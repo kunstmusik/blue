@@ -78,6 +78,9 @@ function sameTarget(
   if (!a || !b) return false;
   if (a.ownerKind !== b.ownerKind) return false;
   if (a.displayContext !== b.displayContext) return false;
+  if (a.blueLive || b.blueLive) {
+    return a.blueLive?.liveObjectId === b.blueLive?.liveObjectId;
+  }
   if (sameLocation(a.location, b.location)) return true;
   if (sameLocation(a.sourceInstanceLocation, b.sourceInstanceLocation)) return true;
   if (a.library && b.library) {

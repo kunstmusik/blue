@@ -187,6 +187,8 @@ const PATCH_FLUSH_DELAY_MS = 100;
 let nextLocalScoreObjectId = 1;
 
 let pendingFlushPromise: Promise<void> | null = null;
+let pendingDirtyBaseline: boolean | null = null;
+let pendingSequenceChanged = false;
 
 function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
   switch (patch.type) {
@@ -412,6 +414,17 @@ function findAddScoreObjectsTargetGroupIndex(
   ));
 }
 
+function finishPendingDirtySequenceIfSettled(): void {
+  if (pendingPatches.length > 0 || pendingDirtyBaseline === null) {
+    return;
+  }
+  if (!pendingSequenceChanged) {
+    storeSet({ isDirty: pendingDirtyBaseline });
+  }
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
+}
+
 const doFlushAsync = async (): Promise<void> => {
   const patches = pendingPatches.slice();
   pendingPatches = [];
@@ -421,6 +434,7 @@ const doFlushAsync = async (): Promise<void> => {
 
   try {
     const receipt = await window.blueAPI.commitProjectDocumentPatches(patches);
+    pendingSequenceChanged = pendingSequenceChanged || receipt.changed !== false;
     if (receipt?.revision !== undefined) {
       if (receipt.sessionId === latestProjectSessionId) {
         latestProjectPatchRequestId = receipt.revision;
@@ -437,8 +451,10 @@ const doFlushAsync = async (): Promise<void> => {
         console.error('[project-store] Failed to refresh canonical project state after commit:', refreshErr);
       }
     }
+    finishPendingDirtySequenceIfSettled();
   } catch (err: unknown) {
-    toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+    // Recover the canonical view and reject. Background callers attach their
+    // own toast handler; explicit live-command barriers observe this rejection.
     try {
       const snapshot = await window.blueAPI.getProjectDocument();
       if (snapshot) {
@@ -447,6 +463,8 @@ const doFlushAsync = async (): Promise<void> => {
     } catch (recoveryErr: unknown) {
       console.error('[project-store] Failed to recover canonical project state after commit error:', recoveryErr);
     }
+    finishPendingDirtySequenceIfSettled();
+    throw err instanceof Error ? err : new Error(String(err));
   }
 };
 
@@ -469,7 +487,9 @@ const scheduleFlush = (): void => {
 
   pendingPatchTimer = setTimeout(() => {
     pendingPatchTimer = null;
-    void startFlush();
+    void startFlush().catch((err: unknown) => {
+      toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }, PATCH_FLUSH_DELAY_MS);
 };
 
@@ -479,12 +499,14 @@ export const __testFlushPendingPatches = (): void => {
     pendingPatchTimer = null;
   }
 
-  void startFlush();
+  void startFlush().catch((err: unknown) => {
+    toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+  });
 };
 
 export const __testAwaitPendingPatches = async (): Promise<void> => {
   while (pendingFlushPromise) {
-    await pendingFlushPromise;
+    await pendingFlushPromise.catch(() => undefined);
   }
 };
 
@@ -496,12 +518,16 @@ export const __testClearPendingPatches = (): void => {
 
   pendingPatches = [];
   pendingFlushPromise = null;
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
 };
 
 function resetTransientProjectMutationState(): void {
   latestProjectPatchRequestId = 0;
   latestProjectSessionId = 0;
   pendingPatches = [];
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
   if (pendingPatchTimer) {
     clearTimeout(pendingPatchTimer);
     pendingPatchTimer = null;
@@ -926,6 +952,18 @@ function applyBlueLivePatchToSnapshot(
         if (cell) {
           next.bins.cells[patch.column]![patch.row] = { ...cell, enabled: patch.enabled };
         }
+      }
+      break;
+    case 'setCell':
+      if (
+        patch.column >= 0
+        && patch.column < next.bins.cells.length
+        && patch.row >= 0
+        && patch.row < next.bins.cells[patch.column]!.length
+      ) {
+        next.bins.cells[patch.column]![patch.row] = patch.cell
+          ? { ...patch.cell }
+          : null;
       }
       break;
     case 'insertRow':
@@ -1610,6 +1648,7 @@ function isScoreItemMatchingTarget(
   item: ScoreLayerSnapshot['items'][number],
   target: ScoreObjectEditorTargetSnapshot,
 ): boolean {
+  if (target.ownerKind === 'blueLive') return false;
   const itemTarget = item.editorTarget;
   if (!itemTarget) return false;
 
@@ -3582,6 +3621,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       return;
     }
 
+    if (pendingDirtyBaseline === null) {
+      pendingDirtyBaseline = get().isDirty;
+      pendingSequenceChanged = false;
+    }
+
     set((state) => {
       const next: ProjectState = {
         ...state,
@@ -3881,7 +3925,12 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       clearTimeout(pendingPatchTimer);
       pendingPatchTimer = null;
     }
-    await startFlush();
+    // Drain both a currently active commit and any edits queued while it was in
+    // flight. The raw commit promise rejects, so live commands cannot continue
+    // after a failed acknowledgement.
+    while (pendingFlushPromise || pendingPatches.length > 0) {
+      await (pendingFlushPromise ?? startFlush());
+    }
   },
 
   moveScoreObjects: (moves) => {

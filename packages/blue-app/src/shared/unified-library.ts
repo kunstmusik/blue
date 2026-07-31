@@ -315,7 +315,7 @@ export interface InsertionTargetSnapshot {
   readonly insertIndex?: number;
   readonly instrumentAssignmentId?: string;
   readonly location?: ScoreInsertionLocation;
-  readonly destinationKind?: 'score' | 'projectSoundObjectLibrary';
+  readonly destinationKind?: 'score' | 'scoreBsbSound' | 'projectSoundObjectLibrary';
 }
 
 export interface LibraryContextSnapshot {
@@ -376,6 +376,7 @@ export interface LibraryInteractionClipboard {
   readonly operation: 'copy' | 'cut';
   readonly source: LibraryTransferSource;
   readonly capturedAt: number;
+  readonly objectType?: string;
 }
 
 export interface CutLibraryToClipboardRequest {
@@ -426,6 +427,11 @@ export type LibraryExactTransferTarget =
     })
   | (ExactProjectTargetBase & {
       readonly kind: 'score';
+      readonly location: ScoreInsertionLocation;
+      readonly timeContextRevision: string;
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'scoreBsbSound';
       readonly location: ScoreInsertionLocation;
       readonly timeContextRevision: string;
     })
@@ -799,7 +805,8 @@ export function isLibraryInteractionClipboard(value: unknown): value is LibraryI
     && isLibraryTransferSource(value.source)
     && typeof value.capturedAt === 'number'
     && Number.isFinite(value.capturedAt)
-    && value.capturedAt >= 0;
+    && value.capturedAt >= 0
+    && (value.objectType === undefined || typeof value.objectType === 'string');
 }
 
 export function isLibraryExactTransferTarget(value: unknown): value is LibraryExactTransferTarget {
@@ -821,7 +828,7 @@ export function isLibraryExactTransferTarget(value: unknown): value is LibraryEx
       && isNonNegativeInteger(value.insertIndex)
       && typeof value.chainRevision === 'string';
   }
-  if (value.kind === 'score') {
+  if (value.kind === 'score' || value.kind === 'scoreBsbSound') {
     return isRecord(value.location)
       && isNonEmptyString(value.location.rootGroupId)
       && Array.isArray(value.location.containerPath)

@@ -26,6 +26,18 @@ interface PendingTerminalStateCandidate {
   firstSeenAt: number;
 }
 
+export interface BlueLiveEngineSessionDependencies {
+  createBridge?: (
+    mainWindow: BrowserWindow,
+    enginePath: string,
+    port: number,
+    pubPort: number,
+    engineRuntime: EngineRuntimeService | undefined,
+  ) => EngineBridge;
+  writeTempCsdSnapshot?: typeof writeTempCsdSnapshot;
+  cleanupDelayMs?: number;
+}
+
 export class BlueLiveEngineSession {
   private status: BlueLiveEngineStatus = 'idle';
   private message = '';
@@ -47,6 +59,10 @@ export class BlueLiveEngineSession {
   private lastEngineStateSequence = 0;
   private pendingPolledTerminalState: PendingTerminalStateCandidate | null = null;
   private cleanupPromise: Promise<void> | null = null;
+  private stopPromise: Promise<BlueLiveStatusSnapshot> | null = null;
+  private startCompletion: Promise<void> | null = null;
+  private lifecycleGeneration = 0;
+  private readonly dependencies: BlueLiveEngineSessionDependencies;
 
   constructor(
     mainWindow: BrowserWindow,
@@ -54,12 +70,14 @@ export class BlueLiveEngineSession {
     port = 5560,
     pubPort = 5561,
     engineRuntime?: EngineRuntimeService,
+    dependencies: BlueLiveEngineSessionDependencies = {},
   ) {
     this.mainWindow = mainWindow;
     this.enginePath = enginePath || 'blue-engine';
     this.port = port;
     this.pubPort = pubPort;
     this.engineRuntime = engineRuntime;
+    this.dependencies = dependencies;
   }
 
   private getSnapshot(): BlueLiveStatusSnapshot {
@@ -76,6 +94,18 @@ export class BlueLiveEngineSession {
     this.status = status;
     this.message = message ?? '';
     this.mainWindow.webContents.send('blue-live-status', this.getSnapshot());
+  }
+
+  private isCurrentLifecycle(generation: number): boolean {
+    return this.lifecycleGeneration === generation;
+  }
+
+  private async stopCancelledStart(generation: number): Promise<boolean> {
+    if (this.isCurrentLifecycle(generation)) {
+      return false;
+    }
+    await this.cleanup();
+    return true;
   }
 
   setOutputCallback(cb: EngineOutputCallback | null): void {
@@ -250,11 +280,18 @@ export class BlueLiveEngineSession {
       return this.getSnapshot();
     }
 
+    const lifecycleGeneration = ++this.lifecycleGeneration;
     this.setStatus('starting', 'Starting Blue Live...');
     this.sessionId++;
     this.projectRevision = revision;
     this.projectDirectory = projectDirectory && projectDirectory.trim().length > 0 ? projectDirectory : null;
     this.projectData = data;
+
+    let resolveStartCompletion = (): void => {};
+    const startCompletion = new Promise<void>((resolve) => {
+      resolveStartCompletion = resolve;
+    });
+    this.startCompletion = startCompletion;
 
     try {
       const liveData = data.getLiveData();
@@ -276,35 +313,52 @@ export class BlueLiveEngineSession {
       const runtimeScore = normalizeScoreForEngineApi(score, this.namedInstrumentNumbers);
 
       const liveOptions = this.buildLiveOptions(liveData, options);
-      const tempCsdPath = await writeTempCsdSnapshot(csd.csdText, this.projectDirectory);
+      const tempCsdPath = await (
+        this.dependencies.writeTempCsdSnapshot ?? writeTempCsdSnapshot
+      )(csd.csdText, this.projectDirectory);
+      if (await this.stopCancelledStart(lifecycleGeneration)) {
+        return this.getSnapshot();
+      }
 
       this.outputCallback?.(
         formatRenderCommandLine(liveOptions, tempCsdPath, this.enginePath),
         'stdout',
       );
 
-      this.bridge = new EngineBridge(
-        this.mainWindow,
-        this.enginePath,
-        this.port,
-        this.pubPort,
-        'blue-live',
-        this.engineRuntime,
-      );
-      this.bridge.setWorkingDirectory(this.projectDirectory);
+      const bridge = this.dependencies.createBridge
+        ? this.dependencies.createBridge(
+          this.mainWindow,
+          this.enginePath,
+          this.port,
+          this.pubPort,
+          this.engineRuntime,
+        )
+        : new EngineBridge(
+          this.mainWindow,
+          this.enginePath,
+          this.port,
+          this.pubPort,
+          'blue-live',
+          this.engineRuntime,
+        );
+      this.bridge = bridge;
+      bridge.setWorkingDirectory(this.projectDirectory);
 
-      this.bridge.setOutputCallback((text, type) => {
+      bridge.setOutputCallback((text, type) => {
         this.outputCallback?.(text, type);
       });
 
-      const started = await this.bridge.startEngine();
+      const started = await bridge.startEngine();
+      if (await this.stopCancelledStart(lifecycleGeneration)) {
+        return this.getSnapshot();
+      }
       if (!started) {
         this.setStatus('error', 'Failed to start Blue Live engine');
         await this.cleanup();
         return this.getSnapshot();
       }
 
-      const client = this.bridge.getClient();
+      const client = bridge.getClient();
       if (!client) {
         this.setStatus('error', 'Blue Live engine client unavailable');
         await this.cleanup();
@@ -317,10 +371,16 @@ export class BlueLiveEngineSession {
         } catch (err) {
           console.warn(`[BlueLive] setOption skipped: ${opt}`);
         }
+        if (await this.stopCancelledStart(lifecycleGeneration)) {
+          return this.getSnapshot();
+        }
       }
 
       if (orchestra) {
         const resp = await client.compileOrc(orchestra);
+        if (await this.stopCancelledStart(lifecycleGeneration)) {
+          return this.getSnapshot();
+        }
         if (!resp.ok) {
           this.setStatus('error', `Blue Live orchestra compile failed: ${resp.message}`);
           await this.cleanup();
@@ -330,6 +390,9 @@ export class BlueLiveEngineSession {
 
       if (runtimeScore) {
         const resp = await client.readScore(runtimeScore);
+        if (await this.stopCancelledStart(lifecycleGeneration)) {
+          return this.getSnapshot();
+        }
         if (!resp.ok) {
           this.setStatus('error', `Blue Live score failed: ${resp.message}`);
           await this.cleanup();
@@ -338,6 +401,9 @@ export class BlueLiveEngineSession {
       }
 
       const startResp = await client.start();
+      if (await this.stopCancelledStart(lifecycleGeneration)) {
+        return this.getSnapshot();
+      }
       if (!startResp.ok) {
         this.setStatus('error', `Blue Live start failed: ${startResp.message}`);
         await this.cleanup();
@@ -348,23 +414,56 @@ export class BlueLiveEngineSession {
       this.setStatus('running', 'Blue Live running');
       return this.getSnapshot();
     } catch (err) {
+      if (await this.stopCancelledStart(lifecycleGeneration)) {
+        return this.getSnapshot();
+      }
       const msg = err instanceof Error ? err.message : String(err);
       this.setStatus('error', `Blue Live error: ${msg}`);
       await this.cleanup();
       return this.getSnapshot();
+    } finally {
+      resolveStartCompletion();
+      if (this.startCompletion === startCompletion) {
+        this.startCompletion = null;
+      }
     }
   }
 
   async stop(): Promise<BlueLiveStatusSnapshot> {
+    if (this.stopPromise) {
+      return this.stopPromise;
+    }
+
     if (this.status !== 'running' && this.status !== 'starting') {
+      if (this.cleanupPromise) {
+        await this.cleanupPromise;
+      }
       return this.getSnapshot();
     }
 
+    this.lifecycleGeneration += 1;
     this.setStatus('stopping', 'Stopping Blue Live...');
-    this.clearStateMonitoring();
-    await this.cleanup();
-    this.setStatus('stopped', 'Blue Live stopped');
-    return this.getSnapshot();
+    const activeStartCompletion = this.startCompletion;
+    const stopping = (async (): Promise<BlueLiveStatusSnapshot> => {
+      this.clearStateMonitoring();
+      await this.cleanup();
+      if (activeStartCompletion) {
+        await activeStartCompletion;
+      }
+      if (this.status === 'stopping') {
+        this.setStatus('stopped', 'Blue Live stopped');
+      }
+      return this.getSnapshot();
+    })();
+    this.stopPromise = stopping;
+
+    try {
+      return await stopping;
+    } finally {
+      if (this.stopPromise === stopping) {
+        this.stopPromise = null;
+      }
+    }
   }
 
   async recompile(
@@ -419,6 +518,51 @@ export class BlueLiveEngineSession {
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : String(err) };
     }
+  }
+
+  /**
+   * Submit a prepared Manual Trigger score batch, gated by the expected Blue
+   * Live session generation. Rejects without an engine call when the session
+   * is not running, the generation no longer matches, there is no engine
+   * client, or the score text is empty. Reuses the existing score
+   * normalization and `readScore` path without routing through realtime
+   * playback.
+   */
+  async submitPreparedScore(
+    scoreText: string,
+    expectedSessionId: number,
+  ): Promise<{ ok: boolean; message?: string }> {
+    if (this.status !== 'running') {
+      return { ok: false, message: 'Blue Live is not running' };
+    }
+    if (expectedSessionId !== this.sessionId) {
+      return { ok: false, message: 'Stale Blue Live session' };
+    }
+    const client = this.bridge?.getClient();
+    if (!client) {
+      return { ok: false, message: 'Blue Live engine client is not available' };
+    }
+    if (!scoreText || scoreText.length === 0) {
+      return { ok: false, message: 'Empty prepared score' };
+    }
+
+    try {
+      const resp = await client.readScore(
+        normalizeScoreForEngineApi(scoreText, this.namedInstrumentNumbers),
+      );
+      return { ok: resp.ok, message: resp.ok ? undefined : resp.message };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  /**
+   * Whether the Blue Live session is in any non-idle lifecycle state
+   * (`starting`, `running`, or `stopping`). Used by project replacement to
+   * await full cancellation before installing a new project.
+   */
+  isActive(): boolean {
+    return this.status === 'starting' || this.status === 'running' || this.status === 'stopping';
   }
 
   isRunning(): boolean {
@@ -497,7 +641,10 @@ export class BlueLiveEngineSession {
         this.bridge = null;
         await bridge.killAndWait();
       }
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      const delayMs = this.dependencies.cleanupDelayMs ?? 200;
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     })().finally(() => {
       this.cleanupPromise = null;
     });

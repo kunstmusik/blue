@@ -11,8 +11,10 @@ import {
   OpcodeDefinition,
   PolyObject,
   PythonInstrument,
+  Sound,
   TimeBase,
   TimeDuration,
+  TimePosition,
   UDOStyle,
   copyEffectForProject,
   copyInstrumentForProject,
@@ -195,6 +197,8 @@ export class UnifiedLibraryProjectAdapter {
     if ((project.revision ?? 0) !== target.projectRevision) return 'The destination changed. Choose it again.';
     const expectedType = target.kind === 'orchestra'
       ? 'instrument'
+      : target.kind === 'scoreBsbSound'
+        ? 'instrument'
       : target.kind === 'projectUdo'
         ? 'udo'
         : target.kind === 'effectChain'
@@ -864,6 +868,53 @@ export class UnifiedLibraryProjectAdapter {
     input: ProjectInsertionInput,
     source: { displayName: string; value: Instrument | OpcodeDefinition | Effect | SoundObject; libraryId?: string },
   ): string {
+    if (input.target.destinationKind === 'scoreBsbSound') {
+      if (input.key.libraryType !== 'instrument' || !(source.value instanceof BlueSynthBuilder)) {
+        throw new Error('Paste BSB As Sound requires a BlueSynthBuilder instrument.');
+      }
+      const location = input.target.location;
+      if (!location) throw new Error('Paste BSB As Sound target is incomplete.');
+      const resolvedTarget = resolveScoreInsertionLocation(project.data, location);
+      if (!resolvedTarget) throw new Error('Score target path or layer is stale.');
+
+      const bsb = source.value.deepCopy() as BlueSynthBuilder;
+      for (const parameter of bsb.getParameters()) {
+        parameter.setAutomationEnabled(false);
+        const value = parameter.getValue(0);
+        parameter.setFixedValue(value);
+        parameter.setPoints([
+          { time: 0, value },
+          { time: 1, value },
+        ]);
+      }
+
+      const sound = new Sound();
+      sound.setBlueSynthBuilder(bsb);
+      sound.setComment(bsb.getComment());
+      sound.setStartTime(TimePosition.beats(location.startTime));
+      const selectionId = randomUUID();
+      const changed = applyProjectDocumentPatch(project.data, {
+        score: {
+          type: 'addScoreObjects',
+          groupId: resolvedTarget.groupId,
+          objects: [{
+            selectionId,
+            layerIndex: resolvedTarget.layerIndex,
+            objectType: 'Sound',
+            name: sound.getName(),
+            startBeats: location.startTime,
+            durationBeats: sound.getSubjectiveDuration().toBeats(
+              project.data.getScore().getTimeContext(),
+            ),
+            backgroundColor: sound.getBackgroundColor(),
+            serializedXml: sound.saveAsXML().toXml(),
+          }],
+        },
+      });
+      if (!changed) throw new Error('Stale Score target.');
+      return selectionId;
+    }
+
     switch (input.key.libraryType) {
       case 'instrument': {
         const instrument = copyInstrumentForProject(source.value as Instrument);

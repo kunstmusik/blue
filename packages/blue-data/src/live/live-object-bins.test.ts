@@ -74,8 +74,15 @@ describe('LiveObjectBins', () => {
 
     it('does not remove the last row', () => {
       const bins = new LiveObjectBins(1, 1);
-      bins.removeRow(0);
+      expect(bins.removeRow(0)).toBe(false);
       expect(bins.getRowCount()).toBe(1);
+    });
+
+    it('reports invalid row removal as a no-op', () => {
+      const bins = new LiveObjectBins(1, 2);
+      expect(bins.removeRow(-1)).toBe(false);
+      expect(bins.removeRow(2)).toBe(false);
+      expect(bins.getRowCount()).toBe(2);
     });
   });
 
@@ -108,8 +115,15 @@ describe('LiveObjectBins', () => {
 
     it('does not remove the last column', () => {
       const bins = new LiveObjectBins(1, 1);
-      bins.removeColumn(0);
+      expect(bins.removeColumn(0)).toBe(false);
       expect(bins.getColumnCount()).toBe(1);
+    });
+
+    it('reports invalid column removal as a no-op', () => {
+      const bins = new LiveObjectBins(2, 1);
+      expect(bins.removeColumn(-1)).toBe(false);
+      expect(bins.removeColumn(2)).toBe(false);
+      expect(bins.getColumnCount()).toBe(2);
     });
   });
 
@@ -172,11 +186,20 @@ describe('LiveObjectBins', () => {
       bins.setLiveObject(0, 1, obj1);
       bins.setLiveObject(0, 2, obj2);
 
-      bins.setEnabledFromLiveObjectSet([obj1]);
+      expect(bins.setEnabledFromLiveObjectSet([obj1])).toBe(true);
 
       expect(obj0.isEnabled()).toBe(false);
       expect(obj1.isEnabled()).toBe(true);
       expect(obj2.isEnabled()).toBe(false);
+    });
+
+    it('reports repeated enabled-set application as a semantic no-op', () => {
+      const bins = new LiveObjectBins(1, 1);
+      const obj = new LiveObject();
+      obj.setEnabled(true);
+      bins.setLiveObject(0, 0, obj);
+
+      expect(bins.setEnabledFromLiveObjectSet([obj])).toBe(false);
     });
 
     it('finds objects by uniqueId', () => {

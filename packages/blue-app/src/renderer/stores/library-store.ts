@@ -405,7 +405,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           revision: node.revision,
         };
     if (operation === 'copy') {
-      set({ clipboard: { operation, source, capturedAt: Date.now() }, error: null });
+      set({
+        clipboard: {
+          operation,
+          source,
+          capturedAt: Date.now(),
+          objectType: node.objectType,
+        },
+        error: null,
+      });
       return true;
     }
 

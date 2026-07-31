@@ -105,4 +105,21 @@ export class InstrumentCategory {
 
     return cat;
   }
+
+  /**
+   * Recursively deep-copy this category, its subcategories, and instruments.
+   * Instruments are copied through their own {@link Instrument.deepCopy}
+   * implementations so the copy shares no mutable references with the
+   * original.
+   */
+  deepCopy(): InstrumentCategory {
+    const copy = new InstrumentCategory(this._categoryName, this._isRoot);
+    for (const subCat of this._subCategories) {
+      copy._subCategories.push(subCat.deepCopy());
+    }
+    for (const instr of this._instruments) {
+      copy._instruments.push(instr.deepCopy());
+    }
+    return copy;
+  }
 }

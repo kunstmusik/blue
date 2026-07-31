@@ -140,6 +140,16 @@ describe('Unified Library shared contracts', () => {
       kind: 'projectSoundObjectLibrary', projectSessionId: 4, projectRevision: 7,
     })).toBe(true);
     expect(isLibraryExactTransferTarget({
+      kind: 'scoreBsbSound', projectSessionId: 4, projectRevision: 7,
+      location: {
+        rootGroupId: 'root',
+        containerPath: [],
+        layerId: 'root-layer-0',
+        startTime: 2,
+      },
+      timeContextRevision: '7',
+    })).toBe(true);
+    expect(isLibraryExactTransferTarget({
       kind: 'projectUdo', projectSessionId: 4, projectRevision: 7,
       instrumentAssignmentId: '7', insertIndex: 0,
     })).toBe(true);
@@ -158,6 +168,7 @@ describe('Unified Library shared contracts', () => {
       operation: 'copy',
       source: { kind: 'library', key: { scope: 'user', libraryType: 'udo', nodeId: 'u-1' }, revision: 3 },
       capturedAt: 100,
+      objectType: 'OpcodeDefinition',
     })).toBe(true);
     expect(isLibraryInteractionClipboard({
       operation: 'cut',

@@ -905,6 +905,7 @@ export class UnifiedLibraryService {
               libraryType: subtree.libraryType,
             },
             capturedAt: Date.now(),
+            objectType: subtree.payload?.objectType,
           },
           closedEditorSessionIds,
         },
@@ -971,6 +972,7 @@ export class UnifiedLibraryService {
           operation: 'copy',
           source: { kind: 'buffer', clipboardId, libraryType: 'soundObject' },
           capturedAt: Date.now(),
+          objectType: source.objectType,
         },
       };
     } catch (error) {
@@ -1240,6 +1242,12 @@ export class UnifiedLibraryService {
       if (!allowedModes.includes(requestedMode as never)) blockingReasons.push('The requested copy mode is not available for this item.');
       if (preview.value.supportStatus === 'unsupported') blockingReasons.push(preview.value.supportMessage ?? 'This payload cannot be transferred safely.');
       if (preview.value.dependencies.unresolvedExternal.length > 0) blockingReasons.push('Resolve external dependencies before transfer.');
+      if (
+        request.target.kind === 'scoreBsbSound'
+        && preview.value.objectType.split('.').pop() !== 'BlueSynthBuilder'
+      ) {
+        blockingReasons.push('Paste BSB As Sound requires a BlueSynthBuilder instrument.');
+      }
       const readyClient = source.key.scope === 'user' && !source.payloadXml ? this.getReadyClient() : null;
       if (source.key.scope === 'user' && !source.payloadXml && !readyClient) return this.notReady();
       const payloadXml = source.payloadXml ?? (source.key.scope === 'user'
@@ -1428,6 +1436,7 @@ export class UnifiedLibraryService {
 
   private targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
     if (target.kind === 'orchestra') return 'instrument';
+    if (target.kind === 'scoreBsbSound') return 'instrument';
     if (target.kind === 'projectUdo') return 'udo';
     if (target.kind === 'effectChain') return 'effect';
     return 'soundObject';
@@ -1442,6 +1451,7 @@ export class UnifiedLibraryService {
     } as const;
     if (target.kind === 'effectChain') return { ...base, label: `${target.chain === 'pre' ? 'Pre' : 'Post'} Effects`, channelId: target.channelId, chain: target.chain, insertIndex: target.insertIndex };
     if (target.kind === 'score') return { ...base, label: 'Score', destinationKind: 'score' as const, location: target.location };
+    if (target.kind === 'scoreBsbSound') return { ...base, label: 'Score', destinationKind: 'scoreBsbSound' as const, location: target.location };
     if (target.kind === 'projectSoundObjectLibrary') {
       return { ...base, label: 'Project SoundObjects', destinationKind: 'projectSoundObjectLibrary' as const };
     }

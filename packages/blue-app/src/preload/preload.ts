@@ -9,6 +9,8 @@ import type {
   BsbRealtimeControlUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
+  LegacyBlueLiveTriggerRequest,
+  LegacyBlueLiveTriggerResult,
   PolyObjectLayerGroupSnapshot,
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
@@ -449,6 +451,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   sendBlueLiveAllNotesOff: () => ipcRenderer.invoke('blue-live:all-notes-off'),
   triggerBlueLiveNote: (request: BlueLiveNoteTriggerRequest) =>
     ipcRenderer.invoke('blue-live:trigger-note', request) as Promise<BlueLiveNoteTriggerResult>,
+  triggerBlueLiveObjects: (request: LegacyBlueLiveTriggerRequest) =>
+    ipcRenderer.invoke('blue-live:trigger-objects', request) as Promise<LegacyBlueLiveTriggerResult>,
   getBlueLiveStatus: () => ipcRenderer.invoke('blue-live:get-status'),
   onBlueLiveStatus: (callback: (snapshot: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => callback(snapshot);

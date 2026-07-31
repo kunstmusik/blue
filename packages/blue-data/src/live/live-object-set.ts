@@ -41,14 +41,18 @@ export class LiveObjectSet implements BlueDataObject {
       set._name = val;
     }
 
+    // Retain all saved-set identifiers losslessly, including references to
+    // LiveObjects that no longer exist. Java Blue discarded missing IDs on
+    // load; this parity pass retains them so legacy projects round-trip
+    // without silent data loss. Resolution against existing objects happens
+    // only when the set is applied (see resolveLiveObjects).
     const ids: string[] = [];
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
       const node = nodes.next();
       if (node.getName() === 'liveObjectRef') {
         const uniqueId = node.getTextString();
-        const lObj = bins.getLiveObjectByUniqueId(uniqueId);
-        if (lObj) {
+        if (uniqueId) {
           ids.push(uniqueId);
         }
       }

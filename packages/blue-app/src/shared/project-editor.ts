@@ -28,6 +28,7 @@ import {
   convertToModern,
   convertToClassic,
   LiveData,
+  LiveObject,
   LiveObjectBins,
   LiveObjectSetList,
   Send,
@@ -403,15 +404,22 @@ export interface ScoreObjectLibraryEntryRef {
   objectType: string;
 }
 
+export interface BlueLiveScoreObjectRef {
+  liveObjectId: string;
+  column: number;
+  row: number;
+}
+
 export interface ScoreObjectEditorTargetSnapshot {
   selectionId: string;
   selectedObjectType: string;
   editorObjectType: string;
-  ownerKind: 'timeline' | 'library';
-  displayContext: 'timeline' | 'library' | 'instance';
+  ownerKind: 'timeline' | 'library' | 'blueLive';
+  displayContext: 'timeline' | 'library' | 'instance' | 'blueLive';
   location?: ScoreObjectLocationRef;
   sourceInstanceLocation?: ScoreObjectLocationRef;
   library?: ScoreObjectLibraryEntryRef;
+  blueLive?: BlueLiveScoreObjectRef;
   supportsTimeBehavior: boolean;
   supportsRepeatPoint: boolean;
   supportsNoteProcessorChain: boolean;
@@ -975,6 +983,31 @@ export interface LiveObjectCellSnapshot {
   displayName: string;
   soundObjectType: string;
   hasSoundObject: boolean;
+  serializedXml?: string;
+  startBeats?: number;
+  durationBeats?: number;
+  startTimeBase?: string;
+  durationTimeBase?: string;
+  backgroundColor?: number;
+}
+
+export const BLUE_LIVE_SOUND_OBJECT_TYPES = [
+  'External',
+  'GenericScore',
+  'JMask',
+  'ObjectBuilder',
+  'PatternObject',
+  'PianoRoll',
+  'PythonObject',
+  'JavaScriptObject',
+  'TrackerObject',
+] as const;
+
+export type BlueLiveSoundObjectType = (typeof BLUE_LIVE_SOUND_OBJECT_TYPES)[number];
+
+export function isBlueLiveSoundObjectType(value: string): value is BlueLiveSoundObjectType {
+  const shortName = value.split('.').pop() ?? value;
+  return (BLUE_LIVE_SOUND_OBJECT_TYPES as readonly string[]).includes(shortName);
 }
 
 export interface LiveObjectBinsSnapshot {
@@ -1244,6 +1277,7 @@ export type BlueLivePatch =
   | { type: 'updateTempoRepeat'; patch: Partial<Pick<BlueLiveProjectSnapshot, 'tempo' | 'repeat' | 'repeatEnabled'>> }
   | { type: 'updateLiveCodeText'; text: string }
   | { type: 'setCellEnabled'; column: number; row: number; enabled: boolean }
+  | { type: 'setCell'; column: number; row: number; cell: LiveObjectCellSnapshot | null }
   | { type: 'insertRow'; index: number }
   | { type: 'removeRow'; index: number }
   | { type: 'insertColumn'; index: number }
@@ -1304,6 +1338,84 @@ export interface ProjectDocumentPatch {
 export interface ProjectDocumentCommitReceipt {
   revision: number;
   sessionId: number;
+  /**
+   * True if at least one patch in the committed batch mutated canonical project
+   * data. Advances in `revision` happen only when `changed` is true. An
+   * all-no-op or rejected batch returns `changed: false` with the unchanged
+   * revision so live commands do not falsely treat a clean no-op as a fence
+   * break.
+   */
+  changed: boolean;
+}
+
+// ─── Legacy Blue Live Manual Trigger contract ───
+
+/**
+ * Renderer intent for a Manual Trigger. The `selected` mode targets exactly
+ * one stable LiveObject identity regardless of its persistent enabled flag;
+ * the `enabled` mode targets every non-null enabled LiveObject in
+ * column-major order. Row/column indices are never canonical identity.
+ */
+export type LegacyBlueLiveTriggerRequest =
+  | { mode: 'selected'; liveObjectId: string }
+  | { mode: 'enabled' };
+
+export type LegacyBlueLiveTriggerStatus =
+  | 'submitted'
+  | 'empty'
+  | 'busy'
+  | 'rejected'
+  | 'failed'
+  | 'stale';
+
+export type LegacyBlueLiveTriggerErrorCode =
+  | 'no-project'
+  | 'not-running'
+  | 'invalid-request'
+  | 'target-not-found'
+  | 'invalid-tempo'
+  | 'runtime-unavailable'
+  | 'generation-failed'
+  | 'stale-document'
+  | 'stale-session'
+  | 'engine-rejected';
+
+/**
+ * Typed result of a Manual Trigger crossing the renderer→preload→main
+ * boundary. `ok` is true only for `submitted` and benign `empty` outcomes.
+ * Runtime feedback never alters cell color, enabled flags, saved sets, or
+ * `.blue` XML.
+ */
+export interface LegacyBlueLiveTriggerResult {
+  ok: boolean;
+  status: LegacyBlueLiveTriggerStatus;
+  code?: LegacyBlueLiveTriggerErrorCode;
+  message?: string;
+  targetCount: number;
+  noteCount: number;
+  documentRevision: number;
+  blueLiveSessionId: number;
+}
+
+/**
+ * Validate a legacy Blue Live trigger request at the boundary. Returns an
+ * error code string when the request is malformed, or `null` when valid.
+ */
+export function validateLegacyBlueLiveTriggerRequest(
+  request: unknown,
+): LegacyBlueLiveTriggerErrorCode | null {
+  if (!request || typeof request !== 'object') return 'invalid-request';
+  const req = request as Record<string, unknown>;
+  if (req.mode === 'selected') {
+    if (typeof req.liveObjectId !== 'string' || req.liveObjectId.trim() === '') {
+      return 'invalid-request';
+    }
+    return null;
+  }
+  if (req.mode === 'enabled') {
+    return null;
+  }
+  return 'invalid-request';
 }
 
 export type BsbRealtimeControlKind = 'value' | 'selected' | 'selectedIndex' | 'xy' | 'sliderBank';
@@ -2949,6 +3061,28 @@ function buildEditorTargetSnapshot(
   };
 }
 
+export function createBlueLiveEditorTargetSnapshot(
+  cell: LiveObjectCellSnapshot,
+  column: number,
+  row: number,
+): ScoreObjectEditorTargetSnapshot {
+  return {
+    selectionId: cell.uniqueId,
+    selectedObjectType: cell.soundObjectType,
+    editorObjectType: cell.soundObjectType,
+    ownerKind: 'blueLive',
+    displayContext: 'blueLive',
+    blueLive: {
+      liveObjectId: cell.uniqueId,
+      column,
+      row,
+    },
+    supportsTimeBehavior: cell.hasSoundObject,
+    supportsRepeatPoint: cell.hasSoundObject,
+    supportsNoteProcessorChain: cell.hasSoundObject,
+  };
+}
+
 export function createScoreObjectPropertiesTarget(
   target: ScoreObjectEditorTargetSnapshot,
 ): ScoreObjectEditorTargetSnapshot {
@@ -3091,7 +3225,16 @@ export function resolveEditorTarget(data: BlueData, target: ScoreObjectEditorTar
   let sObj: SoundObject | AudioClip | null = null;
   let isLibraryOwned = false;
 
-  if (target.ownerKind === 'library' && target.displayContext === 'instance') {
+  if (target.ownerKind === 'blueLive' && target.displayContext === 'blueLive') {
+    const ref = target.blueLive;
+    if (!ref) return null;
+    const bins = data.getLiveData().getLiveObjectBins();
+    let liveObject = bins.getLiveObject(ref.column, ref.row);
+    if (liveObject?.getUniqueId() !== ref.liveObjectId) {
+      liveObject = bins.getLiveObjectByUniqueId(ref.liveObjectId);
+    }
+    sObj = liveObject?.getSoundObject() ?? null;
+  } else if (target.ownerKind === 'library' && target.displayContext === 'instance') {
     isLibraryOwned = true;
     const lib = data.getSoundObjectLibrary();
     if (target.library) {
@@ -3816,7 +3959,10 @@ export function createProjectEditorSnapshot(
     tablesText: data.getTableSet().getTables(),
     projectUdos: createProjectUdoListSnapshot(data),
     loaded: true,
-    blueLive: createBlueLiveProjectSnapshot(data.getLiveData()),
+    blueLive: createBlueLiveProjectSnapshot(
+      data.getLiveData(),
+      data.getScore().getTimeContext(),
+    ),
     midiInput: createMidiInputProcessorSnapshot(data.getMidiInputProcessor()),
     score: createScoreDocumentSnapshot(data),
     namedChains: { names: data.getNoteProcessorChainMap().getChainNames() },
@@ -5245,7 +5391,10 @@ export function applyClojureProjectPatch(
   return true;
 }
 
-export function createBlueLiveProjectSnapshot(liveData: LiveData): BlueLiveProjectSnapshot {
+export function createBlueLiveProjectSnapshot(
+  liveData: LiveData,
+  context: TimeContext = new TimeContext(),
+): BlueLiveProjectSnapshot {
   const bins = liveData.getLiveObjectBins();
   const cells: Array<Array<LiveObjectCellSnapshot | null>> = [];
   for (let c = 0; c < bins.getColumnCount(); c++) {
@@ -5253,6 +5402,7 @@ export function createBlueLiveProjectSnapshot(liveData: LiveData): BlueLiveProje
     for (let r = 0; r < bins.getRowCount(); r++) {
       const obj = bins.getLiveObject(c, r);
       if (obj) {
+        const soundObject = obj.getSoundObject();
         col.push({
           uniqueId: obj.getUniqueId(),
           enabled: obj.isEnabled(),
@@ -5261,6 +5411,12 @@ export function createBlueLiveProjectSnapshot(liveData: LiveData): BlueLiveProje
           displayName: obj.getDisplayName(),
           soundObjectType: obj.getSoundObjectType(),
           hasSoundObject: obj.hasSoundObject,
+          serializedXml: soundObject?.saveAsXML().toXml(),
+          startBeats: soundObject?.getStartTime().toBeats(context),
+          durationBeats: soundObject?.getSubjectiveDuration().toBeats(context),
+          startTimeBase: soundObject ? String(soundObject.getStartTime().getTimeBase()) : undefined,
+          durationTimeBase: soundObject ? String(soundObject.getSubjectiveDuration().getTimeBase()) : undefined,
+          backgroundColor: soundObject?.getBackgroundColor(),
         });
       } else {
         col.push(null);
@@ -5556,56 +5712,124 @@ function applyMidiInputPatch(
 function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolean {
   const liveData = data.getLiveData();
   switch (patch.type) {
-    case 'updateOptions':
-      if (patch.patch.commandLine !== undefined) liveData.setCommandLine(patch.patch.commandLine);
-      if (patch.patch.commandLineEnabled !== undefined) liveData.setCommandLineEnabled(patch.patch.commandLineEnabled);
-      if (patch.patch.commandLineOverride !== undefined) liveData.setCommandLineOverride(patch.patch.commandLineOverride);
-      return true;
-    case 'updateTempoRepeat':
-      if (patch.patch.tempo !== undefined) liveData.setTempo(patch.patch.tempo);
-      if (patch.patch.repeat !== undefined) liveData.setRepeat(patch.patch.repeat);
-      if (patch.patch.repeatEnabled !== undefined) liveData.setRepeatEnabled(patch.patch.repeatEnabled);
-      return true;
+    case 'updateOptions': {
+      let changed = false;
+      if (patch.patch.commandLine !== undefined && liveData.getCommandLine() !== patch.patch.commandLine) {
+        liveData.setCommandLine(patch.patch.commandLine);
+        changed = true;
+      }
+      if (patch.patch.commandLineEnabled !== undefined && liveData.isCommandLineEnabled() !== patch.patch.commandLineEnabled) {
+        liveData.setCommandLineEnabled(patch.patch.commandLineEnabled);
+        changed = true;
+      }
+      if (patch.patch.commandLineOverride !== undefined && liveData.isCommandLineOverride() !== patch.patch.commandLineOverride) {
+        liveData.setCommandLineOverride(patch.patch.commandLineOverride);
+        changed = true;
+      }
+      return changed;
+    }
+    case 'updateTempoRepeat': {
+      let changed = false;
+      if (patch.patch.tempo !== undefined && liveData.getTempo() !== patch.patch.tempo) {
+        liveData.setTempo(patch.patch.tempo);
+        changed = true;
+      }
+      if (patch.patch.repeat !== undefined && liveData.getRepeat() !== patch.patch.repeat) {
+        liveData.setRepeat(patch.patch.repeat);
+        changed = true;
+      }
+      if (patch.patch.repeatEnabled !== undefined && liveData.isRepeatEnabled() !== patch.patch.repeatEnabled) {
+        liveData.setRepeatEnabled(patch.patch.repeatEnabled);
+        changed = true;
+      }
+      return changed;
+    }
     case 'updateLiveCodeText':
+      if (liveData.getLiveCodeText() === patch.text) return false;
       liveData.setLiveCodeText(patch.text);
       return true;
     case 'setCellEnabled': {
       const obj = liveData.getLiveObjectBins().getLiveObject(patch.column, patch.row);
-      if (obj) {
-        obj.setEnabled(patch.enabled);
+      if (!obj) return false;
+      if (obj.isEnabled() === patch.enabled) return false;
+      obj.setEnabled(patch.enabled);
+      return true;
+    }
+    case 'setCell': {
+      const bins = liveData.getLiveObjectBins();
+      if (
+        patch.column < 0
+        || patch.column >= bins.getColumnCount()
+        || patch.row < 0
+        || patch.row >= bins.getRowCount()
+      ) {
+        return false;
+      }
+      const current = bins.getLiveObject(patch.column, patch.row);
+      if (patch.cell === null) {
+        if (!current) return false;
+        bins.setLiveObject(patch.column, patch.row, null);
         return true;
       }
-      return false;
+      if (!patch.cell.serializedXml || patch.cell.uniqueId.trim() === '') {
+        return false;
+      }
+      const matchingIdentity = bins.getLiveObjectByUniqueId(patch.cell.uniqueId);
+      if (matchingIdentity && matchingIdentity !== current) {
+        return false;
+      }
+      try {
+        const serialized = Element.parse(patch.cell.serializedXml);
+        const soundObject = loadSoundObjectFromXML(serialized);
+        if (!soundObject || !isBlueLiveSoundObjectType(soundObject.constructor.name)) {
+          return false;
+        }
+        soundObject.setStartTime(TimePosition.beats(0));
+        const liveObject = new LiveObject();
+        liveObject.setUniqueId(patch.cell.uniqueId);
+        liveObject.setEnabled(patch.cell.enabled);
+        liveObject.setKeyTrigger(patch.cell.keyTrigger);
+        liveObject.setMidiTrigger(patch.cell.midiTrigger);
+        liveObject.setSoundObject(soundObject);
+        bins.setLiveObject(patch.column, patch.row, liveObject);
+        return true;
+      } catch {
+        return false;
+      }
     }
-    case 'insertRow':
-      liveData.getLiveObjectBins().insertRow(patch.index);
-      return true;
-    case 'removeRow':
-      liveData.getLiveObjectBins().removeRow(patch.index);
-      return true;
-    case 'insertColumn':
-      liveData.getLiveObjectBins().insertColumn(patch.index);
-      return true;
-    case 'removeColumn':
-      liveData.getLiveObjectBins().removeColumn(patch.index);
-      return true;
+    case 'insertRow': {
+      return liveData.getLiveObjectBins().insertRow(patch.index);
+    }
+    case 'removeRow': {
+      return liveData.getLiveObjectBins().removeRow(patch.index);
+    }
+    case 'insertColumn': {
+      return liveData.getLiveObjectBins().insertColumn(patch.index);
+    }
+    case 'removeColumn': {
+      return liveData.getLiveObjectBins().removeColumn(patch.index);
+    }
     case 'captureEnabledSet': {
       const sets = liveData.getLiveObjectSets();
       const count = sets.getSets().length;
       sets.captureEnabledSet(liveData.getLiveObjectBins(), `Set ${count + 1}`);
-      return true;
+      return sets.getSets().length !== count;
     }
-    case 'renameSet':
-      liveData.getLiveObjectSets().rename(patch.index, patch.name);
-      return true;
-    case 'removeSet':
-      liveData.getLiveObjectSets().removeAt(patch.index);
-      return true;
-    case 'moveSet':
-      liveData.getLiveObjectSets().move(patch.from, patch.to);
-      return true;
-    case 'applySet':
-      return liveData.getLiveObjectSets().applySet(patch.index, liveData.getLiveObjectBins());
+    case 'renameSet': {
+      return liveData.getLiveObjectSets().rename(patch.index, patch.name);
+    }
+    case 'removeSet': {
+      return liveData.getLiveObjectSets().removeAt(patch.index);
+    }
+    case 'moveSet': {
+      return liveData.getLiveObjectSets().move(patch.from, patch.to);
+    }
+    case 'applySet': {
+      return liveData.getLiveObjectSets().applySet(
+        patch.index,
+        liveData.getLiveObjectBins(),
+      );
+    }
   }
 }
 

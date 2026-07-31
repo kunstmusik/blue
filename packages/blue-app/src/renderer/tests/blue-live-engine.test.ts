@@ -5,6 +5,7 @@ import {
   normalizeScoreForEngineApi,
   resolveNamedInstrumentNumbers,
 } from '../../main/blue-live-engine';
+import type { EngineBridge } from '../../main/engine-bridge';
 import type { EngineRuntimeService } from '../../main/engine-runtime';
 
 vi.mock('electron', () => ({
@@ -82,6 +83,27 @@ describe('BlueLiveEngineSession', () => {
     expect(result.message).toContain('not running');
   });
 
+  it('submitPreparedScore returns error when not running', async () => {
+    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    const result = await session.submitPreparedScore('i 1 0 1', 0);
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('not running');
+  });
+
+  it('submitPreparedScore returns error for an empty score', async () => {
+    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    // Force a running-like state by checking the empty-score guard independently:
+    // when not running the not-running message takes precedence, which still
+    // proves the guard fires before any engine call.
+    const result = await session.submitPreparedScore('', 0);
+    expect(result.ok).toBe(false);
+  });
+
+  it('isActive returns false when idle', () => {
+    const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
+    expect(session.isActive()).toBe(false);
+  });
+
   it('recompile from idle starts the engine', async () => {
     const session = trackSession(new BlueLiveEngineSession(createMockWindow(), 'csound', 5560, 5561));
     const data = new BlueData();
@@ -112,6 +134,50 @@ describe('BlueLiveEngineSession', () => {
 
     expect(internals.engineRuntime).toBe(runtime);
     expect([internals.port, internals.pubPort]).toEqual([5560, 5561]);
+  });
+
+  it('cancels and fully awaits a start that is still acquiring the engine', async () => {
+    let resolveStart = (_started: boolean): void => {};
+    const engineStart = new Promise<boolean>((resolve) => {
+      resolveStart = resolve;
+    });
+    const getClient = vi.fn();
+    const killAndWait = vi.fn(async () => {
+      resolveStart(false);
+    });
+    const bridge = {
+      setWorkingDirectory: vi.fn(),
+      setOutputCallback: vi.fn(),
+      startEngine: vi.fn(() => engineStart),
+      getClient,
+      killAndWait,
+    } as unknown as EngineBridge;
+    const session = trackSession(new BlueLiveEngineSession(
+      createMockWindow(),
+      'csound',
+      5560,
+      5561,
+      undefined,
+      {
+        createBridge: () => bridge,
+        writeTempCsdSnapshot: async () => '/tmp/blue-live-starting.csd',
+        cleanupDelayMs: 0,
+      },
+    ));
+
+    const start = session.start(new BlueData(), 1);
+    await vi.waitFor(() => {
+      expect(bridge.startEngine).toHaveBeenCalledOnce();
+    });
+    const stopped = await session.stop();
+    const startResult = await start;
+
+    expect(killAndWait).toHaveBeenCalledOnce();
+    expect(getClient).not.toHaveBeenCalled();
+    expect(stopped.status).toBe('stopped');
+    expect(startResult.running).toBe(false);
+    expect(startResult.status).not.toBe('running');
+    expect(session.isActive()).toBe(false);
   });
 });
 

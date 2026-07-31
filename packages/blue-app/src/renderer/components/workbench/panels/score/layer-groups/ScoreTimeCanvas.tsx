@@ -277,6 +277,10 @@ export default function ScoreTimeCanvas({
   const librarySoundObjectAvailable = libraryClipboard
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject'
     : false;
+  const libraryBsbAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'instrument'
+      && libraryClipboard.objectType?.split('.').pop() === 'BlueSynthBuilder'
+    : false;
   const transferLibraryItem = useLibraryStore((s) => s.transferToProject);
   const captureScoreSoundObject = useLibraryStore((s) => s.captureScoreSoundObject);
   const addScoreSoundObjectToProjectLibrary = useLibraryStore((s) => s.addScoreSoundObjectToProjectLibrary);
@@ -473,6 +477,17 @@ export default function ScoreTimeCanvas({
     if (!target) return;
     void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
   }, [buildLibraryTarget, contextMenuPos, libraryClipboard, librarySoundObjectAvailable, transferLibraryItem]);
+
+  const pasteBsbAtContext = useCallback(() => {
+    if (!libraryClipboard || !libraryBsbAvailable || !contextMenuPos) return;
+    const scoreTarget = buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats);
+    if (!scoreTarget) return;
+    const target: Extract<LibraryExactTransferTarget, { kind: 'scoreBsbSound' }> = {
+      ...scoreTarget,
+      kind: 'scoreBsbSound',
+    };
+    void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
+  }, [buildLibraryTarget, contextMenuPos, libraryBsbAvailable, libraryClipboard, transferLibraryItem]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 2) return;
@@ -1563,10 +1578,12 @@ export default function ScoreTimeCanvas({
               sepClass={sepClass}
               clipboard={clipboard}
               libraryClipboardAvailable={librarySoundObjectAvailable}
+              libraryBsbAvailable={libraryBsbAvailable}
               contextMenuPos={contextMenuPos}
               group={group}
               onPaste={handleContextMenuPaste}
               onLibraryPaste={pasteLibraryAtContext}
+              onPasteBsb={pasteBsbAtContext}
               snapBeatValue={snapBeatValueStart}
               addScoreObjects={addScoreObjects}
             />
@@ -1671,15 +1688,17 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, contextMenuPos, group, onPaste, onLibraryPaste, snapBeatValue, addScoreObjects }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
   libraryClipboardAvailable: boolean;
+  libraryBsbAvailable: boolean;
   contextMenuPos: { xBeats: number; layerIndex: number } | null;
   group: PolyObjectLayerGroupSnapshot;
   onPaste: () => void;
   onLibraryPaste: () => void;
+  onPasteBsb: () => void;
   snapBeatValue: (b: number) => number;
   addScoreObjects: (objects: ScorePasteObject[]) => void;
 }) {
@@ -1739,9 +1758,13 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
         </ContextMenu.Portal>
       </ContextMenu.Sub>
       <ContextMenu.Separator className={sepClass} />
-      {(libraryClipboardAvailable || clipboard.length > 0) && (
+      {(libraryClipboardAvailable || libraryBsbAvailable || clipboard.length > 0) && (
         <>
-          <ContextMenu.Item className={menuItemClass} onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}>
+          <ContextMenu.Item
+            className={menuItemClass}
+            disabled={!libraryClipboardAvailable && clipboard.length === 0}
+            onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}
+          >
             Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
           </ContextMenu.Item>
           {clipboard.length > 0 && (
@@ -1749,8 +1772,12 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
               Paste as PolyObject
             </ContextMenu.Item>
           )}
-          <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
-            Paste BSB as Sound
+          <ContextMenu.Item
+            className={menuItemClass}
+            disabled={!libraryBsbAvailable}
+            onSelect={onPasteBsb}
+          >
+            Paste BSB As Sound
           </ContextMenu.Item>
           <ContextMenu.Separator className={sepClass} />
         </>

@@ -43,6 +43,11 @@ import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import { BlueLiveEngineSession } from './blue-live-engine';
+import {
+  BlueLiveTriggerController,
+  stopBlueLiveForProjectReplacement,
+  type BlueLiveTriggerControllerAccessors,
+} from './blue-live-trigger-controller';
 import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
 import { createAppZoomController } from './app-zoom-controller';
@@ -122,6 +127,8 @@ import {
   type EffectEditablePatch,
   type BlueLiveNoteTriggerRequest,
   type BlueLiveNoteTriggerResult,
+  type LegacyBlueLiveTriggerRequest,
+  type LegacyBlueLiveTriggerResult,
   type BsbRealtimeControlUpdate,
   type ProjectDocumentCommitReceipt,
   type ProjectDocumentPatch,
@@ -196,6 +203,27 @@ let activeRenderAction: DiskRenderAction | null = null;
 let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
+let blueLiveTriggerController: BlueLiveTriggerController | null = null;
+
+/**
+ * Lazily build (or return the cached) Blue Live trigger controller wired to
+ * the current canonical-state accessors. The controller reads module-level
+ * state through callbacks so main retains ownership.
+ */
+function getBlueLiveTriggerController(): BlueLiveTriggerController {
+  if (blueLiveTriggerController) return blueLiveTriggerController;
+  const accessors: BlueLiveTriggerControllerAccessors = {
+    getCanonicalProject: () => currentData,
+    getProjectSessionId: () => currentProjectSessionId,
+    getDocumentRevision: () => currentProjectRevision,
+    getBlueLiveSession: () => blueLiveSession,
+    getJavaScriptSession: () => javaScriptSession,
+    getJavaRuntimeSessionManager: () => javaRuntimeSessionManager,
+    getCurrentFilePath: () => currentFilePath,
+  };
+  blueLiveTriggerController = new BlueLiveTriggerController(accessors);
+  return blueLiveTriggerController;
+}
 let engineRuntimeService: EngineRuntimeService | null = null;
 let isQuitting = false;
 let pendingQuit = false;
@@ -1452,10 +1480,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     const xml = fs.readFileSync(filePath, 'utf-8');
     const data = await BlueData.loadFromString(xml);
 
-    // Stop Blue Live when switching projects
-    if (blueLiveSession && blueLiveSession.isRunning()) {
-      await blueLiveSession.stop();
-    }
+    await stopActiveBlueLiveBeforeProjectReplacement();
     await disposeJavaRuntimeSession();
     closeEffectEditorWindowsForOwner('project');
 
@@ -1463,6 +1488,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     currentFilePath = filePath;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    getBlueLiveTriggerController().openGate();
     unifiedLibraryService?.publishProjectChanged();
     setActiveMissingAudioSession(null);
     rebuildApplicationMenu();
@@ -1582,9 +1608,7 @@ async function newFile(): Promise<void> {
   if (!(await canReplaceProjectWhileRenderActive())) return;
   if (!(await confirmLibraryDraftTransition('switchProject'))) return;
 
-  if (blueLiveSession && blueLiveSession.isRunning()) {
-    await blueLiveSession.stop();
-  }
+  await stopActiveBlueLiveBeforeProjectReplacement();
   await disposeJavaRuntimeSession();
   closeEffectEditorWindowsForOwner('project');
 
@@ -1595,6 +1619,7 @@ async function newFile(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  getBlueLiveTriggerController().openGate();
   unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
@@ -1622,6 +1647,8 @@ async function closeProject(): Promise<void> {
   if (!(await confirmSaveBeforeReplace())) return;
   if (!(await confirmLibraryDraftTransition('closeProject'))) return;
 
+  // Stop any non-idle Blue Live session before clearing the canonical project.
+  await stopActiveBlueLiveBeforeProjectReplacement();
   disposeJavaScriptSession();
   await disposeJavaRuntimeSession();
   currentData = null;
@@ -2031,7 +2058,9 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
     return blueLiveSession.stop();
   }
 
-  currentProjectRevision++;
+  // Start/recompile is a runtime lifecycle change, not a project edit: do not
+  // advance the document revision. The Blue Live engine session generation
+  // (sessionId) is the independent runtime fence key.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -2039,7 +2068,8 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
 
 async function blueLiveRecompile(): Promise<void> {
   if (!blueLiveSession || !currentData) return;
-  currentProjectRevision++;
+  // Start/recompile is a runtime lifecycle change, not a project edit: do not
+  // advance the document revision.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -2048,6 +2078,19 @@ async function blueLiveRecompile(): Promise<void> {
 async function blueLiveAllNotesOff(): Promise<void> {
   if (!blueLiveSession) return;
   await blueLiveSession.sendAllNotesOff();
+}
+
+/**
+ * Stop any non-idle Blue Live session (starting/running/stopping) before a
+ * project replacement (close/new/open/revert). A session still starting can
+ * retain the old BlueData reference and complete after replacement, so the
+ * full active lifecycle must be awaited — not just `isRunning()`.
+ */
+async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
+  await stopBlueLiveForProjectReplacement(
+    getBlueLiveTriggerController(),
+    blueLiveSession,
+  );
 }
 
 async function generateCsdToScreen(): Promise<void> {
@@ -2312,7 +2355,7 @@ ipcMain.handle('blue-live:toggle', async () => {
   if (blueLiveSession.isRunning()) {
     return blueLiveSession.stop();
   }
-  currentProjectRevision++;
+  // Start is a runtime lifecycle change, not a project edit.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -2329,7 +2372,7 @@ ipcMain.handle('blue-live:recompile', async () => {
   if (!blueLiveSession || !currentData) {
     return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
   }
-  currentProjectRevision++;
+  // Recompile is a runtime lifecycle change, not a project edit.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   return blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -2348,6 +2391,11 @@ ipcMain.handle('blue-live:trigger-note', async (_event, request: BlueLiveNoteTri
   }
 
   return blueLiveSession.triggerNote(request);
+});
+
+ipcMain.handle('blue-live:trigger-objects', async (_event, request: LegacyBlueLiveTriggerRequest): Promise<LegacyBlueLiveTriggerResult> => {
+  const controller = getBlueLiveTriggerController();
+  return controller.trigger(request);
 });
 
 ipcMain.handle('blue-live:get-status', async () => {
@@ -2739,6 +2787,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
   }
 
   let javaRuntimeDependenciesChanged = false;
+  let anyCanonicalMutation = false;
 
   for (const patch of patches) {
     const clojureDependenciesChanged = patch.clojureProject
@@ -2748,6 +2797,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
     maybeCloseRemovedProjectEffectEditors(patch);
     const changed = applyProjectDocumentPatch(currentData, patch);
     if (changed) {
+      anyCanonicalMutation = true;
       for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
         scoreAutomationParameterIds.add(id);
       }
@@ -2755,21 +2805,29 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
       scoreAutomationParameterIds.clear();
     }
     javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
-    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
+    if (changed && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
       void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
       });
     }
   }
 
-  currentProjectRevision += 1;
+  if (anyCanonicalMutation) {
+    currentProjectRevision += 1;
+  }
   if (javaRuntimeDependenciesChanged) {
     currentProjectSessionId += 1;
     await disposeJavaRuntimeSession();
   }
-  broadcastProjectDocumentUpdate();
-  unifiedLibraryService?.publishProjectChanged();
-  const receipt: ProjectDocumentCommitReceipt = { revision: currentProjectRevision, sessionId: currentProjectSessionId };
+  if (anyCanonicalMutation) {
+    broadcastProjectDocumentUpdate();
+    unifiedLibraryService?.publishProjectChanged();
+  }
+  const receipt: ProjectDocumentCommitReceipt = {
+    revision: currentProjectRevision,
+    sessionId: currentProjectSessionId,
+    changed: anyCanonicalMutation,
+  };
   return receipt;
 });
 

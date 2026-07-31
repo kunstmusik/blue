@@ -1,16 +1,48 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import {
+  Element,
+  TimeContext,
+  TimePosition,
+  createSoundObject,
+  loadSoundObjectFromXML,
+} from '@blue/data';
 import { useProjectStore } from '../../../../stores/project-store';
-import type { LiveObjectCellSnapshot } from '../../../../../shared/project-editor';
+import { useBlueLiveStore } from '../../../../stores/blue-live-store';
+import { useScoreSelectionStore } from '../../../../stores/score-selection-store';
+import { useWorkbenchStore } from '../../../../stores/workbench-store';
+import {
+  BLUE_LIVE_SOUND_OBJECT_TYPES,
+  createBlueLiveEditorTargetSnapshot,
+  isBlueLiveSoundObjectType,
+  type BlueLiveSoundObjectType,
+  type LiveObjectCellSnapshot,
+} from '../../../../../shared/project-editor';
+import type { LegacyBlueLiveTriggerResult } from '../../../../../shared/project-editor';
+import type { ScoreObjectClipboardEntry } from '../../../../stores/score-selection-store';
 
 export default function LiveSpaceTab(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const blueLive = useProjectStore((state) => state.blueLive);
   const applyBlueLivePatch = useProjectStore((state) => state.applyBlueLivePatch);
+  const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
+
+  const blueLiveRunning = useBlueLiveStore((s) => s.running);
+  const triggerFeedback = useBlueLiveStore((s) => s.trigger);
+  const setTriggerBusy = useBlueLiveStore((s) => s.setTriggerBusy);
+  const setTriggerResult = useBlueLiveStore((s) => s.setTriggerResult);
+  const clearTrigger = useBlueLiveStore((s) => s.clearTrigger);
 
   const [selectedCol, setSelectedCol] = useState(-1);
   const [selectedRow, setSelectedRow] = useState(-1);
   const [selectedSetIndex, setSelectedSetIndex] = useState(-1);
   const [hoveredSetIndex, setHoveredSetIndex] = useState(-1);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const scoreObjectClipboard = useScoreSelectionStore((state) => state.clipboard);
+  const copyScoreObjects = useScoreSelectionStore((state) => state.copySelected);
+  const selectScoreObject = useScoreSelectionStore((state) => state.select);
+  const clearScoreObjectSelection = useScoreSelectionStore((state) => state.clearSelection);
+  const openPanel = useWorkbenchStore((state) => state.openPanel);
 
   const handleToggleEnabled = useCallback((ci: number, ri: number, cell: LiveObjectCellSnapshot | null) => {
     if (cell) {
@@ -22,11 +54,172 @@ export default function LiveSpaceTab(): React.ReactElement {
     applyBlueLivePatch({ type: 'applySet', index });
   }, [applyBlueLivePatch]);
 
+  const setTargetCell = useCallback((column: number, row: number) => {
+    setSelectedCol(column);
+    setSelectedRow(row);
+    rootRef.current?.focus();
+  }, []);
+
+  const selectCellForEditing = useCallback((
+    column: number,
+    row: number,
+    cell: LiveObjectCellSnapshot | null,
+  ) => {
+    setTargetCell(column, row);
+    if (!cell?.hasSoundObject) {
+      clearScoreObjectSelection();
+      return;
+    }
+    selectScoreObject(
+      cell.uniqueId,
+      false,
+      createBlueLiveEditorTargetSnapshot(cell, column, row),
+    );
+    openPanel('ScoreObjectEditorTopComponent');
+  }, [clearScoreObjectSelection, openPanel, selectScoreObject, setTargetCell]);
+
+  const clearLiveEditorSelection = useCallback((cell: LiveObjectCellSnapshot | null) => {
+    if (!cell) return;
+    const target = useScoreSelectionStore.getState().selectedObjectTarget;
+    if (
+      target?.ownerKind === 'blueLive'
+      && target.blueLive?.liveObjectId === cell.uniqueId
+    ) {
+      clearScoreObjectSelection();
+    }
+  }, [clearScoreObjectSelection]);
+
+  const addSoundObject = useCallback((
+    column: number,
+    row: number,
+    objectType: BlueLiveSoundObjectType,
+    currentCell: LiveObjectCellSnapshot | null,
+  ) => {
+    const cell = createLiveObjectCellSnapshot({ objectType });
+    if (cell) {
+      clearLiveEditorSelection(currentCell);
+      applyBlueLivePatch({ type: 'setCell', column, row, cell });
+    }
+  }, [applyBlueLivePatch, clearLiveEditorSelection]);
+
+  const copyCell = useCallback((cell: LiveObjectCellSnapshot | null): boolean => {
+    const entry = createScoreClipboardEntry(cell);
+    if (!entry) return false;
+    copyScoreObjects([entry]);
+    return true;
+  }, [copyScoreObjects]);
+
+  const cutCell = useCallback((
+    column: number,
+    row: number,
+    cell: LiveObjectCellSnapshot | null,
+  ) => {
+    if (copyCell(cell)) {
+      clearLiveEditorSelection(cell);
+      applyBlueLivePatch({ type: 'setCell', column, row, cell: null });
+    }
+  }, [applyBlueLivePatch, clearLiveEditorSelection, copyCell]);
+
+  const pasteCell = useCallback((
+    column: number,
+    row: number,
+    currentCell: LiveObjectCellSnapshot | null,
+  ) => {
+    const entry = getPasteableBlueLiveEntry(scoreObjectClipboard);
+    if (!entry?.serializedXml) return;
+    const cell = createLiveObjectCellSnapshot({
+      objectType: entry.objectType,
+      serializedXml: entry.serializedXml,
+    });
+    if (cell) {
+      clearLiveEditorSelection(currentCell);
+      applyBlueLivePatch({ type: 'setCell', column, row, cell });
+    }
+  }, [applyBlueLivePatch, clearLiveEditorSelection, scoreObjectClipboard]);
+
   const hoveredSetIds = useMemo(() => {
     if (hoveredSetIndex < 0 || !blueLive) return new Set<string>();
     const set = blueLive.sets[hoveredSetIndex];
     return set ? new Set(set.liveObjectIds) : new Set<string>();
   }, [hoveredSetIndex, blueLive]);
+
+  const isTriggerBusy = triggerFeedback.status === 'busy';
+  const canTrigger = loaded && blueLiveRunning && !isTriggerBusy;
+
+  const runTrigger = useCallback(async (mode: 'selected' | 'enabled') => {
+    if (!canTrigger) return;
+    if (mode === 'selected') {
+      const cell = selectedCol >= 0 && selectedRow >= 0
+        ? blueLive?.bins.cells[selectedCol]?.[selectedRow] ?? null
+        : null;
+      if (!cell || !cell.hasSoundObject) return;
+    }
+
+    // Flush pending project patches so the trigger uses the latest
+    // acknowledged canonical state. A failed flush rejects and the trigger
+    // is not attempted.
+    try {
+      await flushPendingPatches();
+    } catch {
+      setTriggerResult({ status: 'error', message: 'Could not apply pending edits before trigger' });
+      return;
+    }
+
+    setTriggerBusy();
+    try {
+      const request = mode === 'selected'
+        ? { mode: 'selected' as const, liveObjectId: blueLive!.bins.cells[selectedCol]?.[selectedRow]?.uniqueId ?? '' }
+        : { mode: 'enabled' as const };
+      const result: LegacyBlueLiveTriggerResult = await window.blueAPI.triggerBlueLiveObjects(request);
+      mapTriggerResultToFeedback(result, setTriggerResult);
+    } catch (err) {
+      setTriggerResult({
+        status: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }, [
+    canTrigger,
+    selectedCol,
+    selectedRow,
+    blueLive,
+    flushPendingPatches,
+    setTriggerBusy,
+    setTriggerResult,
+  ]);
+
+  // Platform-appropriate Command/Ctrl+T (selected) and Command/Ctrl+Shift+T (enabled).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const root = rootRef.current;
+      const activeElement = document.activeElement;
+      if (!root || !activeElement || !root.contains(activeElement)) return;
+      if (isEditableShortcutTarget(e.target)) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod || e.altKey) return;
+      if (e.key !== 't' && e.key !== 'T') return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        void runTrigger('enabled');
+      } else {
+        void runTrigger('selected');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [runTrigger]);
+
+  // Auto-clear transient success/empty feedback after a short delay.
+  useEffect(() => {
+    if (triggerFeedback.status !== 'submitted' && triggerFeedback.status !== 'empty') return;
+    const token = triggerFeedback.token;
+    const timer = setTimeout(() => {
+      // Only clear if no newer feedback arrived.
+      const current = useBlueLiveStore.getState().trigger;
+      if (current.token === token) clearTrigger();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [triggerFeedback.status, triggerFeedback.token, clearTrigger]);
 
   if (!loaded || !blueLive) {
     return <div style={{ color: 'var(--color-app-text-muted)', padding: '12px' }}>No project loaded.</div>;
@@ -35,7 +228,12 @@ export default function LiveSpaceTab(): React.ReactElement {
   const { bins, sets, tempo, repeat, repeatEnabled } = blueLive;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      data-blue-live-space-root
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {/* Toolbar */}
       <div style={{
         display: 'flex',
@@ -75,19 +273,53 @@ export default function LiveSpaceTab(): React.ReactElement {
             background: repeatEnabled ? 'var(--color-app-accent)' : 'var(--color-app-surface-strong)',
             color: repeatEnabled ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
           }}
+          title="Audible global Repeat is deferred in this release; values remain editable and preserved"
         >
           Repeat
         </button>
         <button
           type="button"
-          onClick={() => {
-            window.alert('not yet implemented');
+          onClick={() => void runTrigger('selected')}
+          disabled={!canTrigger || !(selectedCol >= 0 && selectedRow >= 0 && bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject)}
+          style={{
+            ...toolbarBtnStyle,
+            opacity: (canTrigger && selectedCol >= 0 && selectedRow >= 0 && bins.cells[selectedCol]?.[selectedRow]?.hasSoundObject) ? 1 : 0.5,
+            cursor: canTrigger ? 'pointer' : 'not-allowed',
           }}
-          style={toolbarBtnStyle}
-          title="Trigger all enabled live objects (not yet implemented)"
+          title="Trigger selected cell (⌘/Ctrl+T)"
+        >
+          Trigger Selected
+        </button>
+        <button
+          type="button"
+          onClick={() => void runTrigger('enabled')}
+          disabled={!canTrigger}
+          style={{
+            ...toolbarBtnStyle,
+            opacity: canTrigger ? 1 : 0.5,
+            cursor: canTrigger ? 'pointer' : 'not-allowed',
+          }}
+          title="Trigger all enabled cells (⌘/Ctrl+Shift+T)"
         >
           Trigger
         </button>
+        {triggerFeedback.status !== 'idle' && (
+          <span style={{
+            fontSize: 'var(--text-ui)',
+            color: triggerFeedback.status === 'error'
+              ? 'var(--color-app-error)'
+              : triggerFeedback.status === 'submitted'
+                ? 'var(--color-app-success, var(--color-app-text-muted))'
+                : 'var(--color-app-text-muted)',
+          }}>
+            {triggerFeedback.message || (
+              triggerFeedback.status === 'busy' ? 'Triggering…'
+                : triggerFeedback.status === 'submitted' ? 'Submitted'
+                : triggerFeedback.status === 'empty' ? 'No targets'
+                : ''
+            )}
+          </span>
+        )}
       </div>
 
       {/* Split: Saved Sets | Grid */}
@@ -206,63 +438,163 @@ export default function LiveSpaceTab(): React.ReactElement {
                     const isHoveredSet = cell != null && hoveredSetIds.has(cell.uniqueId);
 
                     return (
-                      <div
-                        key={ci}
-                        onClick={() => { setSelectedCol(ci); setSelectedRow(ri); }}
-                        onDoubleClick={() => handleToggleEnabled(ci, ri, cell)}
-                        style={{
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 'var(--text-ui)',
-                          cursor: 'pointer',
-                          borderRadius: '2px',
-                          border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
-                          background: cell?.enabled
-                            ? 'var(--color-app-warning)'
-                            : isHoveredSet
-                              ? 'var(--color-app-outline-strong)'
-                              : 'var(--color-app-bg)',
-                          color: cell?.enabled ? 'var(--color-app-canvas)' : 'var(--color-app-text-subtle)',
-                          fontWeight: cell?.enabled ? 500 : 400,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          padding: '0 4px',
-                          transition: 'background 0.1s',
-                        }}
-                        title={cell ? `${cell.displayName || 'empty'} — double-click to ${cell.enabled ? 'disable' : 'enable'}` : `(${ci + 1}, ${ri + 1})`}
-                      >
-                        {cell?.displayName || ''}
-                      </div>
+                      <ContextMenu.Root key={ci}>
+                        <ContextMenu.Trigger asChild>
+                          <div
+                            data-blue-live-cell
+                            data-column={ci}
+                            data-row={ri}
+                            onClick={() => selectCellForEditing(ci, ri, cell)}
+                            onContextMenu={() => setTargetCell(ci, ri)}
+                            onDoubleClick={() => handleToggleEnabled(ci, ri, cell)}
+                            style={{
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 'var(--text-ui)',
+                              cursor: 'pointer',
+                              borderRadius: '2px',
+                              border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
+                              background: cell?.enabled
+                                ? 'var(--color-app-warning)'
+                                : isHoveredSet
+                                  ? 'var(--color-app-outline-strong)'
+                                  : 'var(--color-app-bg)',
+                              color: cell?.enabled ? 'var(--color-app-canvas)' : 'var(--color-app-text-subtle)',
+                              fontWeight: cell?.enabled ? 500 : 400,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              padding: '0 4px',
+                              transition: 'background 0.1s',
+                            }}
+                            title={cell ? `${cell.displayName || 'empty'} — double-click to ${cell.enabled ? 'disable' : 'enable'}` : `(${ci + 1}, ${ri + 1})`}
+                          >
+                            {cell?.displayName || ''}
+                          </div>
+                        </ContextMenu.Trigger>
+                        <ContextMenu.Portal>
+                          <ContextMenu.Content
+                            className="editor-context-menu"
+                            data-blue-live-cell-menu
+                          >
+                            <ContextMenu.Sub>
+                              <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
+                                Add SoundObject
+                              </ContextMenu.SubTrigger>
+                              <ContextMenu.Portal>
+                                <ContextMenu.SubContent className="editor-context-menu">
+                                  {BLUE_LIVE_SOUND_OBJECT_TYPES.map((objectType) => (
+                                    <ContextMenu.Item
+                                      key={objectType}
+                                      className="editor-context-menu__item"
+                                      onSelect={() => addSoundObject(ci, ri, objectType, cell)}
+                                    >
+                                      Add New {objectType}
+                                    </ContextMenu.Item>
+                                  ))}
+                                </ContextMenu.SubContent>
+                              </ContextMenu.Portal>
+                            </ContextMenu.Sub>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={!cell}
+                              onSelect={() => {
+                                clearLiveEditorSelection(cell);
+                                applyBlueLivePatch({
+                                  type: 'setCell',
+                                  column: ci,
+                                  row: ri,
+                                  cell: null,
+                                });
+                              }}
+                            >
+                              Remove
+                            </ContextMenu.Item>
+                            <ContextMenu.Separator className="editor-context-menu__separator" />
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={!cell}
+                              onSelect={() => cutCell(ci, ri, cell)}
+                            >
+                              Cut
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={!cell}
+                              onSelect={() => { copyCell(cell); }}
+                            >
+                              Copy
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={getPasteableBlueLiveEntry(scoreObjectClipboard) === null}
+                              onSelect={() => pasteCell(ci, ri, cell)}
+                            >
+                              Paste
+                            </ContextMenu.Item>
+                            <ContextMenu.Separator className="editor-context-menu__separator" />
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              onSelect={() => applyBlueLivePatch({ type: 'insertRow', index: ri })}
+                            >
+                              Insert Row Before
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              onSelect={() => applyBlueLivePatch({ type: 'insertRow', index: ri + 1 })}
+                            >
+                              Insert Row After
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={bins.rows <= 1}
+                              onSelect={() => applyBlueLivePatch({ type: 'removeRow', index: ri })}
+                            >
+                              Remove Row
+                            </ContextMenu.Item>
+                            <ContextMenu.Separator className="editor-context-menu__separator" />
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              onSelect={() => applyBlueLivePatch({ type: 'insertColumn', index: ci })}
+                            >
+                              Insert Column Before
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              onSelect={() => applyBlueLivePatch({ type: 'insertColumn', index: ci + 1 })}
+                            >
+                              Insert Column After
+                            </ContextMenu.Item>
+                            <ContextMenu.Item
+                              className="editor-context-menu__item"
+                              disabled={bins.columns <= 1}
+                              onSelect={() => applyBlueLivePatch({ type: 'removeColumn', index: ci })}
+                            >
+                              Remove Column
+                            </ContextMenu.Item>
+                          </ContextMenu.Content>
+                        </ContextMenu.Portal>
+                      </ContextMenu.Root>
                     );
                   })}
                 </React.Fragment>
               ))}
             </div>
           </div>
-
-          {/* Row/Column controls */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            padding: '4px 8px',
-            borderTop: '1px solid var(--color-app-border)',
-            flexShrink: 0,
-          }}>
-            <button type="button" onClick={() => applyBlueLivePatch({ type: 'insertRow', index: 0 })} style={gridBtnStyle}>+Row Top</button>
-            <button type="button" onClick={() => applyBlueLivePatch({ type: 'insertRow', index: bins.rows })} style={gridBtnStyle}>+Row Bottom</button>
-            <button type="button" onClick={() => { if (bins.rows > 1) applyBlueLivePatch({ type: 'removeRow', index: bins.rows - 1 }); }} style={gridBtnStyle}>−Row</button>
-            <span style={{ width: '8px' }} />
-            <button type="button" onClick={() => applyBlueLivePatch({ type: 'insertColumn', index: 0 })} style={gridBtnStyle}>+Col Left</button>
-            <button type="button" onClick={() => applyBlueLivePatch({ type: 'insertColumn', index: bins.columns })} style={gridBtnStyle}>+Col Right</button>
-            <button type="button" onClick={() => { if (bins.columns > 1) applyBlueLivePatch({ type: 'removeColumn', index: bins.columns - 1 }); }} style={gridBtnStyle}>−Col</button>
-          </div>
         </div>
       </div>
     </div>
   );
+}
+
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable
+    || target.tagName === 'INPUT'
+    || target.tagName === 'TEXTAREA'
+    || target.tagName === 'SELECT';
 }
 
 const toolbarLabelStyle: React.CSSProperties = {
@@ -306,12 +638,107 @@ const setBtnStyle: React.CSSProperties = {
   textAlign: 'center',
 };
 
-const gridBtnStyle: React.CSSProperties = {
-  padding: '2px 8px',
-  fontSize: 'var(--text-ui)',
-  background: 'var(--color-app-surface-strong)',
-  color: 'var(--color-app-text-muted)',
-  border: '1px solid var(--color-app-border)',
-  borderRadius: '2px',
-  cursor: 'pointer',
-};
+/**
+ * Map a typed trigger result to transient UI feedback. Runtime feedback never
+ * alters cell color, enabled flags, saved sets, or `.blue` XML.
+ */
+function mapTriggerResultToFeedback(
+  result: LegacyBlueLiveTriggerResult,
+  setTriggerResult: (status: { status: 'submitted' | 'empty' | 'error'; message: string }) => void,
+): void {
+  if (result.status === 'submitted') {
+    setTriggerResult({
+      status: 'submitted',
+      message: `Submitted ${result.noteCount} note${result.noteCount === 1 ? '' : 's'} from ${result.targetCount} cell${result.targetCount === 1 ? '' : 's'}`,
+    });
+    return;
+  }
+  if (result.status === 'empty') {
+    setTriggerResult({
+      status: 'empty',
+      message: result.targetCount > 0
+        ? 'Selected cells generated no notes'
+        : 'No enabled cells to trigger',
+    });
+    return;
+  }
+  // busy, rejected, failed, stale
+  setTriggerResult({
+    status: 'error',
+    message: result.message ?? `Trigger ${result.status}`,
+  });
+}
+
+function createLiveObjectId(): string {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `live-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createLiveObjectCellSnapshot(args: {
+  objectType: string;
+  serializedXml?: string;
+}): LiveObjectCellSnapshot | null {
+  try {
+    const soundObject = args.serializedXml
+      ? loadSoundObjectFromXML(Element.parse(args.serializedXml))
+      : createSoundObject(args.objectType);
+    if (!soundObject || !isBlueLiveSoundObjectType(soundObject.constructor.name)) {
+      return null;
+    }
+    soundObject.setStartTime(TimePosition.beats(0));
+    const context = new TimeContext();
+    return {
+      uniqueId: createLiveObjectId(),
+      enabled: false,
+      keyTrigger: -1,
+      midiTrigger: -1,
+      displayName: soundObject.getName(),
+      soundObjectType: soundObject.constructor.name,
+      hasSoundObject: true,
+      serializedXml: soundObject.saveAsXML().toXml(),
+      startBeats: 0,
+      durationBeats: soundObject.getSubjectiveDuration().toBeats(context),
+      startTimeBase: String(soundObject.getStartTime().getTimeBase()),
+      durationTimeBase: String(soundObject.getSubjectiveDuration().getTimeBase()),
+      backgroundColor: soundObject.getBackgroundColor(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function createScoreClipboardEntry(
+  cell: LiveObjectCellSnapshot | null,
+): ScoreObjectClipboardEntry | null {
+  if (
+    !cell?.serializedXml
+    || !cell.hasSoundObject
+  ) {
+    return null;
+  }
+  return {
+    objectId: cell.uniqueId,
+    objectType: cell.soundObjectType,
+    name: cell.displayName,
+    startBeats: cell.startBeats ?? 0,
+    durationBeats: cell.durationBeats ?? 1,
+    startTimeBase: cell.startTimeBase,
+    durationTimeBase: cell.durationTimeBase,
+    backgroundColor: cell.backgroundColor ?? -10040065,
+    isContainer: false,
+    layerIndex: 0,
+    groupId: 'blue-live',
+    serializedXml: cell.serializedXml,
+  };
+}
+
+function getPasteableBlueLiveEntry(
+  clipboard: ScoreObjectClipboardEntry[],
+): ScoreObjectClipboardEntry | null {
+  if (clipboard.length !== 1) return null;
+  const entry = clipboard[0];
+  return entry?.serializedXml && isBlueLiveSoundObjectType(entry.objectType)
+    ? entry
+    : null;
+}

@@ -98,8 +98,12 @@ describe('Blue Live toolbar behavior', () => {
     container.remove();
   });
 
-  it('toggles Blue Live without focusing an editor surface', () => {
+  it('toggles Blue Live without focusing an editor surface', async () => {
     seedLoadedProject();
+    // Toolbar Start/Recompile now await the pending-patch acknowledgement barrier.
+    useProjectStore.setState({
+      flushPendingPatches: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
     const { container, root } = renderToolbar();
     const toggle = vi.fn();
     window.blueAPI = {
@@ -111,7 +115,7 @@ describe('Blue Live toolbar behavior', () => {
     expect(blueLiveButton).toBeTruthy();
     expect((blueLiveButton as HTMLButtonElement).disabled).toBe(false);
 
-    act(() => {
+    await act(async () => {
       blueLiveButton?.click();
     });
 
@@ -123,8 +127,136 @@ describe('Blue Live toolbar behavior', () => {
     container.remove();
   });
 
-  it('enables Recompile and All Notes Off according to engine status', () => {
+  it('waits for pending edits before Start and aborts when acknowledgement fails', async () => {
     seedLoadedProject();
+    let acknowledge = (): void => {};
+    const flushPendingPatches = vi.fn(() => new Promise<void>((resolve) => {
+      acknowledge = resolve;
+    }));
+    useProjectStore.setState({
+      flushPendingPatches,
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
+    const { container, root } = renderToolbar();
+    const toggle = vi.fn();
+    window.blueAPI = {
+      ...window.blueAPI,
+      toggleBlueLive: toggle,
+    };
+    const blueLiveButton = Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent === 'Blue Live');
+
+    act(() => {
+      blueLiveButton?.click();
+    });
+    expect(flushPendingPatches).toHaveBeenCalledOnce();
+    expect(toggle).not.toHaveBeenCalled();
+
+    acknowledge();
+    await vi.waitFor(() => {
+      expect(toggle).toHaveBeenCalledOnce();
+    });
+
+    flushPendingPatches.mockRejectedValueOnce(new Error('commit failed'));
+    toggle.mockClear();
+    await act(async () => {
+      blueLiveButton?.click();
+      await Promise.resolve();
+    });
+    expect(toggle).not.toHaveBeenCalled();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps Stop available without waiting for the project edit barrier', async () => {
+    seedLoadedProject();
+    const flushPendingPatches = vi.fn().mockRejectedValue(new Error('commit failed'));
+    useProjectStore.setState({
+      flushPendingPatches,
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
+    useBlueLiveStore.getState().setStatusFromSnapshot({
+      status: 'running',
+      running: true,
+      sessionId: 1,
+    });
+    const { container, root } = renderToolbar();
+    const toggle = vi.fn();
+    window.blueAPI = {
+      ...window.blueAPI,
+      toggleBlueLive: toggle,
+    };
+    const blueLiveButton = Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent === 'Blue Live');
+
+    await act(async () => {
+      blueLiveButton?.click();
+    });
+
+    expect(flushPendingPatches).not.toHaveBeenCalled();
+    expect(toggle).toHaveBeenCalledOnce();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('waits for pending edits before Recompile and aborts when acknowledgement fails', async () => {
+    seedLoadedProject();
+    useBlueLiveStore.getState().setStatusFromSnapshot({
+      status: 'running',
+      running: true,
+      sessionId: 1,
+    });
+    let acknowledge = (): void => {};
+    const flushPendingPatches = vi.fn(() => new Promise<void>((resolve) => {
+      acknowledge = resolve;
+    }));
+    useProjectStore.setState({
+      flushPendingPatches,
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
+    const { container, root } = renderToolbar();
+    const recompile = vi.fn();
+    window.blueAPI = {
+      ...window.blueAPI,
+      recompileBlueLive: recompile,
+    };
+    const recompileButton = Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent === 'Recompile');
+
+    act(() => {
+      recompileButton?.click();
+    });
+    expect(flushPendingPatches).toHaveBeenCalledOnce();
+    expect(recompile).not.toHaveBeenCalled();
+
+    acknowledge();
+    await vi.waitFor(() => {
+      expect(recompile).toHaveBeenCalledOnce();
+    });
+
+    flushPendingPatches.mockRejectedValueOnce(new Error('commit failed'));
+    recompile.mockClear();
+    await act(async () => {
+      recompileButton?.click();
+      await Promise.resolve();
+    });
+    expect(recompile).not.toHaveBeenCalled();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('enables Recompile and All Notes Off according to engine status', async () => {
+    seedLoadedProject();
+    // Toolbar Start/Recompile now await the pending-patch acknowledgement barrier.
+    useProjectStore.setState({
+      flushPendingPatches: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Partial<ReturnType<typeof useProjectStore.getState>>);
     useBlueLiveStore.getState().setStatusFromSnapshot({
       status: 'running',
       running: true,
@@ -149,7 +281,7 @@ describe('Blue Live toolbar behavior', () => {
     expect((recompileButton as HTMLButtonElement).disabled).toBe(false);
     expect((allNotesOffButton as HTMLButtonElement).disabled).toBe(false);
 
-    act(() => {
+    await act(async () => {
       recompileButton?.click();
       allNotesOffButton?.click();
     });

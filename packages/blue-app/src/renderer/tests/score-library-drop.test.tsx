@@ -171,4 +171,69 @@ describe('Score Library drop targets', () => {
     expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual(['independent', 'sharedInstance']);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
   });
+
+  it('routes the shared BlueSynthBuilder buffer through Paste BSB As Sound', async () => {
+    act(() => {
+      useLibraryStore.setState({
+        clipboard: {
+          operation: 'copy',
+          source: {
+            kind: 'library',
+            key: {
+              scope: 'projectOwned',
+              libraryType: 'instrument',
+              projectSessionId: 8,
+              locator: { kind: 'instrument', assignmentId: '1' },
+            },
+            revision: 'bsb-hash',
+          },
+          capturedAt: 1,
+          objectType: 'BlueSynthBuilder',
+        },
+      });
+    });
+    await act(async () => {
+      surface.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: 230,
+        clientY: 10,
+      }));
+      await Promise.resolve();
+    });
+    const item = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
+      .find((candidate) => candidate.textContent?.includes('Paste BSB As Sound')) as HTMLElement;
+    expect(item).toBeTruthy();
+    expect(item.hasAttribute('data-disabled')).toBe(false);
+
+    const PointerEventCtor = window.PointerEvent ?? MouseEvent;
+    await act(async () => {
+      item.dispatchEvent(new PointerEventCtor('pointermove', { bubbles: true }));
+      item.dispatchEvent(new PointerEventCtor('pointerdown', { bubbles: true, button: 0 }));
+      item.dispatchEvent(new PointerEventCtor('pointerup', { bubbles: true, button: 0 }));
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      source: {
+        kind: 'clipboard',
+        source: expect.objectContaining({ kind: 'library' }),
+      },
+      target: {
+        kind: 'scoreBsbSound',
+        projectSessionId: 8,
+        projectRevision: 21,
+        location: {
+          rootGroupId: 'root-stable',
+          containerPath: [{ layerId: 'root-layer-2', objectIdentity: 'container-7' }],
+          layerId: 'nested-group-layer-0',
+          startTime: 4,
+        },
+        timeContextRevision: '21',
+      },
+    }));
+  });
 });

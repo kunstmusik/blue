@@ -58,6 +58,7 @@ import { TimeContext } from "./time/time-context";
 import { TempoMap } from "./time/tempo-map";
 import { ClojureObject } from './sound-objects/clojure-object';
 import { Instance } from './sound-objects/instance';
+import { JavaScriptObject } from './sound-objects/javascript-object';
 import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
 import { PythonObject } from './sound-objects/python-object';
@@ -527,6 +528,7 @@ export class BlueData implements BlueDataObject {
 
   processOnLoad(session?: JavaScriptSession): void {
     this.score.processOnLoad(session);
+    this.processLiveDataOnLoad(this.score.getTimeContext(), session);
   }
 
   async processOnLoadAsync(
@@ -534,6 +536,47 @@ export class BlueData implements BlueDataObject {
     runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<void> {
     await this.score.processOnLoadAsync(session, runtimeClient);
+    await this.processLiveDataOnLoadAsync(this.score.getTimeContext(), session, runtimeClient);
+  }
+
+  /**
+   * Process on-load-processable SoundObjects embedded in Live Space cells
+   * (synchronous variant). Mirrors the score-graph traversal in
+   * {@link PolyObject.processOnLoad}.
+   */
+  private processLiveDataOnLoad(context: TimeContext, session?: JavaScriptSession): void {
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        const target = liveObject?.getSoundObject();
+        if (target) {
+          processSoundObjectOnLoad(target, context, session);
+        }
+      }
+    }
+  }
+
+  /**
+   * Process on-load-processable SoundObjects embedded in Live Space cells
+   * (async variant). Mirrors the score-graph traversal in
+   * {@link PolyObject.processOnLoadAsync}.
+   */
+  private async processLiveDataOnLoadAsync(
+    context: TimeContext,
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        const target = liveObject?.getSoundObject();
+        if (target) {
+          await processSoundObjectOnLoadAsync(target, context, session, runtimeClient);
+        }
+      }
+    }
   }
 
   usesJavaRuntime(): boolean {
@@ -606,6 +649,19 @@ export class BlueData implements BlueDataObject {
     for (const assignment of this.arrangement.getArrangement()) {
       if (assignment.instr instanceof PythonInstrument) {
         return true;
+      }
+    }
+
+    // Include Live Space content: a LiveObject whose SoundObject requires a
+    // host runtime makes the whole project Java-runtime-dependent for trigger
+    // preparation.
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        if (liveObject && visit(liveObject.getSoundObject())) {
+          return true;
+        }
       }
     }
 
@@ -2254,22 +2310,55 @@ export class BlueData implements BlueDataObject {
     copy.version = this.version;
     copy.arrangement = new Arrangement(this.arrangement);
     copy.projectProperties = new ProjectProperties(this.projectProperties);
-    copy.sObjLib = this.sObjLib;
-    copy.instrumentLibrary = this.instrumentLibrary;
+
+    // Deep-copy the SoundObject library and seed an original→copy map so that
+    // copied Instance references can be remapped to copied library objects.
+    const originalLibraryObjects = this.sObjLib.getAllObjects();
+    copy.sObjLib = new SoundObjectLibrary(this.sObjLib);
+    const copiedLibraryObjects = copy.sObjLib.getAllObjects();
+    const libraryRemap = new Map<SoundObject, SoundObject>();
+    for (let i = 0; i < originalLibraryObjects.length; i++) {
+      libraryRemap.set(originalLibraryObjects[i]!, copiedLibraryObjects[i]!);
+    }
+
+    // Deep-copy instrument library (was previously aliased by reference).
+    copy.instrumentLibrary = this.instrumentLibrary
+      ? this.instrumentLibrary.deepCopy()
+      : null;
+
     copy.globalOrcSco = new GlobalOrcSco(this.globalOrcSco);
     copy.tableSet = new Tables(this.tableSet);
     copy.score = new Score(this.score);
-    copy.liveData = this.liveData;
+
+    // Deep-copy Live Data (was previously aliased by reference).
+    copy.liveData = this.liveData.deepCopy() as LiveData;
+
     copy.scratchData = new ScratchPadData(this.scratchData);
     copy.noteProcessorChainMap = new NoteProcessorChainMap(this.noteProcessorChainMap);
     copy.markersList = new MarkersList(this.markersList);
     copy.midiInputProcessor = new MidiInputProcessor(this.midiInputProcessor);
     copy.mixer = this.mixer.deepCopy() as Mixer;
-    copy.opcodeList = this.opcodeList;
+
+    // Deep-copy opcode definitions (was previously aliased by reference).
+    copy.opcodeList = new OpcodeList(this.opcodeList);
+
     copy.renderStartTime = this.renderStartTime;
     copy.renderEndTime = this.renderEndTime;
     copy.loopRendering = this.loopRendering;
     copy.pluginDataXml = this.pluginDataXml.map(e => e.clone());
+
+    // Remap any copied Instance that still references an original library
+    // object to point at the corresponding copied library object. This keeps
+    // whole-project copies internally coherent without retaining references
+    // into the canonical graph.
+    if (libraryRemap.size > 0) {
+      const seen = new Set<SoundObject>();
+      for (const soundObject of copy.sObjLib.getAllObjects()) {
+        remapInstanceReferencesInSoundObject(soundObject, libraryRemap, seen);
+      }
+      remapInstanceReferences(copy.score, libraryRemap, seen);
+      remapInstanceReferencesInLiveData(copy.liveData, libraryRemap, seen);
+    }
 
     // Wire projectProperties into score.timeContext (Java parity)
     copy.score.getTimeContext().setSampleRate(
@@ -2277,6 +2366,119 @@ export class BlueData implements BlueDataObject {
     );
 
     return copy;
+  }
+}
+
+/**
+ * Remap Instance references across the Score graph. Traverses each PolyObject
+ * layer and replaces any Instance whose referenced SoundObject is an original
+ * library object with the corresponding copied library object.
+ */
+function remapInstanceReferences(
+  score: Score,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  for (const layerGroup of score) {
+    if (layerGroup instanceof PolyObject) {
+      remapInstanceReferencesInSoundObject(layerGroup, libraryRemap, seen);
+    }
+  }
+}
+
+function remapInstanceReferencesInSoundObject(
+  soundObject: SoundObject,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  if (seen.has(soundObject)) {
+    return;
+  }
+  seen.add(soundObject);
+
+  if (soundObject instanceof Instance) {
+    const referenced = soundObject.getSoundObject();
+    if (referenced && libraryRemap.has(referenced)) {
+      soundObject.setSoundObject(libraryRemap.get(referenced)!);
+    }
+    const copiedReference = soundObject.getSoundObject();
+    if (copiedReference) {
+      remapInstanceReferencesInSoundObject(copiedReference, libraryRemap, seen);
+    }
+    return;
+  }
+
+  if (soundObject instanceof PolyObject) {
+    for (const layer of soundObject) {
+      for (const child of layer) {
+        remapInstanceReferencesInSoundObject(child, libraryRemap, seen);
+      }
+    }
+  }
+}
+
+/**
+ * Remap Instance references found inside Live Data bins (LiveObjects whose
+ * SoundObject is an Instance pointing at an original library object).
+ */
+function remapInstanceReferencesInLiveData(
+  liveData: LiveData,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  const bins = liveData.getLiveObjectBins();
+  for (let c = 0; c < bins.getColumnCount(); c++) {
+    for (let r = 0; r < bins.getRowCount(); r++) {
+      const liveObject = bins.getLiveObject(c, r);
+      if (!liveObject) continue;
+      const soundObject = liveObject.getSoundObject();
+      if (soundObject) {
+        remapInstanceReferencesInSoundObject(soundObject, libraryRemap, seen);
+      }
+    }
+  }
+}
+
+function resolveOnLoadSoundObject(soundObject: SoundObject): SoundObject | null {
+  if (soundObject instanceof Instance) {
+    const referenced = soundObject.getSoundObject();
+    return referenced ? resolveOnLoadSoundObject(referenced) : null;
+  }
+  return soundObject;
+}
+
+function processSoundObjectOnLoad(
+  soundObject: SoundObject,
+  context: TimeContext,
+  session?: JavaScriptSession,
+): void {
+  const target = resolveOnLoadSoundObject(soundObject);
+  if (target instanceof PolyObject) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context);
+  } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context);
+  }
+}
+
+async function processSoundObjectOnLoadAsync(
+  soundObject: SoundObject,
+  context: TimeContext,
+  session?: JavaScriptSession,
+  runtimeClient?: JavaRuntimeClientContract | null,
+): Promise<void> {
+  const target = resolveOnLoadSoundObject(soundObject);
+  if (target instanceof PolyObject) {
+    await target.processOnLoadAsync(context, session, runtimeClient);
+  } else if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+    await target.processOnLoadAsync(context, runtimeClient);
+  } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+    await target.processOnLoadAsync(context, runtimeClient);
   }
 }
 

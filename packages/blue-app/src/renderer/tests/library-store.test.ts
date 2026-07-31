@@ -364,6 +364,7 @@ describe('library store', () => {
       operation: 'copy',
       source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
       capturedAt: expect.any(Number),
+      objectType: 'GenericInstrument',
     });
     await state.captureClipboard(item, 'cut');
     expect(cutLibraryToClipboard).toHaveBeenCalledWith({

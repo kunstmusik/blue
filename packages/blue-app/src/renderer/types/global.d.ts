@@ -334,6 +334,9 @@ declare global {
       triggerBlueLiveNote: (
         request: BlueLiveNoteTriggerRequest,
       ) => Promise<BlueLiveNoteTriggerResult>;
+      triggerBlueLiveObjects: (
+        request: import('../../shared/project-editor').LegacyBlueLiveTriggerRequest,
+      ) => Promise<import('../../shared/project-editor').LegacyBlueLiveTriggerResult>;
       getBlueLiveStatus: () => Promise<BlueLiveStatusSnapshot>;
       onBlueLiveStatus: (cb: (snapshot: BlueLiveStatusSnapshot) => void) => () => void;
 

@@ -10,10 +10,19 @@ export {
 } from './java-runtime';
 export type {
 	ClojureEvalRequest,
+	ClojureEvalResult,
+	ClojureReinitializeResult,
 	ClojureScoreObjectEvalRequest,
+	ClojureScoreObjectEvalResult,
 	JavaRuntimeClientContract,
+	JavaRuntimeDependencyLoadResult,
+	JavaRuntimeDependencySpec,
 	JavaRuntimeError,
 	JavaRuntimeHealthResult,
+	JavaRuntimeSessionInitRequest,
+	JavaRuntimeSessionInitResult,
+	JythonEvalScriptRequest,
+	JythonEvalScriptResult,
 	JythonImportCheckRequest,
 	JythonImportCheckResult,
 	JythonInstrumentEvalRequest,
@@ -27,7 +36,6 @@ export type {
 	JythonScoreObjectEvalResult,
 	JythonSerializedNote,
 	JavaRuntimeResponse,
-	JavaRuntimeSessionInitRequest,
 	JavaRuntimeStatus,
 } from './java-runtime';
 export {
@@ -238,6 +246,47 @@ export { LiveObject } from './live/live-object';
 export { LiveObjectSet } from './live/live-object-set';
 export { LiveObjectBins } from './live/live-object-bins';
 export { LiveObjectSetList } from './live/live-object-set-list';
+export {
+	prepareTriggerBatch,
+	resolveTriggerTargets,
+	scaleNotesByTempo,
+	computeTempoScale,
+} from './live/blue-live-trigger';
+export type {
+	TriggerPreparationResult,
+	PreparedScoreBatch,
+	TriggerEmptyResult,
+	TriggerPreparationFailure,
+	TriggerPreparationFailureCode,
+	TriggerRuntimeContext,
+	TriggerMode,
+} from './live/blue-live-trigger';
+// Shared Java-parity trigger fixtures (test oracles; safe for production import).
+export {
+	createModernLiveData,
+	createModernProject,
+	createOldFormatLiveData,
+	createSparseGridLiveData,
+	createMissingSavedSetIdLiveData,
+	createMultiEnabledLiveData,
+	createLibraryInstanceLiveData,
+	createRuntimeBackedLiveData,
+	createGenericScoreSoundObject,
+	attachSavedSet,
+	MODERN_ENABLED_TARGET_ORDER,
+	MODERN_ALL_POPULATED_TARGET_ORDER,
+	OLD_FORMAT_ENABLED_TARGET_ORDER,
+	SPARSE_GRID_ENABLED_TARGET_ORDER,
+	MULTI_ENABLED_TARGET_ORDER,
+	TEMPO_SCALING_CASES,
+	INVALID_TEMPO_VALUES,
+} from './live/blue-live-trigger-fixtures';
+export type {
+	ExpectedLiveObjectTarget,
+	ExpectedScalingCase,
+	LibraryInstanceFixture,
+	RuntimeBackedFixture,
+} from './live/blue-live-trigger-fixtures';
 
 // ─── MIDI ───
 export { MidiInputProcessor } from './midi/midi-input-processor';
