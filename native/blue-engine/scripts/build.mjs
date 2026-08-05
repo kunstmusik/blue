@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import process from 'node:process';
 import { packageRoot, sourceRevision, stageArtifact } from './artifact.mjs';
+import { resetBuildDirectoryForToolchainChange } from './cmake-toolchain.mjs';
 import { parseTargetArgs } from './target.mjs';
 import { resolveVcpkgRoot } from './vcpkg.mjs';
 
@@ -28,13 +29,17 @@ const vcpkgRoot = await resolveVcpkgRoot();
 
 const suffix = tracking ? '-profiling' : '';
 const buildDir = join(packageRoot, `build-${target.key}-${buildType.toLowerCase()}${suffix}`);
+const toolchainFile = join(vcpkgRoot, 'scripts', 'buildsystems', 'vcpkg.cmake');
+if (await resetBuildDirectoryForToolchainChange(buildDir, toolchainFile)) {
+  process.stdout.write('Blue Engine: removed stale CMake build cache after vcpkg toolchain changed\n');
+}
 const configureArgs = [
   '-S',
   packageRoot,
   '-B',
   buildDir,
   `-DCMAKE_BUILD_TYPE=${buildType}`,
-  `-DCMAKE_TOOLCHAIN_FILE=${join(vcpkgRoot, 'scripts', 'buildsystems', 'vcpkg.cmake')}`,
+  `-DCMAKE_TOOLCHAIN_FILE=${toolchainFile}`,
   `-DVCPKG_TARGET_TRIPLET=${target.triplet}`,
   `-DVCPKG_OVERLAY_TRIPLETS=${join(packageRoot, 'triplets')}`,
   '-DBUILD_EXAMPLES=OFF',
