@@ -847,7 +847,8 @@ describe('BSB property sheet parity', () => {
     expect(lineHtml).toContain('Lines');
     expect(lineHtml).toContain('Line Name');
     expect(lineHtml).toContain('Link First/Last');
-    expect(lineHtml).toContain('type="color"');
+    expect(lineHtml).toContain('aria-label="BSB line 1 color"');
+    expect(lineHtml).not.toContain('type="color"');
     expect(lineHtml).not.toContain('Right Bound');
   });
 });

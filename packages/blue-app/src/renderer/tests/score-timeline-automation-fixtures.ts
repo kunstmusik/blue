@@ -2,10 +2,10 @@ import { Element } from '@blue/data';
 
 export function makeAutomationTestProjectXml(options?: {
   soundLayerParameterIds?: string[];
-  audioLayerParameterIds?: string[];
+  trackLayerParameterIds?: string[];
 }): string {
   const sParamIds = options?.soundLayerParameterIds ?? [];
-  const aParamIds = options?.audioLayerParameterIds ?? [];
+  const trackParamIds = options?.trackLayerParameterIds ?? [];
 
   const root = new Element('blueData');
   root.setAttribute('version', '2');
@@ -27,15 +27,20 @@ export function makeAutomationTestProjectXml(options?: {
     soundLayer.addElement('parameterId').setText(id);
   }
 
-  const audioGroup = score.addElement('audioLayerGroup');
-  audioGroup.addElement('audioLayer').setAttribute('name', 'Audio Layer 1');
-  const audioLayer = audioGroup.getElement('audioLayer')!;
-  audioLayer.setAttribute('muted', 'false');
-  audioLayer.setAttribute('solo', 'false');
-  audioLayer.setAttribute('heightIndex', '0');
-  audioLayer.setAttribute('uniqueId', 'audio-layer-1');
-  for (const id of aParamIds) {
-    audioLayer.addElement('parameterId').setText(id);
+  const trackGroup = score.addElement('trackLayerGroup');
+  trackGroup.setAttribute('name', 'Track Layer Group');
+  trackGroup.setAttribute('uniqueId', 'track-group-1');
+  trackGroup.addElement('defaultHeightIndex').setText('0');
+  const tracks = trackGroup.addElement('tracks');
+  const track = tracks.addElement('track');
+  track.setAttribute('name', 'Track 1');
+  track.setAttribute('muted', 'false');
+  track.setAttribute('solo', 'false');
+  track.setAttribute('heightIndex', '0');
+  track.setAttribute('uniqueId', 'track-1');
+  track.addElement('noteProcessorChain');
+  for (const id of trackParamIds) {
+    track.addElement('parameterId').setText(id);
   }
 
   return root.toXml();

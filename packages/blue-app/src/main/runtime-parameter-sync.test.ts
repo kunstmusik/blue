@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AudioLayer,
-  AudioLayerGroup,
+  TrackLayer,
+  TrackLayerGroup,
   BlueData,
   BlueSynthBuilder,
   BSBKnob,
@@ -20,8 +20,8 @@ describe('syncCompiledRuntimeParameterNames', () => {
     instrument.setText('aout oscili 0.4, 440');
     data.getArrangement().addInstrument(instrument, '1');
 
-    const audioGroup = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const audioGroup = new TrackLayerGroup();
+    const layer = new TrackLayer();
     layer.setName('Audio A');
     audioGroup.push(layer);
     data.getScore().push(audioGroup);
@@ -53,7 +53,7 @@ describe('syncCompiledRuntimeParameterNames', () => {
   it('copies Blue Live compiled BSB parameter names back to the live instrument', () => {
     const data = new BlueData();
     const instrument = new BlueSynthBuilder();
-    const knob = new BSBKnob();
+    const knob = instrument.getGraphicInterface().createWidgetByType('BSBKnob') as BSBKnob;
     knob.objectName = 'amplitude';
     instrument.setInstrumentText('aout oscili <amplitude>, 440\nout aout');
     instrument.getGraphicInterface().getRootGroup().addChild(knob);
@@ -79,5 +79,32 @@ describe('syncCompiledRuntimeParameterNames', () => {
       compiledParameters[0]?.getCompilationVarName(),
     );
     expect(liveParameter?.getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
+  });
+
+  it('copies compiled parameter names back to Track-owned BSB instruments in render order', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const group = new TrackLayerGroup();
+    const track = group.newLayerAt(0);
+    const instrument = new BlueSynthBuilder();
+    const knob = new BSBKnob();
+    knob.objectName = 'gain';
+    knob.automationAllowed = true;
+    instrument.setInstrumentText('aout oscili <gain>, 440\nout aout');
+    instrument.getGraphicInterface().getRootGroup().addChild(knob);
+    track.setInstrument(instrument);
+    data.getScore().push(group);
+
+    const liveParameter = (track.getInstrument() as BlueSynthBuilder).getParameters()[0]!;
+    const render = data.toRealtimePlaybackCSD();
+    const sync = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      render.parameters,
+      data.getScore(),
+    );
+
+    expect(sync.liveCount).toBe(sync.compiledCount);
+    expect(liveParameter.getCompilationVarName()).toBe('gk_blue_auto0');
   });
 });

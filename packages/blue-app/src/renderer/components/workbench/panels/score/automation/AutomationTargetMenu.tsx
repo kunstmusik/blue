@@ -145,14 +145,25 @@ function TargetGroupItem({
   if (!hasTargets && !hasSubGroups) return null;
 
   if (depth === 0) {
+    const splitTrackEffectsAroundLevel = group.groupId === 'track-channel';
+    const leadingSubGroups = splitTrackEffectsAroundLevel
+      ? group.subGroups.filter((subGroup) => subGroup.label === 'Pre-Effects')
+      : group.subGroups;
+    const trailingSubGroups = splitTrackEffectsAroundLevel
+      ? group.subGroups.filter((subGroup) => subGroup.label !== 'Pre-Effects')
+      : [];
+
     return (
       <>
         <div className={groupLabelClass}>{group.label}</div>
-        {group.subGroups.map((sub) => (
+        {leadingSubGroups.map((sub) => (
           <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
         ))}
         {group.targets.map((target) => (
           <TargetItem key={target.parameterId} target={target} onSelect={onSelect} />
+        ))}
+        {trailingSubGroups.map((sub) => (
+          <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
         ))}
       </>
     );

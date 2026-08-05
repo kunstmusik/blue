@@ -16,6 +16,7 @@ import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { BlueSynthBuilder } from '../instruments/blue-synth-builder';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export class Sound extends AbstractSoundObject {
   private _comment = '';
@@ -77,6 +78,7 @@ export class Sound extends AbstractSoundObject {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): NoteList {
     const bsb = this._blueSynthBuilder.deepCopy() as BlueSynthBuilder;
 
@@ -95,6 +97,7 @@ export class Sound extends AbstractSoundObject {
     }
 
     const instrumentNumber = compileData.addInstrument(bsb);
+    if (options?.trackId) compileData.addInstrSourceId(bsb, options.trackId);
     return this.generateNotes(context, instrumentNumber, startTime, endTime);
   }
 

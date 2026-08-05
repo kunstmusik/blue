@@ -31,6 +31,7 @@ export default function GenericInstrumentEditor({
   instrument,
   onInstrumentPatch,
   projectUdos,
+  embeddedUdoTarget,
 }: SelectedInstrumentEditorProps & {
   instrument: GenericInstrumentSnapshot;
 }): React.ReactElement {
@@ -80,11 +81,11 @@ export default function GenericInstrumentEditor({
             >
               {tab.key === 'udo' ? (
                 <EmbeddedUdoPanel
-                  assignmentId={instrument.assignmentId}
                   udolist={instrument.udolist ?? []}
                   projectUdos={projectUdos}
                   resetKey={instrument.assignmentId}
                   onInstrumentPatch={onInstrumentPatch}
+                  libraryDropTarget={embeddedUdoTarget}
                 />
               ) : (
                 <SelectedCodeEditor

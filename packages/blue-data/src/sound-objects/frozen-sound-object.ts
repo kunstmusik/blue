@@ -18,6 +18,7 @@ import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { GenericInstrument } from '../instruments/generic-instrument';
 import { loadSoundObjectFromXML } from './sound-object-registry';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 const FSO_INSTR_NAME = 'Frozen SoundObject Player Instrument';
 const FSO_COMPILE_VAR = 'frozenSoundObject.hasBeenCompiled';
@@ -76,12 +77,13 @@ export class FrozenSoundObject extends AbstractSoundObject {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): NoteList {
     if (!this._frozenWaveFileName) {
       return new NoteList();
     }
 
-    const instrumentNumber = this.generateInstruments(compileData);
+    const instrumentNumber = this.generateInstruments(compileData, options?.trackId);
     if (instrumentNumber === 0) {
       return new NoteList();
     }
@@ -89,8 +91,9 @@ export class FrozenSoundObject extends AbstractSoundObject {
     return this.generateNotes(context, instrumentNumber, startTime, endTime);
   }
 
-  private generateInstruments(compileData: CompileData): number {
-    const compiled = compileData.getCompilationVariable(FSO_COMPILE_VAR);
+  private generateInstruments(compileData: CompileData, trackId?: string): number {
+    const compileKey = trackId ? `${FSO_COMPILE_VAR}:${trackId}` : FSO_COMPILE_VAR;
+    const compiled = compileData.getCompilationVariable(compileKey);
     if (typeof compiled === 'number') {
       return compiled;
     }
@@ -107,7 +110,8 @@ export class FrozenSoundObject extends AbstractSoundObject {
     instr.setText(instrText);
 
     const instrId = compileData.addInstrument(instr);
-    compileData.setCompilationVariable(FSO_COMPILE_VAR, instrId);
+    if (trackId) compileData.addInstrSourceId(instr, trackId);
+    compileData.setCompilationVariable(compileKey, instrId);
     return instrId;
   }
 

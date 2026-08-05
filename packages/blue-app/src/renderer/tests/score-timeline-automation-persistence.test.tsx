@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { BlueData, PolyObject, Channel, AudioLayer, AudioLayerGroup } from '@blue/data';
+import { BlueData, PolyObject, Channel, TrackLayer, TrackLayerGroup } from '@blue/data';
 import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from '../../shared/project-editor';
 import type { ScoreAutomationLayerRef } from '../../shared/project-editor';
 
@@ -29,14 +29,14 @@ function soundLayerProject() {
   return { data, paramId, layerRef };
 }
 
-function audioLayerProject() {
+function trackProject() {
   const data = new BlueData();
   const score = data.getScore();
   score.length = 0;
 
-  const layer = new AudioLayer();
-  layer.setName('Audio Layer');
-  const layerGroup = new AudioLayerGroup();
+  const layer = new TrackLayer();
+  layer.setName('Track');
+  const layerGroup = new TrackLayerGroup();
   layerGroup.push(layer);
   score.push(layerGroup);
 
@@ -52,7 +52,7 @@ function audioLayerProject() {
     groupId: snap.layerGroups[0]!.groupId,
     layerId: snap.layerGroups[0]!.layers[0]!.layerId,
     layerIndex: 0,
-    layerKind: 'audio',
+    layerKind: 'track',
   };
   return { data, paramId, layerRef };
 }
@@ -78,8 +78,8 @@ describe('automation assignment survives snapshot refresh', () => {
     expect(again.selectedParameterId).toBe(paramId);
   });
 
-  it('keeps an audio layer assignment after refresh', () => {
-    const { data, paramId, layerRef } = audioLayerProject();
+  it('keeps a Track assignment after refresh', () => {
+    const { data, paramId, layerRef } = trackProject();
 
     applyProjectDocumentPatch(data, {
       score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramId, enableAutomation: true },

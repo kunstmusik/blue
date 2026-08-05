@@ -9,8 +9,8 @@ import {
   TimePosition,
   PolyObject,
   SoundLayer,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   External,
   Track,
   TrackerObject,
@@ -92,8 +92,8 @@ function createDataWithAudioClip(): {
 } {
   const data = new BlueData();
   data.getScore().length = 0;
-  const alg = new AudioLayerGroup();
-  const layer = new AudioLayer();
+  const alg = new TrackLayerGroup();
+  const layer = new TrackLayer();
   const clip = new AudioClip();
   clip.setName('Test Clip');
   clip.setAudioFile('test.wav');

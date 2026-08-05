@@ -14,6 +14,7 @@ import {
   createEmptyScoreDocumentSnapshot,
   createMixerEffectEntrySnapshot,
   createDefaultBsbWidgetSnapshot,
+  createBsbRealtimeControlUpdate,
   collectBsbReplacementKeysFromSnapshotTree,
   ensureUniqueName,
   reconcileMixerSnapshotWithArrangement,
@@ -55,6 +56,9 @@ import {
   type ScoreLayerGroupSnapshot,
   type ScoreLayerGroupType,
   type ScoreLayerSnapshot,
+  type TrackLayerGroupSnapshot,
+  type TrackSnapshot,
+  type TrackInstrumentSummary,
   type ScoreRowObjectSnapshot,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLocationRef,
@@ -213,7 +217,17 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'scaleAutomationRange':
       return true;
     case 'addLayerGroup':
-      return patch.groupType === 'audio';
+      return patch.groupType === 'track';
+    case 'addTrackItem':
+    case 'moveTrackItems':
+    case 'removeTrackItems':
+    case 'setSubjectiveDurationToObjective':
+    case 'replaceTrackNoteProcessorChain':
+    case 'createTrackInstrument':
+    case 'replaceTrackInstrument':
+    case 'clearTrackInstrument':
+    case 'updateTrackInstrument':
+      return true;
     default:
       return false;
   }
@@ -274,16 +288,24 @@ function createAddedLayerGroupSnapshot(groupType: ScoreLayerGroupType | undefine
   const groupId = `lg-${timestamp}`;
   const layers = [createDefaultScoreLayerSnapshot(groupId, 0)];
 
-  switch (groupType) {
-    case 'audio':
+  switch (groupType ?? 'track') {
+    case 'track': {
+      const trackId = `${groupId}-track-0`;
       return {
         groupId,
-        groupType: 'audio',
-        name: 'Audio Layer Group',
-        layerCount: layers.length,
+        groupType: 'track',
+        name: 'Track Layer Group',
+        defaultHeightIndex: 0,
+        layerCount: 1,
         isOpenableContainer: false,
-        layers,
+        layers: [{
+          ...layers[0]!,
+          layerId: trackId,
+          layerKind: 'track',
+          instrument: null,
+        }],
       };
+    }
     case 'patterns':
       return {
         groupId,
@@ -410,7 +432,8 @@ function findAddScoreObjectsTargetGroupIndex(
 
   return score.layerGroups.findIndex((group) => (
     group.groupId === groupId
-      && ((group.groupType === 'audio' && allAudio) || (group.groupType === 'polyObject' && allSoundObjects))
+      && ((group.groupType === 'track' && (allAudio || allSoundObjects))
+        || (group.groupType === 'polyObject' && allSoundObjects))
   ));
 }
 
@@ -547,67 +570,10 @@ function buildRealtimeControlUpdate(
     return undefined;
   }
 
-  const baseUpdate = {
-    assignmentId: patch.orchestra.assignmentId,
-    widgetId: bsbPatch.type === 'updateWidgetProperties' || bsbPatch.type === 'updateSliderBankValue'
-      ? bsbPatch.widgetId
-      : undefined,
-  };
-
-  switch (bsbPatch.type) {
-    case 'updateWidgetProperties': {
-      const properties = bsbPatch.properties;
-      if (typeof properties.value === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'value',
-          payload: { value: properties.value },
-        };
-      }
-
-      if (typeof properties.selectedIndex === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'selectedIndex',
-          payload: { selectedIndex: properties.selectedIndex },
-        };
-      }
-
-      if (typeof properties.selected === 'boolean') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'selected',
-          payload: { selected: properties.selected },
-        };
-      }
-
-      if (typeof properties.xValue === 'number' && typeof properties.yValue === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'xy',
-          payload: { xValue: properties.xValue, yValue: properties.yValue },
-        };
-      }
-
-      return undefined;
-    }
-    case 'updateSliderBankValue':
-      return {
-        ...baseUpdate,
-        widgetId: bsbPatch.widgetId,
-        kind: 'sliderBank',
-        payload: {
-          value: bsbPatch.value,
-          sliderIndex: bsbPatch.sliderIndex,
-        },
-      };
-    default:
-      return undefined;
-  }
+  return createBsbRealtimeControlUpdate(
+    { assignmentId: patch.orchestra.assignmentId },
+    bsbPatch,
+  );
 }
 
 function syncSummaryFromProperties(
@@ -1473,19 +1439,19 @@ function applyMixerPatchToSnapshot(
   return next;
 }
 
-interface AudioLayerSnapshotLocation {
+interface TrackSnapshotLocation {
   groupId: string;
   layerIndex: number;
   layerId: string;
 }
 
-function collectAudioLayerSnapshotLocations(
+function collectTrackSnapshotLocations(
   score: ScoreDocumentSnapshot,
-): AudioLayerSnapshotLocation[] {
-  const result: AudioLayerSnapshotLocation[] = [];
+): TrackSnapshotLocation[] {
+  const result: TrackSnapshotLocation[] = [];
 
   for (const group of score.layerGroups) {
-    if (group.groupType !== 'audio') {
+    if (group.groupType !== 'track') {
       continue;
     }
 
@@ -1501,13 +1467,13 @@ function collectAudioLayerSnapshotLocations(
   return result;
 }
 
-function applyAudioLayerRenameToMixerSnapshot(
+function applyTrackRenameToMixerSnapshot(
   mixer: MixerSnapshot,
   score: ScoreDocumentSnapshot,
   patch: Extract<ScorePatch, { type: 'renameLayer' }>,
 ): MixerSnapshot {
-  const audioLayers = collectAudioLayerSnapshotLocations(score);
-  const targetLayer = audioLayers.find(
+  const tracks = collectTrackSnapshotLocations(score);
+  const targetLayer = tracks.find(
     (layer) => layer.groupId === patch.groupId && layer.layerIndex === patch.layerIndex,
   );
   if (!targetLayer) {
@@ -1536,7 +1502,7 @@ function applyAudioLayerRenameToMixerSnapshot(
   return changed ? { ...mixer, channelListGroups: nextChannelListGroups, channels: nextChannels } : mixer;
 }
 
-function applyMixerChannelRenameToAudioLayerSnapshot(
+function applyMixerChannelRenameToTrackSnapshot(
   score: ScoreDocumentSnapshot,
   mixer: MixerSnapshot,
   patch: Extract<MixerPatch, { type: 'updateChannel' }>,
@@ -1545,15 +1511,15 @@ function applyMixerChannelRenameToAudioLayerSnapshot(
     return score;
   }
 
-  const audioLayerLocations = collectAudioLayerSnapshotLocations(score);
-  const audioLayerIds = new Set(audioLayerLocations.map((layer) => layer.layerId));
+  const trackLocations = collectTrackSnapshotLocations(score);
+  const trackIds = new Set(trackLocations.map((layer) => layer.layerId));
   const targetChannel = getMixerSourceChannels(mixer).find((channel) => channel.id === patch.channelId);
   const targetAssociation = targetChannel?.association;
-  if (!targetAssociation || !audioLayerIds.has(targetAssociation)) {
+  if (!targetAssociation || !trackIds.has(targetAssociation)) {
     return score;
   }
 
-  const targetLayer = audioLayerLocations.find((layer) => layer.layerId === targetAssociation);
+  const targetLayer = trackLocations.find((layer) => layer.layerId === targetAssociation);
   if (!targetLayer) {
     return score;
   }
@@ -1758,6 +1724,20 @@ function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreDocumentSnapshot {
+  if (
+    patch.type === 'addTrackItem'
+    || patch.type === 'moveTrackItems'
+    || patch.type === 'resizeTrackItems'
+    || patch.type === 'removeTrackItems'
+    || patch.type === 'replaceTrackNoteProcessorChain'
+    || patch.type === 'createTrackInstrument'
+    || patch.type === 'replaceTrackInstrument'
+    || patch.type === 'clearTrackInstrument'
+    || patch.type === 'updateTrackInstrument'
+  ) {
+    return applyTrackPatchToSnapshot(score, patch);
+  }
+
   if (patch.type === 'removeScoreObjects') {
     if (patch.targets.length === 0) return score;
     const nextLayerGroups = score.layerGroups.map((lg) => ({
@@ -2046,6 +2026,246 @@ function applyScorePatchToSnapshot(
   }));
 
   return { ...score, layerGroups: nextLayerGroups };
+}
+
+function applyTrackPatchToSnapshot(
+  score: ScoreDocumentSnapshot,
+  patch: Extract<ScorePatch, {
+    type:
+      | 'addTrackItem'
+      | 'moveTrackItems'
+      | 'resizeTrackItems'
+      | 'removeTrackItems'
+      | 'replaceTrackNoteProcessorChain'
+      | 'createTrackInstrument'
+      | 'replaceTrackInstrument'
+      | 'clearTrackInstrument'
+      | 'updateTrackInstrument'
+  }>,
+): ScoreDocumentSnapshot {
+  const findTrack = (groupId: string, trackId: string) => {
+    const group = score.layerGroups.find((candidate) => candidate.groupId === groupId && candidate.groupType === 'track');
+    if (!group || group.groupType !== 'track') return null;
+    const layerIndex = group.layers.findIndex((layer) => layer.layerId === trackId);
+    if (layerIndex < 0) return null;
+    return { group, layerIndex, layer: group.layers[layerIndex]! };
+  };
+
+  const findItem = (groupId: string, trackId: string, objectId?: string, objectIndex?: number) => {
+    const target = findTrack(groupId, trackId);
+    if (!target) return null;
+    const index = objectId
+      ? target.layer.items.findIndex((item) => item.objectId === objectId)
+      : objectIndex ?? -1;
+    if (index < 0 || index >= target.layer.items.length) return null;
+    return { ...target, itemIndex: index, item: target.layer.items[index]! };
+  };
+
+  if (patch.type === 'addTrackItem') {
+    const target = findTrack(patch.track.rootGroupId, patch.track.trackId);
+    if (!target) return score;
+    const objectType = patch.item.objectType ?? patch.item.type ?? 'Unknown';
+    const objectId = `local-${objectType === 'AudioClip' ? 'aclp' : 'sobj'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const item: ScoreRowObjectSnapshot = {
+      objectId,
+      objectType,
+      name: patch.item.name ?? objectType,
+      startBeats: patch.startBeats,
+      durationBeats: patch.item.durationBeats ?? 1,
+      startTimeBase: patch.item.startTimeBase ?? 'BEATS',
+      durationTimeBase: patch.item.durationTimeBase ?? 'BEATS',
+      backgroundColor: patch.item.backgroundColor ?? 0x404040,
+      isContainer: false,
+      editorTarget: {
+        selectionId: objectId,
+        selectedObjectType: objectType,
+        editorObjectType: objectType,
+        ownerKind: 'timeline',
+        displayContext: 'timeline',
+        location: {
+          rootGroupIndex: score.layerGroups.indexOf(target.group),
+          containerPath: [],
+          layerIndex: target.layerIndex,
+          objectIndex: target.layer.items.length,
+          rootGroupId: target.group.groupId,
+          layerId: target.layer.layerId,
+          trackId: target.layer.layerId,
+          layerKind: 'track',
+        },
+        supportsTimeBehavior: objectType !== 'AudioClip',
+        supportsRepeatPoint: objectType !== 'AudioClip',
+        supportsNoteProcessorChain: objectType !== 'AudioClip',
+      },
+      serializedXml: patch.item.serializedXml,
+      barRenderer: {
+        kind: objectType === 'AudioClip' ? 'audioClip' : 'fallback',
+        labelLines: [patch.item.name ?? objectType],
+        ...(objectType === 'AudioClip'
+          ? {
+            audioFilePath: '',
+            waveformKey: null,
+            fileStartTimeBeats: 0,
+            audioDurationBeats: 0,
+            looping: true,
+            fadeInBeats: 0,
+            fadeInType: 'LINEAR' as const,
+            fadeOutBeats: 0,
+            fadeOutType: 'LINEAR' as const,
+          }
+          : { reason: 'missing-data' as const }),
+      } as ScoreRowObjectSnapshot['barRenderer'],
+    };
+    const layers = score.layerGroups.map((group) => {
+      if (group.groupId !== target.group.groupId || group.groupType !== 'track') return group;
+      return {
+        ...group,
+        layers: group.layers.map((layer, index) => index === target.layerIndex
+          ? { ...layer, items: [...layer.items, item] }
+          : layer),
+      };
+    });
+    return { ...score, layerGroups: layers };
+  }
+
+  if (patch.type === 'removeTrackItems') {
+    const targets = patch.targets.map((target) => findItem(
+      target.track.rootGroupId,
+      target.track.trackId,
+      target.objectId,
+      target.objectIndex,
+    ));
+    if (targets.some((target) => !target)) return score;
+    const itemIds = new Set((targets as Array<NonNullable<typeof targets[number]>>).map((target) => target.item.objectId));
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => ({
+          ...layer,
+          items: layer.items.filter((item) => !itemIds.has(item.objectId)),
+        })),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  if (patch.type === 'moveTrackItems') {
+    const resolved = patch.moves.map((move) => ({
+      source: findItem(move.source.track.rootGroupId, move.source.track.trackId, move.source.objectId, move.source.objectIndex),
+      destination: findTrack(move.destination.rootGroupId, move.destination.trackId),
+      move,
+    }));
+    if (resolved.some((entry) => !entry.source || !entry.destination)) return score;
+    const movedIds = new Set(resolved.map((entry) => entry.source!.item.objectId));
+    const destinations = new Map<string, Array<{ item: ScoreRowObjectSnapshot; start: number }>>();
+    for (const entry of resolved) {
+      const bucket = destinations.get(entry.destination!.layer.layerId) ?? [];
+      bucket.push({ item: entry.source!.item, start: entry.move.targetStartBeats });
+      destinations.set(entry.destination!.layer.layerId, bucket);
+    }
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => {
+          const additions = destinations.get(layer.layerId) ?? [];
+          const items = layer.items
+            .filter((item) => !movedIds.has(item.objectId))
+            .concat(additions.map(({ item, start }) => ({ ...item, startBeats: start })));
+          return { ...layer, items };
+        }),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  if (patch.type === 'resizeTrackItems') {
+    const resolved = patch.resizes.map((resize) => ({
+      target: findItem(
+        resize.target.track.rootGroupId,
+        resize.target.track.trackId,
+        resize.target.objectId,
+        resize.target.objectIndex,
+      ),
+      resize,
+    }));
+    if (resolved.some((entry) => !entry.target)) return score;
+    const itemIds = new Set(resolved.map((entry) => entry.target!.item.objectId));
+    if (itemIds.size !== resolved.length) return score;
+    const byId = new Map(resolved.map((entry) => [entry.target!.item.objectId, entry.resize]));
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => ({
+          ...layer,
+          items: layer.items.map((item) => {
+            const resize = byId.get(item.objectId);
+            if (!resize) return item;
+            return {
+              ...item,
+              startBeats: resize.targetStartBeats,
+              durationBeats: resize.targetDurationBeats,
+            };
+          }),
+        })),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  const target = findTrack(patch.track.rootGroupId, patch.track.trackId);
+  if (!target) return score;
+  if (patch.type === 'replaceTrackNoteProcessorChain') {
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, noteProcessorChain: cloneVisibleNoteProcessorChain(patch.chain) } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'clearTrackInstrument') {
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument: null } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'createTrackInstrument' || patch.type === 'replaceTrackInstrument') {
+    const instrument = patch.type === 'createTrackInstrument'
+      ? { type: patch.instrumentType, instrumentType: patch.instrumentType, name: '', comment: '', enabled: true, supported: true, trackId: target.layer.layerId }
+      : { type: patch.instrument.type, instrumentType: patch.instrument.instrumentType, name: patch.instrument.name, comment: patch.instrument.comment, enabled: patch.instrument.enabled, supported: patch.instrument.type !== 'unknown', trackId: target.layer.layerId, snapshot: cloneSnapshotValue(patch.instrument) };
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'updateTrackInstrument') {
+    const current = target.layer.instrument;
+    if (!current) return score;
+    const nextSummary = { ...current };
+    const nextSnapshot = current.snapshot ? { ...current.snapshot } : undefined;
+    if (patch.patch.name !== undefined) {
+      nextSummary.name = patch.patch.name;
+      if (nextSnapshot) nextSnapshot.name = patch.patch.name;
+    }
+    if (patch.patch.comment !== undefined) {
+      nextSummary.comment = patch.patch.comment;
+      if (nextSnapshot) nextSnapshot.comment = patch.patch.comment;
+    }
+    if (patch.patch.enabled !== undefined) {
+      nextSummary.enabled = patch.patch.enabled;
+      if (nextSnapshot) nextSnapshot.enabled = patch.patch.enabled;
+    }
+    if (nextSnapshot) nextSummary.snapshot = nextSnapshot;
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument: nextSummary } : layer) }
+        : group),
+    };
+  }
+  return score;
 }
 
 function cloneSnapshotValue<T>(value: T): T {
@@ -3652,7 +3872,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         );
 
         if (normalizedPatch.mixer.type === 'updateChannel' && normalizedPatch.mixer.patch.name !== undefined) {
-          next.score = applyMixerChannelRenameToAudioLayerSnapshot(
+          next.score = applyMixerChannelRenameToTrackSnapshot(
             state.score,
             next.mixer,
             normalizedPatch.mixer,
@@ -3737,7 +3957,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         next.lastScorePatch = normalizedPatch.score;
 
         if (normalizedPatch.score.type === 'renameLayer') {
-          next.mixer = applyAudioLayerRenameToMixerSnapshot(
+          next.mixer = applyTrackRenameToMixerSnapshot(
             next.mixer,
             next.score,
             normalizedPatch.score,

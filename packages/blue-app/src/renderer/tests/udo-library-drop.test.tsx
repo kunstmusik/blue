@@ -4,7 +4,9 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import UdoTable from '../components/workbench/panels/udo/UdoTable';
+import UdoTable, {
+  getProjectUdoSessionObjectId,
+} from '../components/workbench/panels/udo/UdoTable';
 import { useLibraryStore } from '../stores/library-store';
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { createTestDataTransfer, dispatchDragEvent } from './library-interaction-test-helpers';
@@ -287,5 +289,58 @@ describe('project UDO Library drop targets', () => {
     expect(cut.getAttribute('aria-disabled')).not.toBe('true');
     act(() => copy.click());
     expect(captureSelection).toHaveBeenCalledWith('copy');
+  });
+
+  it('uses a distinct shared-buffer identity and exact destination for Track UDOs', async () => {
+    const track = { rootGroupId: 'track-group', trackId: 'track-1' };
+    expect(getProjectUdoSessionObjectId({
+      projectSessionId: 2,
+      projectRevision: 5,
+      track,
+    }, 0)).toBe('track:track-group:track-1:udo:0');
+
+    act(() => {
+      root.render(
+        <UdoTable
+          udolist={[
+            { name: 'trackTone', style: 'CLASSIC', outTypes: 'a', inTypes: 'a', inputArguments: '', code: 'aout = ain', comments: '' },
+          ]}
+          selectedIndices={[0]}
+          onSelectIndex={vi.fn()}
+          onContextSelectIndex={vi.fn()}
+          onAddUdo={vi.fn()}
+          onImportBlueUdo={vi.fn()}
+          onImportCsoundUdo={vi.fn()}
+          onRemoveSelection={vi.fn()}
+          onCopySelection={captureSelection}
+          onExportBlueUdo={vi.fn()}
+          onExportCsoundUdo={vi.fn()}
+          onMoveSelectionUp={vi.fn()}
+          onMoveSelectionDown={vi.fn()}
+          libraryDropTarget={{ projectSessionId: 2, projectRevision: 5, track }}
+        />,
+      );
+    });
+
+    const marker = container.querySelector('[aria-label^="Insert UDO before"]') as HTMLElement;
+    await act(async () => {
+      marker.dispatchEvent(new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'v',
+        metaKey: true,
+      }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      target: {
+        kind: 'projectUdo',
+        projectSessionId: 2,
+        projectRevision: 5,
+        track,
+        insertIndex: 0,
+      },
+    }));
   });
 });

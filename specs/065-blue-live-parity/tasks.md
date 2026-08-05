@@ -317,3 +317,4 @@ Task T039: Deferred Repeat and non-triggering saved-set UI
 
 - [X] T067 CRITICAL Restrict the pending-patch acknowledgement barrier to Blue Live Start/Recompile so Stop remains immediately available after a commit failure, and add deterministic wait-order, rejection-abort, and stop-bypass coverage in `packages/blue-app/src/renderer/components/menu-bar/ToolbarBlueLive.tsx` and `packages/blue-app/src/renderer/tests/blue-live-toolbar.test.tsx`
 - [X] T068 Add deterministic Trigger coverage proving the command waits for pending-patch acknowledgement and aborts after a rejected barrier per FR-011 in `packages/blue-app/src/renderer/tests/blue-live-panels.test.tsx`
+- [X] T069 [US5] Bridge Blue Live Copy/Cut and exact-cell Paste with the application-wide typed Library SoundObject buffer, including stale-cell validation and bidirectional renderer/main regression coverage

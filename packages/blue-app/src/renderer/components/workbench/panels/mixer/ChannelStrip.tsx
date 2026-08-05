@@ -50,6 +50,7 @@ const MIXER_SLIDER_MIN_H = 60;
 interface ChannelStripProps {
   mixer: MixerSnapshot;
   channel: MixerChannelSnapshot;
+  unnamedDisplayName?: string;
   isMaster: boolean;
   isSubChannel: boolean;
   onPatch: (patch: Record<string, unknown>) => void;
@@ -666,6 +667,7 @@ function MixerEffectEditorDialog({
 export default function ChannelStrip({
   mixer,
   channel,
+  unnamedDisplayName,
   isMaster,
   isSubChannel,
   onPatch,
@@ -692,6 +694,14 @@ export default function ChannelStrip({
 
   const sliderValue = getSliderValue(channel.level);
   const canRename = isSubChannel || channel.association != null;
+  const hasExplicitName = channel.name.trim().length > 0;
+  const displayName = hasExplicitName ? channel.name : (unnamedDisplayName ?? 'Unnamed');
+  const isUsingUnnamedDisplayName = !hasExplicitName && unnamedDisplayName !== undefined;
+  const channelNameClassName = [
+    'mixer-channel-name',
+    canRename ? 'mixer-channel-name--editable' : '',
+    isUsingUnnamedDisplayName ? 'mixer-channel-name--fallback' : '',
+  ].filter(Boolean).join(' ');
 
   const validOutputTargets = useMemo(
     () => getValidOutputTargets(mixer, channel.id),
@@ -860,8 +870,8 @@ export default function ChannelStrip({
   const stripContent = (
     <>
       <div
-        className={`mixer-channel-name ${canRename ? 'mixer-channel-name--editable' : ''}`}
-        title={canRename ? `${channel.name} (double-click to rename)` : channel.name}
+        className={channelNameClassName}
+        title={canRename ? `${displayName} (double-click to rename)` : displayName}
         onDoubleClick={handleNameDoubleClick}
         ref={nameRef}
       >
@@ -879,7 +889,7 @@ export default function ChannelStrip({
             autoFocus
           />
         ) : (
-          channel.name || 'Unnamed'
+          displayName
         )}
       </div>
 

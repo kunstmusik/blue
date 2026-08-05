@@ -142,6 +142,27 @@ export class CompileData {
     return this.instrSourceId.get(instr);
   }
 
+  setTrackInstrumentId(trackId: string, instrumentId: number | string): void {
+    this.compileMap.set(`track-instrument:${trackId}`, instrumentId);
+  }
+
+  getTrackInstrumentId(trackId: string): number | string | undefined {
+    const value = this.compileMap.get(`track-instrument:${trackId}`);
+    return typeof value === 'number' || typeof value === 'string' ? value : undefined;
+  }
+
+  getTrackInstrumentIds(): Map<string, number | string> {
+    const result = new Map<string, number | string>();
+    for (const [key, value] of this.compileMap) {
+      if (typeof key !== 'string') continue;
+      if (!key.startsWith('track-instrument:')) continue;
+      if (typeof value === 'number' || typeof value === 'string') {
+        result.set(key.slice('track-instrument:'.length), value);
+      }
+    }
+    return result;
+  }
+
   appendGlobalOrc(code: string): void {
     if (!code) {
       return;

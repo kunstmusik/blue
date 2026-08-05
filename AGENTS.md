@@ -114,6 +114,7 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 066-track-layer-foundation: Replaced the runtime AudioLayer model with canonical mixed Track/TrackLayerGroup data, Track-owned instruments, historical migration, Track mixer association, and Track-first new-project defaults; canonical Track XML is TypeScript-only
 - 065-blue-live-parity: Restored Java-compatible selected/enabled Blue Live Manual Trigger with immutable runtime-backed preparation and lifecycle fencing; added the Java cell menu, shared Score/BSB clipboard bridges, and stable-identity ScoreObject Editor/Properties routing while deferring audible Repeat and modern launcher semantics
 - 064-bundle-blue-engine: Imported Blue Engine as a private native pnpm workspace package, added reproducible static dependency builds, bundled development/packaged resolution, runtime Csound probing, and verified macOS/Windows/Linux plus cross-distribution AppImage packages
 - 061-app-zooming: Added TypeScript 5.8.x in strict mode; Electron 35.7.5 with embedded Node 22.16.0; React 19.x renderers + Electron `Menu`/`BrowserWindow`/`WebContents`/`app`, existing `@blue/app` program-settings store, Dockview popout lifecycle, Vitest 4.x, Playwright 1.60.x Electron automation

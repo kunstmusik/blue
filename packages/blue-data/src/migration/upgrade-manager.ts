@@ -11,6 +11,7 @@ import { ProjectVersion } from './project-version';
 import { ProjectUpgrader } from './upgrader';
 import { ProjectUpgrader_2_1_10 } from './upgrades/upgrade-2.1.10';
 import { ProjectUpgrader_2_3_0 } from './upgrades/upgrade-2.3.0';
+import { migrateAudioLayersToTracks } from './migrate-audio-layers-to-tracks';
 
 export class UpgradeManager {
   private upgraders: ProjectUpgrader[] = [];
@@ -37,6 +38,11 @@ export class UpgradeManager {
    * @param element The root XML element (blueData element).
    */
   performUpgrades(element: Element): void {
+    // Track migration is structural rather than version-gated. Historical
+    // files in the wild do not always carry a version that matches their
+    // score contents, and canonical Track elements are naturally idempotent.
+    migrateAudioLayersToTracks(element);
+
     const versionAttr = element.getAttribute('version');
     const versionString = versionAttr ?? '0.0.0';
     const version = ProjectVersion.parse(versionString);

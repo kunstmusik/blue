@@ -51,6 +51,10 @@ export default defineConfig(({ command }) => ({
         main: resolve(projectRoot, 'src/renderer/index.html'),
         settings: resolve(projectRoot, 'src/renderer/settings.html'),
         effectEditor: resolve(projectRoot, 'src/renderer/effect-editor.html'),
+        trackInstrumentEditor: resolve(
+          projectRoot,
+          'src/renderer/track-instrument-editor.html',
+        ),
         popout: resolve(projectRoot, 'src/renderer/popout.html'),
       },
     },

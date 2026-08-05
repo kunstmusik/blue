@@ -183,6 +183,7 @@ As a Blue Live author, I can select a populated Live Space cell and immediately 
 - **FR-027**: Add SoundObject MUST offer the Java Blue live-eligible SoundObject families supported by the TypeScript data model and MUST create a fresh LiveObject at the targeted cell.
 - **FR-028**: Remove, Cut, Copy, and Paste enablement MUST match the target cell and shared-buffer compatibility rules defined in User Story 5.
 - **FR-029**: Blue Live and the Score timeline MUST use one application-wide ScoreObject copy buffer for compatible SoundObject copy/cut/paste operations.
+- **FR-029a**: Blue Live Copy/Cut MUST also populate the typed application-wide Library SoundObject buffer, and Blue Live Paste MUST accept a compatible project/user Library SoundObject buffer. Library Paste MUST address the exact cell and reject a cell whose identity changed before application; Cut MUST clear the Live cell only after portable Library capture succeeds.
 - **FR-030**: Blue Live copy, cut, and paste MUST use serialized deep-copy payloads; a paste MUST create a fresh LiveObject identity, reset the pasted SoundObject start to beat zero, and MUST NOT alias the source or an earlier paste.
 - **FR-031**: The Orchestra/BlueSynthBuilder and Score timeline workflow MUST share the application-wide Instrument buffer, and Paste BSB As Sound MUST accept only a BlueSynthBuilder payload on a compatible sound layer.
 - **FR-032**: Paste BSB As Sound MUST deep-copy the BlueSynthBuilder, disable its inherited automation, replace automation lines with constant current-value endpoints, preserve the instrument comment, and insert a new Sound at the snapped target time.
@@ -229,7 +230,7 @@ As a Blue Live author, I can select a populated Live Space cell and immediately 
 - **SC-007**: Concurrent realtime and Blue Live verification shows zero cross-session trigger, stop, recompile, or output-routing commands.
 - **SC-008**: The focused data, shared-contract, renderer, main-process, Java-runtime, and engine-boundary test suites plus affected builds and type checks pass before the parity pass is considered complete.
 - **SC-009**: Automated renderer tests verify 100% of the 11 Java menu commands appear in the required order/grouping, the six legacy structural buttons are absent, and every enabled/disabled state matches the target cell, buffer contents, and minimum grid dimensions.
-- **SC-010**: Automated round-trip tests complete Score-to-Live, Live-to-Score, repeated independent paste, and BSB-to-Sound workflows with preserved content, fresh identities, no shared mutable references, and no mutation on incompatible payloads.
+- **SC-010**: Automated round-trip tests complete Score-to-Live, Live-to-Score, Library-to-Live, Live-to-Library, repeated independent paste, and BSB-to-Sound workflows with preserved content, fresh identities, no shared mutable references, and no mutation on incompatible or stale payloads.
 - **SC-011**: Automated tests complete 100% of populated-cell, empty-cell, moved-cell, removed-cell, type-specific edit, and shared-property edit scenarios with the correct editor/property target and zero mutation through stale targets.
 
 ## Assumptions

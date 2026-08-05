@@ -121,6 +121,7 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
 
     entry('projectDefaults', 'projectDefaults.defaultAuthor', 'Default Author', '(empty)', 'New project author', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts' }),
     entry('projectDefaults', 'projectDefaults.mixerEnabled', 'Mixer Enabled', 'true', 'New project mixer state', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts' }),
+    entry('projectDefaults', 'projectDefaults.defaultLayerGroupType', 'Default Layer Group', 'TRACK', 'Initial and generic new layer group type', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts, project-editor.ts' }),
     entry('projectDefaults', 'projectDefaults.layerHeightDefault', 'Default Layer Height', '0 (1)', 'Root layer group height', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts' }),
     entry('projectDefaults', 'projectDefaults.defaultUdoStyle', 'Default UDO Style', 'MODERN', 'Default style when creating new UDOs or effects', 'used-by-workflow', { consumerPath: 'renderer: UdoWorkspacePanel, EffectsChainContextMenu, unified Libraries editor' }),
     entry('projectDefaults', 'projectDefaults.defaultPrimaryTimeBase', 'Primary Ruler', 'BEATS', 'New project primary ruler', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts' }),

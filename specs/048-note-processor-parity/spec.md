@@ -92,6 +92,7 @@ As a maintainer, I need automated tests that prove every processor works through
 - **FR-007**: Named note processor chains MUST remain loadable, savable, importable into an active chain, and savable back as named chains.
 - **FR-008**: ScoreObject Properties MUST provide an editable note-processor-chain surface for score objects that support note processors.
 - **FR-009**: The chain editor MUST support adding processors, removing processors, reordering processors, editing processor fields, cut/copy/paste, clearing chains, importing named chains, and saving non-empty chains as named chains.
+- **FR-009a**: Cut and Copy from any Note Processor Chain editor MUST populate one application-wide typed Note Processor buffer shared by every object, layer, layer-group, root, and Track chain editor. Paste MUST create a detached processor copy with a new destination identity and MUST preserve all processor fields without sharing mutable parameter state with the source.
 - **FR-010**: The score UI MUST provide note-processor edit affordances for supported sound-object layers, supported layer groups, and the root score.
 - **FR-011**: Non-empty chains at object, layer, layer-group, and root scopes MUST be visible to users through clear indicators or summaries.
 - **FR-012**: Chain edits from any supported scope MUST mutate canonical project data and survive project save/reload.
@@ -122,6 +123,7 @@ As a maintainer, I need automated tests that prove every processor works through
 - **SC-005**: A project containing object, layer, layer-group, root, and named note processor chains saves and reloads without losing processor identities, field values, order, or unsupported legacy payloads.
 - **SC-006**: Generated notes or generated CSD visibly change when a root score chain is added to a project with generated notes.
 - **SC-007**: Deferred PythonProcessor data and unsupported legacy processors remain preserved and visibly labeled so users do not mistake them for fully supported transformations in this slice.
+- **SC-008**: A focused two-editor test copies from one Note Processor Chain scope, pastes into another, and verifies 100% field preservation, a new destination identity, and no shared mutable parameter state.
 
 ## Assumptions
 

@@ -3,7 +3,7 @@
  * Mirrors the Java Score class.
  *
  * A Score contains a list of LayerGroups (which can be PolyObject groups,
- * Audio layer groups, or Pattern layer groups). It also holds the TimeContext,
+ * Track layer groups, or Pattern layer groups). It also holds the TimeContext,
  * TimeState, and NoteProcessorChain.
  */
 import { TimeContext } from '../time/time-context';
@@ -18,7 +18,7 @@ import { CompileData } from '../compile-data';
 import { NoteList } from '../sound-objects/note-list';
 import { PolyObject } from '../sound-objects/poly-object';
 import { TimeBehavior } from '../sound-objects/time-behavior';
-import { AudioLayerGroup } from './audio/audio-layer-group';
+import { TrackLayerGroup } from './track/track-layer-group';
 import { PatternsLayerGroup } from './patterns/patterns-layer-group';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
@@ -66,6 +66,28 @@ export class Score extends Array<LayerGroup<Layer>> {
     return this.npc;
   }
 
+  /**
+   * Register Track-owned instruments in the disposable render Arrangement.
+   * This must run before Arrangement UDO, parameter, string, ftable, and
+   * global dependency collection so Track instruments participate exactly
+   * like project Arrangement instruments without mutating the project.
+   */
+  prepareTrackInstruments(compileData: CompileData): void {
+    for (const layerGroup of this) {
+      if (!(layerGroup instanceof TrackLayerGroup)) continue;
+      for (const track of layerGroup) {
+        const instrument = track.getInstrument();
+        if (!instrument || !instrument.isEnabled()) continue;
+        if (compileData.getTrackInstrumentId(track.getUniqueId()) !== undefined) continue;
+
+        const renderInstrument = instrument.deepCopy();
+        const runtimeId = compileData.addInstrument(renderInstrument);
+        compileData.addInstrSourceId(renderInstrument, track.getUniqueId());
+        compileData.setTrackInstrumentId(track.getUniqueId(), runtimeId);
+      }
+    }
+  }
+
   setNoteProcessorChain(npc: NoteProcessorChain): void {
     this.npc = npc;
   }
@@ -83,10 +105,10 @@ export class Score extends Array<LayerGroup<Layer>> {
       const layerGroup = this[i];
 
       if (!hasSolo) {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, false);
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: false });
         noteList.merge(nl);
       } else {
-        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, true);
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: true });
         noteList.merge(nl);
       }
     }
@@ -111,13 +133,25 @@ export class Score extends Array<LayerGroup<Layer>> {
           compileData,
           startTime,
           endTime,
-          hasSolo,
+          { processWithSolo: hasSolo },
         );
         noteList.merge(nl);
         continue;
       }
 
-      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, hasSolo);
+      if (layerGroup instanceof TrackLayerGroup) {
+        const nl = await layerGroup.generateForCSDAsync(
+          context,
+          compileData,
+          startTime,
+          endTime,
+          { processWithSolo: hasSolo },
+        );
+        noteList.merge(nl);
+        continue;
+      }
+
+      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, { processWithSolo: hasSolo });
       noteList.merge(nl);
     }
 
@@ -198,8 +232,8 @@ export class Score extends Array<LayerGroup<Layer>> {
             score.push(polyObject);
           }
           break;
-        case 'audioLayerGroup':
-          score.push(AudioLayerGroup.loadFromXML(node));
+        case 'trackLayerGroup':
+          score.push(TrackLayerGroup.loadFromXML(node, objRefMap));
           break;
         case 'patternsLayerGroup':
           score.push(PatternsLayerGroup.loadFromXML(node, objRefMap));

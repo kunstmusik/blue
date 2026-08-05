@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   BlueData,
   PolyObject,
-  AudioLayerGroup,
+  TrackLayerGroup,
   Channel,
+  Effect,
+  Parameter,
 } from '@blue/data';
 import {
   createScoreDocumentSnapshot,
@@ -38,7 +40,7 @@ function createProjectWithMixerParameter(): {
   return { data, paramId };
 }
 
-function createProjectWithAssociatedAudioLayer(): {
+function createProjectWithAssociatedTrack(): {
   data: BlueData;
   paramId: string;
 } {
@@ -46,16 +48,31 @@ function createProjectWithAssociatedAudioLayer(): {
   const score = data.getScore();
   score.length = 0;
 
-  const audioGroup = new AudioLayerGroup();
+  const audioGroup = new TrackLayerGroup();
   const layer = audioGroup.newLayerAt(0);
   score.push(audioGroup);
 
   const channel = new Channel();
-  channel.setName('Audio Layer Channel');
+  channel.setName('');
   channel.setAssociation(layer.getUniqueId());
+  channel.getPreEffects().push(createAutomatableEffect('Pre Filter', 'Cutoff'));
+  channel.getPostEffects().push(createAutomatableEffect('Post Reverb', 'Room Size'));
   data.getMixer().getChannels().splice(0, 0, channel);
 
   return { data, paramId: channel.getLevelParameter().getUniqueId() };
+}
+
+function createAutomatableEffect(name: string, parameterLabel: string): Effect {
+  const effect = new Effect();
+  effect.setName(name);
+
+  const parameter = new Parameter();
+  parameter.setName(parameterLabel.toLowerCase().replaceAll(' ', '-'));
+  parameter.setLabel(parameterLabel);
+
+  const effectXml = effect.saveAsXML();
+  effectXml.getElement('parameterList')!.addElement(parameter.saveAsXML());
+  return Effect.loadFromXML(effectXml);
 }
 
 describe('ScoreLayerAutomationSnapshot shape', () => {
@@ -172,30 +189,37 @@ describe('automation field on ScoreLayerSnapshot', () => {
     expect(layer.automation!.missingParameterIds).toEqual([]);
   });
 
-  it('always appears on audio layers even with no assigned parameters', () => {
-    const { data } = createProjectWithAssociatedAudioLayer();
+  it('always appears on Track rows even with no assigned parameters', () => {
+    const { data } = createProjectWithAssociatedTrack();
     const snap = createScoreDocumentSnapshot(data);
 
-    const audioGroup = snap.layerGroups.find(g => g.groupType === 'audio');
+    const audioGroup = snap.layerGroups.find(g => g.groupType === 'track');
     expect(audioGroup).toBeDefined();
     expect(audioGroup!.layers[0]!.automation).toBeDefined();
     expect(audioGroup!.layers[0]!.automation!.parameterIds).toEqual([]);
   });
 
-  it('limits audio layer targets to its associated mixer channel', () => {
-    const { data, paramId } = createProjectWithAssociatedAudioLayer();
+  it('limits Track targets to its associated mixer channel', () => {
+    const { data, paramId } = createProjectWithAssociatedTrack();
     const unrelated = new Channel();
     unrelated.setName('Unrelated Channel');
     data.getMixer().getChannels().splice(0, 0, unrelated);
 
     const snap = createScoreDocumentSnapshot(data);
-    const audioGroup = snap.layerGroups.find(g => g.groupType === 'audio')!;
+    const audioGroup = snap.layerGroups.find(g => g.groupType === 'track')!;
     const automation = audioGroup.layers[0]!.automation!;
     const serializedTargets = JSON.stringify(automation.targetGroups);
+    const trackChannelGroup = automation.targetGroups[0]!;
 
     expect(serializedTargets).toContain(paramId);
-    expect(serializedTargets).toContain('Audio Layer Channel');
     expect(serializedTargets).not.toContain(unrelated.getLevelParameter().getUniqueId());
     expect(serializedTargets).not.toContain('Instrument');
+    expect(trackChannelGroup.label).toBe('Track Channel');
+    expect(trackChannelGroup.targets.map((target) => target.label)).toEqual(['dB']);
+    expect(trackChannelGroup.subGroups.map((group) => group.label)).toEqual([
+      'Pre-Effects',
+      'Post-Effects',
+    ]);
+    expect(trackChannelGroup.subGroups.some((group) => group.label === '')).toBe(false);
   });
 });

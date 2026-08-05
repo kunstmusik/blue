@@ -7,8 +7,6 @@ import {
   Instance,
   SoundObjectLibrary,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,

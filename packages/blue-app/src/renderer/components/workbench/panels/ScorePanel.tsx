@@ -30,15 +30,20 @@ import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
+import TrackInstrumentControl from "./score/TrackInstrumentControl";
+import ColorPickerButton from "../../ColorPicker";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
+  | { scope: 'track'; groupId: string; trackId: string; layerIndex: number }
   | { scope: 'layerGroup'; groupId: string }
   | { scope: 'rootScore' };
 
 function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; onClose: () => void }) {
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const score = useProjectStore((s) => s.score);
+  const projectSessionId = useProjectStore((s) => s.sessionId);
+  const projectRevision = getProjectDocumentRevision();
 
   const title = target.scope === 'rootScore'
     ? 'Root Score - Note Processors'
@@ -58,6 +63,9 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
   } else if (target.scope === 'layerGroup') {
     const group = score.layerGroups.find((g) => g.groupId === target.groupId);
     existingChain = group?.noteProcessorChain;
+  } else if (target.scope === 'track') {
+    const group = score.layerGroups.find((g) => g.groupId === target.groupId && g.groupType === 'track');
+    existingChain = group?.layers.find((layer) => layer.layerId === target.trackId)?.noteProcessorChain;
   } else {
     const group = score.layerGroups.find((g) => g.groupId === target.groupId);
     const layer = group?.layers[target.layerIndex];
@@ -71,6 +79,19 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
       void applyProjectDocumentPatch({
         score: { type: 'replaceScopedNoteProcessorChain', scope: 'soundLayer', groupId: target.groupId, layerIndex: target.layerIndex, chain: updated },
       });
+    } else if (target.scope === 'track') {
+      void applyProjectDocumentPatch({
+        score: {
+          type: 'replaceTrackNoteProcessorChain',
+          track: {
+            rootGroupId: target.groupId,
+            trackId: target.trackId,
+            projectSessionId,
+            projectRevision,
+          },
+          chain: updated,
+        },
+      });
     } else if (target.scope === 'layerGroup') {
       void applyProjectDocumentPatch({
         score: { type: 'replaceScopedNoteProcessorChain', scope: 'layerGroup', groupId: target.groupId, chain: updated },
@@ -80,7 +101,7 @@ function ChainDialogWrapper({ target, onClose }: { target: ChainDialogTarget; on
         score: { type: 'replaceScopedNoteProcessorChain', scope: 'rootScore', chain: updated },
       });
     }
-  }, [target, applyProjectDocumentPatch]);
+  }, [target, applyProjectDocumentPatch, projectRevision, projectSessionId]);
 
   return (
     <NoteProcessorChainDialog
@@ -113,7 +134,7 @@ export default function ScorePanel() {
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [tempoMapEditorOpen, setTempoMapEditorOpen] = useState(false);
   const [meterMapEditorOpen, setMeterMapEditorOpen] = useState(false);
-  const [chainDialogTarget, setChainDialogTarget] = useState<{ scope: 'soundLayer'; groupId: string; layerIndex: number } | { scope: 'layerGroup'; groupId: string } | { scope: 'rootScore' } | null>(null);
+  const [chainDialogTarget, setChainDialogTarget] = useState<ChainDialogTarget | null>(null);
 
   const [timeState, setTimeState] = useState(score.timeState);
 
@@ -175,6 +196,21 @@ export default function ScorePanel() {
   const [nestedSnapshot, setNestedSnapshot] = useState<PolyObjectLayerGroupSnapshot | null>(null);
   const [scrollOverlayLeft, setScrollOverlayLeft] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
+
+  const synchronizeHorizontalScroll = useCallback((nextScrollLeft: number) => {
+    const timeline = scrollContainerRef.current;
+    const header = timelineHeaderRef.current;
+
+    if (timeline && timeline.scrollLeft !== nextScrollLeft) {
+      timeline.scrollLeft = nextScrollLeft;
+    }
+
+    const resolvedScrollLeft = timeline?.scrollLeft ?? nextScrollLeft;
+    if (header && header.scrollLeft !== resolvedScrollLeft) {
+      header.scrollLeft = resolvedScrollLeft;
+    }
+    setScrollOverlayLeft(resolvedScrollLeft);
+  }, [scrollContainerRef]);
 
   const activeSegment = session.segments[session.segments.length - 1];
 
@@ -304,7 +340,7 @@ export default function ScorePanel() {
       return;
     }
 
-    timeline.scrollLeft = targetScrollLeft;
+    synchronizeHorizontalScroll(targetScrollLeft);
   }, [
     followPlayback,
     isPlaying,
@@ -312,6 +348,7 @@ export default function ScorePanel() {
     timePointerBeats,
     pixelsPerBeat,
     scrollContainerRef,
+    synchronizeHorizontalScroll,
   ]);
 
   useEffect(() => {
@@ -319,20 +356,25 @@ export default function ScorePanel() {
     const pointerPixel = scrollToBeatTarget * pixelsPerBeat;
     const w = scrollContainerRef.current.clientWidth;
     const newX = Math.max(0, pointerPixel - (w / 8));
-    scrollContainerRef.current.scrollLeft = newX;
+    synchronizeHorizontalScroll(newX);
     clearScrollTarget(null);
-  }, [scrollToBeatTarget, pixelsPerBeat, scrollContainerRef, clearScrollTarget]);
+  }, [scrollToBeatTarget, pixelsPerBeat, scrollContainerRef, clearScrollTarget, synchronizeHorizontalScroll]);
+
+  useLayoutEffect(() => {
+    const timeline = scrollContainerRef.current;
+    if (timeline) {
+      synchronizeHorizontalScroll(timeline.scrollLeft);
+    }
+  }, [session.activeGroupId, pixelsPerBeat, totalBeats, scrollContainerRef, synchronizeHorizontalScroll]);
 
   const handleTimelineScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
     const left = leftHeaderRef.current;
-    const header = timelineHeaderRef.current;
     if (timeline) {
       if (left) left.scrollTop = timeline.scrollTop;
-      if (header) header.scrollLeft = timeline.scrollLeft;
-      setScrollOverlayLeft(timeline.scrollLeft);
+      synchronizeHorizontalScroll(timeline.scrollLeft);
     }
-  }, [scrollContainerRef]);
+  }, [scrollContainerRef, synchronizeHorizontalScroll]);
 
   // Clicking the empty score background (the scroll container showing through
   // below the last layer row, when there are fewer layers than the viewport)
@@ -448,12 +490,11 @@ export default function ScorePanel() {
   }, [bgMarqueeActive]);
 
   const handleTimelineHeaderScroll = useCallback(() => {
-    const timeline = scrollContainerRef.current;
     const header = timelineHeaderRef.current;
-    if (timeline && header) {
-      timeline.scrollLeft = header.scrollLeft;
+    if (header) {
+      synchronizeHorizontalScroll(header.scrollLeft);
     }
-  }, [scrollContainerRef]);
+  }, [synchronizeHorizontalScroll]);
 
   const handleLeftHeaderScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
@@ -560,17 +601,22 @@ export default function ScorePanel() {
             onTempoVisibleChange={handleTempoVisibleChange}
             onRowVisibilityChange={handleRowVisibilityChange}
             layerGroups={effectiveLayerGroups}
+            projectSessionId={sessionId}
+            projectRevision={getProjectDocumentRevision()}
             leftHeaderRef={leftHeaderRef}
             onLeftScroll={handleLeftHeaderScroll}
             onManage={() => setManageDialogOpen(true)}
             onLayerGroupNoteProcessorChain={(groupId) => setChainDialogTarget({ scope: 'layerGroup', groupId })}
-            onSoundLayerNoteProcessorChain={(groupId, layerIndex) => setChainDialogTarget({ scope: 'soundLayer', groupId, layerIndex })}
+            onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) => setChainDialogTarget(
+              trackId ? { scope: 'track', groupId, trackId, layerIndex } : { scope: 'soundLayer', groupId, layerIndex },
+            )}
           />
         }
         second={
           <div className="h-full w-full flex flex-col">
             <div
               ref={timelineHeaderRef}
+              data-score-timeline-header
               className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               onScroll={handleTimelineHeaderScroll}
             >
@@ -717,11 +763,13 @@ interface LeftPanelProps {
   onTempoVisibleChange: (visible: boolean) => void;
   onRowVisibilityChange: (key: 'tempoRowVisible' | 'meterRowVisible' | 'markersRowVisible', value: boolean) => void;
   layerGroups: ScoreLayerGroupSnapshot[];
+  projectSessionId: number;
+  projectRevision: number;
   leftHeaderRef: React.RefObject<HTMLDivElement | null>;
   onLeftScroll: () => void;
   onManage: () => void;
   onLayerGroupNoteProcessorChain: (groupId: string) => void;
-  onSoundLayerNoteProcessorChain: (groupId: string, layerIndex: number) => void;
+  onSoundLayerNoteProcessorChain: (groupId: string, layerIndex: number, trackId?: string) => void;
 }
 
 function LeftPanel({
@@ -732,6 +780,8 @@ function LeftPanel({
   onTempoVisibleChange,
   onRowVisibilityChange,
   layerGroups,
+  projectSessionId,
+  projectRevision,
   leftHeaderRef,
   onLeftScroll,
   onManage,
@@ -799,7 +849,7 @@ function LeftPanel({
               groupIndex={gi}
               totalGroups={visibleGroups.length}
               layerCount={group.layers.length}
-              onNoteProcessorChain={group.groupType === 'audio' ? undefined : () => onLayerGroupNoteProcessorChain(group.groupId)}
+              onNoteProcessorChain={group.groupType === 'polyObject' ? () => onLayerGroupNoteProcessorChain(group.groupId) : undefined}
               noteProcessorChain={group.noteProcessorChain}
             />
           );
@@ -814,7 +864,13 @@ function LeftPanel({
                   groupId={group.groupId}
                   layerIndex={li}
                   rootGroupIndex={gi}
-                  onNoteProcessorChain={onSoundLayerNoteProcessorChain}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
+                  onNoteProcessorChain={(groupId, layerIndex) => onSoundLayerNoteProcessorChain(
+                    groupId,
+                    layerIndex,
+                    group.groupType === 'track' ? layer.layerId : undefined,
+                  )}
                   noteProcessorChain={layer.noteProcessorChain}
                 />
               ))}
@@ -977,6 +1033,8 @@ function SoundLayerHeader({
   groupId,
   layerIndex,
   rootGroupIndex,
+  projectSessionId,
+  projectRevision,
   onNoteProcessorChain,
   noteProcessorChain,
 }: {
@@ -985,6 +1043,8 @@ function SoundLayerHeader({
   groupId: string;
   layerIndex: number;
   rootGroupIndex: number;
+  projectSessionId: number;
+  projectRevision: number;
   onNoteProcessorChain?: (groupId: string, layerIndex: number) => void;
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
@@ -1005,9 +1065,9 @@ function SoundLayerHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   const height = layer.height || 44;
   const heightIndex = Math.round(height / 22) - 1;
-  const showNoteProcessorButton = groupType !== 'audio';
-  const showLayerHeightMenu = groupType === 'audio' || groupType === 'polyObject';
-  const showAutomationButton = (groupType === 'audio' || groupType === 'polyObject') && !!layer.automation;
+  const showNoteProcessorButton = groupType === 'polyObject' || groupType === 'track';
+  const showLayerHeightMenu = groupType === 'polyObject' || groupType === 'track';
+  const showAutomationButton = (groupType === 'polyObject' || groupType === 'track') && !!layer.automation;
   const selectedAutomationParameter = layer.automation?.parameters.find(
     (parameter) => parameter.parameterId === layer.automation?.selectedParameterId,
   );
@@ -1015,6 +1075,7 @@ function SoundLayerHeader({
     && height >= 44
     && !!selectedAutomationParameter
     && (layer.automation?.parameterIds.length ?? 0) > 0;
+  const trackInstrument = groupType === 'track' && 'instrument' in layer ? layer.instrument : null;
 
   const commitEdit = useCallback(() => {
     setEditing(false);
@@ -1059,7 +1120,9 @@ function SoundLayerHeader({
     groupId,
     layerId: layer.layerId,
     layerIndex,
-    layerKind: groupType === 'audio' ? 'audio' as const : 'soundObject' as const,
+    layerKind: groupType === 'track'
+        ? 'track' as const
+        : 'soundObject' as const,
   };
 
   const dispatchAutomationPatch = (patch: ScoreAutomationPatch) => {
@@ -1083,11 +1146,10 @@ function SoundLayerHeader({
     });
   };
 
-  const handleAutomationColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAutomationColorChange = (hex: string) => {
     if (!selectedAutomationParameter) {
       return;
     }
-    const hex = event.target.value;
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -1111,6 +1173,15 @@ function SoundLayerHeader({
           style={{ height }}
           onDoubleClick={startEdit}
         >
+          {groupType === 'track' && (
+            <TrackInstrumentControl
+              groupId={groupId}
+              trackId={layer.layerId}
+              instrument={trackInstrument}
+              projectSessionId={projectSessionId}
+              projectRevision={projectRevision}
+            />
+          )}
           {editing ? (
             <input
               ref={inputRef}
@@ -1184,12 +1255,11 @@ function SoundLayerHeader({
            </div>
           {showAutomationFooter && (
             <div className="absolute left-1 right-1 top-[20px] flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
-              <input
-                type="color"
+              <ColorPickerButton
                 value={selectedAutomationColor}
                 className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
                 title="Automation line color"
-                onClick={(event) => event.stopPropagation()}
+                ariaLabel="Automation line color"
                 onChange={handleAutomationColorChange}
               />
               <span className="min-w-0 flex-1 truncate">

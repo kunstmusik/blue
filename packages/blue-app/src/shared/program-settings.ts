@@ -40,9 +40,12 @@ export interface GeneralSettingsSnapshot {
   directoryTempFileLimit: number;
 }
 
+export type DefaultLayerGroupType = 'TRACK' | 'SOUND_OBJECT';
+
 export interface ProjectDefaultsSettingsSnapshot {
   defaultAuthor: string;
   mixerEnabled: boolean;
+  defaultLayerGroupType: DefaultLayerGroupType;
   layerHeightDefault: number;
   defaultUdoStyle: 'CLASSIC' | 'MODERN';
   defaultPrimaryTimeBase: string;
@@ -217,6 +220,15 @@ export const LAYER_HEIGHT_CHOICES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 
 
 export const UDO_STYLE_CHOICES: readonly ('CLASSIC' | 'MODERN')[] = ['CLASSIC', 'MODERN'];
 
+export const DEFAULT_LAYER_GROUP_TYPE_CHOICES: readonly DefaultLayerGroupType[] = [
+  'TRACK',
+  'SOUND_OBJECT',
+];
+
+export function normalizeDefaultLayerGroupType(value: unknown): DefaultLayerGroupType {
+  return value === 'SOUND_OBJECT' ? 'SOUND_OBJECT' : 'TRACK';
+}
+
 export const FILE_FORMAT_CHOICES: readonly string[] = [
   'WAV', 'AIFF', 'AU', 'RAW', 'IRCAM', 'W64', 'WAVEX', 'SD2', 'FLAC',
 ];
@@ -304,6 +316,7 @@ export function createDefaultProjectDefaultsSettings(): ProjectDefaultsSettingsS
   return {
     defaultAuthor: '',
     mixerEnabled: true,
+    defaultLayerGroupType: 'TRACK',
     layerHeightDefault: 0,
     defaultUdoStyle: 'MODERN',
     defaultPrimaryTimeBase: 'BEATS',
@@ -449,6 +462,14 @@ export function validateProgramSettings(
     issues.push({
       path: 'projectDefaults.layerHeightDefault',
       message: 'Must be between 0 and 8',
+      severity: 'error',
+    });
+  }
+
+  if (!DEFAULT_LAYER_GROUP_TYPE_CHOICES.includes(snapshot.projectDefaults.defaultLayerGroupType)) {
+    issues.push({
+      path: 'projectDefaults.defaultLayerGroupType',
+      message: 'Must be TRACK or SOUND_OBJECT',
       severity: 'error',
     });
   }
@@ -655,7 +676,13 @@ export function mergeWithDefaults(
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
     general: { ...defaults.general, ...saved.general },
-    projectDefaults: { ...defaults.projectDefaults, ...saved.projectDefaults },
+    projectDefaults: {
+      ...defaults.projectDefaults,
+      ...saved.projectDefaults,
+      defaultLayerGroupType: normalizeDefaultLayerGroupType(
+        saved.projectDefaults?.defaultLayerGroupType,
+      ),
+    },
     playback: { ...defaults.playback, ...saved.playback },
     utility: { ...defaults.utility, ...saved.utility },
     realtimeRender: { ...defaults.realtimeRender, ...saved.realtimeRender },

@@ -6,6 +6,10 @@ import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
   EffectEditorSnapshot,
+  TrackInstrumentEditorPatchRequest,
+  TrackInstrumentEditorPatchResult,
+  TrackInstrumentEditorRequest,
+  TrackInstrumentEditorSnapshot,
   BsbRealtimeControlUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
@@ -116,7 +120,11 @@ import {
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
   UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
   UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL,
   UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
   UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
@@ -167,7 +175,10 @@ import {
   type CutLibraryToClipboardRequest,
   type CutLibraryToClipboardResult,
   type LibraryInteractionClipboard,
+  type BsbCanvasClipboard,
   type ScoreTimelineSoundObjectRequest,
+  type TrackInstrumentClipboardRequest,
+  type BlueLiveSoundObjectClipboardRequest,
   type UserLibraryMutation,
   type OpenLibraryEditorRequest,
   type LibraryEditorPatchRequest,
@@ -219,8 +230,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<LibraryResult<LibraryMutationPreview>>,
   cutLibraryToClipboard: (request: CutLibraryToClipboardRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, request) as Promise<LibraryResult<CutLibraryToClipboardResult>>,
+  setLibraryClipboard: (clipboard: LibraryInteractionClipboard | null) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
+  setBsbClipboard: (clipboard: BsbCanvasClipboard | null) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
   captureScoreSoundObjectClipboard: (request: ScoreTimelineSoundObjectRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+  captureTrackInstrumentClipboard: (request: TrackInstrumentClipboardRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+  captureBlueLiveSoundObjectClipboard: (request: BlueLiveSoundObjectClipboardRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<ProjectMutationReceipt>>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
@@ -314,6 +333,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('open-effect-editor', request) as Promise<void>,
   openEffectInterface: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('open-effect-interface', request) as Promise<void>,
+  openTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('open-track-instrument-editor', request) as Promise<void>,
+  focusTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('focus-track-instrument-editor', request) as Promise<boolean>,
+  getTrackInstrumentEditorDocument: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('get-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorSnapshot | null>,
+  updateTrackInstrumentEditorDocument: (request: TrackInstrumentEditorPatchRequest) =>
+    ipcRenderer.invoke('update-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorPatchResult>,
   getEffectEditorDocument: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('get-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
   updateEffectEditorDocument: (request: EffectEditorPatchRequest) =>
@@ -375,6 +402,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   importCsoundUdo: () => ipcRenderer.invoke('import-csound-udo'),
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
   exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
+  exportScoreObject: (xmlText: string, objectName: string) =>
+    ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<void>,
 
   // Event listeners
   onProjectLoaded: (callback: (info: ProjectLoadedPayload) => void) => {

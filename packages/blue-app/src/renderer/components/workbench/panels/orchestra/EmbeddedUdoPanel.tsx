@@ -5,27 +5,25 @@ import type {
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import { useUdoCallbacks } from '../../../../hooks/use-udo-callbacks';
-import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import UdoWorkspacePanel from '../udo/UdoWorkspacePanel';
+import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
 interface EmbeddedUdoPanelProps {
-  assignmentId: string;
   udolist: UdoDefinitionSnapshot[];
   resetKey?: string | number | null;
   onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
   /** Project-global UDOs available to the embedded UDO body editor. */
   projectUdos?: readonly UdoDefinitionSnapshot[];
+  libraryDropTarget?: UdoLibraryDropTarget;
 }
 
 export default function EmbeddedUdoPanel({
-  assignmentId,
   udolist,
   resetKey,
   onInstrumentPatch,
   projectUdos,
+  libraryDropTarget,
 }: EmbeddedUdoPanelProps): React.ReactElement {
-  const projectSessionId = useProjectStore((state) => state.sessionId);
-  const projectRevision = getProjectDocumentRevision();
   const dispatch = useCallback(
     (patch: Record<string, unknown>) => {
       void onInstrumentPatch({ embeddedOpcodeList: patch as any });
@@ -42,11 +40,7 @@ export default function EmbeddedUdoPanel({
         projectUdos={projectUdos}
         resetKey={resetKey}
         {...callbacks}
-        libraryDropTarget={{
-          projectSessionId,
-          projectRevision,
-          instrumentAssignmentId: assignmentId,
-        }}
+        libraryDropTarget={libraryDropTarget}
       />
     </div>
   );

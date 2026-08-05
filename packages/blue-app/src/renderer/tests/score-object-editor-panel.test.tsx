@@ -9,8 +9,8 @@ import {
   Comment,
   External,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   PolyObject,
   SoundLayer,
   Instance,
@@ -24,7 +24,6 @@ import {
   PianoRoll,
   PianoNote,
   TrackerObject,
-  NotationObject,
   JMask,
   FadeType,
   TimeBase,
@@ -188,8 +187,8 @@ describe('AudioClip editor document creation and mutation (T026)', () => {
   function makeAudioClipData() {
     const data = new BlueData();
     data.getScore().length = 0;
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     clip.setName('Test Clip');
     clip.setAudioFile('sound.wav');

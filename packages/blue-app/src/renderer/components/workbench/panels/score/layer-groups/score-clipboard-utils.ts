@@ -1,4 +1,5 @@
 import type { ScoreLayerGroupType, ScoreObjectEditorTargetSnapshot } from '../../../../../../shared/project-editor';
+import { getTrackPlacementForSoundObjectType } from '@blue/data';
 import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import type {
   ScoreLayerGroupSnapshot,
@@ -57,6 +58,8 @@ export function collectClipboardEntriesForSelection(
           isContainer: item.isContainer,
           layerIndex,
           groupId: group.groupId,
+          trackId: group.groupType === 'track' ? layer.layerId : undefined,
+          itemId: item.objectId,
           editorTarget: item.editorTarget,
           serializedXml: item.serializedXml,
           barRenderer: item.barRenderer,
@@ -72,8 +75,8 @@ export function layerGroupAcceptsObjectType(
   groupType: ScoreLayerGroupType,
   objectType: string,
 ): boolean {
-  if (groupType === 'audio') {
-    return objectType === 'AudioClip';
+  if (groupType === 'track') {
+    return objectType === 'AudioClip' || getTrackPlacementForSoundObjectType(objectType).compatible;
   }
   if (groupType === 'polyObject') {
     return objectType !== 'AudioClip';

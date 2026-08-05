@@ -18,6 +18,7 @@ export default function JavaScriptInstrumentEditor({
   instrument,
   onInstrumentPatch,
   projectUdos,
+  embeddedUdoTarget,
 }: SelectedInstrumentEditorProps & {
   instrument: JavaScriptInstrumentSnapshot;
 }): React.ReactElement {
@@ -69,11 +70,11 @@ export default function JavaScriptInstrumentEditor({
                 />
               ) : tab.key === 'udo' ? (
                 <EmbeddedUdoPanel
-                  assignmentId={instrument.assignmentId}
                   udolist={instrument.udolist ?? []}
                   projectUdos={projectUdos}
                   resetKey={instrument.assignmentId}
                   onInstrumentPatch={onInstrumentPatch}
+                  libraryDropTarget={embeddedUdoTarget}
                 />
               ) : (
                 <SelectedCodeEditor

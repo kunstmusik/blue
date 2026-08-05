@@ -27,13 +27,19 @@ export interface DisplayWorkArea {
   height: number;
 }
 
-export type WindowId = 'main' | 'settings' | 'effect-editor' | 'effect-interface';
+export type WindowId =
+  | 'main'
+  | 'settings'
+  | 'effect-editor'
+  | 'effect-interface'
+  | 'track-instrument-editor';
 
 export const WINDOW_IDENTITIES: readonly WindowId[] = [
   'main',
   'settings',
   'effect-editor',
   'effect-interface',
+  'track-instrument-editor',
 ];
 
 export type SplitId =

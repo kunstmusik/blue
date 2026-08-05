@@ -382,7 +382,7 @@ export class Arrangement {
         blueMixerInFound = true;
         const argText = noCommentLine.substring(0, mixerInIndex).trim();
         const args = argText.split(",");
-        const channel = this.getChannelForArrangementId(mixer, arrangementId);
+        const channel = this.getChannelForArrangementId(mixer, arrangementId, compileData);
 
         for (let i = 0; i < nchnls && i < args.length; i++) {
           const arg = args[i].trim();
@@ -437,7 +437,7 @@ export class Arrangement {
           continue;
         }
 
-        const channel = this.getChannelForArrangementId(mixer, arrangementId);
+        const channel = this.getChannelForArrangementId(mixer, arrangementId, compileData);
         for (let i = 0; i < nchnls && i < args.length; i++) {
           const arg = args[i] ?? "";
           const variable = this.getMixerVariable(
@@ -462,7 +462,16 @@ export class Arrangement {
   private getChannelForArrangementId(
     mixer: Mixer,
     arrangementId: string,
+    compileData?: CompileData,
   ): Channel | undefined {
+    const assignedInstrument = this.getInstrumentById(arrangementId);
+    const sourceId = assignedInstrument && compileData?.getInstrSourceId(assignedInstrument);
+    if (sourceId) {
+      const associated = mixer
+        .getAllSourceChannels()
+        .find((channel) => channel.getAssociation() === sourceId);
+      if (associated) return associated;
+    }
     return mixer
       .getAllSourceChannels()
       .find((channel) => channel.getName() === arrangementId);

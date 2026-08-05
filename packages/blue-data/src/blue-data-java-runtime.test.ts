@@ -8,6 +8,16 @@ import { PolyObject } from './sound-objects/poly-object';
 import { PythonObject } from './sound-objects/python-object';
 import { ClojureObject } from './sound-objects/clojure-object';
 import { GenericScore } from './sound-objects/generic-score';
+import { TrackLayerGroup } from './score/track/track-layer-group';
+
+function createTrackProject(): { data: BlueData; track: ReturnType<TrackLayerGroup['newLayerAt']> } {
+  const data = new BlueData();
+  data.getScore().length = 0;
+  const group = new TrackLayerGroup();
+  const track = group.newLayerAt(0);
+  data.getScore().push(group);
+  return { data, track };
+}
 
 describe('BlueData Java runtime usage', () => {
   it('treats PythonObject score content as requiring the Java runtime', () => {
@@ -33,6 +43,20 @@ describe('BlueData Java runtime usage', () => {
     data.getArrangement().addInstrument(new PythonInstrument(), '1');
 
     expect(data.usesJavaRuntime()).toBe(true);
+  });
+
+  it('detects Java runtime dependencies owned by a Track', () => {
+    const instrumentProject = createTrackProject();
+    instrumentProject.track.setInstrument(new PythonInstrument());
+    expect(instrumentProject.data.usesJavaRuntime()).toBe(true);
+
+    const objectProject = createTrackProject();
+    objectProject.track.push(new PythonObject());
+    expect(objectProject.data.usesJavaRuntime()).toBe(true);
+
+    const processorProject = createTrackProject();
+    processorProject.track.getNoteProcessorChain().addProcessor(new PythonProcessor());
+    expect(processorProject.data.usesJavaRuntime()).toBe(true);
   });
 
   it('treats PythonProcessor note-processor chains as requiring the Java runtime', () => {

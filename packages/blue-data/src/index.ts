@@ -106,6 +106,8 @@ export type { SnapValueName, SnapCategory, SnapValueDefinition } from './time/sn
 
 // ─── Score ───
 export { Score } from './score/score';
+export { replaceTrackInstrumentP1, applyTrackInstrumentOverride } from './score/score-generation-options';
+export type { ScoreGenerationOptions, InstrumentTargetCollector, InstrumentTargetBehavior, ScoreGenerationOptionsOrSolo } from './score/score-generation-options';
 export type { ScoreObject } from './score/score-object';
 export { ScoreObjectEvent, ScoreEventType } from './score/score-object-event';
 export type { ScoreObjectListener } from './score/score-object-event';
@@ -127,10 +129,14 @@ export type { DeepCopyableLG } from './score/layers/deep-copyable-lg';
 
 // ─── Audio Score Layers ───
 export { AudioClip } from './score/audio/audio-clip';
-export { AudioLayer } from './score/audio/audio-layer';
-export { AudioLayerGroup } from './score/audio/audio-layer-group';
-export { AudioLayerGroupProvider } from './score/audio/audio-layer-group-provider';
-export type { AudioLayerListener } from './score/audio/audio-layer-listener';
+// The tracker sound object already owns the public `Track` name. Keep that
+// API stable while exposing the score-layer model under an unambiguous alias.
+export { Track as TrackLayer } from './score/track/track';
+export { Track as ScoreTrack } from './score/track/track';
+export type { TrackItem } from './score/track/track';
+export { TrackLayerGroup } from './score/track/track-layer-group';
+export { TrackLayerGroupProvider } from './score/track/track-layer-group-provider';
+export { generateTrackAudioPlaybackNotes, ensureTrackAudioPlaybackInstrument } from './score/track/track-audio-playback';
 export { FadeType, fadeTypeFromString, fadeTypeToString, fadeTypeToCsound } from './score/audio/fade-type';
 export { PLAYBACK_INSTRUMENT_ORC } from './score/audio/playback-instrument-orc';
 export { BLUE_FADE_UDO } from './score/audio/blue-fade-udo';
@@ -184,9 +190,21 @@ export { TrackList } from './sound-objects/tracker/track-list';
 export { Track } from './sound-objects/tracker/track';
 export { Column } from './sound-objects/tracker/column';
 export { TrackerNote } from './sound-objects/tracker/tracker-note';
-export { NotationObject } from './sound-objects/notation-object';
 export { FrozenSoundObject } from './sound-objects/frozen-sound-object';
-export { loadSoundObjectFromXML, registerSoundObjectType, createSoundObject } from './sound-objects/sound-object-registry';
+export {
+  loadSoundObjectFromXML,
+  registerSoundObjectType,
+  registerSoundObjectFactory,
+  createSoundObject,
+  getSoundObjectTypeDescriptor,
+  getAllSoundObjectTypeDescriptors,
+  getTrackPlacementForSoundObject,
+  getTrackPlacementForSoundObjectType,
+} from './sound-objects/sound-object-registry';
+export type {
+  SoundObjectTypeDescriptor,
+  TrackPlacement,
+} from './sound-objects/sound-object-registry';
 
 // ─── Note Processors ───
 export { NoteProcessorChain } from './note-processors/note-processor-chain';

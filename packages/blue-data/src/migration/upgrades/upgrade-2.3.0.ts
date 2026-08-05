@@ -9,6 +9,7 @@
  */
 import { Element } from '../../serialization/xml-reader';
 import { ProjectUpgrader } from '../upgrader';
+import { moveChildElements } from '../xml-migration-utils';
 
 export class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
   constructor() {
@@ -72,17 +73,14 @@ export class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
       const nodeName = node.getName();
 
       if (nodeName === 'patternsLayerGroup') {
-        const patternLayers = node.removeElements('patternLayer');
+        const patternLayerCount = node.getElements('patternLayer').size;
 
-        if (patternLayers.size > 0) {
+        if (patternLayerCount > 0) {
           retVal = true;
         }
 
         const patternsNode = node.addElement('patternLayers');
-
-        for (const patternNode of patternLayers) {
-          patternsNode.addElement(patternNode);
-        }
+        moveChildElements(node, patternsNode, 'patternLayer');
       }
     }
 

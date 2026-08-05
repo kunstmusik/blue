@@ -1128,6 +1128,10 @@
   background: var(--color-app-surface-raised);
 }
 
+.mixer-channel-name--fallback {
+  font-style: italic;
+}
+
 .mixer-channel-name-input {
   width: 100%;
   padding: 2px 4px;

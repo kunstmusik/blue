@@ -1,0 +1,53 @@
+<blueData version="2.3.0">
+  <mixer>
+    <enabled>true</enabled>
+    <channelListGroups>
+      <channelList association="java-group-1" listName="Java Audio Group">
+        <channel association="java-track-1">
+          <name>Field Recording</name>
+          <outChannel>Master</outChannel>
+          <level>-3.0</level>
+          <muted>false</muted>
+          <solo>false</solo>
+          <effectsChain bin="pre" />
+          <effectsChain bin="post"><send><sendChannel>Master</sendChannel><level>0.25</level><enabled>true</enabled></send></effectsChain>
+        </channel>
+      </channelList>
+    </channelListGroups>
+    <channelList list="channels" />
+    <channelList list="subChannels" />
+    <channel><name>Master</name><outChannel>Master</outChannel><level>0.0</level><muted>false</muted><solo>false</solo></channel>
+  </mixer>
+  <score>
+    <timeContext />
+    <timeState />
+    <noteProcessorChain />
+    <audioLayerGroup name="Java Audio Group" uniqueId="java-group-1">
+      <defaultHeightIndex>1</defaultHeightIndex>
+      <unknownGroupSibling value="preserve-me">
+        <nestedUnknown>java</nestedUnknown>
+      </unknownGroupSibling>
+      <audioLayers>
+        <audioLayer name="Field Recording" uniqueId="java-track-1" muted="false" solo="true" heightIndex="2" automationSelectedIndex="0" futureTrackAttribute="preserve-track-attribute">
+          <audioClip>
+            <name>wind</name>
+            <audioFile>/fixtures/wind.wav</audioFile>
+            <numChannels>2</numChannels>
+            <audioDuration>8</audioDuration>
+            <fileStart>0</fileStart>
+            <startTime type="beats">0</startTime>
+            <subjectiveDuration type="beats">4</subjectiveDuration>
+            <fadeIn>0.25</fadeIn>
+            <fadeInType>LINEAR</fadeInType>
+            <fadeOut>0.5</fadeOut>
+            <fadeOutType>CONSTANT_POWER</fadeOutType>
+            <looping>true</looping>
+          </audioClip>
+          <parameterId>java-param-1</parameterId>
+          <unknownTrackSibling value="preserve-track-child" />
+        </audioLayer>
+        <unknownTracksSibling value="preserve-container-child" />
+      </audioLayers>
+    </audioLayerGroup>
+  </score>
+</blueData>

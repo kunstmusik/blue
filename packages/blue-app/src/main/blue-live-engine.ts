@@ -300,6 +300,7 @@ export class BlueLiveEngineSession {
         data.getArrangement(),
         data.getMixer(),
         csd.parameters,
+        data.getScore(),
       );
       if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
         console.warn(

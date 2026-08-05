@@ -157,18 +157,19 @@ export default function MixerPanel(): React.ReactElement {
                       if (!group.association) {
                         return;
                       }
-                      openGroupRenameDialog(group.association, group.listName || 'Audio Layer Group');
+                      openGroupRenameDialog(group.association, group.listName || 'Track Layer Group');
                     }}
                     title={group.association ? 'Double-click to rename group' : undefined}
                   >
-                    {group.listName || 'Audio Layer Group'}
+                    {group.listName || 'Track Layer Group'}
                   </div>
                   <div className="mixer-channel-group__strips">
-                    {group.channels.map((channel) => (
+                    {group.channels.map((channel, channelIndex) => (
                       <ChannelStrip
                         key={channel.id}
                         mixer={mixer}
                         channel={channel}
+                        unnamedDisplayName={`Track ${channelIndex + 1}`}
                         isMaster={false}
                         isSubChannel={false}
                         onPatch={handleMixerPatch}
@@ -261,7 +262,7 @@ export default function MixerPanel(): React.ReactElement {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-blue-border/30 px-4 py-3 text-sm font-medium text-blue-text">
-              Edit Audio Layer Group Name
+              Edit Track Layer Group Name
             </div>
             <div className="px-4 py-3">
               <input

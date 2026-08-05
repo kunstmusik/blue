@@ -13,8 +13,8 @@ import {
   AudioFile,
   FrozenSoundObject,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   Instance,
   SoundObjectLibrary,
   PatternObject,
@@ -353,8 +353,8 @@ describe('createScoreObjectEditorDocument — audioClip type', () => {
   it('returns audioClip editor with all fields', () => {
     const data = new BlueData();
     data.getScore().length = 0;
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     clip.setName('My Clip');
     clip.setAudioFile('test.wav');
@@ -485,8 +485,8 @@ describe('createScoreObjectEditorDocument — shared properties completeness', (
 
   it('omits timeBehavior and repeatPoint for non-sound-objects (AudioClip)', () => {
     const data = new BlueData();
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     layer.push(clip);
     alg.push(layer);

@@ -3,6 +3,14 @@ import { Channel } from './channel';
 import { Element } from '../serialization/xml-reader';
 
 describe('Channel', () => {
+  it('keeps a non-automated level parameter synchronized with the channel level', () => {
+    const ch = new Channel();
+
+    ch.setLevel(-18);
+
+    expect(ch.getLevelParameter().getFixedValue()).toBe(-18);
+  });
+
   describe('saveAsXML Java parity', () => {
     it('does not write <volume> element', () => {
       const ch = new Channel();

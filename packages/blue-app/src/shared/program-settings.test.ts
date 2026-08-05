@@ -38,6 +38,7 @@ describe('program-settings defaults', () => {
     expect(s.general.csoundErrorWarningEnabled).toBe(true);
     expect(s.general.directoryTempFileLimit).toBe(3);
     expect(s.projectDefaults.defaultPrimaryTimeBase).toBe('BEATS');
+    expect(s.projectDefaults.defaultLayerGroupType).toBe('TRACK');
     expect(s.projectDefaults.defaultUdoStyle).toBe('MODERN');
     expect(s.projectDefaults.defaultSmpteFrameRate).toBe(24);
     expect(s.playback.playbackFps).toBe(24);
@@ -156,6 +157,15 @@ describe('program-settings validation', () => {
     expect(issues.some((i) => i.path === 'general.directoryTempFileLimit' && i.severity === 'error')).toBe(true);
   });
 
+  it('rejects an invalid default layer group type', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.projectDefaults.defaultLayerGroupType = 'INVALID' as never;
+    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
+      path: 'projectDefaults.defaultLayerGroupType',
+      severity: 'error',
+    }));
+  });
+
   it('rejects invalid playbackFps', () => {
     const s = createDefaultProgramSettings('darwin');
     s.playback.playbackFps = 0;
@@ -210,6 +220,13 @@ describe('program-settings mergeWithDefaults', () => {
     expect(merged.general.messageColorsEnabled).toBe(false);
     expect(merged.realtimeRender.audioDriver).toBe('pa_bl');
     expect(merged.version).toBe(2);
+    expect(merged.projectDefaults.defaultLayerGroupType).toBe('TRACK');
+  });
+
+  it('normalizes a missing or malformed saved default layer group type to Track', () => {
+    expect(mergeWithDefaults({ projectDefaults: {} }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
+    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'invalid' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
+    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'SOUND_OBJECT' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('SOUND_OBJECT');
   });
 
   it('preserves saved values', () => {

@@ -13,7 +13,7 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { BlueData, Effect, Send, BSBGroup, BSBWidget, setExternalCommandExecutor } from '@blue/data';
+import { BlueData, Effect, Send, BSBGroup, BSBWidget, TrackLayerGroup, setExternalCommandExecutor } from '@blue/data';
 import { openSettingsWindow } from './settings-window';
 import {
   loadProgramSettings,
@@ -38,6 +38,10 @@ import {
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import {
+  isTrackInstrumentEditorPatchRequest,
+  isTrackInstrumentEditorRequest,
+} from '../shared/track-instrument-editor-contract';
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
@@ -60,6 +64,14 @@ import {
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
+import {
+  broadcastProjectDocumentUpdateToTrackInstrumentWindows,
+  closeTrackInstrumentEditorWindows,
+  closeTrackInstrumentEditorWindowsForGroup,
+  closeTrackInstrumentEditorWindowsForTrack,
+  focusTrackInstrumentEditorWindow,
+  openTrackInstrumentEditorWindow,
+} from './track-instrument-editor-window-manager';
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import {
@@ -81,6 +93,10 @@ import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { syncRuntimeChannel } from './runtime-channel-sync';
+import {
+  syncBsbInstrumentRuntimeChannels,
+  syncBsbRealtimeControlUpdate,
+} from './bsb-instrument-runtime-sync';
 import {
   broadcastToWorkbenchWindows,
   getWorkbenchWindowManager,
@@ -112,19 +128,26 @@ import {
 import {
   applyEffectEditablePatchToEffect,
   applyProjectDocumentPatch,
+  createBsbRealtimeControlUpdate,
   createProjectEditorSnapshot,
   createEffectEditorSnapshot,
+  createTrackInstrumentEditorSnapshot,
   createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
   createNoteProcessorChainSnapshot,
+  findMixerChannelById,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   isEmptyProjectDocumentPatch,
+  isBsbRealtimeControlUpdate,
   resolveTimelineTarget,
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
   type EffectEditablePatch,
+  type TrackInstrumentEditorPatchRequest,
+  type TrackInstrumentEditorRequest,
+  type TrackInstrumentEditorPatchResult,
   type BlueLiveNoteTriggerRequest,
   type BlueLiveNoteTriggerResult,
   type LegacyBlueLiveTriggerRequest,
@@ -338,6 +361,7 @@ function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
   };
   broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
   broadcastProjectDocumentUpdateToEffectWindows(event);
+  broadcastProjectDocumentUpdateToTrackInstrumentWindows(event);
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
@@ -345,27 +369,7 @@ function getProjectMixerChannelBySnapshotId(channelId: string) {
     return null;
   }
 
-  const mixer = currentData.getMixer();
-
-  if (channelId === 'master') {
-    return mixer.getMaster();
-  }
-
-  const sourceChannel = mixer.getChannels().find(
-    (ch) => ch.getAssociation() === channelId || getMixerChannelSnapshotId(ch) === channelId,
-  );
-  if (sourceChannel) {
-    return sourceChannel;
-  }
-
-  const subChannel = mixer.getSubChannels().find(
-    (ch) => getMixerChannelSnapshotId(ch) === channelId,
-  );
-  if (subChannel) {
-    return subChannel;
-  }
-
-  return null;
+  return findMixerChannelById(currentData.getMixer(), channelId);
 }
 
 function getProjectEffectEntryByRequest(request: EffectEditorRequest) {
@@ -407,6 +411,95 @@ function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
     projectRef: request.projectRef,
     projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
   });
+}
+
+function trackInstrumentRequestIsCurrent(request: TrackInstrumentEditorRequest): boolean {
+  const { projectSessionId, projectRevision } = request.track;
+  return projectSessionId === currentProjectSessionId
+    && projectRevision === currentProjectRevision;
+}
+
+function getTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
+  if (!currentData || !trackInstrumentRequestIsCurrent(request)) return null;
+
+  return getCurrentTrackInstrumentEditorSnapshot(request);
+}
+
+function getCurrentTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
+  if (!currentData || request.track.projectSessionId !== currentProjectSessionId) return null;
+
+  return createTrackInstrumentEditorSnapshot(currentData, {
+    track: {
+      ...request.track,
+      projectSessionId: currentProjectSessionId,
+      projectRevision: currentProjectRevision,
+    },
+  });
+}
+
+async function applyTrackInstrumentEditorPatch(
+  request: TrackInstrumentEditorPatchRequest,
+): Promise<TrackInstrumentEditorPatchResult> {
+  const data = currentData;
+  if (!data) {
+    return { status: 'unavailable', snapshot: null };
+  }
+  const currentSnapshot = getCurrentTrackInstrumentEditorSnapshot(request);
+  if (!currentSnapshot) {
+    return { status: 'unavailable', snapshot: null };
+  }
+  if (!trackInstrumentRequestIsCurrent(request)) {
+    return { status: 'stale', snapshot: currentSnapshot };
+  }
+
+  const patch: ProjectDocumentPatch = {
+    score: {
+      type: 'updateTrackInstrument',
+      track: currentSnapshot.track,
+      patch: request.patch,
+    },
+  };
+  const changed = applyProjectDocumentPatch(data, patch, {
+    projectSessionId: currentProjectSessionId,
+    projectRevision: currentProjectRevision,
+    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+  });
+  if (!changed) {
+    return { status: 'unchanged', snapshot: currentSnapshot };
+  }
+
+  currentProjectRevision += 1;
+  broadcastProjectDocumentUpdate();
+  const directRealtimeUpdate = request.patch.bsbInterface
+    ? createBsbRealtimeControlUpdate(
+        {
+          track: {
+            projectSessionId: currentProjectSessionId,
+            rootGroupId: request.track.rootGroupId,
+            trackId: request.track.trackId,
+          },
+        },
+        request.patch.bsbInterface,
+      )
+    : undefined;
+  if (!directRealtimeUpdate
+    && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
+    try {
+      await syncEngineWithProjectPatch(data, patch);
+    } catch (error) {
+      console.error('[main] Failed to sync Track instrument editor patch:', error);
+    }
+  }
+  return {
+    status: 'applied',
+    snapshot: getTrackInstrumentEditorSnapshot({
+      track: {
+        ...request.track,
+        projectSessionId: currentProjectSessionId,
+        projectRevision: currentProjectRevision,
+      },
+    }),
+  };
 }
 
 function computeInterfaceBounds(effect: Effect): { maxW: number; maxH: number } {
@@ -525,6 +618,36 @@ function maybeCloseRemovedProjectEffectEditors(patch: ProjectDocumentPatch): voi
       entryId,
     },
   });
+}
+
+function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): void {
+  const scorePatch = patch.score;
+  if (!scorePatch || !currentData) return;
+
+  if (scorePatch.type === 'removeLayerGroup') {
+    closeTrackInstrumentEditorWindowsForGroup(scorePatch.groupId);
+    return;
+  }
+
+  if (scorePatch.type === 'clearTrackInstrument'
+    || scorePatch.type === 'replaceTrackInstrument') {
+    closeTrackInstrumentEditorWindowsForTrack(
+      scorePatch.track.rootGroupId,
+      scorePatch.track.trackId,
+    );
+    return;
+  }
+
+  if (scorePatch.type !== 'removeLayer') return;
+  const group = currentData.getScore().find(
+    (candidate): candidate is TrackLayerGroup => (
+      candidate instanceof TrackLayerGroup && candidate.getUniqueId() === scorePatch.groupId
+    ),
+  );
+  const track = group?.[scorePatch.layerIndex];
+  if (track) {
+    closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
+  }
 }
 
 function updateWindowTitle(): void {
@@ -1349,6 +1472,7 @@ async function doQuit(): Promise<void> {
 
     closeEffectEditorWindowsForOwner('project');
     closeEffectEditorWindowsForOwner('library');
+    closeTrackInstrumentEditorWindows();
     currentData = null;
     currentFilePath = null;
     currentProjectRevision = 0;
@@ -1483,6 +1607,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     await stopActiveBlueLiveBeforeProjectReplacement();
     await disposeJavaRuntimeSession();
     closeEffectEditorWindowsForOwner('project');
+    closeTrackInstrumentEditorWindows();
 
     currentData = data;
     currentFilePath = filePath;
@@ -1611,6 +1736,7 @@ async function newFile(): Promise<void> {
   await stopActiveBlueLiveBeforeProjectReplacement();
   await disposeJavaRuntimeSession();
   closeEffectEditorWindowsForOwner('project');
+  closeTrackInstrumentEditorWindows();
 
   const data = new BlueData();
   const settings = loadProgramSettings();
@@ -2007,6 +2133,7 @@ async function startPlayback(): Promise<boolean> {
       currentData.getArrangement(),
       currentData.getMixer(),
       parameters,
+      currentData.getScore(),
     );
     if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
       console.warn(
@@ -2346,6 +2473,17 @@ ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: st
   await fs.promises.writeFile(result.filePath, codeText, 'utf-8');
 });
 
+ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string) => {
+  if (!mainWindow || typeof xmlText !== 'string' || xmlText.trim().length === 0) return;
+  const safeName = objectName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'SoundObject';
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: `${safeName}.xml`,
+    filters: [{ name: 'Blue SoundObject XML', extensions: ['xml'] }],
+  });
+  if (result.canceled || !result.filePath) return;
+  await fs.promises.writeFile(result.filePath, xmlText, 'utf-8');
+});
+
 // ─── Blue Live IPC Handlers ───
 
 ipcMain.handle('blue-live:toggle', async () => {
@@ -2545,6 +2683,33 @@ ipcMain.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => 
   return focusEffectEditorWindow(request);
 });
 
+ipcMain.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)
+    || !trackInstrumentRequestIsCurrent(request)
+    || !getTrackInstrumentEditorSnapshot(request)) return;
+  openTrackInstrumentEditorWindow(mainWindow, request, {
+    initialZoomFactor: appZoomController.getCurrentFactor(),
+  });
+});
+
+ipcMain.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)
+    || !trackInstrumentRequestIsCurrent(request)) return false;
+  return focusTrackInstrumentEditorWindow(request);
+});
+
+ipcMain.handle('get-track-instrument-editor-document', (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)) return null;
+  return getTrackInstrumentEditorSnapshot(request);
+});
+
+ipcMain.handle('update-track-instrument-editor-document', (_event, request: TrackInstrumentEditorPatchRequest) => {
+  if (!isTrackInstrumentEditorPatchRequest(request)) {
+    return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
+  }
+  return applyTrackInstrumentEditorPatch(request);
+});
+
 // ─── Evaluate Code IPC Handler ───
 
 ipcMain.handle('engine:evaluate-code', async (_event, request: { editorKind: string; text: string; sourcePanelId: string }) => {
@@ -2625,150 +2790,32 @@ async function syncEngineWithProjectPatch(
     if (orchestraPatch.type === 'updateInstrument') {
       const instrument = arrangement.getInstrumentById(orchestraPatch.assignmentId);
       if (instrument instanceof BlueSynthBuilder) {
-        // 1. Individual widget updates
-        if (orchestraPatch.patch.bsbWidgetValues) {
-          const params = instrument.getParameters();
-          for (const [objectName, value] of Object.entries(orchestraPatch.patch.bsbWidgetValues)) {
-            const param = params.find((p) => p.getName() === objectName);
-            if (param && param.getCompilationVarName()) {
-              await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-            }
-          }
-        }
-
-        // 2. BSB Interface patches (like presets)
-        if (orchestraPatch.patch.bsbInterface) {
-          const bsbPatch = orchestraPatch.patch.bsbInterface;
-          if (bsbPatch.type === 'applyPreset') {
-            // Preset applied: sync ALL parameters for this instrument to the engine
-            const params = instrument.getParameters();
-            for (const param of params) {
-              const varName = param.getCompilationVarName();
-              if (varName) {
-                await syncActiveRuntimeChannel(varName, param.getFixedValue());
-              }
-            }
-          } else if (bsbPatch.type === 'updateWidgetProperties') {
-            const widget = instrument.getGraphicInterface().findWidgetById(bsbPatch.widgetId);
-            if (widget && widget.objectName) {
-              const props = bsbPatch.properties;
-              if (typeof props.value === 'number') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.value);
-                }
-              }
-              if (typeof props.selected === 'boolean') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selected ? 1 : 0);
-                }
-              }
-              if (typeof props.selectedIndex === 'number') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selectedIndex);
-                }
-              }
-              if (typeof props.xValue === 'number') {
-                const px = instrument.getParameters().find(p => p.getName() === widget.objectName + 'X');
-                if (px && px.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(px.getCompilationVarName()!, props.xValue);
-                }
-              }
-              if (typeof props.yValue === 'number') {
-                const py = instrument.getParameters().find(p => p.getName() === widget.objectName + 'Y');
-                if (py && py.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(py.getCompilationVarName()!, props.yValue);
-                }
-              }
-            }
-          } else if (bsbPatch.type === 'updateSliderBankValue') {
-            const widget = instrument.getGraphicInterface().findWidgetById(bsbPatch.widgetId);
-            if (widget?.objectName) {
-              const param = instrument.getParameters().find(
-                (candidate) => candidate.getName() === `${widget.objectName}_${bsbPatch.sliderIndex}`,
-              );
-              if (param?.getCompilationVarName()) {
-                await syncActiveRuntimeChannel(param.getCompilationVarName()!, bsbPatch.value);
-              }
-            }
-          }
-        }
+        await syncBsbInstrumentRuntimeChannels(
+          instrument,
+          orchestraPatch.patch,
+          syncActiveRuntimeChannel,
+        );
       }
     }
   }
-}
 
-async function syncEngineWithRealtimeControlUpdate(
-  data: BlueData,
-  update: BsbRealtimeControlUpdate,
-) {
-  const arrangement = data.getArrangement();
-  const instrument = arrangement.getInstrumentById(update.assignmentId);
-  if (!(instrument instanceof BlueSynthBuilder)) return;
-
-  const widget = instrument.getGraphicInterface().findWidgetById(update.widgetId);
-  if (!widget?.objectName) return;
-
-  const findParameter = (name: string) => {
-    return instrument.getParameters().find((candidate) => candidate.getName() === name);
-  };
-
-  switch (update.kind) {
-    case 'value': {
-      const value = typeof update.payload.value === 'number' ? update.payload.value : null;
-      if (value === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-      }
-      break;
-    }
-    case 'selected': {
-      const selected = typeof update.payload.selected === 'boolean' ? update.payload.selected : null;
-      if (selected === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selected ? 1 : 0);
-      }
-      break;
-    }
-    case 'selectedIndex': {
-      const selectedIndex = typeof update.payload.selectedIndex === 'number' ? update.payload.selectedIndex : null;
-      if (selectedIndex === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selectedIndex);
-      }
-      break;
-    }
-    case 'xy': {
-      const nextX = typeof update.payload.xValue === 'number' ? update.payload.xValue : null;
-      const nextY = typeof update.payload.yValue === 'number' ? update.payload.yValue : null;
-      if (nextX !== null) {
-        const px = findParameter(`${widget.objectName}X`);
-        if (px?.getCompilationVarName()) {
-          await syncActiveRuntimeChannel(px.getCompilationVarName()!, nextX);
-        }
-      }
-      if (nextY !== null) {
-        const py = findParameter(`${widget.objectName}Y`);
-        if (py?.getCompilationVarName()) {
-          await syncActiveRuntimeChannel(py.getCompilationVarName()!, nextY);
-        }
-      }
-      break;
-    }
-    case 'sliderBank': {
-      const sliderIndex = typeof update.payload.sliderIndex === 'number' ? update.payload.sliderIndex : null;
-      const value = typeof update.payload.value === 'number' ? update.payload.value : null;
-      if (sliderIndex === null || value === null) break;
-      const param = findParameter(`${widget.objectName}_${sliderIndex}`);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-      }
-      break;
+  const scorePatch = patch.score;
+  if (scorePatch?.type === 'updateTrackInstrument') {
+    const group = data.getScore().find(
+      (candidate): candidate is TrackLayerGroup => (
+        candidate instanceof TrackLayerGroup
+        && candidate.getUniqueId() === scorePatch.track.rootGroupId
+      ),
+    );
+    const instrument = group
+      ?.find((track) => track.getUniqueId() === scorePatch.track.trackId)
+      ?.getInstrument();
+    if (instrument instanceof BlueSynthBuilder) {
+      await syncBsbInstrumentRuntimeChannels(
+        instrument,
+        scorePatch.patch,
+        syncActiveRuntimeChannel,
+      );
     }
   }
 }
@@ -2795,7 +2842,12 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
       : false;
     const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
     maybeCloseRemovedProjectEffectEditors(patch);
-    const changed = applyProjectDocumentPatch(currentData, patch);
+    maybeCloseRemovedTrackInstrumentEditors(patch);
+    const changed = applyProjectDocumentPatch(currentData, patch, {
+      projectSessionId: currentProjectSessionId,
+      projectRevision: currentProjectRevision,
+      defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+    });
     if (changed) {
       anyCanonicalMutation = true;
       for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
@@ -2998,11 +3050,16 @@ ipcMain.handle('java-runtime:reinitialize-jython', async () => {
 });
 
 ipcMain.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {
-  if (!currentData) {
+  if (!currentData || !isBsbRealtimeControlUpdate(update)) {
     return;
   }
 
-  void syncEngineWithRealtimeControlUpdate(currentData, update).catch((error) => {
+  void syncBsbRealtimeControlUpdate(
+    currentData,
+    update,
+    currentProjectSessionId,
+    syncActiveRuntimeChannel,
+  ).catch((error) => {
     console.error('[main] Failed to sync realtime BSB control update:', error);
   });
 });
@@ -3052,8 +3109,13 @@ ipcMain.handle('update-project-document', (_event, patch) => {
   }
 
   maybeCloseRemovedProjectEffectEditors(patch);
+  maybeCloseRemovedTrackInstrumentEditors(patch);
   const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
-  const changed = applyProjectDocumentPatch(currentData, patch);
+  const changed = applyProjectDocumentPatch(currentData, patch, {
+    projectSessionId: currentProjectSessionId,
+    projectRevision: currentProjectRevision,
+    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+  });
   if (changed) {
     for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
       scoreAutomationParameterIds.add(id);

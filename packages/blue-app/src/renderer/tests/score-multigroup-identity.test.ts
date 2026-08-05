@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  AudioLayerGroup,
+  TrackLayerGroup,
   AudioClip,
   BlueData,
   FadeType,
@@ -251,7 +251,7 @@ describe('score multigroup object identity', () => {
     rootLayer.push(nested);
     root.push(rootLayer);
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     const audioLayer = audio.newLayerAt(0);
     audioLayer.setHeightIndex(3);
 
@@ -276,7 +276,7 @@ describe('score multigroup object identity', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     audio.newLayerAt(0);
     data.getScore().push(audio);
 
@@ -294,7 +294,7 @@ describe('score multigroup object identity', () => {
       },
     });
 
-    expect((data.getScore()[0] as AudioLayerGroup)[0]!.getHeightIndex()).toBe(4);
+    expect((data.getScore()[0] as TrackLayerGroup)[0]!.getHeightIndex()).toBe(4);
 
     const updatedSnapshot = createProjectEditorSnapshot(data, null);
     expect(updatedSnapshot.score.layerGroups[0]!.layers[0]!.height).toBe(110);
@@ -304,8 +304,8 @@ describe('score multigroup object identity', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audio = new AudioLayerGroup();
-    audio.setName('Audio');
+    const audio = new TrackLayerGroup();
+    audio.setName('Track');
     const poly = new PolyObject(true);
     poly.setName('Poly');
     const patterns = new PatternsLayerGroup();
@@ -329,7 +329,7 @@ describe('score multigroup object identity', () => {
     const updated = createProjectEditorSnapshot(data, null);
     expect(updated.score.layerGroups.map((group) => group.name)).toEqual([
       'Poly',
-      'Audio',
+      'Track',
       'Patterns',
     ]);
   });
@@ -341,7 +341,7 @@ describe('score multigroup object identity', () => {
     applyProjectDocumentPatch(data, {
       score: {
         type: 'addLayerGroup',
-        groupType: 'audio',
+        groupType: 'track',
       },
     });
 
@@ -352,18 +352,18 @@ describe('score multigroup object identity', () => {
       },
     });
 
-    expect(data.getScore()[0]).toBeInstanceOf(AudioLayerGroup);
-    expect((data.getScore()[0] as AudioLayerGroup).length).toBe(1);
+    expect(data.getScore()[0]).toBeInstanceOf(TrackLayerGroup);
+    expect((data.getScore()[0] as TrackLayerGroup).length).toBe(1);
     expect(data.getScore()[1]).toBeInstanceOf(PatternsLayerGroup);
     expect((data.getScore()[1] as PatternsLayerGroup).length).toBe(1);
 
     const snapshot = createProjectEditorSnapshot(data, null);
     expect(snapshot.score.layerGroups.map((group) => group.groupType)).toEqual([
-      'audio',
+      'track',
       'patterns',
     ]);
     expect(snapshot.score.layerGroups.map((group) => group.name)).toEqual([
-      'Audio Layer Group',
+      'Track Layer Group',
       'Patterns Layer Group',
     ]);
   });
@@ -372,7 +372,7 @@ describe('score multigroup object identity', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     audio.newLayerAt(0);
     data.getScore().push(audio);
 
@@ -402,7 +402,7 @@ describe('score multigroup object identity', () => {
     const updatedSnapshot = createProjectEditorSnapshot(data, null);
     const canonicalItem = updatedSnapshot.score.layerGroups[0]!.layers[0]!.items[0]!;
 
-    expect((data.getScore()[0] as AudioLayerGroup)[0]![0]).toBeInstanceOf(AudioClip);
+    expect((data.getScore()[0] as TrackLayerGroup)[0]![0]).toBeInstanceOf(AudioClip);
     expect(canonicalItem.objectType).toBe('AudioClip');
     expect(canonicalItem.startBeats).toBe(4);
     expect(canonicalItem.durationTimeBase).toBe('TIME');
@@ -468,7 +468,7 @@ describe('score multigroup object identity', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     audio.newLayerAt(0);
     data.getScore().push(audio);
 
@@ -507,7 +507,7 @@ describe('score multigroup object identity', () => {
     tempoMap.setEnabled(true);
     tempoMap.setTempo(120);
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     audio.newLayerAt(0);
     audio.newLayerAt(1);
 
@@ -554,7 +554,7 @@ describe('score multigroup object identity', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audio = new AudioLayerGroup();
+    const audio = new TrackLayerGroup();
     audio.newLayerAt(0);
 
     const clip = createAudioClipForTest('Colored Clip', '/tmp/colored.wav', 2);

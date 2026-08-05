@@ -4,6 +4,10 @@ import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
   EffectEditorSnapshot,
+  TrackInstrumentEditorPatchRequest,
+  TrackInstrumentEditorPatchResult,
+  TrackInstrumentEditorRequest,
+  TrackInstrumentEditorSnapshot,
   BsbRealtimeControlUpdate,
   MixerRealtimeLevelUpdate,
   EffectRealtimeUpdate,
@@ -84,7 +88,10 @@ import type {
   CutLibraryToClipboardRequest,
   CutLibraryToClipboardResult,
   LibraryInteractionClipboard,
+  BsbCanvasClipboard,
   ScoreTimelineSoundObjectRequest,
+  TrackInstrumentClipboardRequest,
+  BlueLiveSoundObjectClipboardRequest,
   OpenLibraryEditorRequest,
   LibraryEditorPatchRequest,
   LibraryEditorConflictDecision,
@@ -163,8 +170,16 @@ declare global {
       cutLibraryToClipboard: (
         request: CutLibraryToClipboardRequest,
       ) => Promise<LibraryResult<CutLibraryToClipboardResult>>;
+      setLibraryClipboard: (clipboard: LibraryInteractionClipboard | null) => Promise<boolean>;
+      setBsbClipboard: (clipboard: BsbCanvasClipboard | null) => Promise<boolean>;
       captureScoreSoundObjectClipboard: (
         request: ScoreTimelineSoundObjectRequest,
+      ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
+      captureTrackInstrumentClipboard: (
+        request: TrackInstrumentClipboardRequest,
+      ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
+      captureBlueLiveSoundObjectClipboard: (
+        request: BlueLiveSoundObjectClipboardRequest,
       ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
       addScoreSoundObjectToProjectLibrary: (
         request: ScoreTimelineSoundObjectRequest,
@@ -257,6 +272,18 @@ declare global {
       openEffectInterface: (
         request: EffectEditorRequest,
       ) => Promise<void>;
+      openTrackInstrumentEditor: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<void>;
+      focusTrackInstrumentEditor: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<boolean>;
+      getTrackInstrumentEditorDocument: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<TrackInstrumentEditorSnapshot | null>;
+      updateTrackInstrumentEditorDocument: (
+        request: TrackInstrumentEditorPatchRequest,
+      ) => Promise<TrackInstrumentEditorPatchResult>;
       getEffectEditorDocument: (
         request: EffectEditorRequest,
       ) => Promise<EffectEditorSnapshot | null>;
@@ -312,6 +339,7 @@ declare global {
       importCsoundUdo: () => Promise<string | null>;
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
+      exportScoreObject: (xmlText: string, objectName: string) => Promise<void>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;
       onProjectClosed: (cb: () => void) => () => void;
       onPlaybackStatus: (cb: (status: { status: string; message?: string }) => void) => () => void;

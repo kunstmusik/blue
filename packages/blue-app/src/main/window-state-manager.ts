@@ -37,6 +37,7 @@ const DEFAULT_WINDOW_SIZES: Record<WindowId, { width: number; height: number }> 
   settings: { width: 800, height: 600 },
   'effect-editor': { width: 1100, height: 820 },
   'effect-interface': { width: 460, height: 560 },
+  'track-instrument-editor': { width: 1000, height: 760 },
 };
 
 const trackedWindowIds = new WeakMap<BrowserWindow, WindowId>();

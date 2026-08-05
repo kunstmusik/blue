@@ -43,6 +43,9 @@ import type {
   CutLibraryToClipboardResult,
   LibraryInteractionClipboard,
   ScoreTimelineSoundObjectRequest,
+  TrackInstrumentClipboardRequest,
+  BlueLiveSoundObjectClipboardRequest,
+  BsbCanvasClipboard,
 } from '../../shared/unified-library';
 import {
   createLibraryCursor,
@@ -60,6 +63,10 @@ import { classifyRepositoryFailure, verifyRepositoryBackup } from './recovery';
 import { LibraryDragSessionService } from './drag-session-service';
 
 type RepositoryClientFactory = (databasePath: string) => UnifiedLibraryRepositoryClient;
+
+function cloneBsbClipboard(clipboard: BsbCanvasClipboard): BsbCanvasClipboard {
+  return JSON.parse(JSON.stringify(clipboard)) as BsbCanvasClipboard;
+}
 
 export interface UnifiedLibraryServiceOptions {
   readonly legacyConfigurationDirectory?: string;
@@ -123,6 +130,8 @@ export class UnifiedLibraryService {
     userItemCounts: { ...EMPTY_COUNTS },
     projectSessionId: null,
     writable: false,
+    clipboard: null,
+    bsbClipboard: null,
   };
 
   constructor(
@@ -180,8 +189,29 @@ export class UnifiedLibraryService {
     return {
       ...this.snapshot,
       userItemCounts: { ...this.snapshot.userItemCounts },
+      bsbClipboard: this.snapshot.bsbClipboard
+        ? cloneBsbClipboard(this.snapshot.bsbClipboard)
+        : null,
       ...(this.activeOperation ? { operation: { ...this.activeOperation } } : {}),
     };
+  }
+
+  setClipboard(clipboard: LibraryInteractionClipboard | null): boolean {
+    if (clipboard?.source.kind === 'buffer') {
+      const entry = this.clipboardEntries.get(clipboard.source.clipboardId);
+      if (!entry || entry.expiresAt < Date.now()) return false;
+    } else {
+      this.clipboardEntries.clear();
+    }
+    this.updateSnapshot({ clipboard });
+    return true;
+  }
+
+  setBsbClipboard(clipboard: BsbCanvasClipboard | null): boolean {
+    this.updateSnapshot({
+      bsbClipboard: clipboard ? cloneBsbClipboard(clipboard) : null,
+    });
+    return true;
   }
 
   async browseLibraries(
@@ -437,11 +467,11 @@ export class UnifiedLibraryService {
     if (request.type === 'browseType') {
       this.context = { selectedType: request.libraryType, target: null };
     } else {
-      const libraryType = request.type === 'instrumentTarget'
+      const libraryType = request.type === 'instrumentTarget' || request.type === 'trackInstrumentTarget'
         ? 'instrument'
         : request.type === 'udoTarget'
           ? 'udo'
-          : request.type === 'effectTarget'
+        : request.type === 'effectTarget'
             ? 'effect'
             : 'soundObject';
       const activeSession = this.projectAdapter.getProjectSessionId();
@@ -460,6 +490,11 @@ export class UnifiedLibraryService {
             insertIndex: request.insertIndex,
             targetRevision: request.targetRevision,
           }
+        : request.type === 'trackInstrumentTarget'
+          ? {
+              destinationKind: 'trackInstrument' as const,
+              track: { rootGroupId: request.rootGroupId, trackId: request.trackId },
+            }
         : request.type === 'soundObjectTarget'
           ? { location: request.location, targetRevision: request.targetRevision }
           : {};
@@ -471,7 +506,11 @@ export class UnifiedLibraryService {
           : 'Mixer',
         soundObject: 'Score',
       } as const;
-      const target = this.projectAdapter.createContextTarget(libraryType, labels[libraryType], details);
+      const target = this.projectAdapter.createContextTarget(
+        libraryType,
+        request.type === 'trackInstrumentTarget' ? 'Track Instrument' : labels[libraryType],
+        details,
+      );
       if (!target) return this.notReady();
       this.context = { selectedType: libraryType, target };
     }
@@ -894,19 +933,21 @@ export class UnifiedLibraryService {
         preview,
         expiresAt: Date.now() + 24 * 60 * 60_000,
       });
+      const clipboard: LibraryInteractionClipboard = {
+        operation: 'cut',
+        source: {
+          kind: 'buffer',
+          clipboardId,
+          libraryType: subtree.libraryType,
+        },
+        capturedAt: Date.now(),
+        objectType: subtree.payload?.objectType,
+      };
+      this.setClipboard(clipboard);
       return {
         ok: true,
         value: {
-          clipboard: {
-            operation: 'cut',
-            source: {
-              kind: 'buffer',
-              clipboardId,
-              libraryType: subtree.libraryType,
-            },
-            capturedAt: Date.now(),
-            objectType: subtree.payload?.objectType,
-          },
+          clipboard,
           closedEditorSessionIds,
         },
       };
@@ -921,63 +962,93 @@ export class UnifiedLibraryService {
     if (!this.getReadyClient()) return this.notReady();
     try {
       const source = this.projectAdapter.getTimelineSoundObjectSource(request);
-      const clipboardId = randomUUID();
-      const contentHash = hashText(source.payloadXml);
-      const key: LibraryItemKey = {
-        scope: 'user',
-        libraryType: 'soundObject',
-        nodeId: `clipboard:${clipboardId}`,
-      };
-      const preview: LibraryItemPreview = {
-        key,
-        displayName: source.displayName,
-        libraryType: 'soundObject',
-        scope: 'user',
-        objectType: source.objectType,
-        supportStatus: 'supported',
-        supportMessage: null,
-        fields: {
-          objectType: { state: 'available', value: source.objectType },
-        },
-        dependencies: { itemOwned: [], unresolvedExternal: [] },
-      };
-      this.clipboardEntries.clear();
-      this.clipboardEntries.set(clipboardId, {
-        subtree: {
-          libraryType: 'soundObject',
-          nodeKind: 'item',
-          displayName: source.displayName,
-          payload: {
-            embeddedName: source.displayName,
-            objectType: source.objectType,
-            supportStatus: 'supported',
-            supportReasonCode: null,
-            supportMessage: null,
-            payloadXml: source.payloadXml,
-            rawHash: contentHash,
-            canonicalContentHash: contentHash,
-            serializerRevision: '1',
-            preview: {},
-            dependencies: { itemOwned: [], unresolvedExternal: [] },
-            metadataRevision: 1,
-          },
-          children: [],
-        },
-        preview,
-        expiresAt: Date.now() + 24 * 60 * 60_000,
-      });
-      return {
-        ok: true,
-        value: {
-          operation: 'copy',
-          source: { kind: 'buffer', clipboardId, libraryType: 'soundObject' },
-          capturedAt: Date.now(),
-          objectType: source.objectType,
-        },
-      };
+      return { ok: true, value: this.capturePortableItem('soundObject', source) };
     } catch (error) {
       return this.failureResult(error);
     }
+  }
+
+  async captureTrackInstrumentClipboard(
+    request: TrackInstrumentClipboardRequest,
+  ): Promise<LibraryResult<LibraryInteractionClipboard>> {
+    if (!this.getReadyClient()) return this.notReady();
+    try {
+      const source = this.projectAdapter.getTrackInstrumentSource(request);
+      return { ok: true, value: this.capturePortableItem('instrument', source) };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async captureBlueLiveSoundObjectClipboard(
+    request: BlueLiveSoundObjectClipboardRequest,
+  ): Promise<LibraryResult<LibraryInteractionClipboard>> {
+    if (!this.getReadyClient()) return this.notReady();
+    try {
+      const source = this.projectAdapter.getBlueLiveSoundObjectSource(request);
+      return { ok: true, value: this.capturePortableItem('soundObject', source) };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  private capturePortableItem(
+    libraryType: LibraryType,
+    source: { readonly displayName: string; readonly objectType: string; readonly payloadXml: string },
+  ): LibraryInteractionClipboard {
+    const clipboardId = randomUUID();
+    const contentHash = hashText(source.payloadXml);
+    const key: LibraryItemKey = {
+      scope: 'user',
+      libraryType,
+      nodeId: `clipboard:${clipboardId}`,
+    };
+    const preview: LibraryItemPreview = {
+      key,
+      displayName: source.displayName,
+      libraryType,
+      scope: 'user',
+      objectType: source.objectType,
+      supportStatus: 'supported',
+      supportMessage: null,
+      fields: {
+        objectType: { state: 'available', value: source.objectType },
+      },
+      dependencies: { itemOwned: [], unresolvedExternal: [] },
+    };
+    this.clipboardEntries.clear();
+    this.clipboardEntries.set(clipboardId, {
+      subtree: {
+        libraryType,
+        nodeKind: 'item',
+        displayName: source.displayName,
+        payload: {
+          embeddedName: source.displayName,
+          objectType: source.objectType,
+          supportStatus: 'supported',
+          supportReasonCode: null,
+          supportMessage: null,
+          payloadXml: source.payloadXml,
+          rawHash: contentHash,
+          canonicalContentHash: contentHash,
+          serializerRevision: '1',
+          preview: {},
+          dependencies: { itemOwned: [], unresolvedExternal: [] },
+          metadataRevision: 1,
+        },
+        children: [],
+      },
+      preview,
+      expiresAt: Date.now() + 24 * 60 * 60_000,
+    });
+    const clipboard: LibraryInteractionClipboard = {
+      operation: 'copy',
+      source: { kind: 'buffer', clipboardId, libraryType },
+      capturedAt: Date.now(),
+      objectType: source.objectType,
+    };
+    this.setClipboard(clipboard);
+    return clipboard;
   }
 
   addScoreSoundObjectToProjectLibrary(
@@ -1435,7 +1506,7 @@ export class UnifiedLibraryService {
   }
 
   private targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
-    if (target.kind === 'orchestra') return 'instrument';
+    if (target.kind === 'orchestra' || target.kind === 'trackInstrument') return 'instrument';
     if (target.kind === 'scoreBsbSound') return 'instrument';
     if (target.kind === 'projectUdo') return 'udo';
     if (target.kind === 'effectChain') return 'effect';
@@ -1450,6 +1521,22 @@ export class UnifiedLibraryService {
       targetRevision: String(target.projectRevision),
     } as const;
     if (target.kind === 'effectChain') return { ...base, label: `${target.chain === 'pre' ? 'Pre' : 'Post'} Effects`, channelId: target.channelId, chain: target.chain, insertIndex: target.insertIndex };
+    if (target.kind === 'trackInstrument') {
+      return {
+        ...base,
+        label: 'Track Instrument',
+        destinationKind: 'trackInstrument' as const,
+        track: target.track,
+      };
+    }
+    if (target.kind === 'blueLive') {
+      return {
+        ...base,
+        label: 'Blue Live',
+        destinationKind: 'blueLive' as const,
+        liveCell: target.liveCell,
+      };
+    }
     if (target.kind === 'score') return { ...base, label: 'Score', destinationKind: 'score' as const, location: target.location };
     if (target.kind === 'scoreBsbSound') return { ...base, label: 'Score', destinationKind: 'scoreBsbSound' as const, location: target.location };
     if (target.kind === 'projectSoundObjectLibrary') {
@@ -1459,12 +1546,17 @@ export class UnifiedLibraryService {
       ...base,
       label: target.kind === 'orchestra'
         ? 'Orchestra'
-        : target.instrumentAssignmentId
-          ? 'Instrument UDOs'
-          : 'Project UDOs',
+        : target.track
+          ? 'Track UDOs'
+          : target.instrumentAssignmentId
+            ? 'Instrument UDOs'
+            : 'Project UDOs',
       insertIndex: target.insertIndex,
       ...(target.kind === 'projectUdo' && target.instrumentAssignmentId
         ? { instrumentAssignmentId: target.instrumentAssignmentId }
+        : {}),
+      ...(target.kind === 'projectUdo' && target.track
+        ? { track: target.track }
         : {}),
     };
   }
@@ -1503,7 +1595,12 @@ export class UnifiedLibraryService {
     this.transferPreviews.clear();
     this.clipboardEntries.clear();
     this.mutationPreviews.clear();
-    this.updateSnapshot({ phase: 'stopped', writable: false });
+    this.updateSnapshot({
+      phase: 'stopped',
+      writable: false,
+      clipboard: null,
+      bsbClipboard: null,
+    });
     this.events.removeAllListeners();
   }
 

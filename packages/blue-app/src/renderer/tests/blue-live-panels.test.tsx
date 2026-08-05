@@ -13,6 +13,7 @@ import type { BlueLiveProjectSnapshot } from '../../shared/project-editor';
 import { GenericScore } from '@blue/data';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
+import { useLibraryStore } from '../stores/library-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -75,6 +76,12 @@ function seedProject(blueLive?: BlueLiveProjectSnapshot): void {
 let container: HTMLDivElement;
 let root: Root;
 const originalOpenPanel = useWorkbenchStore.getState().openPanel;
+const originalLibraryActions = {
+  captureBlueLiveSoundObject: useLibraryStore.getState().captureBlueLiveSoundObject,
+  transferToProject: useLibraryStore.getState().transferToProject,
+};
+const captureBlueLiveSoundObject = vi.fn().mockResolvedValue(true);
+const transferToProject = vi.fn().mockResolvedValue(true);
 
 async function openCellMenu(column: number, row: number): Promise<HTMLElement> {
   const cell = container.querySelector(
@@ -114,10 +121,18 @@ beforeEach(() => {
   useScoreSelectionStore.getState().clearClipboard();
   useScoreSelectionStore.getState().clearSelection();
   useWorkbenchStore.setState({ openPanel: originalOpenPanel });
+  captureBlueLiveSoundObject.mockClear();
+  transferToProject.mockClear();
+  useLibraryStore.setState({
+    clipboard: null,
+    captureBlueLiveSoundObject,
+    transferToProject,
+  });
 });
 
 afterEach(() => {
   useWorkbenchStore.setState({ openPanel: originalOpenPanel });
+  useLibraryStore.setState({ ...originalLibraryActions, clipboard: null });
   act(() => { root.unmount(); });
   container.remove();
 });
@@ -398,7 +413,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     expect(bins.cells[3]![0]?.uniqueId).toBe('obj4');
   });
 
-  it('copies a Live Space SoundObject into the Score timeline clipboard', async () => {
+  it('copies a Live Space SoundObject into the shared Score and Library buffers', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
       root.render(<LiveSpaceTab />);
@@ -415,6 +430,54 @@ describe('Blue Live panel tab render tests (T045)', () => {
         serializedXml: expect.stringContaining('GenericScore'),
       }),
     ]);
+    expect(captureBlueLiveSoundObject).toHaveBeenCalledWith({
+      projectSessionId: useProjectStore.getState().sessionId,
+      projectRevision: expect.any(Number),
+      liveObjectId: 'obj1',
+    });
+  });
+
+  it('leaves the Live Space cell and prior Score buffer unchanged when portable capture fails', async () => {
+    seedProject(makeBlueLiveSnapshot());
+    captureBlueLiveSoundObject.mockResolvedValueOnce(false);
+    act(() => {
+      root.render(<LiveSpaceTab />);
+    });
+
+    await openCellMenu(0, 0);
+    await selectMenuItem('Cut');
+
+    expect(useProjectStore.getState().blueLive!.bins.cells[0]?.[0]?.uniqueId).toBe('obj1');
+    expect(useScoreSelectionStore.getState().clipboard).toEqual([]);
+  });
+
+  it('pastes the shared Library SoundObject buffer into an exact Blue Live cell', async () => {
+    seedProject(makeBlueLiveSnapshot());
+    useLibraryStore.setState({
+      clipboard: {
+        operation: 'copy',
+        source: {
+          kind: 'userNode',
+          libraryType: 'soundObject',
+          nodeId: 'library-sound',
+          revision: 4,
+        },
+        capturedAt: 1,
+      },
+    });
+    act(() => root.render(<LiveSpaceTab />));
+
+    await openCellMenu(1, 0);
+    await selectMenuItem('Paste');
+    expect(transferToProject).toHaveBeenCalledWith(
+      { kind: 'clipboard', source: expect.objectContaining({ nodeId: 'library-sound' }) },
+      {
+        kind: 'blueLive',
+        projectSessionId: useProjectStore.getState().sessionId,
+        projectRevision: expect.any(Number),
+        liveCell: { column: 1, row: 0, expectedLiveObjectId: null },
+      },
+    );
   });
 });
 

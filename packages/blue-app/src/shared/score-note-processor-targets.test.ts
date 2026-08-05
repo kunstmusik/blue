@@ -10,7 +10,7 @@ import {
   AddProcessor,
   MultiplyProcessor,
   RotateProcessor,
-  AudioLayerGroup,
+  TrackLayerGroup,
   AudioClip,
   TimePosition,
   PatternsLayerGroup,
@@ -138,11 +138,11 @@ describe('score-note-processor-targets', () => {
     expect(snap.layerGroups[0]!.layers[0]!.noteProcessorChain).toBeUndefined();
   });
 
-  it('handles AudioLayerGroup with group chain in snapshot', () => {
+  it('handles TrackLayerGroup with an empty group chain in snapshot', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const alg = new AudioLayerGroup();
+    const alg = new TrackLayerGroup();
     alg.newLayerAt(0);
 
     const clip = new AudioClip();
@@ -155,7 +155,7 @@ describe('score-note-processor-targets', () => {
 
     const snap = createScoreDocumentSnapshot(data);
     expect(snap.layerGroups).toHaveLength(1);
-    expect(snap.layerGroups[0]!.groupType).toBe('audio');
+    expect(snap.layerGroups[0]!.groupType).toBe('track');
 
     const audioGroup = snap.layerGroups[0]!;
     expect(audioGroup.noteProcessorChain).toBeUndefined();

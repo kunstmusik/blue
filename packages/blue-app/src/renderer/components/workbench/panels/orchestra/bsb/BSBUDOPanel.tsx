@@ -6,13 +6,13 @@ import type {
   UdoDefinitionSnapshot,
 } from '../../../../../../shared/project-editor';
 import { useUdoCallbacks } from '../../../../../hooks/use-udo-callbacks';
-import { getProjectDocumentRevision, useProjectStore } from '../../../../../stores/project-store';
 import UdoWorkspacePanel from '../../udo/UdoWorkspacePanel';
+import type { UdoLibraryDropTarget } from '../../udo/UdoTable';
 
 interface BSBUDOPanelProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
   onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
-  libraryInstrumentAssignmentId?: string;
+  libraryDropTarget?: UdoLibraryDropTarget;
   /** Project-global UDOs available to the embedded BSB UDO body editor. */
   projectUdos?: readonly UdoDefinitionSnapshot[];
 }
@@ -20,12 +20,10 @@ interface BSBUDOPanelProps {
 export default function BSBUDOPanel({
   instrument,
   onInstrumentPatch,
-  libraryInstrumentAssignmentId,
+  libraryDropTarget,
   projectUdos,
 }: BSBUDOPanelProps): React.ReactElement {
   const udolist = instrument.udolist ?? [];
-  const projectSessionId = useProjectStore((state) => state.sessionId);
-  const projectRevision = getProjectDocumentRevision();
 
   const dispatch = useCallback(
     (patch: Record<string, unknown>) => {
@@ -43,13 +41,7 @@ export default function BSBUDOPanel({
         projectUdos={projectUdos}
         resetKey={instrument.assignmentId}
         {...callbacks}
-        libraryDropTarget={libraryInstrumentAssignmentId
-          ? {
-              projectSessionId,
-              projectRevision,
-              instrumentAssignmentId: libraryInstrumentAssignmentId,
-            }
-          : undefined}
+        libraryDropTarget={libraryDropTarget}
       />
     </div>
   );

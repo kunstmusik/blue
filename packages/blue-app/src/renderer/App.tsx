@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useIPCListeners } from './hooks/use-ipc-listeners';
 import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useMidiInputService } from './hooks/use-midi-input-service';
@@ -18,6 +19,10 @@ export default function App(): React.ReactElement {
   useKeyboardShortcuts();
   useMidiInputService();
   useOscControlCommands();
+  useEffect(() => {
+    void useLibraryStore.getState().initialize();
+    return () => useLibraryStore.getState().dispose();
+  }, []);
 
   const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);

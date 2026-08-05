@@ -36,6 +36,7 @@ describe('program-settings-usage matrix', () => {
     expect(keys.has('general.csoundErrorWarningEnabled')).toBe(true);
     expect(keys.has('general.directoryTempFileLimit')).toBe(true);
     expect(keys.has('projectDefaults.defaultAuthor')).toBe(true);
+    expect(keys.has('projectDefaults.defaultLayerGroupType')).toBe(true);
     expect(keys.has('playback.playbackFps')).toBe(true);
     expect(keys.has('utility.csoundExecutable')).toBe(true);
     expect(keys.has('realtimeRender.csoundExecutable')).toBe(true);

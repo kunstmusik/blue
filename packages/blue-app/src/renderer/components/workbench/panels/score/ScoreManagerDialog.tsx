@@ -15,7 +15,7 @@ interface Props {
 
 const ADD_LAYER_GROUP_OPTIONS: Array<{ groupType: ScoreLayerGroupType; label: string }> = [
   { groupType: 'polyObject', label: 'Add SoundObject Layer Group' },
-  { groupType: 'audio', label: 'Add Audio Layer Group' },
+  { groupType: 'track', label: 'Add Track Layer Group' },
   { groupType: 'patterns', label: 'Add Patterns Layer Group' },
 ];
 

@@ -24,6 +24,7 @@ export class BlueX7 extends Instrument {
   saveAsXML(): Element {
     const elem = new Element('instrument');
     elem.setAttribute('type', 'blue.orchestra.BlueX7');
+    elem.setAttribute('enabled', this._enabled.toString());
     elem.addElement('name').setText(this._name);
     elem.addElement('comment').setText(this._comment);
     for (const child of this._rawChildren) {
@@ -36,6 +37,7 @@ export class BlueX7 extends Instrument {
 
   static loadFromXML(data: Element): BlueX7 {
     const instr = new BlueX7();
+    instr.setEnabled(data.getAttribute('enabled') !== 'false');
     instr.setName(data.getTextString('name') ?? '');
     instr.setComment(data.getTextString('comment') ?? '');
     instr._rawChildren = data

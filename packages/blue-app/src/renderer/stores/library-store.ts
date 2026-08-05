@@ -21,12 +21,16 @@ import {
   type ManualLibraryImportPreview,
   type ManualLibraryImportResult,
   type ScoreTimelineSoundObjectRequest,
+  type TrackInstrumentClipboardRequest,
+  type BlueLiveSoundObjectClipboardRequest,
+  type CapturableLibraryTransferSource,
 } from '../../shared/unified-library';
 import {
   libraryEditorPanelId,
   useLibraryEditorStore,
 } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
+import { useBsbClipboardStore } from './bsb-clipboard-store';
 import { toast } from 'sonner';
 
 const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
@@ -35,6 +39,12 @@ const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
   soundObject: [],
   effect: [],
 };
+
+function receiveSharedCopyBuffers(snapshot: LibraryServiceSnapshot): void {
+  if (snapshot.bsbClipboard !== undefined) {
+    useBsbClipboardStore.getState().receiveClipboard(snapshot.bsbClipboard);
+  }
+}
 
 interface LibraryState {
   snapshot: LibraryServiceSnapshot | null;
@@ -68,6 +78,8 @@ interface LibraryState {
   selectItem: (key: LibraryItemKey) => Promise<void>;
   captureClipboard: (node: LibraryBrowseNode, operation: 'copy' | 'cut') => Promise<boolean>;
   captureScoreSoundObject: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
+  captureTrackInstrument: (request: TrackInstrumentClipboardRequest) => Promise<boolean>;
+  captureBlueLiveSoundObject: (request: BlueLiveSoundObjectClipboardRequest) => Promise<boolean>;
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
   cancelClipboard: () => void;
   pasteInto: (parent: LibraryBrowseNode) => Promise<boolean>;
@@ -199,16 +211,20 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const snapshot = await window.blueAPI.getLibraryServiceSnapshot();
+      receiveSharedCopyBuffers(snapshot);
       set({
         snapshot,
         initialized: true,
+        ...(snapshot.clipboard !== undefined ? { clipboard: snapshot.clipboard } : {}),
       });
       unsubscribeSnapshot?.();
       unsubscribeChanged?.();
       unsubscribeSnapshot = window.blueAPI.onLibraryServiceSnapshot((next) => {
+        receiveSharedCopyBuffers(next);
         const projectChanged = get().snapshot?.projectSessionId !== next.projectSessionId;
         set({
           snapshot: next,
+          ...(next.clipboard !== undefined ? { clipboard: next.clipboard } : {}),
           ...(projectChanged ? { selectedKey: null } : {}),
         });
         if (projectChanged) void get().refresh();
@@ -392,12 +408,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (node.revision === undefined || node.nodeKind === 'root') return false;
     if (node.scope === 'user' && typeof node.revision !== 'number') return false;
     if (node.scope !== 'user' && (node.nodeKind !== 'item' || !node.key)) return false;
-    const source = node.scope === 'user'
+    const source: CapturableLibraryTransferSource = node.scope === 'user'
       ? {
           kind: 'userNode' as const,
           libraryType: node.libraryType,
           nodeId: node.nodeId,
-          revision: node.revision,
+          revision: node.revision as number,
         }
       : {
           kind: 'library' as const,
@@ -405,15 +421,29 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           revision: node.revision,
         };
     if (operation === 'copy') {
+      const clipboard: LibraryInteractionClipboard = {
+        operation,
+        source,
+        capturedAt: Date.now(),
+        objectType: node.objectType,
+      };
+      const previousClipboard = get().clipboard;
       set({
-        clipboard: {
-          operation,
-          source,
-          capturedAt: Date.now(),
-          objectType: node.objectType,
-        },
+        clipboard,
         error: null,
       });
+      const publishClipboard = window.blueAPI.setLibraryClipboard;
+      if (typeof publishClipboard === 'function') {
+        try {
+          if (!await publishClipboard(clipboard)) {
+            if (get().clipboard === clipboard) set({ clipboard: previousClipboard });
+            return false;
+          }
+        } catch {
+          if (get().clipboard === clipboard) set({ clipboard: previousClipboard });
+          return false;
+        }
+      }
       return true;
     }
 
@@ -490,6 +520,28 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     return true;
   },
 
+  captureTrackInstrument: async (request) => {
+    const result = await window.blueAPI.captureTrackInstrumentClipboard(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ clipboard: result.value, error: null });
+    return true;
+  },
+
+  captureBlueLiveSoundObject: async (request) => {
+    const result = await window.blueAPI.captureBlueLiveSoundObjectClipboard(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ clipboard: result.value, error: null });
+    return true;
+  },
+
   addScoreSoundObjectToProjectLibrary: async (request) => {
     const result = await window.blueAPI.addScoreSoundObjectToProjectLibrary(request);
     if (!result.ok) {
@@ -502,7 +554,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     return true;
   },
 
-  cancelClipboard: () => set({ clipboard: null }),
+  cancelClipboard: () => {
+    set({ clipboard: null });
+    void window.blueAPI.setLibraryClipboard(null);
+  },
 
   pasteInto: async (destination) => {
     const clipboard = get().clipboard;

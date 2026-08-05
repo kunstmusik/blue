@@ -5,6 +5,7 @@ import type {
   OrchestraPatch,
   UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
+import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
 export interface OrchestraMutationProps {
   onOrchestraPatch: (patch: OrchestraPatch) => void | Promise<void>;
@@ -19,6 +20,8 @@ export interface SelectedInstrumentEditorProps extends OrchestraMutationProps {
    * never leak into library editing.
    */
   projectUdos?: readonly UdoDefinitionSnapshot[];
+  /** Exact project owner for embedded UDO library transfers; library editors omit it. */
+  embeddedUdoTarget?: UdoLibraryDropTarget;
 }
 
 export interface ArrangementPanelProps extends OrchestraMutationProps {

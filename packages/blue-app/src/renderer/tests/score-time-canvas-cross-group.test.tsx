@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
 import type {
-  AudioLayerGroupSnapshot,
+  TrackLayerGroupSnapshot,
   PolyObjectLayerGroupSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreRowObjectSnapshot,
@@ -129,20 +129,23 @@ function createSoundGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): PolyObjectL
   };
 }
 
-function createAudioGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): AudioLayerGroupSnapshot {
+function createTrackGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): TrackLayerGroupSnapshot {
   return {
-    groupId: 'audio-group',
-    groupType: 'audio',
-    name: 'Audio Layer Group',
+    groupId: 'track-group',
+    groupType: 'track',
+    name: 'Track Layer Group',
+    defaultHeightIndex: 0,
     layerCount: itemsByLayer.length,
     isOpenableContainer: false,
     layers: itemsByLayer.map((items, index) => ({
-      layerId: `audio-group-layer-${index}`,
+      layerId: `track-group-layer-${index}`,
       name: `Layer ${index + 1}`,
       height: 44,
       muted: false,
       solo: false,
       items,
+      layerKind: 'track',
+      instrument: null,
     })),
   };
 }
@@ -246,7 +249,7 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],
     ]);
-    const audioGroup = createAudioGroup([
+    const audioGroup = createTrackGroup([
       [createAudioItem('audio-1', 'Kick', 0, 0, 1, 2)],
     ]);
 
@@ -287,7 +290,7 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 1, 2)],
     ]);
-    const audioGroup = createAudioGroup([
+    const audioGroup = createTrackGroup([
       [createAudioItem('audio-1', 'Kick', 0, 0, 3, 2)],
     ]);
 

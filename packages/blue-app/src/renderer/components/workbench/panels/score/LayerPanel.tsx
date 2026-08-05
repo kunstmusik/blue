@@ -4,8 +4,8 @@ import type { SnapValueName } from "@blue/data";
 import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
 import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
-import AudioLayerGroupCanvas from "./layer-groups/AudioLayerGroupCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
+import TrackLayerGroupCanvas from "./layer-groups/TrackLayerGroupCanvas";
 import MultiLineOverlay from "./automation/MultiLineOverlay";
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
@@ -120,13 +120,26 @@ export default function LayerPanel({
                 {spacer}
               </div>
             );
-          case "audio":
+          case "patterns":
             return (
               <div key={group.groupId}>
-                <AudioLayerGroupCanvas
+                <PatternsLayerGroupCanvas
                   group={group}
-                  rootGroupIndex={gi}
+                  pixelsPerBeat={pixelsPerBeat}
+                />
+                {spacer}
+              </div>
+            );
+          case "track":
+            return (
+              <div key={group.groupId} className="not-last:border-b border-app-border/40">
+                <TrackLayerGroupCanvas
+                  group={group}
                   allLayerGroups={visibleGroups}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
+                  scoreRootGroupId={scoreRootGroupId ?? group.groupId}
+                  scoreContainerPath={scoreRootGroupId ? scoreContainerPath : []}
                   mode={mode}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
@@ -135,16 +148,16 @@ export default function LayerPanel({
                   tempo={tempo}
                   smpteFrameRate={smpteFrameRate}
                   meterMap={meterMap}
-                />
-                {spacer}
-              </div>
-            );
-          case "patterns":
-            return (
-              <div key={group.groupId}>
-                <PatternsLayerGroupCanvas
-                  group={group}
-                  pixelsPerBeat={pixelsPerBeat}
+                  onDoubleClickObject={(objectId) => {
+                    const item = group.layers
+                      .flatMap((layer) => layer.items)
+                      .find((candidate) => candidate.objectId === objectId);
+                    if (!item?.editorTarget?.location) return;
+                    onOpenNested(objectId, item.name, item.editorTarget.location, {
+                      rootGroupId: scoreRootGroupId ?? group.groupId,
+                      containerPath: scoreRootGroupId ? scoreContainerPath : [],
+                    });
+                  }}
                 />
                 {spacer}
               </div>

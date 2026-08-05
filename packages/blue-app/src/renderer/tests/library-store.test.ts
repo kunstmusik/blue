@@ -12,6 +12,7 @@ import type {
 import { getLibraryTransferSourceType } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
 import { useLibraryEditorStore } from '../stores/library-editor-store';
+import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 
 const snapshot: LibraryServiceSnapshot = {
   phase: 'ready',
@@ -161,6 +162,8 @@ const deleteProjectLibraryItem = vi.fn(async () => ({
     insertedIdentity: 'udo:501', message: 'Removed.',
   },
 }));
+const setLibraryClipboard = vi.fn(async () => true);
+const setBsbClipboard = vi.fn(async () => true);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -175,6 +178,8 @@ beforeEach(() => {
   cutLibraryToClipboard.mockClear();
   previewProjectLibraryDelete.mockClear();
   deleteProjectLibraryItem.mockClear();
+  setLibraryClipboard.mockClear();
+  setBsbClipboard.mockClear();
   const applyLibraryMutation = vi.fn(async () => ({
     ok: true as const,
     value: { contentRevision: 4, affectedNodes: [] },
@@ -189,6 +194,8 @@ beforeEach(() => {
     applyLibraryTransfer,
     copyLibraryTransferToUser,
     cutLibraryToClipboard,
+    setLibraryClipboard,
+    setBsbClipboard,
     previewProjectLibraryDelete,
     deleteProjectLibraryItem,
     onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
@@ -216,9 +223,57 @@ beforeEach(() => {
   };
   useLibraryStore.getState().reset();
   useLibraryEditorStore.getState().reset();
+  useBsbClipboardStore.getState().receiveClipboard(null);
 });
 
 describe('library store', () => {
+  it('hydrates and follows the main-owned clipboard shared by renderer windows', async () => {
+    const clipboard = {
+      operation: 'copy' as const,
+      source: {
+        kind: 'userNode' as const,
+        libraryType: 'udo' as const,
+        nodeId: 'shared-udo',
+        revision: 1,
+      },
+      capturedAt: 10,
+    };
+    window.blueAPI.getLibraryServiceSnapshot = vi.fn(async () => ({ ...snapshot, clipboard }));
+    await useLibraryStore.getState().initialize();
+    expect(useLibraryStore.getState().clipboard).toEqual(clipboard);
+
+    snapshotListener?.({ ...snapshot, clipboard: null });
+    expect(useLibraryStore.getState().clipboard).toBeNull();
+  });
+
+  it('hydrates, publishes, and follows the separate cross-window BSB buffer', async () => {
+    const bsbClipboard = {
+      originX: 10,
+      originY: 20,
+      widgets: [{
+        id: 'slider-1', type: 'BSBHSlider', objectName: 'amp',
+        x: 10, y: 20, width: 120, height: 24,
+        value: 0.5, minimum: 0, maximum: 1, editable: true,
+        properties: {},
+      }],
+    };
+    window.blueAPI.getLibraryServiceSnapshot = vi.fn(async () => ({
+      ...snapshot,
+      bsbClipboard,
+    }));
+    await useLibraryStore.getState().initialize();
+    expect(useBsbClipboardStore.getState().clipboard).toEqual(bsbClipboard);
+
+    useBsbClipboardStore.getState().setClipboard({
+      ...bsbClipboard,
+      originX: 30,
+    });
+    expect(setBsbClipboard).toHaveBeenCalledWith(expect.objectContaining({ originX: 30 }));
+
+    snapshotListener?.({ ...snapshot, bsbClipboard: null });
+    expect(useBsbClipboardStore.getState().clipboard).toBeNull();
+  });
+
   it('retains pinned or dirty sessions while pruning a replaced clean preview', async () => {
     const cleanPreview = await useLibraryEditorStore.getState().open(item.key!);
     expect(cleanPreview?.sessionId).toBe('session-1');

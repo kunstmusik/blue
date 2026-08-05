@@ -67,7 +67,7 @@ function seedProjectWithAudioAndPolyHeaders(): void {
   snapshot.score.layerGroups = [
     {
       groupId: 'audio-group',
-      groupType: 'audio',
+      groupType: 'track',
       name: 'Audio Layer Group',
       layerCount: 1,
       isOpenableContainer: false,
@@ -81,7 +81,7 @@ function seedProjectWithAudioAndPolyHeaders(): void {
           items: [],
           automation: {
             layerId: 'audio-layer-0',
-            layerKind: 'audio',
+            layerKind: 'track',
             parameterIds: [],
             parameters: [],
             targetGroups: [],
@@ -167,6 +167,44 @@ afterEach(() => {
 });
 
 describe('ScorePanel session resets', () => {
+  it('keeps header, timeline, and overlay horizontal offsets synchronized', () => {
+    seedLoadedProject();
+
+    const { container, root } = renderPanel();
+    const header = container.querySelector('[data-score-timeline-header]') as HTMLDivElement;
+    const timeline = container.querySelector('.score-timeline-scroll') as HTMLDivElement;
+    const overlay = container.querySelector('[data-score-overlay-content]') as HTMLDivElement;
+
+    act(() => {
+      header.scrollLeft = 320;
+      header.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(timeline.scrollLeft).toBe(320);
+    expect(overlay.style.transform).toBe('translateX(-320px)');
+
+    act(() => {
+      timeline.scrollLeft = 120;
+      timeline.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(header.scrollLeft).toBe(120);
+    expect(overlay.style.transform).toBe('translateX(-120px)');
+
+    act(() => {
+      useProjectStore.getState().setScrollToBeatTarget(10);
+    });
+
+    expect(timeline.scrollLeft).toBeGreaterThan(0);
+    expect(header.scrollLeft).toBe(timeline.scrollLeft);
+    expect(overlay.style.transform).toBe(`translateX(-${timeline.scrollLeft}px)`);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('keeps the navigation session when the score time state changes', async () => {
     seedLoadedProject();
 
@@ -270,16 +308,18 @@ describe('ScorePanel session resets', () => {
     container.remove();
   });
 
-  it('does not render a note processor button for audio layer headers', () => {
+  it('renders the Track and SoundObject note processor buttons', () => {
     seedProjectWithAudioAndPolyHeaders();
 
     const { container, root } = renderPanel();
 
     const noteProcessorButtons = container.querySelectorAll('button[title="Note Processors"]');
     const automationButtons = container.querySelectorAll('button[title="Automation"]');
+    const trackInstrumentControl = container.querySelector('[data-track-instrument-control="audio-layer-0"]');
 
-    expect(noteProcessorButtons).toHaveLength(1);
+    expect(noteProcessorButtons).toHaveLength(2);
     expect(automationButtons).toHaveLength(2);
+    expect(trackInstrumentControl?.parentElement?.firstElementChild).toBe(trackInstrumentControl);
 
     act(() => {
       root.unmount();

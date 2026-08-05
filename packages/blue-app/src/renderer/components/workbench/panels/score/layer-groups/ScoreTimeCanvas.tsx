@@ -33,6 +33,8 @@ import {
   readLibraryDragDescriptor,
   readLibraryDragSource,
 } from '../../../../libraries/library-drag-drop';
+import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
+import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -287,6 +289,9 @@ export default function ScoreTimeCanvas({
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
   const currentScore = useProjectStore((s) => s.score);
   const containerRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<ScoreObjectColorPickerHandle>(null);
+  const colorPickerAnchorRef = useRef<ColorPickerAnchorRect | null>(null);
+  const pendingColorTargetsRef = useRef<ScoreObjectEditorTargetSnapshot[]>([]);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
   const [contextMenuOnObject, setContextMenuOnObject] = useState(false);
   const [contextMenuObjectType, setContextMenuObjectType] = useState<string | null>(null);
@@ -1207,25 +1212,28 @@ export default function ScoreTimeCanvas({
     }
   }, [getSelectedEntries, applyProjectDocumentPatch, clearSelection]);
 
+  const handleColorSelected = useCallback((backgroundColor: number) => {
+    const targets = pendingColorTargetsRef.current;
+    void Promise.all(targets.map((target) => applyProjectDocumentPatch({
+      score: {
+        type: 'updateSharedProperties',
+        target,
+        patch: { backgroundColor },
+      },
+    })));
+  }, [applyProjectDocumentPatch]);
+
   const handleSetColor = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0) return;
     const targets = entries
       .map((entry) => entry.editorTarget)
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
-    if (targets.length === 0) return;
-    void (async () => {
-      for (const target of targets) {
-        await applyProjectDocumentPatch({
-          score: {
-            type: 'updateSharedProperties',
-            target,
-            patch: { backgroundColor: 0x336699 },
-          },
-        });
-      }
-    })();
-  }, [getSelectedEntries, applyProjectDocumentPatch]);
+    const anchor = colorPickerAnchorRef.current;
+    if (targets.length === 0 || !anchor) return;
+    pendingColorTargetsRef.current = targets;
+    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor);
+  }, [getSelectedEntries]);
 
   const handleContextMenuPaste = useCallback(() => {
     if (clipboard.length === 0 || !contextMenuPos) return;
@@ -1458,8 +1466,24 @@ export default function ScoreTimeCanvas({
             setContextMenuOnObject(!!item);
             setContextMenuObjectType(item?.editorTarget?.selectedObjectType ?? item?.objectType ?? null);
             lastLibraryTargetRef.current = hit ? buildLibraryTarget(hit.index, xBeats) : null;
+            if (item && hit) {
+              const bounds = e.currentTarget.getBoundingClientRect();
+              const rowHeight = hit.layer.height || DEFAULT_ROW_HEIGHT;
+              colorPickerAnchorRef.current = {
+                left: e.clientX,
+                right: e.clientX,
+                top: bounds.top + hit.yOffset,
+                bottom: bounds.top + hit.yOffset + rowHeight,
+              };
+            } else {
+              colorPickerAnchorRef.current = null;
+            }
+            if (item && !selectedObjectIds.has(item.objectId)) {
+              select(item.objectId, false, item.editorTarget);
+            }
           }}
         >
+          <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
           {group.layers.map((layer: ScoreLayerSnapshot) => (
             <div
               key={layer.layerId}

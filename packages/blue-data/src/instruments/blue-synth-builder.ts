@@ -1069,6 +1069,7 @@ export class BlueSynthBuilder extends Instrument {
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element("instrument");
     elem.setAttribute("type", "blue.orchestra.BlueSynthBuilder");
+    elem.setAttribute("enabled", this._enabled.toString());
     elem.setAttribute("editEnabled", this._editEnabled.toString());
     elem.addElement("name").setText(this._name);
     elem.addElement("comment").setText(this._comment);
@@ -1096,6 +1097,8 @@ export class BlueSynthBuilder extends Instrument {
     _objRefMap?: ObjRefLoadMap,
   ): BlueSynthBuilder {
     const bsb = new BlueSynthBuilder();
+
+    bsb._enabled = data.getAttribute("enabled") !== "false";
 
     const editEnabled = data.getAttribute("editEnabled");
     if (editEnabled !== null) bsb._editEnabled = editEnabled === "true";

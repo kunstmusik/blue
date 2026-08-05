@@ -61,6 +61,7 @@ import { Instance } from './sound-objects/instance';
 import { JavaScriptObject } from './sound-objects/javascript-object';
 import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
+import { TrackLayerGroup } from './score/track/track-layer-group';
 import { PythonObject } from './sound-objects/python-object';
 import type { SoundObject } from './sound-objects/sound-object';
 import { PythonInstrument } from './instruments/python-instrument';
@@ -637,6 +638,16 @@ export class BlueData implements BlueDataObject {
     for (const layerGroup of this.score) {
       if (layerGroup instanceof PolyObject && visit(layerGroup)) {
         return true;
+      }
+      if (layerGroup instanceof TrackLayerGroup) {
+        for (const track of layerGroup) {
+          const instrument = track.getInstrument();
+          if (instrument instanceof PythonInstrument) return true;
+          if (chainUsesJavaRuntime(track.getNoteProcessorChain())) return true;
+          for (const item of track) {
+            if ('generateForCSD' in item && visit(item as SoundObject)) return true;
+          }
+        }
       }
     }
 
@@ -1748,7 +1759,9 @@ export class BlueData implements BlueDataObject {
     arrangement.clearUnusedInstrAssignments();
     const tables = new Tables(this.tableSet);
     const mixer = this.mixer.deepCopy() as Mixer;
-    const compileData = new CompileData(arrangement, tables, true);
+    const compileData = new CompileData(arrangement, tables, false);
+    this.score.prepareTrackInstruments(compileData);
+    compileData.setHandleParametersAndChannels(true);
 
     if (session) {
       setJavaScriptSession(compileData, session);

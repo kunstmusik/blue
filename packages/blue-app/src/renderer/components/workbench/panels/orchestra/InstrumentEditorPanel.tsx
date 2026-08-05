@@ -8,20 +8,24 @@ import InstrumentCommentsPanel from './InstrumentCommentsPanel';
 import JavaScriptInstrumentEditor from './JavaScriptInstrumentEditor';
 import PythonInstrumentDummyPanel from './PythonInstrumentDummyPanel';
 import type { OrchestraMutationProps } from './types';
+import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
 interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   instrument: InstrumentSnapshot | undefined;
   /** Explicit host-owned project scope; library hosts pass an empty list. */
   projectUdos: readonly UdoDefinitionSnapshot[];
+  embeddedUdoTarget?: UdoLibraryDropTarget;
 }
 
 const EditorSurface = React.memo(function EditorSurface({
   instrument,
   projectUdos,
   onOrchestraPatch,
+  embeddedUdoTarget,
 }: {
   instrument: InstrumentSnapshot;
   projectUdos: readonly UdoDefinitionSnapshot[];
+  embeddedUdoTarget?: UdoLibraryDropTarget;
 } & OrchestraMutationProps): React.ReactElement {
   const dispatchInstrumentPatch = useCallback(
     (patch: InstrumentPatch) =>
@@ -41,6 +45,7 @@ const EditorSurface = React.memo(function EditorSurface({
           projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'javascript':
@@ -50,6 +55,7 @@ const EditorSurface = React.memo(function EditorSurface({
           projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'python':
@@ -58,6 +64,7 @@ const EditorSurface = React.memo(function EditorSurface({
           instrument={instrument}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'blueX7':
@@ -75,6 +82,7 @@ const EditorSurface = React.memo(function EditorSurface({
           projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'unknown':
@@ -96,6 +104,7 @@ function InstrumentEditorPanel({
   instrument,
   onOrchestraPatch,
   projectUdos,
+  embeddedUdoTarget,
 }: InstrumentEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
@@ -166,6 +175,7 @@ function InstrumentEditorPanel({
             instrument={instrument}
             projectUdos={projectUdos}
             onOrchestraPatch={onOrchestraPatch}
+            embeddedUdoTarget={embeddedUdoTarget}
           />
         </div>
         <div

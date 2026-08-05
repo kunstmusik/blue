@@ -120,6 +120,7 @@ export class PythonInstrument extends Instrument {
   saveAsXML(): Element {
     const elem = new Element('instrument');
     elem.setAttribute('type', 'blue.orchestra.PythonInstrument');
+    elem.setAttribute('enabled', this._enabled.toString());
     elem.addElement('name').setText(this._name);
     elem.addElement('comment').setText(this._comment);
     elem.addElement('globalOrc').setText(this._globalOrc);
@@ -131,6 +132,7 @@ export class PythonInstrument extends Instrument {
 
   static loadFromXML(data: Element): PythonInstrument {
     const instr = new PythonInstrument();
+    instr.setEnabled(data.getAttribute('enabled') !== 'false');
     instr.setName(data.getTextString('name') ?? '');
     instr.setComment(data.getTextString('comment') ?? '');
     instr.setGlobalOrc(data.getTextString('globalOrc') ?? '');

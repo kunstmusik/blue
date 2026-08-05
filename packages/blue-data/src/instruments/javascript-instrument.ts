@@ -76,6 +76,7 @@ export class JavaScriptInstrument extends Instrument {
   saveAsXML(): Element {
     const elem = new Element('instrument');
     elem.setAttribute('type', 'blue.orchestra.JavaScriptInstrument');
+    elem.setAttribute('enabled', this._enabled.toString());
     elem.addElement('name').setText(this._name);
     elem.addElement('comment').setText(this._comment);
     elem.addElement('globalOrc').setText(this._globalOrc);
@@ -87,6 +88,7 @@ export class JavaScriptInstrument extends Instrument {
 
   static loadFromXML(data: Element): JavaScriptInstrument {
     const instr = new JavaScriptInstrument();
+    instr.setEnabled(data.getAttribute('enabled') !== 'false');
     instr.setName(data.getTextString('name') ?? '');
     instr.setComment(data.getTextString('comment') ?? '');
     instr.setGlobalOrc(data.getTextString('globalOrc') ?? '');

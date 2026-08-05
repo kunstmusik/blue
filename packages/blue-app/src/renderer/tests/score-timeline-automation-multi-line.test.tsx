@@ -8,8 +8,8 @@ import {
   PolyObject,
   Channel,
   AudioClip,
-  AudioLayer,
-  AudioLayerGroup,
+  TrackLayer,
+  TrackLayerGroup,
   GenericScore,
   TimePosition,
   TimeDuration,
@@ -80,7 +80,7 @@ describe('multi-line layer geometry', () => {
       },
       {
         groupId: 'g1',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'g1',
         layerCount: 1,
         isOpenableContainer: false,
@@ -91,7 +91,7 @@ describe('multi-line layer geometry', () => {
     const rows = buildLayerRowGeometry(groups);
     expect(rows[0]).toMatchObject({ layerId: 'l0', top: 0, height: 44, automatable: true });
     expect(rows[1]).toMatchObject({ layerId: 'l1', top: 44, height: 66, automatable: true });
-    expect(rows[2]).toMatchObject({ layerId: 'l2', top: 110 + 36, automatable: true }); // audio layer, no params but still automatable
+    expect(rows[2]).toMatchObject({ layerId: 'l2', top: 110 + 36, automatable: true }); // Track, no params but still automatable
     expect(totalLayerContentHeight(rows)).toBe(110 + 36 + 44 + 36);
   });
 
@@ -398,17 +398,17 @@ describe('multi-line object / clip alignment (FR-014)', () => {
     expect(obj.getSubjectiveDuration().toBeats(ctx)).toBeCloseTo(4, 5);
   });
 
-  it('moves an audio clip on a selected audio layer with the automation range', () => {
+  it('moves an audio clip on a selected Track with the automation range', () => {
     const data = new BlueData();
     const score = data.getScore();
     score.length = 0;
 
-    const layer = new AudioLayer();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     clip.setStartTime(TimePosition.beats(2));
     clip.setSubjectiveDuration(TimeDuration.beats(2));
     layer.push(clip);
-    const layerGroup = new AudioLayerGroup();
+    const layerGroup = new TrackLayerGroup();
     layerGroup.push(layer);
     score.push(layerGroup);
 
@@ -438,7 +438,7 @@ describe('multi-line object / clip alignment (FR-014)', () => {
       },
     });
 
-    // Anchored transform: boundary at 1, 3 (trans start), moved point 2→4,
+    // Anchored transform: boundary at 1, 3 (transition start), moved point 2→4,
     // discontinuity pair at 6 (trans end = 4+2).
     expect(channel.getLevelParameter().getPoints().map((p) => p.time)).toEqual([0, 1, 3, 4, 6, 6]);
     expect(startBeats(clip, data)).toBeCloseTo(4, 5);

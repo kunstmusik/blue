@@ -82,6 +82,11 @@ export default function OrchestraPanel(): React.ReactElement {
             instrument={selectedInstrument}
             projectUdos={projectUdos}
             onOrchestraPatch={updateOrchestra}
+            embeddedUdoTarget={selectedInstrument ? {
+              projectSessionId,
+              projectRevision,
+              instrumentAssignmentId: selectedInstrument.assignmentId,
+            } : undefined}
           />
         }
       />

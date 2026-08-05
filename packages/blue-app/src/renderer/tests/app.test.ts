@@ -177,7 +177,7 @@ describe('Project Store', () => {
     initial.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -263,7 +263,7 @@ describe('Project Store', () => {
     initial.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -318,7 +318,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -387,7 +387,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -457,7 +457,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -707,7 +707,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,

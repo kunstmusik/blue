@@ -1,5 +1,5 @@
 /**
- * AudioClip — a file-based audio clip in an AudioLayer.
+ * AudioClip — a file-based audio clip in a Track.
  * Mirrors the Java AudioClip class.
  *
  * AudioClip represents a reference to an audio file with temporal positioning,

@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { BlueData } from '../../src/blue-data';
-import { AudioLayerGroup } from '../../src/score/audio/audio-layer-group';
+import { TrackLayerGroup } from '../../src/score/track/track-layer-group';
 import { AudioClip } from '../../src/score/audio/audio-clip';
 import { TimePosition } from '../../src/time/time-position';
 import { TimeDuration } from '../../src/time/time-duration';
@@ -58,8 +58,8 @@ describe('Performance', () => {
     const loadTime = performance.now() - start;
 
     expect(loadTime).toBeLessThan(500);
-    expect(data.getScore()[0]).toBeInstanceOf(AudioLayerGroup);
-    const ag = data.getScore()[0] as AudioLayerGroup;
+    expect(data.getScore()[0]).toBeInstanceOf(TrackLayerGroup);
+    const ag = data.getScore()[0] as TrackLayerGroup;
     expect(ag[0].length).toBe(100);
   });
 
@@ -70,7 +70,7 @@ describe('Performance', () => {
     data.getProjectProperties().nchnls = '2';
 
     const score = new Score();
-    const ag = new AudioLayerGroup();
+    const ag = new TrackLayerGroup();
     const layer = ag.newLayerAt(0);
 
     for (let i = 0; i < 100; i++) {
@@ -102,7 +102,7 @@ describe('Performance', () => {
     data.getProjectProperties().sampleRate = '44100';
 
     const score = new Score();
-    const ag = new AudioLayerGroup();
+    const ag = new TrackLayerGroup();
     const layer = ag.newLayerAt(0);
 
     for (let i = 0; i < 100; i++) {

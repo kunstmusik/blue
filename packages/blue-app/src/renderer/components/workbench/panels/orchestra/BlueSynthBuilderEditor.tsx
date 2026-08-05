@@ -12,6 +12,7 @@ function BlueSynthBuilderEditor({
   onInstrumentPatch,
   onOrchestraPatch,
   projectUdos,
+  embeddedUdoTarget,
 }: SelectedInstrumentEditorProps & {
   instrument: BlueSynthBuilderInstrumentSnapshot;
 }): React.ReactElement {
@@ -79,7 +80,7 @@ function BlueSynthBuilderEditor({
             instrument={instrument}
             projectUdos={projectUdos}
             onInstrumentPatch={onInstrumentPatch}
-            libraryInstrumentAssignmentId={instrument.assignmentId}
+            libraryDropTarget={embeddedUdoTarget}
           />
         </div>
       </div>

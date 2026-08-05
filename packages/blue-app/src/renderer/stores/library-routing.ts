@@ -6,7 +6,7 @@ import { useUIStore } from './ui-store';
 export async function openUnifiedLibraries(request: LibraryContextRequest): Promise<void> {
   const type = request.type === 'browseType'
     ? request.libraryType
-    : request.type === 'instrumentTarget'
+      : request.type === 'instrumentTarget' || request.type === 'trackInstrumentTarget'
       ? 'instrument'
       : request.type === 'udoTarget'
         ? 'udo'

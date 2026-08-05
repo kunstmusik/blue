@@ -18,7 +18,13 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { Element } from '../serialization/xml-reader';
-import { applyNoteProcessorChain, applyNoteProcessorChainAsync, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  rebaseScoreToRenderStart,
+  setScoreStart,
+} from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { LayerGroupDataEvent, LayerGroupDataEventType } from '../score/layers/layer-group-data-event';
 import { LayerGroupListener } from '../score/layers/layer-group-listener';
@@ -41,11 +47,11 @@ import { LineObject } from './line-object';
 import { ZakLineObject } from './zak-line-object';
 import { JMask } from './j-mask';
 import { TrackerObject } from './tracker-object';
-import { NotationObject } from './notation-object';
 import { FrozenSoundObject } from './frozen-sound-object';
 import { ObjectBuilder } from './object-builder';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
+import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score/score-generation-options';
 
 type OnLoadTarget = PolyObject | JavaScriptObject | ClojureObject | PythonObject;
 
@@ -125,8 +131,6 @@ function loadNestedSoundObject(
       return JMask.loadFromXML(data);
     case 'TrackerObject':
       return TrackerObject.loadFromXML(data);
-    case 'NotationObject':
-      return NotationObject.loadFromXML(data);
     case 'FrozenSoundObject':
       return FrozenSoundObject.loadFromXML(data);
     default:
@@ -219,9 +223,10 @@ export class PolyObject extends Array<SoundLayer>
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    processWithSolo?: boolean,
+    options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
     const noteList = new NoteList();
+    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -252,9 +257,10 @@ export class PolyObject extends Array<SoundLayer>
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    processWithSolo?: boolean,
+    options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
     const noteList = new NoteList();
+    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -299,22 +305,11 @@ export class PolyObject extends Array<SoundLayer>
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    let retVal = processed;
-
-    if (startTime > 0) {
-      setScoreStart(processed, -startTime);
-      const filtered = new NoteList();
-      for (const note of processed) {
-        if (note.getStartTime() >= 0) {
-          filtered.add(note);
-        }
-      }
-      retVal = filtered;
-    }
+    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
-      for (const note of retVal) {
+      for (const note of processed) {
         if (note.getStartTime() <= endTime) {
           filtered.add(note);
         }
@@ -322,7 +317,7 @@ export class PolyObject extends Array<SoundLayer>
       return filtered;
     }
 
-    return retVal;
+    return processed;
   }
 
   private async processGeneratedNotesAsync(
@@ -345,22 +340,11 @@ export class PolyObject extends Array<SoundLayer>
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    let retVal = processed;
-
-    if (startTime > 0) {
-      setScoreStart(processed, -startTime);
-      const filtered = new NoteList();
-      for (const note of processed) {
-        if (note.getStartTime() >= 0) {
-          filtered.add(note);
-        }
-      }
-      retVal = filtered;
-    }
+    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
-      for (const note of retVal) {
+      for (const note of processed) {
         if (note.getStartTime() <= endTime) {
           filtered.add(note);
         }
@@ -368,7 +352,7 @@ export class PolyObject extends Array<SoundLayer>
       return filtered;
     }
 
-    return retVal;
+    return processed;
   }
 
   // ─── LayerGroup ───

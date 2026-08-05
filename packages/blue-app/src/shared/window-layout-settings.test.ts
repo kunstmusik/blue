@@ -51,6 +51,7 @@ describe('window-layout-settings defaults', () => {
       'settings',
       'effect-editor',
       'effect-interface',
+      'track-instrument-editor',
     ]);
   });
 

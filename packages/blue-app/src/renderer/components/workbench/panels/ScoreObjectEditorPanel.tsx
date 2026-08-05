@@ -1356,7 +1356,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     return <EmptyState message="Multiple objects selected" />;
   }
 
-  if (loading) {
+  if (loading && !document) {
     return <EmptyState message="Loading..." />;
   }
 

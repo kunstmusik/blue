@@ -5,6 +5,7 @@ import type {
 } from '../../../../../../shared/project-editor';
 import { getBsbObjectNameValidationKeysFromSnapshot } from '../../../../../../shared/bsb-widget-keys';
 import FontChooserDialog, { type FontChoice } from './FontChooserDialog';
+import ColorPickerButton from '../../../../ColorPicker';
 
 interface BSBPropertySheetProps {
   widget: BsbWidgetNodeSnapshot | null;
@@ -842,12 +843,12 @@ function LineObjectEditor({
           <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-tiny last:border-b-0">
             <label className="flex h-full min-h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Color</span>
-              <input
-                type="color"
+              <ColorPickerButton
                 className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0"
                 value={normalizeColorInput(line.color)}
-                onChange={(event) => updateLine(i, { color: event.target.value })}
+                onChange={(value) => updateLine(i, { color: value })}
                 title="Line color"
+                ariaLabel={`BSB line ${i + 1} color`}
               />
             </label>
             <input

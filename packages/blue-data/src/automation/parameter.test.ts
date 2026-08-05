@@ -10,7 +10,7 @@ describe('Parameter compatibility', () => {
     parameter.setLabel('Gain');
     parameter.setMinimum(0);
     parameter.setMaximum(1);
-    parameter.setCurve(AutomationCurve.LINEAR);
+    parameter.setCurve(AutomationCurve.STEP);
     parameter.setAutomationEnabled(true);
     parameter.setFixedValue(0.5);
     parameter.addPoint(0, 0.25);
@@ -23,6 +23,7 @@ describe('Parameter compatibility', () => {
     expect(reloaded.getLabel()).toBe('Gain');
     expect(reloaded.getMinimum()).toBeCloseTo(0, 6);
     expect(reloaded.getMaximum()).toBeCloseTo(1, 6);
+    expect(reloaded.getCurve()).toBe(AutomationCurve.STEP);
     expect(reloaded.isAutomationEnabled()).toBe(true);
     expect(reloaded.getPoints()).toHaveLength(2);
   });

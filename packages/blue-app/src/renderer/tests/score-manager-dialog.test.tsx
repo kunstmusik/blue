@@ -112,21 +112,21 @@ describe('ScoreManagerDialog', () => {
     const menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
     expect(menuItems.map((item) => item.textContent?.trim())).toEqual([
       'Add SoundObject Layer Group',
-      'Add Audio Layer Group',
+      'Add Track Layer Group',
       'Add Patterns Layer Group',
     ]);
 
-    const audioItem = menuItems.find((item) => item.textContent?.includes('Audio'));
-    expect(audioItem).toBeTruthy();
+    const trackItem = menuItems.find((item) => item.textContent?.includes('Track'));
+    expect(trackItem).toBeTruthy();
 
     act(() => {
-      clickMenuItem(audioItem!);
+      clickMenuItem(trackItem!);
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
       score: {
         type: 'addLayerGroup',
-        groupType: 'audio',
+        groupType: 'track',
         insertAtIndex: 1,
       },
     });

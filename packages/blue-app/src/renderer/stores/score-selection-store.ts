@@ -13,6 +13,8 @@ export interface ScoreObjectClipboardEntry {
   isContainer: boolean;
   layerIndex: number;
   groupId: string;
+  trackId?: string;
+  itemId?: string;
   editorTarget?: ScoreObjectEditorTargetSnapshot;
   serializedXml?: string;
   barRenderer?: ScoreRowObjectSnapshot['barRenderer'];

@@ -12,6 +12,7 @@ import {
 } from '../shared/compactFieldStyles';
 import TimeUnitEditor from './TimeUnitEditor';
 import NoteProcessorChainEditor from './note-processors/NoteProcessorChainEditor';
+import ColorPickerButton from '../../../ColorPicker';
 
 interface ScoreObjectPropertiesFormProps {
   document: ScoreObjectEditorDocumentSnapshot;
@@ -69,17 +70,17 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
   const hex = `#${(color >>> 0).toString(16).padStart(8, '0').slice(2)}`;
   return (
     <div className="flex items-center gap-2">
-      <input
-        type="color"
+      <ColorPickerButton
         value={hex}
-        onChange={(e) => {
-          const hexVal = e.target.value;
+        ariaLabel="Score object color"
+        title="Score object color"
+        className="h-6 w-6 rounded border border-blue-border"
+        onChange={(hexVal) => {
           const r = parseInt(hexVal.slice(1, 3), 16);
           const g = parseInt(hexVal.slice(3, 5), 16);
           const b = parseInt(hexVal.slice(5, 7), 16);
           onChange((0xFF000000 | (r << 16) | (g << 8) | b) >>> 0);
         }}
-        className="h-6 w-6 cursor-pointer rounded border border-blue-border"
       />
       <span className="text-body text-blue-muted">{hex}</span>
     </div>

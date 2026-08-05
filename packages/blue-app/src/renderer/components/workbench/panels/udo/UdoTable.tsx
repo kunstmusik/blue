@@ -28,13 +28,16 @@ export interface UdoLibraryDropTarget {
   projectSessionId: number;
   projectRevision: number;
   instrumentAssignmentId?: string;
+  track?: { readonly rootGroupId: string; readonly trackId: string };
 }
 
 export function getProjectUdoSessionObjectId(
   target: UdoLibraryDropTarget | undefined,
   index: number,
 ): string {
-  return target?.instrumentAssignmentId
+  return target?.track
+    ? `track:${target.track.rootGroupId}:${target.track.trackId}:udo:${index}`
+    : target?.instrumentAssignmentId
     ? `instrument:${target.instrumentAssignmentId}:udo:${index}`
     : `udo:${index}`;
 }

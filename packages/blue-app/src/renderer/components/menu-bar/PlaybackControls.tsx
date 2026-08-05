@@ -34,7 +34,7 @@ function ToolbarIconButton({
 }
 
 export default function PlaybackControls(): React.ReactElement {
-  const hasProject = useProjectStore((s) => s.filePath !== null);
+  const hasProject = useProjectStore((s) => s.loaded);
   const isLoading = useProjectStore((s) => s.isLoading);
   const loopRendering = useProjectStore((s) => s.transport.loopRendering);
   const setLoopRendering = useProjectStore((s) => s.setLoopRendering);

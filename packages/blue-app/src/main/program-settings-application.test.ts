@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BlueData, PolyObject } from '@blue/data';
+import { BlueData, PolyObject, TrackLayerGroup } from '@blue/data';
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
 
@@ -140,6 +140,7 @@ describe('program-settings-application', () => {
   it('seeds root PolyObject defaultHeightIndex from layerHeightDefault', () => {
     const data = new BlueData();
     const settings = makeSettings();
+    settings.projectDefaults.defaultLayerGroupType = 'SOUND_OBJECT';
     settings.projectDefaults.layerHeightDefault = 3;
     applyProgramSettingsToNewProject(data, settings);
     const rootPoly = data.getScore()[0];
@@ -150,5 +151,21 @@ describe('program-settings-application', () => {
 
     const newLayer = polyObject.newLayerAt(polyObject.length);
     expect(newLayer.getHeightIndex()).toBe(3);
+  });
+
+  it('creates a Track Layer Group with one Track by default', () => {
+    const data = new BlueData();
+    applyProgramSettingsToNewProject(data, makeSettings());
+    expect(data.getScore()[0]).toBeInstanceOf(TrackLayerGroup);
+    expect((data.getScore()[0] as TrackLayerGroup).length).toBe(1);
+  });
+
+  it('creates a SoundObject Layer Group when explicitly configured', () => {
+    const data = new BlueData();
+    const settings = makeSettings();
+    settings.projectDefaults.defaultLayerGroupType = 'SOUND_OBJECT';
+    applyProgramSettingsToNewProject(data, settings);
+    expect(data.getScore()[0]).toBeInstanceOf(PolyObject);
+    expect((data.getScore()[0] as PolyObject).length).toBe(1);
   });
 });

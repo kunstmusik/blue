@@ -6,6 +6,7 @@ import {
   isLibraryEditorDocument,
   isLibraryEditorDocumentPatch,
 } from './library-editor-document';
+import type { BsbWidgetNodeSnapshot } from './project-editor';
 
 export const LIBRARY_TYPES = [
   'instrument',
@@ -34,6 +35,7 @@ export interface InstrumentProjectLocator {
 export interface ProjectUdoLocator {
   readonly kind: 'udo';
   readonly instrumentAssignmentId?: string;
+  readonly track?: { readonly rootGroupId: string; readonly trackId: string };
   readonly sessionObjectId: string;
   readonly persistedFingerprint: {
     readonly canonicalHash: string;
@@ -95,6 +97,12 @@ export interface LibraryFailureSnapshot {
   readonly retryable: boolean;
 }
 
+export interface BsbCanvasClipboard {
+  readonly widgets: BsbWidgetNodeSnapshot[];
+  readonly originX: number;
+  readonly originY: number;
+}
+
 export interface LibraryServiceSnapshot {
   readonly phase: LibraryServicePhase;
   readonly contentRevision: number;
@@ -102,6 +110,10 @@ export interface LibraryServiceSnapshot {
   readonly userItemCounts: Record<LibraryType, number>;
   readonly projectSessionId: number | null;
   readonly writable: boolean;
+  /** Main-owned active typed clipboard, shared by every renderer window. */
+  readonly clipboard?: LibraryInteractionClipboard | null;
+  /** Separate main-owned BSB widget buffer for detached instrument editors. */
+  readonly bsbClipboard?: BsbCanvasClipboard | null;
   readonly operation?: LibraryServiceOperationSnapshot;
   readonly lastSummary?: CompatibilityReportSummary;
   readonly failure?: LibraryFailureSnapshot;
@@ -287,6 +299,12 @@ export interface ScoreInsertionLocation {
 export type LibraryContextRequest =
   | { readonly type: 'browseType'; readonly libraryType: LibraryType }
   | { readonly type: 'instrumentTarget'; readonly projectSessionId: number }
+  | {
+      readonly type: 'trackInstrumentTarget';
+      readonly projectSessionId: number;
+      readonly rootGroupId: string;
+      readonly trackId: string;
+    }
   | { readonly type: 'udoTarget'; readonly projectSessionId: number }
   | {
       readonly type: 'effectTarget';
@@ -314,8 +332,14 @@ export interface InsertionTargetSnapshot {
   readonly chain?: 'pre' | 'post';
   readonly insertIndex?: number;
   readonly instrumentAssignmentId?: string;
+  readonly track?: { readonly rootGroupId: string; readonly trackId: string };
+  readonly liveCell?: {
+    readonly column: number;
+    readonly row: number;
+    readonly expectedLiveObjectId: string | null;
+  };
   readonly location?: ScoreInsertionLocation;
-  readonly destinationKind?: 'score' | 'scoreBsbSound' | 'projectSoundObjectLibrary';
+  readonly destinationKind?: 'score' | 'scoreBsbSound' | 'projectSoundObjectLibrary' | 'trackInstrument' | 'blueLive';
 }
 
 export interface LibraryContextSnapshot {
@@ -403,6 +427,19 @@ export interface ScoreTimelineSoundObjectRequest {
   };
 }
 
+export interface TrackInstrumentClipboardRequest {
+  readonly projectSessionId: number;
+  readonly projectRevision: number;
+  readonly rootGroupId: string;
+  readonly trackId: string;
+}
+
+export interface BlueLiveSoundObjectClipboardRequest {
+  readonly projectSessionId: number;
+  readonly projectRevision: number;
+  readonly liveObjectId: string;
+}
+
 interface ExactProjectTargetBase {
   readonly projectSessionId: number;
   readonly projectRevision: number;
@@ -414,9 +451,22 @@ export type LibraryExactTransferTarget =
       readonly insertIndex: number;
     })
   | (ExactProjectTargetBase & {
+      readonly kind: 'trackInstrument';
+      readonly track: { readonly rootGroupId: string; readonly trackId: string };
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'blueLive';
+      readonly liveCell: {
+        readonly column: number;
+        readonly row: number;
+        readonly expectedLiveObjectId: string | null;
+      };
+    })
+  | (ExactProjectTargetBase & {
       readonly kind: 'projectUdo';
       readonly insertIndex: number;
       readonly instrumentAssignmentId?: string;
+      readonly track?: { readonly rootGroupId: string; readonly trackId: string };
     })
   | (ExactProjectTargetBase & {
       readonly kind: 'effectChain';
@@ -682,7 +732,11 @@ export const UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL = 'unified-library:context-
 export const UNIFIED_LIBRARY_MUTATE_CHANNEL = 'unified-library:mutate';
 export const UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL = 'unified-library:prepare-mutation';
 export const UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL = 'unified-library:cut-to-clipboard';
+export const UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL = 'unified-library:set-clipboard';
+export const UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL = 'unified-library:set-bsb-clipboard';
 export const UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:capture-score-sound-object';
+export const UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL = 'unified-library:capture-track-instrument';
+export const UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL = 'unified-library:capture-blue-live-sound-object';
 export const UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:add-score-sound-object';
 export const UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL = 'unified-library:editor-open';
 export const UNIFIED_LIBRARY_EDITOR_GET_CHANNEL = 'unified-library:editor-get';
@@ -799,6 +853,25 @@ export function isScoreTimelineSoundObjectRequest(
   ));
 }
 
+export function isTrackInstrumentClipboardRequest(
+  value: unknown,
+): value is TrackInstrumentClipboardRequest {
+  return isRecord(value)
+    && isNonNegativeInteger(value.projectSessionId)
+    && isNonNegativeInteger(value.projectRevision)
+    && isNonEmptyString(value.rootGroupId)
+    && isNonEmptyString(value.trackId);
+}
+
+export function isBlueLiveSoundObjectClipboardRequest(
+  value: unknown,
+): value is BlueLiveSoundObjectClipboardRequest {
+  return isRecord(value)
+    && isNonNegativeInteger(value.projectSessionId)
+    && isNonNegativeInteger(value.projectRevision)
+    && isNonEmptyString(value.liveObjectId);
+}
+
 export function isLibraryInteractionClipboard(value: unknown): value is LibraryInteractionClipboard {
   return isRecord(value)
     && (value.operation === 'copy' || value.operation === 'cut')
@@ -817,10 +890,29 @@ export function isLibraryExactTransferTarget(value: unknown): value is LibraryEx
   if (value.kind === 'orchestra') {
     return isNonNegativeInteger(value.insertIndex);
   }
+  if (value.kind === 'trackInstrument') {
+    return isRecord(value.track)
+      && isNonEmptyString(value.track.rootGroupId)
+      && isNonEmptyString(value.track.trackId);
+  }
+  if (value.kind === 'blueLive') {
+    return isRecord(value.liveCell)
+      && isNonNegativeInteger(value.liveCell.column)
+      && isNonNegativeInteger(value.liveCell.row)
+      && (value.liveCell.expectedLiveObjectId === null
+        || isNonEmptyString(value.liveCell.expectedLiveObjectId));
+  }
   if (value.kind === 'projectUdo') {
+    const hasInstrumentOwner = value.instrumentAssignmentId !== undefined;
+    const hasTrackOwner = value.track !== undefined;
     return isNonNegativeInteger(value.insertIndex)
       && (value.instrumentAssignmentId === undefined
-        || isNonEmptyString(value.instrumentAssignmentId));
+        || isNonEmptyString(value.instrumentAssignmentId))
+      && (value.track === undefined
+        || (isRecord(value.track)
+          && isNonEmptyString(value.track.rootGroupId)
+          && isNonEmptyString(value.track.trackId)))
+      && !(hasInstrumentOwner && hasTrackOwner);
   }
   if (value.kind === 'effectChain') {
     return isNonEmptyString(value.channelId)
@@ -859,6 +951,44 @@ export function isLibraryServicePhase(value: unknown): value is LibraryServicePh
   return typeof value === 'string' && (SERVICE_PHASES as readonly string[]).includes(value);
 }
 
+function isBsbClipboardWidget(value: unknown): value is BsbWidgetNodeSnapshot {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.id !== 'string'
+    || typeof value.type !== 'string'
+    || typeof value.objectName !== 'string'
+    || typeof value.x !== 'number'
+    || !Number.isFinite(value.x)
+    || typeof value.y !== 'number'
+    || !Number.isFinite(value.y)
+    || typeof value.width !== 'number'
+    || !Number.isFinite(value.width)
+    || typeof value.height !== 'number'
+    || !Number.isFinite(value.height)
+    || typeof value.value !== 'number'
+    || !Number.isFinite(value.value)
+    || typeof value.minimum !== 'number'
+    || !Number.isFinite(value.minimum)
+    || typeof value.maximum !== 'number'
+    || !Number.isFinite(value.maximum)
+    || typeof value.editable !== 'boolean'
+    || !isRecord(value.properties)
+  ) return false;
+  return value.children === undefined
+    || (Array.isArray(value.children) && value.children.every(isBsbClipboardWidget));
+}
+
+export function isBsbCanvasClipboard(value: unknown): value is BsbCanvasClipboard {
+  return isRecord(value)
+    && typeof value.originX === 'number'
+    && Number.isFinite(value.originX)
+    && typeof value.originY === 'number'
+    && Number.isFinite(value.originY)
+    && Array.isArray(value.widgets)
+    && value.widgets.length > 0
+    && value.widgets.every(isBsbClipboardWidget);
+}
+
 export function isLibraryServiceSnapshot(value: unknown): value is LibraryServiceSnapshot {
   if (!isRecord(value) || !isLibraryServicePhase(value.phase)) return false;
   if (!isNonNegativeInteger(value.contentRevision)) return false;
@@ -874,7 +1004,13 @@ export function isLibraryServiceSnapshot(value: unknown): value is LibraryServic
     return false;
   }
   return (value.projectSessionId === null || isNonNegativeInteger(value.projectSessionId))
-    && typeof value.writable === 'boolean';
+    && typeof value.writable === 'boolean'
+    && (value.clipboard === undefined
+      || value.clipboard === null
+      || isLibraryInteractionClipboard(value.clipboard))
+    && (value.bsbClipboard === undefined
+      || value.bsbClipboard === null
+      || isBsbCanvasClipboard(value.bsbClipboard));
 }
 
 export function isLibraryChangedEvent(value: unknown): value is LibraryChangedEvent {
@@ -893,9 +1029,16 @@ export function isProjectItemLocator(value: unknown): value is ProjectItemLocato
   if (!isRecord(value) || typeof value.kind !== 'string') return false;
   if (value.kind === 'instrument') return isNonEmptyString(value.assignmentId);
   if (value.kind === 'udo') {
+    const hasInstrumentOwner = value.instrumentAssignmentId !== undefined;
+    const hasTrackOwner = value.track !== undefined;
     return isNonEmptyString(value.sessionObjectId)
       && (value.instrumentAssignmentId === undefined
         || isNonEmptyString(value.instrumentAssignmentId))
+      && (value.track === undefined
+        || (isRecord(value.track)
+          && isNonEmptyString(value.track.rootGroupId)
+          && isNonEmptyString(value.track.trackId)))
+      && !(hasInstrumentOwner && hasTrackOwner)
       && isRecord(value.persistedFingerprint)
       && isNonEmptyString(value.persistedFingerprint.canonicalHash)
       && isNonEmptyString(value.persistedFingerprint.opcodeName)
@@ -962,6 +1105,11 @@ export function isLibraryContextRequest(value: unknown): value is LibraryContext
   if (value.type === 'browseType') return isLibraryType(value.libraryType);
   if (value.type === 'instrumentTarget' || value.type === 'udoTarget') {
     return isNonNegativeInteger(value.projectSessionId);
+  }
+  if (value.type === 'trackInstrumentTarget') {
+    return isNonNegativeInteger(value.projectSessionId)
+      && isNonEmptyString(value.rootGroupId)
+      && isNonEmptyString(value.trackId);
   }
   if (value.type === 'effectTarget') {
     return isNonNegativeInteger(value.projectSessionId)

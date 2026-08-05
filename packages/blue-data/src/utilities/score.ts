@@ -22,6 +22,13 @@ export function setScoreStart(nl: NoteList, offset: number): void {
   }
 }
 
+/** Convert absolute score times to the performance-relative render origin. */
+export function rebaseScoreToRenderStart(nl: NoteList, renderStart: number): void {
+  if (renderStart <= 0) return;
+  setScoreStart(nl, -renderStart);
+  nl.removeIf((note) => note.getStartTime() < 0);
+}
+
 function getTotalDuration(notes: NoteList): number {
   let max = 0;
   for (let i = 0; i < notes.length; i++) {

@@ -8,6 +8,7 @@ import {
   lineMinimum,
   normalizeLineColor,
 } from './EditableLineCanvas';
+import ColorPickerButton from '../../../../ColorPicker';
 
 export interface ScoreEditorLineLike extends EditableLineLike {
   color: number;
@@ -112,17 +113,17 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
             >
               <label className="flex h-8 items-center justify-center border-r border-app-border/30">
                 <span className="sr-only">Line color</span>
-                <input
-                  type="color"
+                <ColorPickerButton
                   className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0"
                   value={normalizeLineColor(line.color)}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     updateLineAt(index, (currentLine) => ({
                       ...currentLine,
-                      color: cssHexToLineColor(event.target.value),
+                      color: cssHexToLineColor(value),
                     }));
                   }}
                   title="Line color"
+                  ariaLabel={`Line ${index + 1} color`}
                 />
               </label>
 

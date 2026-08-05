@@ -226,6 +226,7 @@ export class Parameter implements BlueDataObject {
     elem.setAttribute('min', Parameter.formatDouble(this._minimum));
     elem.setAttribute('max', Parameter.formatDouble(this._maximum));
     elem.setAttribute('bdresolution', this._resolution.toString());
+    elem.setAttribute('curve', this._curve);
     elem.setAttribute('automationEnabled', this._enabled.toString());
     elem.setAttribute('value', Parameter.formatDouble(this._fixedValue));
 

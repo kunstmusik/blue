@@ -42,7 +42,54 @@ const layerRef: ScoreAutomationLayerRef = {
   layerKind: 'soundObject',
 };
 
-function renderMenu() {
+function buildTrackAutomation(): ScoreLayerAutomationSnapshot {
+  const buildTarget = (parameterId: string, label: string): AutomationTargetSnapshot => ({
+    parameterId,
+    label,
+    sourceKind: 'mixer',
+    automationEnabled: false,
+    assignmentState: 'available',
+  });
+
+  return {
+    layerId: 'track-1',
+    layerKind: 'track',
+    parameterIds: [],
+    parameters: [],
+    targetGroups: [{
+      groupId: 'track-channel',
+      label: 'Track Channel',
+      subGroups: [
+        {
+          groupId: 'track-channel-pre',
+          label: 'Pre-Effects',
+          subGroups: [{
+            groupId: 'pre-filter',
+            label: 'Filter',
+            subGroups: [],
+            targets: [buildTarget('pre-cutoff', 'Cutoff')],
+          }],
+          targets: [],
+        },
+        {
+          groupId: 'track-channel-post',
+          label: 'Post-Effects',
+          subGroups: [{
+            groupId: 'post-reverb',
+            label: 'Reverb',
+            subGroups: [],
+            targets: [buildTarget('post-room', 'Room Size')],
+          }],
+          targets: [],
+        },
+      ],
+      targets: [buildTarget('track-db', 'dB')],
+    }],
+    missingParameterIds: [],
+  };
+}
+
+function renderMenu(automation = buildAutomation()) {
   const onPatch = vi.fn();
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -50,7 +97,7 @@ function renderMenu() {
   void act(() => {
     root.render(
       <AutomationTargetMenu
-        automation={buildAutomation()}
+        automation={automation}
         layerRef={layerRef}
         onPatch={(patch: ScoreAutomationPatch) => onPatch(patch)}
       />,
@@ -71,6 +118,23 @@ function clickByText(container: HTMLElement, text: string) {
 }
 
 describe('AutomationTargetMenu', () => {
+  it('shows Track channel targets directly in Pre-Effects, dB, Post-Effects order', () => {
+    const { container, root } = renderMenu(buildTrackAutomation());
+    try {
+      const menu = container.querySelector<HTMLElement>('.automation-target-menu')!;
+      const directChildren = Array.from(menu.children);
+
+      expect(directChildren[0]!.textContent).toBe('Track Channel');
+      expect(directChildren[1]!.querySelector(':scope > div > span')!.textContent).toBe('Pre-Effects');
+      expect(directChildren[2]!.querySelector('.flex-1')!.textContent).toBe('dB');
+      expect(directChildren[3]!.querySelector(':scope > div > span')!.textContent).toBe('Post-Effects');
+    } finally {
+      void act(() => {
+        root.unmount();
+      });
+    }
+  });
+
   it('groups instrument and mixer targets and offers Clear All / Cleanup Missing', () => {
     const { container, root } = renderMenu();
     try {

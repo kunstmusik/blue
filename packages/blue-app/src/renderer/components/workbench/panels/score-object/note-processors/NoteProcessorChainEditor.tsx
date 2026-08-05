@@ -7,6 +7,7 @@ import {
   getNoteProcessorCatalog,
 } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
+import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
 
 const CATALOG = getNoteProcessorCatalog();
 
@@ -36,7 +37,8 @@ const BTN = 'px-1.5 py-0.5 rounded text-tiny border border-blue-border hover:bg-
 export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNames, onImportNamedChain, onSaveNamedChain }: NoteProcessorChainEditorProps): React.ReactElement {
   const [local, setLocal] = useState<NoteProcessorChainSnapshot>(() => cloneChain(chain));
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
-  const [clipboard, setClipboard] = useState<NoteProcessorEntrySnapshot | null>(null);
+  const clipboard = useNoteProcessorClipboardStore((state) => state.clipboard);
+  const setClipboard = useNoteProcessorClipboardStore((state) => state.setClipboard);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showImportMenu, setShowImportMenu] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -122,14 +124,14 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
     if (selectedIdx >= 0 && selectedIdx < local.processors.length) {
       setClipboard({ ...local.processors[selectedIdx] });
     }
-  }, [local, selectedIdx]);
+  }, [local, selectedIdx, setClipboard]);
 
   const handleCut = useCallback(() => {
     if (selectedIdx >= 0 && selectedIdx < local.processors.length) {
       setClipboard({ ...local.processors[selectedIdx] });
       handleRemove();
     }
-  }, [local, selectedIdx, handleRemove]);
+  }, [handleRemove, local, selectedIdx, setClipboard]);
 
   const handlePaste = useCallback(() => {
     if (!clipboard) return;

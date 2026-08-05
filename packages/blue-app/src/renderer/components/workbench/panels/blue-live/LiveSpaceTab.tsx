@@ -7,8 +7,9 @@ import {
   createSoundObject,
   loadSoundObjectFromXML,
 } from '@blue/data';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import { useBlueLiveStore } from '../../../../stores/blue-live-store';
+import { useLibraryStore } from '../../../../stores/library-store';
 import { useScoreSelectionStore } from '../../../../stores/score-selection-store';
 import { useWorkbenchStore } from '../../../../stores/workbench-store';
 import {
@@ -20,12 +21,15 @@ import {
 } from '../../../../../shared/project-editor';
 import type { LegacyBlueLiveTriggerResult } from '../../../../../shared/project-editor';
 import type { ScoreObjectClipboardEntry } from '../../../../stores/score-selection-store';
+import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 
 export default function LiveSpaceTab(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const blueLive = useProjectStore((state) => state.blueLive);
   const applyBlueLivePatch = useProjectStore((state) => state.applyBlueLivePatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
+  const projectSessionId = useProjectStore((state) => state.sessionId);
+  const projectRevision = getProjectDocumentRevision();
 
   const blueLiveRunning = useBlueLiveStore((s) => s.running);
   const triggerFeedback = useBlueLiveStore((s) => s.trigger);
@@ -40,6 +44,9 @@ export default function LiveSpaceTab(): React.ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const scoreObjectClipboard = useScoreSelectionStore((state) => state.clipboard);
   const copyScoreObjects = useScoreSelectionStore((state) => state.copySelected);
+  const libraryClipboard = useLibraryStore((state) => state.clipboard);
+  const captureBlueLiveSoundObject = useLibraryStore((state) => state.captureBlueLiveSoundObject);
+  const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
   const selectScoreObject = useScoreSelectionStore((state) => state.select);
   const clearScoreObjectSelection = useScoreSelectionStore((state) => state.clearSelection);
   const openPanel = useWorkbenchStore((state) => state.openPanel);
@@ -102,19 +109,25 @@ export default function LiveSpaceTab(): React.ReactElement {
     }
   }, [applyBlueLivePatch, clearLiveEditorSelection]);
 
-  const copyCell = useCallback((cell: LiveObjectCellSnapshot | null): boolean => {
+  const copyCell = useCallback(async (cell: LiveObjectCellSnapshot | null): Promise<boolean> => {
     const entry = createScoreClipboardEntry(cell);
-    if (!entry) return false;
+    if (!entry || !cell) return false;
+    const captured = await captureBlueLiveSoundObject({
+      projectSessionId,
+      projectRevision,
+      liveObjectId: cell.uniqueId,
+    });
+    if (!captured) return false;
     copyScoreObjects([entry]);
     return true;
-  }, [copyScoreObjects]);
+  }, [captureBlueLiveSoundObject, copyScoreObjects, projectRevision, projectSessionId]);
 
-  const cutCell = useCallback((
+  const cutCell = useCallback(async (
     column: number,
     row: number,
     cell: LiveObjectCellSnapshot | null,
   ) => {
-    if (copyCell(cell)) {
+    if (await copyCell(cell)) {
       clearLiveEditorSelection(cell);
       applyBlueLivePatch({ type: 'setCell', column, row, cell: null });
     }
@@ -126,16 +139,44 @@ export default function LiveSpaceTab(): React.ReactElement {
     currentCell: LiveObjectCellSnapshot | null,
   ) => {
     const entry = getPasteableBlueLiveEntry(scoreObjectClipboard);
-    if (!entry?.serializedXml) return;
-    const cell = createLiveObjectCellSnapshot({
-      objectType: entry.objectType,
-      serializedXml: entry.serializedXml,
-    });
-    if (cell) {
-      clearLiveEditorSelection(currentCell);
-      applyBlueLivePatch({ type: 'setCell', column, row, cell });
+    if (entry?.serializedXml) {
+      const cell = createLiveObjectCellSnapshot({
+        objectType: entry.objectType,
+        serializedXml: entry.serializedXml,
+      });
+      if (cell) {
+        clearLiveEditorSelection(currentCell);
+        applyBlueLivePatch({ type: 'setCell', column, row, cell });
+      }
+      return;
     }
-  }, [applyBlueLivePatch, clearLiveEditorSelection, scoreObjectClipboard]);
+    if (!libraryClipboard || getLibraryTransferSourceType(libraryClipboard.source) !== 'soundObject') return;
+    void transferLibraryItem(
+      { kind: 'clipboard', source: libraryClipboard.source },
+      {
+        kind: 'blueLive',
+        projectSessionId,
+        projectRevision,
+        liveCell: {
+          column,
+          row,
+          expectedLiveObjectId: currentCell?.uniqueId ?? null,
+        },
+      },
+    );
+  }, [
+    applyBlueLivePatch,
+    clearLiveEditorSelection,
+    libraryClipboard,
+    projectRevision,
+    projectSessionId,
+    scoreObjectClipboard,
+    transferLibraryItem,
+  ]);
+
+  const canPasteCell = getPasteableBlueLiveEntry(scoreObjectClipboard) !== null
+    || Boolean(libraryClipboard
+      && getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject');
 
   const hoveredSetIds = useMemo(() => {
     if (hoveredSetIndex < 0 || !blueLive) return new Set<string>();
@@ -516,20 +557,20 @@ export default function LiveSpaceTab(): React.ReactElement {
                             <ContextMenu.Item
                               className="editor-context-menu__item"
                               disabled={!cell}
-                              onSelect={() => cutCell(ci, ri, cell)}
+                              onSelect={() => { void cutCell(ci, ri, cell); }}
                             >
                               Cut
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
                               disabled={!cell}
-                              onSelect={() => { copyCell(cell); }}
+                              onSelect={() => { void copyCell(cell); }}
                             >
                               Copy
                             </ContextMenu.Item>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
-                              disabled={getPasteableBlueLiveEntry(scoreObjectClipboard) === null}
+                              disabled={!canPasteCell}
                               onSelect={() => pasteCell(ci, ri, cell)}
                             >
                               Paste

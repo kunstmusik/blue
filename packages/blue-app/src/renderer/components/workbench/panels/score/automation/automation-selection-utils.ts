@@ -84,7 +84,7 @@ export function getAssignmentStateLabel(state: AutomationAssignmentState): strin
 // Layer rows are laid out top-to-bottom within the score scroll content: each
 // layer row is `layer.height || DEFAULT_ROW_HEIGHT` tall, and each layer group
 // is followed by a `GROUP_SPACER` gap. This mirrors the layout math in
-// ScoreTimeCanvas/AudioLayerGroupCanvas (see getGlobalLayerIndexForY), so the
+// score timeline canvases (see getGlobalLayerIndexForY), so the
 // geometry computed here stays in sync with the rendered rows without reading
 // DOM positions — keeping multi-line selection deterministic and unit-testable.
 
@@ -94,7 +94,7 @@ export interface LayerRowGeometry {
   layerIndex: number;
   top: number;
   height: number;
-  /** True for polyObject/audio layers (support automation), even with no params. */
+  /** True for PolyObject and Track rows (support automation), even with no params. */
   automatable: boolean;
   parameterIds: string[];
 }

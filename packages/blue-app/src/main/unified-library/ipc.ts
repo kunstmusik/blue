@@ -22,7 +22,11 @@ import {
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
   UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
   UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL,
   UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
@@ -61,7 +65,11 @@ import {
   isUserLibraryMutation,
   isPrepareLibraryMutationRequest,
   isCutLibraryToClipboardRequest,
+  isLibraryInteractionClipboard,
+  isBsbCanvasClipboard,
   isScoreTimelineSoundObjectRequest,
+  isTrackInstrumentClipboardRequest,
+  isBlueLiveSoundObjectClipboardRequest,
   isLibraryType,
 } from '../../shared/unified-library';
 import { UnifiedLibraryService } from './service';
@@ -173,12 +181,38 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid Library Cut request.', false),
         })
   ));
+  ipcMain.handle(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+    clipboard === null || isLibraryInteractionClipboard(clipboard)
+      ? service.setClipboard(clipboard)
+      : false
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+    clipboard === null || isBsbCanvasClipboard(clipboard)
+      ? service.setBsbClipboard(clipboard)
+      : false
+  ));
   ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
     isScoreTimelineSoundObjectRequest(request)
       ? service.captureScoreSoundObjectClipboard(request)
       : Promise.resolve({
           ok: false as const,
           error: createLibraryServiceError('invalid-request', 'Invalid timeline SoundObject request.', false),
+        })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, (_event, request: unknown) => (
+    isTrackInstrumentClipboardRequest(request)
+      ? service.captureTrackInstrumentClipboard(request)
+      : Promise.resolve({
+          ok: false as const,
+          error: createLibraryServiceError('invalid-request', 'Invalid Track instrument request.', false),
+        })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
+    isBlueLiveSoundObjectClipboardRequest(request)
+      ? service.captureBlueLiveSoundObjectClipboard(request)
+      : Promise.resolve({
+          ok: false as const,
+          error: createLibraryServiceError('invalid-request', 'Invalid Blue Live SoundObject request.', false),
         })
   ));
   ipcMain.handle(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
@@ -424,7 +458,11 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_MUTATE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL);

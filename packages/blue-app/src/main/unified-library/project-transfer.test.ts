@@ -6,6 +6,7 @@ import {
   Effect,
   GenericInstrument,
   GenericScore,
+  LiveObject,
   OpcodeDefinition,
   PolyObject,
   Sound,
@@ -492,5 +493,48 @@ describe('project library transfer', () => {
     })).toThrow(/stale target/i);
     expect(project.data.getArrangement().size()).toBe(0);
     expect(project.commit).not.toHaveBeenCalled();
+  });
+
+  it('copies Blue Live SoundObjects through the shared Library buffer target', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const source = new GenericScore();
+    source.setName('Library Phrase');
+    const exactTarget = {
+      kind: 'blueLive' as const,
+      projectSessionId: 11,
+      projectRevision: project.revision,
+      liveCell: { column: 0, row: 0, expectedLiveObjectId: null },
+    };
+    expect(adapter.validateTransferTarget(exactTarget, 'soundObject')).toBeNull();
+
+    const receipt = adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'soundObject', nodeId: 'phrase' },
+      payloadXml: source.saveAsXML().toXml(),
+      target: {
+        ...target('soundObject', project.revision),
+        destinationKind: 'blueLive',
+        liveCell: exactTarget.liveCell,
+      },
+      mode: 'independent',
+    });
+    const liveObject = project.data.getLiveData().getLiveObjectBins().getLiveObject(0, 0);
+    expect(receipt.insertedIdentity).toBe(liveObject?.getUniqueId());
+    expect(liveObject?.getSoundObject()?.getName()).toBe('Library Phrase');
+    expect(liveObject?.getSoundObject()).not.toBe(source);
+
+    expect(adapter.getBlueLiveSoundObjectSource({
+      projectSessionId: 11,
+      projectRevision: project.revision,
+      liveObjectId: liveObject!.getUniqueId(),
+    })).toMatchObject({ displayName: 'Library Phrase', objectType: 'GenericScore' });
+
+    const replacement = new LiveObject();
+    project.data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, replacement);
+    expect(adapter.validateTransferTarget({
+      ...exactTarget,
+      projectRevision: project.revision,
+      liveCell: { ...exactTarget.liveCell, expectedLiveObjectId: liveObject!.getUniqueId() },
+    }, 'soundObject')).toMatch(/changed/i);
   });
 });

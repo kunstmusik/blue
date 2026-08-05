@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { BlueData } from './blue-data';
 import { Arrangement } from './arrangement';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
-import { AudioLayer } from './score/audio/audio-layer';
-import { AudioLayerGroup } from './score/audio/audio-layer-group';
+import { Track } from './score/track/track';
+import { TrackLayerGroup } from './score/track/track-layer-group';
 import { AudioClip } from './score/audio/audio-clip';
 import { TimeDuration } from './time/time-duration';
 import { TimePosition } from './time/time-position';
@@ -51,7 +51,7 @@ describe('BlueData scheduling parity', () => {
   it('replaces audio-layer placeholder ids with compile-time instrument ids', () => {
     const data = new BlueData();
 
-    const layer = new AudioLayer();
+    const layer = new Track();
     const clip = new AudioClip();
     clip.setAudioFile('/tmp/kick.wav');
     clip.setStartTime(TimePosition.beats(0));
@@ -59,7 +59,7 @@ describe('BlueData scheduling parity', () => {
     clip.setLooping(null, false);
     layer.push(clip);
 
-    const layerGroup = new AudioLayerGroup();
+    const layerGroup = new TrackLayerGroup();
     layerGroup.push(layer);
     data.getScore().push(layerGroup);
 
