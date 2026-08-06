@@ -27,6 +27,7 @@ import { InstrumentLibrary } from "./instruments/instrument-library";
 import { Instrument } from "./instruments/instrument";
 import { GenericInstrument } from "./instruments/generic-instrument";
 import { CompileData } from "./compile-data";
+import type { CompiledMidiInstrumentTarget } from "./compile-data";
 import { BlueDataObject } from "./blue-data-object";
 import { NoteList } from "./sound-objects/note-list";
 import { Note } from "./sound-objects/note";
@@ -82,6 +83,12 @@ type RenderCsdResult = {
   csdText: string;
   parameters?: Parameter[];
   stringChannels?: Array<{ objectName: string; value: string; channelName: string }>;
+  /**
+   * Spec 067 disposable compiled MIDI target catalog: the exact enabled base Track
+   * and Orchestra instruments compiled into this CSD snapshot, keyed by stable
+   * project identity. Derived render output only; never serialized to XML.
+   */
+  midiInstrumentTargets: readonly CompiledMidiInstrumentTarget[];
 };
 
 export class BlueData implements BlueDataObject {
@@ -907,6 +914,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: allParameters,
         stringChannels: allStringChannels,
+        midiInstrumentTargets: [],
       };
     } catch (error) {
       generationError = error;
@@ -1146,6 +1154,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: allParameters,
         stringChannels: allStringChannels,
+        midiInstrumentTargets: [],
       };
     } catch (error) {
       generationError = error;
@@ -1222,6 +1231,8 @@ export class BlueData implements BlueDataObject {
       const baseInstrIds = baseArrangementItems
         .map((ia) => ia.arrangementId)
         .filter((id): id is string => Boolean(id));
+
+      const midiInstrumentTargets = compileData.getCompiledMidiInstrumentTargets();
 
       const alwaysOnInstruments = this.collectAlwaysOnInstruments(
         clonedArrangement,
@@ -1310,6 +1321,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: compileData.getOriginalParameters(),
         stringChannels: compileData.getStringChannels(),
+        midiInstrumentTargets,
       };
     } catch (error) {
       generationError = error;

@@ -16,6 +16,7 @@ import type { ScoreLayerGroupSnapshot, TrackLayerGroupSnapshot } from '../../sha
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
 import { useProjectStore } from '../stores/project-store';
 import { useLibraryStore } from '../stores/library-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
@@ -192,6 +193,7 @@ beforeEach(() => {
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
+  useMidiRoutingStore.getState().clearFocusForProjectSession();
   useScoreSelectionStore.setState({ select: originalSelect });
   useLibraryStore.setState({ captureScoreSoundObject: vi.fn().mockResolvedValue(true) });
   useWorkbenchStore.setState({ openPanel: vi.fn() } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
@@ -203,6 +205,7 @@ afterEach(() => {
   useScoreSelectionStore.setState({ select: originalSelect });
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
+  useMidiRoutingStore.getState().clearFocusForProjectSession();
   useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
   document.body.innerHTML = '';
 });
@@ -241,6 +244,36 @@ describe('Track layer timeline gestures', () => {
 
   it('derives drag movement from the local timeline coordinate', () => {
     expect(timelinePointerDeltaBeats(460, 3, 100)).toBeCloseTo(1.6);
+  });
+
+  it('focuses the Track from empty timeline and contained-object selections', () => {
+    const group = makeTrackGroup([makeItem('track-object', 1, 2)]);
+    const { root, surface } = renderTrackCanvas(group);
+
+    act(() => {
+      mouse(surface, 'mousedown', 300, 15);
+      mouse(window, 'mouseup', 300, 15);
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
+      kind: 'track',
+      projectSessionId: 1,
+      rootGroupId: 'track-group',
+      trackId: 'track-row',
+      displayName: 'Track Row',
+    });
+
+    act(() => {
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
+      mouse(surface, 'mousedown', 30, 15);
+      mouse(window, 'mouseup', 30, 15);
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
+      kind: 'track',
+      rootGroupId: 'track-group',
+      trackId: 'track-row',
+    });
+
+    act(() => root.unmount());
   });
 
   it.each([

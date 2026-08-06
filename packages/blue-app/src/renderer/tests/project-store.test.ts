@@ -6,8 +6,40 @@ import {
   __testFlushPendingPatches,
   useProjectStore,
 } from '../stores/project-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
+
+function createFocusSnapshot(sessionId: number) {
+  const snapshot = createEmptyProjectEditorSnapshot();
+  snapshot.loaded = true;
+  snapshot.sessionId = sessionId;
+  snapshot.orchestra.arrangement.rows = [{
+    assignmentId: '1',
+    enabled: true,
+    instrumentName: 'Orchestra Name',
+    instrumentType: 'generic',
+    instrumentSummary: 'GenericInstrument',
+    editable: true,
+  }];
+  snapshot.score!.layerGroups = [{
+    groupId: 'root-group',
+    groupType: 'track',
+    name: 'Tracks',
+    defaultHeightIndex: 1,
+    layerCount: 1,
+    isOpenableContainer: true,
+    layers: [{
+      layerId: 'track-1',
+      layerKind: 'track',
+      name: 'Track Name',
+      height: 22,
+      items: [],
+      instrument: null,
+    }],
+  }];
+  return snapshot;
+}
 
 describe('project-store — missing-audio resolve refresh', () => {
   beforeEach(() => {
@@ -152,5 +184,61 @@ describe('project-store — canonical acknowledgement barrier', () => {
     rejectFirst(new Error('commit failed'));
 
     await expect(barrier).rejects.toThrow('commit failed');
+  });
+});
+
+describe('project-store — MIDI focus reconciliation', () => {
+  beforeEach(() => {
+    useProjectStore.getState().clearProject();
+    useMidiRoutingStore.setState({
+      mode: 'focus',
+      focusedTarget: null,
+      focusRevision: 0,
+    });
+  });
+
+  afterEach(() => {
+    useProjectStore.getState().clearProject();
+  });
+
+  it('refreshes same-session names and clears removed focused identities', () => {
+    const snapshot = createFocusSnapshot(7);
+    useProjectStore.getState().setProjectInfo(snapshot);
+
+    useMidiRoutingStore.getState().focusOrchestra({
+      projectSessionId: 7,
+      assignmentId: '1',
+      displayName: 'Orchestra Name',
+    });
+    const renamed = {
+      ...snapshot,
+      orchestra: {
+        ...snapshot.orchestra,
+        arrangement: {
+          rows: [{
+            ...snapshot.orchestra.arrangement.rows[0]!,
+            instrumentName: 'Renamed Orchestra',
+          }],
+        },
+      },
+    };
+    useProjectStore.getState().setProjectInfo(renamed);
+    expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
+      kind: 'orchestra',
+      assignmentId: '1',
+      displayName: 'Renamed Orchestra',
+    });
+
+    useMidiRoutingStore.getState().focusTrack({
+      projectSessionId: 7,
+      rootGroupId: 'root-group',
+      trackId: 'track-1',
+      displayName: 'Track Name',
+    });
+    useProjectStore.getState().setProjectInfo({
+      ...renamed,
+      score: { ...renamed.score!, layerGroups: [] },
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
   });
 });

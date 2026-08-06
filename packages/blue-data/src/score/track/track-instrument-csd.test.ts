@@ -25,7 +25,6 @@ describe('Track instrument CSD generation', () => {
     expect(asyncCsd).toMatch(/\ni2\s+0(?:\.0)?\s+1/);
     expect(track.getInstrument()?.getName()).toBe('Fixture Instrument');
   });
-
   it('does not mutate authored p1 or share a Track-owned instrument copy', () => {
     const first = createTrackWithInstrumentFixture();
     const second = createTrackWithInstrumentFixture();
@@ -86,5 +85,79 @@ describe('Track instrument CSD generation', () => {
 
     expect(exportedChannels.length).toBeGreaterThan(0);
     expect(new Set(exportedChannels).size).toBe(exportedChannels.length);
+  });
+});
+
+describe('Track instrument compiled MIDI target catalog', () => {
+  it('includes an enabled Track instrument as a track target with a runtime id', () => {
+    const { data, track } = createTrackWithInstrumentFixture();
+    const trackId = track.getUniqueId();
+
+    const result = data.toBlueLiveCSD();
+    const targets = result.midiInstrumentTargets ?? [];
+    const trackTargets = targets.filter((t) => t.kind === 'track');
+    expect(trackTargets).toHaveLength(1);
+    expect(trackTargets[0]).toMatchObject({ kind: 'track', trackId });
+    expect(typeof trackTargets[0]?.runtimeInstrumentId).not.toBe('undefined');
+  });
+
+  it('excludes Tracks whose instrument is disabled or missing', () => {
+    const { data, track } = createTrackFixture({ includeClip: false, includeSoundObject: false });
+    // no instrument on this track yet
+    const without = data.toBlueLiveCSD();
+    expect((without.midiInstrumentTargets ?? []).filter((t) => t.kind === 'track')).toHaveLength(0);
+
+    track.setInstrument(createTrackInstrumentFixture('Temp'));
+    const withInstrument = data.toBlueLiveCSD();
+    expect(
+      (withInstrument.midiInstrumentTargets ?? []).filter((t) => t.kind === 'track'),
+    ).toHaveLength(1);
+
+    // setInstrument deep-copies, so disable the Track's owned copy directly.
+    track.getInstrument()!.setEnabled(false);
+    const disabled = data.toBlueLiveCSD();
+    expect((disabled.midiInstrumentTargets ?? []).filter((t) => t.kind === 'track')).toHaveLength(0);
+  });
+
+  it('rebuilds the catalog without stale Track entries after instrument clear', () => {
+    const { data, track } = createTrackWithInstrumentFixture();
+    const trackId = track.getUniqueId();
+
+    const first = data.toBlueLiveCSD();
+    expect(
+      first.midiInstrumentTargets?.some((t) => t.kind === 'track' && t.trackId === trackId),
+    ).toBe(true);
+
+    track.clearInstrument();
+    const cleared = data.toBlueLiveCSD();
+    expect(
+      cleared.midiInstrumentTargets?.some((t) => t.kind === 'track' && t.trackId === trackId),
+    ).toBe(false);
+  });
+
+  it('keeps Orchestra and Track targets distinct and does not conflate identities', () => {
+    const { data, track } = createTrackWithInstrumentFixture();
+    const orch = new GenericInstrument();
+    orch.setText('out aout');
+    data.getArrangement().addInstrument(orch, '1');
+
+    const result = data.toBlueLiveCSD();
+    const targets = result.midiInstrumentTargets ?? [];
+    const orchestraTargets = targets.filter((t) => t.kind === 'orchestra');
+    const trackTargets = targets.filter((t) => t.kind === 'track');
+    expect(orchestraTargets).toHaveLength(1);
+    expect(trackTargets).toHaveLength(1);
+    // Orchestra assignment id must not equal the Track uniqueId.
+    expect((orchestraTargets[0] as { assignmentId: string }).assignmentId).not.toBe(
+      (trackTargets[0] as { trackId: string }).trackId,
+    );
+  });
+
+  it('does not write Track target ids into saved project XML', () => {
+    const { data } = createTrackWithInstrumentFixture();
+    data.toBlueLiveCSD();
+    const xml = data.saveToString();
+    expect(xml).not.toContain('midiInstrumentTargets');
+    expect(xml).not.toContain('track-instrument');
   });
 });

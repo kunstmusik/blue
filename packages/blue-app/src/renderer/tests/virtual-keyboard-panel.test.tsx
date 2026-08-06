@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import VirtualKeyboardPanel from '../components/workbench/panels/VirtualKeyboardPanel';
 import { useBlueLiveStore } from '../stores/blue-live-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import {
@@ -65,6 +66,7 @@ let router: MidiNoteRouter | null = null;
 beforeEach(() => {
   useProjectStore.getState().clearProject();
   useBlueLiveStore.getState().reset();
+  useMidiRoutingStore.setState({ mode: 'focus', focusedTarget: null, focusRevision: 0 });
   window.blueAPI = {
     triggerBlueLiveNote: vi.fn().mockResolvedValue({ ok: true }),
     sendBlueLiveAllNotesOff: vi.fn().mockResolvedValue({ ok: true }),
@@ -193,13 +195,16 @@ describe('VirtualKeyboardPanel', () => {
     container.remove();
   });
 
-  it('displays channel as 1-16 (1-indexed)', () => {
+  it('displays channel as 1-16 (1-indexed) in Direct Channel mode', () => {
     seedLoadedProject();
     useBlueLiveStore.getState().setStatusFromSnapshot({
       status: 'running',
       running: true,
       sessionId: 1,
     });
+    // Spec 067: focus mode is the default; switch to Direct Channel to show the
+    // existing one-based channel selector.
+    useMidiRoutingStore.getState().setMode('channel');
 
     const { container, root } = renderPanel();
     const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
@@ -223,6 +228,88 @@ describe('VirtualKeyboardPanel', () => {
     act(() => {
       root.unmount();
     });
+    container.remove();
+  });
+});
+describe('VirtualKeyboardPanel MIDI routing control (Spec 067)', () => {
+  it('defaults to Focused Target routing mode', () => {
+    const { container, root } = renderPanel();
+    const select = container.querySelector('select') as HTMLSelectElement | null;
+    expect(select).toBeTruthy();
+    expect(select?.value).toBe('focus');
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('shows an accessible No focused instrument status when no target is focused', () => {
+    const { container, root } = renderPanel();
+    const status = container.querySelector('[role="status"]') as HTMLElement | null;
+    expect(status).toBeTruthy();
+    expect(status?.textContent).toContain('No focused instrument');
+    expect(status?.getAttribute('aria-label')).toContain('No focused instrument');
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('does not render a routing error message for rejected notes', () => {
+    const { container, root } = renderPanel();
+    // No element should announce a routing failure / rejection.
+    expect(container.textContent).not.toMatch(/routing error|rejected|failed/i);
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('switches to Direct Channel mode and shows the one-based channel selector', () => {
+    const { container, root } = renderPanel();
+    const select = container.querySelector('select') as HTMLSelectElement;
+    act(() => {
+      select.value = 'channel';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
+    expect(channelInput).toBeTruthy();
+    expect(channelInput?.value).toBe('1');
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('does not change normal piano canvas visuals in focus mode', () => {
+    const { container, root } = renderPanel();
+    const canvas = container.querySelector('canvas');
+    expect(canvas).toBeTruthy();
+    act(() => root.unmount());
+    container.remove();
+  });
+});
+
+describe('Virtual Keyboard Direct Channel compatibility (Spec 067 US3)', () => {
+  it('retains the focused target when switching to Direct Channel but ignores it for routing', () => {
+    useMidiRoutingStore.getState().focusTrack({
+      projectSessionId: 1, rootGroupId: 'root', trackId: 'track-1', displayName: 'Bass',
+    });
+    useMidiRoutingStore.getState().setMode('channel');
+    // Focus is retained for later mode reuse.
+    expect(useMidiRoutingStore.getState().focusedTarget?.trackId).toBe('track-1');
+    // But channel mode resolves to the event channel, not the focus.
+    expect(useMidiRoutingStore.getState().resolveTargetForNote(4)).toEqual({
+      kind: 'channel', channel: 4,
+    });
+  });
+
+  it('shows the one-based channel selector only in Direct Channel mode', () => {
+    const { container, root } = renderPanel();
+    // Focus mode (default): no channel input.
+    expect(container.querySelector('input[type="number"][min="1"]')).toBeNull();
+    const select = container.querySelector('select') as HTMLSelectElement;
+    act(() => {
+      select.value = 'channel';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    // Channel mode: channel input appears with one-based display.
+    const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement;
+    expect(channelInput).toBeTruthy();
+    expect(channelInput.value).toBe('1');
+    act(() => root.unmount());
     container.remove();
   });
 });

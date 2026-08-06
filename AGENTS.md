@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-29
+Auto-generated from all feature plans. Last updated: 2026-08-06
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -78,6 +78,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-29
 - Blue Engine source and pinned dependency inputs live under `native/blue-engine`; engine artifacts and compatibility reports are derived/transient, the existing main-owned `program-settings.json` retains the explicit engine override, and `.blue` XML is unchanged (064-bundle-blue-engine)
 - TypeScript 5.8.x strict mode, React 19.x, Electron 35.7.5 + `@blue/data` Blue Live/SoundObject/runtime models, Zustand project/selection/live stores, Radix Context Menu, existing ScoreObject Editor/Properties and unified-library transfer contracts, Vitest 4.x (065-blue-live-parity)
 - Main-process `BlueData` remains canonical and `.blue` XML remains unchanged; trigger preparations, session generations, selection targets, and shared ScoreObject/Instrument/BSB widget clipboards are transient and explicitly separated (065-blue-live-parity)
+- No new durable storage. Electron main retains canonical `BlueData`; compiled target catalogs, renderer focus/routing mode, and held-note ledgers are transient. `.blue` XML and `program-settings.json` are unchanged. (067-virtual-keyboard-track-targeting-research)
+- TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces (067-virtual-keyboard-track-targeting-research)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -114,10 +116,5 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 067-virtual-keyboard-track-targeting-research: Added TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces
 - 066-track-layer-foundation: Replaced the runtime AudioLayer model with canonical mixed Track/TrackLayerGroup data, Track-owned instruments, historical migration, Track mixer association, and Track-first new-project defaults; canonical Track XML is TypeScript-only
-- 065-blue-live-parity: Restored Java-compatible selected/enabled Blue Live Manual Trigger with immutable runtime-backed preparation and lifecycle fencing; added the Java cell menu, shared Score/BSB clipboard bridges, and stable-identity ScoreObject Editor/Properties routing while deferring audible Repeat and modern launcher semantics
-- 064-bundle-blue-engine: Imported Blue Engine as a private native pnpm workspace package, added reproducible static dependency builds, bundled development/packaged resolution, runtime Csound probing, and verified macOS/Windows/Linux plus cross-distribution AppImage packages
-- 061-app-zooming: Added TypeScript 5.8.x in strict mode; Electron 35.7.5 with embedded Node 22.16.0; React 19.x renderers + Electron `Menu`/`BrowserWindow`/`WebContents`/`app`, existing `@blue/app` program-settings store, Dockview popout lifecycle, Vitest 4.x, Playwright 1.60.x Electron automation
-- 060-unified-libraries: Added TypeScript 5.8.x in strict mode; React 19.x; Electron pinned to 35.7.5 with embedded Node 22.16.0 and SQLite 3.49.1 + built-in `node:sqlite` (`DatabaseSync` and `backup`) and `node:worker_threads` in Electron main; existing `@rgrove/parse-xml` and `@blue/data` models/codecs; Electron `app`/`dialog`/IPC; Dockview 5.2.0; Zustand 5.x; `react-arborist` 3.5.x; Radix menus; existing type-specific Instrument/UDO/Effect/SoundObject editors
-- 059-osc-control-parity: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge
-- 058-midi-live-input: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge

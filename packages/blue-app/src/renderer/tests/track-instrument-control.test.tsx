@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   captureTrackInstrument: vi.fn(),
   openTrackInstrumentEditor: vi.fn(),
   pasteLibraryInstrument: vi.fn(),
+  focusTrack: vi.fn(),
   libraryDrop: {
     active: false,
     canPaste: false,
@@ -30,6 +31,12 @@ vi.mock('../stores/library-store', () => ({
   useLibraryStore: (selector: (state: { captureTrackInstrument: typeof mocks.captureTrackInstrument }) => unknown) => selector({
     captureTrackInstrument: mocks.captureTrackInstrument,
   }),
+}));
+
+vi.mock('../stores/midi-routing-store', () => ({
+  useMidiRoutingStore: {
+    getState: () => ({ focusTrack: mocks.focusTrack }),
+  },
 }));
 
 vi.mock('../components/libraries/use-library-drop-target', () => ({
@@ -67,6 +74,7 @@ describe('TrackInstrumentControl', () => {
     mocks.captureTrackInstrument.mockResolvedValue(true);
     mocks.openTrackInstrumentEditor.mockReset();
     mocks.pasteLibraryInstrument.mockReset();
+    mocks.focusTrack.mockReset();
     mocks.libraryDrop = {
       active: false,
       canPaste: false,
@@ -92,6 +100,7 @@ describe('TrackInstrumentControl', () => {
           instrument={makeInstrument()}
           projectSessionId={1}
           projectRevision={2}
+          displayName="Lead"
         />,
       );
     });
@@ -128,6 +137,7 @@ describe('TrackInstrumentControl', () => {
           instrument={null}
           projectSessionId={1}
           projectRevision={2}
+          displayName="Lead"
         />,
       );
     });
@@ -152,6 +162,7 @@ describe('TrackInstrumentControl', () => {
           instrument={null}
           projectSessionId={1}
           projectRevision={2}
+          displayName="Lead"
         />,
       );
     });
@@ -195,6 +206,7 @@ describe('TrackInstrumentControl', () => {
           instrument={makeInstrument()}
           projectSessionId={1}
           projectRevision={2}
+          displayName="Lead"
         />,
       );
     });
@@ -274,6 +286,7 @@ describe('TrackInstrumentControl', () => {
           instrument={null}
           projectSessionId={1}
           projectRevision={2}
+          displayName="Lead"
         />,
       );
     });
@@ -288,6 +301,37 @@ describe('TrackInstrumentControl', () => {
     expect(byLabel('Cut').getAttribute('data-disabled')).not.toBeNull();
     expect(byLabel('Copy').getAttribute('data-disabled')).not.toBeNull();
     expect(byLabel('Paste').getAttribute('data-disabled')).not.toBeNull();
+
+    act(() => root.unmount());
+  });
+
+  it('focuses the Track for MIDI routing on single click (Spec 067)', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    window.blueAPI = { openTrackInstrumentEditor: mocks.openTrackInstrumentEditor } as never;
+
+    act(() => {
+      root.render(
+        <TrackInstrumentControl
+          groupId="control-group"
+          trackId="control-track"
+          instrument={makeInstrument()}
+          projectSessionId={1}
+          projectRevision={2}
+          displayName="Lead"
+        />,
+      );
+    });
+
+    const instrumentButton = container.querySelector('button[title="Track Instrument: Lead Instrument"]') as HTMLButtonElement;
+    act(() => instrumentButton.click());
+    expect(mocks.focusTrack).toHaveBeenCalledWith({
+      projectSessionId: 1,
+      rootGroupId: 'control-group',
+      trackId: 'control-track',
+      displayName: 'Lead',
+    });
 
     act(() => root.unmount());
   });

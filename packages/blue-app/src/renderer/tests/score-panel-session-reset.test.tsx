@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -324,6 +325,64 @@ describe('ScorePanel session resets', () => {
     act(() => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('marks the focused Track header independently from editor state', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    useMidiRoutingStore.getState().focusTrack({
+      projectSessionId: 1,
+      rootGroupId: 'audio-group',
+      trackId: 'audio-layer-0',
+      displayName: 'Audio 1',
+    });
+
+    const { container, root } = renderPanel();
+    const focusedHeader = container.querySelector('[data-midi-focused="true"]');
+
+    expect(focusedHeader).toBeTruthy();
+    expect(focusedHeader?.textContent).toContain('Audio 1');
+    expect(focusedHeader?.className).toContain('border-l-app-accent');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('focuses a Track from its header without letting row controls steal focus', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    const { container, root } = renderPanel();
+    const instrumentControl = container.querySelector(
+      '[data-track-instrument-control="audio-layer-0"]',
+    ) as HTMLElement;
+    const trackHeader = instrumentControl.parentElement as HTMLElement;
+
+    act(() => {
+      trackHeader.dispatchEvent(new MouseEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+      }));
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
+      kind: 'track',
+      projectSessionId: 1,
+      rootGroupId: 'audio-group',
+      trackId: 'audio-layer-0',
+      displayName: 'Audio 1',
+    });
+
+    act(() => {
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
+      const muteButton = trackHeader.querySelector('button[title="Mute"]') as HTMLButtonElement;
+      muteButton.dispatchEvent(new MouseEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+      }));
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
+
+    act(() => root.unmount());
     container.remove();
   });
 });

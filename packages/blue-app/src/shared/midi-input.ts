@@ -235,3 +235,74 @@ export function isValidMidiNote(note: number): boolean {
 export function isValidMidiVelocity(velocity: number): boolean {
   return Number.isInteger(velocity) && velocity >= 0 && velocity <= 127;
 }
+
+// ─── Spec 067: Blue Live note target validation and identity keys ───
+
+/**
+ * Maximum length for a bounded serializable stable identity string (Track id or
+ * Orchestra assignment id). Generous enough for UUIDs and human ids while keeping
+ * the serializable contract bounded for IPC.
+ */
+export const MAX_BLUE_LIVE_TARGET_ID_LENGTH = 256;
+
+/**
+ * True when `value` is a non-empty bounded serializable stable identity string.
+ * Track and Orchestra assignment ids must satisfy this before they cross IPC.
+ */
+export function isBoundedTargetIdentity(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= MAX_BLUE_LIVE_TARGET_ID_LENGTH
+  );
+}
+
+/**
+ * True for a nonnegative integer, used for the optional `liveSessionId` fence.
+ */
+export function isNonnegativeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+}
+
+/**
+ * Derive the collision-safe aggregate key for a Blue Live note target + MIDI note.
+ *
+ * The key is structural — each target kind is encoded so user-controlled assignment
+ * text cannot collide across kinds or with the separator. Consumers resolve by
+ * identity rather than position, so ordering is not significant.
+ */
+export function blueLiveTargetKey(
+  target: { kind: 'track'; trackId: string }
+    | { kind: 'orchestra'; assignmentId: string }
+    | { kind: 'channel'; channel: number },
+  midiNote: number,
+): string {
+  switch (target.kind) {
+    case 'track':
+      return `track\u0000${target.trackId}\u0000${midiNote}`;
+    case 'orchestra':
+      return `orchestra\u0000${target.assignmentId}\u0000${midiNote}`;
+    case 'channel':
+      return `channel\u0000${target.channel}\u0000${midiNote}`;
+  }
+}
+
+/**
+ * Derive the identity-only portion of a target key (no MIDI note). Two notes with
+ * the same identity key but different pitches remain independent aggregates; two
+ * notes with the same identity key and pitch share one aggregate engine note.
+ */
+export function blueLiveTargetIdentityKey(
+  target: { kind: 'track'; trackId: string }
+    | { kind: 'orchestra'; assignmentId: string }
+    | { kind: 'channel'; channel: number },
+): string {
+  switch (target.kind) {
+    case 'track':
+      return `track\u0000${target.trackId}`;
+    case 'orchestra':
+      return `orchestra\u0000${target.assignmentId}`;
+    case 'channel':
+      return `channel\u0000${target.channel}`;
+  }
+}

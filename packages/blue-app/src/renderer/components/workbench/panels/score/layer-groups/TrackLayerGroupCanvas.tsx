@@ -19,6 +19,7 @@ import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-sele
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
 import { useLibraryStore } from '../../../../../stores/library-store';
 import { useProjectStore } from '../../../../../stores/project-store';
+import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
@@ -599,6 +600,23 @@ export default function TrackLayerGroupCanvas({
       pasteAtTrackPosition(layerHit.layerIndex, xBeats);
       gestureRef.current = null;
       return;
+    }
+
+    // Spec 067: an explicit pointer selection of a Track timeline surface
+    // (empty location or contained ScoreObject/clip) focuses that Track. The
+    // focus layer is the one under the pointer; identity is stable.
+    const focusLayer = hit
+      ? group.layers[hit.layerIndex]
+      : layerHit
+        ? group.layers[layerHit.layerIndex]
+        : undefined;
+    if (focusLayer) {
+      useMidiRoutingStore.getState().focusTrack({
+        projectSessionId,
+        rootGroupId: group.groupId,
+        trackId: focusLayer.layerId,
+        displayName: focusLayer.name,
+      });
     }
 
     if (!hit) {

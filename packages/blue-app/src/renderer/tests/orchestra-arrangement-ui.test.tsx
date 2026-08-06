@@ -83,3 +83,116 @@ describe('ArrangementPanel', () => {
     }
   });
 });
+const midiRoutingMock = vi.hoisted(() => {
+  const focusOrchestra = vi.fn();
+  const state = {
+    focusedTarget: null as {
+      kind: 'orchestra';
+      projectSessionId: number;
+      assignmentId: string;
+      displayName: string;
+    } | null,
+  };
+  const useMidiRoutingStore = Object.assign(
+    (selector: (value: typeof state) => unknown) => selector(state),
+    { getState: () => ({ focusOrchestra }) },
+  );
+  return { focusOrchestra, state, useMidiRoutingStore };
+});
+vi.mock('../stores/midi-routing-store', () => ({
+  useMidiRoutingStore: midiRoutingMock.useMidiRoutingStore,
+}));
+
+describe('ArrangementPanel MIDI focus (Spec 067 US2)', () => {
+  beforeEach(() => {
+    midiRoutingMock.focusOrchestra.mockReset();
+    midiRoutingMock.state.focusedTarget = null;
+  });
+
+  it('focuses the Orchestra assignment on explicit row click', () => {
+    const rows: ArrangementRowSnapshot[] = [
+      { assignmentId: '1', enabled: true, instrumentName: 'Lead', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+      { assignmentId: '2', enabled: true, instrumentName: 'Pad', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+    ];
+    const onSelect = vi.fn();
+    const rendered = renderRoot(
+      <ArrangementPanel
+        projectSessionId={3}
+        projectRevision={1}
+        rows={rows}
+        selectedAssignmentId={null}
+        onSelectAssignment={onSelect}
+        onOrchestraPatch={vi.fn()}
+      />,
+    );
+    try {
+      const row2 = rendered.container.querySelector('[data-assignment-id="2"]') as HTMLElement;
+      expect(row2).toBeTruthy();
+      act(() => {
+        row2.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      });
+      expect(onSelect).toHaveBeenCalledWith('2');
+      expect(midiRoutingMock.focusOrchestra).toHaveBeenCalledWith({
+        projectSessionId: 3,
+        assignmentId: '2',
+        displayName: 'Pad',
+      });
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('uses (unnamed) for an assignment with an empty instrument name', () => {
+    const rows: ArrangementRowSnapshot[] = [
+      { assignmentId: '7', enabled: true, instrumentName: '', instrumentType: 'generic', instrumentSummary: 'GenericInstrument', editable: true },
+    ];
+    const rendered = renderRoot(
+      <ArrangementPanel
+        projectSessionId={1}
+        projectRevision={1}
+        rows={rows}
+        selectedAssignmentId={null}
+        onSelectAssignment={vi.fn()}
+        onOrchestraPatch={vi.fn()}
+      />,
+    );
+    try {
+      const row = rendered.container.querySelector('[data-assignment-id="7"]') as HTMLElement;
+      act(() => {
+        row.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      });
+      expect(midiRoutingMock.focusOrchestra).toHaveBeenCalledWith(
+        expect.objectContaining({ assignmentId: '7', displayName: '(unnamed)' }),
+      );
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('marks the focused assignment separately from editor selection', () => {
+    midiRoutingMock.state.focusedTarget = {
+      kind: 'orchestra',
+      projectSessionId: 1,
+      assignmentId: '1',
+      displayName: 'Lead',
+    };
+    const rendered = renderRoot(
+      <ArrangementPanel
+        projectSessionId={1}
+        projectRevision={1}
+        rows={ROWS}
+        selectedAssignmentId="1"
+        onSelectAssignment={vi.fn()}
+        onOrchestraPatch={vi.fn()}
+      />,
+    );
+    try {
+      const row = rendered.container.querySelector('[data-assignment-id="1"]');
+      expect(row?.getAttribute('data-midi-focused')).toBe('true');
+      expect(row?.className).toContain('bg-app-accent/20');
+      expect(row?.className).toContain('ring-app-accent/70');
+    } finally {
+      rendered.unmount();
+    }
+  });
+});

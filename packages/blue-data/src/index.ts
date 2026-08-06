@@ -4,6 +4,7 @@ export type { BlueDataObject, BlueDataObjectStatic } from './blue-data-object';
 export type { DeepCopyable } from './deep-copyable';
 export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
+export type { CompiledMidiInstrumentTarget } from './compile-data';
 export {
 	getJavaRuntimeClient,
 	setJavaRuntimeClient,

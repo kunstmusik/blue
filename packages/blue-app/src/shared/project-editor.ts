@@ -1327,6 +1327,23 @@ export type MidiInputPatch =
   | { type: 'updateAmpConstant'; value: string }
   | { type: 'updateScale'; scale: MidiScaleSnapshot | null };
 
+/**
+ * Serializable instrument target for a Blue Live note request.
+ *
+ * - `track`: a Track-owned instrument, addressed by its stable project Track id.
+ * - `orchestra`: an Orchestra assignment, addressed by its stable assignment id.
+ * - `channel`: the pre-Spec-067 compatibility path; the runtime instrument is the
+ *   one the existing channel-indexed behavior resolves.
+ *
+ * The optional `target`/`liveSessionId` request fields are the Spec 067 focus-routing
+ * bridge. Omitting `target` keeps the legacy direct-channel meaning so existing callers
+ * migrate safely.
+ */
+export type BlueLiveNoteTarget =
+  | { kind: 'track'; trackId: string }
+  | { kind: 'orchestra'; assignmentId: string }
+  | { kind: 'channel'; channel: number };
+
 export interface BlueLiveNoteTriggerRequest {
   type: 'noteOn' | 'noteOff';
   midiNote: number;
@@ -1339,6 +1356,17 @@ export interface BlueLiveNoteTriggerRequest {
   deviceId?: string;
   /** Source high-resolution timestamp when available. */
   timestamp?: number;
+  /**
+   * Optional Spec 067 focus-routing target. Omission normalizes to
+   * `{ kind: 'channel', channel: request.channel }` for compatibility.
+   */
+  target?: BlueLiveNoteTarget;
+  /**
+   * Optional Blue Live session fence. The shared focus-aware router always supplies
+   * the current main-owned session id; main rejects a supplied id that does not match
+   * the active Blue Live session. Omission remains accepted for legacy callers.
+   */
+  liveSessionId?: number;
 }
 
 export interface BlueLiveNoteTriggerResult {

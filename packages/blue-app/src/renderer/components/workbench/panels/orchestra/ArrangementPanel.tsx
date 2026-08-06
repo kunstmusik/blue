@@ -12,6 +12,7 @@ import {
 import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { useLibraryStore } from '../../../../stores/library-store';
+import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import ArrangementContextMenu from './ArrangementContextMenu';
 import { createArrangementColumns } from './arrangement-table/arrangement-columns';
 import type { ArrangementPanelProps } from './types';
@@ -38,6 +39,12 @@ function ArrangementPanel({
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
   const captureClipboard = useLibraryStore((state) => state.captureClipboard);
+  const focusedAssignmentId = useMidiRoutingStore((state) => (
+    state.focusedTarget?.kind === 'orchestra'
+    && state.focusedTarget.projectSessionId === projectSessionId
+      ? state.focusedTarget.assignmentId
+      : null
+  ));
   const projectNodes = useProjectLibraryNodes(
     'projectOwned', 'instrument', projectSessionId, projectRevision,
   );
@@ -289,6 +296,7 @@ function ArrangementPanel({
           <tbody>
             {table.getRowModel().rows.map((row, index) => {
               const selected = row.original.assignmentId === selectedAssignmentId;
+              const midiFocused = row.original.assignmentId === focusedAssignmentId;
               const canInsertAfter = insertionIds[index + 1] !== null;
               const projectNode = projectNodes.find((candidate) => (
                 candidate.key?.scope === 'projectOwned'
@@ -321,13 +329,28 @@ function ArrangementPanel({
                       <tr
                         {...dropProps}
                         data-assignment-id={row.original.assignmentId}
+                        data-midi-focused={midiFocused ? 'true' : undefined}
                         data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
                         className={[
-                          'cursor-default border-b border-app-border/50 text-app-text-soft',
+                          'cursor-default border-b border-l-2 border-l-transparent border-app-border/50 text-app-text-soft',
                           active ? 'ring-1 ring-inset ring-app-accent' : '',
+                          midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
                           selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
                         ].join(' ')}
-                        onClick={() => onSelectAssignment(row.original.assignmentId)}
+                        onClick={() => {
+                          const clicked = row.original;
+                          onSelectAssignment(clicked.assignmentId);
+                          // Spec 067: an explicit user row selection focuses this
+                          // Orchestra assignment for MIDI routing. The auto/editor
+                          // fallback selection in OrchestraPanel never reaches this
+                          // handler, so opening the panel or auto-selecting the first
+                          // editor row does not steal performance focus.
+                          useMidiRoutingStore.getState().focusOrchestra({
+                            projectSessionId,
+                            assignmentId: clicked.assignmentId,
+                            displayName: clicked.instrumentName || '(unnamed)',
+                          });
+                        }}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td

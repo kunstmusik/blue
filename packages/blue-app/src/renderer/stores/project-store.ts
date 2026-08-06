@@ -81,6 +81,10 @@ import {
   convertUdoSnapshotStyle,
   formatUdoListAsOpcodeText,
 } from '../components/workbench/panels/udo/udo-snapshot-utils';
+import {
+  useMidiRoutingStore,
+  type MidiRoutingReconciliation,
+} from './midi-routing-store';
 
 interface ProjectState {
   title: string;
@@ -594,10 +598,12 @@ function applyProjectInfoToState(
     if (!preserveDirty) {
       resetTransientProjectMutationState();
       storeSet(buildInitialState());
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
     }
     return;
   }
 
+  let reconciliation: MidiRoutingReconciliation | undefined;
   storeSet((state: ProjectState) => {
     const incomingSessionId = info.sessionId ?? state.sessionId;
     if (incomingSessionId !== latestProjectSessionId) {
@@ -609,6 +615,7 @@ function applyProjectInfoToState(
       ? mergeProjectProperties(state.projectProperties, info.projectProperties)
       : state.projectProperties;
     const nextOrchestra = info.orchestra ?? state.orchestra;
+    const nextScore = info.score ?? state.score;
     const nextTransport = info.transport
       ? {
           ...state.transport,
@@ -623,6 +630,11 @@ function applyProjectInfoToState(
           author: state.author,
           sampleRate: state.sampleRate,
         };
+      reconciliation = buildMidiRoutingReconciliation(
+        nextScore,
+        nextOrchestra,
+        incomingSessionId,
+      );
 
     return {
       ...state,
@@ -656,9 +668,37 @@ function applyProjectInfoToState(
       projectUdos: info.projectUdos ?? state.projectUdos,
       blueLive: info.blueLive ?? state.blueLive,
       midiInput: info.midiInput ?? state.midiInput,
-      score: info.score ?? state.score,
+      score: nextScore,
     };
   });
+  if (reconciliation) {
+    useMidiRoutingStore.getState().reconcileFocus(reconciliation);
+  }
+}
+
+function buildMidiRoutingReconciliation(
+  score: ScoreDocumentSnapshot,
+  orchestra: OrchestraSnapshot,
+  projectSessionId: number,
+): MidiRoutingReconciliation {
+  return {
+    projectSessionId,
+    tracks: score.layerGroups.flatMap((group) => (
+      group.groupType === 'track'
+        ? group.layers.map((layer) => ({
+            projectSessionId,
+            rootGroupId: group.groupId,
+            trackId: layer.layerId,
+            displayName: layer.name,
+          }))
+        : []
+    )),
+    orchestra: orchestra.arrangement.rows.map((row) => ({
+      projectSessionId,
+      assignmentId: row.assignmentId,
+      displayName: row.instrumentName || '(unnamed)',
+    })),
+  };
 }
 
 function mergeProjectProperties(
@@ -3803,6 +3843,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     clearProject: () => {
       resetTransientProjectMutationState();
       set(buildInitialState());
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
     },
 
   revertProject: async () => {

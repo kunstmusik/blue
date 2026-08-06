@@ -10,6 +10,20 @@ interface StringChannelEntry {
   channelName: string;
 }
 
+/**
+ * Disposable compiled MIDI target (Spec 067). Describes exactly the enabled base
+ * instruments generated into one Blue Live CSD snapshot, keyed by stable project
+ * identity rather than row position or MIDI channel. This is derived render output
+ * only; it is never serialized into `.blue` XML.
+ */
+export type CompiledMidiInstrumentTarget =
+	| { kind: 'track'; trackId: string; runtimeInstrumentId: number | string }
+	| {
+		kind: 'orchestra';
+		assignmentId: string;
+		runtimeInstrumentId: number | string;
+	};
+
 export class CompileData {
   private arrangement: Arrangement;
   private tables: Tables;
@@ -161,6 +175,45 @@ export class CompileData {
       }
     }
     return result;
+  }
+
+  /**
+   * Build the deterministic disposable compiled MIDI target catalog for one render
+   * snapshot (Spec 067). Track entries come from the `track-instrument:<id>` registry
+   * populated by `Score.prepareTrackInstruments`. Orchestra entries come from the
+   * enabled base arrangement assignments that are NOT Track-owned render instruments
+   * (a Track-owned render instrument has an `instrSourceId` equal to its Track
+   * uniqueId, while a project Orchestra assignment does not). The runtime instrument
+   * id for an Orchestra target is its project `arrangementId`.
+   *
+   * Ordering is deterministic: Orchestra entries follow arrangement order, Track
+   * entries follow registry insertion order. Consumers resolve by identity rather
+   * than position.
+   */
+  getCompiledMidiInstrumentTargets(): CompiledMidiInstrumentTarget[] {
+    const targets: CompiledMidiInstrumentTarget[] = [];
+
+    for (const ia of this.arrangement.getArrangement()) {
+      if (!ia.enabled || !ia.instr) continue;
+      const sourceId = this.instrSourceId.get(ia.instr);
+      // A Track-owned render instrument is tagged with its Track uniqueId. The
+      // project Orchestra assignments have no source-id entry, so they are the
+      // base Orchestra targets.
+      if (sourceId !== undefined) continue;
+      const arrangementId = ia.arrangementId;
+      if (!arrangementId) continue;
+      targets.push({
+        kind: 'orchestra',
+        assignmentId: arrangementId,
+        runtimeInstrumentId: arrangementId,
+      });
+    }
+
+    for (const [trackId, runtimeId] of this.getTrackInstrumentIds()) {
+      targets.push({ kind: 'track', trackId, runtimeInstrumentId: runtimeId });
+    }
+
+    return targets;
   }
 
   appendGlobalOrc(code: string): void {

@@ -4,6 +4,7 @@ import { ChevronRight, Music2 } from 'lucide-react';
 import type { SupportedNewInstrumentType, TrackInstrumentSummary } from '../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../stores/project-store';
 import { useLibraryStore } from '../../../../stores/library-store';
+import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import { useLibraryDropTarget } from '../../../libraries/use-library-drop-target';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   instrument: TrackInstrumentSummary | null;
   projectSessionId: number;
   projectRevision: number;
+  displayName: string;
 }
 
 const NEW_INSTRUMENTS: Array<{ type: SupportedNewInstrumentType; label: string }> = [
@@ -28,6 +30,7 @@ export default function TrackInstrumentControl({
   instrument,
   projectSessionId,
   projectRevision,
+  displayName,
 }: Props) {
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const captureTrackInstrument = useLibraryStore((state) => state.captureTrackInstrument);
@@ -97,6 +100,14 @@ export default function TrackInstrumentControl({
             aria-label={instrument ? `Track Instrument: ${label}` : 'Assign Track Instrument'}
             onClick={(event) => {
               event.stopPropagation();
+              // Spec 067: an explicit pointer interaction with the Track instrument
+              // control focuses this Track for MIDI routing.
+              useMidiRoutingStore.getState().focusTrack({
+                projectSessionId,
+                rootGroupId: groupId,
+                trackId,
+                displayName,
+              });
             }}
             onDoubleClick={(event) => {
               event.stopPropagation();

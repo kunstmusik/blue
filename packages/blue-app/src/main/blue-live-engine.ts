@@ -1,14 +1,20 @@
 import { BrowserWindow } from 'electron';
 import { EngineBridge, EngineOutputCallback } from './engine-bridge';
 import type { BlueData, JavaScriptSession } from '@blue/data';
+import type { CompiledMidiInstrumentTarget } from '@blue/data';
 import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import type {
+  BlueLiveNoteTarget,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
 } from '../shared/project-editor';
+import {
+  isBoundedTargetIdentity,
+  isNonnegativeInteger,
+} from '../shared/midi-input';
 import type { EngineRuntimeService } from './engine-runtime';
 
 export type BlueLiveEngineStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
@@ -19,6 +25,18 @@ export interface BlueLiveStatusSnapshot {
   message?: string;
   sessionId: number;
   projectRevision?: number | null;
+}
+
+/**
+ * Spec 067 — the disposable compiled target catalog owned by one Blue Live
+ * session. Installed atomically only after a successful start; cleared on
+ * cancellation, failure, stop, and cleanup. Resolves explicit Track/Orchestra
+ * targets to their runtime instrument id without falling back.
+ */
+interface CompiledMidiTargetCatalog {
+  liveSessionId: number;
+  byTrackId: Map<string, CompiledMidiInstrumentTarget>;
+  byAssignmentId: Map<string, CompiledMidiInstrumentTarget>;
 }
 
 interface PendingTerminalStateCandidate {
@@ -53,6 +71,11 @@ export class BlueLiveEngineSession {
   private namedInstrumentNumbers = new Map<string, number>();
   private projectDirectory: string | null = null;
   private projectData: BlueData | null = null;
+  /**
+   * Spec 067 compiled target catalog for the active session. `null` until a start
+   * completes successfully and after cleanup; resolves focus-routing targets.
+   */
+  private targetCatalog: CompiledMidiTargetCatalog | null = null;
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
   private engineStateUnsubscribe: (() => void) | null = null;
   private awaitingTerminalState = false;
@@ -411,6 +434,15 @@ export class BlueLiveEngineSession {
         return this.getSnapshot();
       }
 
+      // Spec 067: install the validated compiled target catalog atomically, fenced
+      // by this session id, only after the engine has started successfully.
+      const targetCatalog = this.buildTargetCatalog(csd.midiInstrumentTargets, this.sessionId);
+      if (!targetCatalog) {
+        this.setStatus('error', 'Blue Live target catalog is invalid');
+        await this.cleanup();
+        return this.getSnapshot();
+      }
+      this.targetCatalog = targetCatalog;
       this.beginTerminalStateMonitoring();
       this.setStatus('running', 'Blue Live running');
       return this.getSnapshot();
@@ -588,10 +620,16 @@ export class BlueLiveEngineSession {
       return { ok: false, message: 'Blue Live is not running' };
     }
 
-    const arrangement = projectData.getArrangement().getArrangement();
-    const assignment = arrangement[request.channel];
-    if (!assignment) {
-      return { ok: false, message: 'No instrument mapped to that channel' };
+    // Spec 067: resolve the target (and validate the session fence) before any
+    // score submission. A stale/missing/malformed target fails closed with no
+    // wrong-instrument fallback and no successful submitted score text.
+    const runtimeInstrumentId = this.resolveRequestTarget(request);
+    if (runtimeInstrumentId === null) {
+      return { ok: false, message: 'Unresolved MIDI target' };
+    }
+    const scoreInstrumentId = this.resolveRuntimeInstrumentNumber(runtimeInstrumentId);
+    if (scoreInstrumentId === null) {
+      return { ok: false, message: 'Unresolved MIDI target' };
     }
 
     const mapped = mapMidiTrigger(projectData.getMidiInputProcessor(), {
@@ -601,25 +639,22 @@ export class BlueLiveEngineSession {
     });
 
     const paddedNoteNum = this.getPaddedNoteNum(mapped.originalMidiNote);
-    const arrangementId = assignment.arrangementId;
     const scoreText = request.type === 'noteOff'
-      ? `i-${arrangementId}.${paddedNoteNum} 0 0`
-      : `i${arrangementId}.${paddedNoteNum} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
+      ? `i-${scoreInstrumentId}.${paddedNoteNum} 0 0`
+      : `i${scoreInstrumentId}.${paddedNoteNum} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
 
     try {
       const resp = await client.readScore(
         normalizeScoreForEngineApi(scoreText, this.namedInstrumentNumbers),
       );
-      return {
-        ok: resp.ok,
-        message: resp.ok ? undefined : resp.message,
-        submittedScoreText: scoreText,
-      };
+      if (!resp.ok) {
+        return { ok: false, message: resp.message };
+      }
+      return { ok: true, submittedScoreText: scoreText };
     } catch (err) {
       return {
         ok: false,
         message: err instanceof Error ? err.message : String(err),
-        submittedScoreText: scoreText,
       };
     }
   }
@@ -636,6 +671,7 @@ export class BlueLiveEngineSession {
     const cleanup = (async () => {
       this.clearStateMonitoring();
       this.namedInstrumentNumbers.clear();
+      this.targetCatalog = null;
       this.projectData = null;
       if (this.bridge) {
         const bridge = this.bridge;
@@ -673,6 +709,106 @@ export class BlueLiveEngineSession {
     }
     buffer += noteStr;
     return buffer;
+  }
+
+  /**
+   * Spec 067 — build the validated compiled target catalog from the disposable
+   * render snapshot. Duplicate stable identities are reported as invalid and the
+   * whole catalog is rejected (returns null) so the session fail-closes rather
+   * than first-match routing.
+   */
+  private buildTargetCatalog(
+    targets: readonly CompiledMidiInstrumentTarget[],
+    liveSessionId: number,
+  ): CompiledMidiTargetCatalog | null {
+    const catalog: CompiledMidiTargetCatalog = {
+      liveSessionId,
+      byTrackId: new Map(),
+      byAssignmentId: new Map(),
+    };
+    for (const target of targets) {
+      if (target.kind === 'track') {
+        if (!isBoundedTargetIdentity(target.trackId)) return null;
+        if (catalog.byTrackId.has(target.trackId)) return null;
+        catalog.byTrackId.set(target.trackId, target);
+      } else {
+        if (!isBoundedTargetIdentity(target.assignmentId)) return null;
+        if (catalog.byAssignmentId.has(target.assignmentId)) return null;
+        catalog.byAssignmentId.set(target.assignmentId, target);
+      }
+    }
+    return catalog;
+  }
+
+  /**
+   * Spec 067 — resolve an explicit request target against the installed compiled
+   * catalog. Channel targets are normalized for compatibility and resolved through
+   * the preserved channel-index behavior. Returns null on any validation failure
+   * (stale session, missing/malformed target, unmapped channel) so the caller
+   * fail-closes without a wrong-instrument fallback.
+   */
+  private resolveRequestTarget(
+    request: BlueLiveNoteTriggerRequest,
+  ): number | string | null {
+    // Validate the optional Blue Live session fence before any target lookup.
+    if (request.liveSessionId !== undefined) {
+      if (!isNonnegativeInteger(request.liveSessionId)) return null;
+      if (request.liveSessionId !== this.sessionId) return null;
+    }
+
+    const target = request.target;
+    // Omitted target normalizes to the compatibility channel target.
+    const normalizedTarget: BlueLiveNoteTarget = target ?? {
+      kind: 'channel',
+      channel: request.channel,
+    };
+
+    if (normalizedTarget.kind === 'channel') {
+      // A channel target that disagrees with the request channel is malformed.
+      if (normalizedTarget.channel !== request.channel) return null;
+      if (!Number.isInteger(normalizedTarget.channel) || normalizedTarget.channel < 0 || normalizedTarget.channel > 15) {
+        return null;
+      }
+      const projectData = this.projectData;
+      if (!projectData) return null;
+      const catalog = this.targetCatalog;
+      if (!catalog) return null;
+      const arrangement = projectData.getArrangement().getArrangement();
+      const assignment = arrangement[normalizedTarget.channel];
+      if (!assignment?.enabled || !assignment.instr) return null;
+      const compiled = catalog.byAssignmentId.get(assignment.arrangementId);
+      if (!compiled) return null;
+      return compiled.runtimeInstrumentId;
+    }
+
+    // Track/Orchestra targets resolve only from the installed compiled catalog.
+    const catalog = this.targetCatalog;
+    if (!catalog) return null;
+
+    if (normalizedTarget.kind === 'track') {
+      if (!isBoundedTargetIdentity(normalizedTarget.trackId)) return null;
+      const compiled = catalog.byTrackId.get(normalizedTarget.trackId);
+      if (!compiled) return null;
+      return compiled.runtimeInstrumentId;
+    }
+
+    if (!isBoundedTargetIdentity(normalizedTarget.assignmentId)) return null;
+    const compiled = catalog.byAssignmentId.get(normalizedTarget.assignmentId);
+    if (!compiled) return null;
+    return compiled.runtimeInstrumentId;
+  }
+
+  private resolveRuntimeInstrumentNumber(runtimeInstrumentId: number | string): string | null {
+    if (typeof runtimeInstrumentId === 'number') {
+      return Number.isInteger(runtimeInstrumentId) && runtimeInstrumentId >= 0
+        ? String(runtimeInstrumentId)
+        : null;
+    }
+    if (/^\d+$/.test(runtimeInstrumentId)) {
+      return runtimeInstrumentId;
+    }
+    const namedNumber = this.namedInstrumentNumbers.get(runtimeInstrumentId);
+    return namedNumber === undefined ? null : String(namedNumber);
   }
 
   private buildLiveOptions(liveData: LiveData, csdOptions: string[]): string[] {

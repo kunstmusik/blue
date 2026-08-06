@@ -25,6 +25,7 @@ import LayerPanel from "./score/LayerPanel";
 import { useScorePathState } from "./score/useScorePathState";
 import { useScoreWheelZoom, computePixelsPerBeat } from "./score/useScoreWheelZoom";
 import { useScoreSelectionStore } from "../../../stores/score-selection-store";
+import { useMidiRoutingStore } from "../../../stores/midi-routing-store";
 import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
@@ -1055,6 +1056,13 @@ function SoundLayerHeader({
   const removeLayer = useProjectStore((s) => s.removeLayer);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
+  const midiFocused = useMidiRoutingStore((state) => (
+    groupType === 'track'
+    && state.focusedTarget?.kind === 'track'
+    && state.focusedTarget.projectSessionId === projectSessionId
+    && state.focusedTarget.rootGroupId === groupId
+    && state.focusedTarget.trackId === layer.layerId
+  ));
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(layer.name);
@@ -1154,9 +1162,28 @@ function SoundLayerHeader({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className="relative flex items-start overflow-hidden border-b border-app-border/20 select-none"
+          data-midi-focused={midiFocused ? 'true' : undefined}
+          className={[
+            'relative flex items-start overflow-hidden border-b border-l-2 border-l-transparent border-app-border/20 select-none',
+            midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
+          ].join(' ')}
           style={{ height }}
           onDoubleClick={startEdit}
+          onPointerDown={(event) => {
+            // Spec 067: an explicit pointer selection of a Track row header
+            // focuses that Track for MIDI routing. Buttons (Mute/Solo/automation/
+            // note processors) and the instrument control stop propagation or are
+            // skipped here so they do not steal performance focus.
+            if (groupType !== 'track' || event.button !== 0) return;
+            const target = event.target as HTMLElement;
+            if (target.closest('button, [data-track-instrument-control]')) return;
+            useMidiRoutingStore.getState().focusTrack({
+              projectSessionId,
+              rootGroupId: groupId,
+              trackId: layer.layerId,
+              displayName: layer.name,
+            });
+          }}
         >
           {groupType === 'track' && (
             <TrackInstrumentControl
@@ -1165,6 +1192,7 @@ function SoundLayerHeader({
               instrument={trackInstrument}
               projectSessionId={projectSessionId}
               projectRevision={projectRevision}
+              displayName={layer.name}
             />
           )}
           {editing ? (
@@ -1246,7 +1274,7 @@ function SoundLayerHeader({
             )}
            </div>
           {showAutomationFooter && (
-            <div className="absolute left-1 right-1 top-[20px] flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
+            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
               <ColorPickerButton
                 value={selectedAutomationColor}
                 className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
