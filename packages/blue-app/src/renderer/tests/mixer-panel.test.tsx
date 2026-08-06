@@ -200,6 +200,36 @@ describe('MixerPanel', () => {
     container.remove();
   });
 
+  it('fills the available level slider height', async () => {
+    seedLoadedProject();
+    const heightSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains('mixer-level-slider-wrapper')) {
+          return { height: 180 } as DOMRect;
+        }
+        return { height: 0 } as DOMRect;
+      });
+
+    const { container, root } = renderPanel();
+
+    try {
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(
+        [...container.querySelectorAll('.mixer-level-slider-wrapper svg')]
+          .map((slider) => slider.getAttribute('height')),
+      ).toEqual(['180', '180']);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+      heightSpy.mockRestore();
+    }
+  });
+
   it('keeps only one Effect selected across all channels', () => {
     seedLoadedProjectWithEffects();
     const { container, root } = renderPanel();

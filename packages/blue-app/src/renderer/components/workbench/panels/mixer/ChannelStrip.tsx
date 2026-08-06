@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Effect, Element } from '@blue/data';
 import type {
@@ -154,7 +154,28 @@ function MixerLevelSlider({
 }): React.ReactElement {
   const svgRef = useRef<SVGSVGElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
-  const sliderHeight = MIXER_SLIDER_MIN_H;
+  const sliderWrapperRef = useRef<HTMLDivElement>(null);
+  const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
+
+  useEffect(() => {
+    const sliderWrapper = sliderWrapperRef.current;
+    if (!sliderWrapper) return;
+
+    const updateSliderHeight = () => {
+      const nextHeight = Math.max(
+        MIXER_SLIDER_MIN_H,
+        Math.round(sliderWrapper.getBoundingClientRect().height),
+      );
+      setSliderHeight((currentHeight) => currentHeight === nextHeight ? currentHeight : nextHeight);
+    };
+
+    updateSliderHeight();
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(updateSliderHeight);
+    resizeObserver.observe(sliderWrapper);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const range = max - min || 1;
   const pct = Math.max(0, Math.min(1, (value - min) / range));
   const trackX = MIXER_SLIDER_WIDTH / 2 - MIXER_TRACK_W / 2;
@@ -200,7 +221,11 @@ function MixerLevelSlider({
   );
 
   return (
-    <div className="mixer-level-slider-wrapper" style={{ width: MIXER_SLIDER_WIDTH }}>
+    <div
+      ref={sliderWrapperRef}
+      className="mixer-level-slider-wrapper"
+      style={{ width: MIXER_SLIDER_WIDTH }}
+    >
       <svg
         ref={svgRef}
         width={MIXER_SLIDER_WIDTH}
