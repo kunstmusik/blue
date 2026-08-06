@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import {
   Element,
   TimeContext,
@@ -522,7 +523,8 @@ export default function LiveSpaceTab(): React.ReactElement {
                           >
                             <ContextMenu.Sub>
                               <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-                                Add SoundObject
+                                <span>Add SoundObject</span>
+                                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                               </ContextMenu.SubTrigger>
                               <ContextMenu.Portal>
                                 <ContextMenu.SubContent className="editor-context-menu">

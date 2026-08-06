@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import type { PolyObjectLayerGroupSnapshot, ScoreLayerGroupSnapshot, ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { RenderBar } from '../bar-renderers/renderer-registry';
@@ -1673,7 +1674,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       </ContextMenu.Item>
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
-          Align
+          <span>Align</span>
+          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className={subMenuClass}>
@@ -1765,7 +1767,8 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
     <>
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
-          Add SoundObject
+          <span>Add SoundObject</span>
+          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="editor-context-menu">

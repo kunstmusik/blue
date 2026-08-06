@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   getAllSoundObjectTypeDescriptors,
@@ -1252,7 +1253,8 @@ export default function TrackLayerGroupCanvas({
               </ContextMenu.Item>
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger" disabled={!canArrangeSelection}>
-                  Align
+                  <span>Align</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">
@@ -1286,7 +1288,8 @@ export default function TrackLayerGroupCanvas({
             <>
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-                  Add SoundObject
+                  <span>Add SoundObject</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">

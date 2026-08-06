@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { Music2 } from 'lucide-react';
+import { ChevronRight, Music2 } from 'lucide-react';
 import type { SupportedNewInstrumentType, TrackInstrumentSummary } from '../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../stores/project-store';
 import { useLibraryStore } from '../../../../stores/library-store';
@@ -112,7 +112,8 @@ export default function TrackInstrumentControl({
           <ContextMenu.Label className="px-3 py-1 text-tiny text-app-text-muted">Track Instrument</ContextMenu.Label>
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-              Use New Instrument
+              <span>Use New Instrument</span>
+              <ChevronRight className="w-3.5 h-3.5 opacity-60" />
             </ContextMenu.SubTrigger>
             <ContextMenu.Portal>
               <ContextMenu.SubContent

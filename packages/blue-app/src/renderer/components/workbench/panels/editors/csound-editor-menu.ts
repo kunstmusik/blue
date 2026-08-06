@@ -19,12 +19,16 @@ interface InsertionDefinition {
   detail: string;
 }
 
-function getEvaluateCodeShortcutLabel(): string {
+function getPlatformModifier(): string {
   if (typeof navigator !== 'undefined') {
-    return /Mac|iPhone|iPad|iPod/.test(navigator.platform) ? 'Cmd-Enter' : 'Ctrl-Enter';
+    return /Mac|iPhone|iPad|iPod/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
   }
 
-  return 'Cmd/Ctrl-Enter';
+  return 'Cmd/Ctrl';
+}
+
+function getEvaluateCodeShortcutLabel(): string {
+  return `${getPlatformModifier()}-Enter`;
 }
 
 const BLUE_VARIABLE_DEFINITIONS: InsertionDefinition[] = [
@@ -173,6 +177,7 @@ export function createJavaBlueCsoundEditorMenuItems(
       id: 'cut',
       label: 'Cut',
       command: 'cut',
+      shortcutLabel: `${getPlatformModifier()}-X`,
       disabled: readOnly,
       disabledReason: readOnly ? 'Editor is read-only' : undefined,
     },
@@ -181,12 +186,14 @@ export function createJavaBlueCsoundEditorMenuItems(
       id: 'copy',
       label: 'Copy',
       command: 'copy',
+      shortcutLabel: `${getPlatformModifier()}-C`,
     },
     {
       kind: 'command',
       id: 'paste',
       label: 'Paste',
       command: 'paste',
+      shortcutLabel: `${getPlatformModifier()}-V`,
       disabled: readOnly,
       disabledReason: readOnly ? 'Editor is read-only' : undefined,
     },
@@ -219,6 +226,7 @@ export function createBasicTextEditorMenuItems(
       id: 'cut',
       label: 'Cut',
       command: 'cut',
+      shortcutLabel: `${getPlatformModifier()}-X`,
       disabled: readOnly,
       disabledReason: readOnly ? 'Editor is read-only' : undefined,
     },
@@ -227,12 +235,14 @@ export function createBasicTextEditorMenuItems(
       id: 'copy',
       label: 'Copy',
       command: 'copy',
+      shortcutLabel: `${getPlatformModifier()}-C`,
     },
     {
       kind: 'command',
       id: 'paste',
       label: 'Paste',
       command: 'paste',
+      shortcutLabel: `${getPlatformModifier()}-V`,
       disabled: readOnly,
       disabledReason: readOnly ? 'Editor is read-only' : undefined,
     },

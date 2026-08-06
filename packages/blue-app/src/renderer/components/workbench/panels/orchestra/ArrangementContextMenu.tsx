@@ -1,5 +1,6 @@
 import React from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import type {
   ArrangementRowSnapshot,
   SupportedNewInstrumentType,
@@ -43,7 +44,8 @@ function AddInstrumentSubmenu({
   return (
     <ContextMenu.Sub>
       <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-        Add Instrument
+        <span>Add Instrument</span>
+        <ChevronRight className="w-3.5 h-3.5 opacity-60" />
       </ContextMenu.SubTrigger>
       <ContextMenu.Portal>
         <ContextMenu.SubContent

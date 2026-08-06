@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
@@ -84,7 +84,7 @@ export default function BSBPresetBar({
             <DropdownMenu.Sub key={subGroup.name}>
               <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20">
                 <span>{subGroup.name}</span>
-                <ChevronDown size={12} className="ml-2" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
               </DropdownMenu.SubTrigger>
               <DropdownMenu.SubContent className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
                 {renderPresetMenu(subGroup, depth + 1)}

@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data';
 import type { ScorePathSegment } from './types';
@@ -169,7 +169,7 @@ export default function ScoreToolbar({
                 <DropdownMenu.Sub key={group.label}>
                   <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-ui text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight">
                     {group.label}
-                    <ChevronDown className="w-3 h-3 ml-2 rotate-[-90deg]" />
+                    <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
                   </DropdownMenu.SubTrigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.SubContent

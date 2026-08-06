@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import type { BsbWidgetNodeSnapshot, BsbInterfacePatch } from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 import { getWidgetDisplaySize } from './utils';
@@ -262,7 +263,8 @@ function WidgetWrapper({
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-                  Align
+                  <span>Align</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">
@@ -278,7 +280,8 @@ function WidgetWrapper({
               </ContextMenu.Sub>
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger" disabled={!canDistribute}>
-                  Distribute
+                  <span>Distribute</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">

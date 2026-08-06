@@ -1,10 +1,6 @@
-import {
-  useCallback,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { ChevronRight } from 'lucide-react';
+import { type ReactNode, useMemo } from 'react';
 import type {
   ScoreAutomationPatch,
   ScoreAutomationLayerRef,
@@ -17,19 +13,9 @@ import {
   getAllTargetsFromGroups,
 } from './automation-selection-utils';
 
-const menuClass =
-  'automation-target-menu min-w-[180px] bg-app-menu border border-app-border/50 rounded-md p-1 shadow-lg z-50 text-body text-app-text-bright';
-const menuItemClass =
-  'flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-default outline-none text-app-text hover:bg-app-highlight';
-const sepClass = 'h-px my-1 bg-app-border/40';
-const groupLabelClass = 'px-2 py-1 text-ui text-app-text-muted font-medium';
-const subTriggerClass =
-  'flex items-center justify-between px-2 py-1.5 rounded-sm cursor-default outline-none text-app-text hover:bg-app-highlight';
-const submenuMaxHeight = 360;
-const submenuPadding = 8;
-const submenuEstimatedWidth = 220;
-
 interface Props {
+  /** The element that opens the menu (typically the "A" button). */
+  trigger: ReactNode;
   automation?: ScoreLayerAutomationSnapshot;
   layerRef: ScoreAutomationLayerRef;
   onPatch: (patch: ScoreAutomationPatch) => void;
@@ -37,9 +23,11 @@ interface Props {
 }
 
 export default function AutomationTargetMenu({
+  trigger,
   automation,
   layerRef,
   onPatch,
+  onClose,
 }: Props) {
   const safeAutomation = automation ?? {
     layerId: layerRef.layerId,
@@ -58,7 +46,10 @@ export default function AutomationTargetMenu({
     assignmentState: 'missing',
   }));
   const allTargets = [...getAllTargetsFromGroups(safeAutomation.targetGroups), ...missingTargets];
-  const { current, missing } = classifyTargets(safeAutomation, allTargets);
+  const { current, missing } = useMemo(
+    () => classifyTargets(safeAutomation, allTargets),
+    [safeAutomation, allTargets],
+  );
 
   function handleSelect(target: AutomationTargetSnapshot) {
     if (target.assignmentState === 'assignedCurrentLayer') {
@@ -100,33 +91,44 @@ export default function AutomationTargetMenu({
   }
 
   return (
-    <div className={menuClass}>
-      {safeAutomation.targetGroups.map((group) => (
-        <TargetGroupItem
-          key={group.groupId}
-          group={group}
-          onSelect={handleSelect}
-        />
-      ))}
+    <DropdownMenu.Root onOpenChange={(open) => { if (!open) onClose?.(); }}>
+      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className="editor-context-menu" sideOffset={4}>
+          {safeAutomation.targetGroups.map((group) => (
+            <TargetGroupItem
+              key={group.groupId}
+              group={group}
+              onSelect={handleSelect}
+            />
+          ))}
 
-      {current.length > 0 && (
-        <>
-          <div className={sepClass} />
-          <div className={menuItemClass} onClick={handleClearAll}>
-            Clear All
-          </div>
-        </>
-      )}
+          {current.length > 0 && (
+            <>
+              <DropdownMenu.Separator className="editor-context-menu__separator" />
+              <DropdownMenu.Item
+                className="editor-context-menu__item"
+                onSelect={handleClearAll}
+              >
+                Clear All
+              </DropdownMenu.Item>
+            </>
+          )}
 
-      {missing.length > 0 && (
-        <>
-          <div className={sepClass} />
-          <div className={menuItemClass} onClick={handleCleanupMissing}>
-            Cleanup Missing ({missing.length})
-          </div>
-        </>
-      )}
-    </div>
+          {missing.length > 0 && (
+            <>
+              <DropdownMenu.Separator className="editor-context-menu__separator" />
+              <DropdownMenu.Item
+                className="editor-context-menu__item"
+                onSelect={handleCleanupMissing}
+              >
+                Cleanup Missing ({missing.length})
+              </DropdownMenu.Item>
+            </>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -154,8 +156,10 @@ function TargetGroupItem({
       : [];
 
     return (
-      <>
-        <div className={groupLabelClass}>{group.label}</div>
+      <DropdownMenu.Group>
+        <DropdownMenu.Label className="editor-context-menu__label">
+          {group.label}
+        </DropdownMenu.Label>
         {leadingSubGroups.map((sub) => (
           <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
         ))}
@@ -165,96 +169,27 @@ function TargetGroupItem({
         {trailingSubGroups.map((sub) => (
           <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
         ))}
-      </>
-    );
-  }
-
-  if (hasSubGroups && !hasTargets) {
-    return (
-      <SubMenu label={group.label}>
-        {group.subGroups.map((sub) => (
-          <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
-        ))}
-      </SubMenu>
-    );
-  }
-
-  if (hasSubGroups && hasTargets) {
-    return (
-      <SubMenu label={group.label}>
-        {group.subGroups.map((sub) => (
-          <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
-        ))}
-        {group.targets.map((target) => (
-          <TargetItem key={target.parameterId} target={target} onSelect={onSelect} />
-        ))}
-      </SubMenu>
+      </DropdownMenu.Group>
     );
   }
 
   return (
-    <SubMenu label={group.label}>
-      {group.targets.map((target) => (
-        <TargetItem key={target.parameterId} target={target} onSelect={onSelect} />
-      ))}
-    </SubMenu>
-  );
-}
-
-function SubMenu({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  const triggerRef = useRef<HTMLDivElement | null>(null);
-  const [contentStyle, setContentStyle] = useState<CSSProperties | undefined>();
-
-  const updateContentPosition = useCallback(() => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-
-    const rect = trigger.getBoundingClientRect();
-    const maxHeight = Math.min(
-      submenuMaxHeight,
-      Math.max(160, window.innerHeight - (submenuPadding * 2)),
-    );
-    const maxTop = Math.max(
-      submenuPadding,
-      window.innerHeight - maxHeight - submenuPadding,
-    );
-    const top = Math.min(Math.max(rect.top, submenuPadding), maxTop);
-    const opensRight = rect.right + submenuEstimatedWidth + submenuPadding <= window.innerWidth;
-    const left = opensRight
-      ? rect.right
-      : Math.max(submenuPadding, rect.left - submenuEstimatedWidth);
-
-    setContentStyle({
-      left,
-      maxHeight: window.innerHeight - top - submenuPadding,
-      minWidth: submenuEstimatedWidth,
-      overflowY: 'auto',
-      top,
-    });
-  }, []);
-
-  return (
-    <div
-      className="automation-target-submenu"
-      onFocus={updateContentPosition}
-      onMouseEnter={updateContentPosition}
-    >
-      <div ref={triggerRef} className={subTriggerClass}>
-        <span className="flex-1">{label}</span>
-        <span className="text-tiny opacity-60 ml-2">▸</span>
-      </div>
-      <div className="automation-target-submenu__content" style={contentStyle}>
-        <div className={menuClass}>
-          {children}
-        </div>
-      </div>
-    </div>
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
+        <span>{group.label}</span>
+        <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+      </DropdownMenu.SubTrigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.SubContent className="editor-context-menu" sideOffset={-2} alignOffset={-4}>
+          {group.subGroups.map((sub) => (
+            <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
+          ))}
+          {group.targets.map((target) => (
+            <TargetItem key={target.parameterId} target={target} onSelect={onSelect} />
+          ))}
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Sub>
   );
 }
 
@@ -266,9 +201,9 @@ function TargetItem({
   onSelect: (target: AutomationTargetSnapshot) => void;
 }) {
   return (
-    <div
-      className={menuItemClass}
-      onClick={() => onSelect(target)}
+    <DropdownMenu.Item
+      className="editor-context-menu__item"
+      onSelect={() => onSelect(target)}
     >
       <span
         style={{
@@ -287,8 +222,8 @@ function TargetItem({
       />
       <span className="flex-1">{target.label}</span>
       {target.ownerLayerName && (
-        <span className="text-ui text-app-text-muted">({target.ownerLayerName})</span>
+        <span className="editor-context-menu__shortcut">({target.ownerLayerName})</span>
       )}
-    </div>
+    </DropdownMenu.Item>
   );
 }

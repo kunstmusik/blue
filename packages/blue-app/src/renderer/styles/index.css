@@ -177,6 +177,7 @@
   .toolbar-context-menu__item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     width: 100%;
     min-height: 32px;
@@ -201,11 +202,10 @@
     justify-content: space-between;
   }
 
-  .toolbar-context-menu__subtrigger::after {
-    content: '▸';
-    font-size: var(--text-tiny);
-    opacity: 0.6;
-    margin-left: 12px;
+  .toolbar-context-menu__shortcut {
+    margin-left: auto;
+    font-size: var(--text-ui);
+    color: var(--color-app-text-soft);
   }
 
   .toolbar-context-menu__subtrigger[data-state='open'] {
@@ -240,6 +240,7 @@
   .editor-context-menu__item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     width: 100%;
     min-height: 32px;
@@ -273,15 +274,20 @@
     background: var(--color-app-border-subtle);
   }
 
-  .editor-context-menu__subtrigger {
-    justify-content: space-between;
+  .editor-context-menu__label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 12px;
+    min-height: 28px;
+    font-size: var(--text-ui);
+    color: var(--color-app-text-soft);
+    font-weight: 500;
+    user-select: none;
   }
 
-  .editor-context-menu__subtrigger::after {
-    content: '▸';
-    font-size: var(--text-tiny);
-    opacity: 0.6;
-    margin-left: 12px;
+  .editor-context-menu__subtrigger {
+    justify-content: space-between;
   }
 
   .editor-context-menu__subtrigger[data-state='open'] {
@@ -291,21 +297,6 @@
 
   .editor-context-menu__arrow {
     display: none;
-  }
-
-  .automation-target-submenu {
-    position: relative;
-  }
-
-  .automation-target-submenu__content {
-    display: none;
-    position: fixed;
-    z-index: 60;
-  }
-
-  .automation-target-submenu:hover > .automation-target-submenu__content,
-  .automation-target-submenu:focus-within > .automation-target-submenu__content {
-    display: block;
   }
 
   .cm-blue-code-eval-flash {

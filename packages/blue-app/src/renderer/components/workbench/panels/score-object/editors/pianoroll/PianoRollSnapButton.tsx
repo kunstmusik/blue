@@ -115,7 +115,7 @@ function SnapSubmenu({
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={subTriggerClass}>
         {label}
-        <ChevronRight className="w-3 h-3 ml-2" />
+        <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
       </DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
         <DropdownMenu.SubContent className={menuClass} sideOffset={-2} alignOffset={-4}>

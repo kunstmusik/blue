@@ -1,5 +1,4 @@
 import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
-import { createPortal } from "react-dom";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown } from "lucide-react";
 import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
@@ -1059,9 +1058,6 @@ function SoundLayerHeader({
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(layer.name);
-  const [automationMenuOpen, setAutomationMenuOpen] = useState(false);
-  const automationMenuRef = useRef<HTMLDivElement>(null);
-  const automationBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const height = layer.height || 44;
   const heightIndex = Math.round(height / 22) - 1;
@@ -1088,17 +1084,6 @@ function SoundLayerHeader({
     setEditing(false);
     setEditValue(layer.name);
   }, [layer.name]);
-
-  useEffect(() => {
-    if (!automationMenuOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (automationMenuRef.current && !automationMenuRef.current.contains(e.target as Node)) {
-        setAutomationMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [automationMenuOpen]);
 
   const startEdit = useCallback(
     (e: React.MouseEvent) => {
@@ -1240,17 +1225,24 @@ function SoundLayerHeader({
               </button>
             )}
             {showAutomationButton && (
-              <button
-                ref={automationBtnRef}
-                className={btnClass(false, "")}
-                title="Automation"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAutomationMenuOpen(!automationMenuOpen);
+              <AutomationTargetMenu
+                trigger={
+                  <button
+                    className={btnClass(false, "")}
+                    title="Automation"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    A
+                  </button>
+                }
+                automation={layer.automation}
+                layerRef={layerRef}
+                onPatch={(patch) => {
+                  dispatchAutomationPatch(patch);
                 }}
-              >
-                A
-              </button>
+              />
             )}
            </div>
           {showAutomationFooter && (
@@ -1291,31 +1283,6 @@ function SoundLayerHeader({
           )}
          </div>
        </ContextMenu.Trigger>
-       {automationMenuOpen && createPortal(
-         <div
-           ref={automationMenuRef}
-           className="fixed z-[9999]"
-           style={{
-             top: automationBtnRef.current
-               ? automationBtnRef.current.getBoundingClientRect().bottom + 2
-               : 0,
-             left: automationBtnRef.current
-               ? automationBtnRef.current.getBoundingClientRect().left
-               : 0,
-           }}
-         >
-           <AutomationTargetMenu
-             automation={layer.automation}
-             layerRef={layerRef}
-             onPatch={(patch) => {
-               dispatchAutomationPatch(patch);
-               setAutomationMenuOpen(false);
-             }}
-             onClose={() => setAutomationMenuOpen(false)}
-           />
-         </div>,
-          document.body,
-        )}
        <ContextMenu.Portal>
         <ContextMenu.Content className="editor-context-menu">
           <ContextMenu.Item
@@ -1356,7 +1323,8 @@ function SoundLayerHeader({
                 <ContextMenu.SubTrigger
                   className={`${ctxItemClass} editor-context-menu__subtrigger`}
                 >
-                  Layer Height
+                  <span>Layer Height</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">
