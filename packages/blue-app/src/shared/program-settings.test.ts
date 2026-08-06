@@ -45,6 +45,8 @@ describe('program-settings defaults', () => {
     expect(s.playback.followPlayback).toBe(true);
     expect(s.utility.csoundExecutable).toBe('/usr/local/bin/csound');
     expect(s.utility.freezeFlags).toBe('-Ado');
+    expect(s.realtimeRender.defaultKsmps).toBe('64');
+    expect(s.diskRender.defaultKsmps).toBe('64');
     expect(s.realtimeRender.audioDriver).toBe('pa_bl');
     expect(s.realtimeRender.softwareBufferSize).toBe(1024);
     expect(s.realtimeRender.hardwareBufferSize).toBe(4096);

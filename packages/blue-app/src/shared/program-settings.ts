@@ -348,7 +348,7 @@ export function createDefaultRealtimeRenderSettings(platform: string): RealtimeR
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     defaultSr: '44100',
-    defaultKsmps: '1',
+    defaultKsmps: '64',
     defaultNchnls: '2',
     useZeroDbfs: true,
     zeroDbfs: '1',
@@ -382,7 +382,7 @@ export function createDefaultDiskRenderSettings(platform: string): DiskRenderSet
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     defaultSr: '44100',
-    defaultKsmps: '1',
+    defaultKsmps: '64',
     defaultNchnls: '2',
     useZeroDbfs: true,
     zeroDbfs: '1',
