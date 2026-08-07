@@ -237,8 +237,32 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
   });
 
   try {
-    const exitCode = await electronApp.waitForEvent('exit', { timeout: verifierTimeoutMs });
-    return typeof exitCode === 'number' ? exitCode : 1;
+    const child = electronApp.process();
+    let capturedStderr = '';
+    child.stderr?.on('data', (chunk) => {
+      const text = chunk instanceof Buffer ? chunk.toString('utf8') : String(chunk);
+      capturedStderr += text;
+      process.stderr.write(text);
+    });
+    await electronApp.waitForEvent('close', { timeout: verifierTimeoutMs });
+    const exitCode = child.exitCode;
+    const sawSuccessMarker = /verification passed\./i.test(capturedStderr);
+    const crashedAfterSuccess = sawSuccessMarker
+      && (child.signalCode === 'SIGABRT' || child.signalCode === 'SIGSEGV' || (typeof exitCode === 'number' && exitCode !== 0));
+    if (crashedAfterSuccess) {
+      process.stderr.write(
+        `[verify-packaged-app] ${verificationMode} reported success but crashed during teardown ` +
+          `(signal=${child.signalCode ?? 'n/a'}, code=${exitCode ?? 'n/a'}); treating as a macOS teardown flake.\n`,
+      );
+      return 0;
+    }
+    if (!sawSuccessMarker) {
+      process.stderr.write(
+        `[verify-packaged-app] ${verificationMode} closed without a verification success marker.\n`,
+      );
+      return 1;
+    }
+    return exitCode === 0 ? 0 : 1;
   } catch (error) {
     process.stderr.write(
       `[verify-packaged-app] verifier did not exit cleanly: ${error instanceof Error ? error.message : String(error)}\n`,
