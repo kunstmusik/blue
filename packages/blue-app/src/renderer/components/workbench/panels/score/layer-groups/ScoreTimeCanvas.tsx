@@ -1347,6 +1347,8 @@ export default function ScoreTimeCanvas({
   }, [contextMenuPos, snapBeatValueStart, group.groupId, addScoreObjects]);
 
   const selectedEntries = getSelectedEntries();
+  const canSetObjectiveDuration = selectedEntries.length > 0
+    && selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
   const canExport = selectedEntries.length === 1 &&
     selectedEntries[0]!.objectType !== 'AudioClip' &&
     selectedEntries[0]!.objectType !== 'Instance' &&
@@ -1782,6 +1784,7 @@ export default function ScoreTimeCanvas({
               onShift={handleShift}
               onSetColor={handleSetColor}
               onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
+              canSetObjectiveDuration={canSetObjectiveDuration}
               onReplaceWithBuffer={handleReplaceWithBuffer}
               canReplaceWithBuffer={clipboard.length === 1}
               onFreezeUnfreeze={handleFreezeUnfreeze}
@@ -1824,7 +1827,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1841,6 +1844,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onShift: () => void;
   onSetColor: () => void;
   onSetSubjectiveToObjective: () => void;
+  canSetObjectiveDuration: boolean;
   onReplaceWithBuffer: () => void;
   canReplaceWithBuffer: boolean;
   onFreezeUnfreeze: () => void;
@@ -1899,7 +1903,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Item className={menuItemClass} onSelect={onShift}>
         Shift…
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={onSetSubjectiveToObjective}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canSetObjectiveDuration} onSelect={onSetSubjectiveToObjective}>
         Set Subjective Time to Objective Time
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
