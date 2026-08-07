@@ -188,6 +188,7 @@ const originalProjectActions = {
   moveScoreObjects: useProjectStore.getState().moveScoreObjects,
   resizeScoreObjects: useProjectStore.getState().resizeScoreObjects,
 };
+const originalBlueAPI = window.blueAPI;
 const originalCaptureScoreSoundObject = useLibraryStore.getState().captureScoreSoundObject;
 const originalSelect = useScoreSelectionStore.getState().select;
 const originalOpenPanel = useWorkbenchStore.getState().openPanel;
@@ -200,6 +201,11 @@ beforeEach(() => {
     setAudioClipEditorPreview: vi.fn(),
     clearAudioClipEditorPreview: vi.fn(),
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
+  window.blueAPI = {
+    ...window.blueAPI,
+    exportScoreObject: vi.fn().mockResolvedValue({ status: 'saved' }),
+    importScoreObject: vi.fn().mockResolvedValue(null),
+  } as typeof window.blueAPI;
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
   useMidiRoutingStore.getState().clearFocusForProjectSession();
@@ -216,6 +222,7 @@ afterEach(() => {
   useScoreSelectionStore.getState().clearClipboard();
   useMidiRoutingStore.getState().clearFocusForProjectSession();
   useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+  window.blueAPI = originalBlueAPI;
   document.body.innerHTML = '';
 });
 
@@ -439,6 +446,59 @@ describe('Track layer timeline gestures', () => {
     expect(menuText).toContain('Select Layer');
     expect(menuText).toContain('Select All Before');
     expect(menuText).toContain('Select All After');
+    act(() => root.unmount());
+  });
+
+  it('imports a context-normalized SoundObject with top-level Track timing', async () => {
+    const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
+    window.blueAPI = {
+      ...window.blueAPI,
+      importScoreObject: vi.fn().mockResolvedValue({
+        ok: true,
+        object: {
+          serializedXml,
+          objectType: 'GenericScore',
+          name: 'Imported BBF',
+          backgroundColor: 0x336699,
+          durationBeats: 9,
+          destinationTimeBase: 'BBF',
+          isContainer: false,
+        },
+      }),
+    } as typeof window.blueAPI;
+    const group = makeTrackGroup([]);
+    const { root, surface } = renderTrackCanvas(group);
+
+    act(() => mouse(surface, 'contextmenu', 100, 15));
+    clickContextMenuItem('Import…');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'addTrackItem',
+        track: {
+          rootGroupId: 'track-group',
+          trackId: 'track-row',
+          projectSessionId: 1,
+          projectRevision: 1,
+        },
+        item: {
+          name: 'Imported BBF',
+          durationBeats: 9,
+          startTimeBase: 'BBF',
+          durationTimeBase: 'BBF',
+          backgroundColor: 0x336699,
+          objectType: 'GenericScore',
+          serializedXml,
+        },
+        startBeats: 4,
+      },
+    });
+
     act(() => root.unmount());
   });
 

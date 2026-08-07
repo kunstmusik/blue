@@ -545,11 +545,64 @@ export default function TrackLayerGroupCanvas({
     })();
   }, [allLayerGroups, applyProjectDocumentPatch, clearSelection, clipboard, getSelectedEntries]);
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     const entries = getSelectedEntries();
-    if (entries.length !== 1 || entries[0]!.objectType === 'AudioClip' || !entries[0]!.serializedXml) return;
-    void window.blueAPI.exportScoreObject(entries[0]!.serializedXml, entries[0]!.name);
+    if (
+      entries.length !== 1
+      || entries[0]!.objectType === 'AudioClip'
+      || entries[0]!.objectType === 'Instance'
+      || !entries[0]!.serializedXml
+    ) return;
+    try {
+      const result = await window.blueAPI.exportScoreObject(entries[0]!.serializedXml, entries[0]!.name);
+      if (result.status === 'error') toast.error(result.error);
+    } catch (error) {
+      toast.error('Error: Could not export Sound Object.');
+      console.error('Error exporting Sound Object', error);
+    }
   }, [getSelectedEntries]);
+
+  const handleImport = useCallback(async () => {
+    if (!window.blueAPI?.importScoreObject || !contextMenuPos) return;
+    try {
+      const result = await window.blueAPI.importScoreObject();
+      if (!result) return;
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      const imported = result.object;
+      const layer = group.layers[Math.max(0, Math.min(contextMenuPos.layerIndex, group.layers.length - 1))];
+      if (!layer) return;
+      if (!layerGroupAcceptsObjectType('track', imported.objectType)) {
+        toast.error(`${imported.objectType} cannot be imported into a Track.`);
+        return;
+      }
+
+      const startBeats = clampBeat(snapBeat(contextMenuPos.xBeats, 'floor'), totalBeats);
+
+      void applyProjectDocumentPatch({
+        score: {
+          type: 'addTrackItem',
+          track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
+          item: {
+            name: imported.name,
+            durationBeats: imported.durationBeats,
+            startTimeBase: imported.destinationTimeBase,
+            durationTimeBase: imported.destinationTimeBase,
+            backgroundColor: imported.backgroundColor,
+            objectType: imported.objectType,
+            serializedXml: imported.serializedXml,
+          },
+          startBeats,
+        },
+      });
+    } catch (error) {
+      toast.error('Error: Could not read Sound Object from file');
+      console.error('Error importing Sound Object', error);
+    }
+  }, [applyProjectDocumentPatch, clampBeat, contextMenuPos, group, projectRevision, projectSessionId, snapBeat, totalBeats]);
 
   const addTrackItem = useCallback((objectType: 'AudioClip' | string, startBeats: number, layerIndex: number) => {
     const layer = group.layers[Math.max(0, Math.min(layerIndex, group.layers.length - 1))];
@@ -1094,6 +1147,7 @@ export default function TrackLayerGroupCanvas({
     && selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
   const canExport = selectedEntries.length === 1
     && selectedEntries[0]!.objectType !== 'AudioClip'
+    && selectedEntries[0]!.objectType !== 'Instance'
     && Boolean(selectedEntries[0]!.serializedXml);
   return (
     <ContextMenu.Root onOpenChange={(open) => { if (!open) setContextMenuObjectId(null); }}>
@@ -1339,6 +1393,8 @@ export default function TrackLayerGroupCanvas({
               <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectLayer}>Select Layer</ContextMenu.Item>
               <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectAllBefore}>Select All Before</ContextMenu.Item>
               <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleSelectAllAfter}>Select All After</ContextMenu.Item>
+              <ContextMenu.Separator className="editor-context-menu__separator" />
+              <ContextMenu.Item className="editor-context-menu__item" disabled={!contextMenuPos} onSelect={handleImport}>Import…</ContextMenu.Item>
             </>
           )}
         </ContextMenu.Content>

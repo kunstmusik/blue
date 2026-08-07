@@ -25,6 +25,10 @@ import type {
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
 } from '../../shared/project-editor';
+import type {
+  ScoreObjectExportResult,
+  ScoreObjectImportResult,
+} from '../../shared/score-object-file';
 import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 import type {
   MissingAudioAssetsChooseRequest,
@@ -342,7 +346,8 @@ declare global {
       importCsoundUdo: () => Promise<string | null>;
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
-      exportScoreObject: (xmlText: string, objectName: string) => Promise<void>;
+      exportScoreObject: (xmlText: string, objectName: string) => Promise<ScoreObjectExportResult>;
+      importScoreObject: () => Promise<ScoreObjectImportResult | null>;
       readCsoundRC: () => Promise<{ filePath: string; content: string }>;
       writeCsoundRC: (text: string) => Promise<{ success: boolean; filePath: string }>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;

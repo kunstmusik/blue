@@ -171,6 +171,12 @@ import {
   type ScoreObjectEditorTargetSnapshot,
   type PolyObjectLayerGroupSnapshot,
 } from '../shared/project-editor';
+import {
+  prepareScoreObjectImport,
+  validateScoreObjectExport,
+  type ScoreObjectExportResult,
+  type ScoreObjectImportResult,
+} from '../shared/score-object-file';
 import type {
   RenderToDiskRequest,
   FreezeScoreObjectsRequest,
@@ -2494,6 +2500,24 @@ ipcMain.handle('import-csound-udo', async () => {
   return text;
 });
 
+ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    filters: [{ name: 'Blue Sound Object File', extensions: ['blueObject', 'xml'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  const xml = await fs.promises.readFile(result.filePaths[0], 'utf-8');
+  const data = currentData;
+  if (!data) return { ok: false, error: 'No project is loaded.' };
+  const score = data.getScore();
+  return prepareScoreObjectImport(
+    xml,
+    score.getTimeContext(),
+    String(score.getTimeState().getTimeDisplay()),
+  );
+});
+
 ipcMain.handle('read-csoundrc', () => {
   const csoundRcEnv = process.env.CSOUNDRC;
   const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
@@ -2536,15 +2560,24 @@ ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: st
   await fs.promises.writeFile(result.filePath, codeText, 'utf-8');
 });
 
-ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string) => {
-  if (!mainWindow || typeof xmlText !== 'string' || xmlText.trim().length === 0) return;
-  const safeName = objectName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'SoundObject';
+ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string): Promise<ScoreObjectExportResult> => {
+  if (!mainWindow) return { status: 'error', error: 'The main window is not available.' };
+  if (typeof xmlText !== 'string' || xmlText.trim().length === 0) {
+    return { status: 'error', error: 'The selected Sound Object has no XML to export.' };
+  }
+  const validation = validateScoreObjectExport(xmlText);
+  if (!validation.ok) return { status: 'error', error: validation.error };
+
+  const safeName = typeof objectName === 'string'
+    ? objectName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'SoundObject'
+    : 'SoundObject';
   const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: `${safeName}.xml`,
     filters: [{ name: 'Blue SoundObject XML', extensions: ['xml'] }],
   });
-  if (result.canceled || !result.filePath) return;
+  if (result.canceled || !result.filePath) return { status: 'cancelled' };
   await fs.promises.writeFile(result.filePath, xmlText, 'utf-8');
+  return { status: 'saved' };
 });
 
 // ─── Blue Live IPC Handlers ───

@@ -17,6 +17,7 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
+const originalBlueAPI = window.blueAPI;
 
 function createSoundItem(
   objectId: string,
@@ -243,6 +244,11 @@ beforeEach(() => {
     moveScoreObjects: vi.fn(),
     resizeScoreObjects: vi.fn(),
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
+  window.blueAPI = {
+    ...window.blueAPI,
+    exportScoreObject: vi.fn().mockResolvedValue({ status: 'saved' }),
+    importScoreObject: vi.fn().mockResolvedValue(null),
+  } as typeof window.blueAPI;
   useScoreSelectionStore.getState().clearSelection();
 });
 
@@ -254,6 +260,7 @@ afterEach(() => {
     resizeScoreObjects: originalProjectState.resizeScoreObjects,
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
   useScoreSelectionStore.getState().clearSelection();
+  window.blueAPI = originalBlueAPI;
   document.body.innerHTML = '';
 });
 
@@ -352,6 +359,29 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('exports the single selected SoundObject XML', async () => {
+    const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
+    const item = {
+      ...createSoundItem('sound-object', 'Export Me', 0, 0, 1, 2),
+      serializedXml,
+    };
+    const soundGroup = createSoundGroup([[item]]);
+    const exportScoreObject = vi.fn().mockResolvedValue({ status: 'saved' });
+    window.blueAPI = { ...window.blueAPI, exportScoreObject } as typeof window.blueAPI;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Export…');
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(exportScoreObject).toHaveBeenCalledWith(serializedXml, 'Export Me');
+    act(() => root.unmount());
   });
 
   it('replaces selected SoundObjects with the single SoundObject in the buffer', async () => {
@@ -562,5 +592,56 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('imports a context-normalized SoundObject at the requested score position', async () => {
+    const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
+    window.blueAPI = {
+      ...window.blueAPI,
+      importScoreObject: vi.fn().mockResolvedValue({
+        ok: true,
+        object: {
+          serializedXml,
+          objectType: 'GenericScore',
+          name: 'Imported BBF',
+          backgroundColor: 0x336699,
+          durationBeats: 9,
+          destinationTimeBase: 'BBF',
+          isContainer: false,
+        },
+      }),
+    } as typeof window.blueAPI;
+    const soundGroup = createSoundGroup([[]]);
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Import…');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'addScoreObjects',
+        groupId: 'sound-group',
+        objects: [expect.objectContaining({
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          name: 'Imported BBF',
+          startBeats: 4,
+          durationBeats: 9,
+          startTimeBase: 'BBF',
+          durationTimeBase: 'BBF',
+          backgroundColor: 0x336699,
+          serializedXml,
+        })],
+      },
+    });
+
+    act(() => root.unmount());
   });
 });

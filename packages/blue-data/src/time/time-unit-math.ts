@@ -127,7 +127,8 @@ export function beatsToDuration(beats: number, targetBase: TimeBase, context: Ti
       return TimeDuration.bbf(bars, fullBeats, Math.min(fraction, 99));
     }
 
-    case TimeBase.TIME: {
+    case TimeBase.TIME:
+    case TimeBase.SMPTE: {
       const secs = context.getTempoMap().beatsToSeconds(beats);
       return TimeDuration.fromSeconds(secs);
     }
@@ -188,7 +189,8 @@ function beatsToTimePositionInternal(beats: number, base: TimeBase, context: Tim
       return TimePosition.bbf(bbf.bar, bbf.beat, bbf.fraction);
     }
 
-    case TimeBase.TIME: {
+    case TimeBase.TIME:
+    case TimeBase.SMPTE: {
       const totalSecs = context.getTempoMap().beatsToSeconds(beats);
       const totalMs = Math.round(totalSecs * 1000);
       const hours = Math.floor(totalMs / 3600000);

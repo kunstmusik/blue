@@ -42,7 +42,8 @@ export function beatsToTimePosition(beats: number, base: TimeBase, context: Time
       return TimePosition.bbf(bbf.bar, bbf.beat, bbf.fraction);
     }
 
-    case TimeBase.TIME: {
+    case TimeBase.TIME:
+    case TimeBase.SMPTE: {
       const totalSecs = context.getTempoMap().beatsToSeconds(beats);
       // Normalize to avoid millisecond overflow (e.g., 0.999977 * 1000 = 999.977 ≈ 1000)
       const totalMs = Math.round(totalSecs * 1000);

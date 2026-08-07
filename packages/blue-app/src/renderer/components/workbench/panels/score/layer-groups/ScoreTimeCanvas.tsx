@@ -1295,6 +1295,63 @@ export default function ScoreTimeCanvas({
     colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor);
   }, [getSelectedEntries]);
 
+  const handleExport = useCallback(async () => {
+    const entries = getSelectedEntries();
+    if (
+      entries.length !== 1 ||
+      entries[0]!.objectType === 'AudioClip' ||
+      entries[0]!.objectType === 'Instance' ||
+      !entries[0]!.serializedXml
+    ) {
+      return;
+    }
+    try {
+      const result = await window.blueAPI.exportScoreObject(entries[0]!.serializedXml, entries[0]!.name);
+      if (result.status === 'error') toast.error(result.error);
+    } catch (error) {
+      toast.error('Error: Could not export Sound Object.');
+      console.error('Error exporting Sound Object', error);
+    }
+  }, [getSelectedEntries]);
+
+  const handleImport = useCallback(async () => {
+    if (!window.blueAPI?.importScoreObject || !contextMenuPos) return;
+    try {
+      const result = await window.blueAPI.importScoreObject();
+      if (!result) return;
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      const imported = result.object;
+      const startBeats = snapBeatValueStart(contextMenuPos.xBeats);
+
+      addScoreObjects([{
+        groupId: group.groupId,
+        layerIndex: contextMenuPos.layerIndex,
+        name: imported.name,
+        startBeats,
+        durationBeats: imported.durationBeats,
+        startTimeBase: imported.destinationTimeBase,
+        durationTimeBase: imported.destinationTimeBase,
+        backgroundColor: imported.backgroundColor,
+        objectType: imported.objectType,
+        isContainer: imported.isContainer,
+        serializedXml: imported.serializedXml,
+      }]);
+    } catch (error) {
+      toast.error('Error: Could not read Sound Object from file');
+      console.error('Error importing Sound Object', error);
+    }
+  }, [contextMenuPos, snapBeatValueStart, group.groupId, addScoreObjects]);
+
+  const selectedEntries = getSelectedEntries();
+  const canExport = selectedEntries.length === 1 &&
+    selectedEntries[0]!.objectType !== 'AudioClip' &&
+    selectedEntries[0]!.objectType !== 'Instance' &&
+    Boolean(selectedEntries[0]!.serializedXml);
+
   const handleContextMenuPaste = useCallback(() => {
     if (clipboard.length === 0 || !contextMenuPos) return;
     const paste = translateClipboardEntriesForPaste({
@@ -1731,6 +1788,8 @@ export default function ScoreTimeCanvas({
               onCancelFreeze={handleCancelFreeze}
               freezeBusy={freezeBusy}
               freezeProgress={freezeProgress}
+              onExport={handleExport}
+              canExport={canExport}
             />
           ) : (
             <EmptyAreaContextMenu
@@ -1749,6 +1808,7 @@ export default function ScoreTimeCanvas({
               onSelectLayer={handleSelectLayer}
               onSelectAllBefore={handleSelectAllBefore}
               onSelectAllAfter={handleSelectAllAfter}
+              onImport={handleImport}
             />
           )}
         </ContextMenu.Content>
@@ -1764,7 +1824,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1787,6 +1847,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onCancelFreeze: () => void;
   freezeBusy: boolean;
   freezeProgress: number | null;
+  onExport: () => void;
+  canExport: boolean;
 }) {
   const ni = () => alert('Not yet implemented');
   return (
@@ -1856,14 +1918,14 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
         Set Color…
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canExport} onSelect={onExport}>
         Export…
       </ContextMenu.Item>
     </>
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter, onImport }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
@@ -1879,6 +1941,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   onSelectLayer: () => void;
   onSelectAllBefore: () => void;
   onSelectAllAfter: () => void;
+  onImport: () => void;
 }) {
   const ni = () => alert('Not yet implemented');
 
@@ -1971,7 +2034,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
         Select All After
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} onSelect={onImport}>
         Import…
       </ContextMenu.Item>
     </>

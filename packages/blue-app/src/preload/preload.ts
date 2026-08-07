@@ -27,6 +27,10 @@ import type {
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
 } from '../shared/project-editor';
+import type {
+  ScoreObjectExportResult,
+  ScoreObjectImportResult,
+} from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
 import {
   ABOUT_WINDOW_CLOSE_CHANNEL,
@@ -412,7 +416,9 @@ contextBridge.exposeInMainWorld('blueAPI', {
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
   exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
   exportScoreObject: (xmlText: string, objectName: string) =>
-    ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<void>,
+    ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<ScoreObjectExportResult>,
+  importScoreObject: () =>
+    ipcRenderer.invoke('import-score-object') as Promise<ScoreObjectImportResult | null>,
 
   // Csound RC
   readCsoundRC: () =>
