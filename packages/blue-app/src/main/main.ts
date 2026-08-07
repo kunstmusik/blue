@@ -1146,6 +1146,11 @@ function rebuildApplicationMenu(): void {
         mainWindow.webContents.send('native-menu-command', { type: 'open-ftable-converter' });
       }
     },
+    onOpenCsoundRCEditor: () => {
+      if (mainWindow) {
+        mainWindow.webContents.send('native-menu-command', { type: 'open-csoundrc-editor' });
+      }
+    },
     onFocusPanel: (panelId) => {
       // Route through the workbench window registry so an already-floating panel
       // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).
@@ -2487,6 +2492,27 @@ ipcMain.handle('import-csound-udo', async () => {
   if (result.canceled || result.filePaths.length === 0) return null;
   const text = await fs.promises.readFile(result.filePaths[0], 'utf-8');
   return text;
+});
+
+ipcMain.handle('read-csoundrc', () => {
+  const csoundRcEnv = process.env.CSOUNDRC;
+  const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
+  let content = '';
+  try {
+    if (fs.existsSync(filePath)) {
+      content = fs.readFileSync(filePath, 'utf-8');
+    }
+  } catch {
+    // Ignore read failure
+  }
+  return { filePath, content };
+});
+
+ipcMain.handle('write-csoundrc', (_event, text: string) => {
+  const csoundRcEnv = process.env.CSOUNDRC;
+  const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
+  fs.writeFileSync(filePath, text ?? '', 'utf-8');
+  return { success: true, filePath };
 });
 
 ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {

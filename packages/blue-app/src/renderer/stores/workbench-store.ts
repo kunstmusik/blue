@@ -1727,6 +1727,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         case 'open-ftable-converter':
           window.dispatchEvent(new CustomEvent('blue-open-ftable-converter'));
           return;
+        case 'open-csoundrc-editor':
+          window.dispatchEvent(new CustomEvent('blue-open-csoundrc-editor'));
+          return;
         case 'toggle-follow-playback':
           usePlaybackStore.getState().toggleFollowPlayback();
           return;

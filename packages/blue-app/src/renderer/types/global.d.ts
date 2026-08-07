@@ -343,6 +343,8 @@ declare global {
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
       exportScoreObject: (xmlText: string, objectName: string) => Promise<void>;
+      readCsoundRC: () => Promise<{ filePath: string; content: string }>;
+      writeCsoundRC: (text: string) => Promise<{ success: boolean; filePath: string }>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;
       onProjectClosed: (cb: () => void) => () => void;
       onPlaybackStatus: (cb: (status: { status: string; message?: string }) => void) => () => void;

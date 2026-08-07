@@ -124,6 +124,7 @@ export type NativeMenuCommand =
   | { type: 'reset-windows' }
   | { type: 'open-effects-library' }
   | { type: 'open-ftable-converter' }
+  | { type: 'open-csoundrc-editor' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }
   | { type: 'toggle-loop-rendering' }

@@ -414,6 +414,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
   exportScoreObject: (xmlText: string, objectName: string) =>
     ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<void>,
 
+  // Csound RC
+  readCsoundRC: () =>
+    ipcRenderer.invoke('read-csoundrc') as Promise<{ filePath: string; content: string }>,
+  writeCsoundRC: (text: string) =>
+    ipcRenderer.invoke('write-csoundrc', text) as Promise<{ success: boolean; filePath: string }>,
+
   // Event listeners
   onProjectLoaded: (callback: (info: ProjectLoadedPayload) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, info: unknown) => callback(info as ProjectLoadedPayload);

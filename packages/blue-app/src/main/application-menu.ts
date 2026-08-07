@@ -25,6 +25,7 @@ export interface ApplicationMenuTemplateOptions {
   onOpenAbout: () => void;
   onOpenEffectsLibrary: () => void;
   onOpenFTableConverter: () => void;
+  onOpenCsoundRCEditor: () => void;
   onFocusPanel: (panelId: string) => void;
   onToggleDevTools: () => void;
   onResetLayout: () => void;
@@ -185,7 +186,7 @@ function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIt
     buildPlaceholderItem('SoundFont Viewer', options),
     buildPlaceholderItem('Blue Share', options),
     { label: 'FTable Converter', click: () => options.onOpenFTableConverter() },
-    buildPlaceholderItem('.csound6rc Editor', options),
+    { label: '.csound7rc Editor', click: () => options.onOpenCsoundRCEditor() },
   ];
 }
 
