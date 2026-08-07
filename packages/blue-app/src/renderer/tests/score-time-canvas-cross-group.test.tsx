@@ -354,6 +354,61 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
   });
 
+  it('replaces selected SoundObjects with the single SoundObject in the buffer', async () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Original', 0, 0, 1, 2),
+    ]]);
+    const replacement = createSoundItem('buffer-object', 'Replacement', 0, 0, 0, 7);
+    useScoreSelectionStore.getState().copySelected([{
+      ...replacement,
+      objectId: 'buffer-object',
+      groupId: 'buffer-group',
+      layerIndex: 0,
+      serializedXml: '<soundObject />',
+    }]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    await act(async () => {
+      clickContextMenuItem('Replace with SoundObject in Buffer');
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(applyPatch).toHaveBeenNthCalledWith(1, {
+      score: {
+        type: 'removeScoreObjects',
+        targets: [item.editorTarget],
+      },
+    });
+    expect(applyPatch).toHaveBeenNthCalledWith(2, {
+      score: {
+        type: 'addScoreObjects',
+        groupId: 'sound-group',
+        objects: [{
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          name: 'Replacement',
+          startBeats: 1,
+          durationBeats: 2,
+          startTimeBase: 'BEATS',
+          durationTimeBase: 'BEATS',
+          backgroundColor: replacement.backgroundColor,
+          serializedXml: '<soundObject />',
+        }],
+      },
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set());
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],

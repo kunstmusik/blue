@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import {
   collectClipboardEntriesForSelection,
   groupPasteObjectsByTargetGroup,
+  layerGroupAcceptsObjectType,
   translateClipboardEntriesForPaste,
   type ScorePasteObject,
 } from './score-clipboard-utils';
@@ -1226,6 +1227,49 @@ export default function ScoreTimeCanvas({
     }
   }, [applyProjectDocumentPatch, getSelectedEntries]);
 
+  const handleReplaceWithBuffer = useCallback(() => {
+    const selected = getSelectedEntries();
+    if (selected.length === 0 || clipboard.length !== 1) {
+      toast.error('Copy one SoundObject or AudioClip before replacing selected objects.');
+      return;
+    }
+    const replacement = clipboard[0]!;
+    const invalid = selected.find((entry) => {
+      const targetGroup = interactionLayerGroups.find((candidate) => candidate.groupId === entry.groupId);
+      return !targetGroup || !layerGroupAcceptsObjectType(targetGroup.groupType, replacement.objectType);
+    });
+    if (invalid) {
+      toast.error(`${replacement.objectType} is not compatible with the selected destination layer.`);
+      return;
+    }
+    const removeTargets = selected
+      .map((entry) => entry.editorTarget)
+      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
+    void (async () => {
+      if (removeTargets.length > 0) {
+        await applyProjectDocumentPatch({ score: { type: 'removeScoreObjects', targets: removeTargets } });
+      }
+      for (const entry of selected) {
+        await applyProjectDocumentPatch({ score: {
+          type: 'addScoreObjects',
+          groupId: entry.groupId,
+          objects: [{
+            layerIndex: entry.layerIndex,
+            objectType: replacement.objectType,
+            name: replacement.name,
+            startBeats: entry.startBeats,
+            durationBeats: entry.durationBeats,
+            startTimeBase: entry.startTimeBase,
+            durationTimeBase: entry.durationTimeBase,
+            backgroundColor: replacement.backgroundColor,
+            serializedXml: replacement.serializedXml,
+          }],
+        } });
+      }
+      clearSelection();
+    })();
+  }, [applyProjectDocumentPatch, clearSelection, clipboard, getSelectedEntries, interactionLayerGroups]);
+
   const handleColorSelected = useCallback((backgroundColor: number) => {
     const targets = pendingColorTargetsRef.current;
     void Promise.all(targets.map((target) => applyProjectDocumentPatch({
@@ -1624,6 +1668,8 @@ export default function ScoreTimeCanvas({
               onReverse={handleReverse}
               onSetColor={handleSetColor}
               onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
+              onReplaceWithBuffer={handleReplaceWithBuffer}
+              canReplaceWithBuffer={clipboard.length === 1}
               onFreezeUnfreeze={handleFreezeUnfreeze}
               onCancelFreeze={handleCancelFreeze}
               freezeBusy={freezeBusy}
@@ -1654,7 +1700,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onSetSubjectiveToObjective, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1670,6 +1716,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onReverse: () => void;
   onSetColor: () => void;
   onSetSubjectiveToObjective: () => void;
+  onReplaceWithBuffer: () => void;
+  canReplaceWithBuffer: boolean;
   onFreezeUnfreeze: () => void;
   onCancelFreeze: () => void;
   freezeBusy: boolean;
@@ -1698,7 +1746,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Item className={menuItemClass} onSelect={ni}>
         Convert to ObjectBuilder
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canReplaceWithBuffer} onSelect={onReplaceWithBuffer}>
         Replace with SoundObject in Buffer
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
