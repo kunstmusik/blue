@@ -153,7 +153,11 @@ function createTrackGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): TrackLayerG
 function renderCanvas(
   group: PolyObjectLayerGroupSnapshot,
   allLayerGroups: ScoreLayerGroupSnapshot[],
-  options?: { pixelsPerBeat?: number; totalBeats?: number },
+  options?: {
+    pixelsPerBeat?: number;
+    totalBeats?: number;
+    scoreContainerPath?: Array<{ layerId: string; objectIdentity: string }>;
+  },
 ): {
   root: Root;
   surface: HTMLDivElement;
@@ -178,7 +182,7 @@ function renderCanvas(
         projectSessionId={1}
         projectRevision={1}
         scoreRootGroupId="group-1"
-        scoreContainerPath={[]}
+        scoreContainerPath={options?.scoreContainerPath ?? []}
         group={group}
         totalBeats={totalBeats}
         pixelsPerBeat={pixelsPerBeat}
@@ -224,6 +228,15 @@ function dispatchMouseEvent(
   }));
 }
 
+function clickContextMenuItem(label: string): void {
+  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    .find((item) => item.textContent?.trim() === label);
+  expect(menuItem).toBeTruthy();
+  act(() => {
+    menuItem?.click();
+  });
+}
+
 beforeEach(() => {
   useProjectStore.setState({
     applyProjectDocumentPatch: vi.fn().mockResolvedValue(undefined),
@@ -245,6 +258,77 @@ afterEach(() => {
 });
 
 describe('ScoreTimeCanvas cross-group gestures', () => {
+  it('selects SoundObject layers and timeline boundaries from the empty-area menu', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-before', 'Sound Before', 0, 0, 0, 1),
+      createSoundItem('sound-after', 'Sound After', 0, 1, 6, 1),
+    ]]);
+    const trackGroup = createTrackGroup([[
+      createSoundItem('track-before', 'Track Before', 0, 0, 1, 1),
+      createSoundItem('track-after', 'Track After', 0, 1, 5, 1),
+    ]]);
+
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup, trackGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 200, 10);
+    });
+    clickContextMenuItem('Select Layer');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-before',
+      'sound-after',
+    ]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All Before');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-before',
+      'track-before',
+    ]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All After');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-after',
+      'track-after',
+    ]);
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('keeps boundary selection scoped to an empty nested score view', () => {
+    const rootGroup = createSoundGroup([[
+      createSoundItem('root-before', 'Root Before', 0, 0, 0, 1),
+      createSoundItem('root-after', 'Root After', 0, 1, 6, 1),
+    ]]);
+    const nestedGroup = createSoundGroup([[]]);
+    const { root, surface } = renderCanvas(nestedGroup, [rootGroup], {
+      scoreContainerPath: [{ layerId: 'root-layer', objectIdentity: 'nested-poly-object' }],
+    });
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All Before');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All After');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([]);
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],

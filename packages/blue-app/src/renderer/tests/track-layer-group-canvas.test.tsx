@@ -174,6 +174,15 @@ function mouse(target: EventTarget, type: string, x: number, y: number, init: Mo
   }));
 }
 
+function clickContextMenuItem(label: string): void {
+  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    .find((item) => item.textContent?.trim() === label);
+  expect(menuItem).toBeTruthy();
+  act(() => {
+    menuItem?.click();
+  });
+}
+
 const originalProjectActions = {
   applyProjectDocumentPatch: useProjectStore.getState().applyProjectDocumentPatch,
   moveScoreObjects: useProjectStore.getState().moveScoreObjects,
@@ -430,6 +439,47 @@ describe('Track layer timeline gestures', () => {
     expect(menuText).toContain('Select Layer');
     expect(menuText).toContain('Select All Before');
     expect(menuText).toContain('Select All After');
+    act(() => root.unmount());
+  });
+
+  it('selects Track layers and timeline boundaries from the empty-area menu', () => {
+    const trackGroup = makeTrackGroup([
+      makeItem('track-before', 0, 1),
+      makeItem('track-after', 6, 1),
+    ]);
+    const soundGroup = makeSoundGroup([
+      makeItem('sound-before', 1, 1),
+      makeItem('sound-after', 5, 1),
+    ]);
+    const { root, surface } = renderTrackCanvas(trackGroup, [soundGroup, trackGroup]);
+
+    act(() => {
+      mouse(surface, 'contextmenu', 200, 15);
+    });
+    clickContextMenuItem('Select Layer');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'track-before',
+      'track-after',
+    ]);
+
+    act(() => {
+      mouse(surface, 'contextmenu', 100, 15);
+    });
+    clickContextMenuItem('Select All Before');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-before',
+      'track-before',
+    ]);
+
+    act(() => {
+      mouse(surface, 'contextmenu', 100, 15);
+    });
+    clickContextMenuItem('Select All After');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-after',
+      'track-after',
+    ]);
+
     act(() => root.unmount());
   });
 

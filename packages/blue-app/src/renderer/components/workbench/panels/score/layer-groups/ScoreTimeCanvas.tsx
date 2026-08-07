@@ -36,6 +36,10 @@ import {
 } from '../../../../libraries/library-drag-drop';
 import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
 import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
+import {
+  collectTimelineBoundarySelection,
+  collectTimelineLayerSelection,
+} from './score-timeline-gesture-utils';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -350,9 +354,7 @@ export default function ScoreTimeCanvas({
     && selectedObjectTarget.selectedObjectType !== 'Instance'
     && selectedObjectTarget.location !== undefined;
 
-  const isNestedView = useMemo(() =>
-    group.layers.some((layer) =>
-      layer.items.some((item) => (item.editorTarget?.location?.containerPath.length ?? 0) > 0)), [group]);
+  const isNestedView = scoreContainerPath.length > 0;
   const interactionLayerGroups = useMemo<ScoreLayerGroupSnapshot[]>(
     () => (isNestedView ? [group] : currentScore.layerGroups),
     [isNestedView, group, currentScore.layerGroups],
@@ -1255,6 +1257,24 @@ export default function ScoreTimeCanvas({
     }
   }, [clipboard, contextMenuPos, snapBeatValueStart, addScoreObjects, interactionLayerGroups, group.groupId]);
 
+  const handleSelectLayer = useCallback(() => {
+    if (!contextMenuPos) return;
+    const layer = group.layers[contextMenuPos.layerIndex];
+    if (layer) setSelection(collectTimelineLayerSelection(layer));
+  }, [contextMenuPos, group.layers, setSelection]);
+
+  const handleSelectAllBefore = useCallback(() => {
+    if (contextMenuPos) {
+      setSelection(collectTimelineBoundarySelection(interactionLayerGroups, contextMenuPos.xBeats, 'before'));
+    }
+  }, [contextMenuPos, interactionLayerGroups, setSelection]);
+
+  const handleSelectAllAfter = useCallback(() => {
+    if (contextMenuPos) {
+      setSelection(collectTimelineBoundarySelection(interactionLayerGroups, contextMenuPos.xBeats, 'after'));
+    }
+  }, [contextMenuPos, interactionLayerGroups, setSelection]);
+
   const handleAlignLeft = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
@@ -1611,6 +1631,9 @@ export default function ScoreTimeCanvas({
               onPasteBsb={pasteBsbAtContext}
               snapBeatValue={snapBeatValueStart}
               addScoreObjects={addScoreObjects}
+              onSelectLayer={handleSelectLayer}
+              onSelectAllBefore={handleSelectAllBefore}
+              onSelectAllAfter={handleSelectAllAfter}
             />
           )}
         </ContextMenu.Content>
@@ -1714,7 +1737,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
@@ -1727,6 +1750,9 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   onPasteBsb: () => void;
   snapBeatValue: (b: number) => number;
   addScoreObjects: (objects: ScorePasteObject[]) => void;
+  onSelectLayer: () => void;
+  onSelectAllBefore: () => void;
+  onSelectAllAfter: () => void;
 }) {
   const ni = () => alert('Not yet implemented');
 
@@ -1809,13 +1835,13 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
           <ContextMenu.Separator className={sepClass} />
         </>
       )}
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectLayer}>
         Select Layer
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectAllBefore}>
         Select All Before
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectAllAfter}>
         Select All After
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
