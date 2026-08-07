@@ -10,6 +10,7 @@ import WelcomeScreen from './components/welcome/WelcomeScreen';
 import WorkbenchShell from './components/workbench/WorkbenchShell';
 import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
+import FTableConverterModal from './components/workbench/panels/tools/FTableConverterModal';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
 import { useLibraryStore } from './stores/library-store';
@@ -55,6 +56,7 @@ export default function App(): React.ReactElement {
 
         <GeneratedCsdModal />
         <MissingAudioAssetsModal />
+        <FTableConverterModal />
         {transferPreview && (
           <LibraryTransferDialog
             preview={transferPreview}

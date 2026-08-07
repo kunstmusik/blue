@@ -1141,6 +1141,11 @@ function rebuildApplicationMenu(): void {
         mainWindow.webContents.send('native-menu-command', { type: 'open-effects-library' });
       }
     },
+    onOpenFTableConverter: () => {
+      if (mainWindow) {
+        mainWindow.webContents.send('native-menu-command', { type: 'open-ftable-converter' });
+      }
+    },
     onFocusPanel: (panelId) => {
       // Route through the workbench window registry so an already-floating panel
       // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).

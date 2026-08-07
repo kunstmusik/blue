@@ -1724,6 +1724,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
           useUIStore.getState().setActivePanel('workspace');
           get().openPanel('LibrariesTopComponent');
           return;
+        case 'open-ftable-converter':
+          window.dispatchEvent(new CustomEvent('blue-open-ftable-converter'));
+          return;
         case 'toggle-follow-playback':
           usePlaybackStore.getState().toggleFollowPlayback();
           return;

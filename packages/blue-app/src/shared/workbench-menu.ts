@@ -123,6 +123,7 @@ export type NativeMenuCommand =
   | { type: 'close-floating-group'; panelId: string }
   | { type: 'reset-windows' }
   | { type: 'open-effects-library' }
+  | { type: 'open-ftable-converter' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }
   | { type: 'toggle-loop-rendering' }
