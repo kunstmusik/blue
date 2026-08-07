@@ -8,14 +8,8 @@ import {
 import type { AuxiliarySlideoutView } from './auxiliary-layout';
 import { getAuxiliaryRailLabel } from './auxiliary-layout';
 import { getPanel } from './panel-registry';
-import OutputPanel from './panels/output/OutputPanel';
-import MidiInputPanel from './panels/MidiInputPanel';
-import VirtualKeyboardPanel from './panels/VirtualKeyboardPanel';
-import MixerPanel from './panels/MixerPanel';
-import MarkersPanel from './panels/MarkersPanel';
-import ScoreObjectPropertiesPanel from './panels/ScoreObjectPropertiesPanel';
-import ScoreObjectEditorPanel from './panels/ScoreObjectEditorPanel';
-import PlaceholderPanel from './panels/PlaceholderPanel';
+import WorkbenchPanelContent from './WorkbenchPanelContent';
+import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
 
 interface AuxiliarySlideoutProps {
   slideout: AuxiliarySlideoutView;
@@ -42,11 +36,14 @@ export default function AuxiliarySlideout({
   onResize,
 }: AuxiliarySlideoutProps) {
   const descriptor = getPanel(slideout.panelId);
+  const isLibrarySession = libraryEditorSessionIdFromPanel(slideout.panelId) !== null;
   const DockIcon = getDockIcon(slideout.edge);
 
-  if (!descriptor) {
+  if (!descriptor && !isLibrarySession) {
     return null;
   }
+
+  const title = descriptor?.title ?? getAuxiliaryRailLabel(slideout.panelId);
 
   const style =
     slideout.edge === 'bottom'
@@ -92,7 +89,7 @@ export default function AuxiliarySlideout({
       ].join(' ')}
       style={style}
       data-auxiliary-slideout="true"
-      aria-label={`${descriptor.title} slideout`}
+      aria-label={`${title} slideout`}
     >
       <div
         className={[
@@ -138,24 +135,9 @@ export default function AuxiliarySlideout({
       </header>
 
       <div className="workbench-aux-slideout__content">
-        {descriptor.id === 'OutputTopComponent' ? (
-          <OutputPanel />
-        ) : descriptor.id === 'MidiInputPanelTopComponent' ? (
-          <MidiInputPanel />
-        ) : descriptor.id === 'VirtualKeyboardTopComponent' ? (
-          <VirtualKeyboardPanel />
-        ) : descriptor.id === 'MixerTopComponent' ? (
-          <MixerPanel />
-        ) : descriptor.id === 'MarkersTopComponent' ? (
-          <MarkersPanel />
-        ) : descriptor.id === 'SoundObjectPropertiesTopComponent' ? (
-          <ScoreObjectPropertiesPanel />
-        ) : descriptor.id === 'ScoreObjectEditorTopComponent' ? (
-          <ScoreObjectEditorPanel />
-        ) : (
-          <PlaceholderPanel descriptor={descriptor} showHeader={false} />
-        )}
+        <WorkbenchPanelContent panelId={slideout.panelId} descriptor={descriptor} />
       </div>
     </section>
   );
 }
+
