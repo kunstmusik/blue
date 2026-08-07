@@ -275,8 +275,8 @@ The `@blue/data` package must remain **environment-agnostic** (works in both bro
 ### Java-First Parity
 
 For behavior, rendering, XML, or formatting differences, consult the Java implementation before
-changing TypeScript. The primary references are `~/work/nbprojects/blue/blue-core` and
-`~/work/nbprojects/blue/blue-ui-core`. Compare Java-generated artifacts when available and document
+changing TypeScript. The primary references are [blue-core](https://github.com/kunstmusik/blue/tree/develop/blue-core) and
+[blue-ui-core](https://github.com/kunstmusik/blue/tree/develop/blue-ui-core). Compare Java-generated artifacts when available and document
 every intentional divergence in the active feature spec and plan.
 
 ### Adding a New Data Class
