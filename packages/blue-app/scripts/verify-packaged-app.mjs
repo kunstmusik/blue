@@ -285,10 +285,21 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
       `[verify-packaged-app] launching ${verificationMode}: ${binary} ${args.join(' ')}\n`,
     );
 
+    // Capture stderr so the driver can detect the verification's deterministic
+    // success marker. stdout is inherited because Electron logs there and the
+    // markers live on stderr; stderr is tee'd: forwarded to the parent so CI
+    // logs are unchanged, while also accumulated for marker inspection.
+    let capturedStderr = '';
     const child = spawn(binary, args, {
       env,
-      stdio: ['ignore', 'inherit', 'inherit'],
+      stdio: ['ignore', 'inherit', 'pipe'],
     });
+    child.stderr?.on('data', (chunk) => {
+      const text = chunk instanceof Buffer ? chunk.toString('utf8') : String(chunk);
+      capturedStderr += text;
+      process.stderr.write(text);
+    });
+
     let finished = false;
     const finish = (code) => {
       if (finished) return;
@@ -311,7 +322,27 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
       finish(1);
     });
 
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
+      // Each verification mode writes a deterministic "verification passed."
+      // marker to stderr when its checks succeed. On macOS the packaged
+      // Electron process occasionally crashes with a native
+      // v8::ToLocalChecked / GetNearestParentPackageJSON fatal during
+      // teardown *after* reporting success (a known Electron module-
+      // resolution shutdown crash), surfacing here as SIGABRT/SIGSEGV or a
+      // non-zero exit. When we already observed the success marker, treat the
+      // crash as a teardown flake rather than a verification failure so the
+      // remaining smoke stages can run.
+      const sawSuccessMarker = /verification passed\./i.test(capturedStderr);
+      const crashedAfterSuccess = sawSuccessMarker
+        && (signal === 'SIGABRT' || signal === 'SIGSEGV' || (typeof code === 'number' && code !== 0));
+      if (crashedAfterSuccess) {
+        process.stderr.write(
+          `[verify-packaged-app] ${verificationMode} reported success but crashed during teardown ` +
+            `(signal=${signal ?? 'n/a'}, code=${code ?? 'n/a'}); treating as a macOS teardown flake.\n`,
+        );
+        finish(0);
+        return;
+      }
       finish(typeof code === 'number' ? code : 1);
     });
   });

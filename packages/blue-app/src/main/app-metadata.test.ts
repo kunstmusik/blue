@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 
 import { resolveAppMetadata } from './app-metadata';
 
@@ -14,7 +15,10 @@ describe('resolveAppMetadata', () => {
         node: '22.14.0',
       },
       readFile: (filePath) => {
-        expect(filePath).toBe('/app/release-metadata.json');
+        // app-metadata.ts builds this path with path.join, which is
+        // platform-specific (backslashes on Windows). Assert against the
+        // platform's own join so the test passes on every CI runner.
+        expect(filePath).toBe(path.join('/app', 'release-metadata.json'));
         return JSON.stringify({
           appVersion: '2.10.0',
           sourceRevision: 'a'.repeat(40),
