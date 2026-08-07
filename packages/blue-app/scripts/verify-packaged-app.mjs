@@ -2,12 +2,13 @@
 /**
  * Installed-package smoke driver.
  *
- * Launches the packaged Blue application in two modes. A direct-spawn
- * `BLUE_VERIFY_MODE=packaged-resources` run checks the Java helper JAR, Python
- * library, ZeroMQ native module, Electron node:sqlite built-in, and externalized
- * workspace packages. `BLUE_VERIFY_MODE=packaged-project` then uses Playwright
- * when available to load a representative .blue file through the normal
- * main-process project path. Both modes exit with a deterministic status code.
+ * Launches the packaged Blue application in verification modes. A direct-spawn
+ * `BLUE_VERIFY_MODE=packaged-metadata` run checks the release metadata consumed
+ * by the About dialog. `BLUE_VERIFY_MODE=packaged-resources` checks the Java
+ * helper JAR, Python library, ZeroMQ native module, Electron node:sqlite
+ * built-in, and externalized workspace packages. `BLUE_VERIFY_MODE=packaged-project`
+ * then uses Playwright when available to load a representative .blue file
+ * through the normal main-process project path. All modes exit deterministically.
  *
  * The driver does not render windows or play audio.
  *
@@ -205,7 +206,7 @@ function isPlaywrightAvailable() {
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
+ * @param {'packaged-metadata' | 'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {string} userDataPath
  * @returns {Promise<number>}
@@ -221,6 +222,9 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
   if (blueFile) {
     verificationEnv.BLUE_VERIFY_PROJECT_PATH = blueFile;
     verificationEnv.BLUE_VERIFY_SAVE_PATH = join(userDataPath, 'smoke-roundtrip.blue');
+  }
+  if (process.env.BLUE_RELEASE_CHANNEL) {
+    verificationEnv.BLUE_RELEASE_CHANNEL = process.env.BLUE_RELEASE_CHANNEL;
   }
   if (verificationMode === 'packaged-engine-mismatch') {
     verificationEnv.BLUE_VERIFY_ENGINE_REPORT_FIXTURE = incompatibleEngineFixture;
@@ -250,7 +254,7 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
+ * @param {'packaged-metadata' | 'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {string} userDataPath
  * @returns {Promise<number>}
@@ -266,6 +270,9 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
     if (blueFile) {
       verificationEnv.BLUE_VERIFY_PROJECT_PATH = blueFile;
       verificationEnv.BLUE_VERIFY_SAVE_PATH = join(userDataPath, 'smoke-roundtrip.blue');
+    }
+    if (process.env.BLUE_RELEASE_CHANNEL) {
+      verificationEnv.BLUE_RELEASE_CHANNEL = process.env.BLUE_RELEASE_CHANNEL;
     }
     if (verificationMode === 'packaged-engine-mismatch') {
       verificationEnv.BLUE_VERIFY_ENGINE_REPORT_FIXTURE = incompatibleEngineFixture;
@@ -312,7 +319,7 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
+ * @param {'packaged-metadata' | 'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {boolean} usePlaywright
  * @param {string} userDataPath
@@ -340,6 +347,15 @@ async function runVerifier(binary, verificationMode, blueFile, usePlaywright, us
 async function runSmokeChecks(binary, blueFile, usePlaywright) {
   const userDataPath = mkdtempSync(join(tmpdir(), 'blue-packaged-smoke-'));
   try {
+    const metadataCode = await launchViaSpawn(
+      binary,
+      'packaged-metadata',
+      null,
+      userDataPath,
+    );
+    if (metadataCode !== 0) {
+      return metadataCode;
+    }
     // The resource verifier exits before Electron opens Playwright's control
     // channel, so launch that fast pre-ready stage directly.
     const resourcesCode = await launchViaSpawn(

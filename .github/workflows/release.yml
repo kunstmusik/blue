@@ -67,6 +67,8 @@ jobs:
     name: package (macos-${{ matrix.arch }})
     needs: validate-version
     runs-on: ${{ matrix.runner }}
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     strategy:
       fail-fast: false
       matrix:
@@ -80,9 +82,6 @@ jobs:
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
-
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
 
       - name: Verify revision-matched native artifact
         run: |
@@ -122,6 +121,8 @@ jobs:
     name: package (windows-x64)
     needs: validate-version
     runs-on: windows-2022
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     permissions:
       contents: read
     steps:
@@ -130,9 +131,6 @@ jobs:
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
-
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
 
       - name: Verify revision-matched native artifact
         run: |
@@ -173,15 +171,14 @@ jobs:
     name: package (linux-x64)
     needs: validate-version
     runs-on: ubuntu-22.04
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
-
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
 
       - name: Verify revision-matched native artifact
         run: |

@@ -192,16 +192,18 @@ runtime installation for playback, and a Java runtime remains required for
 Java-backed features. Linux builds target glibc 2.35 and use the modern
 AppImage runtime, including extract-and-run operation without FUSE 2.
 
-Contributor, develop, and stable packages are unsigned and require no production signing credentials. Stable releases still use the protected GitHub `release` Environment for maintainer approval before public publication. Signed macOS and Windows release paths are reserved for future funded work.
+Contributor, develop, and stable packages are unsigned and require no production signing credentials. Stable releases use the protected GitHub `release` Environment as the publisher boundary; under the current single-maintainer policy, no separate approval prompt is configured. Signed macOS and Windows release paths are reserved for future funded work.
 
 | Audience | Quick command |
 | --- | --- |
 | Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app` |
-| PR validation | `.github/workflows/pr.yml` builds macOS arm64, Windows x64, and Linux x64 and uploads `blue-{os}-{cputype}-{version}-pr{number}.zip` Actions artifacts. |
-| Develop build | Push to `develop`; `.github/workflows/develop.yml` uploads `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts and creates no GitHub Release. |
-| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json`. `.github/workflows/release.yml` publishes verified unsigned `blue-{os}-{cputype}-{version}.zip` assets after protected approval. |
+| PR validation | `.github/workflows/pr.yml` directly uploads versioned `.dmg`, `.exe`, `.AppImage`, and `.deb` Actions artifacts for macOS arm64, Windows x64, and Linux x64. |
+| Develop build | Push to `develop`; `.github/workflows/develop.yml` directly uploads native packages named `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` and creates no GitHub Release. |
+| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json`. After all package jobs succeed, `.github/workflows/release.yml` publishes verified unsigned `.dmg`, `.exe`, `.AppImage`, and `.deb` assets from the `release` Environment. |
 
-Local package input validation: `pnpm verify:package-inputs`. Full repository verification: `pnpm verify`. Workflow contract validation: `pnpm verify:release-workflows`. Credential test coverage: `pnpm verify:release-credentials`. Stable-version validation: `pnpm --filter @blue/app verify:release-version -- --tag vX.Y.Z --app-version X.Y.Z --repository <owner/repo>`.
+The `package:*` scripts are the normal packaging entry point. Each stages the selected Blue Engine, generates `release-metadata.json`, validates the complete package inputs, and then invokes `electron-builder`. To run input validation separately after building, first run `pnpm --filter @blue/app release:metadata`, then `pnpm verify:package-inputs`.
+
+Full repository verification: `pnpm verify`. Workflow contract validation: `pnpm verify:release-workflows`. Credential test coverage: `pnpm verify:release-credentials`. Stable-version validation: `pnpm --filter @blue/app verify:release-version -- --tag vX.Y.Z --app-version X.Y.Z --repository <owner/repo>`.
 
 For GitHub Environment policy, future signing readiness, and failure recovery see the [release guide](docs/release-guide.md).
 

@@ -4,6 +4,7 @@ import { chmodSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import {
+  verifyPackagedMetadata,
   verifyPackagedProject,
   verifyPackagedRuntime,
 } from './packaged-runtime-verification';
@@ -46,6 +47,82 @@ const recoverableMissingCsoundProbe = () => ({
 });
 
 describe('packaged-runtime-verification', () => {
+  it('accepts complete packaged release metadata and runtime versions', () => {
+    const result = verifyPackagedMetadata({
+      isPackaged: true,
+      appVersion: '2.10.0',
+      appPath: '/app',
+      releaseChannel: 'stable',
+      processVersions: {
+        electron: '35.7.5',
+        chromium: '134.0.6998.179',
+        node: '22.14.0',
+      },
+      readFile: () => JSON.stringify({
+        appVersion: '2.10.0',
+        sourceRevision: 'a'.repeat(40),
+        generatedAt: '2026-05-04T12:00:00.000Z',
+        channel: 'stable',
+      }),
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      code: 'OK',
+      message: `Packaged release metadata: 2.10.0, stable, ${'a'.repeat(40)}`,
+    });
+  });
+
+  it('rejects incomplete packaged release metadata', () => {
+    const result = verifyPackagedMetadata({
+      isPackaged: true,
+      appVersion: '2.10.0',
+      appPath: '/app',
+      processVersions: {
+        electron: '35.7.5',
+        chromium: '134.0.6998.179',
+        node: '22.14.0',
+      },
+      readFile: () => JSON.stringify({
+        appVersion: '2.10.0',
+        sourceRevision: 'abc1234',
+        generatedAt: '2026-05-04T12:00:00.000Z',
+        channel: 'development',
+      }),
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      code: 'APP_METADATA_INVALID',
+      message: 'Packaged release metadata is missing or incomplete.',
+    });
+  });
+
+  it('rejects release metadata for a different application version', () => {
+    const result = verifyPackagedMetadata({
+      isPackaged: true,
+      appVersion: '2.10.0',
+      appPath: '/app',
+      processVersions: {
+        electron: '35.7.5',
+        chromium: '134.0.6998.179',
+        node: '22.14.0',
+      },
+      readFile: () => JSON.stringify({
+        appVersion: '2.9.0',
+        sourceRevision: 'a'.repeat(40),
+        generatedAt: '2026-05-04T12:00:00.000Z',
+        channel: 'stable',
+      }),
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      code: 'APP_METADATA_VERSION_MISMATCH',
+      message: 'Packaged release metadata version 2.9.0 does not match 2.10.0.',
+    });
+  });
+
   it('reports ok=true when every dependency resolves', () => {
     const resources = createEngineResources();
     const report = verifyPackagedRuntime({

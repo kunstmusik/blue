@@ -42,6 +42,7 @@ packages/blue-java/target
 packages/blue-app/assets/java/blue-java.jar
 packages/blue-app/release/
 packages/blue-app/.engine-stage/
+packages/blue-app/release-metadata.json
 native/blue-engine/build/
 native/blue-engine/build-*/
 native/blue-engine/dist/

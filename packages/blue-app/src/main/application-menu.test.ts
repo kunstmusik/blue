@@ -14,6 +14,7 @@ function createHandlers() {
     onGenerateCsdToDisk: vi.fn(),
     onRequestQuit: vi.fn(),
     onOpenSettings: vi.fn(),
+    onOpenAbout: vi.fn(),
     onOpenEffectsLibrary: vi.fn(),
     onFocusPanel: vi.fn(),
     onToggleDevTools: vi.fn(),
@@ -108,6 +109,9 @@ describe('application menu template', () => {
     expect(blueMenu.map((item) => item.label)).toContain('About Blue');
     expect(blueMenu.map((item) => item.label)).toContain('Settings...');
 
+    blueMenu.find((item) => item.label === 'About Blue')?.click?.();
+    expect(handlers.onOpenAbout).toHaveBeenCalledTimes(1);
+
     const blueSettings = blueMenu.find((item) => item.label === 'Settings...');
     expect(blueSettings?.accelerator).toBe('Cmd+,');
     blueSettings?.click?.();
@@ -159,7 +163,7 @@ describe('application menu template', () => {
       ...handlers,
     });
 
-    expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Tools', 'Window']);
+    expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Tools', 'Help', 'Window']);
 
     const fileMenu = getSubmenu(template[0]);
     expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Save Libraries', 'Recent Projects', 'Settings...', 'Quit']);
@@ -183,6 +187,10 @@ describe('application menu template', () => {
 
     const toolsMenu = getSubmenu(template[4]);
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
+
+    const helpMenu = getSubmenu(template[5]);
+    helpMenu.find((item) => item.label === 'About Blue')?.click?.();
+    expect(handlers.onOpenAbout).toHaveBeenCalledTimes(1);
   });
 
   it('places the View menu between Edit and Project with Zoom In, Zoom Out, and Actual Size in that order', () => {

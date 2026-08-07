@@ -40,6 +40,8 @@ jobs:
             package-script: package:linux-x64
 
     runs-on: ${{ matrix.runs-on }}
+    env:
+      BLUE_RELEASE_CHANNEL: development
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -53,10 +55,6 @@ jobs:
         run: |
           APP_VERSION=$(node -e "console.log(require('./packages/blue-app/package.json').version)")
           echo "app-version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Verify package inputs
-        shell: bash
-        run: pnpm verify:package-inputs
 
       - name: Verify native workspace and artifact
         shell: bash

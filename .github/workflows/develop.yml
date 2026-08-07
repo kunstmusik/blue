@@ -38,6 +38,8 @@ jobs:
             package-script: package:linux-x64
 
     runs-on: ${{ matrix.runs-on }}
+    env:
+      BLUE_RELEASE_CHANNEL: development
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -55,10 +57,6 @@ jobs:
             echo "app-version=${APP_VERSION}"
             echo "short-sha=${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
-
-      - name: Verify package inputs
-        shell: bash
-        run: pnpm verify:package-inputs
 
       - name: Run workspace tests
         shell: bash

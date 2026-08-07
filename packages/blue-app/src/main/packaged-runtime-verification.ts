@@ -20,6 +20,8 @@ import {
   resolveJavaRuntimePythonLibraryPaths,
   type JavaRuntimePathContext,
 } from './java-runtime/java-runtime-path';
+import { resolveAppMetadata } from './app-metadata';
+import type { AppRuntimeVersions } from '../shared/app-metadata';
 
 /** Kinds of runtime aspects the verifier inspects. */
 export type RuntimeAspect =
@@ -43,6 +45,22 @@ export interface RuntimeVerificationResult {
 export interface RuntimeVerificationReport {
   ok: boolean;
   results: RuntimeVerificationResult[];
+}
+
+export interface PackagedMetadataVerificationContext {
+  isPackaged: boolean;
+  appVersion?: string;
+  appPath?: string;
+  resourcesPath?: string;
+  releaseChannel?: string;
+  processVersions?: Partial<AppRuntimeVersions>;
+  readFile?: (filePath: string) => string;
+}
+
+export interface PackagedMetadataVerificationResult {
+  ok: boolean;
+  code: string;
+  message: string;
 }
 
 export interface RuntimeVerificationContext extends JavaRuntimePathContext {
@@ -84,6 +102,65 @@ function failedProjectVerification(
   message: string,
 ): PackagedProjectVerificationResult {
   return { ok: false, code, message };
+}
+
+export function verifyPackagedMetadata(
+  context: PackagedMetadataVerificationContext,
+): PackagedMetadataVerificationResult {
+  if (!context.isPackaged) {
+    return {
+      ok: false,
+      code: 'APP_NOT_PACKAGED',
+      message: 'Packaged metadata verification requires an installed application.',
+    };
+  }
+
+  const metadata = resolveAppMetadata({
+    appVersion: context.appVersion,
+    appPath: context.appPath,
+    resourcesPath: context.resourcesPath,
+    isPackaged: context.isPackaged,
+    releaseChannel: context.releaseChannel,
+    processVersions: context.processVersions,
+    readFile: context.readFile,
+  });
+  if (context.appVersion && metadata.version !== context.appVersion) {
+    return {
+      ok: false,
+      code: 'APP_METADATA_VERSION_MISMATCH',
+      message: `Packaged release metadata version ${metadata.version} does not match ${context.appVersion}.`,
+    };
+  }
+  const runtimeValues = Object.values(metadata.runtime);
+  const hasCompleteMetadata =
+    metadata.version !== 'unknown'
+    && /^[0-9a-f]{40}$/i.test(metadata.sourceRevision)
+    && metadata.buildDate !== 'unknown'
+    && metadata.channel !== 'unknown'
+    && runtimeValues.every((value) => value !== 'unknown');
+  if (!hasCompleteMetadata) {
+    return {
+      ok: false,
+      code: 'APP_METADATA_INVALID',
+      message: 'Packaged release metadata is missing or incomplete.',
+    };
+  }
+  if (
+    (context.releaseChannel === 'development' || context.releaseChannel === 'stable')
+    && metadata.channel !== context.releaseChannel
+  ) {
+    return {
+      ok: false,
+      code: 'APP_METADATA_CHANNEL_MISMATCH',
+      message: `Packaged release metadata channel ${metadata.channel} does not match ${context.releaseChannel}.`,
+    };
+  }
+
+  return {
+    ok: true,
+    code: 'OK',
+    message: `Packaged release metadata: ${metadata.version}, ${metadata.channel}, ${metadata.sourceRevision}`,
+  };
 }
 
 /**
@@ -494,6 +571,19 @@ export function runPackagedRuntimeVerificationAndExit(context: RuntimeVerificati
     process.exit(0);
   }
   process.stderr.write('\nPackaged runtime verification failed.\n');
+  process.exit(1);
+}
+
+export function runPackagedMetadataVerificationAndExit(
+  context: PackagedMetadataVerificationContext,
+): never {
+  const result = verifyPackagedMetadata(context);
+  process.stderr.write(`${result.ok ? '[ok]' : '[FAIL]'} ${result.message}\n`);
+  if (result.ok) {
+    process.stderr.write('\nPackaged metadata verification passed.\n');
+    process.exit(0);
+  }
+  process.stderr.write('\nPackaged metadata verification failed.\n');
   process.exit(1);
 }
 

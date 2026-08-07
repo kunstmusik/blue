@@ -22,6 +22,7 @@ export interface ApplicationMenuTemplateOptions {
   onGenerateCsdToDisk: () => void;
   onRequestQuit: () => void;
   onOpenSettings: () => void;
+  onOpenAbout: () => void;
   onOpenEffectsLibrary: () => void;
   onFocusPanel: (panelId: string) => void;
   onToggleDevTools: () => void;
@@ -217,7 +218,7 @@ export function buildApplicationMenuTemplate(
     template.push({
       label: 'Blue',
       submenu: [
-        { label: 'About Blue', click: () => { /* deferred */ } },
+        { label: 'About Blue', click: () => options.onOpenAbout() },
         { type: 'separator' },
         {
           label: 'Settings...',
@@ -272,6 +273,15 @@ export function buildApplicationMenuTemplate(
     label: 'Tools',
     submenu: buildToolsMenuTemplate(options),
   });
+
+  if (!options.isDarwin) {
+    template.push({
+      label: 'Help',
+      submenu: [
+        { label: 'About Blue', click: () => options.onOpenAbout() },
+      ],
+    });
+  }
 
   template.push({
     label: 'Window',

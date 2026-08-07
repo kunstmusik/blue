@@ -28,6 +28,11 @@ import type {
   ScoreObjectLocationRef,
 } from '../shared/project-editor';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
+import {
+  ABOUT_WINDOW_CLOSE_CHANNEL,
+  APP_METADATA_GET_CHANNEL,
+  type AppMetadata,
+} from '../shared/app-metadata';
 import type { EngineOutputPayload } from '../shared/io-provider';
 import type {
   MissingAudioAssetsChooseRequest,
@@ -392,6 +397,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Project info
   getProjectInfo: () => ipcRenderer.invoke('get-project-info'),
+
+  // About
+  getAppMetadata: () => ipcRenderer.invoke(APP_METADATA_GET_CHANNEL) as Promise<AppMetadata>,
+  closeAboutWindow: () => ipcRenderer.invoke(ABOUT_WINDOW_CLOSE_CHANNEL) as Promise<boolean>,
 
   // CSD generation
   generateCsdToScreen: () => ipcRenderer.invoke('generate-csd-to-screen'),

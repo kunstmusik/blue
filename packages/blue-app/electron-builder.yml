@@ -44,6 +44,7 @@ files:
   - dist/preload/**/*
   - dist/renderer/**/*
   - dist/shared/**/*
+  - release-metadata.json
   - package.json
   - '!**/.DS_Store'
   - '!**/.gitkeep'

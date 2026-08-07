@@ -15,6 +15,8 @@ import * as fs from 'fs';
 
 import { BlueData, Effect, Send, BSBGroup, BSBWidget, TrackLayerGroup, setExternalCommandExecutor } from '@blue/data';
 import { openSettingsWindow } from './settings-window';
+import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
+import { resolveAppMetadata } from './app-metadata';
 import {
   loadProgramSettings,
   saveProgramSettings,
@@ -111,6 +113,10 @@ import {
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
+import {
+  ABOUT_WINDOW_CLOSE_CHANNEL,
+  APP_METADATA_GET_CHANNEL,
+} from '../shared/app-metadata';
 import { MidiInputCoordinator } from './midi-input-coordinator';
 import {
   decideMidiPermission,
@@ -207,6 +213,7 @@ import { UnifiedLibraryService } from './unified-library/service';
 import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
 import {
+  runPackagedMetadataVerificationAndExit,
   runPackagedRuntimeVerificationAndExit,
   verifyPackagedProject,
 } from './packaged-runtime-verification';
@@ -284,6 +291,25 @@ app.setName('Blue');
 
 if (process.env.BLUE_VERIFY_USER_DATA_PATH) {
   app.setPath('userData', path.resolve(process.env.BLUE_VERIFY_USER_DATA_PATH));
+}
+
+// Deterministic packaged metadata smoke mode. It verifies the release
+// metadata consumed by the About dialog before creating windows or starting
+// runtime services. The smoke driver and CI matrix rely on this exit-code
+// contract.
+if (process.env.BLUE_VERIFY_MODE === 'packaged-metadata') {
+  runPackagedMetadataVerificationAndExit({
+    isPackaged: app.isPackaged,
+    appVersion: app.getVersion(),
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+    releaseChannel: process.env.BLUE_RELEASE_CHANNEL,
+    processVersions: {
+      electron: process.versions.electron,
+      chromium: process.versions.chrome,
+      node: process.versions.node,
+    },
+  });
 }
 
 // Deterministic no-audio packaged-resource smoke mode.
@@ -1103,6 +1129,12 @@ function rebuildApplicationMenu(): void {
         });
       }
     },
+    onOpenAbout: () => {
+      openAboutWindow(mainWindow, {
+        icon: getAppIcon(),
+        initialZoomFactor: appZoomController.getCurrentFactor(),
+      });
+    },
     onOpenEffectsLibrary: () => {
       if (mainWindow) {
         routeFocusPanel('LibrariesTopComponent');
@@ -1144,9 +1176,9 @@ function rebuildApplicationMenu(): void {
     onRenderToDisk: () => { void handleRenderToDisk('render'); },
     onRenderToDiskAndPlay: () => { void handleRenderToDisk('play'); },
     onRenderToDiskAndOpen: () => { void handleRenderToDisk('open'); },
-    onZoomIn: () => { appZoomController.execute('zoom-in'); },
-    onZoomOut: () => { appZoomController.execute('zoom-out'); },
-    onActualSize: () => { appZoomController.execute('actual-size'); },
+    onZoomIn: () => { appZoomController.execute('zoom-in'); syncAboutWindowZoom(); },
+    onZoomOut: () => { appZoomController.execute('zoom-out'); syncAboutWindowZoom(); },
+    onActualSize: () => { appZoomController.execute('actual-size'); syncAboutWindowZoom(); },
     onNotYetImplemented: () => { mainWindow?.webContents.send('native-menu-command', { type: 'show-not-yet-implemented' }); },
   }));
 
@@ -2551,6 +2583,21 @@ ipcMain.handle('settings:open', async () => {
     initialZoomFactor: appZoomController.getCurrentFactor(),
   });
 });
+
+ipcMain.handle(APP_METADATA_GET_CHANNEL, () => resolveAppMetadata({
+  appVersion: app.getVersion(),
+  appPath: app.getAppPath(),
+  resourcesPath: process.resourcesPath,
+  isPackaged: app.isPackaged,
+  releaseChannel: process.env.BLUE_RELEASE_CHANNEL,
+  processVersions: {
+    electron: process.versions.electron,
+    chromium: process.versions.chrome,
+    node: process.versions.node,
+  },
+}));
+
+ipcMain.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(event.sender));
 
 // ─── Program Settings IPC Handlers ───
 

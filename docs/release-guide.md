@@ -58,19 +58,29 @@ pnpm lint
 The implemented host-platform package and smoke commands are:
 
 ```bash
-pnpm verify:package-inputs
 pnpm --filter @blue/app rebuild:native
 pnpm --filter @blue/app package:dir
 pnpm --filter @blue/app verify:packaged-app
 ```
 
-`verify:package-inputs` runs from the repository root and checks that the Java helper JAR, Python library, built Electron entries (including shared runtime modules), externalized workspace packages, pinned Electron version, ZeroMQ native binary, Vite externals contract, and exactly one revision/protocol/target/hash-matched Blue Engine are present before packaging. It is automatically invoked by every `package:*` script, so it can also be run on its own to diagnose a failing CI target.
+Every `package:*` script is the authoritative packaging boundary. It stages the selected Blue Engine, generates `release-metadata.json`, verifies the complete package inputs, and only then invokes `electron-builder`. Do not place a standalone input check before the package command: the generated metadata it validates does not exist yet in a clean checkout.
+
+For focused input diagnostics after the build prerequisites are present, generate metadata before running the root verifier:
+
+```bash
+pnpm --filter @blue/app release:metadata
+pnpm verify:package-inputs
+```
+
+`release:metadata` defaults to the `development` channel. PR and develop jobs explicitly use that channel, while stable package jobs set `BLUE_RELEASE_CHANNEL=stable`. The generated, ignored `packages/blue-app/release-metadata.json` records the application version, build time, full source revision, channel, release version, name, and notes. `electron-builder` embeds it in the ASAR for the About Blue window.
+
+`verify:package-inputs` runs from the repository root and validates that metadata, including its version, timestamp, full revision, required release fields, and expected channel. It also checks that the Java helper JAR, Python library, built Electron entries (including shared runtime modules), externalized workspace packages, pinned Electron version, ZeroMQ native binary, Vite externals contract, and exactly one revision/protocol/target/hash-matched Blue Engine are present before packaging. Every `package:*` script invokes it automatically after generating metadata.
 
 `rebuild:native` rebuilds the native `zeromq` addon against the installed Electron runtime. Run it after a fresh `pnpm install` if you change Node or Electron versions.
 
 `package:dir` builds an unsigned unpacked application into `packages/blue-app/release/`. `package:current` and the release-target scripts `package:macos-arm64`, `package:windows-x64`, and `package:linux-x64` produce the installer formats declared in `packages/blue-app/electron-builder.yml`. `package:macos-x64` remains available for local developer experiments but is not part of the hosted build or published release matrix. The builder configuration disables macOS signing identity auto-discovery so local macOS packages stay unsigned.
 
-`verify:packaged-app` launches the installed application twice. `BLUE_VERIFY_MODE=packaged-resources` proves that the bundled Java helper at `resources/assets/java`, bundled Blue Engine at `resources/assets/engine`, externalized workspace modules, `zeromq`, and Electron-pinned `node:sqlite` runtime resolve. It also runs the engine's side-effect-free probe against an intentionally missing Csound path and requires a structured recoverable result. `BLUE_VERIFY_MODE=packaged-project` then loads `fixtures/smoke-test.blue` through the normal main-process project path and proves that it became the current project. Either failure exits non-zero. Both modes use an isolated temporary user-data directory; neither starts audio or touches the maintainer's normal Blue profile.
+`verify:packaged-app` launches the installed application in four deterministic verification modes. `BLUE_VERIFY_MODE=packaged-metadata` proves that the embedded About Blue metadata matches the packaged application version and requested release channel. `BLUE_VERIFY_MODE=packaged-resources` proves that the bundled Java helper at `resources/assets/java`, bundled Blue Engine at `resources/assets/engine`, externalized workspace modules, `zeromq`, and Electron-pinned `node:sqlite` runtime resolve. It also runs the engine's side-effect-free probe against an intentionally missing Csound path and requires a structured recoverable result. `BLUE_VERIFY_MODE=packaged-project` loads `fixtures/smoke-test.blue` through the normal main-process project path and proves that it became the current project. Finally, `BLUE_VERIFY_MODE=packaged-engine-mismatch` proves that an incompatible engine is rejected before playback while the project remains open. Any failure exits non-zero. All modes use an isolated temporary user-data directory; none starts audio or touches the maintainer's normal Blue profile.
 
 ### Diagnosing missing prerequisites
 

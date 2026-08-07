@@ -55,6 +55,7 @@ export default defineConfig(({ command }) => ({
           projectRoot,
           'src/renderer/track-instrument-editor.html',
         ),
+        about: resolve(projectRoot, 'src/renderer/about.html'),
         popout: resolve(projectRoot, 'src/renderer/popout.html'),
       },
     },

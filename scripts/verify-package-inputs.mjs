@@ -20,6 +20,8 @@
  *   5. Native ZeroMQ (.node) availability for the host runtime so packaging
  *      does not silently ship an app that cannot load `zeromq`.
  *   6. The macOS nested-engine entitlement required for future signed builds.
+ *   7. Generated release metadata with a matching app version, build channel,
+ *      build date, full source revision, and release fields.
  *
  * Exit codes:
  *   0 - all inputs are present and consistent.
@@ -47,6 +49,7 @@ const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '..');
 const appRoot = join(repoRoot, 'packages', 'blue-app');
 const engineStageRoot = join(appRoot, '.engine-stage');
+const releaseMetadataPath = join(appRoot, 'release-metadata.json');
 const engineProtocolVersion = 1;
 
 /** @typedef {{ ok: boolean, code: string, message: string, detail?: string[] }} Diagnostic */
@@ -285,6 +288,104 @@ function checkBuiltElectronEntries() {
 }
 
 /**
+ * Verifies the generated metadata that the About dialog reads from packaged
+ * application resources. The source revision is deliberately required to be
+ * a full Git hash so packaged builds never present an abbreviated identity.
+ *
+ * @param {{ metadataPath?: string, packagePath?: string, expectedChannel?: string }} [options]
+ * @returns {Diagnostic}
+ */
+export function checkReleaseMetadata({
+  metadataPath = releaseMetadataPath,
+  packagePath = join(appRoot, 'package.json'),
+  expectedChannel = process.env.BLUE_RELEASE_CHANNEL,
+} = {}) {
+  let metadata;
+  try {
+    metadata = JSON.parse(readFileSync(metadataPath, 'utf8'));
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_MISSING',
+      message: `Release metadata is missing or invalid at ${metadataPath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+
+  if (metadata === null || typeof metadata !== 'object') {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_INVALID',
+      message: `Release metadata must be an object at ${metadataPath}`,
+    };
+  }
+
+  const channel = metadata.channel;
+  if (channel !== 'development' && channel !== 'stable') {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_CHANNEL_INVALID',
+      message: `Release metadata channel must be development or stable at ${metadataPath}`,
+    };
+  }
+  if (expectedChannel !== undefined && expectedChannel !== channel) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_CHANNEL_MISMATCH',
+      message: `Release metadata channel ${channel} does not match BLUE_RELEASE_CHANNEL=${expectedChannel}`,
+    };
+  }
+
+  let packageVersion;
+  try {
+    packageVersion = JSON.parse(readFileSync(packagePath, 'utf8')).version;
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'PACKAGE_JSON_INVALID',
+      message: `Could not read app version from ${packagePath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (typeof packageVersion !== 'string' || metadata.appVersion !== packageVersion) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_VERSION_MISMATCH',
+      message: `Release metadata appVersion ${String(metadata.appVersion)} does not match ${packageVersion}`,
+    };
+  }
+  if (typeof metadata.sourceRevision !== 'string' || !/^[0-9a-f]{40}$/i.test(metadata.sourceRevision)) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_REVISION_INVALID',
+      message: 'Release metadata sourceRevision must be a full 40-character Git hash',
+    };
+  }
+  if (typeof metadata.generatedAt !== 'string' || Number.isNaN(Date.parse(metadata.generatedAt))) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_DATE_INVALID',
+      message: 'Release metadata generatedAt must be a valid date string',
+    };
+  }
+  for (const field of ['releaseVersion', 'releaseName', 'releaseNotes']) {
+    if (typeof metadata[field] !== 'string' || metadata[field].trim().length === 0) {
+      return {
+        ok: false,
+        code: 'RELEASE_METADATA_FIELD_MISSING',
+        message: `Release metadata field ${field} must be a non-empty string`,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    code: 'OK',
+    message: `Release metadata: ${metadataPath} (${channel}, ${metadata.sourceRevision})`,
+  };
+}
+
+/**
  * @returns {Diagnostic}
  */
 function checkElectronVersion() {
@@ -492,6 +593,7 @@ export function collectPackageInputDiagnostics({
     ...checkJavaHelperOutputs(),
     ...checkExternalizedWorkspacePackages(),
     ...checkBuiltElectronEntries(),
+    checkReleaseMetadata(),
     checkStagedBlueEngine({ target }),
     checkElectronVersion(),
     checkNativeZeroMQ(),

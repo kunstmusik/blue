@@ -41,6 +41,7 @@ import type {
   FreezeOperationResult,
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
+import type { AppMetadata } from '../../shared/app-metadata';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
   EngineProbeRequest,
@@ -333,6 +334,8 @@ declare global {
       stopPlayback: () => Promise<void>;
       syncFollowPlaybackState: (enabled: boolean) => void;
       getProjectInfo: () => Promise<Record<string, string> | null>;
+      getAppMetadata: () => Promise<AppMetadata>;
+      closeAboutWindow: () => Promise<boolean>;
       generateCsdToScreen: () => Promise<void>;
       generateCsdToDisk: () => Promise<void>;
       importBlueUdo: () => Promise<string | null>;

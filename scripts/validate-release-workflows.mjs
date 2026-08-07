@@ -146,6 +146,12 @@ requireSubstring(
   'PR_TRIGGER',
   'pr.yml must trigger on pull requests',
 );
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'BLUE_RELEASE_CHANNEL: development',
+  'PR_METADATA_CHANNEL',
+  'pr.yml must build development-channel metadata',
+);
 forbidRegex(
   '.github/workflows/pr.yml',
   /^\s*push:/m,
@@ -246,6 +252,12 @@ requireSubstring(
   'branches: [develop]',
   'DEVELOP_TRIGGER',
   'develop.yml must trigger on push to develop',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'BLUE_RELEASE_CHANNEL: development',
+  'DEVELOP_METADATA_CHANNEL',
+  'develop.yml must build development-channel metadata',
 );
 requireSubstring('.github/workflows/develop.yml', 'target-id: macos-arm64', 'DEVELOP_MACOS_ARM64', 'develop.yml must cover macos-arm64');
 requireSubstring('.github/workflows/develop.yml', 'target-id: windows-x64', 'DEVELOP_WINDOWS_X64', 'develop.yml must cover windows-x64');
@@ -354,6 +366,12 @@ requireSubstring(
   'verify:release-version',
   'RELEASE_VERSION_VALIDATION',
   'release.yml must validate tag/version agreement via the package script',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'BLUE_RELEASE_CHANNEL: stable',
+  'RELEASE_METADATA_CHANNEL',
+  'release.yml must build stable-channel metadata',
 );
 requireSubstring(
   '.github/workflows/release.yml',
@@ -500,6 +518,12 @@ requireSubstring(
   '- dist/shared/**/*',
   'BUILDER_SHARED_RUNTIME',
   'electron-builder must package shared runtime modules imported by main and preload',
+);
+requireSubstring(
+  'packages/blue-app/electron-builder.yml',
+  '- release-metadata.json',
+  'BUILDER_RELEASE_METADATA',
+  'electron-builder must package generated release metadata for the About dialog',
 );
 
 // === print findings ===

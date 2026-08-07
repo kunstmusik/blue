@@ -62,6 +62,7 @@ for (const entry of readdirSync(packagesDir)) {
 // 2. electron-builder output (unpacked apps, installers, manifests).
 remove('packages/blue-app/release');
 remove('packages/blue-app/.engine-stage');
+remove('packages/blue-app/release-metadata.json');
 
 // 3. Maven build output for the Java helper.
 remove('packages/blue-java/target');

@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import {
   checkStagedBlueEngine,
+  checkReleaseMetadata,
   resolvePackageTarget,
 } from './verify-package-inputs.mjs';
 
@@ -84,5 +85,48 @@ test('rejects protocol, target, revision, hash, and extra-file mismatches', asyn
       target: resolvePackageTarget(['--target', 'darwin-arm64']),
       expectedRevision: 'abc123',
     }).code, 'BLUE_ENGINE_STAGE_CONTENTS');
+  });
+});
+
+async function metadataFixture(overrides = {}) {
+  const root = await mkdtemp(join(tmpdir(), 'blue-package-metadata-'));
+  const packagePath = join(root, 'package.json');
+  const metadataPath = join(root, 'release-metadata.json');
+  await writeFile(packagePath, JSON.stringify({ version: '2.3.4' }));
+  await writeFile(metadataPath, JSON.stringify({
+    channel: 'development',
+    appVersion: '2.3.4',
+    sourceRevision: 'a'.repeat(40),
+    generatedAt: '2026-05-04T12:00:00.000Z',
+    releaseVersion: '2.3.4-dev.20260504-1200.aaaaaaa',
+    releaseName: 'Blue Development Build 2.3.4-dev.20260504-1200.aaaaaaa',
+    releaseNotes: 'Development build',
+    ...overrides,
+  }));
+  return { metadataPath, packagePath, root };
+}
+
+test('accepts complete release metadata for the requested channel', async () => {
+  const fixture = await metadataFixture({ channel: 'stable' });
+  assert.equal(checkReleaseMetadata({
+    ...fixture,
+    expectedChannel: 'stable',
+  }).ok, true);
+  await rm(fixture.root, { recursive: true, force: true });
+});
+
+test('rejects channel and full-revision mismatches in release metadata', async (t) => {
+  await t.test('channel mismatch', async () => {
+    const fixture = await metadataFixture();
+    assert.equal(checkReleaseMetadata({
+      ...fixture,
+      expectedChannel: 'stable',
+    }).code, 'RELEASE_METADATA_CHANNEL_MISMATCH');
+    await rm(fixture.root, { recursive: true, force: true });
+  });
+  await t.test('short revision', async () => {
+    const fixture = await metadataFixture({ sourceRevision: 'abc1234' });
+    assert.equal(checkReleaseMetadata(fixture).code, 'RELEASE_METADATA_REVISION_INVALID');
+    await rm(fixture.root, { recursive: true, force: true });
   });
 });
