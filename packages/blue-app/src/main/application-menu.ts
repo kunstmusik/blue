@@ -108,8 +108,6 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'Render to Disk and Play', accelerator: 'Shift+F9', enabled: canRender, click: () => options.onRenderToDiskAndPlay() },
     { label: 'Render to Disk and Open', enabled: canRender, click: () => options.onRenderToDiskAndOpen() },
     { type: 'separator' },
-    buildPlaceholderItem('Save Libraries', options, { enabled: hasProject }),
-    { type: 'separator' },
     { label: 'Recent Projects', submenu: buildRecentProjectsMenuTemplate(options) },
     ...(options.isDarwin
       ? []
