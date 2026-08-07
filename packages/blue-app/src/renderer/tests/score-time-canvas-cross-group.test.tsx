@@ -329,6 +329,31 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
   });
 
+  it('sets selected SoundObject subjective time to objective time', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Sound Object', 0, 0, 1, 2),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Set Subjective Time to Objective Time');
+
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'setSubjectiveDurationToObjective',
+        targets: [item.editorTarget],
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],

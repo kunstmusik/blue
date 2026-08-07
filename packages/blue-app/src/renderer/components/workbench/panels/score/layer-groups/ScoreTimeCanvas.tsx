@@ -1215,6 +1215,17 @@ export default function ScoreTimeCanvas({
     }
   }, [getSelectedEntries, applyProjectDocumentPatch, clearSelection]);
 
+  const handleSetSubjectiveToObjective = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0 || entries.some((entry) => entry.objectType === 'AudioClip')) return;
+    const targets = entries
+      .map((entry) => entry.editorTarget)
+      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
+    if (targets.length > 0) {
+      void applyProjectDocumentPatch({ score: { type: 'setSubjectiveDurationToObjective', targets } });
+    }
+  }, [applyProjectDocumentPatch, getSelectedEntries]);
+
   const handleColorSelected = useCallback((backgroundColor: number) => {
     const targets = pendingColorTargetsRef.current;
     void Promise.all(targets.map((target) => applyProjectDocumentPatch({
@@ -1612,6 +1623,7 @@ export default function ScoreTimeCanvas({
               onFollowTheLeader={handleFollowTheLeader}
               onReverse={handleReverse}
               onSetColor={handleSetColor}
+              onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
               onFreezeUnfreeze={handleFreezeUnfreeze}
               onCancelFreeze={handleCancelFreeze}
               freezeBusy={freezeBusy}
@@ -1642,7 +1654,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onSetSubjectiveToObjective, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1657,6 +1669,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onFollowTheLeader: () => void;
   onReverse: () => void;
   onSetColor: () => void;
+  onSetSubjectiveToObjective: () => void;
   onFreezeUnfreeze: () => void;
   onCancelFreeze: () => void;
   freezeBusy: boolean;
@@ -1711,7 +1724,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Item className={menuItemClass} onSelect={ni}>
         Shift…
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} onSelect={onSetSubjectiveToObjective}>
         Set Subjective Time to Objective Time
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
