@@ -16,6 +16,8 @@ function createHandlers() {
     onOpenSettings: vi.fn(),
     onOpenAbout: vi.fn(),
     onOpenEffectsLibrary: vi.fn(),
+    onOpenFTableConverter: vi.fn(),
+    onOpenCsoundRCEditor: vi.fn(),
     onFocusPanel: vi.fn(),
     onToggleDevTools: vi.fn(),
     onResetLayout: vi.fn(),

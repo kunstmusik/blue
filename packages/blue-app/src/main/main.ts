@@ -1773,6 +1773,9 @@ async function runPackagedEngineMismatchVerificationAndExit(): Promise<never> {
     `${passed ? '[ok]' : '[FAIL]'} Incompatible engine was ` +
       `${passed ? 'rejected before playback while the project remained open' : 'not rejected safely'}.\n`,
   );
+  if (passed) {
+    process.stderr.write('Packaged engine mismatch verification passed.\n');
+  }
   process.exit(passed ? 0 : 1);
 }
 

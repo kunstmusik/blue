@@ -361,6 +361,30 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
   });
 
+  it('disables subjective time conversion for selected AudioClips', () => {
+    const audioGroup = createSoundGroup([[
+      createAudioItem('audio-clip', 'Audio Clip', 0, 0, 1, 2),
+    ]]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(audioGroup, [audioGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      .find((item) => item.textContent?.trim() === 'Set Subjective Time to Objective Time');
+    expect(menuItem?.getAttribute('data-disabled')).toBe('');
+    act(() => {
+      menuItem?.click();
+    });
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('exports the single selected SoundObject XML', async () => {
     const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
     const item = {
