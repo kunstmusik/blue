@@ -409,6 +409,58 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
   });
 
+  it('shifts selected sound objects by the prompted beat amount', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Item', 0, 0, 2, 4),
+    ]]);
+    const moveScoreObjects = useProjectStore.getState().moveScoreObjects as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 60, 10);
+    });
+    clickContextMenuItem('Shift…');
+
+    const input = document.querySelector('input[type="number"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    act(() => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      nativeSetter?.call(input, '3.5');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const okButton = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent === 'OK');
+    expect(okButton).not.toBeUndefined();
+
+    act(() => {
+      okButton!.click();
+    });
+
+    const item = soundGroup.layers[0]!.items[0]!;
+    expect(moveScoreObjects).toHaveBeenCalledWith([
+      { objectId: 'sound-object', targetStartBeats: 5.5, targetLayerIndex: 0, targetGroupId: 'sound-group' },
+    ]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'moveScoreObjects',
+        moves: [
+          {
+            target: item.editorTarget,
+            targetStartBeats: 5.5,
+            targetLayerIndex: 0,
+            targetGroupId: 'sound-group',
+          },
+        ],
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],

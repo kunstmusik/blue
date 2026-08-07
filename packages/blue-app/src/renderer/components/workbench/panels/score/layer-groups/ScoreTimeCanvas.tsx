@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import ShiftObjectsDialog from '../ShiftObjectsDialog';
 import { ChevronRight } from 'lucide-react';
 import type { PolyObjectLayerGroupSnapshot, ScoreLayerGroupSnapshot, ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
@@ -280,6 +281,7 @@ export default function ScoreTimeCanvas({
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
   const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
+  const [showShiftDialog, setShowShiftDialog] = useState(false);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const libraryClipboard = useLibraryStore((s) => s.clipboard);
   const librarySoundObjectAvailable = libraryClipboard
@@ -1330,64 +1332,118 @@ export default function ScoreTimeCanvas({
     }
   }, [contextMenuPos, interactionLayerGroups, setSelection]);
 
+  const commitMoves = useCallback(
+    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+      if (moves.length === 0) return;
+      const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
+        objectId: entry.objectId,
+        targetStartBeats,
+        targetLayerIndex: entry.layerIndex,
+        targetGroupId: entry.groupId,
+      }));
+      moveScoreObjects(optimisticMoves);
+      const canonicalMoves = moves.flatMap(({ entry, targetStartBeats }) =>
+        entry.editorTarget
+          ? [
+              {
+                target: entry.editorTarget,
+                targetStartBeats,
+                targetLayerIndex: entry.layerIndex,
+                targetGroupId: entry.groupId,
+              },
+            ]
+          : [],
+      );
+      if (canonicalMoves.length > 0) {
+        void applyProjectDocumentPatch({ score: { type: 'moveScoreObjects', moves: canonicalMoves } });
+      }
+    },
+    [applyProjectDocumentPatch, moveScoreObjects],
+  );
+
   const handleAlignLeft = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const minStart = Math.min(...entries.map((e) => e.startBeats));
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: minStart,
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(entries.map((entry) => ({ entry, targetStartBeats: minStart })));
+  }, [commitMoves, getSelectedEntries]);
 
   const handleAlignCenter = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const centers = entries.map((e) => e.startBeats + e.durationBeats / 2);
     const mid = (Math.min(...centers) + Math.max(...centers)) / 2;
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: Math.max(0, mid - e.durationBeats / 2),
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      entries.map((entry) => ({
+        entry,
+        targetStartBeats: Math.max(0, mid - entry.durationBeats / 2),
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleAlignRight = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const maxEnd = Math.max(...entries.map((e) => e.startBeats + e.durationBeats));
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: Math.max(0, maxEnd - e.durationBeats),
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      entries.map((entry) => ({
+        entry,
+        targetStartBeats: Math.max(0, maxEnd - entry.durationBeats),
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleFollowTheLeader = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const sorted = [...entries].sort((a, b) => a.startBeats - b.startBeats);
     let cursor = sorted[0].startBeats;
-    const moves = sorted.map((e) => {
-      const target = cursor;
-      cursor += e.durationBeats;
-      return { objectId: e.objectId, targetStartBeats: target };
-    });
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      sorted.map((entry) => {
+        const targetStartBeats = cursor;
+        cursor += entry.durationBeats;
+        return { entry, targetStartBeats };
+      }),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleReverse = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const sorted = [...entries].sort((a, b) => a.startBeats - b.startBeats);
     const reversed = [...sorted].reverse();
-    const moves = sorted.map((orig, i) => {
-      const rev = reversed[i];
-      return { objectId: orig.objectId, targetStartBeats: rev.startBeats };
-    });
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      sorted.map((entry, i) => ({
+        entry,
+        targetStartBeats: reversed[i].startBeats,
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
+
+  const handleShift = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0) return;
+    setShowShiftDialog(true);
+  }, [getSelectedEntries]);
+
+  const handleConfirmShift = useCallback(
+    (amount: number) => {
+      const entries = getSelectedEntries();
+      if (entries.length === 0) return;
+      commitMoves(
+        entries.map((entry) => ({
+          entry,
+          targetStartBeats: entry.startBeats + amount,
+        })),
+      );
+    },
+    [commitMoves, getSelectedEntries],
+  );
+
+  const minStartBeats = useMemo(() => {
+    const entries = getSelectedEntries();
+    return entries.length > 0 ? Math.min(...entries.map((e) => e.startBeats)) : 0;
+  }, [getSelectedEntries]);
 
   const handleSelectAll = useCallback(() => {
     setSelection(collectAllItemSelectionEntries(group));
@@ -1666,6 +1722,7 @@ export default function ScoreTimeCanvas({
               onRemove={handleRemove}
               onFollowTheLeader={handleFollowTheLeader}
               onReverse={handleReverse}
+              onShift={handleShift}
               onSetColor={handleSetColor}
               onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
               onReplaceWithBuffer={handleReplaceWithBuffer}
@@ -1696,11 +1753,18 @@ export default function ScoreTimeCanvas({
           )}
         </ContextMenu.Content>
       </ContextMenu.Portal>
+      {showShiftDialog && (
+        <ShiftObjectsDialog
+          onConfirm={handleConfirmShift}
+          onClose={() => setShowShiftDialog(false)}
+          minStartBeats={minStartBeats}
+        />
+      )}
     </ContextMenu.Root>
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1714,6 +1778,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onRemove: () => void;
   onFollowTheLeader: () => void;
   onReverse: () => void;
+  onShift: () => void;
   onSetColor: () => void;
   onSetSubjectiveToObjective: () => void;
   onReplaceWithBuffer: () => void;
@@ -1769,7 +1834,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} onSelect={onShift}>
         Shift…
       </ContextMenu.Item>
       <ContextMenu.Item className={menuItemClass} onSelect={onSetSubjectiveToObjective}>

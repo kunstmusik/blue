@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import ShiftObjectsDialog from '../ShiftObjectsDialog';
 import { ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -187,6 +188,7 @@ export default function TrackLayerGroupCanvas({
   const [marquee, setMarquee] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
   const marqueeRef = useRef<typeof marquee>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
+  const [showShiftDialog, setShowShiftDialog] = useState(false);
   const [contextMenuObjectId, setContextMenuObjectId] = useState<string | null>(null);
   const [previewByObjectId, setPreviewByObjectId] = useState<Record<string, TrackPreview>>({});
   const [audioPreviewByObjectId, setAudioPreviewByObjectId] = useState<Record<string, AudioClipPreview>>({});
@@ -453,19 +455,22 @@ export default function TrackLayerGroupCanvas({
   const handleShift = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0) return;
-    const raw = window.prompt('Shift selected objects by beats:', '0');
-    if (raw === null) return;
-    const amount = Number(raw);
-    if (!Number.isFinite(amount)) {
-      toast.error('Shift must be a number of beats.');
-      return;
-    }
-    if (entries.some((entry) => entry.startBeats + amount < 0)) {
-      toast.error('Shift would move an object before beat 0.');
-      return;
-    }
-    commitMoves(entries.map((entry) => ({ entry, targetStartBeats: entry.startBeats + amount })));
-  }, [commitMoves, getSelectedEntries]);
+    setShowShiftDialog(true);
+  }, [getSelectedEntries]);
+
+  const handleConfirmShift = useCallback(
+    (amount: number) => {
+      const entries = getSelectedEntries();
+      if (entries.length === 0) return;
+      commitMoves(entries.map((entry) => ({ entry, targetStartBeats: entry.startBeats + amount })));
+    },
+    [commitMoves, getSelectedEntries],
+  );
+
+  const minStartBeats = useMemo(() => {
+    const entries = getSelectedEntries();
+    return entries.length > 0 ? Math.min(...entries.map((e) => e.startBeats)) : 0;
+  }, [getSelectedEntries]);
 
   const handleSetSubjectiveToObjective = useCallback(() => {
     const entries = getSelectedEntries();
@@ -1338,6 +1343,13 @@ export default function TrackLayerGroupCanvas({
           )}
         </ContextMenu.Content>
       </ContextMenu.Portal>
+      {showShiftDialog && (
+        <ShiftObjectsDialog
+          onConfirm={handleConfirmShift}
+          onClose={() => setShowShiftDialog(false)}
+          minStartBeats={minStartBeats}
+        />
+      )}
     </ContextMenu.Root>
   );
 }
