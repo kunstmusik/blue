@@ -863,6 +863,7 @@ function LeftPanel({
                   groupType={group.groupType}
                   groupId={group.groupId}
                   layerIndex={li}
+                  layerCount={group.layers.length}
                   rootGroupIndex={gi}
                   projectSessionId={projectSessionId}
                   projectRevision={projectRevision}
@@ -967,6 +968,7 @@ function SpacerPanel({
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
   const addLayer = useProjectStore((s) => s.addLayer);
+  const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const ctxItemClass = 'editor-context-menu__item';
 
   return (
@@ -1008,7 +1010,11 @@ function SpacerPanel({
           {groupIndex > 0 && (
             <ContextMenu.Item
               className={ctxItemClass}
-              onSelect={() => alert("Not yet implemented")}
+              onSelect={() => {
+                void applyProjectDocumentPatch({
+                  score: { type: 'moveLayerGroup', groupId, targetIndex: groupIndex - 1 },
+                });
+              }}
             >
               Move Layer Group Up
             </ContextMenu.Item>
@@ -1016,7 +1022,11 @@ function SpacerPanel({
           {groupIndex < totalGroups - 1 && (
             <ContextMenu.Item
               className={ctxItemClass}
-              onSelect={() => alert("Not yet implemented")}
+              onSelect={() => {
+                void applyProjectDocumentPatch({
+                  score: { type: 'moveLayerGroup', groupId, targetIndex: groupIndex + 1 },
+                });
+              }}
             >
               Move Layer Group Down
             </ContextMenu.Item>
@@ -1032,6 +1042,7 @@ function SoundLayerHeader({
   groupType,
   groupId,
   layerIndex,
+  layerCount,
   rootGroupIndex,
   projectSessionId,
   projectRevision,
@@ -1042,6 +1053,7 @@ function SoundLayerHeader({
   groupType: ScoreLayerGroupSnapshot['groupType'];
   groupId: string;
   layerIndex: number;
+  layerCount: number;
   rootGroupIndex: number;
   projectSessionId: number;
   projectRevision: number;
@@ -1334,13 +1346,35 @@ function SoundLayerHeader({
           </ContextMenu.Item>
           <ContextMenu.Item
             className={ctxItemClass}
-            onSelect={() => alert("Not yet implemented")}
+            disabled={layerIndex <= 0}
+            onSelect={() => {
+              if (layerIndex <= 0) return;
+              void applyProjectDocumentPatch({
+                score: {
+                  type: 'moveLayer',
+                  groupId,
+                  layerIndex,
+                  targetIndex: layerIndex - 1,
+                },
+              });
+            }}
           >
             Push Up
           </ContextMenu.Item>
           <ContextMenu.Item
             className={ctxItemClass}
-            onSelect={() => alert("Not yet implemented")}
+            disabled={layerIndex >= layerCount - 1}
+            onSelect={() => {
+              if (layerIndex >= layerCount - 1) return;
+              void applyProjectDocumentPatch({
+                score: {
+                  type: 'moveLayer',
+                  groupId,
+                  layerIndex,
+                  targetIndex: layerIndex + 1,
+                },
+              });
+            }}
           >
             Push Down
           </ContextMenu.Item>
