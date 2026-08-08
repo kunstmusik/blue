@@ -1112,6 +1112,22 @@ describe('workbench store native menu commands', () => {
 
     expect(addMarkerAtTime).toHaveBeenCalledWith(10);
   });
+
+  it('routes Render/Stop Project through the playback store', () => {
+    const togglePlaySpy = vi
+      .spyOn(usePlaybackStore.getState(), 'togglePlay')
+      .mockResolvedValue(undefined);
+
+    try {
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'render-stop-project',
+      });
+
+      expect(togglePlaySpy).toHaveBeenCalledOnce();
+    } finally {
+      togglePlaySpy.mockRestore();
+    }
+  });
 });
 
 describe('workbench-store reset-windows command', () => {

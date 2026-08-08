@@ -1,0 +1,788 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>ObjectBuilder2 Example</title>
+    <author>steven yi</author>
+    <notes>The example ObjectBuilder examples demonstrate the use of LineObjects in ObjectBuilder to be used as the mask boundaries for a Pmask script.  </notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>ObjectBuilder2.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings>csound</diskAdvancedSettings>
+    <diskCompleteOverride>true</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>untitled</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_fm_table	ftgen 0, 0, 65537, 10, 1, 0, 0.4, 0.2, 0, 0.1, 0.1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>	; p2 = onset
+	; p3 = duration
+	; p4 = base frequency
+	; p5 fm index
+	; p6 pan (L=0, R=1)
+        ; p7 = amplitude
+
+kenv 	expon	1, p3, 0.01
+kindx	expon	p5, p3, 0.4
+a1	foscil	kenv * p7*1000, p4, 1, 1.143, kindx, gi_fm_table
+	outs	a1*(1-p6)*10, a1*p6*10
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324051' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324049' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>50</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>21.08</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>ObjectBuilder</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>from pmask import *
+
+def makeTupleList(arr, yAdjust = 1.0):
+	retVal = []
+	for i in range(len(arr) / 2):
+		indx1 = i * 2
+		indx2 = indx1 + 1
+		retVal.append((arr[indx1] * 20,arr[indx2] * yAdjust))
+	return retVal
+
+max = makeTupleList([&lt;density_max&gt;])
+min = makeTupleList([&lt;density_min&gt;])
+
+density = Mask(UniformRandom(), 
+	PowerSegment(min, 3.0), 
+	PowerSegment(max, 3.0))
+
+max = makeTupleList([&lt;duration_max&gt;])
+min = makeTupleList([&lt;duration_min&gt;])
+
+duration = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+max = makeTupleList([&lt;frequnecy_max&gt;])
+min = makeTupleList([&lt;frequnecy_min&gt;])
+
+frequency_mask = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+frequency = Quantizer(frequency_mask, 
+		LinearSegment([(0.0, 400.0), (20.0, 50.0)]), 
+		0.95)
+
+index = Mask(UniformRandom(), 
+	PowerSegment([(0.0, 2.0), (20.0, 3.0)], 1.0), 
+	PowerSegment([(0.0, 3.0), (20.0, 5.0)], 1.0))
+
+panorama = Range(0, 1)
+
+amplitude = Lorenz(&apos;x&apos;)
+
+ss = ScoreSection(0.0, 20.0, 1, density, duration, frequency, index, panorama, amplitude)
+
+score = str(ss)</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>density</objectName>
+            <x>74</x>
+            <y>9</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.277027'/>
+                <linePoint x='0.13435374' y='0.5945946'/>
+                <linePoint x='0.27891156' y='0.6486486'/>
+                <linePoint x='0.4489796' y='1.0'/>
+                <linePoint x='0.8078231' y='0.4662162'/>
+                <linePoint x='1.0' y='0.9527027'/>
+              </line>
+              <line name='min' version='2' max='1.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.2162162'/>
+                <linePoint x='0.20068027' y='0.3108108'/>
+                <linePoint x='0.7176871' y='0.30405408'/>
+                <linePoint x='0.8486394' y='0.25'/>
+                <linePoint x='1.0' y='0.49324322'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>duration</objectName>
+            <x>74</x>
+            <y>194</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='6.621622'/>
+                <linePoint x='0.21938775' y='4.391892'/>
+                <linePoint x='0.27891156' y='6.4864864'/>
+                <linePoint x='0.4506803' y='4.932432'/>
+                <linePoint x='0.8078231' y='4.662162'/>
+                <linePoint x='1.0' y='9.527027'/>
+              </line>
+              <line name='min' version='2' max='10.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='1.7567569'/>
+                <linePoint x='0.20068027' y='3.108108'/>
+                <linePoint x='0.7176871' y='3.0405407'/>
+                <linePoint x='0.8486394' y='2.5'/>
+                <linePoint x='1.0' y='1.3513511'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>17</x>
+            <y>8</y>
+            <label>Density</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>194</y>
+            <label>Duration</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>frequnecy</objectName>
+            <x>74</x>
+            <y>379</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='7235.2705'/>
+                <linePoint x='0.21938775' y='4403.1084'/>
+                <linePoint x='0.3452381' y='4268.243'/>
+                <linePoint x='0.4506803' y='4942.5674'/>
+                <linePoint x='0.8078231' y='4672.838'/>
+                <linePoint x='0.9421769' y='4470.54'/>
+                <linePoint x='1.0' y='7977.027'/>
+              </line>
+              <line name='min' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='2110.4058'/>
+                <linePoint x='0.20068027' y='3121.8918'/>
+                <linePoint x='0.50510204' y='964.0541'/>
+                <linePoint x='0.8486394' y='2515.0'/>
+                <linePoint x='1.0' y='3459.0542'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>379</y>
+            <label>Frequency</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>20.16</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>ObjectBuilder</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>from pmask import *
+
+def makeTupleList(arr, yAdjust = 1.0):
+	retVal = []
+	for i in range(len(arr) / 2):
+		indx1 = i * 2
+		indx2 = indx1 + 1
+		retVal.append((arr[indx1] * 20,arr[indx2] * yAdjust))
+	return retVal
+
+max = makeTupleList([&lt;density_max&gt;])
+min = makeTupleList([&lt;density_min&gt;])
+
+density = Mask(UniformRandom(), 
+	PowerSegment(min, 3.0), 
+	PowerSegment(max, 3.0))
+
+max = makeTupleList([&lt;duration_max&gt;])
+min = makeTupleList([&lt;duration_min&gt;])
+
+duration = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+max = makeTupleList([&lt;frequnecy_max&gt;])
+min = makeTupleList([&lt;frequnecy_min&gt;])
+
+frequency_mask = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+frequency = Quantizer(frequency_mask, 
+		LinearSegment([(0.0, 400.0), (20.0, 50.0)]), 
+		0.95)
+
+index = Mask(UniformRandom(), 
+	PowerSegment([(0.0, 2.0), (20.0, 3.0)], 1.0), 
+	PowerSegment([(0.0, 3.0), (20.0, 5.0)], 1.0))
+
+panorama = Range(0, 1)
+
+amplitude = Lorenz(&apos;x&apos;)
+
+ss = ScoreSection(0.0, 20.0, 1, density, duration, frequency, index, panorama, amplitude)
+
+score = str(ss)</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>density</objectName>
+            <x>74</x>
+            <y>9</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.6418919'/>
+                <linePoint x='1.0' y='0.9527027'/>
+              </line>
+              <line name='min' version='2' max='1.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.2162162'/>
+                <linePoint x='1.0' y='0.75'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>duration</objectName>
+            <x>74</x>
+            <y>194</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='6.621622'/>
+                <linePoint x='1.0' y='3.3783782'/>
+              </line>
+              <line name='min' version='2' max='10.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='4.864865'/>
+                <linePoint x='1.0' y='1.3513511'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>17</x>
+            <y>8</y>
+            <label>Density</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>194</y>
+            <label>Duration</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>frequnecy</objectName>
+            <x>74</x>
+            <y>379</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='7235.2705'/>
+                <linePoint x='0.49659863' y='3998.5132'/>
+                <linePoint x='1.0' y='7977.027'/>
+              </line>
+              <line name='min' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='3661.3516'/>
+                <linePoint x='0.8061224' y='1975.5403'/>
+                <linePoint x='1.0' y='3459.0542'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>379</y>
+            <label>Frequency</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>20.92</subjectiveDuration>
+        <startTime>12.92</startTime>
+        <name>ObjectBuilder</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <code>from pmask import *
+
+def makeTupleList(arr, yAdjust = 1.0):
+	retVal = []
+	for i in range(len(arr) / 2):
+		indx1 = i * 2
+		indx2 = indx1 + 1
+		retVal.append((arr[indx1] * 20,arr[indx2] * yAdjust))
+	return retVal
+
+max = makeTupleList([&lt;density_max&gt;])
+min = makeTupleList([&lt;density_min&gt;])
+
+density = Mask(UniformRandom(), 
+	PowerSegment(min, 3.0), 
+	PowerSegment(max, 3.0))
+
+max = makeTupleList([&lt;duration_max&gt;])
+min = makeTupleList([&lt;duration_min&gt;])
+
+duration = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+max = makeTupleList([&lt;frequnecy_max&gt;])
+min = makeTupleList([&lt;frequnecy_min&gt;])
+
+frequency_mask = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+frequency = Quantizer(frequency_mask, 
+		LinearSegment([(0.0, 400.0), (20.0, 50.0)]), 
+		0.95)
+
+index = Mask(UniformRandom(), 
+	PowerSegment([(0.0, 2.0), (20.0, 3.0)], 1.0), 
+	PowerSegment([(0.0, 3.0), (20.0, 5.0)], 1.0))
+
+panorama = Range(0, 1)
+
+amplitude = Lorenz(&apos;x&apos;)
+
+ss = ScoreSection(0.0, 20.0, 1, density, duration, frequency, index, panorama, amplitude)
+
+score = str(ss)</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>density</objectName>
+            <x>74</x>
+            <y>9</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.277027'/>
+                <linePoint x='0.13435374' y='0.5945946'/>
+                <linePoint x='0.27891156' y='0.6486486'/>
+                <linePoint x='0.4489796' y='1.0'/>
+                <linePoint x='0.8078231' y='0.4662162'/>
+                <linePoint x='1.0' y='0.9527027'/>
+              </line>
+              <line name='min' version='2' max='1.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.2162162'/>
+                <linePoint x='0.20068027' y='0.3108108'/>
+                <linePoint x='0.7176871' y='0.30405408'/>
+                <linePoint x='0.8486394' y='0.25'/>
+                <linePoint x='1.0' y='0.49324322'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>duration</objectName>
+            <x>74</x>
+            <y>194</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='6.621622'/>
+                <linePoint x='0.21938775' y='4.391892'/>
+                <linePoint x='0.27891156' y='6.4864864'/>
+                <linePoint x='0.4506803' y='4.932432'/>
+                <linePoint x='0.8078231' y='4.662162'/>
+                <linePoint x='1.0' y='9.527027'/>
+              </line>
+              <line name='min' version='2' max='10.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='1.7567569'/>
+                <linePoint x='0.20068027' y='3.108108'/>
+                <linePoint x='0.7176871' y='3.0405407'/>
+                <linePoint x='0.8486394' y='2.5'/>
+                <linePoint x='1.0' y='1.3513511'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>17</x>
+            <y>8</y>
+            <label>Density</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>194</y>
+            <label>Duration</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>frequnecy</objectName>
+            <x>74</x>
+            <y>379</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='7235.2705'/>
+                <linePoint x='0.21938775' y='4403.1084'/>
+                <linePoint x='0.3452381' y='4268.243'/>
+                <linePoint x='0.4506803' y='4942.5674'/>
+                <linePoint x='0.8078231' y='4672.838'/>
+                <linePoint x='0.9421769' y='4470.54'/>
+                <linePoint x='1.0' y='7977.027'/>
+              </line>
+              <line name='min' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='2110.4058'/>
+                <linePoint x='0.20068027' y='3121.8918'/>
+                <linePoint x='0.50510204' y='964.0541'/>
+                <linePoint x='0.8486394' y='2515.0'/>
+                <linePoint x='1.0' y='3459.0542'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>379</y>
+            <label>Frequency</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>21.02</subjectiveDuration>
+        <startTime>12.92</startTime>
+        <name>ObjectBuilder</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <code>from pmask import *
+
+def makeTupleList(arr, yAdjust = 1.0):
+	retVal = []
+	for i in range(len(arr) / 2):
+		indx1 = i * 2
+		indx2 = indx1 + 1
+		retVal.append((arr[indx1] * 20,arr[indx2] * yAdjust))
+	return retVal
+
+max = makeTupleList([&lt;density_max&gt;])
+min = makeTupleList([&lt;density_min&gt;])
+
+density = Mask(UniformRandom(), 
+	PowerSegment(min, 3.0), 
+	PowerSegment(max, 3.0))
+
+max = makeTupleList([&lt;duration_max&gt;])
+min = makeTupleList([&lt;duration_min&gt;])
+
+duration = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+max = makeTupleList([&lt;frequnecy_max&gt;])
+min = makeTupleList([&lt;frequnecy_min&gt;])
+
+frequency_mask = Mask(UniformRandom(), 
+	PowerSegment(min, 1.0), 
+	PowerSegment(max, 1.0))
+
+frequency = Quantizer(frequency_mask, 
+		LinearSegment([(0.0, 400.0), (20.0, 50.0)]), 
+		0.95)
+
+index = Mask(UniformRandom(), 
+	PowerSegment([(0.0, 2.0), (20.0, 3.0)], 1.0), 
+	PowerSegment([(0.0, 3.0), (20.0, 5.0)], 1.0))
+
+panorama = Range(0, 1)
+
+amplitude = Lorenz(&apos;x&apos;)
+
+ss = ScoreSection(0.0, 20.0, 1, density, duration, frequency, index, panorama, amplitude)
+
+score = str(ss)</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>density</objectName>
+            <x>74</x>
+            <y>9</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.6418919'/>
+                <linePoint x='1.0' y='0.9527027'/>
+              </line>
+              <line name='min' version='2' max='1.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.2162162'/>
+                <linePoint x='1.0' y='0.75'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>duration</objectName>
+            <x>74</x>
+            <y>194</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='6.621622'/>
+                <linePoint x='1.0' y='3.3783782'/>
+              </line>
+              <line name='min' version='2' max='10.0' min='0.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='4.864865'/>
+                <linePoint x='1.0' y='1.3513511'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>17</x>
+            <y>8</y>
+            <label>Density</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>194</y>
+            <label>Duration</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>frequnecy</objectName>
+            <x>74</x>
+            <y>379</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>160</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>false</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>false</locked>
+            <lines>
+              <line name='max' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='7235.2705'/>
+                <linePoint x='0.49659863' y='3998.5132'/>
+                <linePoint x='1.0' y='7977.027'/>
+              </line>
+              <line name='min' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-16776961' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='3661.3516'/>
+                <linePoint x='0.8061224' y='1975.5403'/>
+                <linePoint x='1.0' y='3459.0542'/>
+              </line>
+            </lines>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>379</y>
+            <label>Frequency</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

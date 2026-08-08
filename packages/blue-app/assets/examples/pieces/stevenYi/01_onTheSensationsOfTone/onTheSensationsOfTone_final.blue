@@ -1,0 +1,2323 @@
+<blueData version='0.112.0_beta'>
+  <projectProperties>
+    <title>On the Sensations of Tone</title>
+    <author>Steven Yi</author>
+    <notes>Title: On the Sensations of Tone
+Duration: 6:00
+Date of Completion: October 19th, 2004
+
+Notes on the Work
+
+On the Sensations of Tone marks the beginning of a new period of actively composing in my life. 
+The years that have passed between the last finished piece and this one were filled with many 
+musical explorations as well as many life experiences. The time spent establishing a career as
+a programmer, experiencing the world&apos;s events, and simply living life has been rich and rewarding. 
+The exploration of musical ideas has provided many lessons from which I feel I am only now beginning 
+to understand within the context of my own music. It’s been an amazing journey to arrive at this piece, 
+and I am looking forward to the music to come.</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>onTheSensationsOfTone.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>feedback scanned - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = (iamp / 0dbfs) * .5
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+ain 	init 0
+
+;aforce	= kenv * iforce 
+aforce	= iforce
+
+ain	= ain + aforce
+
+
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+ain	= a1 * .0002
+
+a1 	dcblock a1
+
+aout	= a1
+
+aout	butterlp	aout, kpchline * 8 * kenv
+aout	butterlp	aout, kpchline * 8 * kenv
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+;aout	balance	aout, a1
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+aout	= aout * iamp
+
+aout	declick aout
+aout	= aout * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>design1 - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = iamp / 0dbfs
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+;ain	= kenv * iforce
+ain	= iforce
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+a1 	dcblock a1	
+
+aout	= a1
+
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+aout	declick aout
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>feedback scanned - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = (iamp / 0dbfs) * .5
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+ain 	init 0
+
+;aforce	= kenv * iforce 
+aforce	= iforce
+
+ain	= ain + aforce
+
+
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+ain	= a1 * .0002
+
+a1 	dcblock a1
+
+aout	= a1
+
+aout	butterlp	aout, kpchline * 8 * kenv
+aout	butterlp	aout, kpchline * 8 * kenv
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+;aout	balance	aout, a1
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+aout	= aout * iamp
+
+aout	declick aout
+aout	= aout * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>design1 - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = iamp / 0dbfs
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+;ain	= kenv * iforce
+ain	= iforce
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+a1 	dcblock a1	
+
+aout	= a1
+
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+aout	declick aout
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='5' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>feedback scanned - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = (iamp / 0dbfs) * .5
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+ain 	init 0
+
+;aforce	= kenv * iforce 
+aforce	= iforce
+
+ain	= ain + aforce
+
+
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+ain	= a1 * .0002
+
+a1 	dcblock a1
+
+aout	= a1
+
+aout	butterlp	aout, kpchline * 8 * kenv
+aout	butterlp	aout, kpchline * 8 * kenv
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+;aout	balance	aout, a1
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+aout	= aout * iamp
+
+aout	declick aout
+aout	= aout * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='6' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>triangle</name>
+        <comment>Description: 
+
+A simple band-limited fm wave instrument built using an instrument template code snippet I often use from my personal code repository for building my instruments. Instrument parameters are numerous, but often I use instruments I build from this template with python code that simplifies the process of generating these notes, yet I&apos;m still able to have the flexibility and nuance of all of these parameters.
+
+Parameters:
+
+p4	- start frequency, can be either hertz or pch notation 
+p5	- end frequency, can be either hertz or pch notation
+p6	- amplitude, expressed in decibels
+p7	- panning, from range -1 to 1
+p8	- amplitude envelope type, 0 = adsr, 1 = pyramid, 2 = ramp</comment>
+        <globalOrc>;[once]{
+gi_square		ftgen 0, 0, 65537, 10, 1, 0, 0.111111, 0, 0.4, 0, .020408163, 0, .012345679, 0, .008264463
+;}</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+;print ipch, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+itable	= gi_square
+
+kenv	yiEnvelope ienvType
+
+;aout	oscili iamp * kenv, kpchline, itable
+;aout	vco 	iamp * kenv, ipch, 3, .5
+
+aout	vco2	1, kpchline, 12
+aout2	vco2	1, kpchline + .0009, 12
+aout3	vco2	1, kpchline + .0007, 12
+
+aout	sum aout, aout2, aout3
+aout	= aout * .333
+
+kCut	= (kpchline * 4 * kenv) + kpchline
+
+kCut    	limit kCut, sr * 0.0002, sr * 0.48
+
+;if kCut &lt; 20000 kgoto kCutPass
+;  kCut = 20000
+;kCutPass:
+;printk2 kCut
+
+aout 	butterlp aout, kCut
+
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+	outs aLeft, aRight
+
+;ga1 = ga1 + aLeft
+;ga2 = ga2 + aRight </instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='1001' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Pass Through</name>
+        <comment>Description:
+
+A pass through instruments for all of the sounds.  Use this instrument if you do not want to use the convolution and plain reverbs.</comment>
+        <globalOrc></globalOrc>
+        <globalSco>i &lt;INSTR_ID&gt; 0 [&lt;TOTAL_DUR&gt; + 1]</globalSco>
+        <instrumentText>ga1 = ga1 * .3
+ga2 = ga2 * .3
+
+outs	ga1, ga2
+
+ga1 = 0
+ga2 = 0
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968323' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968321' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968319' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968317' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968315' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>6</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968313' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>1001</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1909968311' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1909968309' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>13.9375</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>chord</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <isRoot>false</isRoot>
+      <pixelSecond>64</pixelSecond>
+      <defaultHeightIndex>1</defaultHeightIndex>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.PythonObject'>
+          <subjectiveDuration>7.921875</subjectiveDuration>
+          <startTime>0.078125</startTime>
+          <name>p1 - 8.00</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>#pch = 261.62558
+pch = 8.00
+
+line = NoteList([ Note(0, 1, pch, pch, 68, 1)])
+
+score = p1.perform(line)</pythonCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.PythonObject'>
+          <subjectiveDuration>8.015625</subjectiveDuration>
+          <startTime>0.03125</startTime>
+          <name>p3 - 8.02</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>pch = 8.02
+#pch = 294.32877
+
+line = NoteList([ Note(0, 1, pch, pch, 66, 1)])
+
+
+score = p3.perform(line)</pythonCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.PythonObject'>
+          <subjectiveDuration>7.53125</subjectiveDuration>
+          <startTime>0.2734375</startTime>
+          <name>p2 - 7.05</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>pch = 7.05
+#pch = 174.41705
+
+line = NoteList([ Note(0, 1, pch, pch, 69, 1)])
+
+
+
+score = p2.perform(line)</pythonCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.PythonObject'>
+          <subjectiveDuration>7.921875</subjectiveDuration>
+          <startTime>0.078125</startTime>
+          <name>p5 - 8.07</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>pch = 8.07
+#pch = 392.43835
+
+
+line = NoteList([ Note(0, 1, pch, pch, 65, 1)])
+
+score = p5.perform(line)</pythonCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.PythonObject'>
+          <subjectiveDuration>7.453125</subjectiveDuration>
+          <startTime>0.3125</startTime>
+          <name>p4 - 7.02</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>pch = 7.02
+#pch = 147.16438
+
+line = NoteList([ Note(0, 1, pch, pch, 70, 1)])
+
+score = p4.perform(line)</pythonCode>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+    <soundObject type='blue.soundObject.PythonObject'>
+      <subjectiveDuration>31.166666</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>melody</name>
+      <backgroundColor>-12566464</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <pythonCode>amp = 78
+
+line = NoteList([ 
+	Note(0, 1, 8.09, 8.09, amp, 1),
+	#Note(.5, 1, 8.10, 8.10, amp, 1),
+	Note(1, 1, 8.07, 8.07, amp, 1)
+])
+
+score = solo.perform(line)</pythonCode>
+    </soundObject>
+  </soundObjectLibrary>
+  <globalOrcSco>
+    <globalOrc>ga1	init 	0
+ga2	init	0
+
+</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>i</inTypes>
+      <codeBody>kout	init 0
+ienvType	xin
+if ienvType == 0 kgoto env0  ; adsr
+if ienvType == 1 kgoto env1  ; pyramid
+if ienvType == 2 kgoto env2  ; ramp
+env0:
+	kenv	adsr	.3, .2, .9, .5
+	kgoto endEnvelope
+env1:
+	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+;	kenv	oscil3	1, .5 / p3 , gi_sine
+	kgoto endEnvelope
+env2:
+	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+	kgoto endEnvelope
+endEnvelope:
+	xout 	kenv
+</codeBody>
+    </udo>
+    <udo>
+      <opcodeName>declick</opcodeName>
+      <outTypes>a</outTypes>
+      <inTypes>a</inTypes>
+      <codeBody>ain     	xin
+aenv    	linseg 0, 0.02, 1, p3 - 0.05, 1, 0.02, 0, 0.01, 0
+        	xout ain * aenv         ; apply envelope and write output
+</codeBody>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound --sched  -W -d -o devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand recorder</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+
+chords = [ [0,1,2], [0,2,4], [0,2,3] ]
+
+pitches = [ 60, 62, 66, 69, 70, 71, 73, 75, 76, 78 ]
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = 21
+
+modifier = 0
+
+if instr &lt; 3:
+    modifier = instr * -4
+else:
+    modifier = (instr - 3) * -4
+
+score = &quot;&quot;
+
+dur = (random.random() * 3 ) + 3
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = int(random.random() * 20) + 80
+    noteText = &quot;i%i %f %f %i %i\n&quot; % (instr, start, duration, pitch, amp)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>pythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from orchestra.ScoreUtilities import pchAdd
+import random
+
+interval = 1
+
+basePchList = [6.05, 6.11, 7.01, 7.04, 7.10]
+
+for i in range(len(basePchList)):
+	basePchList[i] = pchAdd(basePchList[i], - 11)
+
+basePch = basePchList[int(random.random() * len(basePchList))]
+
+chord = [basePch, pchAdd(basePch, 17), pchAdd(basePch, 25)]
+
+space = (random.random() * 2) - 1
+
+score = &quot;&quot;
+
+for pch in chord:
+	score = score + &quot;i23 0 6 %s %s 72 %s 1\n&quot; % (pch, pch, space)
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand chord</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+import time
+
+try:
+	timeSpan =  time.time() - lastEventTime
+	lastEventTime = time.time()
+except(NameError):
+	print &quot;test&quot;
+	lastEventTime = 0
+	timeSpan = 0
+
+
+chords = [ [0,.05,.07], [0,.02,.04], [0,.04,.07], [0, .05, .10 ], [0, 0.04, 0.07] ]
+
+pitches = [ 7.00, 7.02, 7.05, 7.07, 7.09 ]
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = int(random.random() * 5) + 15
+env = 1
+
+score = &quot;&quot;
+
+dur = (random.random() * 4 ) + 11
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = 70 - timeSpan
+    space = 1 - (random.random() * 2)
+    noteText = &quot;i%i %f %f %f %f %f %f %i \n&quot; % (instr, start, duration, pitch, pitch, amp, space, env)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand chord guitar</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+import time
+
+try:
+	timeSpan =  time.time() - lastEventTime
+	lastEventTime = time.time()
+except(NameError):
+	print &quot;test&quot;
+	lastEventTime = 0
+	timeSpan = 0
+
+
+chords = [ [0,.01,.02], [0,.02,.04], [0,.04,.08], [0, .05, .10 ], [0, 0.04, 0.07] ]
+
+pitches = [ 8.01, 9.03, 8.06, 9.08, 8.10 ]
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = 20
+env = 0
+
+score = &quot;&quot;
+
+dur = (random.random() * 3 ) + 9
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = 90 - timeSpan
+    space = 1 - (random.random() * 2)
+    noteText = &quot;i%i %f %f %f %f %f %f %i \n&quot; % (instr, start, duration, pitch, pitch, amp, space, env)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand chord i1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+import time
+
+try:
+	timeSpan =  time.time() - lastEventTime
+	lastEventTime = time.time()
+except(NameError):
+	print &quot;test&quot;
+	lastEventTime = 0
+	timeSpan = 0
+
+
+chords = [ [0,.05,.07], [0,.02,.04], [0,.04,.07], [0, .05, .10 ], [0, 0.04, 0.07] ]
+
+pitches = [ 7.00, 7.02, 7.05, 7.07, 7.09 ]
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = 1
+env = 1
+
+score = &quot;&quot;
+
+dur = (random.random() * 1 ) + 9
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = 70 - timeSpan
+    space = 1 - (random.random() * 2)
+    noteText = &quot;i%i %f %f %f %f %f %f %i \n&quot; % (instr, start, duration, pitch, pitch, amp, space, env)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand chord i2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+import time
+
+try:
+	timeSpan =  time.time() - lastEventTime
+	lastEventTime = time.time()
+except(NameError):
+	print &quot;test&quot;
+	lastEventTime = 0
+	timeSpan = 0
+
+
+chords = [ [0,.05,.07], [0,.02,.04], [0,.04,.07], [0, .05, .10 ], [0, 0.04, 0.07] ]
+
+pitches = [ 7.00, 7.02, 7.05, 7.07, 7.09 ]
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = 2
+env = 1
+
+score = &quot;&quot;
+
+dur = (random.random() * 1 ) + 9
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = 70 - timeSpan
+    space = 1 - (random.random() * 2)
+    noteText = &quot;i%i %f %f %f %f %f %f %i \n&quot; % (instr, start, duration, pitch, pitch, amp, space, env)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>rand chord whistle</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#use variable blueDuration for duration from blue
+#use variable score at end of script to bring score back into blue
+
+import random
+import time
+
+try:
+	timeSpan =  time.time() - lastEventTime
+	lastEventTime = time.time()
+except(NameError):
+	print &quot;test&quot;
+	lastEventTime = 0
+	timeSpan = 0
+
+
+chords = [ [0,.05,.07], [0,.02,.04], [0,.04,.07], [0, .05, .10 ], [0, 0.04, 0.07] ]
+
+pitches = [ 7.00, 7.02, 7.05, 7.07, 7.09 ]
+
+for i in range(0, len(pitches)):
+	pitches[i] += 2
+
+
+basePch = pitches[int(random.random() * len(pitches))]
+chord = chords[int(random.random() * len(chords))]
+
+instr = 7
+env = 1
+
+score = &quot;&quot;
+
+dur = (random.random() * 1 ) + 9
+
+for i in chord:
+    start = random.random() * 2
+    duration = dur - start
+    pitch = basePch + i
+    amp = 70 - timeSpan
+    space = 1 - (random.random() * 2)
+    noteText = &quot;i%i %f %f %f %f %f %f %i \n&quot; % (instr, start, duration, pitch, pitch, amp, space, env)
+    score += noteText
+
+print &quot;[score]\n%s&quot; % score
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>genericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>i1	0.0	12.298801	8.0	8.0	68	0	1	
+i3	0.024258109	12.444349	8.02	8.02	68	-0.1	1	
+i2	0.14554769	11.692351	7.05	7.05	68	0.1	1	
+i5	1.8678657	12.298801	8.07	8.07	68	-0.2	1	
+i4	2.0619287	11.571061	7.02	7.02	68	0.2	1	
+</score>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>pythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>pitches = [8.09, 8.10, 8.07]
+
+for i in range(len(pitches)):
+	pitches[i] = pitches[i] + 2
+
+line = NoteList()
+
+for i in range(len(pitches)):
+	line.append(Note(i / 2.0, 1, pitches[i], pitches[i], 77, 1))
+
+multiplier = 5
+
+for note in line:
+	note.startTime = note.startTime * multiplier
+	note.duration = note.duration * multiplier
+
+
+score = solo.perform(line)</pythonCode>
+      </soundObject>
+    </liveObject>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>6</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>10</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>4.1578946</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>performer setup</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from orchestra import *
+
+#p1 = Performer(1, 1, .1)
+#p2 = Performer(2, 1, .05)
+#p3 = Performer(3, 1, -.1)
+#p4 = Performer(4, 1, -.05)
+#p5 = Performer(5, 1, 0)
+
+p1 = Performer(1, 1, .2)
+p2 = Performer(2, 1, .1)
+p3 = Performer(3, 1, -.2)
+p4 = Performer(4, 1, -.1)
+p5 = Performer(5, 1, 0)
+
+
+solo = Performer(6, 1, 0)
+whistle = Performer(7, 1, 0)
+
+guitar = Performer(20, 1, 0)</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>21.333334</subjectiveDuration>
+        <startTime>92.5</startTime>
+        <name>ic (+2)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>4</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>5</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>6</pfield>
+            <value>-4.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>2</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>2</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>21.333334</subjectiveDuration>
+        <startTime>136.16667</startTime>
+        <name>ic (+2)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>4</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>5</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>6</pfield>
+            <value>-4.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>2</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>2</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>21.333334</subjectiveDuration>
+        <startTime>74.666664</startTime>
+        <name>ic </name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>4</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>5</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>6</pfield>
+            <value>-4.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>21.333334</subjectiveDuration>
+        <startTime>114.333336</startTime>
+        <name>ic</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>4</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+            <pfield>5</pfield>
+            <value>8.0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>6</pfield>
+            <value>-4.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>22.0</subjectiveDuration>
+        <startTime>37.333332</startTime>
+        <name>m(1,2)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>22.0</subjectiveDuration>
+        <startTime>91.333336</startTime>
+        <name>m(2,1)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>23.0</subjectiveDuration>
+        <startTime>124.333336</startTime>
+        <name>m(2,1)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>22.0</subjectiveDuration>
+        <startTime>64.166664</startTime>
+        <name>m(1,2)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>12.0</subjectiveDuration>
+        <startTime>154.5</startTime>
+        <name>m(1)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>1</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>13.0</subjectiveDuration>
+        <startTime>173.0</startTime>
+        <name>m(2)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>2</start>
+            <end>2</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>14.0</subjectiveDuration>
+        <startTime>25.5</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>14.166667</subjectiveDuration>
+        <startTime>49.166668</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>15.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>7</pfield>
+            <value>-0.05</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>18.0</subjectiveDuration>
+        <startTime>71.833336</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>18.0</subjectiveDuration>
+        <startTime>140.0</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>18.0</subjectiveDuration>
+        <startTime>111.166664</startTime>
+        <name>chord (-12)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-12</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-12</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.PolyObject'>
+        <subjectiveDuration>178.16667</subjectiveDuration>
+        <startTime>181.16667</startTime>
+        <name>firstSection - retrograde</name>
+        <backgroundColor>-10066279</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <isRoot>false</isRoot>
+        <pixelSecond>42</pixelSecond>
+        <defaultHeightIndex>0</defaultHeightIndex>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>15.0</subjectiveDuration>
+            <startTime>0.0</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>7</pfield>
+                <value>-0.05</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>14.5</subjectiveDuration>
+            <startTime>12.333333</startTime>
+            <name>chord (-14)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>7</pfield>
+                <value>0.05</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>14.0</subjectiveDuration>
+            <startTime>25.5</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>15.0</subjectiveDuration>
+            <startTime>36.166668</startTime>
+            <name>chord (-14)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-14</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>22.0</subjectiveDuration>
+            <startTime>37.333332</startTime>
+            <name>m(1,2)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain/>
+            <soundObjectReference soundObjectLibraryID='1'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>14.166667</subjectiveDuration>
+            <startTime>49.166668</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>16.0</subjectiveDuration>
+            <startTime>59.333332</startTime>
+            <name>chord (-14)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-14</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>22.0</subjectiveDuration>
+            <startTime>64.166664</startTime>
+            <name>m(1,2)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain/>
+            <soundObjectReference soundObjectLibraryID='1'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>18.0</subjectiveDuration>
+            <startTime>71.833336</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>21.333334</subjectiveDuration>
+            <startTime>74.666664</startTime>
+            <name>ic </name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>4</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>5</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>6</pfield>
+                <value>-4.0</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>22.0</subjectiveDuration>
+            <startTime>91.333336</startTime>
+            <name>m(2,1)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='1'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>21.333334</subjectiveDuration>
+            <startTime>92.5</startTime>
+            <name>ic (+2)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>4</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>5</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>6</pfield>
+                <value>-4.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>2</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>2</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>16.0</subjectiveDuration>
+            <startTime>97.5</startTime>
+            <name>chord (-14)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-14</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>18.0</subjectiveDuration>
+            <startTime>111.166664</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>21.333334</subjectiveDuration>
+            <startTime>114.333336</startTime>
+            <name>ic</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>4</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>5</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>6</pfield>
+                <value>-4.0</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>23.0</subjectiveDuration>
+            <startTime>124.333336</startTime>
+            <name>m(2,1)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='1'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>21.333334</subjectiveDuration>
+            <startTime>136.16667</startTime>
+            <name>ic (+2)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>4</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+                <pfield>5</pfield>
+                <value>8.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.AddProcessor'>
+                <pfield>6</pfield>
+                <value>-4.0</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>2</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>2</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>18.0</subjectiveDuration>
+            <startTime>140.0</startTime>
+            <name>chord (-12)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-12</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-12</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>12.0</subjectiveDuration>
+            <startTime>154.5</startTime>
+            <name>m(1)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+                <start>1</start>
+                <end>1</end>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='1'/>
+          </soundObject>
+        </soundLayer>
+        <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+          <noteProcessorChain/>
+          <soundObject type='blue.soundObject.Instance'>
+            <subjectiveDuration>18.0</subjectiveDuration>
+            <startTime>160.16667</startTime>
+            <name>chord (-14)</name>
+            <backgroundColor>-12566464</backgroundColor>
+            <timeBehavior>0</timeBehavior>
+            <noteProcessorChain>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>4</pfield>
+                <value>-14</value>
+              </noteProcessor>
+              <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+                <pfield>5</pfield>
+                <value>-14</value>
+              </noteProcessor>
+            </noteProcessorChain>
+            <soundObjectReference soundObjectLibraryID='0'/>
+          </soundObject>
+        </soundLayer>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>15.0</subjectiveDuration>
+        <startTime>36.166668</startTime>
+        <name>chord (-14)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-14</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>16.0</subjectiveDuration>
+        <startTime>59.333332</startTime>
+        <name>chord (-14)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-14</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>14.5</subjectiveDuration>
+        <startTime>12.333333</startTime>
+        <name>chord (-14)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>7</pfield>
+            <value>0.05</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>16.0</subjectiveDuration>
+        <startTime>97.5</startTime>
+        <name>chord (-14)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-14</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>18.0</subjectiveDuration>
+        <startTime>160.16667</startTime>
+        <name>chord (-14)</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-14</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-14</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText>-think about flow of meditation... sounds weaving slowly in and out... be mindful of duration
+
+fluidProgramSelect	iEngineNumber, channel, instrumentNumber, bank, presetNum
+
+-finish adding EarlyPatches, add in their comments
+
+-need to fix FrenchHorn Instrument (FTables)
+-categorize instruments
+
+
+
+
+</scratchText>
+  </scratchPadData>
+  <noteProcessorChainMap>
+    <npc name='Orch - Transpose'>
+      <noteProcessorChain>
+        <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+          <pfield>4</pfield>
+          <value>-14</value>
+        </noteProcessor>
+        <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+          <pfield>5</pfield>
+          <value>-14</value>
+        </noteProcessor>
+      </noteProcessorChain>
+    </npc>
+    <npc name='Orch - Invert 8.0'>
+      <noteProcessorChain>
+        <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+          <pfield>4</pfield>
+          <value>8.0</value>
+        </noteProcessor>
+        <noteProcessor type='blue.noteProcessor.PchInversionProcessor'>
+          <pfield>5</pfield>
+          <value>8.0</value>
+        </noteProcessor>
+      </noteProcessorChain>
+    </npc>
+  </noteProcessorChainMap>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+</blueData>

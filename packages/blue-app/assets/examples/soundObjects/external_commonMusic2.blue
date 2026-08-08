@@ -1,0 +1,171 @@
+<blueData version='0.106.0_beta3'>
+  <projectProperties>
+    <title>Common Music Example</title>
+    <author>Stephane Boussage</author>
+    <notes> -W -o D:\Nuendo\Urban\mel1.wav
+
+consound -W -oD:\Nuendo\Urban\bass_1_ctof.wav</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>2</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>2</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+  </projectProperties>
+  <arrangement/>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'/>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+    </channel>
+  </mixer>
+  <tables>;sine
+f 1 0 16384 10 1
+
+;saw
+f 2 0 256 7 0 128 1 0 -1 128 0
+;pulse?
+f 3 0 256 7 1 128 1 0 -1 128 -1
+</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>ga1 init 0
+ga2 init 0
+</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <heightIndex>2</heightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.External'>
+        <subjectiveDuration>15.296875</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>external</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <text>(load &quot;/home/stf/bin/cm-2.6.0/src/cm.lisp&quot;)
+(in-package :cm)
+
+
+(defparameter *buflen* 4096); used to store file in print-stream function
+
+
+(defobject simp ()
+          ((ins :initform &apos;simp :accessor object-name)
+           (beg :accessor object-time)
+           (dur :initform 1)
+           (amp :initform .5)
+           (freq :initform 440))
+ (:parameters beg dur amp freq))
+
+;; Now define a simple process that output simps...
+
+
+
+(define (simp-1 num)
+ (process repeat num
+          output (new simp
+                   :beg (now) :dur 1 :amp .5
+                   :freq (between 220 440))
+          wait (pick 0 1 2)))
+
+
+
+
+
+;; Next we define a variant process that outputs simps
+;; with names picked randomly from a list.
+
+(define (simp-2 num names)
+ (process repeat num
+          output (new simp :beg (now)
+                      :ins (and names (pickl names))
+                      :dur 1 :amp .5
+                      :freq (between 220 440))
+          wait (pick 0 1 2)))
+
+(events (simp-2 20 &apos;(&quot;i1&quot; &quot;i2&quot; &quot;i3&quot;))  ; write to i1 i2 or i3
+       &quot;test.sco&quot;)
+
+
+
+
+(defun print-stream (filename)
+       (let ((buffer (make-array *buflen*)))
+       (with-open-file (f filename :direction :input
+                     :if-does-not-exist :error
+                     )
+       (do ((j 0))((= j (file-length f)))
+       (setf myline (read-line f t &quot;eofeof&quot;))
+       (if (string-equal myline &quot;eofeof&quot;)(return))
+       (princ myline)
+       (write-char #\Newline)
+       (setf j (+ j ))
+       )
+  ))
+)
+;
+;
+
+;
+(print-stream  &quot;test.sco&quot;)</text>
+        <commandLine>clisp </commandLine>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText></scratchText>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+</blueData>

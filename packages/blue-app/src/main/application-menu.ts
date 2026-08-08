@@ -13,6 +13,7 @@ export interface ApplicationMenuTemplateOptions {
   followPlaybackOnStartEnabled: boolean;
   onNewFile: () => void;
   onOpenFile: () => void;
+  onOpenExampleProject: () => void;
   onOpenRecentProject: (filePath: string) => void;
   onCloseProject: () => void;
   onRevertProject: () => void;
@@ -95,7 +96,7 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'New Project', accelerator: 'CmdOrCtrl+N', click: () => options.onNewFile() },
     { type: 'separator' },
     { label: 'Open Project', accelerator: 'CmdOrCtrl+O', click: () => options.onOpenFile() },
-    buildPlaceholderItem('Open Example Project', options),
+    { label: 'Open Example Project...', click: () => options.onOpenExampleProject() },
     { type: 'separator' },
     buildPlaceholderItem('Import CSD File', options, { enabled: hasProject }),
     buildPlaceholderItem('Import from ORC/SCO', options, { enabled: hasProject }),

@@ -56,6 +56,7 @@ import {
 } from './blue-live-trigger-controller';
 import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
+import { resolveExampleProjectPath } from './example-project-path';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
@@ -1120,6 +1121,7 @@ function rebuildApplicationMenu(): void {
     followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
     onNewFile: () => { void handleNewFile(); },
     onOpenFile: () => { void handleOpenFile(); },
+    onOpenExampleProject: () => { void openExampleProject(); },
     onOpenRecentProject: (filePath) => { void openRecentProject(filePath); },
     onCloseProject: () => { void closeProject(); },
     onRevertProject: () => { void revertProject(); },
@@ -1638,6 +1640,35 @@ async function openFilePath(filePath: string): Promise<boolean> {
   }
 
   return loadProjectFromDisk(filePath);
+}
+
+/**
+ * Opens the bundled examples directory in a file picker (Java Blue's "Open
+ * Example Project"). The resolved examples directory seeds the dialog; the
+ * selected `.blue` file is handed to the normal {@link openFilePath} load
+ * path, so it participates in the same render-active guard, recent-projects
+ * tracking, and project-loaded lifecycle as a regular open.
+ */
+async function openExampleProject(): Promise<boolean> {
+  if (!mainWindow) return false;
+  if (!(await confirmSaveBeforeReplace())) return false;
+
+  const resolution = resolveExampleProjectPath({
+    isPackaged: app.isPackaged,
+    mainModuleDir: __dirname,
+    resourcesPath: process.resourcesPath,
+  });
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Example Project',
+    defaultPath: resolution.exists ? resolution.examplesPath : undefined,
+    filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+    properties: ['openFile'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return false;
+
+  return openFilePath(result.filePaths[0]);
 }
 
 /**

@@ -52,9 +52,14 @@ files:
 # Java helper JAR + Python library land at installed
 # resources/assets/java/* so the existing resolver in
 # java-runtime-path.ts finds them at its preferred candidate.
+# Bundled example projects (assets/examples) are copied alongside so the
+# resolver in example-project-path.ts finds them at its preferred candidate.
 extraResources:
   - from: assets/java
     to: assets/java
+    filter: ['**/*']
+  - from: assets/examples
+    to: assets/examples
     filter: ['**/*']
   - from: .engine-stage
     to: assets/engine

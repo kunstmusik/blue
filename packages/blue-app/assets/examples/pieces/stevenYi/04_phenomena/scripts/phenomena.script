@@ -1,0 +1,494 @@
+<scriptCategory categoryName='Phenomena' isRoot='false'>
+  <script>
+    <name>Analyze Chords</name>
+    <description>Creates a report for the piece</description>
+    <code>from ScriptingUtils import *
+from orchestra import *
+
+pObj = blueData.getPolyObject()
+
+chordNames = [&quot;C&quot;, &quot;OB&quot;, &quot;OT&quot;, &quot;O&quot;]
+intervalSets = [ [7, 7], [19, 7], [7, 19], [19, 19]]
+basePch = 7.04
+
+
+report = &quot;&quot;
+
+
+def getPch(basePch, intervalSet):
+	pch1 = pchAdd(basePch, intervalSet[0])
+	return [basePch, pch1, pchAdd(pch1, intervalSet[1]) ]
+
+def getChordInfo(chordObj):
+	chord0 = &quot;&quot;
+	chord1 = &quot;&quot;
+	iset0 = []
+	iset1 = []
+	baseAdjust = &quot;&quot;
+	rootSpace = &quot;&quot;
+
+	for j in range(chordObj.graphicInterface.size()):
+		bsbObj = chordObj.graphicInterface.getBSBObject(j)
+
+		if(bsbObj.objectName == &quot;CHORD0&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord0 = chordNames[index]
+			iset0 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;CHORD1&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord1 = chordNames[index]
+			iset1 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;BASE_ADJUST&quot;):
+			baseAdjust = bsbObj.value
+		elif(bsbObj.objectName == &quot;ROOT_SPACE&quot;):
+			rootSpace = bsbObj.value
+	root1 = pchAdd(basePch, baseAdjust)
+	root2 = pchAdd(root1, rootSpace)
+
+	set0 = getPch(root1, iset0)
+	set1 = getPch(root2, iset1)	
+
+
+	row0 = &quot;Start: %.2f Duration: %.2f\n&quot;%(chordObj.startTime, chordObj.subjectiveDuration)
+	row1 = &quot;%s\t%s\n&quot;%(chord1, str(set1))
+	row2 = &quot;%s\t%s\n&quot;%(chord0, str(set0))
+
+	return row0 + row1 + row2, set0 + set1
+	
+def sObjSort(a,b):
+	val = a.startTime - b.startTime
+	
+	if val &gt; 0:
+		return 1
+	if val &lt; 0:
+		return -1
+	return 0
+
+def getChordsText(chords):
+	value = []
+	retVal = &quot;&quot;
+
+
+	for i in range(len(chords[0])):
+		value.append([])
+
+	for chord in chords:
+		chord.sort()
+		chord.reverse()
+
+		for i in range(len(chord)):
+			value[i].append(chord[i])
+
+	for line in value:
+		for i in line:
+			retVal += &quot;%.2f\t&quot;%i
+		retVal += &quot;\n&quot;
+
+	return retVal	
+
+def getChordIntervals(chords):
+	retVal = &quot;&quot;
+
+	values = []
+
+	for i in range(5):
+		values.append([])
+
+	for chord in chords:
+		chord.sort()
+		chord.reverse()
+
+		for j in range(1, len(chord)):
+			values[j-1].append(pchDiff(chord[j], chord[j-1]))
+	
+	for line in values:
+		for j in line:
+			retVal += &quot;%.f\t&quot;%j
+
+		retVal += &quot;\n&quot;
+
+	return retVal	
+
+def getChordIntervalChanges(chords):
+	retVal = &quot;&quot;
+
+	for chord in chords:
+		chord.sort()
+		chord.reverse()
+
+	for i in range(len(chords[0])):
+		previous = None
+		for j in chords:
+			if(previous != None):
+				retVal += &quot;%.f\t&quot;%pchDiff(previous[i], j[i])
+			previous = j
+		retVal += &quot;\n&quot;
+
+	return retVal		
+
+def getPchSet(chords):
+	retVal = &quot;&quot;
+
+	values = []
+
+	for i in range(6):
+		values.append([])
+
+	for chord in chords:
+		intervals = []
+		for j in range(len(chord)):
+			pch = string.split(str(chord[j]), &quot;.&quot;)
+			pch = float(&quot;.&quot; + pch[1]) * 100
+			intervals.append(pch % 12)
+
+		intervals.sort()	
+		intervals.reverse()	
+
+		if intervals[5] &gt; 0:
+			adjust = intervals[5]
+			intervals = [i - adjust for i in intervals]
+			
+		for j in range(len(chord)):
+			values[j].append(str(intervals[j]))
+
+	for line in values:
+		for j in line:
+			retVal += &quot;%.f\t&quot;%j
+
+		retVal += &quot;\n&quot;
+
+	return retVal
+
+
+## SCRIPT ##
+
+for i in range(pObj.size ):
+	sLayer = pObj.getElementAt(i)
+	
+	if sLayer.muted:
+		continue
+
+	if sLayer.name == &quot;Chords&quot;:
+		report += &quot;[Layer %i: Chords]===================================================\n&quot;%i
+	
+		chords = []
+			
+		a = sLayer.soundObjects.toArray()
+		k = []
+		for j in a:
+			k.append(j)
+		
+		k.sort(sObjSort)
+
+		for j in k:
+			text, chord = getChordInfo(j)
+			report += text + &quot;\n&quot;
+			chords.append(chord)
+
+		report += &quot;\nChords\n&quot;
+		report += getChordsText(chords)
+
+		report += &quot;\nPitch Set\n&quot;
+		report += getPchSet(chords)
+
+		report += &quot;\nInterval Between Chord Voices\n&quot;
+		report += getChordIntervals(chords)
+		
+		report += &quot;\nInterval Changes Per Chord Voice\n&quot;
+		report += getChordIntervalChanges(chords)
+
+infoTabs(report, &quot;chords&quot;)
+
+report = None
+chords = None</code>
+    <comments/>
+  </script>
+  <script>
+    <name>Analyze Chords 2</name>
+    <description>Creates a report for the piece</description>
+    <code>from ScriptingUtils import *
+from orchestra import *
+
+pObj = blueData.getPolyObject()
+
+chordNames = [&quot;C&quot;, &quot;OB&quot;, &quot;OT&quot;, &quot;O&quot;]
+intervalSets = [ [7, 7], [19, 7], [7, 19], [19, 19]]
+basePch = 7.04
+
+
+report = &quot;&quot;
+
+
+def getPch(basePch, intervalSet):
+	pch1 = pchAdd(basePch, intervalSet[0])
+	return [basePch, pch1, pchAdd(pch1, intervalSet[1]) ]
+
+def getChordInfo(chordObj):
+	chord0 = &quot;&quot;
+	chord1 = &quot;&quot;
+	iset0 = []
+	iset1 = []
+	baseAdjust = &quot;&quot;
+	rootSpace = &quot;&quot;
+
+	for j in range(chordObj.graphicInterface.size()):
+		bsbObj = chordObj.graphicInterface.getBSBObject(j)
+
+		if(bsbObj.objectName == &quot;CHORD0&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord0 = chordNames[index]
+			iset0 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;CHORD1&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord1 = chordNames[index]
+			iset1 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;BASE_ADJUST&quot;):
+			baseAdjust = bsbObj.value
+		elif(bsbObj.objectName == &quot;ROOT_SPACE&quot;):
+			rootSpace = bsbObj.value
+	root1 = pchAdd(basePch, baseAdjust)
+	root2 = pchAdd(root1, rootSpace)
+
+	set0 = getPch(root1, iset0)
+	set1 = getPch(root2, iset1)	
+
+	return &quot;%s-%s (%i)&quot;%(chord0, chord1, rootSpace % 12)
+	
+def sObjSort(a,b):
+	val = a.startTime - b.startTime
+	
+	if val &gt; 0:
+		return 1
+	if val &lt; 0:
+		return -1
+	return 0
+
+
+
+## SCRIPT ##
+
+for i in range(pObj.size ):
+	sLayer = pObj.getElementAt(i)
+	
+	if sLayer.muted:
+		continue
+
+	if sLayer.name == &quot;Chords&quot;:
+		report += &quot;[Layer %i: Chords]===================================================\n&quot;%i
+	
+		chords = []
+			
+		a = sLayer.soundObjects.toArray()
+		k = []
+		for j in a:
+			k.append(j)
+		
+		k.sort(sObjSort)
+
+		counter = 0
+
+		for j in k:
+			text = getChordInfo(j)
+			report += text + &quot;\t&quot;
+			counter += 1
+			if counter == 4:
+				report += &quot;\n&quot;
+				counter = 0
+
+
+infoTabs(report, &quot;chords&quot;)
+
+report = None
+chords = None</code>
+    <comments/>
+  </script>
+  <script>
+    <name>Analyze Solo1</name>
+    <description>Analyze Solo1</description>
+    <code>from ScriptingUtils import *
+from orchestra import *
+from blue.soundObject import NoteList as blueNoteList
+
+pObj = blueData.getPolyObject()
+
+
+
+## SCRIPT ##
+def analyzeLine(layerName):
+	temp = blueNoteList()
+	
+	for i in range(pObj.size ):
+		sLayer = pObj.getElementAt(i)
+		
+		if sLayer.muted:
+			continue
+	
+		if sLayer.name == layerName:
+			temp.merge(sLayer.generateNotes(0, -1))
+	
+	
+	temp.sort()
+	
+	vals = &quot;[%s]\n&quot;%layerName
+	lastVal = None
+	intervals = &quot;&quot;
+	
+	for note in temp:
+		pch = note.getPField(4)
+		vals += &quot;%s\t&quot;%pch
+		if lastVal != None:
+			diff = pchDiff(float(lastVal), float(pch))
+			intervals += &quot;\t%i&quot;%diff
+		lastVal = pch
+	
+	vals += &quot;\n&quot; + intervals + &quot;\n&quot;
+	return vals
+
+buffer = analyzeLine(&quot;Solo1&quot;) + &quot;\n&quot; + analyzeLine(&quot;Solo2&quot;)
+
+
+infoTabs(buffer, &quot;Solo Lines&quot;)
+
+buffer = None
+temp = None
+</code>
+    <comments/>
+  </script>
+  <script>
+    <name>Rename SoundObjects</name>
+    <description>Renames All SoundObjects from their Contents</description>
+    <code>#use variable blueData for current BlueData project
+#use variable selectedSoundObjects to get array of soundObjects selected on the timeline
+#use variable userConfigDir for user&apos;s .blue dir
+#use variable blueLibDir for blue&apos;s lib directory
+#use variable blueProjectDir for this project&apos;s directory
+
+from ScriptingUtils import *
+from orchestra import *
+
+pObj = blueData.getPolyObject()
+
+chordNames = [&quot;C&quot;, &quot;OB&quot;, &quot;OT&quot;, &quot;O&quot;]
+intervalSets = [ [7, 7], [19, 7], [7, 19], [19, 19]]
+basePch = 7.04
+
+def getPch(basePch, intervalSet):
+	pch1 = pchAdd(basePch, intervalSet[0])
+	return (basePch, pch1, pchAdd(pch1, intervalSet[1]) )
+
+def pchfmt(pchArr):
+	return &quot;(%.2f, %.2f, %.2f)&quot;%pchArr
+
+
+def setChordName(sndObj):
+	chord0 = &quot;&quot;
+	chord1 = &quot;&quot;
+	iset0 = []
+	iset1 = []
+	baseAdjust = &quot;&quot;
+	rootSpace = &quot;&quot;
+
+	for j in range(sndObj.graphicInterface.size()):
+		bsbObj = sndObj.graphicInterface.getBSBObject(j)
+
+		if(bsbObj.objectName == &quot;CHORD0&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord0 = chordNames[index]
+			iset0 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;CHORD1&quot;):
+			index = bsbObj.getSelectedIndex()
+			chord1 = chordNames[index]
+			iset1 = intervalSets[index]
+		elif(bsbObj.objectName == &quot;BASE_ADJUST&quot;):
+			baseAdjust = bsbObj.value
+		elif(bsbObj.objectName == &quot;ROOT_SPACE&quot;):
+			rootSpace = bsbObj.value
+	root1 = pchAdd(basePch, baseAdjust)
+	root2 = pchAdd(root1, rootSpace)	
+
+	#alert(getPch(root1, iset0))
+
+	#alert(&quot;%s %s [%.2f : %.2f : %.f : %.f]&quot;%(chord0, chord1, root1, root2, baseAdjust, rootSpace))
+	pchSet2 = getPch(root2, iset1)
+	pchSet1 = getPch(root1, iset0)
+	rangeVal = pchSet1 + pchSet2
+        rangeVal = [i for i in rangeVal]
+	rangeVal.sort()
+	rangeVal = pchDiff(rangeVal[0], rangeVal[5])
+
+	newName = &quot;%s %s (%i) [%i]\\n%s %s (%i) [%i]&quot;%(chord1, pchfmt(pchSet2), rootSpace, rangeVal, chord0, pchfmt(pchSet1), rootSpace % 12, baseAdjust)
+	sndObj.name = newName
+	#alert(newName)
+
+for i in range(pObj.size ):
+	sLayer = pObj.getElementAt(i)
+	
+	if sLayer.name.startswith(&quot;Solo&quot;):
+		performerNum = sLayer.name[4:]
+		for j in sLayer.soundObjects:
+			note = j.generateNotes()[0]
+			pch = note.getPField(4)
+			#alert(performerNum + &quot; : &quot; + pch)
+			j.name = &quot;S%s - %s&quot;%(performerNum, pch)
+	elif sLayer.name == &quot;Chords&quot;:
+		for j in sLayer.soundObjects:
+			setChordName(j)</code>
+    <comments/>
+  </script>
+  <script>
+    <name>Root Spacing</name>
+    <description>Shows Root Spacing for Chord Objects</description>
+    <code>from ScriptingUtils import * 
+
+pObj = blueData.getPolyObject()
+
+val = &quot;&quot;
+
+def getRootSpace(sndObj):
+	for j in range(sndObj.graphicInterface.size()):
+		bsbObj = sndObj.graphicInterface.getBSBObject(j)
+
+		if(bsbObj.objectName == &quot;ROOT_SPACE&quot;):
+			return bsbObj.value
+
+for i in range(pObj.size ):
+	sLayer = pObj.getElementAt(i)
+
+	if sLayer.name == &quot;Chords&quot;:
+		for j in sLayer.soundObjects:
+			val += str(int(getRootSpace(j))) + &quot; &quot;
+
+alert(val)</code>
+    <comments/>
+  </script>
+  <script>
+    <name>Root Space Minimum </name>
+    <description>One time utility script for adjusting minimum values of BSB Widget</description>
+    <code>from ScriptingUtils import *
+from orchestra import *
+
+pObj = blueData.getPolyObject()
+
+
+for i in range(pObj.size ):
+	sLayer = pObj.getElementAt(i)
+	
+	if sLayer.name.startswith(&quot;Solo&quot;):
+		performerNum = sLayer.name[4:]
+		for j in sLayer.soundObjects:
+			note = j.generateNotes()[0]
+			pch = note.getPField(4)
+			#alert(performerNum + &quot; : &quot; + pch)
+			j.name = &quot;S%s - %s&quot;%(performerNum, pch)
+	elif sLayer.name == &quot;Chords&quot;:
+		for sndObj in sLayer.soundObjects:
+			for j in range(sndObj.graphicInterface.size()):
+				bsbObj = sndObj.graphicInterface.getBSBObject(j)
+		
+				if(bsbObj.objectName == &quot;ROOT_SPACE&quot;):
+					bsbObj.setMinimum(-29.0, True)
+					bsbObj.setMaximum(29.0, True)
+</code>
+    <comments/>
+  </script>
+</scriptCategory>

@@ -5,6 +5,7 @@ function createHandlers() {
   return {
     onNewFile: vi.fn(),
     onOpenFile: vi.fn(),
+    onOpenExampleProject: vi.fn(),
     onOpenRecentProject: vi.fn(),
     onCloseProject: vi.fn(),
     onRevertProject: vi.fn(),
@@ -175,12 +176,16 @@ describe('application menu template', () => {
     expect(handlers.onOpenSettings).toHaveBeenCalledTimes(1);
 
     const fileMenu = getSubmenu(template[1]);
-    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects']);
+    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project...', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects']);
 
     const recentMenu = getSubmenu(fileMenu.find((item) => item.label === 'Recent Projects'));
     expect(getLabels(recentMenu)).toEqual(['one.blue', 'two.blue']);
     recentMenu[0]?.click?.();
     expect(handlers.onOpenRecentProject).toHaveBeenCalledWith('/one.blue');
+
+    const exampleItem = fileMenu.find((item) => item.label === 'Open Example Project...');
+    exampleItem?.click?.();
+    expect(handlers.onOpenExampleProject).toHaveBeenCalledTimes(1);
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();
@@ -223,7 +228,7 @@ describe('application menu template', () => {
     expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Tools', 'Help', 'Window']);
 
     const fileMenu = getSubmenu(template[0]);
-    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects', 'Settings...', 'Quit']);
+    expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project...', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects', 'Settings...', 'Quit']);
 
     const recentMenu = getSubmenu(fileMenu.find((item) => item.label === 'Recent Projects'));
     expect(getLabels(recentMenu)).toEqual(['No Recent Projects']);

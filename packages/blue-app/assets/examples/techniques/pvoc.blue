@@ -1,0 +1,578 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>PVOC example</title>
+    <author>Steven Yi</author>
+    <notes>[DESCRIPTION]
+A quick piece using a pvx analysis-resynthesis of the &quot;Hello, I&apos;m Dr. Richard Boulanger&quot; AIFF sample. The instrument
+was made to not be driving by pfields but rather by automation data on the timeline.
+
+************************************************************************************************************
+ 
+[DEPENDENCIES]
+
+hellorcb.pvx	- &quot;Hello, I&apos;m Dr. Richard Boulanger&quot; pvx analysis file
+		
+</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>64</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>PVOC Player</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='0' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>12</y>
+            <label>File</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+            <objectName>pvocFile</objectName>
+            <x>43</x>
+            <y>5</y>
+            <fileName>hellorcb.pvx</fileName>
+            <textFieldWidth>300</textFieldWidth>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>47</y>
+            <label>Time Pointer</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>timePointer</objectName>
+            <x>18</x>
+            <y>72</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>2.3</maximum>
+            <value>0.47179484</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>112</x>
+            <y>46</y>
+            <label>Space</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>panning</objectName>
+            <x>103</x>
+            <y>71</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>-1.0</minimum>
+            <maximum>1.0</maximum>
+            <value>-0.98</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='917408358' name='timePointer' label='' min='0.0' max='2.3' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='2.3' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.47179484'/>
+              <linePoint x='1.84375' y='0.67820513'/>
+              <linePoint x='4.5625' y='0.58974355'/>
+              <linePoint x='4.703125' y='0.825641'/>
+              <linePoint x='6.4375' y='0.7371795'/>
+              <linePoint x='8.0625' y='0.97307694'/>
+              <linePoint x='21.0' y='0.91410255'/>
+              <linePoint x='30.5' y='0.0'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList>
+          <udo>
+            <opcodeName>pan_gm2</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ak</inTypes>
+            <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>PVOC Player</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='0' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>12</y>
+            <label>File</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+            <objectName>pvocFile</objectName>
+            <x>43</x>
+            <y>5</y>
+            <fileName>hellorcb.pvx</fileName>
+            <textFieldWidth>300</textFieldWidth>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>47</y>
+            <label>Time Pointer</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>timePointer</objectName>
+            <x>18</x>
+            <y>72</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>2.3</maximum>
+            <value>0.022999998</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>112</x>
+            <y>46</y>
+            <label>Space</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>panning</objectName>
+            <x>103</x>
+            <y>71</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>-1.0</minimum>
+            <maximum>1.0</maximum>
+            <value>-0.98</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='917408372' name='panning' label='' min='-1.0' max='1.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='1.0' min='-1.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-0.98'/>
+              <linePoint x='4.1296296' y='-0.9743589'/>
+              <linePoint x='7.740741' y='0.9743589'/>
+              <linePoint x='12.555555' y='-0.35897434'/>
+              <linePoint x='17.851852' y='0.8717948'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='917408370' name='timePointer' label='' min='0.0' max='2.3' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='2.3' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.022999998'/>
+              <linePoint x='4.2083335' y='1.7692307'/>
+              <linePoint x='18.018518' y='0.0'/>
+              <linePoint x='18.03125' y='1.9461539'/>
+              <linePoint x='32.5625' y='0.0'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList>
+          <udo>
+            <opcodeName>pan_gm2</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ak</inTypes>
+            <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>PVOC Player</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='0' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>12</y>
+            <label>File</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+            <objectName>pvocFile</objectName>
+            <x>43</x>
+            <y>5</y>
+            <fileName>hellorcb.pvx</fileName>
+            <textFieldWidth>300</textFieldWidth>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>47</y>
+            <label>Time Pointer</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>timePointer</objectName>
+            <x>18</x>
+            <y>72</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>2.3</maximum>
+            <value>0.022999998</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>112</x>
+            <y>46</y>
+            <label>Space</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>panning</objectName>
+            <x>103</x>
+            <y>71</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>-1.0</minimum>
+            <maximum>1.0</maximum>
+            <value>-0.98</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='917408378' name='panning' label='' min='-1.0' max='1.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='1.0' min='-1.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-0.98'/>
+              <linePoint x='11.46875' y='0.05128205'/>
+              <linePoint x='32.09375' y='-0.25641024'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='917408376' name='timePointer' label='' min='0.0' max='2.3' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='2.3' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.022999998'/>
+              <linePoint x='11.125' y='0.598'/>
+              <linePoint x='13.6875' y='0.75899994'/>
+              <linePoint x='26.25' y='0.828'/>
+              <linePoint x='32.625' y='0.0'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList>
+          <udo>
+            <opcodeName>pan_gm2</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ak</inTypes>
+            <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>-7.4400024</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='917408354' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-7.4400024'/>
+            <linePoint x='20.785715' y='-9.599998'/>
+            <linePoint x='30.291666' y='-96.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>-4.5</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='917408374' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-4.5'/>
+            <linePoint x='30.357143' y='-5.25'/>
+            <linePoint x='31.966667' y='-96.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>3.45</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='917408380' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='3.45'/>
+            <linePoint x='11.285714' y='3.3600006'/>
+            <linePoint x='29.857143' y='-7.4400024'/>
+            <linePoint x='32.166668' y='-96.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>-2.2</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='917408352' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-2.2'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='-2.2'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>22</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='4'>
+      <noteProcessorChain/>
+      <parameterId>917408354</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='3'>
+      <noteProcessorChain/>
+      <parameterId>917408358</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.625</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>i1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>i1 0 2 </score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='6'>
+      <noteProcessorChain/>
+      <parameterId>917408374</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='3'>
+      <noteProcessorChain/>
+      <parameterId>917408372</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='3'>
+      <noteProcessorChain/>
+      <parameterId>917408370</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>28.15625</subjectiveDuration>
+        <startTime>4.351852</startTime>
+        <name>i2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>i2 0 2 </score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='4'>
+      <noteProcessorChain/>
+      <parameterId>917408380</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='3'>
+      <noteProcessorChain/>
+      <parameterId>917408378</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='4'>
+      <noteProcessorChain/>
+      <parameterId>917408376</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>21.4375</subjectiveDuration>
+        <startTime>11.28125</startTime>
+        <name>i3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>i3 0 2 </score>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>
