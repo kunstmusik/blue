@@ -1755,6 +1755,12 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         case 'rewind-to-start':
           useProjectStore.getState().rewindToStart();
           return;
+        case 'render-stop-project':
+          // Routes through the renderer toggle so pending patches are flushed,
+          // the transport anchor is captured, and playback status flows back
+          // through the existing playback-status broadcast.
+          void usePlaybackStore.getState().togglePlay();
+          return;
         case 'show-not-yet-implemented':
           window.alert('not yet implemented');
           return;

@@ -37,6 +37,7 @@ function createHandlers() {
     onNavigateNextMarker: vi.fn(),
     onNavigatePreviousMarker: vi.fn(),
     onRewindToStart: vi.fn(),
+    onRenderStopProject: vi.fn(),
     onZoomIn: vi.fn(),
     onZoomOut: vi.fn(),
     onActualSize: vi.fn(),
@@ -91,6 +92,60 @@ describe('application menu template', () => {
     expect(handlers.onRenderToDisk).toHaveBeenCalledOnce();
     expect(handlers.onRenderToDiskAndPlay).toHaveBeenCalledOnce();
     expect(handlers.onRenderToDiskAndOpen).toHaveBeenCalledOnce();
+  });
+
+  it('routes the Render/Stop Project item to onRenderStopProject and gates it on project + render state', () => {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const projectMenu = getSubmenu(template.find((item) => item.label === 'Project'));
+
+    const renderStopItem = projectMenu.find((item) => item.label === 'Render/Stop Project');
+    expect(renderStopItem?.accelerator).toBe('F9');
+    expect(renderStopItem?.enabled).toBe(true);
+    renderStopItem?.click?.();
+    expect(handlers.onRenderStopProject).toHaveBeenCalledOnce();
+    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
+  });
+
+  it('disables Render/Stop Project while a render/freeze operation is active', () => {
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isRenderOperationActive: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...createHandlers(),
+    });
+    const projectMenu = getSubmenu(template.find((item) => item.label === 'Project'));
+
+    expect(projectMenu.find((item) => item.label === 'Render/Stop Project')?.enabled).toBe(false);
+  });
+
+  it('disables Render/Stop Project when no project is loaded', () => {
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: false,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...createHandlers(),
+    });
+    const projectMenu = getSubmenu(template.find((item) => item.label === 'Project'));
+
+    expect(projectMenu.find((item) => item.label === 'Render/Stop Project')?.enabled).toBe(false);
   });
 
   it('builds the macOS Blue menu with the expected order and actions', () => {

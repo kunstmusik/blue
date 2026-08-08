@@ -36,6 +36,7 @@ export interface ApplicationMenuTemplateOptions {
   onNavigateNextMarker: () => void;
   onNavigatePreviousMarker: () => void;
   onRewindToStart: () => void;
+  onRenderStopProject: () => void;
   onToggleBlueLive: () => void;
   onRecompileBlueLive: () => void;
   onBlueLiveAllNotesOff: () => void;
@@ -124,12 +125,15 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 
 function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   const hasProject = options.hasLoadedProject;
+  // Realtime playback is exclusive with disk render/freeze so F9 (realtime) and
+  // Shift+F9 (disk render) accelerators never collide on a busy engine.
+  const canRealtimePlay = hasProject && !options.isRenderOperationActive;
 
   return [
     { label: 'Generate CSD to Screen', accelerator: 'CmdOrCtrl+Shift+G', enabled: hasProject, click: () => options.onGenerateCsdToScreen() },
     buildPlaceholderItem('Generate Realtime CSD to Screen', options, { enabled: hasProject }),
     { label: 'Generate CSD to File', accelerator: 'CmdOrCtrl+G', enabled: hasProject, click: () => options.onGenerateCsdToDisk() },
-    buildPlaceholderItem('Render/Stop Project', options, { accelerator: 'F9', enabled: hasProject }),
+    { label: 'Render/Stop Project', accelerator: 'F9', enabled: canRealtimePlay, click: () => options.onRenderStopProject() },
     { label: 'Audition ScoreObjects', enabled: false, click: () => options.onNotYetImplemented() },
     { type: 'separator' },
     { label: 'Follow playback by scrolling score', type: 'checkbox', checked: options.followPlaybackEnabled, enabled: hasProject, click: () => options.onToggleFollowPlayback() },

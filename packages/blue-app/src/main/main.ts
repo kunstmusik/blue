@@ -1184,6 +1184,7 @@ function rebuildApplicationMenu(): void {
     onNavigateNextMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-next-marker' }); },
     onNavigatePreviousMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-previous-marker' }); },
     onRewindToStart: () => { mainWindow?.webContents.send('native-menu-command', { type: 'rewind-to-start' }); },
+    onRenderStopProject: () => { mainWindow?.webContents.send('native-menu-command', { type: 'render-stop-project' }); },
     onToggleBlueLive: () => { void blueLiveToggle(); },
     onRecompileBlueLive: () => { void blueLiveRecompile(); },
     onBlueLiveAllNotesOff: () => { void blueLiveAllNotesOff(); },
