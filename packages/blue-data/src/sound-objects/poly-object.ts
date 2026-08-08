@@ -31,24 +31,11 @@ import { LayerGroupListener } from '../score/layers/layer-group-listener';
 import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../score/score-object-event';
 import { Layer } from '../score/layers/layer';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
-import { GenericScore } from './generic-score';
-import { Comment } from './comment';
-import { CSDSoundObject } from './csd-sound-object';
+import { loadSoundObjectFromXML } from './sound-object-registry';
 import { PythonObject } from './python-object';
 import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';
-import { PianoRoll } from './piano-roll';
-import { PatternObject } from './pattern-object';
-import { AudioFile } from './audio-file';
-import { Sound } from './sound';
-import { External } from './external';
 import { Instance } from './instance';
-import { LineObject } from './line-object';
-import { ZakLineObject } from './zak-line-object';
-import { JMask } from './j-mask';
-import { TrackerObject } from './tracker-object';
-import { FrozenSoundObject } from './frozen-sound-object';
-import { ObjectBuilder } from './object-builder';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score/score-generation-options';
@@ -73,71 +60,7 @@ function resolveOnLoadTarget(sObj: SoundObject): OnLoadTarget | null {
   return null;
 }
 
-/**
- * Normalize a Java class name type to a short name.
- * E.g., "blue.soundObject.PianoRoll" → "PianoRoll"
- */
-function normalizeType(type: string | null): string {
-  if (!type) return '';
-  const shortName = type.split('.').pop() || type;
-  return shortName;
-}
 
-/**
- * Load a nested SoundObject from XML by dispatching based on type attribute.
- * Handles both short names and Java full class names.
- */
-function loadNestedSoundObject(
-  data: Element,
-  objRefMap: ObjRefLoadMap | undefined,
-): SoundObject | null {
-  const rawType = data.getAttribute('type');
-  const type = normalizeType(rawType);
-
-  switch (type) {
-    case 'GenericScore':
-      return GenericScore.loadFromXML(data);
-    case 'PolyObject':
-      return PolyObject.loadFromXML(data, objRefMap);
-    case 'Comment':
-      return Comment.loadFromXML(data);
-    case 'CSDSoundObject':
-      return CSDSoundObject.loadFromXML(data);
-    case 'PythonObject':
-      return PythonObject.loadFromXML(data);
-    case 'ObjectBuilder':
-      return ObjectBuilder.loadFromXML(data);
-    case 'ClojureObject':
-      return ClojureObject.loadFromXML(data);
-    case 'JavaScriptObject':
-      return JavaScriptObject.loadFromXML(data);
-    case 'PianoRoll':
-      return PianoRoll.loadFromXML(data);
-    case 'PatternObject':
-      return PatternObject.loadFromXML(data);
-    case 'AudioFile':
-      return AudioFile.loadFromXML(data);
-    case 'Sound':
-      return Sound.loadFromXML(data);
-    case 'External':
-      return External.loadFromXML(data);
-    case 'Instance':
-      return Instance.loadFromXML(data);
-    case 'LineObject':
-      return LineObject.loadFromXML(data);
-    case 'ZakLineObject':
-      return ZakLineObject.loadFromXML(data);
-    case 'JMask':
-      return JMask.loadFromXML(data);
-    case 'TrackerObject':
-      return TrackerObject.loadFromXML(data);
-    case 'FrozenSoundObject':
-      return FrozenSoundObject.loadFromXML(data);
-    default:
-      console.warn(`Unknown SoundObject type in PolyObject: ${rawType || '(no type)'}`);
-      return null;
-  }
-}
 
 export class PolyObject extends Array<SoundLayer>
   implements SoundObject, ScoreObjectLayerGroup<SoundLayer>, AutomatableLayerGroup {
@@ -532,7 +455,7 @@ export class PolyObject extends Array<SoundLayer>
         while (sObjNodes.hasMoreElements()) {
           const sObjNode = sObjNodes.next();
           if (sObjNode.getName() === 'soundObject') {
-            const sObj = loadNestedSoundObject(sObjNode, _objRefMap);
+            const sObj = loadSoundObjectFromXML(sObjNode, _objRefMap);
             if (sObj) layer.push(sObj);
           } else if (sObjNode.getName() === 'noteProcessorChain') {
             layer.setNoteProcessorChain(NoteProcessorChain.loadFromXML(sObjNode));

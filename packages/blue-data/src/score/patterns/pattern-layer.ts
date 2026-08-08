@@ -15,17 +15,10 @@ import { NoteList } from '../../sound-objects/note-list';
 import { SoundObject } from '../../sound-objects/sound-object';
 import { SoundObjectException } from '../../sound-objects/sound-object-exception';
 import { GenericScore } from '../../sound-objects/generic-score';
+import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registry';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { setScoreStart } from '../../utilities/score';
-
-/**
- * Normalize a Java class name type to a short name.
- */
-function normalizeType(type: string | null): string {
-  if (!type) return '';
-  return type.split('.').pop() || type;
-}
 
 export class PatternLayer implements Layer {
   private _soundObject: SoundObject;
@@ -128,7 +121,7 @@ export class PatternLayer implements Layer {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): PatternLayer {
+  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): PatternLayer {
     const layer = new PatternLayer();
 
     layer._name = data.getAttributeValue('name') ?? '';
@@ -141,13 +134,13 @@ export class PatternLayer implements Layer {
       const nodeName = node.getName();
 
       if (nodeName === 'soundObject') {
-        const rawType = node.getAttribute('type');
-        const type = normalizeType(rawType);
-        if (type === 'GenericScore') {
-          layer._soundObject = GenericScore.loadFromXML(node);
-        } else {
-          console.warn(`Unknown sound object type in pattern layer: ${rawType}`);
+        const loaded = loadSoundObjectFromXML(node, objRefMap);
+        if (loaded) {
+          layer._soundObject = loaded;
         }
+        // If loader returns null (unknown type), keep the default GenericScore.
+        // This matches Java's fallback behavior where PatternLayer retains its
+        // constructor-assigned SoundObject when ObjectUtilities.loadFromXML fails.
       } else if (nodeName === 'patternData') {
         layer._patternData = PatternData.loadFromXML(node);
       }
