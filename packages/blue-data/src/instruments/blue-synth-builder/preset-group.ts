@@ -1,4 +1,5 @@
 import { Element } from "../../serialization/xml-reader";
+import type { BSBGraphicInterface } from "./bsb-graphic-interface";
 import { Preset } from "./preset";
 
 export class PresetGroup {
@@ -49,6 +50,21 @@ export class PresetGroup {
       if (found) return found;
     }
     return null;
+  }
+
+  /**
+   * Recursively synchronize every preset in this group tree with the
+   * current BSB graphic interface.
+   *
+   * Mirrors Java `PresetsUtilities.synchronizePresets(PresetGroup, BSBGraphicInterface)`.
+   */
+  synchronizePresets(graphicInterface: BSBGraphicInterface): void {
+    for (const subGroup of this.subGroups) {
+      subGroup.synchronizePresets(graphicInterface);
+    }
+    for (const preset of this.presets) {
+      preset.synchronizeWithInterface(graphicInterface);
+    }
   }
 
   saveAsXML(): Element {

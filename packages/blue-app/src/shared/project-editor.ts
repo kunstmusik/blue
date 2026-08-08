@@ -5309,8 +5309,8 @@ function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbInterfac
     case 'synchronizePresets': {
       const presetGroup = instrument.getPresetGroup();
       if (!presetGroup) return false;
-      // TODO: Implement synchronizePresets functionality
-      return false;
+      presetGroup.synchronizePresets(instrument.getGraphicInterface());
+      return true;
     }
     case 'updateEmbeddedOpcodeList':
       instrument.setOpcodeListText(patch.opcodeList);
