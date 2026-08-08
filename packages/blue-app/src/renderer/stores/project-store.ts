@@ -148,6 +148,7 @@ interface ProjectActions {
   applyBlueLivePatch: (patch: BlueLivePatch) => Promise<void>;
   setGeneratedCsd: (csd: { text: string; title: string } | null) => void;
   generateCsdToScreen: () => Promise<void>;
+  generateRealtimeCsdToScreen: () => Promise<void>;
   generateCsdToDisk: () => Promise<void>;
   flushPendingPatches: () => Promise<void>;
   moveScoreObjects: (moves: Array<{ objectId: string; targetStartBeats: number; targetLayerIndex?: number; targetGroupId?: string }>) => void;
@@ -4175,6 +4176,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
   generateCsdToScreen: async () => {
     await window.blueAPI.generateCsdToScreen();
+  },
+
+  generateRealtimeCsdToScreen: async () => {
+    await window.blueAPI.generateRealtimeCsdToScreen();
   },
 
   generateCsdToDisk: async () => {

@@ -341,6 +341,7 @@ declare global {
       getAppMetadata: () => Promise<AppMetadata>;
       closeAboutWindow: () => Promise<boolean>;
       generateCsdToScreen: () => Promise<void>;
+      generateRealtimeCsdToScreen: () => Promise<void>;
       generateCsdToDisk: () => Promise<void>;
       importBlueUdo: () => Promise<string | null>;
       importCsoundUdo: () => Promise<string | null>;

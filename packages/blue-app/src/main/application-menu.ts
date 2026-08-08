@@ -20,6 +20,7 @@ export interface ApplicationMenuTemplateOptions {
   onSaveFile: () => void;
   onSaveFileAs: () => void;
   onGenerateCsdToScreen: () => void;
+  onGenerateRealtimeCsdToScreen: () => void;
   onGenerateCsdToDisk: () => void;
   onRequestQuit: () => void;
   onOpenSettings: () => void;
@@ -132,7 +133,7 @@ function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): Menu
 
   return [
     { label: 'Generate CSD to Screen', accelerator: 'CmdOrCtrl+Shift+G', enabled: hasProject, click: () => options.onGenerateCsdToScreen() },
-    buildPlaceholderItem('Generate Realtime CSD to Screen', options, { enabled: hasProject }),
+    { label: 'Generate Realtime CSD to Screen', enabled: hasProject, click: () => options.onGenerateRealtimeCsdToScreen() },
     { label: 'Generate CSD to File', accelerator: 'CmdOrCtrl+G', enabled: hasProject, click: () => options.onGenerateCsdToDisk() },
     { label: 'Render/Stop Project', accelerator: 'F9', enabled: canRealtimePlay, click: () => options.onRenderStopProject() },
     { label: 'Audition ScoreObjects', enabled: false, click: () => options.onNotYetImplemented() },

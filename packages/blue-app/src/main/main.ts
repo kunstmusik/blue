@@ -194,6 +194,7 @@ import {
   isRenderToDiskRequest,
 } from '../shared/render-freeze-contract';
 import { executeRenderToDisk, parseCsoundProgressLine, resolveOutputFilePath, resolveRenderWorkingDirectory, type RenderExecutionSeam } from './render-to-disk';
+import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
 import { tokenizeCommand } from './disk-render-command';
 import {
   executeFreezeUnfreeze,
@@ -1128,6 +1129,7 @@ function rebuildApplicationMenu(): void {
     onSaveFile: () => { void saveFile(); },
     onSaveFileAs: () => { void saveFileAs(); },
     onGenerateCsdToScreen: () => { void generateCsdToScreen(); },
+    onGenerateRealtimeCsdToScreen: () => { void generateRealtimeCsdToScreen(); },
     onGenerateCsdToDisk: () => { void generateCsdToDisk(); },
     onRequestQuit: () => { void requestQuit(); },
     onOpenSettings: () => {
@@ -2312,9 +2314,36 @@ async function generateCsdToScreen(): Promise<void> {
   try {
     await ensureJavaScriptEngine();
     const javaRuntimeClient = await runProjectOnLoad(currentData);
-    const csdText = javaRuntimeClient
-      ? await currentData.toCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
-      : currentData.toCSD(javaScriptSession ?? undefined);
+    // "Generate CSD to Screen" mirrors Java's GenerateCsdToScreenAction, which
+    // generates a disk-profile CSD (isRealTime=false).
+    const csdText = await generateDiskCsdForScreen(
+      currentData,
+      javaScriptSession ?? undefined,
+      javaRuntimeClient,
+    );
+    mainWindow.webContents.send('generated-csd', csdText);
+  } catch (err) {
+    mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
+  }
+}
+
+async function generateRealtimeCsdToScreen(): Promise<void> {
+  if (!mainWindow) return;
+  if (!currentData) {
+    notifyNoProjectLoaded('generated-csd-error');
+    return;
+  }
+  try {
+    await ensureJavaScriptEngine();
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    // "Generate Realtime CSD to Screen" mirrors Java's
+    // GenerateRealtimeCsdToScreenAction, which generates a realtime-profile
+    // CSD (isRealTime=true).
+    const csdText = await generateRealtimeCsdForScreen(
+      currentData,
+      javaScriptSession ?? undefined,
+      javaRuntimeClient,
+    );
     mainWindow.webContents.send('generated-csd', csdText);
   } catch (err) {
     mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
@@ -2482,6 +2511,10 @@ ipcMain.on('sync-follow-playback-state', (_event, enabled: boolean) => {
 
 ipcMain.handle('generate-csd-to-screen', async () => {
   await generateCsdToScreen();
+});
+
+ipcMain.handle('generate-realtime-csd-to-screen', async () => {
+  await generateRealtimeCsdToScreen();
 });
 
 ipcMain.handle('generate-csd-to-disk', async () => {

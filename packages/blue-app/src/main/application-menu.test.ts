@@ -12,6 +12,7 @@ function createHandlers() {
     onSaveFile: vi.fn(),
     onSaveFileAs: vi.fn(),
     onGenerateCsdToScreen: vi.fn(),
+    onGenerateRealtimeCsdToScreen: vi.fn(),
     onGenerateCsdToDisk: vi.fn(),
     onRequestQuit: vi.fn(),
     onOpenSettings: vi.fn(),
@@ -189,9 +190,15 @@ describe('application menu template', () => {
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();
+    expect(projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')).toBeTruthy();
     expect(projectMenu.find((item) => item.label === 'Blue Live')).toBeTruthy();
     projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.click?.();
     expect(handlers.onGenerateCsdToScreen).toHaveBeenCalledTimes(1);
+    // "Generate Realtime CSD to Screen" is now wired (not a placeholder): it
+    // must dispatch its own handler and must not fall back to onNotYetImplemented.
+    projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.click?.();
+    expect(handlers.onGenerateRealtimeCsdToScreen).toHaveBeenCalledTimes(1);
+    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
     const toolsMenu = getSubmenu(template[5]);
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
@@ -245,6 +252,7 @@ describe('application menu template', () => {
 
     const projectMenu = getSubmenu(template[3]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.enabled).toBe(false);
+    expect(projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.enabled).toBe(false);
     expect(projectMenu.find((item) => item.label === 'Blue Live')?.enabled).toBe(false);
 
     const toolsMenu = getSubmenu(template[4]);

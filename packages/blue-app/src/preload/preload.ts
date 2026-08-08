@@ -408,6 +408,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // CSD generation
   generateCsdToScreen: () => ipcRenderer.invoke('generate-csd-to-screen'),
+  generateRealtimeCsdToScreen: () => ipcRenderer.invoke('generate-realtime-csd-to-screen'),
   generateCsdToDisk: () => ipcRenderer.invoke('generate-csd-to-disk'),
 
   // UDO import/export
