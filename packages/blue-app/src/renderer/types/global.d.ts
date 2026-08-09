@@ -358,6 +358,8 @@ declare global {
       importCsoundUdo: () => Promise<string | null>;
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
+      importPresetFile: () => Promise<string | null>;
+      exportPresetFile: (xmlText: string, presetName: string) => Promise<void>;
       exportScoreObject: (xmlText: string, objectName: string) => Promise<ScoreObjectExportResult>;
       importScoreObject: () => Promise<ScoreObjectImportResult | null>;
       readCsoundRC: () => Promise<{ filePath: string; content: string }>;

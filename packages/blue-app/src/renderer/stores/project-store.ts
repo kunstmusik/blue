@@ -3327,6 +3327,87 @@ export function applyBsbInterfacePatchToSnapshot(
         instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
       }
       break;
+    case 'addPresetFromSnapshot':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const targetGroup = getPresetGroupSnapshotAtPath(
+          instrument.presetGroup,
+          patch.parentGroupPath,
+        );
+        if (targetGroup) {
+          targetGroup.presets.push({
+            ...patch.preset,
+            values: patch.preset.values ? { ...patch.preset.values } : undefined,
+          });
+          targetGroup.currentPresetModified = false;
+        }
+      }
+      break;
+    case 'addPresetGroupFromSnapshot':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const targetGroup = getPresetGroupSnapshotAtPath(
+          instrument.presetGroup,
+          patch.parentGroupPath,
+        );
+        if (targetGroup) {
+          targetGroup.subGroups.push(clonePresetGroupSnapshot(patch.group));
+        }
+      }
+      break;
+    case 'renamePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const preset = findPresetById(instrument.presetGroup, patch.presetUniqueId);
+        if (preset) preset.name = patch.name;
+      }
+      break;
+    case 'renamePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const group = getPresetGroupSnapshotAtPath(instrument.presetGroup, patch.groupPath);
+        if (group) group.name = patch.name;
+      }
+      break;
+    case 'removePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const parent = findPresetParentSnapshot(instrument.presetGroup, patch.presetUniqueId);
+        const index = parent?.presets.findIndex((preset) => preset.uniqueId === patch.presetUniqueId) ?? -1;
+        if (parent && index >= 0) {
+          parent.presets.splice(index, 1);
+          clearMissingCurrentPresetSnapshot(instrument.presetGroup);
+        }
+      }
+      break;
+    case 'removePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        removePresetGroupSnapshotAtPath(instrument.presetGroup, patch.groupPath);
+      }
+      break;
+    case 'movePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        movePresetSnapshot(
+          instrument.presetGroup,
+          patch.presetUniqueId,
+          patch.parentGroupPath,
+          patch.targetIndex,
+        );
+      }
+      break;
+    case 'movePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        movePresetGroupSnapshot(
+          instrument.presetGroup,
+          patch.groupPath,
+          patch.parentGroupPath,
+          patch.targetIndex,
+        );
+      }
+      break;
     case 'synchronizePresets':
       // Optimistic update - actual sync happens on main process
       if (instrument.presetGroup) {
@@ -3492,6 +3573,14 @@ function shouldPreserveWidgetMetadataForBsbPatch(patch: BsbInterfacePatch): bool
     case 'updatePreset':
     case 'addPreset':
     case 'addPresetGroup':
+    case 'addPresetFromSnapshot':
+    case 'addPresetGroupFromSnapshot':
+    case 'renamePreset':
+    case 'renamePresetGroup':
+    case 'removePreset':
+    case 'removePresetGroup':
+    case 'movePreset':
+    case 'movePresetGroup':
     case 'synchronizePresets':
     case 'updateEmbeddedOpcodeList':
     case 'randomize':
@@ -3581,6 +3670,125 @@ function findPresetById(
     if (found) return found;
   }
   return undefined;
+}
+
+function getPresetGroupSnapshotAtPath(
+  root: PresetGroupSnapshot,
+  path: readonly number[],
+): PresetGroupSnapshot | undefined {
+  let current = root;
+  for (const index of path) {
+    if (!Number.isInteger(index) || index < 0) return undefined;
+    const next = current.subGroups[index];
+    if (!next) return undefined;
+    current = next;
+  }
+  return current;
+}
+
+function findPresetParentSnapshot(
+  root: PresetGroupSnapshot,
+  uniqueId: string,
+): PresetGroupSnapshot | undefined {
+  if (root.presets.some((preset) => preset.uniqueId === uniqueId)) return root;
+  for (const subGroup of root.subGroups) {
+    const parent = findPresetParentSnapshot(subGroup, uniqueId);
+    if (parent) return parent;
+  }
+  return undefined;
+}
+
+function clearMissingCurrentPresetSnapshot(group: PresetGroupSnapshot): void {
+  if (group.currentPresetUniqueId && !findPresetById(group, group.currentPresetUniqueId)) {
+    group.currentPresetUniqueId = undefined;
+    group.currentPresetModified = false;
+  }
+}
+
+function removePresetGroupSnapshotAtPath(
+  root: PresetGroupSnapshot,
+  path: readonly number[],
+): boolean {
+  if (path.length === 0) return false;
+  const parent = getPresetGroupSnapshotAtPath(root, path.slice(0, -1));
+  const index = path[path.length - 1];
+  if (!parent || index === undefined || !Number.isInteger(index) || index < 0) return false;
+  const [removed] = parent.subGroups.splice(index, 1);
+  if (!removed) return false;
+  clearMissingCurrentPresetSnapshot(root);
+  return true;
+}
+
+function movePresetSnapshot(
+  root: PresetGroupSnapshot,
+  uniqueId: string,
+  parentGroupPath: readonly number[],
+  targetIndex: number,
+): boolean {
+  const sourceParent = findPresetParentSnapshot(root, uniqueId);
+  const targetParent = getPresetGroupSnapshotAtPath(root, parentGroupPath);
+  if (!sourceParent || !targetParent) return false;
+
+  const sourceIndex = sourceParent.presets.findIndex((preset) => preset.uniqueId === uniqueId);
+  if (sourceIndex < 0) return false;
+  const [preset] = sourceParent.presets.splice(sourceIndex, 1);
+  if (!preset) return false;
+
+  const rawPresetIndex = Number.isFinite(targetIndex)
+    ? Math.trunc(targetIndex) - targetParent.subGroups.length
+    : targetParent.presets.length;
+  const adjustedPresetIndex = sourceParent === targetParent && sourceIndex < rawPresetIndex
+    ? rawPresetIndex - 1
+    : rawPresetIndex;
+  const presetIndex = Math.max(0, Math.min(adjustedPresetIndex, targetParent.presets.length));
+  targetParent.presets.splice(presetIndex, 0, preset);
+  return true;
+}
+
+function isSnapshotPathWithin(
+  path: readonly number[],
+  possibleParent: readonly number[],
+): boolean {
+  return possibleParent.length < path.length
+    && possibleParent.every((index, position) => path[position] === index);
+}
+
+function movePresetGroupSnapshot(
+  root: PresetGroupSnapshot,
+  sourcePath: readonly number[],
+  parentGroupPath: readonly number[],
+  targetIndex: number,
+): boolean {
+  const samePath = sourcePath.length === parentGroupPath.length
+    && sourcePath.every((index, position) => parentGroupPath[position] === index);
+  if (sourcePath.length === 0 || samePath || isSnapshotPathWithin(parentGroupPath, sourcePath)) {
+    return false;
+  }
+
+  const sourceParent = getPresetGroupSnapshotAtPath(root, sourcePath.slice(0, -1));
+  const targetParent = getPresetGroupSnapshotAtPath(root, parentGroupPath);
+  const sourceIndex = sourcePath[sourcePath.length - 1];
+  if (
+    !sourceParent
+    || !targetParent
+    || sourceIndex === undefined
+    || !Number.isInteger(sourceIndex)
+    || sourceIndex < 0
+  ) {
+    return false;
+  }
+
+  const [group] = sourceParent.subGroups.splice(sourceIndex, 1);
+  if (!group) return false;
+  const rawGroupIndex = Number.isFinite(targetIndex)
+    ? Math.trunc(targetIndex)
+    : targetParent.subGroups.length;
+  const adjustedGroupIndex = sourceParent === targetParent && sourceIndex < rawGroupIndex
+    ? rawGroupIndex - 1
+    : rawGroupIndex;
+  const groupIndex = Math.max(0, Math.min(adjustedGroupIndex, targetParent.subGroups.length));
+  targetParent.subGroups.splice(groupIndex, 0, group);
+  return true;
 }
 
 function applyOrchestraPatchSnapshot(

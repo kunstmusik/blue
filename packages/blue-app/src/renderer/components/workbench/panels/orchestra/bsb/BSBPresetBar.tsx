@@ -6,6 +6,7 @@ import type {
   BsbInterfacePatch,
   PresetGroupSnapshot,
 } from '../../../../../../shared/project-editor';
+import PresetsManagerDialog from './PresetsManagerDialog';
 
 interface BSBPresetBarProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
@@ -18,6 +19,7 @@ export default function BSBPresetBar({
 }: BSBPresetBarProps): React.ReactElement {
   const presetGroup = instrument.presetGroup;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
 
   const handleUpdatePreset = useCallback(() => {
     if (!presetGroup?.currentPresetUniqueId) return;
@@ -41,7 +43,13 @@ export default function BSBPresetBar({
   }, [onBsbInterfacePatch]);
 
   const handleManagePresets = useCallback(() => {
-    alert('Manage Presets - opens dialog for full preset management (to be implemented)');
+    if (!presetGroup) return;
+    setMenuOpen(false);
+    setManagerOpen(true);
+  }, [presetGroup]);
+
+  const handleCloseManager = useCallback(() => {
+    setManagerOpen(false);
   }, []);
 
   const getCurrentPresetPath = useCallback((): string => {
@@ -149,44 +157,54 @@ export default function BSBPresetBar({
   const canUpdate = hasCurrentPreset && presetGroup?.currentPresetModified;
 
   return (
-    <div className="flex items-center gap-2 w-full pr-2">
-      <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenu.Trigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
-          >
-            Presets
-            <ChevronDown size={12} />
-          </button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
-            {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-body text-app-text-muted">No presets</div>}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+    <>
+      <div className="flex items-center gap-2 w-full pr-2">
+        <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+            >
+              Presets
+              <ChevronDown size={12} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
+              {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-body text-app-text-muted">No presets</div>}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
 
-      <input
-        type="text"
-        readOnly
-        value={currentPresetPath}
-        className="min-w-0 flex-1 border-none bg-transparent text-body text-app-text-strong outline-none"
-        style={{ textOverflow: 'ellipsis' }}
-      />
+        <input
+          type="text"
+          readOnly
+          value={currentPresetPath}
+          className="min-w-0 flex-1 border-none bg-transparent text-body text-app-text-strong outline-none"
+          style={{ textOverflow: 'ellipsis' }}
+        />
 
-      <button
-        type="button"
-        disabled={!canUpdate}
-        onClick={handleUpdatePreset}
-        className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Update
-      </button>
+        <button
+          type="button"
+          disabled={!canUpdate}
+          onClick={handleUpdatePreset}
+          className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Update
+        </button>
 
-      {presetGroup?.currentPresetModified && (
-        <span className="text-tiny text-app-warning">modified</span>
+        {presetGroup?.currentPresetModified && (
+          <span className="text-tiny text-app-warning">modified</span>
+        )}
+      </div>
+
+      {managerOpen && presetGroup && (
+        <PresetsManagerDialog
+          presetGroup={presetGroup}
+          onBsbInterfacePatch={onBsbInterfacePatch}
+          onClose={handleCloseManager}
+        />
       )}
-    </div>
+    </>
   );
 }

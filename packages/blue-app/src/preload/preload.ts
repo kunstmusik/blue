@@ -425,6 +425,9 @@ contextBridge.exposeInMainWorld('blueAPI', {
   importCsoundUdo: () => ipcRenderer.invoke('import-csound-udo'),
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
   exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
+  importPresetFile: () => ipcRenderer.invoke('import-preset-file') as Promise<string | null>,
+  exportPresetFile: (xmlText: string, presetName: string) =>
+    ipcRenderer.invoke('export-preset-file', xmlText, presetName) as Promise<void>,
   exportScoreObject: (xmlText: string, objectName: string) =>
     ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<ScoreObjectExportResult>,
   importScoreObject: () =>

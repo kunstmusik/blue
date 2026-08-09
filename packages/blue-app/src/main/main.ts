@@ -2879,6 +2879,17 @@ ipcMain.handle('import-csound-udo', async () => {
   return text;
 });
 
+ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Presets',
+    filters: [{ name: 'Preset file', extensions: ['preset'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return fs.promises.readFile(result.filePaths[0], 'utf-8');
+});
+
 ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -2937,6 +2948,23 @@ ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: st
   });
   if (result.canceled || !result.filePath) return;
   await fs.promises.writeFile(result.filePath, codeText, 'utf-8');
+});
+
+ipcMain.handle('export-preset-file', async (_event, xmlText: string, presetName: string) => {
+  if (!mainWindow || typeof xmlText !== 'string') return;
+  const safeName = typeof presetName === 'string'
+    ? presetName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'presets'
+    : 'presets';
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Presets',
+    defaultPath: `${safeName}.preset`,
+    filters: [{ name: 'Preset file', extensions: ['preset'] }],
+    properties: ['showOverwriteConfirmation'],
+  });
+  if (result.canceled || !result.filePath) return;
+  let filePath = result.filePath;
+  if (!filePath.toLowerCase().endsWith('.preset')) filePath += '.preset';
+  await fs.promises.writeFile(filePath, xmlText, 'utf-8');
 });
 
 ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string): Promise<ScoreObjectExportResult> => {
