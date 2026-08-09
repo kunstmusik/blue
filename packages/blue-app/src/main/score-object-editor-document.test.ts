@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BlueData,
+  BSBKnob,
   ClojureObject,
   ObjectBuilder,
   PolyObject,
@@ -23,6 +24,7 @@ import {
   Track,
 } from '@blue/data';
 import {
+  applyProjectDocumentPatch,
   createScoreObjectEditorDocument,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLibraryEntryRef,
@@ -136,6 +138,7 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     objectBuilder.setCommandLine('render --fast');
     objectBuilder.setLanguageType('PYTHON');
     objectBuilder.setEditEnabled(false);
+    objectBuilder.setComment('Builder notes');
     const data = makeDataWithObject(objectBuilder);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
@@ -148,8 +151,93 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
         commandLine: 'render --fast',
         languageType: 'PYTHON',
         editEnabled: false,
+        comment: 'Builder notes',
       });
+      expect(doc!.editor.bsbInstrument?.type).toBe('blueSynthBuilder');
+      expect(doc!.editor.bsbInstrument?.widgetTree.type).toBe('BSBRootGroup');
+      expect(doc!.editor.bsbInstrument?.presetGroup?.name).toBe('Presets');
     }
+  });
+
+  it.each([
+    ['JAVASCRIPT', 'javascript'],
+    ['CLOJURE', 'clojure'],
+    ['EXTERNAL', 'text'],
+  ] as const)('maps ObjectBuilder %s to %s editor syntax', (languageType, syntax) => {
+    const objectBuilder = new ObjectBuilder();
+    objectBuilder.setLanguageType(languageType);
+    const data = makeDataWithObject(objectBuilder);
+
+    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
+
+    expect(doc?.editor.kind).toBe('code');
+    if (doc?.editor.kind === 'code') {
+      expect(doc.editor.syntax).toBe(syntax);
+    }
+  });
+
+  it('persists ObjectBuilder code editor metadata patches together', () => {
+    const objectBuilder = new ObjectBuilder();
+    const data = makeDataWithObject(objectBuilder);
+    const target = makeTimelineTarget('ObjectBuilder');
+
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: {
+          text: '(def score commandline)',
+          languageType: 'CLOJURE',
+          commandLine: 'i8 0 1 880',
+          editEnabled: false,
+          comment: 'Clojure builder',
+          bsbInterfacePatch: {
+            type: 'updateGridSettings',
+            patch: { width: 24, height: 18 },
+          },
+        },
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(objectBuilder.getCode()).toBe('(def score commandline)');
+    expect(objectBuilder.getLanguageType()).toBe('CLOJURE');
+    expect(objectBuilder.getCommandLine()).toBe('i8 0 1 880');
+    expect(objectBuilder.isEditEnabled()).toBe(false);
+    expect(objectBuilder.getComment()).toBe('Clojure builder');
+    expect(objectBuilder.getGraphicInterface().getGridSettings().width).toBe(24);
+    expect(objectBuilder.getGraphicInterface().getGridSettings().height).toBe(18);
+  });
+
+  it('applies ObjectBuilder BSB preset patches through the shared interface editor', () => {
+    const objectBuilder = new ObjectBuilder();
+    const knob = new BSBKnob();
+    knob.objectName = 'amp';
+    knob.setValue(0.25);
+    objectBuilder.getGraphicInterface().getRootGroup().addChild(knob);
+    const data = makeDataWithObject(objectBuilder);
+    const target = makeTimelineTarget('ObjectBuilder');
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { bsbInterfacePatch: { type: 'addPreset', presetName: 'Quiet' } },
+      },
+    })).toBe(true);
+
+    const preset = objectBuilder.getPresetGroup().getPresets()[0];
+    expect(preset?.getPresetName()).toBe('Quiet');
+    knob.setValue(0.75);
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { bsbInterfacePatch: { type: 'applyPreset', presetUniqueId: preset!.getUniqueId() } },
+      },
+    })).toBe(true);
+    expect(knob.value).toBe(0.25);
   });
 
   it('returns code editor with text syntax for Comment', () => {

@@ -328,9 +328,37 @@ export function applyPatchToDocument(
     return { ...doc, editor };
   }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'code') {
+    const auxiliaryFlags = { ...doc.editor.auxiliaryFlags };
+    for (const key of ['commandLine', 'languageType', 'editEnabled', 'comment', 'onLoadProcessable']) {
+      const value = patch.patch[key];
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        auxiliaryFlags[key] = value;
+      }
+    }
+    const languageType = patch.patch.languageType;
+    const syntax = languageType === 'PYTHON'
+      ? 'python'
+      : languageType === 'JAVASCRIPT'
+        ? 'javascript'
+        : languageType === 'CLOJURE'
+          ? 'clojure'
+          : languageType === 'EXTERNAL'
+            ? 'text'
+            : doc.editor.syntax;
+    let bsbInstrument = doc.editor.bsbInstrument;
+    if (patch.patch.bsbInterfacePatch !== undefined && bsbInstrument) {
+      bsbInstrument = structuredClone(bsbInstrument);
+      applyBsbInterfacePatchToSnapshot(
+        bsbInstrument,
+        patch.patch.bsbInterfacePatch as BsbInterfacePatch,
+      );
+    }
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
-      text: patch.patch.text as string,
+      syntax,
+      text: patch.patch.text !== undefined ? patch.patch.text as string : doc.editor.text,
+      ...(Object.keys(auxiliaryFlags).length > 0 ? { auxiliaryFlags } : {}),
+      ...(bsbInstrument ? { bsbInstrument } : {}),
     };
     return { ...doc, editor };
   }

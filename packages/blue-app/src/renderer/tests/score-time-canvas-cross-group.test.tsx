@@ -26,10 +26,11 @@ function createSoundItem(
   objectIndex: number,
   startBeats: number,
   durationBeats: number,
+  objectType = 'GenericScore',
 ): ScoreRowObjectSnapshot {
   return {
     objectId,
-    objectType: 'GenericScore',
+    objectType,
     name,
     startBeats,
     durationBeats,
@@ -39,8 +40,8 @@ function createSoundItem(
     isContainer: false,
     editorTarget: {
       selectionId: objectId,
-      selectedObjectType: 'GenericScore',
-      editorObjectType: 'GenericScore',
+      selectedObjectType: objectType,
+      editorObjectType: objectType,
       ownerKind: 'timeline',
       displayContext: 'timeline',
       location: {
@@ -359,6 +360,51 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('confirms and dispatches Java-compatible ObjectBuilder conversion', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Convert to ObjectBuilder');
+
+    expect(confirm).toHaveBeenCalledWith('This operation can not be undone.\nAre you sure?');
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'convertScoreObjectToObjectBuilder',
+        target: item.editorTarget,
+      },
+    });
+
+    act(() => { root.unmount(); });
+    confirm.mockRestore();
+  });
+
+  it('disables ObjectBuilder conversion for unsupported score object types', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('generic-object', 'Generic', 0, 0, 1, 2),
+    ]]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      .find((candidate) => candidate.textContent?.trim() === 'Convert to ObjectBuilder');
+    expect(menuItem?.getAttribute('data-disabled')).toBe('');
+    act(() => { menuItem?.click(); });
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    act(() => { root.unmount(); });
   });
 
   it('disables subjective time conversion for selected AudioClips', () => {

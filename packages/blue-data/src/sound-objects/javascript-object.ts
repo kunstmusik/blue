@@ -55,7 +55,7 @@ function getScoreValue(compileData: CompileData): string {
   }
 }
 
-function executeJavaScriptCode(
+export function executeJavaScriptCode(
   code: string,
   duration: number,
   compileData: CompileData,

@@ -1314,6 +1314,22 @@ export default function ScoreTimeCanvas({
     }
   }, [getSelectedEntries]);
 
+  const handleConvertToObjectBuilder = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (
+      entries.length !== 1 ||
+      (entries[0]!.objectType !== 'PythonObject' && entries[0]!.objectType !== 'External') ||
+      !entries[0]!.editorTarget
+    ) {
+      return;
+    }
+    // Java warns this operation is not undoable; confirm before proceeding.
+    if (!window.confirm('This operation can not be undone.\nAre you sure?')) return;
+    void applyProjectDocumentPatch({
+      score: { type: 'convertScoreObjectToObjectBuilder', target: entries[0]!.editorTarget },
+    });
+  }, [applyProjectDocumentPatch, getSelectedEntries]);
+
   const handleImport = useCallback(async () => {
     if (!window.blueAPI?.importScoreObject || !contextMenuPos) return;
     try {
@@ -1353,6 +1369,11 @@ export default function ScoreTimeCanvas({
     selectedEntries[0]!.objectType !== 'AudioClip' &&
     selectedEntries[0]!.objectType !== 'Instance' &&
     Boolean(selectedEntries[0]!.serializedXml);
+  // Mirrors Java ConvertToObjectBuilderAction: enabled for exactly one
+  // selected PythonObject or External.
+  const canConvertToObjectBuilder = selectedEntries.length === 1 &&
+    (selectedEntries[0]!.objectType === 'PythonObject' ||
+      selectedEntries[0]!.objectType === 'External');
 
   const handleContextMenuPaste = useCallback(() => {
     if (clipboard.length === 0 || !contextMenuPos) return;
@@ -1793,6 +1814,8 @@ export default function ScoreTimeCanvas({
               freezeProgress={freezeProgress}
               onExport={handleExport}
               canExport={canExport}
+              onConvertToObjectBuilder={handleConvertToObjectBuilder}
+              canConvertToObjectBuilder={canConvertToObjectBuilder}
             />
           ) : (
             <EmptyAreaContextMenu
@@ -1827,7 +1850,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1853,6 +1876,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   freezeProgress: number | null;
   onExport: () => void;
   canExport: boolean;
+  onConvertToObjectBuilder: () => void;
+  canConvertToObjectBuilder: boolean;
 }) {
   const ni = () => alert('Not yet implemented');
   return (
@@ -1874,7 +1899,11 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Item className={menuItemClass} onSelect={ni}>
         Convert to PolyObject
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item
+        className={menuItemClass}
+        disabled={!canConvertToObjectBuilder}
+        onSelect={onConvertToObjectBuilder}
+      >
         Convert to ObjectBuilder
       </ContextMenu.Item>
       <ContextMenu.Item className={menuItemClass} disabled={!canReplaceWithBuffer} onSelect={onReplaceWithBuffer}>

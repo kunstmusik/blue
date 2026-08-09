@@ -613,7 +613,7 @@ export class BlueData implements BlueDataObject {
         return true;
       }
 
-      if (soundObject instanceof ObjectBuilder && soundObject.isPythonLanguage()) {
+      if (soundObject instanceof ObjectBuilder && soundObject.usesJavaRuntime()) {
         return true;
       }
 

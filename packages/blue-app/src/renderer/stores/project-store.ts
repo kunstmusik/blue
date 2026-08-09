@@ -220,6 +220,7 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'moveAutomationPoint':
     case 'moveAutomationRange':
     case 'scaleAutomationRange':
+    case 'convertScoreObjectToObjectBuilder':
       return true;
     case 'addLayerGroup':
       return patch.groupType === 'track';

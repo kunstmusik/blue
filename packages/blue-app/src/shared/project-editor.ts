@@ -517,9 +517,10 @@ export type TypeSpecificScoreObjectEditorSnapshot =
   | {
       kind: 'code';
       target: ScoreObjectEditorTargetSnapshot;
-      syntax: 'text' | 'csound-score' | 'python' | 'javascript';
+      syntax: 'text' | 'csound-score' | 'python' | 'javascript' | 'clojure';
       text: string;
       auxiliaryFlags?: Record<string, string | number | boolean>;
+      bsbInstrument?: BlueSynthBuilderInstrumentSnapshot;
     }
   | {
       kind: 'external';
@@ -732,6 +733,16 @@ export type ScorePatch =
   | {
       type: 'removeScoreObjects';
       targets: ScoreObjectEditorTargetSnapshot[];
+    }
+  | {
+      // Mirrors Java ConvertToObjectBuilderAction: removes a single
+      // PythonObject or External and appends a new ObjectBuilder, copying
+      // name, note-processor chain, time behavior, start time, subjective
+      // duration, and background color. The source's code text becomes the
+      // ObjectBuilder's code; an External additionally contributes its command
+      // line and forces languageType to EXTERNAL.
+      type: 'convertScoreObjectToObjectBuilder';
+      target: ScoreObjectEditorTargetSnapshot;
     }
   | {
       type: 'setSubjectiveDurationToObjective';
@@ -3481,7 +3492,7 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
 function getSyntaxForType(
   objectType: string,
   sObj?: SoundObject | AudioClip,
-): 'text' | 'csound-score' | 'python' | 'javascript' {
+): 'text' | 'csound-score' | 'python' | 'javascript' | 'clojure' {
   switch (objectType) {
     case 'PythonObject': return 'python';
     case 'JavaScriptObject': return 'javascript';
@@ -3492,6 +3503,8 @@ function getSyntaxForType(
             return 'python';
           case 'JAVASCRIPT':
             return 'javascript';
+          case 'CLOJURE':
+            return 'clojure';
           default:
             return 'text';
         }
@@ -3694,6 +3707,7 @@ export function createScoreObjectEditorDocument(
                 commandLine: sObj.getCommandLine(),
                 languageType: sObj.getLanguageType(),
                 editEnabled: sObj.isEditEnabled(),
+                comment: sObj.getComment(),
               }
             : undefined;
       editor = {
@@ -3702,6 +3716,9 @@ export function createScoreObjectEditorDocument(
         syntax: getSyntaxForType(objectType, sObj as SoundObject),
         text: getCodeText(sObj as SoundObject),
         ...(auxiliaryFlags ? { auxiliaryFlags } : {}),
+        ...(sObj instanceof ObjectBuilder
+          ? { bsbInstrument: buildObjectBuilderBsbInstrumentSnapshot(sObj) }
+          : {}),
       };
       break;
     }
@@ -4751,6 +4768,36 @@ function buildSoundBSBInstrumentSnapshot(bsb: BlueSynthBuilder): BlueSynthBuilde
   };
 }
 
+function createObjectBuilderBsbAdapter(builder: ObjectBuilder): BlueSynthBuilder {
+  const adapter = new BlueSynthBuilder();
+  adapter.setName(builder.getName());
+  adapter.setGraphicInterface(builder.getGraphicInterface());
+  adapter.setPresetGroup(builder.getPresetGroup());
+  return adapter;
+}
+
+function buildObjectBuilderBsbInstrumentSnapshot(
+  builder: ObjectBuilder,
+): BlueSynthBuilderInstrumentSnapshot {
+  return buildSoundBSBInstrumentSnapshot(createObjectBuilderBsbAdapter(builder));
+}
+
+function applyObjectBuilderBsbInterfacePatch(
+  builder: ObjectBuilder,
+  patch: BsbInterfacePatch,
+): boolean {
+  const adapter = createObjectBuilderBsbAdapter(builder);
+  const changed = applyBsbInterfacePatch(adapter, patch);
+  if (changed) {
+    builder.setGraphicInterface(adapter.getGraphicInterface());
+    const presetGroup = adapter.getPresetGroup();
+    if (presetGroup) {
+      builder.setPresetGroup(presetGroup);
+    }
+  }
+  return changed;
+}
+
 const KNOWN_WIDGET_TYPES = new Set([
   'BSBKnob', 'BSBCheckBox', 'BSBHSlider', 'BSBVSlider',
   'BSBHSliderBank', 'BSBVSliderBank', 'BSBValue', 'BSBDropdown',
@@ -5291,8 +5338,8 @@ function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbInterfac
       preset.updatePresets(instrument.getGraphicInterface());
       preset.setPresetName(patch.presetName);
       preset['uniqueId'] = crypto.randomUUID();
-      presetGroup.getPresets().push(preset);
-      presetGroup.getPresets().sort((a, b) => a.getPresetName().localeCompare(b.getPresetName()));
+      presetGroup.presets.push(preset);
+      presetGroup.presets.sort((a, b) => a.getPresetName().localeCompare(b.getPresetName()));
       presetGroup.setCurrentPresetUniqueId(preset.getUniqueId());
       presetGroup.setCurrentPresetModified(false);
       return true;
@@ -5302,8 +5349,8 @@ function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbInterfac
       if (!presetGroup) return false;
       const newFolder = new PresetGroup();
       newFolder.setPresetGroupName(patch.groupName);
-      presetGroup.getSubGroups().push(newFolder);
-      presetGroup.getSubGroups().sort((a, b) => a.getPresetGroupName().localeCompare(b.getPresetGroupName()));
+      presetGroup.subGroups.push(newFolder);
+      presetGroup.subGroups.sort((a, b) => a.getPresetGroupName().localeCompare(b.getPresetGroupName()));
       return true;
     }
     case 'synchronizePresets': {
@@ -6622,6 +6669,54 @@ function removeScoreObjectByTarget(data: BlueData, target: ScoreObjectEditorTarg
   return true;
 }
 
+/**
+ * Converts a single PythonObject or External into an ObjectBuilder, mirroring
+ * Java's remove-then-add behavior. The converted object keeps the source's
+ * stable selection id so it remains selected after moving to the layer end.
+ */
+function applyConvertScoreObjectToObjectBuilder(
+  data: BlueData,
+  target: ScoreObjectEditorTargetSnapshot,
+): boolean {
+  const score = data.getScore();
+  const location = target.location;
+  if (!location) return false;
+
+  const resolved = resolveTimelineTarget(score, location);
+  if (!resolved) return false;
+  const { sObj, layer, objectIndex } = resolved;
+  if (!(sObj instanceof PythonObject) && !(sObj instanceof External)) return false;
+
+  const builder = new ObjectBuilder();
+
+  // Common properties copied from the source (matches Java branches).
+  builder.setName(sObj.getName());
+  builder.setNoteProcessorChain(new NoteProcessorChain(sObj.getNoteProcessorChain()));
+  builder.setTimeBehavior(sObj.getTimeBehavior());
+  builder.setStartTime(sObj.getStartTime());
+  builder.setSubjectiveDuration(sObj.getSubjectiveDuration());
+  builder.setBackgroundColor(sObj.getBackgroundColor());
+
+  if (sObj instanceof PythonObject) {
+    builder.setCode(sObj.getPythonCode());
+    // languageType defaults to PYTHON from the ObjectBuilder constructor.
+  } else {
+    builder.setCode(sObj.getText());
+    builder.setCommandLine(sObj.getCommandLine());
+    builder.setLanguageType('EXTERNAL');
+  }
+
+  // Preserve the stable selection id so the converted object stays selected.
+  const existingId = getScoreObjectId(sObj);
+  if (existingId) {
+    assignExplicitScoreObjectId(builder, existingId);
+  }
+
+  layer.splice(objectIndex, 1);
+  layer.push(builder);
+  return true;
+}
+
 function applyMoveLayerGroupPatch(data: BlueData, patch: ScorePatch & { type: 'moveLayerGroup' }): boolean {
   const score = data.getScore();
   const sourceIdx = findRootLayerGroupIndexByGroupId(score, patch.groupId);
@@ -7520,6 +7615,10 @@ function applyScoreObjectPatch(
     return removedAny;
   }
 
+  if (patch.type === 'convertScoreObjectToObjectBuilder') {
+    return applyConvertScoreObjectToObjectBuilder(data, patch.target);
+  }
+
   if (patch.type === 'setSubjectiveDurationToObjective') {
     const context = data.getScore().getTimeContext();
     const resolved = patch.targets.map((target) => resolveEditorTarget(data, target)?.sObj ?? null);
@@ -7734,6 +7833,37 @@ function applyScoreObjectPatch(
       return true;
     }
     case 'updateTypeSpecificEditor': {
+      if (sObj instanceof ObjectBuilder) {
+        const p = patch.patch;
+        let changed = false;
+        if (p.text !== undefined) {
+          sObj.setCode(p.text as string);
+          changed = true;
+        }
+        if (p.commandLine !== undefined) {
+          sObj.setCommandLine(p.commandLine as string);
+          changed = true;
+        }
+        if (p.languageType !== undefined) {
+          sObj.setLanguageType(p.languageType as string);
+          changed = true;
+        }
+        if (p.editEnabled !== undefined) {
+          sObj.setEditEnabled(p.editEnabled as boolean);
+          changed = true;
+        }
+        if (p.comment !== undefined) {
+          sObj.setComment(p.comment as string);
+          changed = true;
+        }
+        if (p.bsbInterfacePatch !== undefined) {
+          changed = applyObjectBuilderBsbInterfacePatch(
+            sObj,
+            p.bsbInterfacePatch as BsbInterfacePatch,
+          ) || changed;
+        }
+        return changed;
+      }
       if (patch.patch.text !== undefined) {
         return setCodeText(sObj as SoundObject, patch.patch.text as string);
       }
@@ -7748,25 +7878,6 @@ function applyScoreObjectPatch(
         const p = patch.patch;
         if (p.onLoadProcessable !== undefined) {
           sObj.setOnLoadProcessable(p.onLoadProcessable as boolean);
-          return true;
-        }
-      }
-      if (sObj instanceof ObjectBuilder) {
-        const p = patch.patch;
-        let changed = false;
-        if (p.commandLine !== undefined) {
-          sObj.setCommandLine(p.commandLine as string);
-          changed = true;
-        }
-        if (p.languageType !== undefined) {
-          sObj.setLanguageType(p.languageType as string);
-          changed = true;
-        }
-        if (p.editEnabled !== undefined) {
-          sObj.setEditEnabled(p.editEnabled as boolean);
-          changed = true;
-        }
-        if (changed) {
           return true;
         }
       }

@@ -73,6 +73,7 @@ export interface ClojureEvalResult {
 export interface ClojureScoreObjectEvalRequest {
   code: string;
   blueDuration: number;
+  commandline?: string;
   blueProjectDir?: string | null;
 }
 

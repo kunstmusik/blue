@@ -85,21 +85,24 @@ export async function testScoreObject(
     };
   }
 
-  if (sObj instanceof ObjectBuilder && sObj.isPythonLanguage() && !options.javaRuntimeClient) {
+  if (sObj instanceof ObjectBuilder && sObj.usesJavaRuntime() && !options.javaRuntimeClient) {
+    const languageLabel = sObj.getLanguageType() === 'PYTHON' ? 'Python' : 'Clojure';
     return {
       ok: false,
       output: '',
-      error: 'Java runtime is unavailable. Install Java 17 or newer to test Python ObjectBuilder objects.',
+      error: `Java runtime is unavailable. Install Java 17 or newer to test ${languageLabel} ObjectBuilder objects.`,
     };
   }
 
-  if (sObj instanceof JavaScriptObject) {
+  const usesJavaScript = sObj instanceof JavaScriptObject
+    || (sObj instanceof ObjectBuilder && sObj.getLanguageType() === 'JAVASCRIPT');
+  if (usesJavaScript) {
     await options.ensureJavaScriptEngine?.();
   }
 
   try {
     const compileData = CompileData.createEmptyCompileData();
-    if (sObj instanceof JavaScriptObject && options.javaScriptSession) {
+    if (usesJavaScript && options.javaScriptSession) {
       setJavaScriptSession(compileData, options.javaScriptSession);
     }
     if (options.javaRuntimeClient) {

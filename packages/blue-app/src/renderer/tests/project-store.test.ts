@@ -185,6 +185,35 @@ describe('project-store — canonical acknowledgement barrier', () => {
 
     await expect(barrier).rejects.toThrow('commit failed');
   });
+
+  it('refreshes canonical score state after ObjectBuilder conversion', async () => {
+    commitProjectDocumentPatches.mockResolvedValue({
+      revision: 1,
+      sessionId: 1,
+      changed: true,
+    });
+    getProjectDocument.mockResolvedValue(createEmptyProjectEditorSnapshot());
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'convertScoreObjectToObjectBuilder',
+        target: {
+          selectionId: 'external-0',
+          selectedObjectType: 'External',
+          editorObjectType: 'External',
+          ownerKind: 'timeline',
+          displayContext: 'timeline',
+          location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+          supportsTimeBehavior: true,
+          supportsRepeatPoint: true,
+          supportsNoteProcessorChain: true,
+        },
+      },
+    });
+    await useProjectStore.getState().flushPendingPatches();
+
+    expect(getProjectDocument).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('project-store — MIDI focus reconciliation', () => {

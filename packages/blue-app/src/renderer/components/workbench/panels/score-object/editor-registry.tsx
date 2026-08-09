@@ -17,6 +17,7 @@ import ZakLineObjectEditor from './editors/ZakLineObjectEditor';
 import PianoRollEditor from './editors/PianoRollEditor';
 import PolyObjectScoreObjectEditor from './editors/PolyObjectScoreObjectEditor';
 import TrackerScoreObjectEditor from './editors/TrackerScoreObjectEditor';
+import ObjectBuilderScoreObjectEditor from './editors/ObjectBuilderScoreObjectEditor';
 
 import JMaskEditor from './editors/JMaskEditor';
 import SoundEditor from './editors/SoundEditor';
@@ -57,6 +58,7 @@ export function resolveEditorComponent(
 ): ScoreObjectEditorComponent {
   switch (editor.kind) {
     case 'code':
+      if (editor.target.editorObjectType === 'ObjectBuilder') return ObjectBuilderScoreObjectEditor;
       if (editor.syntax === 'javascript') return JavaScriptObjectEditor;
       if (editor.target.editorObjectType === 'ClojureObject') return ClojureObjectEditor;
       return CodeBackedScoreObjectEditor;
