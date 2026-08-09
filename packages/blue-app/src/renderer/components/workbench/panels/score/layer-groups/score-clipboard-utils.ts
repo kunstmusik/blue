@@ -1,5 +1,17 @@
 import type { ScoreLayerGroupType, ScoreObjectEditorTargetSnapshot } from '../../../../../../shared/project-editor';
-import { getTrackPlacementForSoundObjectType } from '@blue/data';
+import {
+  getTrackPlacementForSoundObjectType,
+  PolyObject,
+  loadSoundObjectFromXML,
+  createSoundObject,
+  Element,
+  TimePosition,
+  TimeBase,
+  TimeContext,
+  TimeDuration,
+  SoundObject,
+  beatsToDuration,
+} from '@blue/data';
 import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import type {
   ScoreLayerGroupSnapshot,
@@ -214,4 +226,133 @@ export function groupPasteObjectsByTargetGroup(objects: ScorePasteObject[]): Sco
     }
   }
   return [...grouped.values()];
+}
+
+export function createPolyObjectPasteObjectFromClipboard(args: {
+  clipboard: ScoreObjectClipboardEntry[];
+  layerGroups: ScoreLayerGroupSnapshot[];
+  targetGroupId: string;
+  targetLayerIndex: number;
+  targetXBeats: number;
+  snapBeatValue: (beats: number) => number;
+}): { ok: true; pasteObject: ScorePasteObject } | { ok: false; message: string } {
+  const {
+    clipboard,
+    layerGroups,
+    targetGroupId,
+    targetLayerIndex,
+    targetXBeats,
+    snapBeatValue,
+  } = args;
+
+  if (clipboard.length === 0) {
+    return { ok: false, message: 'Nothing to paste.' };
+  }
+
+  if (clipboard.some((entry) => entry.objectType === 'AudioClip')) {
+    return { ok: false, message: 'Unable to paste AudioClips as a PolyObject.' };
+  }
+
+  const flatLayers = flattenLayers(layerGroups);
+  const targetGlobalLayerIndex = findGlobalLayerIndex(flatLayers, targetGroupId, targetLayerIndex);
+  if (targetGlobalLayerIndex < 0) {
+    return { ok: false, message: 'Paste target layer was not found.' };
+  }
+
+  const targetGroup = layerGroups.find((group) => group.groupId === targetGroupId);
+  if (!targetGroup || targetGroup.groupType !== 'polyObject') {
+    return { ok: false, message: 'PolyObject paste requires a SoundObject layer.' };
+  }
+
+  const soundObjectEntries = clipboard;
+  const sourceGlobalIndices: number[] = [];
+  for (const entry of soundObjectEntries) {
+    const globalIdx = findSourceGlobalLayerIndex(flatLayers, entry);
+    if (globalIdx < 0) {
+      return { ok: false, message: 'Unable to paste from this copy buffer in the current score view.' };
+    }
+    sourceGlobalIndices.push(globalIdx);
+  }
+
+  const minLayer = Math.min(...sourceGlobalIndices);
+  const maxLayer = Math.max(...sourceGlobalIndices);
+  const numLayers = maxLayer - minLayer + 1;
+
+  const pObj = new PolyObject(false);
+  pObj.setName('polyObject');
+  for (let i = 0; i < numLayers; i += 1) {
+    pObj.newLayerAt(-1);
+  }
+
+  const context = new TimeContext();
+  let envelopeStartBeats = Infinity;
+  let envelopeEndBeats = -Infinity;
+
+  for (let i = 0; i < soundObjectEntries.length; i += 1) {
+    const entry = soundObjectEntries[i]!;
+    const layerIdx = sourceGlobalIndices[i]! - minLayer;
+    if (!Number.isFinite(entry.startBeats) || !Number.isFinite(entry.durationBeats)) {
+      return { ok: false, message: 'Unable to paste an object with invalid timing.' };
+    }
+    envelopeStartBeats = Math.min(envelopeStartBeats, entry.startBeats);
+    envelopeEndBeats = Math.max(envelopeEndBeats, entry.startBeats + Math.max(0, entry.durationBeats));
+
+    let sObj: SoundObject | null = null;
+    let loadedFromXml = false;
+    if (entry.serializedXml) {
+      try {
+        const parsed = Element.parse(entry.serializedXml);
+        sObj = loadSoundObjectFromXML(parsed)?.deepCopy() ?? null;
+        loadedFromXml = sObj !== null;
+      } catch {
+        sObj = null;
+      }
+    }
+
+    if (!sObj) {
+      sObj = createSoundObject(entry.objectType);
+    }
+
+    if (!sObj) {
+      return { ok: false, message: `Unable to load ${entry.objectType} from the copy buffer.` };
+    }
+
+    sObj.setName(entry.name);
+    sObj.setStartTime(TimePosition.beats(entry.startBeats));
+    if (!loadedFromXml) {
+      const durationTimeBase = Object.values(TimeBase).includes(entry.durationTimeBase as TimeBase)
+        ? entry.durationTimeBase as TimeBase
+        : TimeBase.BEATS;
+      if (durationTimeBase !== TimeBase.BEATS) {
+        return {
+          ok: false,
+          message: `Unable to preserve ${entry.objectType}'s ${durationTimeBase} duration without serialized data.`,
+        };
+      }
+      sObj.setSubjectiveDuration(beatsToDuration(entry.durationBeats, durationTimeBase, context));
+    }
+    sObj.setBackgroundColor(entry.backgroundColor);
+    pObj[layerIdx].push(sObj);
+  }
+
+  pObj.normalizeSoundObjects(context);
+  pObj.setSubjectiveDuration(
+    TimeDuration.beats(Math.max(0, envelopeEndBeats - envelopeStartBeats)),
+  );
+  const startBeats = snapBeatValue(targetXBeats);
+
+  return {
+    ok: true,
+    pasteObject: {
+      layerIndex: targetLayerIndex,
+      groupId: targetGroupId,
+      name: 'polyObject',
+      startBeats,
+      durationBeats: pObj.getSubjectiveDuration().toBeats(context),
+      backgroundColor: pObj.getBackgroundColor(),
+      objectType: 'PolyObject',
+      isContainer: true,
+      serializedXml: pObj.saveAsXML().toXml(),
+    },
+  };
 }

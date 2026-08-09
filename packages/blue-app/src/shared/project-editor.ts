@@ -34,6 +34,7 @@ import {
   Send,
   Score,
   PolyObject,
+  SoundLayer,
   TrackLayer,
   TrackLayerGroup,
   PatternsLayerGroup,
@@ -41,11 +42,13 @@ import {
   isValidSnapValueName,
   SoundObject,
   SoundObjectLibrary,
+  collectInstanceSoundObjects,
   Instance,
   AbstractSoundObject,
   TimeBehavior,
   NoteProcessorChain,
   AudioClip,
+  ObjRefLoadMap,
   TimePosition,
   TimeDuration,
   TimeContext,
@@ -743,6 +746,13 @@ export type ScorePatch =
       // line and forces languageType to EXTERNAL.
       type: 'convertScoreObjectToObjectBuilder';
       target: ScoreObjectEditorTargetSnapshot;
+    }
+  | {
+      type: 'convertToPolyObject';
+      targets: ScoreObjectEditorTargetSnapshot[];
+      targetGroupId: string;
+      targetLayerIndex: number;
+      selectionId?: string;
     }
   | {
       type: 'setSubjectiveDurationToObjective';
@@ -6506,6 +6516,10 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
   if (!targetGroup || targetGroup instanceof PatternsLayerGroup) return false;
 
   const context = score.getTimeContext();
+  const soundObjectRefMap = new ObjRefLoadMap();
+  for (const entry of data.getSoundObjectLibrary().getEntries()) {
+    soundObjectRefMap.register(entry.libraryId, entry.object);
+  }
   let changed = false;
 
   for (const obj of patch.objects) {
@@ -6518,7 +6532,7 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
         if (serialized.getName() === 'audioClip') {
           clip = AudioClip.loadFromXML(serialized);
         } else {
-          sObj = loadSoundObjectFromXML(serialized)?.deepCopy() ?? null;
+          sObj = loadSoundObjectFromXML(serialized, soundObjectRefMap)?.deepCopy() ?? null;
         }
       } catch {
         sObj = null;
@@ -6556,31 +6570,46 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
     targetObject.setStartTime(
       beatsToTimePosition(obj.startBeats, (obj.startTimeBase ?? TimeBase.BEATS) as TimeBase, context),
     );
-    targetObject.setSubjectiveDuration(
-      beatsToDuration(obj.durationBeats, (obj.durationTimeBase ?? TimeBase.BEATS) as TimeBase, context),
-    );
+    if (sObj instanceof PolyObject && obj.serializedXml) {
+      // A serialized PolyObject may contain TIME/BBT/etc. child durations.
+      // Recompute its envelope in the canonical project context so the outer
+      // duration is not tied to the renderer's fallback conversion context.
+      sObj.normalizeSoundObjects(context);
+    } else {
+      targetObject.setSubjectiveDuration(
+        beatsToDuration(obj.durationBeats, (obj.durationTimeBase ?? TimeBase.BEATS) as TimeBase, context),
+      );
+    }
     targetObject.setBackgroundColor(obj.backgroundColor);
 
     if (obj.layerIndex < 0 || obj.layerIndex >= targetGroup.length) {
       continue;
     }
 
+    let inserted = false;
     if (targetGroup instanceof TrackLayerGroup) {
       const trackLayer = targetGroup[obj.layerIndex];
       if (!trackLayer) continue;
       if (clip && trackLayer.accepts(clip)) {
         trackLayer.push(clip);
         changed = true;
+        inserted = true;
       } else if (sObj && trackLayer.accepts(sObj)) {
         trackLayer.push(sObj);
         changed = true;
+        inserted = true;
       }
-      continue;
-    }
-
-    if (targetGroup instanceof PolyObject && sObj) {
+    } else if (targetGroup instanceof PolyObject && sObj) {
       targetGroup[obj.layerIndex].push(sObj);
       changed = true;
+      inserted = true;
+    }
+
+    if (inserted && sObj) {
+      const instances = collectInstanceSoundObjects([sObj]);
+      if (instances.length > 0) {
+        data.getSoundObjectLibrary().checkAndAddInstanceSoundObjects(instances);
+      }
     }
   }
 
@@ -7589,6 +7618,137 @@ function applyTrackScorePatch(
   return false;
 }
 
+function applyConvertToPolyObjectPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'convertToPolyObject' },
+): boolean {
+  const score = data.getScore();
+  const context = score.getTimeContext();
+
+  const targetGroup = findLayerGroupByGroupId(score, patch.targetGroupId);
+  if (!(targetGroup instanceof PolyObject)) return false;
+  if (patch.targetLayerIndex < 0 || patch.targetLayerIndex >= targetGroup.length) return false;
+
+  const destLayer = targetGroup[patch.targetLayerIndex];
+  if (!(destLayer instanceof SoundLayer)) return false;
+
+  const resolvedTargets: Array<{
+    sObj: SoundObject;
+  }> = [];
+  const seenObjects = new Set<SoundObject>();
+
+  for (const target of patch.targets) {
+    const location = target.ownerKind === 'library' && target.displayContext === 'instance'
+      ? target.sourceInstanceLocation
+      : target.location;
+    if (!location) return false;
+
+    const resolved = resolveTimelineTarget(score, location);
+    if (!resolved || resolved.sObj instanceof AudioClip || seenObjects.has(resolved.sObj)) return false;
+
+    seenObjects.add(resolved.sObj);
+    resolvedTargets.push({ sObj: resolved.sObj });
+  }
+
+  if (resolvedTargets.length === 0 || resolvedTargets.length !== patch.targets.length) return false;
+
+  const allLayers: Array<SoundLayer | TrackLayer> = [];
+  const collectLayers = (container: ManagedLayerGroup): void => {
+    if (container instanceof PatternsLayerGroup) return;
+    for (let i = 0; i < container.length; i += 1) {
+      const layer = container[i];
+      if (layer) {
+        allLayers.push(layer as SoundLayer | TrackLayer);
+        for (const child of layer) {
+          if (child instanceof PolyObject) {
+            collectLayers(child);
+          }
+        }
+      }
+    }
+  };
+
+  for (const group of score) {
+    if (isManagedLayerGroup(group)) {
+      collectLayers(group);
+    }
+  }
+
+  let layerMin = Infinity;
+  let layerMax = -Infinity;
+  let startBeatsMin = Infinity;
+
+  const targetItems: Array<{
+    sObj: SoundObject;
+    layer: SoundLayer | TrackLayer;
+    globalLayerIndex: number;
+  }> = [];
+
+  for (const item of resolvedTargets) {
+    const sObj = item.sObj;
+    const gIdx = allLayers.findIndex((l) => l.includes(sObj) || ('contains' in l && l.contains(sObj)));
+    if (gIdx === -1) return false;
+    const layer = allLayers[gIdx]!;
+
+    const startBeats = sObj.getStartTime().toBeats(context);
+    if (startBeats < startBeatsMin) {
+      startBeatsMin = startBeats;
+    }
+    if (gIdx < layerMin) {
+      layerMin = gIdx;
+    }
+    if (gIdx > layerMax) {
+      layerMax = gIdx;
+    }
+
+    targetItems.push({
+      sObj,
+      layer,
+      globalLayerIndex: gIdx,
+    });
+  }
+
+  if (
+    targetItems.length === 0
+    || targetItems.length !== resolvedTargets.length
+    || !Number.isFinite(layerMin)
+    || !Number.isFinite(layerMax)
+  ) {
+    return false;
+  }
+
+  const pObj = new PolyObject(false);
+  pObj.setName('polyObject');
+  const numLayers = layerMax - layerMin + 1;
+  for (let i = 0; i < numLayers; i += 1) {
+    pObj.newLayerAt(-1);
+  }
+
+  if (!destLayer.accepts(pObj)) return false;
+
+  for (const item of targetItems) {
+    item.layer.remove(item.sObj);
+    const destLayerIndex = item.globalLayerIndex - layerMin;
+    pObj[destLayerIndex].push(item.sObj);
+  }
+
+  pObj.normalizeSoundObjects(context);
+  pObj.setStartTime(TimePosition.beats(startBeatsMin));
+
+  if (patch.selectionId?.trim()) {
+    assignExplicitScoreObjectId(pObj, patch.selectionId.trim());
+  }
+
+  destLayer.push(pObj);
+
+  const instances = collectInstanceSoundObjects([pObj]);
+  if (instances.length > 0) {
+    data.getSoundObjectLibrary().checkAndAddInstanceSoundObjects(instances);
+  }
+
+  return true;
+}
+
 function applyScoreObjectPatch(
   data: BlueData,
   patch: ScorePatch,
@@ -7617,6 +7777,10 @@ function applyScoreObjectPatch(
 
   if (patch.type === 'convertScoreObjectToObjectBuilder') {
     return applyConvertScoreObjectToObjectBuilder(data, patch.target);
+  }
+
+  if (patch.type === 'convertToPolyObject') {
+    return applyConvertToPolyObjectPatch(data, patch);
   }
 
   if (patch.type === 'setSubjectiveDurationToObjective') {

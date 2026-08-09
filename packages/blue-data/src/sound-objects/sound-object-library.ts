@@ -6,6 +6,8 @@
  * resolution (e.g., Instance sound objects reference library entries by id).
  */
 import { SoundObject } from './sound-object';
+import { Instance } from './instance';
+import { PolyObject } from './poly-object';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { BlueDataObject } from '../blue-data-object';
@@ -138,6 +140,33 @@ export class SoundObjectLibrary implements BlueDataObject {
     return matches.length === 1 ? matches[0] : undefined;
   }
 
+  checkAndAddInstanceSoundObjects(instanceSoundObjects: Instance[]): void {
+    const originalToCopyMap = new Map<SoundObject, SoundObject>();
+
+    for (const instance of instanceSoundObjects) {
+      const instanceSObj = instance.getSoundObject();
+      if (!instanceSObj) continue;
+
+      const existingId = this.findIdForObject(instanceSObj);
+      if (existingId) {
+        instance.setLibraryId(existingId);
+        continue;
+      }
+
+      let copy = originalToCopyMap.get(instanceSObj);
+      if (!copy) {
+        copy = instanceSObj.deepCopy();
+        const libraryId = this.addObject(copy);
+        originalToCopyMap.set(instanceSObj, copy);
+        instance.setLibraryId(libraryId);
+      } else {
+        const libraryId = this.findIdForObject(copy);
+        if (libraryId) instance.setLibraryId(libraryId);
+      }
+      instance.setSoundObject(copy);
+    }
+  }
+
   private generateId(): string {
     return `lib_${this._nextId++}`;
   }
@@ -198,4 +227,16 @@ export class SoundObjectLibrary implements BlueDataObject {
   deepCopy(): BlueDataObject {
     return new SoundObjectLibrary(this);
   }
+}
+
+export function collectInstanceSoundObjects(sObjs: SoundObject[]): Instance[] {
+  const instances: Instance[] = [];
+  for (const sObj of sObjs) {
+    if (sObj instanceof Instance) {
+      instances.push(sObj);
+    } else if (sObj instanceof PolyObject) {
+      instances.push(...collectInstanceSoundObjects(sObj.getSoundObjects(true)));
+    }
+  }
+  return instances;
 }

@@ -141,6 +141,65 @@ export class PolyObject extends Array<SoundLayer>
   getRepeatPoint(): TimeDuration | null { return this._repeatPoint; }
   setRepeatPoint(rp: TimeDuration | null): void { this._repeatPoint = rp; }
 
+  getSoundObjects(grabMutedSoundObjects = false): SoundObject[] {
+    const sObjects: SoundObject[] = [];
+    for (const layer of this) {
+      if (!grabMutedSoundObjects && layer.isMuted()) {
+        continue;
+      }
+      sObjects.push(...layer);
+    }
+    return sObjects;
+  }
+
+  addSoundObject(layerIndex: number, sObj: SoundObject): void {
+    if (layerIndex >= 0 && layerIndex < this.length) {
+      this[layerIndex].push(sObj);
+    }
+  }
+
+  removeSoundObject(sObj: SoundObject): number {
+    for (let i = 0; i < this.length; i += 1) {
+      const layer = this[i];
+      if (layer.contains(sObj)) {
+        layer.remove(sObj);
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  normalizeSoundObjects(context: TimeContext): void {
+    const sObjects = this.getSoundObjects(false);
+    if (sObjects.length === 0) {
+      return;
+    }
+
+    let min = sObjects[0].getStartTime().toBeats(context);
+    for (let i = 1; i < sObjects.length; i += 1) {
+      const start = sObjects[i].getStartTime().toBeats(context);
+      if (start < min) {
+        min = start;
+      }
+    }
+
+    for (const sObj of sObjects) {
+      const currentStart = sObj.getStartTime().toBeats(context);
+      sObj.setStartTime(TimePosition.beats(currentStart - min));
+    }
+
+    let maxTime = 0;
+    for (const sObj of sObjects) {
+      const start = sObj.getStartTime().toBeats(context);
+      const duration = sObj.getSubjectiveDuration().toBeats(context);
+      if (start + duration > maxTime) {
+        maxTime = start + duration;
+      }
+    }
+
+    this.setSubjectiveDuration(TimeDuration.beats(maxTime));
+  }
+
   generateForCSD(
     context: TimeContext,
     compileData: CompileData,

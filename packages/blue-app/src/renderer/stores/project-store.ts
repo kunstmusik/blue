@@ -221,9 +221,12 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'moveAutomationRange':
     case 'scaleAutomationRange':
     case 'convertScoreObjectToObjectBuilder':
+    case 'convertToPolyObject':
       return true;
     case 'addLayerGroup':
       return patch.groupType === 'track';
+    case 'addScoreObjects':
+      return patch.objects.some((object) => object.objectType === 'PolyObject');
     case 'addTrackItem':
     case 'moveTrackItems':
     case 'removeTrackItems':

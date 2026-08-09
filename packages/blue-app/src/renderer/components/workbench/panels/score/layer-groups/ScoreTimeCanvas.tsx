@@ -26,6 +26,7 @@ import { deriveSnapLineBeats, snapBeatToGrid } from '../snap-grid-utils';
 import { toast } from 'sonner';
 import {
   collectClipboardEntriesForSelection,
+  createPolyObjectPasteObjectFromClipboard,
   groupPasteObjectsByTargetGroup,
   layerGroupAcceptsObjectType,
   translateClipboardEntriesForPaste,
@@ -1374,6 +1375,47 @@ export default function ScoreTimeCanvas({
   const canConvertToObjectBuilder = selectedEntries.length === 1 &&
     (selectedEntries[0]!.objectType === 'PythonObject' ||
       selectedEntries[0]!.objectType === 'External');
+  const canConvertToPolyObject = selectedEntries.length > 0 &&
+    selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
+
+  const handleConvertToPolyObject = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0 || !contextMenuPos) return;
+    const targets = entries.flatMap((entry) => (entry.editorTarget ? [entry.editorTarget] : []));
+    if (targets.length === 0) return;
+
+    const selectionId = `poly_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    void (async () => {
+      await applyProjectDocumentPatch({
+        score: {
+          type: 'convertToPolyObject',
+          targets,
+          targetGroupId: group.groupId,
+          targetLayerIndex: contextMenuPos.layerIndex,
+          selectionId,
+        },
+      });
+      await flushPendingPatches();
+      select(selectionId, false);
+    })();
+  }, [getSelectedEntries, contextMenuPos, applyProjectDocumentPatch, flushPendingPatches, group.groupId, select]);
+
+  const handlePasteAsPolyObject = useCallback(() => {
+    if (clipboard.length === 0 || !contextMenuPos) return;
+    const paste = createPolyObjectPasteObjectFromClipboard({
+      clipboard,
+      layerGroups: interactionLayerGroups,
+      targetGroupId: group.groupId,
+      targetLayerIndex: contextMenuPos.layerIndex,
+      targetXBeats: contextMenuPos.xBeats,
+      snapBeatValue: snapBeatValueStart,
+    });
+    if (!paste.ok) {
+      toast.error(paste.message);
+      return;
+    }
+    addScoreObjects([paste.pasteObject]);
+  }, [clipboard, contextMenuPos, interactionLayerGroups, group.groupId, snapBeatValueStart, addScoreObjects]);
 
   const handleContextMenuPaste = useCallback(() => {
     if (clipboard.length === 0 || !contextMenuPos) return;
@@ -1816,6 +1858,8 @@ export default function ScoreTimeCanvas({
               canExport={canExport}
               onConvertToObjectBuilder={handleConvertToObjectBuilder}
               canConvertToObjectBuilder={canConvertToObjectBuilder}
+              onConvertToPolyObject={handleConvertToPolyObject}
+              canConvertToPolyObject={canConvertToPolyObject}
             />
           ) : (
             <EmptyAreaContextMenu
@@ -1827,6 +1871,7 @@ export default function ScoreTimeCanvas({
               contextMenuPos={contextMenuPos}
               group={group}
               onPaste={handleContextMenuPaste}
+              onPasteAsPolyObject={handlePasteAsPolyObject}
               onLibraryPaste={pasteLibraryAtContext}
               onPasteBsb={pasteBsbAtContext}
               snapBeatValue={snapBeatValueStart}
@@ -1850,7 +1895,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder, onConvertToPolyObject, canConvertToPolyObject }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1878,8 +1923,9 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   canExport: boolean;
   onConvertToObjectBuilder: () => void;
   canConvertToObjectBuilder: boolean;
+  onConvertToPolyObject: () => void;
+  canConvertToPolyObject: boolean;
 }) {
-  const ni = () => alert('Not yet implemented');
   return (
     <>
       <ContextMenu.Item
@@ -1896,7 +1942,11 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
           : 'Freeze/Unfreeze ScoreObjects'}
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item
+        className={menuItemClass}
+        disabled={!canConvertToPolyObject}
+        onSelect={onConvertToPolyObject}
+      >
         Convert to PolyObject
       </ContextMenu.Item>
       <ContextMenu.Item
@@ -1958,7 +2008,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter, onImport }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onPasteAsPolyObject, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter, onImport }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
@@ -1967,6 +2017,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   contextMenuPos: { xBeats: number; layerIndex: number } | null;
   group: PolyObjectLayerGroupSnapshot;
   onPaste: () => void;
+  onPasteAsPolyObject: () => void;
   onLibraryPaste: () => void;
   onPasteBsb: () => void;
   snapBeatValue: (b: number) => number;
@@ -1976,8 +2027,6 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   onSelectAllAfter: () => void;
   onImport: () => void;
 }) {
-  const ni = () => alert('Not yet implemented');
-
   const handleAddSobj = (typeName: string) => {
     if (contextMenuPos == null) return;
     const isContainer = typeName === 'PolyObject';
@@ -2043,7 +2092,11 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
             Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
           </ContextMenu.Item>
           {clipboard.length > 0 && (
-            <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+            <ContextMenu.Item
+              className={menuItemClass}
+              disabled={clipboard.some((entry) => entry.objectType === 'AudioClip')}
+              onSelect={onPasteAsPolyObject}
+            >
               Paste as PolyObject
             </ContextMenu.Item>
           )}

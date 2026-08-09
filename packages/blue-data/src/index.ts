@@ -160,7 +160,7 @@ export { GenericScore } from './sound-objects/generic-score';
 export { PolyObject } from './sound-objects/poly-object';
 export { SoundLayer } from './sound-objects/sound-layer';
 export { PolyObjectLayerGroupProvider } from './sound-objects/poly-object-layer-group-provider';
-export { SoundObjectLibrary } from './sound-objects/sound-object-library';
+export { SoundObjectLibrary, collectInstanceSoundObjects } from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
 export { ObjectBuilder } from './sound-objects/object-builder';
 export type { ObjectBuilderLanguageType } from './sound-objects/object-builder';
