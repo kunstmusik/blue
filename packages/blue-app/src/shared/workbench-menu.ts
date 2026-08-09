@@ -125,6 +125,7 @@ export type NativeMenuCommand =
   | { type: 'open-effects-library' }
   | { type: 'open-ftable-converter' }
   | { type: 'open-csoundrc-editor' }
+  | { type: 'open-midi-import' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }
   | { type: 'toggle-loop-rendering' }

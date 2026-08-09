@@ -24,6 +24,7 @@ import {
   convertCSDtoBlue,
   convertOrcScoToBlue,
   CSDImportMode,
+  buildMidiImportProject,
 } from '@blue/data';
 import { openSettingsWindow } from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
@@ -51,6 +52,7 @@ import {
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
 import {
   isTrackInstrumentEditorPatchRequest,
   isTrackInstrumentEditorRequest,
@@ -130,6 +132,12 @@ import {
   APP_METADATA_GET_CHANNEL,
 } from '../shared/app-metadata';
 import { MidiInputCoordinator } from './midi-input-coordinator';
+import { parseMidiImportBytes } from './midi-import-parser';
+import { MidiImportService } from './midi-import-service';
+import type {
+  MidiImportCommitResult,
+  MidiImportStartResult,
+} from '../shared/midi-import';
 import {
   decideMidiPermission,
   isSameApplicationLocation,
@@ -293,6 +301,21 @@ const appZoomController = createAppZoomController({
   loadSnapshot: () => loadProgramSettings(),
   saveSnapshot: (snapshot) => saveProgramSettings(snapshot),
   getAllWindows: () => BrowserWindow.getAllWindows(),
+});
+
+const midiImportService = new MidiImportService({
+  chooseFile: async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select MIDI File',
+      filters: [{ name: 'MIDI File (*.mid, *.midi)', extensions: ['mid', 'midi'] }],
+      properties: ['openFile'],
+    });
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0];
+  },
+  readFile: (filePath) => fs.readFileSync(filePath),
+  parseFile: parseMidiImportBytes,
+  getProjectSessionId: () => currentProjectSessionId,
 });
 
 interface ProjectOnLoadState {
@@ -1136,6 +1159,9 @@ function rebuildApplicationMenu(): void {
     onOpenExampleProject: () => { void openExampleProject(); },
     onImportCsdFile: () => { void importCsdFile(); },
     onImportOrcSco: () => { void importOrcSco(); },
+    onImportMidiFile: () => {
+      mainWindow?.webContents.send('native-menu-command', { type: 'open-midi-import' });
+    },
     onOpenRecentProject: (filePath) => { void openRecentProject(filePath); },
     onCloseProject: () => { void closeProject(); },
     onRevertProject: () => { void revertProject(); },
@@ -1270,6 +1296,9 @@ function createWindow(): void {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+  });
+  mainWindow.webContents.on('did-start-loading', () => {
+    midiImportService.clearAll();
   });
 
   // MIDI Input coordinator (SPEC 058). Main owns permission policy, cached
@@ -1738,6 +1767,7 @@ async function importCsdFile(): Promise<boolean> {
     currentFilePath = null;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    midiImportService.clearAll();
     getBlueLiveTriggerController().openGate();
     unifiedLibraryService?.publishProjectChanged();
     setActiveMissingAudioSession(null);
@@ -1827,6 +1857,7 @@ async function importOrcSco(): Promise<boolean> {
     currentFilePath = null;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    midiImportService.clearAll();
     getBlueLiveTriggerController().openGate();
     unifiedLibraryService?.publishProjectChanged();
     setActiveMissingAudioSession(null);
@@ -1877,6 +1908,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     currentFilePath = filePath;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    midiImportService.clearAll();
     getBlueLiveTriggerController().openGate();
     unifiedLibraryService?.publishProjectChanged();
     setActiveMissingAudioSession(null);
@@ -2012,6 +2044,7 @@ async function newFile(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  midiImportService.clearAll();
   getBlueLiveTriggerController().openGate();
   unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
@@ -2048,6 +2081,7 @@ async function closeProject(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  midiImportService.clearAll();
   unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
@@ -2625,6 +2659,101 @@ ipcMain.handle('open-file', async () => {
   const loaded = await openFile();
   return loaded ? currentFilePath : null;
 });
+
+ipcMain.handle('start-midi-import', async (): Promise<MidiImportStartResult> => {
+  if (!mainWindow || !hasLoadedProject()) {
+    return { status: 'error', message: 'No project is loaded.' };
+  }
+  if (!(await canReplaceProjectWhileRenderActive())) {
+    return { status: 'cancelled' };
+  }
+  return midiImportService.start();
+});
+
+ipcMain.handle('cancel-midi-import', (_event, token: string): void => {
+  midiImportService.clear(token);
+});
+
+ipcMain.handle(
+  'commit-midi-import',
+  async (_event, token: string, settings: unknown): Promise<MidiImportCommitResult> => {
+    const validation = midiImportService.validateCommit(token, settings);
+    if (!validation.ok) {
+      return { status: 'error', message: validation.message };
+    }
+
+    try {
+      const { data, warnings } = buildMidiImportProject(
+        validation.pending.document,
+        validation.settings,
+        {
+          layerGroupType: normalizeDefaultLayerGroupType(
+            loadProgramSettings().projectDefaults.defaultLayerGroupType,
+          ),
+        },
+      );
+      if (warnings.length > 0) {
+        console.warn(`[MIDI import] ${warnings.length} note-pairing warning(s)`);
+      }
+
+      if (!(await canReplaceProjectWhileRenderActive())) {
+        return { status: 'cancelled' };
+      }
+      if (!(await confirmLibraryDraftTransition('switchProject'))) {
+        return { status: 'cancelled' };
+      }
+      if (!(await confirmSaveBeforeReplace())) {
+        return { status: 'cancelled' };
+      }
+
+      const currentValidation = midiImportService.validateCommit(token, settings);
+      if (!currentValidation.ok) {
+        return { status: 'error', message: currentValidation.message };
+      }
+
+      await stopActiveBlueLiveBeforeProjectReplacement();
+      await disposeJavaRuntimeSession();
+      closeEffectEditorWindowsForOwner('project');
+      closeTrackInstrumentEditorWindows();
+
+      currentData = data;
+      currentFilePath = null;
+      currentProjectRevision = 0;
+      currentProjectSessionId += 1;
+      midiImportService.clearAll();
+      getBlueLiveTriggerController().openGate();
+      unifiedLibraryService?.publishProjectChanged();
+      setActiveMissingAudioSession(null);
+      rebuildApplicationMenu();
+      updateWindowTitle();
+
+      disposeJavaScriptSession();
+      try {
+        javaScriptSession = await createJavaScriptSession();
+      } catch (sessionErr: unknown) {
+        console.warn('[App] Failed to create JavaScript session for imported MIDI:', sessionErr);
+      }
+
+      try {
+        await runProjectOnLoad(data);
+      } catch (sessionErr: unknown) {
+        console.warn('[App] Failed to run processOnLoad for imported MIDI:', sessionErr);
+      }
+
+      buildAndSendProjectLoaded(data, null);
+      const project = getCurrentProjectDocument();
+      if (!project) {
+        return { status: 'error', message: 'MIDI project was installed but could not be read back.' };
+      }
+      return { status: 'installed', project };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: `Failed to import MIDI file: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  },
+);
 
 ipcMain.handle('open-file-path', async (_event, filePath: string) => {
   if (!(await confirmSaveBeforeReplace())) return null;
@@ -3230,6 +3359,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
   }
   if (javaRuntimeDependenciesChanged) {
     currentProjectSessionId += 1;
+    midiImportService.clearAll();
     await disposeJavaRuntimeSession();
   }
   if (anyCanonicalMutation) {

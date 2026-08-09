@@ -12,6 +12,7 @@ import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
 import FTableConverterModal from './components/workbench/panels/tools/FTableConverterModal';
 import CsoundRCEditorModal from './components/workbench/panels/tools/CsoundRCEditorModal';
+import MidiImportDialog from './components/workbench/panels/MidiImportDialog';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
 import { useLibraryStore } from './stores/library-store';
@@ -59,6 +60,7 @@ export default function App(): React.ReactElement {
         <MissingAudioAssetsModal />
         <FTableConverterModal />
         <CsoundRCEditorModal />
+        <MidiImportDialog />
         {transferPreview && (
           <LibraryTransferDialog
             preview={transferPreview}

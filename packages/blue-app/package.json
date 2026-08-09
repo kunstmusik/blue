@@ -56,6 +56,7 @@
     "codemirror": "^6.0.2",
     "dockview": "^5.2.0",
     "lucide-react": "^0.563.0",
+    "midi-file": "1.2.4",
     "node-osc": "^11.6.0",
     "react": "^19.2.4",
     "react-arborist": "^3.5.0",

@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-06
+Auto-generated from all feature plans. Last updated: 2026-08-09
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -80,6 +80,8 @@ Auto-generated from all feature plans. Last updated: 2026-08-06
 - Main-process `BlueData` remains canonical and `.blue` XML remains unchanged; trigger preparations, session generations, selection targets, and shared ScoreObject/Instrument/BSB widget clipboards are transient and explicitly separated (065-blue-live-parity)
 - No new durable storage. Electron main retains canonical `BlueData`; compiled target catalogs, renderer focus/routing mode, and held-note ledgers are transient. `.blue` XML and `program-settings.json` are unchanged. (067-virtual-keyboard-track-targeting-research)
 - TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces (067-virtual-keyboard-track-targeting-research)
+- TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `midi-file` 1.2.4 in Electron main, portable `@blue/data` MIDI pairing/template/project conversion, existing preload IPC and native File menu, TrackLayerGroup/PolyObject score roots, Vitest 4.x (068-midi-file-import)
+- Main-process pending MIDI documents are transient; successful import replaces canonical `BlueData`, starts unsaved, and persists only through the existing `.blue` XML save path. MIDI tempo events populate the existing Score tempo map; no new storage format is introduced. (068-midi-file-import)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -116,5 +118,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 068-midi-file-import: Added native Standard MIDI File import with PPQ format-0/1 parsing, channel-aware mapping, Java-compatible note templates, tempo-map import, project-default Track/SoundObject roots, safe replacement IPC, and XML round-trip coverage
 - 067-virtual-keyboard-track-targeting-research: Added TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces
 - 066-track-layer-foundation: Replaced the runtime AudioLayer model with canonical mixed Track/TrackLayerGroup data, Track-owned instruments, historical migration, Track mixer association, and Track-first new-project defaults; canonical Track XML is TypeScript-only

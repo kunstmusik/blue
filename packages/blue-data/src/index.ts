@@ -107,6 +107,33 @@ export type { SnapValueName, SnapCategory, SnapValueDefinition } from './time/sn
 
 // ─── Score ───
 export { Score } from './score/score';
+export {
+  buildMidiImportProject,
+  createMidiImportStreamKey,
+  expandMidiNoteTemplate,
+  isMidiImportInstrumentIdZero,
+  pairMidiImportStream,
+  validateMidiImportSettings,
+  MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+  MIDI_IMPORT_DEFAULT_TEMPO_BPM,
+  MIDI_IMPORT_PLACEHOLDERS,
+} from './midi/midi-file-import';
+export type {
+  MidiImportConversionResult,
+  MidiImportDivision,
+  MidiImportDocument,
+  MidiImportBuildOptions,
+  MidiImportFormat,
+  MidiImportLayerGroupType,
+  MidiImportNote,
+  MidiImportNoteEvent,
+  MidiImportSettings,
+  MidiImportStream,
+  MidiImportTrack,
+  MidiImportTempoChange,
+  MidiImportWarning,
+  MidiImportWarningCode,
+} from './midi/midi-file-import';
 export { replaceTrackInstrumentP1, applyTrackInstrumentOverride } from './score/score-generation-options';
 export type { ScoreGenerationOptions, InstrumentTargetCollector, InstrumentTargetBehavior, ScoreGenerationOptionsOrSolo } from './score/score-generation-options';
 export type { ScoreObject } from './score/score-object';

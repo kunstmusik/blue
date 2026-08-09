@@ -45,6 +45,11 @@ import type {
   FreezeOperationResult,
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
+import type {
+  MidiImportCommitResult,
+  MidiImportSettings,
+  MidiImportStartResult,
+} from '../../shared/midi-import';
 import type { AppMetadata } from '../../shared/app-metadata';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
@@ -266,6 +271,12 @@ declare global {
       setRecentFiles: (files: string[]) => Promise<string[]>;
       saveFile: () => Promise<string | null>;
       saveFileAs: () => Promise<string | null>;
+      startMidiImport: () => Promise<MidiImportStartResult>;
+      commitMidiImport: (
+        token: string,
+        settings: MidiImportSettings[],
+      ) => Promise<MidiImportCommitResult>;
+      cancelMidiImport: (token: string) => Promise<void>;
       getProjectDocument: () => Promise<ProjectEditorSnapshot | null>;
       updateProjectDocument: (
         patch: ProjectDocumentPatch,

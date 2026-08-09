@@ -16,6 +16,7 @@ export interface ApplicationMenuTemplateOptions {
   onOpenExampleProject: () => void;
   onImportCsdFile: () => void;
   onImportOrcSco: () => void;
+  onImportMidiFile: () => void;
   onOpenRecentProject: (filePath: string) => void;
   onCloseProject: () => void;
   onRevertProject: () => void;
@@ -103,7 +104,7 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { type: 'separator' },
     { label: 'Import CSD File', enabled: hasProject, click: () => options.onImportCsdFile() },
     { label: 'Import from ORC/SCO', enabled: hasProject, click: () => options.onImportOrcSco() },
-    buildPlaceholderItem('Import MIDI File', options, { enabled: hasProject }),
+    { label: 'Import MIDI File', enabled: hasProject, click: () => options.onImportMidiFile() },
     { type: 'separator' },
     { label: 'Close Project', accelerator: options.isDarwin ? 'Shift+Cmd+W' : 'Shift+Ctrl+W', enabled: hasProject, click: () => options.onCloseProject() },
     { label: 'Revert', enabled: options.canRevertProject, click: () => options.onRevertProject() },

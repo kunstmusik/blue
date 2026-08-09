@@ -8,6 +8,7 @@ function createHandlers() {
     onOpenExampleProject: vi.fn(),
     onImportCsdFile: vi.fn(),
     onImportOrcSco: vi.fn(),
+    onImportMidiFile: vi.fn(),
     onOpenRecentProject: vi.fn(),
     onCloseProject: vi.fn(),
     onRevertProject: vi.fn(),
@@ -96,6 +97,24 @@ describe('application menu template', () => {
     expect(handlers.onRenderToDisk).toHaveBeenCalledOnce();
     expect(handlers.onRenderToDiskAndPlay).toHaveBeenCalledOnce();
     expect(handlers.onRenderToDiskAndOpen).toHaveBeenCalledOnce();
+  });
+
+  it('gates MIDI import on a loaded project', () => {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: false,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const fileMenu = getSubmenu(template.find((item) => item.label === 'File'));
+    const importMidiItem = fileMenu.find((item) => item.label === 'Import MIDI File');
+
+    expect(importMidiItem?.enabled).toBe(false);
   });
 
   it('routes the Render/Stop Project item to onRenderStopProject and gates it on project + render state', () => {
@@ -197,6 +216,11 @@ describe('application menu template', () => {
     const importOrcScoItem = fileMenu.find((item) => item.label === 'Import from ORC/SCO');
     importOrcScoItem?.click?.();
     expect(handlers.onImportOrcSco).toHaveBeenCalledTimes(1);
+
+    const importMidiItem = fileMenu.find((item) => item.label === 'Import MIDI File');
+    importMidiItem?.click?.();
+    expect(handlers.onImportMidiFile).toHaveBeenCalledTimes(1);
+    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();

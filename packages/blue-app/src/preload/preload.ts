@@ -32,6 +32,11 @@ import type {
   ScoreObjectImportResult,
 } from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
+import type {
+  MidiImportCommitResult,
+  MidiImportSettings,
+  MidiImportStartResult,
+} from '../shared/midi-import';
 import {
   ABOUT_WINDOW_CLOSE_CHANNEL,
   APP_METADATA_GET_CHANNEL,
@@ -330,6 +335,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
   setRecentFiles: (files: string[]) => ipcRenderer.invoke('set-recent-files', files) as Promise<string[]>,
   saveFile: () => ipcRenderer.invoke('save-file'),
   saveFileAs: () => ipcRenderer.invoke('save-file-as'),
+  startMidiImport: () => ipcRenderer.invoke('start-midi-import') as Promise<MidiImportStartResult>,
+  commitMidiImport: (token: string, settings: MidiImportSettings[]) =>
+    ipcRenderer.invoke('commit-midi-import', token, settings) as Promise<MidiImportCommitResult>,
+  cancelMidiImport: (token: string) => ipcRenderer.invoke('cancel-midi-import', token) as Promise<void>,
 
   // Project document
   getProjectDocument: () =>
