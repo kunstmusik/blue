@@ -187,7 +187,8 @@ function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
     buildPlaceholderItem('Code Repository Editor', options),
-    buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
+    // Scanned Synthesis Matrix Editor - Not being implemented at this time
+    // buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
     buildPlaceholderItem('SoundFont Viewer', options),
     buildPlaceholderItem('Blue Share', options),
