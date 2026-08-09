@@ -6,6 +6,8 @@ function createHandlers() {
     onNewFile: vi.fn(),
     onOpenFile: vi.fn(),
     onOpenExampleProject: vi.fn(),
+    onImportCsdFile: vi.fn(),
+    onImportOrcSco: vi.fn(),
     onOpenRecentProject: vi.fn(),
     onCloseProject: vi.fn(),
     onRevertProject: vi.fn(),
@@ -187,6 +189,14 @@ describe('application menu template', () => {
     const exampleItem = fileMenu.find((item) => item.label === 'Open Example Project...');
     exampleItem?.click?.();
     expect(handlers.onOpenExampleProject).toHaveBeenCalledTimes(1);
+
+    const importCsdItem = fileMenu.find((item) => item.label === 'Import CSD File');
+    importCsdItem?.click?.();
+    expect(handlers.onImportCsdFile).toHaveBeenCalledTimes(1);
+
+    const importOrcScoItem = fileMenu.find((item) => item.label === 'Import from ORC/SCO');
+    importOrcScoItem?.click?.();
+    expect(handlers.onImportOrcSco).toHaveBeenCalledTimes(1);
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();

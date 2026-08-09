@@ -348,7 +348,15 @@ export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 // ─── Utilities ───
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
 export { writeInt, readInt, writeDouble, readDouble, writeBoolean, readBoolean } from './utilities/xml';
-export { applyNoteProcessorChain, setScoreStart, getNotes } from './utilities/score';
+export { applyNoteProcessorChain, setScoreStart, getNotes, getTotalDuration } from './utilities/score';
+export {
+  CSDImportMode,
+  convertCSDtoBlue,
+  convertOrcScoToBlue,
+  getTextBetweenTags,
+  parseCsOrc,
+  parseCsScore,
+} from './utilities/csd-utility';
 export { buildFreezeRenderData } from './utilities/freeze-render-data';
 export type { FreezeRenderDataResult } from './utilities/freeze-render-data';
 

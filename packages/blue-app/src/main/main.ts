@@ -13,7 +13,18 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { BlueData, Effect, Send, BSBGroup, BSBWidget, TrackLayerGroup, setExternalCommandExecutor } from '@blue/data';
+import {
+  BlueData,
+  Effect,
+  Send,
+  BSBGroup,
+  BSBWidget,
+  TrackLayerGroup,
+  setExternalCommandExecutor,
+  convertCSDtoBlue,
+  convertOrcScoToBlue,
+  CSDImportMode,
+} from '@blue/data';
 import { openSettingsWindow } from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
@@ -1123,6 +1134,8 @@ function rebuildApplicationMenu(): void {
     onNewFile: () => { void handleNewFile(); },
     onOpenFile: () => { void handleOpenFile(); },
     onOpenExampleProject: () => { void openExampleProject(); },
+    onImportCsdFile: () => { void importCsdFile(); },
+    onImportOrcSco: () => { void importOrcSco(); },
     onOpenRecentProject: (filePath) => { void openRecentProject(filePath); },
     onCloseProject: () => { void closeProject(); },
     onRevertProject: () => { void revertProject(); },
@@ -1671,6 +1684,175 @@ async function openExampleProject(): Promise<boolean> {
   if (result.canceled || result.filePaths.length === 0) return false;
 
   return openFilePath(result.filePaths[0]);
+}
+
+async function importCsdFile(): Promise<boolean> {
+  if (!mainWindow) return false;
+  if (!hasLoadedProject()) return false;
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
+  if (!(await confirmSaveBeforeReplace())) return false;
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select CSD File',
+    filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
+    properties: ['openFile'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return false;
+  }
+
+  const filePath = result.filePaths[0];
+
+  const modeResult = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: 'CSD Import Method',
+    message: 'How would you like to import the score?',
+    buttons: [
+      'Global Score',
+      'Single Sound Object',
+      'Sound Object per Instrument',
+      'Cancel',
+    ],
+    defaultId: 0,
+    cancelId: 3,
+  });
+
+  if (modeResult.response === 3) {
+    return false;
+  }
+
+  const modeType: CSDImportMode = modeResult.response as CSDImportMode;
+
+  try {
+    const csdText = fs.readFileSync(filePath, 'utf-8');
+    const data = convertCSDtoBlue(csdText, modeType);
+
+    await stopActiveBlueLiveBeforeProjectReplacement();
+    await disposeJavaRuntimeSession();
+    closeEffectEditorWindowsForOwner('project');
+    closeTrackInstrumentEditorWindows();
+
+    currentData = data;
+    currentFilePath = null;
+    currentProjectRevision = 0;
+    currentProjectSessionId += 1;
+    getBlueLiveTriggerController().openGate();
+    unifiedLibraryService?.publishProjectChanged();
+    setActiveMissingAudioSession(null);
+    rebuildApplicationMenu();
+    updateWindowTitle();
+
+    disposeJavaScriptSession();
+    try {
+      javaScriptSession = await createJavaScriptSession();
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to create JavaScript session for imported CSD:', sessionErr);
+    }
+
+    try {
+      await runProjectOnLoad(data);
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to run processOnLoad for imported CSD:', sessionErr);
+    }
+
+    buildAndSendProjectLoaded(data, null);
+    return true;
+  } catch (err: unknown) {
+    const message = `Failed to import ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+    await dialog.showErrorBox('Error Importing File', message);
+    return false;
+  }
+}
+
+async function importOrcSco(): Promise<boolean> {
+  if (!mainWindow) return false;
+  if (!hasLoadedProject()) return false;
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
+  if (!(await confirmSaveBeforeReplace())) return false;
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
+
+  const orcResult = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select ORC File',
+    filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
+    properties: ['openFile'],
+  });
+
+  if (orcResult.canceled || orcResult.filePaths.length === 0) {
+    return false;
+  }
+
+  const scoResult = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select SCO File',
+    filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
+    properties: ['openFile'],
+  });
+
+  if (scoResult.canceled || scoResult.filePaths.length === 0) {
+    return false;
+  }
+
+  const modeResult = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: 'CSD Import Method',
+    message: 'How would you like to import the score?',
+    buttons: [
+      'Global Score',
+      'Single Sound Object',
+      'Sound Object per Instrument',
+      'Cancel',
+    ],
+    defaultId: 0,
+    cancelId: 3,
+  });
+
+  if (modeResult.response === 3) {
+    return false;
+  }
+
+  const modeType: CSDImportMode = modeResult.response as CSDImportMode;
+
+  try {
+    const orcText = fs.readFileSync(orcResult.filePaths[0], 'utf-8');
+    const scoText = fs.readFileSync(scoResult.filePaths[0], 'utf-8');
+    const data = convertOrcScoToBlue(orcText, scoText, modeType);
+
+    await stopActiveBlueLiveBeforeProjectReplacement();
+    await disposeJavaRuntimeSession();
+    closeEffectEditorWindowsForOwner('project');
+    closeTrackInstrumentEditorWindows();
+
+    currentData = data;
+    currentFilePath = null;
+    currentProjectRevision = 0;
+    currentProjectSessionId += 1;
+    getBlueLiveTriggerController().openGate();
+    unifiedLibraryService?.publishProjectChanged();
+    setActiveMissingAudioSession(null);
+    rebuildApplicationMenu();
+    updateWindowTitle();
+
+    disposeJavaScriptSession();
+    try {
+      javaScriptSession = await createJavaScriptSession();
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to create JavaScript session for imported ORC/SCO:', sessionErr);
+    }
+
+    try {
+      await runProjectOnLoad(data);
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to run processOnLoad for imported ORC/SCO:', sessionErr);
+    }
+
+    buildAndSendProjectLoaded(data, null);
+    return true;
+  } catch (err: unknown) {
+    const message = `Failed to import ORC/SCO:\n${err instanceof Error ? err.message : String(err)}`;
+    await dialog.showErrorBox('Error Importing File', message);
+    return false;
+  }
 }
 
 /**

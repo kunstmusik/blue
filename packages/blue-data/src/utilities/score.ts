@@ -29,7 +29,7 @@ export function rebaseScoreToRenderStart(nl: NoteList, renderStart: number): voi
   nl.removeIf((note) => note.getStartTime() < 0);
 }
 
-function getTotalDuration(notes: NoteList): number {
+export function getTotalDuration(notes: NoteList): number {
   let max = 0;
   for (let i = 0; i < notes.length; i++) {
     const n = notes.getNote(i);

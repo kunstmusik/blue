@@ -287,7 +287,7 @@ export class PolyObject extends Array<SoundLayer>
   newLayerAt(index: number): SoundLayer {
     const layer = new SoundLayer();
     layer.setHeightIndex(this._defaultHeightIndex);
-    const insertIdx = Math.min(index, this.length);
+    const insertIdx = index < 0 ? this.length : Math.min(index, this.length);
     this.splice(insertIdx, 0, layer);
     return layer;
   }
