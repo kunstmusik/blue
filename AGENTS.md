@@ -110,6 +110,13 @@ TypeScript 5.x, strict mode: Follow standard conventions
 - Primary reference roots: `~/work/nbprojects/blue/blue-core` and `~/work/nbprojects/blue/blue-ui-core`.
 - When applicable, compare against Java-generated artifacts first, especially `~/work/blue/demo2026/01.csd`, and only keep a TypeScript-side divergence if it is intentional and documented.
 
+## Csound-Embedded Path Convention
+
+- Keep filesystem paths in native OS form when using `fs`, `path`, `os.tmpdir()`, and when passing paths as separate `spawn`/`execFile` arguments.
+- Before embedding a file path in generated Csound source text—CSD, orchestra, score, `sfload`, `diskin2`, or quoted p-fields—convert backslashes to forward slashes. Escape quotes and other Csound string syntax at the same boundary.
+- Tests for Csound text should include a synthetic Windows path such as `C:\\Users\\...` and assert the exact normalized Csound representation. For OS-derived paths, normalize only the expected Csound value: `const expectedCsoundPath = filePath.replaceAll('\\', '/');`
+- Do not compare an OS-native filesystem path directly with a path embedded in Csound text.
+
 ## Constraints
 
 - No `require()` or dynamic `import()` calls in `@blue/data` (esbuild bundle constraint).
