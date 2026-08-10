@@ -247,6 +247,8 @@ import type {
 import { UnifiedLibraryService } from './unified-library/service';
 import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
+import { CodeRepositoryService } from './code-repository/service';
+import { registerCodeRepositoryIpc } from './code-repository/ipc';
 import {
   runPackagedMetadataVerificationAndExit,
   runPackagedRuntimeVerificationAndExit,
@@ -259,6 +261,8 @@ let currentFilePath: string | null = null;
 let currentProjectRevision = 0;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
 let unregisterUnifiedLibraryIpc: (() => void) | null = null;
+let codeRepositoryService: CodeRepositoryService | null = null;
+let unregisterCodeRepositoryIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
 let activeRenderOperationId: string | null = null;
@@ -1219,6 +1223,11 @@ function rebuildApplicationMenu(): void {
         mainWindow.webContents.send('native-menu-command', { type: 'open-csoundrc-editor' });
       }
     },
+    onOpenCodeRepositoryEditor: () => {
+      mainWindow?.webContents.send('native-menu-command', {
+        type: 'open-code-repository-editor',
+      });
+    },
     onFocusPanel: (panelId) => {
       // Route through the workbench window registry so an already-floating panel
       // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).
@@ -1558,6 +1567,11 @@ async function doQuit(): Promise<void> {
     unregisterUnifiedLibraryIpc = null;
     await unifiedLibraryService?.stop();
     unifiedLibraryService = null;
+
+    unregisterCodeRepositoryIpc?.();
+    unregisterCodeRepositoryIpc = null;
+    await codeRepositoryService?.stop();
+    codeRepositoryService = null;
 
     await midiInputCoordinator?.requestShutdown();
 
@@ -3811,6 +3825,19 @@ app.whenReady().then(async () => {
     getWindows: () => BrowserWindow.getAllWindows(),
   });
   await unifiedLibraryService.start();
+  codeRepositoryService = new CodeRepositoryService(
+    path.join(app.getPath('userData'), 'blue_code_repository.sqlite'),
+    {
+      legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
+      migrationStatePath: path.join(app.getPath('userData'), 'blue-code-repository-state.json'),
+    },
+  );
+  unregisterCodeRepositoryIpc = registerCodeRepositoryIpc({
+    ipcMain,
+    service: codeRepositoryService,
+    getWindows: () => BrowserWindow.getAllWindows(),
+  });
+  await codeRepositoryService.start();
   initializeOscControlService();
 
   // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench

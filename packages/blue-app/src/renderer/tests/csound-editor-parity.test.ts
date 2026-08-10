@@ -249,13 +249,16 @@ describe('Csound editor parity menu and clipboard helpers', () => {
       kind: 'disabled',
       label: 'Opcodes',
     });
+    // Custom is disabled when no repository root is provided; Add to Code
+    // Repository is now a command item (disabled without a selection).
     expect(menuItems[4]).toMatchObject({
       kind: 'disabled',
       label: 'Custom',
     });
     expect(menuItems[5]).toMatchObject({
-      kind: 'disabled',
+      kind: 'command',
       label: 'Add to Code Repository',
+      command: 'add-to-code-repository',
     });
   });
 

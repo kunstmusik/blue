@@ -117,6 +117,21 @@ import type {
   ManualLibraryImportExecutionRequest,
   ManualLibraryImportResult,
 } from '../../shared/unified-library';
+import type {
+  CodeRepositoryChangedEvent,
+  CodeRepositoryCommitDraftRequest,
+  CodeRepositoryCreateGroupRequest,
+  CodeRepositoryCreateSnippetRequest,
+  CodeRepositoryDeleteNodeRequest,
+  CodeRepositoryExportFileResult,
+  CodeRepositoryImportFileRequest,
+  CodeRepositoryImportResult,
+  CodeRepositoryMoveNodeRequest,
+  CodeRepositoryResult,
+  CodeRepositorySnapshot,
+  CodeRepositoryStatus,
+  CodeRepositoryUpdateNodeRequest,
+} from '../../shared/code-repository';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -263,6 +278,36 @@ declare global {
       ) => () => void;
       onLibraryChanged: (
         callback: (event: LibraryChangedEvent) => void,
+      ) => () => void;
+
+      // Code Repository
+      getCodeRepositorySnapshot: () => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      getCodeRepositoryStatus: () => Promise<CodeRepositoryStatus>;
+      commitCodeRepositoryDraft: (
+        request: CodeRepositoryCommitDraftRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      createCodeRepositoryGroup: (
+        request: CodeRepositoryCreateGroupRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      createCodeRepositorySnippet: (
+        request: CodeRepositoryCreateSnippetRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      moveCodeRepositoryNode: (
+        request: CodeRepositoryMoveNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      updateCodeRepositoryNode: (
+        request: CodeRepositoryUpdateNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      deleteCodeRepositoryNode: (
+        request: CodeRepositoryDeleteNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      importCodeRepositoryFile: (
+        request: CodeRepositoryImportFileRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositoryImportResult> | null>;
+      exportCodeRepositoryXml: () => Promise<CodeRepositoryResult<CodeRepositoryExportFileResult> | null>;
+      retryCodeRepository: () => Promise<CodeRepositoryResult<CodeRepositoryStatus>>;
+      onCodeRepositoryChanged: (
+        callback: (event: CodeRepositoryChangedEvent) => void,
       ) => () => void;
 
       openFile: () => Promise<string | null>;

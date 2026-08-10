@@ -12,10 +12,12 @@ import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
 import FTableConverterModal from './components/workbench/panels/tools/FTableConverterModal';
 import CsoundRCEditorModal from './components/workbench/panels/tools/CsoundRCEditorModal';
+import CodeRepositoryEditorModal from './components/workbench/panels/code-repository/CodeRepositoryEditorModal';
 import MidiImportDialog from './components/workbench/panels/MidiImportDialog';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
 import { useLibraryStore } from './stores/library-store';
+import { useCodeRepositoryStore } from './stores/code-repository-store';
 
 export default function App(): React.ReactElement {
   useIPCListeners();
@@ -24,7 +26,11 @@ export default function App(): React.ReactElement {
   useOscControlCommands();
   useEffect(() => {
     void useLibraryStore.getState().initialize();
-    return () => useLibraryStore.getState().dispose();
+    useCodeRepositoryStore.getState().initialize();
+    return () => {
+      useLibraryStore.getState().dispose();
+      useCodeRepositoryStore.getState().dispose();
+    };
   }, []);
 
   const activePanel = useUIStore((s) => s.activePanel);
@@ -60,6 +66,7 @@ export default function App(): React.ReactElement {
         <MissingAudioAssetsModal />
         <FTableConverterModal />
         <CsoundRCEditorModal />
+        <CodeRepositoryEditorModal />
         <MidiImportDialog />
         {transferPreview && (
           <LibraryTransferDialog

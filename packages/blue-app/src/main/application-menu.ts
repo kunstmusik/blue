@@ -31,6 +31,7 @@ export interface ApplicationMenuTemplateOptions {
   onOpenEffectsLibrary: () => void;
   onOpenFTableConverter: () => void;
   onOpenCsoundRCEditor: () => void;
+  onOpenCodeRepositoryEditor: () => void;
   onFocusPanel: (panelId: string) => void;
   onToggleDevTools: () => void;
   onResetLayout: () => void;
@@ -189,7 +190,7 @@ function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 
 function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
-    buildPlaceholderItem('Code Repository Editor', options),
+    { label: 'Code Repository Editor', click: () => options.onOpenCodeRepositoryEditor() },
     // Scanned Synthesis Matrix Editor - Not being implemented at this time
     // buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },

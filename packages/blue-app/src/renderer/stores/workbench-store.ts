@@ -1730,6 +1730,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         case 'open-csoundrc-editor':
           window.dispatchEvent(new CustomEvent('blue-open-csoundrc-editor'));
           return;
+        case 'open-code-repository-editor':
+          window.dispatchEvent(new CustomEvent('blue-open-code-repository-editor'));
+          return;
         case 'open-midi-import':
           window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
           return;

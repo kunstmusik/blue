@@ -20,6 +20,10 @@ export default defineConfig(({ command }) => ({
             projectRoot,
             'src/main/unified-library/repository-worker.ts',
           ),
+          'code-repository-worker': resolve(
+            projectRoot,
+            'src/main/code-repository/repository-worker.ts',
+          ),
         },
         vite: {
           build: {

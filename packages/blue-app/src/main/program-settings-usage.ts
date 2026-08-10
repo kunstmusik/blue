@@ -73,9 +73,9 @@ export const MISSING_FEATURES: readonly MissingFeatureDependency[] = [
     id: 'new-user-defaults',
     title: 'New User Defaults',
     affectedSettings: ['general.newUserDefaultsEnabled'],
-    javaWorkflow: 'Java Blue inserts default code repository entries for new users.',
-    currentAppStatus: 'Code repository default insertion workflow is not implemented.',
-    recommendedSpecScope: 'Create a code-repository spec if default code repository insertion is desired.',
+    javaWorkflow: 'Java Blue inserts placeholder code for newly created Code Repository snippets.',
+    currentAppStatus: 'Implemented: the Code Repository editor uses the Java placeholder only when this setting is enabled.',
+    recommendedSpecScope: 'Implemented by SPEC 069; retain this entry only as a Java-parity usage reference.',
   },
   {
     id: 'alpha-marquee-csound-error-warning',
@@ -113,7 +113,7 @@ function entry(
 export function buildUsageMatrix(): UsageParityMatrixEntry[] {
   return [
     entry('general', 'general.workDirectory', 'Work Directory', '(empty)', 'File chooser default start directory', 'blocked-by-missing-feature', { missingFeature: 'general-work-directory-consumers' }),
-    entry('general', 'general.newUserDefaultsEnabled', 'New User Defaults Enabled', 'true', 'Code repository default insertion for new users', 'blocked-by-missing-feature', { missingFeature: 'new-user-defaults' }),
+    entry('general', 'general.newUserDefaultsEnabled', 'New User Defaults Enabled', 'true', 'Code Repository new-snippet placeholder', 'used-by-workflow', { consumerPath: 'renderer: CodeRepositoryEditorModal' }),
     entry('general', 'general.drawAlphaBackgroundOnMarquee', 'Draw Alpha Background on Marquee', 'false', 'Score selection marquee drawing', 'blocked-by-missing-feature', { missingFeature: 'alpha-marquee-csound-error-warning' }),
     entry('general', 'general.messageColorsEnabled', 'Message Colors Enabled', 'false', 'Csound -+msg_color command flag', 'used-by-workflow', { consumerPath: 'main.ts:buildRealtimeEngineOptions' }),
     entry('general', 'general.csoundErrorWarningEnabled', 'Csound Error Warning Enabled', 'true', 'Csound output error warning behavior', 'blocked-by-missing-feature', { missingFeature: 'alpha-marquee-csound-error-warning' }),

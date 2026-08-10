@@ -23,6 +23,7 @@ function createHandlers() {
     onOpenEffectsLibrary: vi.fn(),
     onOpenFTableConverter: vi.fn(),
     onOpenCsoundRCEditor: vi.fn(),
+    onOpenCodeRepositoryEditor: vi.fn(),
     onFocusPanel: vi.fn(),
     onToggleDevTools: vi.fn(),
     onResetLayout: vi.fn(),
@@ -235,6 +236,9 @@ describe('application menu template', () => {
     expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
     const toolsMenu = getSubmenu(template[5]);
+    toolsMenu.find((item) => item.label === 'Code Repository Editor')?.click?.();
+    expect(handlers.onOpenCodeRepositoryEditor).toHaveBeenCalledTimes(1);
+    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
     toolsMenu.find((item) => item.label === 'Effects Library')?.click?.();
     expect(handlers.onOpenEffectsLibrary).toHaveBeenCalledTimes(1);

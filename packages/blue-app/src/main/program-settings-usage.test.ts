@@ -66,6 +66,16 @@ describe('program-settings-usage matrix', () => {
     expect(entry!.consumerPath).toContain('UdoWorkspacePanel');
   });
 
+  it('marks new-user defaults as consumed by the Code Repository workflow', () => {
+    const matrix = buildUsageMatrix();
+    const entry = matrix.find((item) => item.settingKey === 'general.newUserDefaultsEnabled');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('CodeRepositoryEditorModal'),
+    });
+  });
+
   it('keeps used realtime driver settings out of the device discovery dependency', () => {
     const feature = MISSING_FEATURES.find(
       (entry) => entry.id === 'device-discovery-render-method',

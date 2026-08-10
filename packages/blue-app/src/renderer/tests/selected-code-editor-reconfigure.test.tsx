@@ -7,6 +7,8 @@ import { EditorView } from 'codemirror';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import type { JavaBlueCsoundCompletionOptions } from '../components/workbench/panels/editors/editor-adapter-types';
+import { useCodeRepositoryStore } from '../stores/code-repository-store';
+import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -24,20 +26,40 @@ describe('SelectedCodeEditor completion reconfigure', () => {
   let container: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
   let rectSpy: ReturnType<typeof vi.spyOn>;
+  let rangeRectsDescriptor: PropertyDescriptor | undefined;
+  let blueApiDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, left: 0, top: 0, right: 400, bottom: 300, width: 400, height: 300,
       toJSON: () => ({}),
     } as DOMRect);
+    rangeRectsDescriptor = Object.getOwnPropertyDescriptor(Range.prototype, 'getClientRects');
+    blueApiDescriptor = Object.getOwnPropertyDescriptor(window, 'blueAPI');
+    useCodeRepositoryStore.getState().dispose();
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: () => ({ length: 0, item: () => null }),
+    });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
   });
 
   afterEach(() => {
-    act(() => root.unmount());
+    if (root) act(() => root.unmount());
     rectSpy.mockRestore();
+    if (rangeRectsDescriptor) {
+      Object.defineProperty(Range.prototype, 'getClientRects', rangeRectsDescriptor);
+    } else {
+      delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+    }
+    useCodeRepositoryStore.getState().dispose();
+    if (blueApiDescriptor) {
+      Object.defineProperty(window, 'blueAPI', blueApiDescriptor);
+    } else {
+      delete (window as { blueAPI?: unknown }).blueAPI;
+    }
     container.remove();
   });
 
@@ -91,5 +113,90 @@ describe('SelectedCodeEditor completion reconfigure', () => {
 
     const viewAfter = getView();
     expect(viewAfter).toBe(viewBefore);
+  });
+
+  it('updates the rendered Add to Code Repository menu item from the live selection', async () => {
+    renderWith({});
+    const view = getView();
+    expect(view).not.toBeNull();
+    const trigger = container.querySelector('.selected-code-editor') as HTMLElement;
+
+    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 12,
+      clientY: 12,
+    })));
+    let addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    expect(addItem?.getAttribute('data-disabled')).not.toBeNull();
+
+    act(() => {
+      view!.dispatch({ selection: { anchor: 0, head: 5 } });
+    });
+    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 12,
+      clientY: 12,
+    })));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    expect(addItem?.getAttribute('data-disabled')).toBeNull();
+  });
+
+  it('initializes repository snapshots and the local Add flow in a standalone editor', async () => {
+    const snapshot = {
+      root: {
+        id: CODE_REPOSITORY_ROOT_ID,
+        kind: 'root' as const,
+        name: 'Code Repository',
+        parentId: null,
+        order: 0,
+        children: [],
+      },
+      contentRevision: 4,
+      initialized: true,
+    };
+    const onCodeRepositoryChanged = vi.fn(() => () => undefined);
+    const getCodeRepositorySnapshot = vi.fn(async () => ({ ok: true as const, value: snapshot }));
+    Object.defineProperty(window, 'blueAPI', {
+      configurable: true,
+      value: { onCodeRepositoryChanged, getCodeRepositorySnapshot },
+    });
+
+    renderWith({}, 'selected Csound');
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onCodeRepositoryChanged).toHaveBeenCalledOnce();
+    expect(getCodeRepositorySnapshot).toHaveBeenCalledOnce();
+    expect(useCodeRepositoryStore.getState().snapshot).toEqual(snapshot);
+
+    const view = getView()!;
+    const trigger = container.querySelector('.selected-code-editor') as HTMLElement;
+    act(() => view.dispatch({ selection: { anchor: 0, head: 8 } }));
+    act(() => trigger.dispatchEvent(new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 12,
+      clientY: 12,
+    })));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const addItem = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+      .find((item) => item.textContent?.includes('Add to Code Repository'));
+    expect(addItem).toBeTruthy();
+    await act(async () => {
+      addItem!.click();
+      await Promise.resolve();
+    });
+    expect([...document.body.querySelectorAll('h2')]
+      .some((heading) => heading.textContent === 'Add to Code Repository')).toBe(true);
+    expect(document.body.textContent).toContain('selected');
   });
 });

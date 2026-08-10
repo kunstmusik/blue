@@ -216,6 +216,84 @@ import {
   type SearchLibrariesRequest,
   type SearchLibrariesResult,
 } from '../shared/unified-library';
+import {
+  CODE_REPOSITORY_CHANGED_CHANNEL,
+  CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL,
+  CODE_REPOSITORY_CREATE_GROUP_CHANNEL,
+  CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL,
+  CODE_REPOSITORY_DELETE_NODE_CHANNEL,
+  CODE_REPOSITORY_EXPORT_XML_CHANNEL,
+  CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL,
+  CODE_REPOSITORY_GET_STATUS_CHANNEL,
+  CODE_REPOSITORY_IMPORT_FILE_CHANNEL,
+  CODE_REPOSITORY_MOVE_NODE_CHANNEL,
+  CODE_REPOSITORY_RETRY_CHANNEL,
+  CODE_REPOSITORY_UPDATE_NODE_CHANNEL,
+  createCodeRepositoryError,
+  isCodeRepositoryChangedEvent,
+  isCodeRepositoryExportFileResult,
+  isCodeRepositoryImportResult,
+  isCodeRepositoryResult,
+  isCodeRepositorySnapshot,
+  isCodeRepositoryStatus,
+  type CodeRepositoryChangedEvent,
+  type CodeRepositoryCommitDraftRequest,
+  type CodeRepositoryCreateGroupRequest,
+  type CodeRepositoryCreateSnippetRequest,
+  type CodeRepositoryDeleteNodeRequest,
+  type CodeRepositoryExportFileResult,
+  type CodeRepositoryImportFileRequest,
+  type CodeRepositoryImportResult,
+  type CodeRepositoryMoveNodeRequest,
+  type CodeRepositoryResult,
+  type CodeRepositoryStatus,
+  type CodeRepositoryUpdateNodeRequest,
+} from '../shared/code-repository';
+
+function invalidCodeRepositoryResponse<T>(message: string): CodeRepositoryResult<T> {
+  return {
+    ok: false,
+    error: createCodeRepositoryError('storage-unavailable', message, true),
+  };
+}
+
+function invokeCodeRepository<T>(
+  channel: string,
+  isSuccessValue: (value: unknown) => value is T,
+  ...args: readonly unknown[]
+): Promise<CodeRepositoryResult<T>> {
+  return ipcRenderer.invoke(channel, ...args).then(
+    (value: unknown) =>
+      isCodeRepositoryResult(value, isSuccessValue)
+        ? value
+        : invalidCodeRepositoryResponse<T>('Invalid response from the Code Repository service.'),
+    () => invalidCodeRepositoryResponse<T>('Unable to reach the Code Repository service.'),
+  );
+}
+
+function invokeCodeRepositoryStatus(): Promise<CodeRepositoryStatus> {
+  return ipcRenderer.invoke(CODE_REPOSITORY_GET_STATUS_CHANNEL).then(
+    (value: unknown) =>
+      isCodeRepositoryStatus(value)
+        ? value
+        : {
+            available: false,
+            migrationStatus: 'failed',
+            diagnostic: {
+              code: 'storage-unavailable',
+              message: 'Invalid response from the Code Repository service.',
+            },
+          },
+    () => ({
+      available: false,
+      migrationStatus: 'failed',
+      diagnostic: {
+        code: 'storage-unavailable',
+        message: 'Unable to reach the Code Repository service.',
+      },
+    }),
+  );
+}
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // Unified Libraries
@@ -328,6 +406,62 @@ contextBridge.exposeInMainWorld('blueAPI', {
     };
     ipcRenderer.on(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler); };
+  },
+
+  // Code Repository
+  getCodeRepositorySnapshot: () =>
+    invokeCodeRepository(CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL, isCodeRepositorySnapshot),
+  getCodeRepositoryStatus: () => invokeCodeRepositoryStatus(),
+  commitCodeRepositoryDraft: (request: CodeRepositoryCommitDraftRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL, isCodeRepositorySnapshot, request),
+  createCodeRepositoryGroup: (request: CodeRepositoryCreateGroupRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_CREATE_GROUP_CHANNEL, isCodeRepositorySnapshot, request),
+  createCodeRepositorySnippet: (request: CodeRepositoryCreateSnippetRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL, isCodeRepositorySnapshot, request),
+  moveCodeRepositoryNode: (request: CodeRepositoryMoveNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_MOVE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  updateCodeRepositoryNode: (request: CodeRepositoryUpdateNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_UPDATE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  deleteCodeRepositoryNode: (request: CodeRepositoryDeleteNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_DELETE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  importCodeRepositoryFile: (request: CodeRepositoryImportFileRequest) =>
+    ipcRenderer.invoke(CODE_REPOSITORY_IMPORT_FILE_CHANNEL, request).then(
+      (value: unknown) => {
+        if (value === null) return null;
+        return isCodeRepositoryResult(value, isCodeRepositoryImportResult)
+          ? value
+          : invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
+              'Invalid response from the Code Repository service.',
+            );
+      },
+      () => invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
+        'Unable to reach the Code Repository service.',
+      ),
+    ),
+  exportCodeRepositoryXml: () =>
+    ipcRenderer.invoke(CODE_REPOSITORY_EXPORT_XML_CHANNEL).then(
+      (value: unknown) => {
+        if (value === null) return null;
+        return isCodeRepositoryResult(value, isCodeRepositoryExportFileResult)
+          ? value
+          : invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
+              'Invalid response from the Code Repository service.',
+            );
+      },
+      () => invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
+        'Unable to reach the Code Repository service.',
+      ),
+    ),
+  retryCodeRepository: () =>
+    invokeCodeRepository(CODE_REPOSITORY_RETRY_CHANNEL, isCodeRepositoryStatus),
+  onCodeRepositoryChanged: (callback: (event: CodeRepositoryChangedEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, value: unknown) => {
+      if (isCodeRepositoryChangedEvent(value)) callback(value);
+    };
+    ipcRenderer.on(CODE_REPOSITORY_CHANGED_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(CODE_REPOSITORY_CHANGED_CHANNEL, handler);
+    };
   },
 
   // File operations

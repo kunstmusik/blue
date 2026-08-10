@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { basicSetup, EditorView } from 'codemirror';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { syntaxHighlighting, HighlightStyle, type TagStyle } from '@codemirror/language';
@@ -20,6 +20,9 @@ import {
   createBasicTextEditorMenuItems,
   createJavaBlueCsoundEditorMenuItems,
 } from './csound-editor-menu';
+import AddToCodeRepositoryDialog from '../code-repository/AddToCodeRepositoryDialog';
+import { useCodeRepositoryStore } from '../../../../stores/code-repository-store';
+import { getSelectedText } from './csound-editor-actions';
 import type {
   DynamicCsoundCompletionProvider,
   JavaBlueCsoundCompletionOptions,
@@ -143,10 +146,16 @@ export default function SelectedCodeEditor({
   contextMenuItems,
   evaluateCodeEnabled = false,
   onEvaluateCode,
+  codeRepositoryRoot,
+  onAddToCodeRepository,
   onChange,
 }: SelectedCodeEditorProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const [pendingRepositoryText, setPendingRepositoryText] = useState<string | null>(null);
+  const repositorySnapshot = useCodeRepositoryStore((state) => state.snapshot);
+  const effectiveRepositoryRoot = codeRepositoryRoot ?? repositorySnapshot?.root ?? null;
   // Holds the autocompletion extension so it can be reconfigured (updated in
   // place) when completion options change, without destroying the EditorView.
   // Destroying the view on every options change resets the cursor/selection.
@@ -155,6 +164,50 @@ export default function SelectedCodeEditor({
   const syncingFromPropsRef = useRef(false);
   const editorMetadata = getSelectedEditorMetadata(mode);
   const hasEvaluateCodeHandler = Boolean(onEvaluateCode);
+  const usesCsoundMenu = mode === 'orc' || mode === 'sco' || mode === 'csd';
+
+  useEffect(() => {
+    if (!usesCsoundMenu) return;
+    // Standalone Effect and Track Instrument windows do not mount App.tsx.
+    // Store initialization is idempotent, so every editor can safely ensure
+    // the shared repository bridge is connected.
+    useCodeRepositoryStore.getState().initialize();
+  }, [usesCsoundMenu]);
+
+  const handleAddToCodeRepository = useCallback(
+    (text: string) => {
+      if (text.length === 0 || readOnly) return;
+      if (onAddToCodeRepository) {
+        onAddToCodeRepository(text);
+      } else {
+        setPendingRepositoryText(text);
+      }
+    },
+    [onAddToCodeRepository, readOnly],
+  );
+
+  const createRepositorySnippet = useCallback(async (
+    parentId: string,
+    name: string,
+    code: string,
+    expectedRevision: number,
+  ): Promise<{ ok: true } | { ok: false; error: { message: string } }> => {
+    if (!window.blueAPI?.createCodeRepositorySnippet) {
+      return {
+        ok: false,
+        error: { message: 'Code Repository is unavailable' },
+      };
+    }
+    const result = await window.blueAPI.createCodeRepositorySnippet({
+      parentId,
+      name,
+      code,
+      expectedRevision,
+    });
+    if (!result.ok) return { ok: false, error: { message: result.error.message } };
+    await useCodeRepositoryStore.getState().refresh();
+    return { ok: true };
+  }, []);
 
   const evaluateCodeEnabledRef = useRef(evaluateCodeEnabled);
   const onEvaluateCodeRef = useRef(onEvaluateCode);
@@ -195,6 +248,9 @@ export default function SelectedCodeEditor({
         createEvaluateCodeKeymapExtension(mode, () => onEvaluateCodeRef.current, () => evaluateCodeEnabledRef.current),
       ] : []),
       EditorView.updateListener.of((update) => {
+        if (update.selectionSet) {
+          setSelectedText(getSelectedText(update.state));
+        }
         if (!update.docChanged || syncingFromPropsRef.current) {
           return;
         }
@@ -282,28 +338,47 @@ export default function SelectedCodeEditor({
 
   const menuItems =
     contextMenuItems ??
-    (mode === 'text'
-      ? createBasicTextEditorMenuItems({ readOnly })
-      : createJavaBlueCsoundEditorMenuItems({
+    (usesCsoundMenu
+      ? createJavaBlueCsoundEditorMenuItems({
           readOnly,
           showEvaluateCode: Boolean(onEvaluateCode),
           evaluateCodeEnabled,
-        }));
+          repositoryRoot: effectiveRepositoryRoot,
+          addToCodeRepositoryEnabled: !readOnly && selectedText.length > 0,
+        })
+      : createBasicTextEditorMenuItems({ readOnly }));
 
   return (
-    <CsoundEditorContextMenu editorViewRef={viewRef} menuItems={menuItems} onEvaluateCode={onEvaluateCode ? handleEvaluateCode : undefined}>
-      <div
-        className="selected-code-editor selected-code-editor--codemirror"
-        data-editor-kind={editorMetadata.kind}
-        data-editor-language={editorMetadata.languageId}
-        data-udo-scope={`${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`}
-        aria-label={ariaLabel}
+    <>
+      <CsoundEditorContextMenu
+        editorViewRef={viewRef}
+        menuItems={menuItems}
+        onEvaluateCode={onEvaluateCode ? handleEvaluateCode : undefined}
+        onAddToCodeRepository={handleAddToCodeRepository}
       >
-        <div ref={containerRef} className="selected-code-editor__mount" />
-        <pre className="selected-code-editor__ssr-preview" aria-hidden="true">
-          {value || placeholder}
-        </pre>
-      </div>
-    </CsoundEditorContextMenu>
+        <div
+          className="selected-code-editor selected-code-editor--codemirror"
+          data-editor-kind={editorMetadata.kind}
+          data-editor-language={editorMetadata.languageId}
+          data-udo-scope={`${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`}
+          aria-label={ariaLabel}
+        >
+          <div ref={containerRef} className="selected-code-editor__mount" />
+          <pre className="selected-code-editor__ssr-preview" aria-hidden="true">
+            {value || placeholder}
+          </pre>
+        </div>
+      </CsoundEditorContextMenu>
+      {pendingRepositoryText !== null && (
+        <AddToCodeRepositoryDialog
+          root={effectiveRepositoryRoot}
+          initialText={pendingRepositoryText}
+          contentRevision={repositorySnapshot?.contentRevision ?? 0}
+          onClose={() => setPendingRepositoryText(null)}
+          onCreate={createRepositorySnippet}
+          onRetry={() => useCodeRepositoryStore.getState().retry()}
+        />
+      )}
+    </>
   );
 }
