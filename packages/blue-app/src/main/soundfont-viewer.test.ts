@@ -57,7 +57,10 @@ Preset list of "piano.sf2"
       expect(args[0]).toBe('-n');
       expect(cwd).toMatch(/blue-soundfont-/u);
       const csd = fs.readFileSync(args[1]!, 'utf-8');
-      expect(csd).toContain(`sfload "${filePath}"`);
+      // buildSoundFontProbeCsd normalizes backslashes to forward slashes so the
+      // sfload path is valid for Csound on every platform; mirror that here.
+      const normalizedFilePath = filePath.replaceAll('\\', '/');
+      expect(csd).toContain(`sfload "${normalizedFilePath}"`);
       return {
         exitCode: 0,
         stdout: 'Instrument list of "test.sf2"\n  0) Piano\nPreset list of "test.sf2"\n  0) Piano prog:0 bank:0\n',
