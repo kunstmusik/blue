@@ -193,6 +193,6 @@ describe('settings renderer (044)', () => {
     await act(() => { utilButton?.click(); });
 
     expect(container.textContent).toContain('freeze/unfreeze');
-    expect(container.textContent).toContain('SoundFont inspection remains unavailable');
+    expect(container.textContent).toContain('SoundFont inspection');
   });
 });

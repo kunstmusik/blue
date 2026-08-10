@@ -193,7 +193,6 @@ function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIt
     // Scanned Synthesis Matrix Editor - Not being implemented at this time
     // buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
-    buildPlaceholderItem('SoundFont Viewer', options),
     buildPlaceholderItem('Blue Share', options),
     { label: 'FTable Converter', click: () => options.onOpenFTableConverter() },
     { label: '.csound7rc Editor', click: () => options.onOpenCsoundRCEditor() },

@@ -46,6 +46,9 @@ import type {
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type {
+  SoundFontInfo,
+} from '../../shared/soundfont-viewer';
+import type {
   MidiImportCommitResult,
   MidiImportSettings,
   MidiImportStartResult,
@@ -349,6 +352,9 @@ declare global {
       stopPlayback: () => Promise<void>;
       syncFollowPlaybackState: (enabled: boolean) => void;
       getProjectInfo: () => Promise<Record<string, string> | null>;
+      getPathForFile: (file: File) => string;
+      selectSoundFontFile: () => Promise<string | null>;
+      inspectSoundFont: (filePath: string) => Promise<SoundFontInfo>;
       getAppMetadata: () => Promise<AppMetadata>;
       closeAboutWindow: () => Promise<boolean>;
       generateCsdToScreen: () => Promise<void>;

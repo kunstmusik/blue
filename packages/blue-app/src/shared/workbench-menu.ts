@@ -59,6 +59,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryRailLabel: 'Audio Player',
   },
   {
+    id: 'SoundFontViewerTopComponent',
+    title: 'SoundFont Viewer',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'SoundFont Viewer',
+  },
+  {
     id: 'MarkersTopComponent',
     title: 'Markers',
     mode: 'properties',

@@ -43,7 +43,7 @@ export interface RenderExecutionSeam {
     cwd: string,
     onProgress?: (progress: number) => void,
     totalDuration?: number,
-  ): Promise<{ exitCode: number; stderr: string }>;
+  ): Promise<{ exitCode: number; stderr: string; stdout?: string }>;
 }
 
 // ─── Service ───

@@ -20,14 +20,14 @@ export default function UtilitySettings({
   return (
     <SettingsSection
       title="Utility"
-      dependencyNote="The Utility Csound executable and freeze flags are used by SoundObject freeze/unfreeze. SoundFont inspection remains unavailable."
+      dependencyNote="The Utility Csound executable and freeze flags are used by SoundObject freeze/unfreeze and SoundFont inspection."
     >
       <SettingsField
         label="Csound Executable"
         value={settings.csoundExecutable}
         onChange={(value) => set('csoundExecutable', value)}
         placeholder="/usr/local/bin/csound"
-        description="Path to Csound executable for utility operations."
+        description="Path to Csound executable for freeze and SoundFont inspection operations."
       />
 
       <SettingsField

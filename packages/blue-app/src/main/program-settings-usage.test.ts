@@ -52,6 +52,9 @@ describe('program-settings-usage matrix', () => {
     expect(ids).toContain('utility-freeze-unfreeze');
     expect(ids).toContain('soundfont-utility');
     expect(ids).not.toContain('udo-effect-creation-runtime');
+
+    const soundfont = MISSING_FEATURES.find((feature) => feature.id === 'soundfont-utility');
+    expect(soundfont?.currentAppStatus).toContain('Implemented');
   });
 
   it('marks defaultUdoStyle as used by active creation workflows', () => {

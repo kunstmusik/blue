@@ -238,6 +238,7 @@ describe('application menu template', () => {
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
     toolsMenu.find((item) => item.label === 'Effects Library')?.click?.();
     expect(handlers.onOpenEffectsLibrary).toHaveBeenCalledTimes(1);
+    expect(toolsMenu.find((item) => item.label === 'SoundFont Viewer')).toBeFalsy();
 
     const windowMenu = getSubmenu(template[6]);
     expect(windowMenu.map((item) => item.label).slice(0, 5)).toEqual(['Editors', 'Properties', 'Output', 'REPL', 'Toggle Dev Tools']);

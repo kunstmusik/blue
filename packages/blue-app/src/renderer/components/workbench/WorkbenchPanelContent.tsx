@@ -19,6 +19,7 @@ import MarkersPanel from './panels/MarkersPanel';
 import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 import LibrariesPanel from './panels/LibrariesPanel';
 import SoundObjectLibraryPanel from './panels/SoundObjectLibraryPanel';
+import SoundFontViewerPanel from './panels/tools/SoundFontViewerPanel';
 import { LibraryItemEditorPanel } from '../libraries/LibraryItemEditorPanel';
 import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
 
@@ -74,6 +75,8 @@ export default function WorkbenchPanelContent({
       return <MarkersPanel />;
     case 'AudioFilePlayerTopComponent':
       return <AudioPlayerPanel />;
+    case 'SoundFontViewerTopComponent':
+      return <SoundFontViewerPanel />;
     case 'LibrariesTopComponent':
       return <LibrariesPanel />;
     case 'SoundObjectLibraryTopComponent':

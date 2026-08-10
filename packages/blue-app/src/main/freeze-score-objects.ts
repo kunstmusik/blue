@@ -52,7 +52,7 @@ export type StatusCallback = (status: RenderOperationStatus) => void;
 
 export interface FreezeExecutionSeam {
   /** Run Csound with the given args in the project directory. Returns exit code. */
-  runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string }>;
+  runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout?: string }>;
 }
 
 // ─── Filename Allocation ───

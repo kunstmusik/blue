@@ -100,6 +100,10 @@ import {
 import { executeExternalTest } from './external-executor';
 import { createMainExternalExecutor } from './external-command-executor';
 import {
+  inspectSoundFont,
+  type SoundFontExecutionSeam,
+} from './soundfont-viewer';
+import {
   buildAutomationRuntimeTimingContext,
   collectAffectedProjectScoreAutomationParameterIds,
   syncScoreAutomationParametersToEngine,
@@ -126,6 +130,10 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
+import {
+  SOUND_FONT_FILE_SELECT_CHANNEL,
+  SOUND_FONT_INSPECT_CHANNEL,
+} from '../shared/soundfont-viewer';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
 import {
   ABOUT_WINDOW_CLOSE_CHANNEL,
@@ -732,17 +740,24 @@ const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
 function createCsoundExecutionSeam(
   cancellationSignal?: { cancelled: boolean },
   onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
-): RenderExecutionSeam & FreezeExecutionSeam {
+  options: { trackRenderProcess?: boolean } = {},
+): RenderExecutionSeam & FreezeExecutionSeam & SoundFontExecutionSeam {
+  const trackRenderProcess = options.trackRenderProcess ?? true;
+
   return {
-    async runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string }> {
+    async runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout: string }> {
       return new Promise((resolve, reject) => {
         const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
-        activeRenderProcess = child;
+        if (trackRenderProcess) {
+          activeRenderProcess = child;
+        }
 
         let stderr = '';
+        let stdout = '';
         let stderrLineBuffer = '';
         child.stdout?.on('data', (chunk: Buffer) => {
           const text = chunk.toString();
+          stdout += text;
           onOutput?.(text, 'stdout');
         });
         child.stderr?.on('data', (chunk: Buffer) => {
@@ -760,16 +775,20 @@ function createCsoundExecutionSeam(
         });
 
         child.on('error', (err) => {
-          activeRenderProcess = null;
+          if (activeRenderProcess === child) {
+            activeRenderProcess = null;
+          }
           reject(err);
         });
 
         child.on('close', (code) => {
-          activeRenderProcess = null;
+          if (activeRenderProcess === child) {
+            activeRenderProcess = null;
+          }
           if (cancellationSignal?.cancelled) {
-            resolve({ exitCode: -1, stderr: 'Operation cancelled.' });
+            resolve({ exitCode: -1, stderr: 'Operation cancelled.', stdout });
           } else {
-            resolve({ exitCode: code ?? -1, stderr });
+            resolve({ exitCode: code ?? -1, stderr, stdout });
           }
         });
       });
@@ -2842,6 +2861,38 @@ ipcMain.handle('get-project-info', () => {
     nchnls: currentData.getProjectProperties().nchnls,
     version: currentData.getVersion(),
   };
+});
+
+ipcMain.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose SoundFont File',
+    properties: ['openFile'],
+    filters: [
+      { name: 'SoundFont Files', extensions: ['sf2'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+  return result.canceled || result.filePaths.length === 0
+    ? null
+    : result.filePaths[0] ?? null;
+});
+
+ipcMain.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => {
+  if (typeof filePath !== 'string' || filePath.trim().length === 0) {
+    throw new Error('SoundFont file path is required.');
+  }
+
+  const settings = loadProgramSettings();
+  const seam = createCsoundExecutionSeam(undefined, undefined, {
+    trackRenderProcess: false,
+  });
+  return inspectSoundFont(
+    filePath,
+    settings.utility.csoundExecutable,
+    seam,
+    app.getPath('temp'),
+  );
 });
 
 ipcMain.handle('set-recent-files', (_event, files: string[]) => {

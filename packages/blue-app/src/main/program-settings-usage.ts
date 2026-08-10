@@ -50,8 +50,8 @@ export const MISSING_FEATURES: readonly MissingFeatureDependency[] = [
     title: 'SoundFont Utility',
     affectedSettings: ['utility.csoundExecutable'],
     javaWorkflow: 'Java Blue uses the Utility Csound executable for SoundFont file inspection.',
-    currentAppStatus: 'SoundFont utility is not implemented.',
-    recommendedSpecScope: 'Create a soundfont-utility spec if SoundFont inspection is desired.',
+    currentAppStatus: 'Implemented: SoundFont Viewer uses the Utility Csound executable to inspect .sf2 instrument and preset metadata.',
+    recommendedSpecScope: 'Implemented in the SoundFont Viewer Properties panel; retain this entry only as a Java-parity usage reference.',
   },
   {
     id: 'device-discovery-render-method',
@@ -136,7 +136,7 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
     entry('playback', 'playback.followPlayback', 'Score Follows Playback', 'true', 'Auto-scroll follow behavior', 'used-by-workflow', { consumerPath: 'playback-store.ts' }),
     entry('playback', 'playback.followPlaybackOnStart', 'Follow on Render Start', 'true', 'Enable follow on playback start', 'used-by-workflow', { consumerPath: 'playback-store.ts' }),
 
-    entry('utility', 'utility.csoundExecutable', 'Csound Executable', '/usr/local/bin/csound (macOS)', 'Freeze and SoundFont utility Csound', 'used-by-workflow', { consumerPath: 'freeze-score-objects.ts:planFreezeCommand' }),
+    entry('utility', 'utility.csoundExecutable', 'Csound Executable', '/usr/local/bin/csound (macOS)', 'Freeze and SoundFont utility Csound', 'used-by-workflow', { consumerPath: 'freeze-score-objects.ts:planFreezeCommand; soundfont-viewer.ts:inspectSoundFont' }),
     entry('utility', 'utility.freezeFlags', 'Freeze Flags', '-Ado (macOS)', 'SoundObject freeze render flags', 'used-by-workflow', { consumerPath: 'freeze-score-objects.ts:planFreezeCommand' }),
 
     entry('realtimeRender', 'realtimeRender.csoundExecutable', 'Csound Executable', '/usr/local/bin/csound (macOS)', 'Realtime render executable selection', 'used-by-workflow', { consumerPath: 'main.ts:buildRealtimeEngineOptions' }),

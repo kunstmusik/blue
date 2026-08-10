@@ -201,6 +201,7 @@ const AUXILIARY_SEED_DEFINITIONS: Record<
       'LibrariesTopComponent',
       'SoundObjectLibraryTopComponent',
       'AudioFilePlayerTopComponent',
+      'SoundFontViewerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
     ],

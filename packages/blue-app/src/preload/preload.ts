@@ -1,7 +1,7 @@
 /**
  * Preload script — exposes safe IPC bridges to the renderer process.
  */
-import { clipboard, contextBridge, ipcRenderer } from 'electron';
+import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron';
 import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
@@ -32,6 +32,11 @@ import type {
   ScoreObjectImportResult,
 } from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
+import {
+  SOUND_FONT_FILE_SELECT_CHANNEL,
+  SOUND_FONT_INSPECT_CHANNEL,
+  type SoundFontInfo,
+} from '../shared/soundfont-viewer';
 import type {
   MidiImportCommitResult,
   MidiImportSettings,
@@ -410,6 +415,13 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Project info
   getProjectInfo: () => ipcRenderer.invoke('get-project-info'),
+
+  // SoundFont Viewer
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  selectSoundFontFile: () =>
+    ipcRenderer.invoke(SOUND_FONT_FILE_SELECT_CHANNEL) as Promise<string | null>,
+  inspectSoundFont: (filePath: string) =>
+    ipcRenderer.invoke(SOUND_FONT_INSPECT_CHANNEL, filePath) as Promise<SoundFontInfo>,
 
   // About
   getAppMetadata: () => ipcRenderer.invoke(APP_METADATA_GET_CHANNEL) as Promise<AppMetadata>,
