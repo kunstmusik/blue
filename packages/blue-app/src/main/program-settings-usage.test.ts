@@ -3,7 +3,7 @@ import { BlueData } from '@blue/data';
 import {
   buildUsageMatrix,
   buildRealtimeEngineOptions,
-  MISSING_FEATURES,
+  FEATURE_PARITY_NOTES,
 } from './program-settings-usage';
 import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
 
@@ -45,15 +45,15 @@ describe('program-settings-usage matrix', () => {
     expect(keys.has('diskRender.externalOpenCommand')).toBe(true);
   });
 
-  it('has missing feature dependencies', () => {
-    expect(MISSING_FEATURES.length).toBeGreaterThan(0);
-    const ids = MISSING_FEATURES.map((f) => f.id);
+  it('has feature parity notes', () => {
+    expect(FEATURE_PARITY_NOTES.length).toBeGreaterThan(0);
+    const ids = FEATURE_PARITY_NOTES.map((f) => f.id);
     expect(ids).toContain('disk-render-execution');
     expect(ids).toContain('utility-freeze-unfreeze');
     expect(ids).toContain('soundfont-utility');
     expect(ids).not.toContain('udo-effect-creation-runtime');
 
-    const soundfont = MISSING_FEATURES.find((feature) => feature.id === 'soundfont-utility');
+    const soundfont = FEATURE_PARITY_NOTES.find((feature) => feature.id === 'soundfont-utility');
     expect(soundfont?.currentAppStatus).toContain('Implemented');
   });
 
@@ -76,8 +76,17 @@ describe('program-settings-usage matrix', () => {
     });
   });
 
+  it('marks work directory as consumed by file chooser workflows', () => {
+    const entry = buildUsageMatrix().find((item) => item.settingKey === 'general.workDirectory');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('file chooser'),
+    });
+  });
+
   it('keeps used realtime driver settings out of the device discovery dependency', () => {
-    const feature = MISSING_FEATURES.find(
+    const feature = FEATURE_PARITY_NOTES.find(
       (entry) => entry.id === 'device-discovery-render-method',
     );
 
@@ -99,8 +108,8 @@ describe('program-settings-usage matrix', () => {
     }
   });
 
-  it('blocked entries reference valid missing features', () => {
-    const featureIds = new Set(MISSING_FEATURES.map((f) => f.id));
+  it('blocked entries reference valid feature parity notes', () => {
+    const featureIds = new Set(FEATURE_PARITY_NOTES.map((f) => f.id));
     const matrix = buildUsageMatrix();
     const blocked = matrix.filter((e) => e.currentStatus === 'blocked-by-missing-feature');
     for (const entry of blocked) {

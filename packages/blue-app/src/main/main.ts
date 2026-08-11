@@ -91,6 +91,10 @@ import {
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import {
+  normalizeWorkDirectory,
+  resolveWorkDirectoryDefaultPath,
+} from './work-directory';
+import {
   authorizeAudioFilePath,
   readAuthorizedAudioFileBytes,
   registerBlueAudioScheme,
@@ -313,6 +317,14 @@ let currentFollowPlaybackEnabled = true;
 let currentFollowPlaybackOnStartEnabled = true;
 let lastProjectOnLoadState: ProjectOnLoadState | null = null;
 
+function getConfiguredWorkDirectory(): string | undefined {
+  return normalizeWorkDirectory(loadProgramSettings().general.workDirectory);
+}
+
+function getConfiguredWorkDirectoryDefaultPath(fileName?: string): string | undefined {
+  return resolveWorkDirectoryDefaultPath(getConfiguredWorkDirectory(), fileName);
+}
+
 const appZoomController = createAppZoomController({
   loadSnapshot: () => loadProgramSettings(),
   saveSnapshot: (snapshot) => saveProgramSettings(snapshot),
@@ -324,6 +336,7 @@ const midiImportService = new MidiImportService({
     if (!mainWindow) return null;
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Select MIDI File',
+      defaultPath: getConfiguredWorkDirectory(),
       filters: [{ name: 'MIDI File (*.mid, *.midi)', extensions: ['mid', 'midi'] }],
       properties: ['openFile'],
     });
@@ -930,9 +943,12 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 
     if (!props.diskCompleteOverride && !outputFile) {
       const defaultName = props.fileName?.trim() || `${currentFilePath ? path.basename(currentFilePath, '.blue') : 'untitled'}.wav`;
+      const dialogDirectory = currentFilePath
+        ? projectDirectory
+        : (getConfiguredWorkDirectory() ?? projectDirectory);
       const result = await dialog.showSaveDialog(mainWindow!, {
         title: 'Render to Disk',
-        defaultPath: path.join(projectDirectory, defaultName),
+        defaultPath: path.join(dialogDirectory, defaultName),
         filters: [
           { name: 'WAV', extensions: ['wav'] },
           { name: 'AIFF', extensions: ['aif', 'aiff'] },
@@ -1715,6 +1731,7 @@ async function openFile(): Promise<boolean> {
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Blue Project',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue Project', extensions: ['blue'] }],
     properties: ['openFile'],
   });
@@ -1764,7 +1781,7 @@ async function openExampleProject(): Promise<boolean> {
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Example Project',
-    defaultPath: resolution.exists ? resolution.examplesPath : undefined,
+    defaultPath: resolution.exists ? resolution.examplesPath : getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue Project', extensions: ['blue'] }],
     properties: ['openFile'],
   });
@@ -1783,6 +1800,7 @@ async function importCsdFile(): Promise<boolean> {
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Select CSD File',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
     properties: ['openFile'],
   });
@@ -1865,6 +1883,7 @@ async function importOrcSco(): Promise<boolean> {
 
   const orcResult = await dialog.showOpenDialog(mainWindow, {
     title: 'Select ORC File',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
     properties: ['openFile'],
   });
@@ -1875,6 +1894,7 @@ async function importOrcSco(): Promise<boolean> {
 
   const scoResult = await dialog.showOpenDialog(mainWindow, {
     title: 'Select SCO File',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
     properties: ['openFile'],
   });
@@ -2179,7 +2199,7 @@ async function saveFileAs(): Promise<void> {
 
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Save Blue Project',
-    defaultPath: currentFilePath ?? 'project.blue',
+    defaultPath: currentFilePath ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
     filters: [{ name: 'Blue Project', extensions: ['blue'] }],
   });
 
@@ -2211,7 +2231,7 @@ function normalizeBsbSelectedPath(filePath: string): string {
 
 function resolveBsbDefaultPath(currentValue?: string): string | undefined {
   if (!currentValue || currentValue.trim().length === 0) {
-    return currentFilePath ? path.dirname(currentFilePath) : undefined;
+    return currentFilePath ? path.dirname(currentFilePath) : getConfiguredWorkDirectoryDefaultPath();
   }
 
   if (path.isAbsolute(currentValue)) {
@@ -2219,7 +2239,7 @@ function resolveBsbDefaultPath(currentValue?: string): string | undefined {
   }
 
   if (!currentFilePath) {
-    return currentValue;
+    return getConfiguredWorkDirectoryDefaultPath(currentValue);
   }
 
   return path.resolve(path.dirname(currentFilePath), currentValue);
@@ -2702,6 +2722,7 @@ async function generateCsdToDisk(): Promise<void> {
     await saveGeneratedCsdToDisk({
       currentData,
       currentFilePath,
+      workDirectory: getConfiguredWorkDirectory(),
       mainWindow,
       session: javaScriptSession ?? undefined,
       runtimeClient: javaRuntimeClient ?? undefined,
@@ -2724,7 +2745,7 @@ async function chooseMissingAudioReplacement(
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Choose Replacement File',
-    defaultPath: request.currentReplacementPath || undefined,
+    defaultPath: request.currentReplacementPath || getConfiguredWorkDirectoryDefaultPath(),
     properties: ['openFile'],
   });
 
@@ -2982,6 +3003,7 @@ ipcMain.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> 
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Choose SoundFont File',
+    defaultPath: getConfiguredWorkDirectory(),
     properties: ['openFile'],
     filters: [
       { name: 'SoundFont Files', extensions: ['sf2'] },
@@ -3026,6 +3048,7 @@ ipcMain.handle('get-recent-files', () => {
 ipcMain.handle('import-blue-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue UDO File', extensions: ['blueUDO'] }],
     properties: ['openFile'],
   });
@@ -3037,6 +3060,7 @@ ipcMain.handle('import-blue-udo', async () => {
 ipcMain.handle('import-csound-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Csound File', extensions: ['udo', 'orc', 'csd'] }],
     properties: ['openFile'],
   });
@@ -3049,6 +3073,7 @@ ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Import Presets',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Preset file', extensions: ['preset'] }],
     properties: ['openFile'],
   });
@@ -3059,6 +3084,7 @@ ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
 ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue Sound Object File', extensions: ['blueObject', 'xml'] }],
     properties: ['openFile'],
   });
@@ -3098,6 +3124,7 @@ ipcMain.handle('write-csoundrc', (_event, text: string) => {
 ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue UDO File', extensions: ['blueUDO'] }],
   });
   if (result.canceled || !result.filePath) return;
@@ -3109,7 +3136,7 @@ ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
 ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: `${udoName}.udo`,
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${udoName}.udo`),
     filters: [{ name: 'Csound UDO File', extensions: ['udo', 'inc'] }],
   });
   if (result.canceled || !result.filePath) return;
@@ -3123,7 +3150,7 @@ ipcMain.handle('export-preset-file', async (_event, xmlText: string, presetName:
     : 'presets';
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Presets',
-    defaultPath: `${safeName}.preset`,
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${safeName}.preset`),
     filters: [{ name: 'Preset file', extensions: ['preset'] }],
     properties: ['showOverwriteConfirmation'],
   });
@@ -3145,7 +3172,7 @@ ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName
     ? objectName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'SoundObject'
     : 'SoundObject';
   const result = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: `${safeName}.xml`,
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${safeName}.xml`),
     filters: [{ name: 'Blue SoundObject XML', extensions: ['xml'] }],
   });
   if (result.canceled || !result.filePath) return { status: 'cancelled' };
@@ -3591,6 +3618,7 @@ ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Audio File',
+    defaultPath: getConfiguredWorkDirectory(),
     properties: ['openFile'],
     filters: [
       {
@@ -3924,6 +3952,7 @@ app.whenReady().then(async () => {
     ipcMain,
     service: unifiedLibraryService,
     getWindows: () => BrowserWindow.getAllWindows(),
+    getWorkDirectory: getConfiguredWorkDirectory,
   });
   await unifiedLibraryService.start();
   codeRepositoryService = new CodeRepositoryService(
@@ -3937,6 +3966,7 @@ app.whenReady().then(async () => {
     ipcMain,
     service: codeRepositoryService,
     getWindows: () => BrowserWindow.getAllWindows(),
+    getWorkDirectory: getConfiguredWorkDirectory,
   });
   await codeRepositoryService.start();
   initializeOscControlService();

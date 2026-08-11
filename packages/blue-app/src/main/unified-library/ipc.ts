@@ -73,11 +73,13 @@ import {
   isLibraryType,
 } from '../../shared/unified-library';
 import { UnifiedLibraryService } from './service';
+import { resolveWorkDirectoryDefaultPath } from '../work-directory';
 
 export interface UnifiedLibraryIpcOptions {
   readonly ipcMain: IpcMain;
   readonly service: UnifiedLibraryService;
   readonly getWindows: () => readonly BrowserWindow[];
+  readonly getWorkDirectory?: () => string | undefined;
 }
 
 function isStringRecord(value: unknown): value is Readonly<Record<string, string>> {
@@ -89,6 +91,7 @@ function isStringRecord(value: unknown): value is Readonly<Record<string, string
 
 export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): () => void {
   const { ipcMain, service, getWindows } = options;
+  const getWorkDirectory = options.getWorkDirectory;
   ipcMain.handle(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL, () => service.getSnapshot());
   ipcMain.handle(UNIFIED_LIBRARY_BROWSE_CHANNEL, (_event, request: unknown) => (
     isBrowseLibraryRequest(request)
@@ -307,6 +310,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Library XML',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       filters: [{ name: 'Java Blue Library XML', extensions: ['xml'] }],
       properties: ['openFile', 'multiSelections'],
     };
@@ -317,6 +321,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Configuration Directory',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       properties: ['openDirectory'],
     };
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
@@ -342,7 +347,8 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const names = { instrument: 'userInstrumentLibrary.xml', udo: 'udoLibrary.xml', effect: 'effectsLibrary.xml', soundObject: 'soundObjectLibrary.xml' } as const;
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: SaveDialogOptions = {
-      title: `Export ${libraryType} Library`, defaultPath: names[libraryType],
+      title: `Export ${libraryType} Library`,
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), names[libraryType]),
       filters: [{ name: 'Java Blue Library XML', extensions: ['xml'] }],
     };
     const result = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
@@ -377,7 +383,9 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
   ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
-      title: 'Export All Java Blue Libraries', properties: ['openDirectory', 'createDirectory'],
+      title: 'Export All Java Blue Libraries',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
+      properties: ['openDirectory', 'createDirectory'],
     };
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
     if (result.canceled || !result.filePaths[0]) return null;
@@ -410,6 +418,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Restore Unified Library Backup',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
       properties: ['openFile'],
     };

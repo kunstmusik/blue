@@ -6,6 +6,7 @@ import type { BlueData, JavaRuntimeClientContract, JavaScriptSession } from '@bl
 export interface SaveGeneratedCsdToDiskRequest {
   currentData: Pick<BlueData, 'toDiskCSD'> & Partial<Pick<BlueData, 'toDiskCSDAsync'>>;
   currentFilePath?: string | null;
+  workDirectory?: string | null;
   mainWindow: Pick<BrowserWindow, 'webContents'>;
   dialogApi?: Pick<typeof dialog, 'showSaveDialog'>;
   writeFile?: typeof fs.writeFile;
@@ -24,12 +25,13 @@ export async function saveGeneratedCsdToDisk(
   const projectDir = request.currentFilePath
     ? path.dirname(request.currentFilePath)
     : undefined;
+  const defaultDirectory = projectDir ?? (request.workDirectory?.trim() || undefined);
 
   const result = await dialogApi.showSaveDialog(
     request.mainWindow as BrowserWindow,
     {
-      defaultPath: projectDir
-        ? path.join(projectDir, `${projectBase}.csd`)
+      defaultPath: defaultDirectory
+        ? path.join(defaultDirectory, `${projectBase}.csd`)
         : `${projectBase}.csd`,
       filters: [{ name: 'CSD Files', extensions: ['csd'] }],
     },

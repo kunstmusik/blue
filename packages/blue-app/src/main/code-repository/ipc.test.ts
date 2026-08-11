@@ -99,6 +99,7 @@ describe('Code Repository IPC', () => {
       ipcMain,
       service,
       getWindows: () => [],
+      getWorkDirectory: () => '/tmp/work',
     });
     const handler = handlers.get(CODE_REPOSITORY_IMPORT_FILE_CHANNEL)!;
 
@@ -113,6 +114,9 @@ describe('Code Repository IPC', () => {
     await expect(handler({}, { expectedRevision: 0 })).resolves.toMatchObject({
       ok: true,
     });
+    expect(showOpenDialog).toHaveBeenLastCalledWith(
+      expect.objectContaining({ defaultPath: '/tmp/work' }),
+    );
     expect(importFile).toHaveBeenCalledWith('/safe/main-owned/codeRepository.xml', 0);
 
     await expect(handler({}, { expectedRevision: -1 })).resolves.toMatchObject({
@@ -135,6 +139,7 @@ describe('Code Repository IPC', () => {
         ipcMain,
         service,
         getWindows: () => [],
+        getWorkDirectory: () => '/tmp/work',
       });
       const destination = path.join(directory.directory, 'codeRepository.xml');
       showSaveDialog.mockResolvedValueOnce({
@@ -146,6 +151,9 @@ describe('Code Repository IPC', () => {
         ok: true,
         value: { basename: 'codeRepository.xml' },
       });
+      expect(showSaveDialog).toHaveBeenLastCalledWith(
+        expect.objectContaining({ defaultPath: '/tmp/work/codeRepository.xml' }),
+      );
       expect(fs.readFileSync(destination, 'utf8')).toContain('<customAccelerators>');
 
       showSaveDialog.mockResolvedValueOnce({

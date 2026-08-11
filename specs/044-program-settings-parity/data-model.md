@@ -211,11 +211,11 @@
 - `javaUsage`: Java workflow or new-project seed behavior.
 - `currentStatus`: `used-by-workflow`, `used-as-new-project-default`, `app-specific-retained`, `resource-only-stale`, or `blocked-by-missing-feature`.
 - `consumerPath`: optional implementation area.
-- `missingFeature`: optional MissingFeatureDependency id.
+- `missingFeature`: optional FeatureParityNote id.
 
-## Entity: MissingFeatureDependency
+## Entity: FeatureParityNote
 
-**Purpose**: Named follow-up area required to fully consume one or more settings.
+**Purpose**: Developer-facing Java parity note for one or more settings. Notes may document either remaining gaps or completed parity work.
 
 **Fields**:
 - `id`: stable identifier such as `disk-render-execution`.

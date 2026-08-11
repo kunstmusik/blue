@@ -3,7 +3,8 @@ import type { ProgramSettingsSnapshot, UsageParityMatrixEntry } from '../shared/
 
 export type { UsageParityMatrixEntry } from '../shared/program-settings';
 
-export interface MissingFeatureDependency {
+/** Developer-facing Java parity notes; this metadata does not drive feature behavior. */
+export interface FeatureParityNote {
   id: string;
   title: string;
   affectedSettings: string[];
@@ -14,7 +15,7 @@ export interface MissingFeatureDependency {
 
 import { UsageStatus } from '../shared/program-settings';
 
-export const MISSING_FEATURES: readonly MissingFeatureDependency[] = [
+export const FEATURE_PARITY_NOTES: readonly FeatureParityNote[] = [
   {
     id: 'disk-render-execution',
     title: 'Disk Render Execution',
@@ -66,8 +67,8 @@ export const MISSING_FEATURES: readonly MissingFeatureDependency[] = [
     title: 'General Work Directory Consumers',
     affectedSettings: ['general.workDirectory'],
     javaWorkflow: 'Java Blue uses Work Directory as the default start directory for file choosers in import/export flows.',
-    currentAppStatus: 'No import/export file chooser workflows consume work directory yet.',
-    recommendedSpecScope: 'Wire work directory into file chooser defaults as import/export workflows are implemented.',
+    currentAppStatus: 'Implemented: generic import/export and asset file choosers use work directory when no project-specific directory is available.',
+    recommendedSpecScope: 'Implemented in the main-process file chooser consumers; retain this entry only as a Java-parity usage reference.',
   },
   {
     id: 'new-user-defaults',
@@ -112,7 +113,7 @@ function entry(
 
 export function buildUsageMatrix(): UsageParityMatrixEntry[] {
   return [
-    entry('general', 'general.workDirectory', 'Work Directory', '(empty)', 'File chooser default start directory', 'blocked-by-missing-feature', { missingFeature: 'general-work-directory-consumers' }),
+    entry('general', 'general.workDirectory', 'Work Directory', '(empty)', 'File chooser default start directory', 'used-by-workflow', { consumerPath: 'main-process import/export and asset file chooser dialogs' }),
     entry('general', 'general.newUserDefaultsEnabled', 'New User Defaults Enabled', 'true', 'Code Repository new-snippet placeholder', 'used-by-workflow', { consumerPath: 'renderer: CodeRepositoryEditorModal' }),
     entry('general', 'general.drawAlphaBackgroundOnMarquee', 'Draw Alpha Background on Marquee', 'false', 'Score selection marquee drawing', 'blocked-by-missing-feature', { missingFeature: 'alpha-marquee-csound-error-warning' }),
     entry('general', 'general.messageColorsEnabled', 'Message Colors Enabled', 'false', 'Csound -+msg_color command flag', 'used-by-workflow', { consumerPath: 'main.ts:buildRealtimeEngineOptions' }),
@@ -197,8 +198,8 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
   ];
 }
 
-export function getMissingFeatureById(id: string): MissingFeatureDependency | undefined {
-  return MISSING_FEATURES.find((f) => f.id === id);
+export function getFeatureParityNoteById(id: string): FeatureParityNote | undefined {
+  return FEATURE_PARITY_NOTES.find((f) => f.id === id);
 }
 
 export function buildRealtimeEngineOptions(

@@ -37,11 +37,13 @@ import {
   type CodeRepositoryUpdateNodeRequest,
 } from '../../shared/code-repository';
 import { CodeRepositoryService, ServiceError } from './service';
+import { resolveWorkDirectoryDefaultPath } from '../work-directory';
 
 export interface CodeRepositoryIpcOptions {
   readonly ipcMain: IpcMain;
   readonly service: CodeRepositoryService;
   readonly getWindows: () => readonly BrowserWindow[];
+  readonly getWorkDirectory?: () => string | undefined;
 }
 
 function ok<T>(value: T): CodeRepositoryResult<T> {
@@ -131,6 +133,7 @@ function isImportFileRequest(value: unknown): value is CodeRepositoryImportFileR
 
 export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): () => void {
   const { ipcMain, service, getWindows } = options;
+  const getWorkDirectory = options.getWorkDirectory;
 
   const invalid = (message: string) => fail(createCodeRepositoryError('invalid-tree', message, false));
 
@@ -206,6 +209,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const dialogOptions: OpenDialogOptions = {
       title: 'Import Code Repository',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       properties: ['openFile'],
       filters: [{ name: 'Java Blue Code Repository XML', extensions: ['xml'] }],
     };
@@ -239,7 +243,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const dialogOptions: SaveDialogOptions = {
       title: 'Export Code Repository',
-      defaultPath: 'codeRepository.xml',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), 'codeRepository.xml'),
       filters: [{ name: 'Java Blue Code Repository XML', extensions: ['xml'] }],
     };
     const result = owner
