@@ -7,6 +7,7 @@ import {
 import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
+import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createLibraryEditorSession } from './library-editor-fixtures';
 
 const dockviewSnapshot = {
@@ -1126,6 +1127,43 @@ describe('workbench store native menu commands', () => {
       expect(togglePlaySpy).toHaveBeenCalledOnce();
     } finally {
       togglePlaySpy.mockRestore();
+    }
+  });
+
+  it('passes the current score selection to the audition playback path', () => {
+    const auditionScoreObjects = vi
+      .spyOn(usePlaybackStore.getState(), 'auditionScoreObjects')
+      .mockResolvedValue(undefined);
+    useScoreSelectionStore.getState().setSelection(['sobj-1', 'aclp-2']);
+
+    try {
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'audition-score-objects',
+      });
+      expect(auditionScoreObjects).toHaveBeenCalledWith(['sobj-1', 'aclp-2']);
+    } finally {
+      auditionScoreObjects.mockRestore();
+      useScoreSelectionStore.getState().clearSelection();
+    }
+  });
+
+  it('ignores audition commands when the selection is empty or not timeline-owned', () => {
+    const auditionScoreObjects = vi
+      .spyOn(usePlaybackStore.getState(), 'auditionScoreObjects')
+      .mockResolvedValue(undefined);
+
+    try {
+      useScoreSelectionStore.getState().clearSelection();
+      useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
+      useScoreSelectionStore.getState().setSelection([{
+        objectId: 'live-1',
+        editorTarget: { ownerKind: 'blueLive' } as never,
+      }]);
+      useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
+      expect(auditionScoreObjects).not.toHaveBeenCalled();
+    } finally {
+      auditionScoreObjects.mockRestore();
+      useScoreSelectionStore.getState().clearSelection();
     }
   });
 });

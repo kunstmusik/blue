@@ -163,6 +163,7 @@ export { Track as TrackLayer } from './score/track/track';
 export { Track as ScoreTrack } from './score/track/track';
 export type { TrackItem } from './score/track/track';
 export { TrackLayerGroup } from './score/track/track-layer-group';
+export { createAuditionProjectCopy } from './score/audition-project';
 export { TrackLayerGroupProvider } from './score/track/track-layer-group-provider';
 export { generateTrackAudioPlaybackNotes, ensureTrackAudioPlaybackInstrument } from './score/track/track-audio-playback';
 export { FadeType, fadeTypeFromString, fadeTypeToString, fadeTypeToCsound } from './score/audio/fade-type';

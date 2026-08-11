@@ -48,6 +48,18 @@ interface ScoreSelectionState {
   clearClipboard: () => void;
 }
 
+/** Only timeline-owned selections identify objects in the canonical Score. */
+export function hasAuditionEligibleSelection(state: {
+  selectedObjectIds: ReadonlySet<string>;
+  selectedObjectTargets: Readonly<Record<string, ScoreObjectEditorTargetSnapshot>>;
+}): boolean {
+  if (state.selectedObjectIds.size === 0) return false;
+  return [...state.selectedObjectIds].every((objectId) => {
+    const target = state.selectedObjectTargets[objectId];
+    return target === undefined || target.ownerKind === 'timeline';
+  });
+}
+
 function normalizeSelectionEntries(
   entries: ScoreSelectionEntry[] | string[],
 ): ScoreSelectionEntry[] {

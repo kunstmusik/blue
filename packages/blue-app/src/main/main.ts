@@ -111,6 +111,7 @@ import {
 import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
+import { auditionSelectedScoreObjects } from './audition-score-objects';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
@@ -169,6 +170,7 @@ import {
   createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
+  resolveTimelineScoreObjects,
   createNoteProcessorChainSnapshot,
   findMixerChannelById,
   getMixerChannelSnapshotId,
@@ -259,6 +261,7 @@ let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
 let currentFilePath: string | null = null;
 let currentProjectRevision = 0;
+let canAuditionScoreObjects = false;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
 let unregisterUnifiedLibraryIpc: (() => void) | null = null;
 let codeRepositoryService: CodeRepositoryService | null = null;
@@ -298,6 +301,7 @@ let isQuitting = false;
 let pendingQuit = false;
 let shutdownPromise: Promise<void> | null = null;
 let playbackStartPromise: Promise<boolean> | null = null;
+let activeAuditionPlayback = false;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
@@ -896,6 +900,14 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
     return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Another render/freeze operation is already running.' };
   }
 
+  // Java Blue's RenderToDiskUtility stops any active realtime render before
+  // opening the output dialog or starting the disk subprocess. This also
+  // terminates an active ScoreObject audition rather than overlapping audio.
+  await stopPlayback();
+  if (!currentData) {
+    return { ok: false, operationId: '', cancelled: true, outputPath: null, error: 'Project closed.' };
+  }
+
   const projectDirectory = resolveRenderWorkingDirectory(currentFilePath, app.getPath('temp'));
 
   const operationId = requestedOperationId ?? `disk-${Date.now()}`;
@@ -1083,12 +1095,12 @@ function getCurrentProjectDirectory(): string | null {
   return currentFilePath ? path.dirname(currentFilePath) : null;
 }
 
-function getRealtimeSfDirOption(projectDirectory: string | null): string | null {
-  if (!currentData || !projectDirectory) {
+function getRealtimeSfDirOption(data: BlueData, projectDirectory: string | null): string | null {
+  if (!projectDirectory) {
     return null;
   }
 
-  const mediaFolder = currentData.getProjectProperties().mediaFolder?.trim() ?? '';
+  const mediaFolder = data.getProjectProperties().mediaFolder?.trim() ?? '';
   const sfDir = path.isAbsolute(mediaFolder)
     ? mediaFolder
     : path.resolve(projectDirectory, mediaFolder.length > 0 ? mediaFolder : 'media');
@@ -1101,7 +1113,7 @@ function buildRealtimeEngineOptions(data: BlueData, projectDirectory: string | n
   const settings = loadProgramSettings();
   const options = buildRealtimeEngineOptionsFromSettings(data, projectDirectory, settings);
 
-  const sfDirOption = getRealtimeSfDirOption(projectDirectory);
+  const sfDirOption = getRealtimeSfDirOption(data, projectDirectory);
   if (sfDirOption) {
     options.push(sfDirOption);
   }
@@ -1111,6 +1123,13 @@ function buildRealtimeEngineOptions(data: BlueData, projectDirectory: string | n
 
 function hasLoadedProject(): boolean {
   return Boolean(currentData);
+}
+
+function setAuditionScoreObjectAvailability(enabled: boolean): void {
+  const next = Boolean(enabled && currentData);
+  if (canAuditionScoreObjects === next) return;
+  canAuditionScoreObjects = next;
+  rebuildApplicationMenu();
 }
 
 async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
@@ -1172,6 +1191,7 @@ function rebuildApplicationMenu(): void {
   const menu = Menu.buildFromTemplate(buildApplicationMenuTemplate({
     hasLoadedProject: hasLoadedProject(),
     isRenderOperationActive: activeRenderOperationId !== null,
+    canAuditionScoreObjects,
     isDarwin: process.platform === 'darwin',
     recentProjects: getRecentProjectFilesSnapshot(),
     canRevertProject: Boolean(currentFilePath),
@@ -1256,6 +1276,7 @@ function rebuildApplicationMenu(): void {
     onNavigatePreviousMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-previous-marker' }); },
     onRewindToStart: () => { mainWindow?.webContents.send('native-menu-command', { type: 'rewind-to-start' }); },
     onRenderStopProject: () => { mainWindow?.webContents.send('native-menu-command', { type: 'render-stop-project' }); },
+    onAuditionScoreObjects: () => { mainWindow?.webContents.send('native-menu-command', { type: 'audition-score-objects' }); },
     onToggleBlueLive: () => { void blueLiveToggle(); },
     onRecompileBlueLive: () => { void blueLiveRecompile(); },
     onBlueLiveAllNotesOff: () => { void blueLiveAllNotesOff(); },
@@ -1430,6 +1451,10 @@ function createWindow(): void {
   );
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
+    if (activeAuditionPlayback) {
+      activeAuditionPlayback = false;
+      return;
+    }
     if (stopReason !== 'completed') return;
     if (!currentData || !currentData.isLoopRendering()) return;
     void startPlayback();
@@ -1602,6 +1627,7 @@ async function doQuit(): Promise<void> {
     closeEffectEditorWindowsForOwner('library');
     closeTrackInstrumentEditorWindows();
     currentData = null;
+    canAuditionScoreObjects = false;
     currentFilePath = null;
     currentProjectRevision = 0;
     setActiveMissingAudioSession(null);
@@ -1797,6 +1823,7 @@ async function importCsdFile(): Promise<boolean> {
     closeTrackInstrumentEditorWindows();
 
     currentData = data;
+    canAuditionScoreObjects = false;
     currentFilePath = null;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
@@ -1887,6 +1914,7 @@ async function importOrcSco(): Promise<boolean> {
     closeTrackInstrumentEditorWindows();
 
     currentData = data;
+    canAuditionScoreObjects = false;
     currentFilePath = null;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
@@ -1938,6 +1966,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     closeTrackInstrumentEditorWindows();
 
     currentData = data;
+    canAuditionScoreObjects = false;
     currentFilePath = filePath;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
@@ -2074,6 +2103,7 @@ async function newFile(): Promise<void> {
   const settings = loadProgramSettings();
   applyProgramSettingsToNewProject(data, settings);
   currentData = data;
+  canAuditionScoreObjects = false;
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
@@ -2111,6 +2141,7 @@ async function closeProject(): Promise<void> {
   disposeJavaScriptSession();
   await disposeJavaRuntimeSession();
   currentData = null;
+  canAuditionScoreObjects = false;
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
@@ -2381,13 +2412,13 @@ function projectOnLoadStateMatches(
     && current.jythonStateRevision === next.jythonStateRevision;
 }
 
-async function runProjectOnLoad(data: BlueData): Promise<JavaRuntimeClient | null> {
+async function runProjectOnLoad(data: BlueData, force = false): Promise<JavaRuntimeClient | null> {
   const javaRuntimeClient = await ensureJavaRuntimeSession(data);
   const nextState = getProjectOnLoadState(data, javaRuntimeClient);
 
-  if (!projectOnLoadStateMatches(lastProjectOnLoadState, nextState)) {
+  if (force || !projectOnLoadStateMatches(lastProjectOnLoadState, nextState)) {
     await data.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient ?? undefined);
-    lastProjectOnLoadState = nextState;
+    if (!force) lastProjectOnLoadState = nextState;
   }
 
   return javaRuntimeClient;
@@ -2443,13 +2474,21 @@ async function restartPlayback(): Promise<boolean> {
   return playbackStartPromise;
 }
 
-async function startPlayback(): Promise<boolean> {
-  if (!engineBridge || !currentData || !mainWindow) return false;
+async function startPlayback(
+  data: BlueData | null = currentData,
+  forceProcessOnLoad = false,
+): Promise<boolean> {
+  if (!engineBridge || !data || !mainWindow) return false;
+  const canonicalDataAtStart = currentData;
+  const projectSessionAtStart = currentProjectSessionId;
+  activeAuditionPlayback = data !== currentData;
 
   try {
     broadcastToWorkbenchWindows('playback-status', {
       status: 'starting',
       message: 'Preparing playback...',
+      renderStartTime: data.getRenderStartTime(),
+      auditioning: data !== currentData,
     });
 
     mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
@@ -2457,17 +2496,17 @@ async function startPlayback(): Promise<boolean> {
 
     await ensureJavaScriptEngine();
 
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(data, forceProcessOnLoad);
     const render = javaRuntimeClient
-      ? await currentData.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
-      : currentData.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
+      ? await data.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
+      : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
     const csd = render.csdText;
     const parameters = render.parameters;
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
-      currentData.getArrangement(),
-      currentData.getMixer(),
+      data.getArrangement(),
+      data.getMixer(),
       parameters,
-      currentData.getScore(),
+      data.getScore(),
     );
     if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
       console.warn(
@@ -2477,10 +2516,22 @@ async function startPlayback(): Promise<boolean> {
       );
     }
 
-    const automationTiming = buildAutomationRuntimeTimingContext(currentData);
+    const automationTiming = buildAutomationRuntimeTimingContext(data);
 
     const projectDirectory = getCurrentProjectDirectory();
-    const extraRealtimeOptions = buildRealtimeEngineOptions(currentData, projectDirectory);
+    const extraRealtimeOptions = buildRealtimeEngineOptions(data, projectDirectory);
+
+    // Project replacement/close may complete while CSD generation or runtime
+    // setup is awaiting. Never submit an old canonical session or its audition
+    // copy to the engine after that fence has advanced.
+    if (
+      currentProjectSessionId !== projectSessionAtStart
+      || currentData !== canonicalDataAtStart
+      || (data !== currentData && !activeAuditionPlayback)
+    ) {
+      activeAuditionPlayback = false;
+      return false;
+    }
 
     const success = await engineBridge.playCSD(
       csd,
@@ -2491,6 +2542,7 @@ async function startPlayback(): Promise<boolean> {
     );
 
     if (!success) {
+      activeAuditionPlayback = false;
       broadcastToWorkbenchWindows('playback-status', {
         status: 'error',
         message: 'Failed to start playback',
@@ -2500,12 +2552,51 @@ async function startPlayback(): Promise<boolean> {
 
     return true;
   } catch (err: unknown) {
+    activeAuditionPlayback = false;
+    broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+
+async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
+  const data = currentData;
+  const projectSessionAtStart = currentProjectSessionId;
+  if (!data || !engineBridge || !mainWindow || activeRenderOperationId) return false;
+  if (!Array.isArray(objectIds) || objectIds.length === 0 || objectIds.some((id) => typeof id !== 'string')) {
+    setAuditionScoreObjectAvailability(false);
+    return false;
+  }
+
+  const selected = resolveTimelineScoreObjects(data, objectIds);
+  if (!selected) {
+    setAuditionScoreObjectAvailability(false);
+    return false;
+  }
+
+  try {
+    if (playbackStartPromise) await playbackStartPromise;
+    if (currentData !== data || currentProjectSessionId !== projectSessionAtStart) return false;
+
+    return await auditionSelectedScoreObjects(data, selected, {
+      isRenderOperationActive: activeRenderOperationId !== null,
+      isRealtimePlaying: () => engineBridge?.isCurrentlyPlaying() ?? false,
+      stopRealtime: stopPlayback,
+      startRealtime: async (auditionData) => {
+        playbackStartPromise = startPlayback(auditionData, true).finally(() => {
+          playbackStartPromise = null;
+        });
+        return playbackStartPromise;
+      },
+    });
+  } catch (err: unknown) {
+    activeAuditionPlayback = false;
     broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
     return false;
   }
 }
 
 async function stopPlayback(): Promise<void> {
+  activeAuditionPlayback = false;
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
 }
@@ -2750,6 +2841,7 @@ ipcMain.handle(
       closeTrackInstrumentEditorWindows();
 
       currentData = data;
+      canAuditionScoreObjects = false;
       currentFilePath = null;
       currentProjectRevision = 0;
       currentProjectSessionId += 1;
@@ -2844,6 +2936,15 @@ ipcMain.handle('restart-playback', async () => {
 
 ipcMain.handle('stop-playback', async () => {
   await stopPlayback();
+});
+
+ipcMain.handle('audition-score-objects', async (_event, objectIds: unknown) => {
+  return auditionScoreObjects(objectIds);
+});
+
+ipcMain.on('sync-audition-score-object-availability', (event, enabled: unknown) => {
+  if (event.sender !== mainWindow?.webContents) return;
+  setAuditionScoreObjectAvailability(enabled === true);
 });
 
 ipcMain.on('sync-follow-playback-state', (_event, enabled: boolean) => {

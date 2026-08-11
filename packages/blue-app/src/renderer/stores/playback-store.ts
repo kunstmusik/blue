@@ -29,6 +29,7 @@ export type PlaybackTransportAnchor = ToolbarProjectTransportSnapshot;
 
 interface PlaybackState {
   isPlaying: boolean;
+  isAuditioning: boolean;
   status: PlaybackStatus;
   message: string;
   followPlayback: boolean;
@@ -42,9 +43,16 @@ interface PlaybackState {
 interface PlaybackActions {
   togglePlay: () => Promise<void>;
   startFresh: () => Promise<void>;
+  auditionScoreObjects: (objectIds: string[]) => Promise<void>;
+  stopAuditioning: () => Promise<void>;
   stop: () => Promise<void>;
   setPlaying: (playing: boolean) => void;
-  setStatus: (info: { status: string; message?: string }) => void;
+  setStatus: (info: {
+    status: string;
+    message?: string;
+    renderStartTime?: number;
+    auditioning?: boolean;
+  }) => void;
   setError: (error: string) => void;
   acceptPlaybackClock: (snapshot: PlaybackClockSnapshot) => void;
   toggleFollowPlayback: () => void;
@@ -105,6 +113,7 @@ function clonePlaybackTransportAnchor(
 
 export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, get) => ({
   isPlaying: false,
+  isAuditioning: false,
   status: 'idle',
   message: '',
   followPlayback: true,
@@ -127,6 +136,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     try {
       set({
         isPlaying: false,
+        isAuditioning: false,
         status: 'starting',
         message: 'Preparing playback...',
         clock: null,
@@ -153,6 +163,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
       if (get().status === 'starting') {
         set({
           isPlaying: playing,
+          isAuditioning: false,
           status: playing ? 'playing' : 'stopped',
           message: playing ? 'Playing via blue-engine' : '',
           transportAnchor: playing ? transportAnchor : null,
@@ -167,6 +178,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     try {
       set({
         isPlaying: false,
+        isAuditioning: false,
         status: 'starting',
         message: 'Preparing playback...',
         clock: null,
@@ -199,6 +211,42 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     }
   },
 
+  auditionScoreObjects: async (objectIds) => {
+    if (objectIds.length === 0 || get().status === 'starting' || get().status === 'stopping') {
+      return;
+    }
+
+    try {
+      set({
+        isPlaying: false,
+        isAuditioning: true,
+        status: 'starting',
+        message: 'Preparing audition...',
+        clock: null,
+        display: createIdlePlaybackDisplayState(),
+        transportAnchor: null,
+      });
+
+      await useProjectStore.getState().flushPendingPatches();
+      const playing = await window.blueAPI.auditionScoreObjects([...objectIds]);
+      if (get().status === 'starting') {
+        set({
+          isPlaying: playing,
+          isAuditioning: playing,
+          status: playing ? 'playing' : 'stopped',
+          message: playing ? 'Auditioning selected ScoreObjects' : '',
+        });
+      }
+    } catch (err: unknown) {
+      get().setError(err instanceof Error ? err.message : String(err));
+    }
+  },
+
+  stopAuditioning: async () => {
+    if (!get().isAuditioning) return;
+    await get().stop();
+  },
+
   stop: async () => {
     const state = get();
     const shouldShowStopping =
@@ -207,6 +255,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     if (shouldShowStopping) {
       set({
         isPlaying: state.isPlaying,
+        isAuditioning: false,
         status: 'stopping',
         message: 'Stopping playback...',
       });
@@ -217,7 +266,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   setPlaying: (isPlaying) => set({ isPlaying }),
 
-  setStatus: ({ status, message }) => {
+  setStatus: ({ status, message, renderStartTime, auditioning }) => {
     const normalizedStatus: PlaybackStatus =
       status === 'starting' || status === 'playing' || status === 'stopping' || status === 'stopped' || status === 'error'
         ? status
@@ -230,6 +279,17 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         message: message || '',
       };
 
+      if (auditioning !== undefined) {
+        nextState.isAuditioning = auditioning;
+      }
+
+      if (renderStartTime !== undefined && Number.isFinite(renderStartTime)) {
+        nextState.transportAnchor = clonePlaybackTransportAnchor({
+          ...(state.transportAnchor ?? useProjectStore.getState().transport),
+          renderStartTime,
+        });
+      }
+
       if (normalizedStatus === 'starting') {
         nextState.clock = null;
         nextState.display = createIdlePlaybackDisplayState();
@@ -238,10 +298,15 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         normalizedStatus === 'stopped' ||
         normalizedStatus === 'error'
       ) {
+        nextState.isAuditioning = false;
         nextState.clock = null;
         nextState.display = createIdlePlaybackDisplayState();
         nextState.transportAnchor = null;
-      } else if (normalizedStatus === 'playing' && state.transportAnchor === null) {
+      } else if (
+        normalizedStatus === 'playing'
+        && state.transportAnchor === null
+        && nextState.transportAnchor === undefined
+      ) {
         nextState.transportAnchor = clonePlaybackTransportAnchor(
           useProjectStore.getState().transport,
         );
@@ -255,6 +320,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     set({
       status: 'error',
       isPlaying: false,
+      isAuditioning: false,
       message: error,
       clock: null,
       display: createIdlePlaybackDisplayState(),
@@ -336,6 +402,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   reset: () => {
     set({
       isPlaying: false,
+      isAuditioning: false,
       status: 'idle',
       message: '',
       followPlayback: true,

@@ -546,6 +546,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
   restartPlayback: () => ipcRenderer.invoke('restart-playback') as Promise<boolean>,
   stopPlayback: () => ipcRenderer.invoke('stop-playback'),
   syncFollowPlaybackState: (enabled: boolean) => ipcRenderer.send('sync-follow-playback-state', enabled),
+  syncAuditionScoreObjectAvailability: (canAudition: boolean) =>
+    ipcRenderer.send('sync-audition-score-object-availability', canAudition),
+  auditionScoreObjects: (objectIds: string[]) =>
+    ipcRenderer.invoke('audition-score-objects', objectIds) as Promise<boolean>,
 
   // Project info
   getProjectInfo: () => ipcRenderer.invoke('get-project-info'),

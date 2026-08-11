@@ -48,10 +48,11 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
   usePlaybackStore.getState().reset();
   useProjectStore.getState().clearProject();
-  (window as typeof window & { blueAPI?: unknown }).blueAPI = {
+  (window as unknown as { blueAPI?: unknown }).blueAPI = {
     togglePlay: vi.fn().mockResolvedValue(true),
     restartPlayback: vi.fn().mockResolvedValue(true),
     stopPlayback: vi.fn().mockResolvedValue(undefined),
+    auditionScoreObjects: vi.fn().mockResolvedValue(true),
   };
 });
 
@@ -153,5 +154,106 @@ describe('playback store authoritative clock', () => {
       isPlaying: true,
     });
     expect(usePlaybackStore.getState().transportAnchor?.renderStartTime).toBe(12);
+  });
+
+  it('anchors an audition playhead to the audition copy render start', () => {
+    seedProject(0);
+
+    usePlaybackStore.getState().setStatus({
+      status: 'starting',
+      message: 'Preparing audition...',
+      renderStartTime: 12,
+    });
+
+    expect(usePlaybackStore.getState().transportAnchor?.renderStartTime).toBe(12);
+  });
+
+  it('keeps audition identity across engine status updates until playback stops', () => {
+    seedProject(0);
+
+    usePlaybackStore.getState().setStatus({
+      status: 'starting',
+      renderStartTime: 12,
+      auditioning: true,
+    });
+    usePlaybackStore.getState().setStatus({ status: 'playing', message: 'Playing via blue-engine' });
+
+    expect(usePlaybackStore.getState().isAuditioning).toBe(true);
+
+    usePlaybackStore.getState().setStatus({ status: 'stopped', message: 'Playback stopped' });
+
+    expect(usePlaybackStore.getState().isAuditioning).toBe(false);
+  });
+
+  it('flushes pending edits and routes selected IDs through the audition IPC path', async () => {
+    seedProject(12);
+    const flushPendingPatches = vi
+      .spyOn(useProjectStore.getState(), 'flushPendingPatches')
+      .mockResolvedValue(undefined);
+
+    await usePlaybackStore.getState().auditionScoreObjects(['sobj-1', 'aclp-2']);
+
+    const api = window.blueAPI as unknown as {
+      auditionScoreObjects: ReturnType<typeof vi.fn>;
+    };
+    expect(flushPendingPatches).toHaveBeenCalledOnce();
+    expect(api.auditionScoreObjects).toHaveBeenCalledWith(['sobj-1', 'aclp-2']);
+    expect(usePlaybackStore.getState()).toMatchObject({
+      status: 'playing',
+      isPlaying: true,
+      isAuditioning: true,
+      transportAnchor: null,
+    });
+    flushPendingPatches.mockRestore();
+  });
+
+  it('stops only an active audition when the score timeline requests audition cancellation', async () => {
+    seedProject(4);
+    await usePlaybackStore.getState().auditionScoreObjects(['sobj-1']);
+
+    await usePlaybackStore.getState().stopAuditioning();
+
+    const api = window.blueAPI as unknown as { stopPlayback: ReturnType<typeof vi.fn> };
+    expect(api.stopPlayback).toHaveBeenCalledOnce();
+    expect(usePlaybackStore.getState().isAuditioning).toBe(false);
+
+    api.stopPlayback.mockClear();
+    await usePlaybackStore.getState().stopAuditioning();
+    expect(api.stopPlayback).not.toHaveBeenCalled();
+  });
+
+  it('does not stop ordinary project playback when the score timeline requests audition cancellation', async () => {
+    seedProject(4);
+    usePlaybackStore.setState({
+      isPlaying: true,
+      isAuditioning: false,
+      status: 'playing',
+    });
+
+    await usePlaybackStore.getState().stopAuditioning();
+
+    const api = window.blueAPI as unknown as { stopPlayback: ReturnType<typeof vi.fn> };
+    expect(api.stopPlayback).not.toHaveBeenCalled();
+    expect(usePlaybackStore.getState()).toMatchObject({
+      isPlaying: true,
+      isAuditioning: false,
+      status: 'playing',
+    });
+  });
+
+  it('clears audition state when main declines to start the temporary render', async () => {
+    seedProject(4);
+    const api = window.blueAPI as unknown as {
+      auditionScoreObjects: ReturnType<typeof vi.fn>;
+    };
+    api.auditionScoreObjects.mockResolvedValueOnce(false);
+
+    await usePlaybackStore.getState().auditionScoreObjects(['sobj-1']);
+
+    expect(usePlaybackStore.getState()).toMatchObject({
+      status: 'stopped',
+      isPlaying: false,
+      isAuditioning: false,
+    });
   });
 });

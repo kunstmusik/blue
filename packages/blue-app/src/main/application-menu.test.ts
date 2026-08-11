@@ -44,6 +44,7 @@ function createHandlers() {
     onNavigatePreviousMarker: vi.fn(),
     onRewindToStart: vi.fn(),
     onRenderStopProject: vi.fn(),
+    onAuditionScoreObjects: vi.fn(),
     onZoomIn: vi.fn(),
     onZoomOut: vi.fn(),
     onActualSize: vi.fn(),
@@ -170,6 +171,45 @@ describe('application menu template', () => {
     const projectMenu = getSubmenu(template.find((item) => item.label === 'Project'));
 
     expect(projectMenu.find((item) => item.label === 'Render/Stop Project')?.enabled).toBe(false);
+  });
+
+  it('routes Audition ScoreObjects with the Java Blue DS-A accelerator and selection gating', () => {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      canAuditionScoreObjects: true,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const projectMenu = getSubmenu(template.find((item) => item.label === 'Project'));
+    const auditionItem = projectMenu.find((item) => item.label === 'Audition ScoreObjects');
+
+    expect(auditionItem?.accelerator).toBe('CmdOrCtrl+Shift+A');
+    expect(auditionItem?.enabled).toBe(true);
+    auditionItem?.click?.();
+    expect(handlers.onAuditionScoreObjects).toHaveBeenCalledOnce();
+    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
+  });
+
+  it('disables Audition ScoreObjects for an empty selection or busy render', () => {
+    const base = {
+      hasLoadedProject: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...createHandlers(),
+    };
+    const emptySelection = buildApplicationMenuTemplate({ ...base, canAuditionScoreObjects: false });
+    const busy = buildApplicationMenuTemplate({ ...base, canAuditionScoreObjects: true, isRenderOperationActive: true });
+    expect(getSubmenu(emptySelection.find((item) => item.label === 'Project')).find((item) => item.label === 'Audition ScoreObjects')?.enabled).toBe(false);
+    expect(getSubmenu(busy.find((item) => item.label === 'Project')).find((item) => item.label === 'Audition ScoreObjects')?.enabled).toBe(false);
   });
 
   it('builds the macOS Blue menu with the expected order and actions', () => {

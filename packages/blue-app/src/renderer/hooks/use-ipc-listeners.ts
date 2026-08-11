@@ -8,6 +8,7 @@ import { useWorkbenchStore } from '../stores/workbench-store';
 import { useOutputStore } from '../stores/output-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import { hasAuditionEligibleSelection, useScoreSelectionStore } from '../stores/score-selection-store';
 import {
   applyLegacyLayoutMigration,
   createDefaultWindowLayoutSettings,
@@ -34,6 +35,20 @@ export function useIPCListeners(): void {
   const resetBlueLive = useBlueLiveStore((s) => s.reset);
   const hydrateFromProgramSettings = usePlaybackStore((s) => s.hydrateFromProgramSettings);
   const recentFiles = useSettingsStore((s) => s.recentFiles);
+
+  useEffect(() => {
+    const syncAvailability = () => {
+      window.blueAPI?.syncAuditionScoreObjectAvailability?.(
+        hasAuditionEligibleSelection(useScoreSelectionStore.getState()),
+      );
+    };
+    if (!window.blueAPI?.syncAuditionScoreObjectAvailability) return undefined;
+
+    syncAvailability();
+    return useScoreSelectionStore.subscribe((next, previous) => {
+      if (next.selectedObjectIds !== previous.selectedObjectIds) syncAvailability();
+    });
+  }, []);
 
   useEffect(() => {
     if (!window.blueAPI?.getProgramSettings) return;
@@ -122,6 +137,7 @@ export function useIPCListeners(): void {
     const unsubProjectLoaded = window.blueAPI.onProjectLoaded((info) => {
       resetPlayback();
       resetBlueLive();
+      useScoreSelectionStore.getState().clearSelection();
       setProjectInfo(info);
       useProjectStore.getState().setMissingAudioSession(info.missingAudioAssets ?? null);
       setActivePanel('project');
@@ -134,6 +150,7 @@ export function useIPCListeners(): void {
     const unsubProjectClosed = window.blueAPI.onProjectClosed(() => {
       resetPlayback();
       resetBlueLive();
+      useScoreSelectionStore.getState().clearSelection();
       useProjectStore.getState().clearProject();
       setActivePanel('welcome');
     });

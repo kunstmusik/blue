@@ -290,6 +290,7 @@ export default function ScorePanel() {
   const clockElapsed = usePlaybackStore((s) => s.display.elapsedSeconds);
   const followPlayback = usePlaybackStore((s) => s.followPlayback);
   const transportAnchor = usePlaybackStore((s) => s.transportAnchor);
+  const stopAuditioning = usePlaybackStore((s) => s.stopAuditioning);
   const scrollToBeatTarget = useProjectStore((s) => s.scrollToBeatTarget);
   const clearScrollTarget = useProjectStore((s) => s.setScrollToBeatTarget);
 
@@ -648,6 +649,9 @@ export default function ScorePanel() {
                 data-library-autoscroll
                 className="score-timeline-scroll absolute inset-0 overflow-auto"
                 onScroll={handleTimelineScroll}
+                onMouseDownCapture={() => {
+                  void stopAuditioning();
+                }}
                 onMouseDown={handleTimelineBackgroundMouseDown}
               >
                 <LayerPanel

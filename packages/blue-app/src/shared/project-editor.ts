@@ -3024,6 +3024,52 @@ function getScoreObjectId(obj: object): string | undefined {
   return SCORE_OBJECT_ID_MAP.get(obj);
 }
 
+/**
+ * Resolve renderer timeline-selection IDs against the main-owned project graph.
+ * IDs are assigned while creating score snapshots, so this deliberately returns
+ * null for an empty, duplicate, or stale request rather than guessing by index.
+ */
+export function resolveTimelineScoreObjects(
+  data: BlueData,
+  objectIds: readonly string[],
+): BlueDataScoreObject[] | null {
+  if (
+    objectIds.length === 0
+    || objectIds.some((id) => id.trim().length === 0)
+    || new Set(objectIds).size !== objectIds.length
+  ) return null;
+  const wanted = new Set(objectIds);
+  const found = new Map<string, BlueDataScoreObject>();
+
+  const visitPolyObject = (polyObject: PolyObject): void => {
+    for (const layer of polyObject) {
+      for (const object of layer) {
+        const id = getScoreObjectId(object);
+        if (id && wanted.has(id)) found.set(id, object);
+        if (object instanceof PolyObject) visitPolyObject(object);
+      }
+    }
+  };
+
+  for (const layerGroup of data.getScore()) {
+    if (layerGroup instanceof PolyObject) {
+      visitPolyObject(layerGroup);
+      continue;
+    }
+    if (layerGroup instanceof TrackLayerGroup) {
+      for (const track of layerGroup) {
+        for (const object of track) {
+          const id = getScoreObjectId(object);
+          if (id && wanted.has(id)) found.set(id, object);
+        }
+      }
+    }
+  }
+
+  if (found.size !== wanted.size) return null;
+  return objectIds.map((id) => found.get(id)!);
+}
+
 function createScoreTimeStateSnapshot(data: BlueData): ScoreTimeStateSnapshot {
   const ts = data.getScore().getTimeState();
   return {

@@ -396,6 +396,8 @@ declare global {
       restartPlayback: () => Promise<boolean>;
       stopPlayback: () => Promise<void>;
       syncFollowPlaybackState: (enabled: boolean) => void;
+      syncAuditionScoreObjectAvailability: (canAudition: boolean) => void;
+      auditionScoreObjects: (objectIds: string[]) => Promise<boolean>;
       getProjectInfo: () => Promise<Record<string, string> | null>;
       getPathForFile: (file: File) => string;
       selectSoundFontFile: () => Promise<string | null>;
@@ -417,7 +419,14 @@ declare global {
       writeCsoundRC: (text: string) => Promise<{ success: boolean; filePath: string }>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;
       onProjectClosed: (cb: () => void) => () => void;
-      onPlaybackStatus: (cb: (status: { status: string; message?: string }) => void) => () => void;
+      onPlaybackStatus: (
+        cb: (status: {
+          status: string;
+          message?: string;
+          renderStartTime?: number;
+          auditioning?: boolean;
+        }) => void,
+      ) => () => void;
       onPlaybackClock: (cb: (clock: PlaybackClockSnapshot) => void) => () => void;
       onPlaybackError: (cb: (error: string) => void) => () => void;
       onNativeMenuCommand: (cb: (command: NativeMenuCommand) => void) => () => void;

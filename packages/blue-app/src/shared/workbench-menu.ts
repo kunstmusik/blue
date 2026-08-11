@@ -143,6 +143,7 @@ export type NativeMenuCommand =
   | { type: 'navigate-previous-marker' }
   | { type: 'rewind-to-start' }
   | { type: 'render-stop-project' }
+  | { type: 'audition-score-objects' }
   | { type: 'edit-tempo-map' }
   | { type: 'edit-meter-map' }
   | { type: 'show-not-yet-implemented' };

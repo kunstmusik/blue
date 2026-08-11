@@ -10,6 +10,7 @@ import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import {
   applyWindowLayoutUpdate,
@@ -85,6 +86,7 @@ describe('useIPCListeners', () => {
     onPlaybackClock: vi.fn((cb: (clock: unknown) => void) => addListener(listeners, 'playback-clock', cb)),
     onPlaybackError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'playback-error', cb)),
     onNativeMenuCommand: vi.fn((cb: (command: unknown) => void) => addListener(listeners, 'native-menu-command', cb)),
+    syncAuditionScoreObjectAvailability: vi.fn(),
     onSaveComplete: vi.fn((cb: () => void) => addListener(listeners, 'save-complete', cb)),
     onSaveError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'save-error', cb)),
     onEngineOutput: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'engine-output', cb)),
@@ -112,6 +114,7 @@ describe('useIPCListeners', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     useProjectStore.getState().clearProject();
+    useScoreSelectionStore.getState().clearSelection();
     usePlaybackStore.getState().reset();
     useUIStore.getState().setActivePanel('welcome');
     useSettingsStore.setState({
@@ -138,6 +141,7 @@ describe('useIPCListeners', () => {
     container.remove();
     delete (window as Window & { blueAPI?: typeof blueAPI }).blueAPI;
     useLayoutSettingsStore.setState({ layout: null });
+    useScoreSelectionStore.getState().clearSelection();
     globalThis.localStorage?.clear();
     vi.clearAllMocks();
   });
@@ -224,6 +228,23 @@ describe('useIPCListeners', () => {
     });
 
     expect(useProjectStore.getState().missingAudioSession).toBeNull();
+  });
+
+  it('clears score selection and audition availability when the project closes', () => {
+    useScoreSelectionStore.getState().setSelection(['sobj-1']);
+    act(() => {
+      root.render(<Harness />);
+    });
+    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+
+    act(() => {
+      projectClosedHandler();
+    });
+
+    expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
+    expect(blueAPI.syncAuditionScoreObjectAvailability).toHaveBeenLastCalledWith(false);
   });
 
   it('reveals the no-project workbench when a panel is opened from Welcome', () => {

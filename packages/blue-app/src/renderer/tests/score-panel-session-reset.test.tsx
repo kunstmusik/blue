@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
+import { usePlaybackStore } from '../stores/playback-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
@@ -164,10 +165,40 @@ beforeEach(() => {
 afterEach(() => {
   __testClearPendingPatches();
   useProjectStore.getState().clearProject();
+  usePlaybackStore.getState().reset();
   delete (window as any).blueAPI;
 });
 
 describe('ScorePanel session resets', () => {
+  it('stops an active audition on a score-timeline press', () => {
+    seedLoadedProject();
+    const stopAuditioning = vi.fn().mockResolvedValue(undefined);
+    usePlaybackStore.setState({
+      isAuditioning: true,
+      stopAuditioning,
+    } as Partial<ReturnType<typeof usePlaybackStore.getState>>);
+
+    const { container, root } = renderPanel();
+    const timeline = container.querySelector('.score-timeline-scroll') as HTMLDivElement;
+
+    act(() => {
+      timeline.dispatchEvent(new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        clientX: 20,
+        clientY: 20,
+      }));
+    });
+
+    expect(stopAuditioning).toHaveBeenCalledOnce();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('keeps header, timeline, and overlay horizontal offsets synchronized', () => {
     seedLoadedProject();
 

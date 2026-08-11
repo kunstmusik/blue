@@ -60,6 +60,7 @@ import {
 } from './library-editor-store';
 import { usePlaybackStore } from './playback-store';
 import { useProjectStore } from './project-store';
+import { hasAuditionEligibleSelection, useScoreSelectionStore } from './score-selection-store';
 
 interface WorkbenchState {
   api: DockviewApi | null;
@@ -1767,6 +1768,13 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
           // through the existing playback-status broadcast.
           void usePlaybackStore.getState().togglePlay();
           return;
+        case 'audition-score-objects': {
+          const selection = useScoreSelectionStore.getState();
+          if (!hasAuditionEligibleSelection(selection)) return;
+          const objectIds = [...selection.selectedObjectIds];
+          void usePlaybackStore.getState().auditionScoreObjects(objectIds);
+          return;
+        }
         case 'show-not-yet-implemented':
           window.alert('not yet implemented');
           return;

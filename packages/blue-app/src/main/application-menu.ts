@@ -6,6 +6,8 @@ export interface ApplicationMenuTemplateOptions {
   hasLoadedProject: boolean;
   /** Render/freeze is exclusive, so native render commands must not overlap it. */
   isRenderOperationActive?: boolean;
+  /** Renderer selection is non-empty and can be resolved by the main process. */
+  canAuditionScoreObjects?: boolean;
   isDarwin: boolean;
   recentProjects: string[];
   canRevertProject: boolean;
@@ -43,6 +45,7 @@ export interface ApplicationMenuTemplateOptions {
   onNavigatePreviousMarker: () => void;
   onRewindToStart: () => void;
   onRenderStopProject: () => void;
+  onAuditionScoreObjects: () => void;
   onToggleBlueLive: () => void;
   onRecompileBlueLive: () => void;
   onBlueLiveAllNotesOff: () => void;
@@ -134,13 +137,14 @@ function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): Menu
   // Realtime playback is exclusive with disk render/freeze so F9 (realtime) and
   // Shift+F9 (disk render) accelerators never collide on a busy engine.
   const canRealtimePlay = hasProject && !options.isRenderOperationActive;
+  const canAudition = hasProject && Boolean(options.canAuditionScoreObjects) && !options.isRenderOperationActive;
 
   return [
     { label: 'Generate CSD to Screen', accelerator: 'CmdOrCtrl+Shift+G', enabled: hasProject, click: () => options.onGenerateCsdToScreen() },
     { label: 'Generate Realtime CSD to Screen', enabled: hasProject, click: () => options.onGenerateRealtimeCsdToScreen() },
     { label: 'Generate CSD to File', accelerator: 'CmdOrCtrl+G', enabled: hasProject, click: () => options.onGenerateCsdToDisk() },
     { label: 'Render/Stop Project', accelerator: 'F9', enabled: canRealtimePlay, click: () => options.onRenderStopProject() },
-    { label: 'Audition ScoreObjects', enabled: false, click: () => options.onNotYetImplemented() },
+    { label: 'Audition ScoreObjects', accelerator: 'CmdOrCtrl+Shift+A', enabled: canAudition, click: () => options.onAuditionScoreObjects() },
     { type: 'separator' },
     { label: 'Follow playback by scrolling score', type: 'checkbox', checked: options.followPlaybackEnabled, enabled: hasProject, click: () => options.onToggleFollowPlayback() },
     { label: 'Enable follow playback on render start', type: 'checkbox', checked: options.followPlaybackOnStartEnabled, enabled: hasProject, click: () => options.onToggleFollowPlaybackOnStart() },
