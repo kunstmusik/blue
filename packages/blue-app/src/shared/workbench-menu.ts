@@ -24,7 +24,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
   { id: 'UserDefinedOpcodeTopComponent', title: 'UDOs', mode: 'editor', openAtStartup: true, position: 300 },
   { id: 'ProjectPropertiesTopComponent', title: 'Project Properties', mode: 'editor', openAtStartup: true },
   { id: 'BlueLiveTopComponent', title: 'Blue Live', mode: 'editor', openAtStartup: true, position: 800, icon: '🔴' },
-  { id: 'ScratchPadTopComponent', title: 'Scratch Pad', mode: 'editor', openAtStartup: false },
+  {
+    id: 'ScratchPadTopComponent',
+    title: 'Scratch Pad',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'Scratch Pad',
+  },
 
   {
     id: 'SoundObjectPropertiesTopComponent',

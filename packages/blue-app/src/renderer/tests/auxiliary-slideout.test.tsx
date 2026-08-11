@@ -23,6 +23,10 @@ vi.mock('../components/workbench/panels/audio-player/AudioPlayerPanel', () => ({
   default: () => React.createElement('div', { 'data-testid': 'audio-player-panel' }),
 }));
 
+vi.mock('../components/workbench/panels/ScratchPadPanel', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'scratch-pad-panel' }),
+}));
+
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 function renderRoot(element: React.ReactElement): {
@@ -128,10 +132,10 @@ describe('AuxiliarySlideout', () => {
     tree.unmount();
   });
 
-  it('keeps placeholder content for unbuilt stub slideouts', () => {
+  it('renders the Scratch Pad panel', () => {
     const slideout: AuxiliarySlideoutView = {
       edge: 'right',
-      groupInstanceId: 'editor-main',
+      groupInstanceId: 'properties-main',
       panelId: 'ScratchPadTopComponent',
       size: 320,
     };
@@ -145,8 +149,8 @@ describe('AuxiliarySlideout', () => {
       />,
     );
 
-    expect(tree.container.querySelector('[data-testid="output-panel"]')).toBeNull();
-    expect(tree.container.textContent).toContain('Placeholder — to be implemented');
+    expect(tree.container.querySelector('[data-testid="scratch-pad-panel"]')).not.toBeNull();
+    expect(tree.container.textContent).not.toContain('Placeholder — to be implemented');
 
     tree.unmount();
   });

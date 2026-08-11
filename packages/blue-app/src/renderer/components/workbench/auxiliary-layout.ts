@@ -197,6 +197,7 @@ const AUXILIARY_SEED_DEFINITIONS: Record<
     modeId: 'properties',
     defaultEdge: 'right',
     panelIds: [
+      'ScratchPadTopComponent',
       'SoundObjectPropertiesTopComponent',
       'LibrariesTopComponent',
       'SoundObjectLibraryTopComponent',

@@ -10,6 +10,7 @@ import {
 } from '@blue/data';
 import {
   createEmptyProjectEditorSnapshot,
+  createEmptyScratchPadSnapshot,
   createEmptyMixerSnapshot,
   createEmptyScoreDocumentSnapshot,
   createMixerEffectEntrySnapshot,
@@ -48,6 +49,8 @@ import {
   type ProjectLoadedPayload,
   type ProjectEditorSnapshot,
   type ProjectPropertiesSnapshot,
+  type ScratchPadPatch,
+  type ScratchPadSnapshot,
   type MarkerSnapshot,
   type OrchestraPatch,
   type OrchestraSnapshot,
@@ -102,6 +105,7 @@ interface ProjectState {
   orchestra: OrchestraSnapshot;
   mixer: MixerSnapshot;
   projectProperties: ProjectPropertiesSnapshot;
+  scratchPad: ScratchPadSnapshot;
   clojureProject: ClojureProjectSnapshot;
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
@@ -137,6 +141,7 @@ interface ProjectActions {
   updateProjectProperties: (
     patch: Partial<ProjectPropertiesSnapshot>,
   ) => Promise<void>;
+  updateScratchPad: (patch: ScratchPadPatch) => Promise<void>;
   updateClojureProject: (
     clojureProject: ClojureProjectSnapshot,
   ) => Promise<void>;
@@ -665,6 +670,9 @@ function applyProjectInfoToState(
           ? reconcileMixerSnapshotWithArrangement(state.mixer, nextOrchestra)
           : state.mixer,
       projectProperties: nextProjectProperties,
+      scratchPad: info.scratchPad
+        ? { ...info.scratchPad }
+        : state.scratchPad,
       clojureProject: info.clojureProject
         ? cloneClojureProjectSnapshot(info.clojureProject)
         : state.clojureProject,
@@ -742,6 +750,7 @@ function buildInitialState(): ProjectState {
     orchestra: snapshot.orchestra,
     mixer: snapshot.mixer ?? createEmptyMixerSnapshot(),
     projectProperties: snapshot.projectProperties,
+    scratchPad: snapshot.scratchPad ?? createEmptyScratchPadSnapshot(),
     clojureProject: snapshot.clojureProject,
     transport: snapshot.transport,
     tablesText: snapshot.tablesText,
@@ -4084,6 +4093,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       normalizedPatch.orchestra === undefined &&
       normalizedPatch.mixer === undefined &&
       normalizedPatch.clojureProject === undefined &&
+      (!normalizedPatch.scratchPad || Object.keys(normalizedPatch.scratchPad).length === 0) &&
       normalizedPatch.tablesText === undefined &&
       normalizedPatch.projectUdo === undefined &&
       normalizedPatch.blueLive === undefined &&
@@ -4155,6 +4165,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         next.clojureProject = cloneClojureProjectSnapshot(
           normalizedPatch.clojureProject,
         );
+      }
+
+      if (normalizedPatch.scratchPad !== undefined) {
+        next.scratchPad = {
+          ...state.scratchPad,
+          ...normalizedPatch.scratchPad,
+        };
       }
 
       if (normalizedPatch.transport) {
@@ -4255,6 +4272,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
   updateProjectProperties: async (patch) => {
     await get().applyProjectDocumentPatch({ projectProperties: patch });
+  },
+
+  updateScratchPad: async (patch) => {
+    await get().applyProjectDocumentPatch({ scratchPad: patch });
   },
 
   updateClojureProject: async (clojureProject) => {

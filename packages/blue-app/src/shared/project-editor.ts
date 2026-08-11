@@ -87,6 +87,7 @@ import {
   Meter,
   FadeType,
   ObjectBuilder,
+  ScratchPadData,
   getTrackPlacementForSoundObject,
   getNotes as parseScoreNotes,
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
@@ -1424,6 +1425,7 @@ export interface ProjectEditorSnapshot {
   clojureProject: ClojureProjectSnapshot;
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
+  scratchPad: ScratchPadSnapshot;
   projectUdos: UdoDefinitionSnapshot[];
   loaded: boolean;
   blueLive?: BlueLiveProjectSnapshot;
@@ -1453,11 +1455,19 @@ export interface ProjectDocumentPatch {
     meterMapPatch?: MeterMapPatch;
   };
   tablesText?: string;
+  scratchPad?: ScratchPadPatch;
   projectUdo?: ProjectUdoPatch;
   blueLive?: BlueLivePatch;
   midiInput?: MidiInputPatch;
   score?: ScorePatch;
 }
+
+export interface ScratchPadSnapshot {
+  text: string;
+  wordWrapEnabled: boolean;
+}
+
+export type ScratchPadPatch = Partial<ScratchPadSnapshot>;
 
 export interface ProjectDocumentCommitReceipt {
   revision: number;
@@ -2020,6 +2030,7 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
       | 'clojureProject'
       | 'transport'
       | 'tablesText'
+      | 'scratchPad'
       | 'projectUdos'
       | 'loaded'
       | 'blueLive'
@@ -2083,6 +2094,13 @@ export function createEmptyClojureProjectSnapshot(): ClojureProjectSnapshot {
   return createDefaultClojureProjectSnapshot();
 }
 
+export function createEmptyScratchPadSnapshot(): ScratchPadSnapshot {
+  return {
+    text: '',
+    wordWrapEnabled: true,
+  };
+}
+
 export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
   return {
     filePath: null,
@@ -2096,6 +2114,7 @@ export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
     clojureProject: createDefaultClojureProjectSnapshot(),
     transport: createEmptyToolbarProjectTransportSnapshot(),
     tablesText: '',
+    scratchPad: createEmptyScratchPadSnapshot(),
     projectUdos: [],
     loaded: false,
     score: createEmptyScoreDocumentSnapshot(),
@@ -4347,6 +4366,7 @@ export function createProjectEditorSnapshot(
     clojureProject: createClojureProjectSnapshot(data.getClojureProjectData()),
     transport: createToolbarProjectTransportSnapshot(data),
     tablesText: data.getTableSet().getTables(),
+    scratchPad: createScratchPadSnapshot(data.getScratchPadData()),
     projectUdos: createProjectUdoListSnapshot(data),
     loaded: true,
     blueLive: createBlueLiveProjectSnapshot(
@@ -4356,6 +4376,13 @@ export function createProjectEditorSnapshot(
     midiInput: createMidiInputProcessorSnapshot(data.getMidiInputProcessor()),
     score: createScoreDocumentSnapshot(data),
     namedChains: { names: data.getNoteProcessorChainMap().getChainNames() },
+  };
+}
+
+function createScratchPadSnapshot(data: ScratchPadData): ScratchPadSnapshot {
+  return {
+    text: data.getScratchText(),
+    wordWrapEnabled: data.isWordWrapEnabled(),
   };
 }
 
@@ -9529,6 +9556,21 @@ export function applyProjectDocumentPatch(
     changed = true;
   }
 
+  if (patch.scratchPad) {
+    const scratchPad = data.getScratchPadData();
+    if (patch.scratchPad.text !== undefined && scratchPad.getScratchText() !== patch.scratchPad.text) {
+      scratchPad.setScratchText(patch.scratchPad.text);
+      changed = true;
+    }
+    if (
+      patch.scratchPad.wordWrapEnabled !== undefined
+      && scratchPad.isWordWrapEnabled() !== patch.scratchPad.wordWrapEnabled
+    ) {
+      scratchPad.setWordWrapEnabled(patch.scratchPad.wordWrapEnabled);
+      changed = true;
+    }
+  }
+
   if (patch.projectUdo) {
     changed = applyProjectUdoPatch(data, patch.projectUdo) || changed;
   }
@@ -10601,6 +10643,9 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
     patch.blueLive !== undefined &&
     Object.keys(patch.blueLive).length > 0;
   const hasMidiInput = patch.midiInput !== undefined;
+  const hasScratchPad =
+    patch.scratchPad !== undefined &&
+    Object.keys(patch.scratchPad).length > 0;
   const hasMixer = patch.mixer !== undefined;
   const hasScore = patch.score !== undefined && isNonEmptyScorePatch(patch.score);
 
@@ -10614,6 +10659,7 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
     !hasProjectUdo &&
     !hasBlueLive &&
     !hasMidiInput &&
+    !hasScratchPad &&
     !hasMixer &&
     !hasScore
   );

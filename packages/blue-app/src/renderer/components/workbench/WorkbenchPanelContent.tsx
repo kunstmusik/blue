@@ -7,6 +7,7 @@ import GlobalOrchestraPanel from './panels/GlobalOrchestraPanel';
 import GlobalScorePanel from './panels/GlobalScorePanel';
 import OrchestraPanel from './panels/OrchestraPanel';
 import ProjectPropertiesPanel from './panels/ProjectPropertiesPanel';
+import ScratchPadPanel from './panels/ScratchPadPanel';
 import TablesPanel from './panels/TablesPanel';
 import UserDefinedOpcodePanel from './panels/UserDefinedOpcodePanel';
 import VirtualKeyboardPanel from './panels/VirtualKeyboardPanel';
@@ -51,6 +52,8 @@ export default function WorkbenchPanelContent({
       return <GlobalScorePanel />;
     case 'ProjectPropertiesTopComponent':
       return <ProjectPropertiesPanel />;
+    case 'ScratchPadTopComponent':
+      return <ScratchPadPanel />;
     case 'TablesTopComponent':
       return <TablesPanel />;
     case 'UserDefinedOpcodeTopComponent':
