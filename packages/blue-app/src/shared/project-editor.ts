@@ -4237,7 +4237,15 @@ function applyTimebaseUpdate(
   }
 
   if (markerMode != null) {
-    // TODO: Implement marker timebase update when MarkersList is ported to @blue/data
+    const markers = data.getMarkersList();
+    for (let i = 0; i < markers.size(); i++) {
+      const markerTime = markers.getMarkerTimePosition(i);
+      const shouldUpdate = markerMode === 'UPDATE_ALL'
+        || markerTime.getTimeBase() === oldTimeBase;
+      if (shouldUpdate) {
+        markers.setMarkerTimePosition(i, convertTimePosition(markerTime, newTimeBase, context));
+      }
+    }
   }
 }
 

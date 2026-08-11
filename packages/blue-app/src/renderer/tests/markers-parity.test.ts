@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BlueData, Element, MarkersList, TimeBase } from '@blue/data';
 import {
   applyProjectDocumentPatch,
+  applyScoreTimeStatePatch,
   createProjectEditorSnapshot,
 } from '../../shared/project-editor';
 
@@ -73,5 +74,49 @@ describe('Marker parity with Java Blue', () => {
     const markerTime = data.getMarkersList().getMarker(0)?.getElement('time');
     expect(markerTime?.getAttributeValue('type')).toBe('BEATS');
     expect(markerTime?.getTextString('csoundBeats')).toBe('4');
+  });
+
+  it('converts only matching marker timebases when the primary display changes', () => {
+    const data = new BlueData();
+    data.setMarkersList(
+      MarkersList.loadFromXML(
+        Element.parse(
+          '<markersList><marker name="Beats"><time type="BEATS"><csoundBeats>4</csoundBeats></time></marker><marker name="Seconds"><time type="SECONDS"><totalSeconds>2</totalSeconds></time></marker></markersList>',
+        ),
+      ),
+    );
+    data.getScore().getTimeState().setTimeDisplay(TimeBase.BEATS);
+
+    applyScoreTimeStatePatch(data, {
+      primaryTimeDisplay: TimeBase.BBT,
+      scoreObjectUpdateMode: 'UPDATE_MATCHING',
+      markerUpdateMode: 'UPDATE_MATCHING',
+    });
+
+    const context = data.getScore().getTimeContext();
+    expect(data.getMarkersList().getMarkerTimePosition(0).getTimeBase()).toBe(TimeBase.BBT);
+    expect(data.getMarkersList().getMarkerTimePosition(0).toBeats(context)).toBeCloseTo(4);
+    expect(data.getMarkersList().getMarkerTimePosition(1).getTimeBase()).toBe(TimeBase.SECONDS);
+  });
+
+  it('converts all marker timebases when UPDATE_ALL is selected', () => {
+    const data = new BlueData();
+    data.setMarkersList(
+      MarkersList.loadFromXML(
+        Element.parse(
+          '<markersList><marker name="Beats"><time type="BEATS"><csoundBeats>4</csoundBeats></time></marker><marker name="Seconds"><time type="SECONDS"><totalSeconds>2</totalSeconds></time></marker></markersList>',
+        ),
+      ),
+    );
+    data.getScore().getTimeState().setTimeDisplay(TimeBase.BEATS);
+
+    applyScoreTimeStatePatch(data, {
+      primaryTimeDisplay: TimeBase.BBT,
+      scoreObjectUpdateMode: 'UPDATE_MATCHING',
+      markerUpdateMode: 'UPDATE_ALL',
+    });
+
+    expect(data.getMarkersList().getMarkerTimePosition(0).getTimeBase()).toBe(TimeBase.BBT);
+    expect(data.getMarkersList().getMarkerTimePosition(1).getTimeBase()).toBe(TimeBase.BBT);
   });
 });
