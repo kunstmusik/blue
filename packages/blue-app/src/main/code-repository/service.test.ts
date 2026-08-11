@@ -9,12 +9,11 @@ import { CodeRepositoryService } from './service';
 import { createCodeRepositoryTestDirectory } from './test-helpers';
 
 function createService(directory: ReturnType<typeof createCodeRepositoryTestDirectory>) {
-  const client = CodeRepositoryClient.openForTesting(directory.databasePath);
   const service = new CodeRepositoryService(directory.databasePath, {
     // Skip automatic migration so each test controls initialization.
-    clientFactory: () => client,
+    clientFactory: () => CodeRepositoryClient.openForTesting(directory.databasePath),
   });
-  return { service, client };
+  return { service };
 }
 
 function createMigratingService(
