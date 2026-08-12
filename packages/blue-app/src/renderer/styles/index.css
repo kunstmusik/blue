@@ -819,6 +819,20 @@
   user-select: none;
 }
 
+.workbench-context-menu__subtrigger {
+  justify-content: space-between;
+}
+
+.workbench-context-menu__submenu {
+  position: relative;
+}
+
+.workbench-context-menu__submenu-content {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 4px);
+}
+
 .workbench-context-menu__item[data-highlighted],
 .workbench-context-menu__item:not([data-disabled]):hover {
   background: var(--color-app-highlight);

@@ -66,13 +66,13 @@ Move tab-menu command-state calculation into a pure renderer helper that accepts
 
 - Continue adding conditional logic directly to `AuxiliaryTab.tsx`: rejected because context-menu parity has many state combinations and needs focused automated coverage.
 
-## Decision: Implement The NetBeans Tab Popup Shape, Disable Unsupported Submenus
+## Decision: Implement The NetBeans Tab Popup Shape And Auxiliary Submenus
 
-The first-slice menu set includes the Java/NetBeans editor popup commands (Close, Close All, Close Other, Maximize/Restore, Float, Float Group, Dock, Dock Group, Shift Left, Shift Right, Clone, New Document Tab Group, Collapse Document Tab Group) and the view/auxiliary popup commands (Close, Close Group, Maximize/Restore, Minimize, Minimize Group, Float, Float Group, Dock, Dock Group, Move, Shift Left, Shift Right, Move Group, Size Group). Commands with no current Electron submenu equivalent remain visible but disabled.
+The first-slice menu set includes the Java/NetBeans editor popup commands (Close, Close All, Close Other, Maximize/Restore, Float, Float Group, Dock, Dock Group, Shift Left, Shift Right, Clone, New Document Tab Group, Collapse Document Tab Group) and the view/auxiliary popup commands (Close, Close Group, Maximize/Restore, Minimize, Minimize Group, Float, Float Group, Dock, Dock Group, Move, Shift Left, Shift Right, Move Group, Size Group). Auxiliary Move and Move Group use left/right/bottom edge submenus, while Size Group uses larger/smaller/reset actions for docked groups. Moving auxiliary content transfers the selected panel or group of panels into a derived target-edge group; the seeded Properties and Output groups remain stable default-mode anchors for later reveals and reset.
 
-**Rationale**: The review identified that `Float Group`, `Dock Group`, Clone, New Document Tab Group, Collapse Document Tab Group, Close Group, Minimize, and Minimize Group are part of the actual NetBeans popup surface. Rendering them with accurate enablement avoids silent parity gaps while still keeping unsupported submenu-style actions honest.
+**Rationale**: The review identified that `Float Group`, `Dock Group`, Clone, New Document Tab Group, Collapse Document Tab Group, Close Group, Minimize, and Minimize Group are part of the actual NetBeans popup surface. Rendering them with accurate enablement, alongside the auxiliary edge and size submenus, avoids silent parity gaps.
 
 **Alternatives considered**:
 
-- Implement every discovered NetBeans submenu now: rejected for Move, Move Group, and Size Group because those are submenu/dialog flows and existing Dockview drag/resize behavior already covers the primary workflow.
+- Implement every discovered NetBeans submenu now: retained as a focused auxiliary-only implementation because Dockview drag/resize remains the direct manipulation path while the commands provide the missing menu workflow. The transfer semantics follow NetBeans mode drops without mutating the app's stable seeded default-mode anchors.
 - Omit extras without tracking: rejected because parity gaps should be explicit.

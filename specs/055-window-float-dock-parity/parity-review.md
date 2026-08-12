@@ -15,6 +15,7 @@
 | Tab context menu (NetBeans editor/view popup shape)          | Implemented         | `computeTabCommandState` drives Radix tab menus and the delegated header menu.                                                                                 |
 | Clone / New Document Tab Group / Collapse Document Tab Group | Implemented/visible | Clone is visible disabled; New/Collapse document group commands are implemented for eligible editor groups.                                                    |
 | Close Group / Minimize / Minimize Group                      | Implemented         | View/auxiliary popup commands route through existing workbench auxiliary layout actions.                                                                       |
+| Move / Move Group / Size Group                               | Implemented         | Auxiliary tab and header menus transfer panels/groups to derived left/right/bottom edge groups while preserving seeded Properties/Output defaults; Size Group changes the controlled pane by fixed increments or restores its default. |
 | Auxiliary panels floatable                                   | Implemented         | `isFloatable` defaults true (FR-014).                                                                                                                          |
 | Layout persistence (v7 envelope)                             | Implemented         | `floatingOrigins` and `closedPanelOrigins` round-trip; Dockview `popoutGroups` serialize in `api.toJSON()` (FR-021).                                           |
 | Close → Window-menu reopen                                   | Implemented         | A close origin restores editor group/index or an auxiliary edge, size, presentation, and derived group; default placement is used only without a valid origin. |
@@ -28,8 +29,8 @@
 
 | Command family          | First-slice status                | Rationale                                                                                         |
 | ----------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Move / keyboard drag    | Visible disabled for menu command | Existing Dockview drag already supports panel moving; submenu-style menu parity remains deferred. |
-| Move Group / Size Group | Visible disabled                  | Existing Dockview drag/resize covers the core workflow; submenu/dialog parity remains deferred.   |
+| Move / keyboard drag    | Implemented for auxiliary edge targets | Existing Dockview drag remains the direct manipulation path; seeded default modes remain stable when content is transferred. |
+| Move Group / Size Group | Implemented                         | Auxiliary menu subcommands transfer the group's panels between edges or resize its controlled pane. |
 | Dock to Editor          | Omitted                           | Not evidenced in Java Blue tab menu for this context.                                             |
 | New Window / duplicate  | Omitted                           | Distinct from Float (Float moves the group, does not duplicate); intentionally not provided.      |
 

@@ -83,6 +83,9 @@ export interface TabCommandState {
   canMinimizeGroup: boolean;
   canShiftLeft: boolean;
   canShiftRight: boolean;
+  canMove: boolean;
+  canMoveGroup: boolean;
+  canSizeGroup: boolean;
   canMaximize: boolean;
   canRestore: boolean;
   canClone: boolean;
@@ -133,8 +136,7 @@ export function computeTabCommandState(context: TabCommandContext): TabCommandSt
 
   const currentIndex = context.groupPanelIds.indexOf(context.panelId);
   const canShiftLeft = currentIndex > 0;
-  const canShiftRight =
-    currentIndex >= 0 && currentIndex < context.groupPanelIds.length - 1;
+  const canShiftRight = currentIndex >= 0 && currentIndex < context.groupPanelIds.length - 1;
 
   const canClose = context.isClosable;
   const closableSiblingIds = context.groupPanelIds.filter(
@@ -151,8 +153,7 @@ export function computeTabCommandState(context: TabCommandContext): TabCommandSt
     id === context.panelId ? context.isFloatable : siblingIsFloatable(context, id),
   );
   const canFloat = !isFloating && context.isFloatable;
-  const canFloatGroup =
-    !isFloating && context.groupPanelIds.length > 0 && allGroupPanelsFloatable;
+  const canFloatGroup = !isFloating && context.groupPanelIds.length > 0 && allGroupPanelsFloatable;
 
   // Dock-back always falls back to the panel default mode when the origin is
   // invalid, so it is enabled whenever a group is floating.
@@ -163,20 +164,18 @@ export function computeTabCommandState(context: TabCommandContext): TabCommandSt
 
   const canMaximize = context.location === 'docked' && !context.isMaximized;
   const canRestore = context.isMaximized || context.location === 'maximized';
+  const canMove =
+    isViewLike && context.isAuxiliary && context.location === 'docked' && !context.isMaximized;
+  const canMoveGroup = canMove && context.groupPanelIds.length > 0;
+  const canSizeGroup = canMove && context.location === 'docked' && !context.isMaximized;
   const canClone = context.isCloneable === true;
   const canNewDocumentTabGroup =
     isEditor && context.location === 'docked' && context.groupPanelIds.length > 1;
   const canCollapseDocumentTabGroup =
-    isEditor &&
-    context.location === 'docked' &&
-    (context.dockedEditorGroupCount ?? 1) > 1;
+    isEditor && context.location === 'docked' && (context.dockedEditorGroupCount ?? 1) > 1;
 
   const commands: TabCommandDescriptor[] = [];
-  const push = (
-    kind: TabCommandKind,
-    enabled: boolean,
-    reasonDisabled?: string,
-  ): void => {
+  const push = (kind: TabCommandKind, enabled: boolean, reasonDisabled?: string): void => {
     commands.push({
       kind,
       label: LABELS[kind],
@@ -190,46 +189,62 @@ export function computeTabCommandState(context: TabCommandContext): TabCommandSt
     push('close-all', canCloseAll, canCloseAll ? undefined : 'No closable panels in this group');
     push('close-other', canCloseOther, canCloseOther ? undefined : 'No closable sibling panels');
   } else {
-    push('close-group', canCloseGroup, canCloseGroup ? undefined : 'No closable panels in this group');
+    push(
+      'close-group',
+      canCloseGroup,
+      canCloseGroup ? undefined : 'No closable panels in this group',
+    );
   }
 
   if (canMaximize) push('maximize', true);
   if (canRestore) push('restore', true);
   if (isViewLike) {
     push('minimize', canMinimize, canMinimize ? undefined : 'Panel cannot be minimized here');
-    push('minimize-group', canMinimizeGroup, canMinimizeGroup ? undefined : 'Group cannot be minimized here');
+    push(
+      'minimize-group',
+      canMinimizeGroup,
+      canMinimizeGroup ? undefined : 'Group cannot be minimized here',
+    );
   }
 
   push(
     'float',
     canFloat,
-    canFloat ? undefined : isFloating ? 'Panel is already floating' : 'This panel type cannot be floated',
+    canFloat
+      ? undefined
+      : isFloating
+        ? 'Panel is already floating'
+        : 'This panel type cannot be floated',
   );
   push(
     'float-group',
     canFloatGroup,
-    canFloatGroup ? undefined : isFloating ? 'Group is already floating' : 'One or more panels cannot be floated',
+    canFloatGroup
+      ? undefined
+      : isFloating
+        ? 'Group is already floating'
+        : 'One or more panels cannot be floated',
   );
-  push(
-    'dock',
-    canDock,
-    canDock ? undefined : 'Panel is already docked',
-  );
-  push(
-    'dock-group',
-    canDockGroup,
-    canDockGroup ? undefined : 'Group is already docked',
-  );
+  push('dock', canDock, canDock ? undefined : 'Panel is already docked');
+  push('dock-group', canDockGroup, canDockGroup ? undefined : 'Group is already docked');
 
   if (isViewLike) {
-    push('move', false, 'Move submenu is not implemented yet');
+    push('move', canMove, canMove ? undefined : 'Panel must be docked to move between edges');
   }
 
   push('shift-left', canShiftLeft, canShiftLeft ? undefined : 'Already the first tab');
   push('shift-right', canShiftRight, canShiftRight ? undefined : 'Already the last tab');
   if (isViewLike) {
-    push('move-group', false, 'Move Group submenu is not implemented yet');
-    push('size-group', false, 'Size Group submenu is not implemented yet');
+    push(
+      'move-group',
+      canMoveGroup,
+      canMoveGroup ? undefined : 'Group must be docked to move between edges',
+    );
+    push(
+      'size-group',
+      canSizeGroup,
+      canSizeGroup ? undefined : 'Group cannot be resized in this presentation',
+    );
   }
 
   push('clone', canClone, canClone ? undefined : 'Panel is not cloneable');
@@ -263,6 +278,9 @@ export function computeTabCommandState(context: TabCommandContext): TabCommandSt
     canMinimizeGroup,
     canShiftLeft,
     canShiftRight,
+    canMove,
+    canMoveGroup,
+    canSizeGroup,
     canMaximize,
     canRestore,
     canClone,
