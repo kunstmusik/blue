@@ -152,7 +152,7 @@ describe('Code Repository IPC', () => {
         value: { basename: 'codeRepository.xml' },
       });
       expect(showSaveDialog).toHaveBeenLastCalledWith(
-        expect.objectContaining({ defaultPath: '/tmp/work/codeRepository.xml' }),
+        expect.objectContaining({ defaultPath: path.join('/tmp/work', 'codeRepository.xml') }),
       );
       expect(fs.readFileSync(destination, 'utf8')).toContain('<customAccelerators>');
 

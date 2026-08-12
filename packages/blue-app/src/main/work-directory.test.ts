@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -13,7 +14,9 @@ describe('work-directory dialog defaults', () => {
   });
 
   it('resolves a filename inside the configured work directory', () => {
-    expect(resolveWorkDirectoryDefaultPath('/tmp/work', 'project.blue')).toBe('/tmp/work/project.blue');
+    expect(resolveWorkDirectoryDefaultPath('/tmp/work', 'project.blue')).toBe(
+      path.join('/tmp/work', 'project.blue'),
+    );
     expect(resolveWorkDirectoryDefaultPath('/tmp/work')).toBe('/tmp/work');
   });
 

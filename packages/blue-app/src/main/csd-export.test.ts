@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { saveGeneratedCsdToDisk } from './csd-export';
@@ -20,7 +21,7 @@ describe('saveGeneratedCsdToDisk', () => {
 
     expect(showSaveDialog).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ defaultPath: '/tmp/work/generated.csd' }),
+      expect.objectContaining({ defaultPath: path.join('/tmp/work', 'generated.csd') }),
     );
   });
 
