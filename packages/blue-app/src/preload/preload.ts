@@ -48,6 +48,20 @@ import {
   type AppMetadata,
 } from '../shared/app-metadata';
 import type { EngineOutputPayload } from '../shared/io-provider';
+import {
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  REPL_CONSOLE_OPEN_CHANNEL,
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  type ReplConsoleCloseRequest,
+  type ReplConsoleCloseResult,
+  type ReplConsoleEvaluateRequest,
+  type ReplConsoleEvaluateResult,
+  type ReplConsoleOpenRequest,
+  type ReplConsoleOpenResult,
+  type ReplConsoleReinitializeRequest,
+  type ReplConsoleReinitializeResult,
+} from '../shared/repl-console';
 import type {
   MissingAudioAssetsChooseRequest,
   MissingAudioAssetsDismissRequest,
@@ -520,6 +534,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('test-external-sound-object', request) as Promise<ScoreObjectTestResult>,
   testJavascriptSoundObject: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('test-javascript-sound-object', request) as Promise<ScoreObjectTestResult>,
+  openReplConsole: (request: ReplConsoleOpenRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_OPEN_CHANNEL, request) as Promise<ReplConsoleOpenResult>,
+  evaluateReplConsole: (request: ReplConsoleEvaluateRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_EVALUATE_CHANNEL, request) as Promise<ReplConsoleEvaluateResult>,
+  reinitializeReplConsole: (request: ReplConsoleReinitializeRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_REINITIALIZE_CHANNEL, request) as Promise<ReplConsoleReinitializeResult>,
+  closeReplConsole: (request: ReplConsoleCloseRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_CLOSE_CHANNEL, request) as Promise<ReplConsoleCloseResult>,
   reinitializeClojureRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize') as Promise<{ ok: boolean; error?: string }>,
   reinitializeJythonRuntime: () =>

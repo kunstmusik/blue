@@ -139,6 +139,34 @@ describe('java-runtime-client', () => {
     }
   });
 
+  it('applies a longer timeout to an interactive evaluation without changing the default', async () => {
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      timeout: 5000,
+      authToken: 'secret',
+    });
+    await client.connect();
+
+    const request = mockState.requestInstances[0];
+    request.responses.push(Buffer.from(JSON.stringify({
+      id: 'req-1',
+      ok: true,
+      result: { value: '2', namespace: 'user0' },
+      stdout: '',
+      stderr: '',
+      elapsedMs: 1,
+    })));
+
+    const response = await client.evaluateClojure(
+      { code: '(+ 1 1)', bindings: {}, returnVariableName: null },
+      { timeout: 30000 },
+    );
+
+    expect(request.sendTimeout).toBe(30000);
+    expect(request.receiveTimeout).toBe(30000);
+    expect(response.ok).toBe(true);
+  });
+
   it('returns a specific envelope when the response id does not match', async () => {
     const client = new JavaRuntimeClient({
       endpoint: 'tcp://127.0.0.1:5555',

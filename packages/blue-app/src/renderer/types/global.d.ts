@@ -31,6 +31,16 @@ import type {
 } from '../../shared/score-object-file';
 import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 import type {
+  ReplConsoleCloseRequest,
+  ReplConsoleCloseResult,
+  ReplConsoleEvaluateRequest,
+  ReplConsoleEvaluateResult,
+  ReplConsoleOpenRequest,
+  ReplConsoleOpenResult,
+  ReplConsoleReinitializeRequest,
+  ReplConsoleReinitializeResult,
+} from '../../shared/repl-console';
+import type {
   MissingAudioAssetsChooseRequest,
   MissingAudioAssetsDismissRequest,
   MissingAudioAssetsResolveRequest,
@@ -376,6 +386,18 @@ declare global {
       testJavascriptSoundObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
+      openReplConsole: (
+        request: ReplConsoleOpenRequest,
+      ) => Promise<ReplConsoleOpenResult>;
+      evaluateReplConsole: (
+        request: ReplConsoleEvaluateRequest,
+      ) => Promise<ReplConsoleEvaluateResult>;
+      reinitializeReplConsole: (
+        request: ReplConsoleReinitializeRequest,
+      ) => Promise<ReplConsoleReinitializeResult>;
+      closeReplConsole: (
+        request: ReplConsoleCloseRequest,
+      ) => Promise<ReplConsoleCloseResult>;
       reinitializeClojureRuntime: () => Promise<{ ok: boolean; error?: string }>;
       reinitializeJythonRuntime: () => Promise<{ ok: boolean; error?: string }>;
       getNestedPolyObjectSnapshot: (

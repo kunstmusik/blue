@@ -114,6 +114,7 @@ import {
 } from './score-automation-runtime-sync';
 import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
+import { evaluateJavaScriptConsole } from './repl-console-runtime';
 import { testScoreObject } from './score-object-test';
 import { auditionSelectedScoreObjects } from './audition-score-objects';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
@@ -135,6 +136,23 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
+import {
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  REPL_CONSOLE_OPEN_CHANNEL,
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  isReplConsoleLanguage,
+  type ReplConsoleCloseRequest,
+  type ReplConsoleCloseResult,
+  type ReplConsoleEvaluateRequest,
+  type ReplConsoleEvaluateResult,
+  type ReplConsoleLanguage,
+  type ReplConsoleOpenRequest,
+  type ReplConsoleOpenResult,
+  type ReplConsoleProjectContext,
+  type ReplConsoleReinitializeRequest,
+  type ReplConsoleReinitializeResult,
+} from '../shared/repl-console';
 import {
   SOUND_FONT_FILE_SELECT_CHANNEL,
   SOUND_FONT_INSPECT_CHANNEL,
@@ -309,6 +327,7 @@ let activeAuditionPlayback = false;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
+let replRuntimeQueue: Promise<unknown> = Promise.resolve();
 let midiInputCoordinator: MidiInputCoordinator | null = null;
 let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
@@ -2373,6 +2392,296 @@ function disposeJavaScriptSession(): void {
   lastProjectOnLoadState = null;
 }
 
+const REPL_CONSOLE_PROMPTS: Record<ReplConsoleLanguage, string> = {
+  javascript: 'js> ',
+  python: '>>> ',
+  clojure: 'user=> ',
+};
+
+// Interactive JVM evaluations can legitimately spend longer than the short
+// transport deadline used by score-object/runtime requests, especially while
+// a project dependency or a user expression is being compiled.
+const REPL_CONSOLE_EVALUATION_TIMEOUT_MS = 30_000;
+
+function getReplProjectLabel(data: BlueData | null, filePath: string | null): string {
+  if (data) {
+    const title = data.getProjectProperties().title?.trim();
+    if (title) return title;
+  }
+
+  return filePath ? path.basename(filePath) : data ? 'Untitled' : 'No Project';
+}
+
+function createReplProjectContext(): ReplConsoleProjectContext {
+  return {
+    loaded: currentData !== null,
+    sessionId: currentProjectSessionId,
+    label: getReplProjectLabel(currentData, currentFilePath),
+    filePath: currentFilePath,
+    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+  };
+}
+
+function createReplProjectDataSnapshot(): Record<string, unknown> | null {
+  if (!currentData) return null;
+
+  const properties = currentData.getProjectProperties();
+  const globalOrcSco = currentData.getGlobalOrcSco();
+  return {
+    sessionId: currentProjectSessionId,
+    filePath: currentFilePath,
+    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+    projectProperties: {
+      title: properties.title,
+      author: properties.author,
+      notes: properties.notes,
+      sampleRate: properties.sampleRate,
+      ksmps: properties.ksmps,
+      nchnls: properties.nchnls,
+      useZeroDbFS: properties.useZeroDbFS,
+      zeroDbFS: properties.zeroDbFS,
+      diskSampleRate: properties.diskSampleRate,
+      diskKsmps: properties.diskKsmps,
+    },
+    globalOrc: globalOrcSco.getGlobalOrc(),
+    globalSco: globalOrcSco.getGlobalSco(),
+    tablesText: currentData.getTableSet().getTables(),
+    scratchPad: {
+      text: currentData.getScratchPadData().getScratchText(),
+      wordWrapEnabled: currentData.getScratchPadData().isWordWrapEnabled(),
+    },
+  };
+}
+
+function createReplRuntimeContext(): {
+  project: ReplConsoleProjectContext;
+  projectDir: string;
+  data: Record<string, unknown> | null;
+} {
+  const project = createReplProjectContext();
+  return {
+    project,
+    projectDir: project.projectDir ? `${project.projectDir}${path.sep}` : '',
+    data: createReplProjectDataSnapshot(),
+  };
+}
+
+function createReplOpenResult(
+  language: ReplConsoleLanguage,
+  runtime: ReplConsoleOpenResult['runtime'],
+  error?: string,
+): ReplConsoleOpenResult {
+  return {
+    ok: runtime === 'ready',
+    language,
+    prompt: REPL_CONSOLE_PROMPTS[language],
+    project: createReplProjectContext(),
+    runtime,
+    ...(error ? { error } : {}),
+  };
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function ensureJavaScriptConsoleSession(): Promise<JavaScriptSession> {
+  if (!javaScriptSession) {
+    javaScriptSession = await createJavaScriptSession();
+  }
+  return javaScriptSession;
+}
+
+async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
+  if (!currentData) {
+    throw new Error('No project loaded.');
+  }
+  if (!javaRuntimeSessionManager) {
+    throw new Error('Java runtime is unavailable.');
+  }
+
+  return javaRuntimeSessionManager.ensureReady(
+    currentData,
+    currentProjectSessionId,
+    currentFilePath,
+  );
+}
+
+async function openReplConsoleNow(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
+  try {
+    if (language === 'javascript') {
+      await ensureJavaScriptConsoleSession();
+    } else {
+      await ensureJavaRuntimeConsoleSession();
+    }
+    return createReplOpenResult(language, 'ready');
+  } catch (error: unknown) {
+    return createReplOpenResult(language, currentData ? 'error' : 'unavailable', getErrorMessage(error));
+  }
+}
+
+function enqueueReplRuntime<T>(operation: () => Promise<T>): Promise<T> {
+  const next = replRuntimeQueue.then(operation, operation);
+  replRuntimeQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
+
+function openReplConsole(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
+  return enqueueReplRuntime(() => openReplConsoleNow(language));
+}
+
+function createReplEvaluationFailure(
+  language: ReplConsoleLanguage,
+  message: string,
+  projectSessionId = currentProjectSessionId,
+): ReplConsoleEvaluateResult {
+  return {
+    ok: false,
+    language,
+    projectSessionId,
+    value: '',
+    stdout: '',
+    stderr: '',
+    elapsedMs: 0,
+    error: { message },
+  };
+}
+
+async function evaluateReplConsoleNow(
+  language: ReplConsoleLanguage,
+  code: string,
+): Promise<ReplConsoleEvaluateResult> {
+  const runtimeContext = createReplRuntimeContext();
+  if (language === 'javascript') {
+    const session = await ensureJavaScriptConsoleSession();
+    return evaluateJavaScriptConsole(
+      session,
+      { code, projectSessionId: runtimeContext.project.sessionId },
+      {
+        projectDir: runtimeContext.projectDir,
+        data: runtimeContext.data,
+        project: runtimeContext.project,
+      },
+    );
+  }
+
+  if (!runtimeContext.project.loaded) {
+    return createReplEvaluationFailure(language, 'No project loaded.', runtimeContext.project.sessionId);
+  }
+
+  const startedAt = Date.now();
+  const client = await ensureJavaRuntimeConsoleSession();
+  const bindings = {
+    blueData: runtimeContext.data,
+    blueProjectDir: runtimeContext.projectDir,
+    blueProject: runtimeContext.project,
+  };
+  const response = language === 'python'
+    ? await client.evaluateJythonScript(
+      { code, bindings },
+      { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
+    )
+    : await client.evaluateClojure(
+      { code, bindings, returnVariableName: null },
+      { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
+    );
+
+  if (response.ok) {
+    return {
+      ok: true,
+      language,
+      projectSessionId: runtimeContext.project.sessionId,
+      value: response.result.value,
+      stdout: response.stdout,
+      stderr: response.stderr,
+      elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
+    };
+  }
+
+  return {
+    ok: false,
+    language,
+    projectSessionId: runtimeContext.project.sessionId,
+    value: '',
+    stdout: response.stdout,
+    stderr: response.stderr,
+    elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
+    error: {
+      code: response.error.code,
+      message: response.error.message,
+      ...(response.error.stack ? { stack: response.error.stack } : {}),
+      ...(response.error.line !== undefined ? { line: response.error.line } : {}),
+      ...(response.error.column !== undefined ? { column: response.error.column } : {}),
+    },
+  };
+}
+
+async function evaluateReplConsole(request: ReplConsoleEvaluateRequest): Promise<ReplConsoleEvaluateResult> {
+  if (!isReplConsoleLanguage(request?.language)) {
+    return createReplEvaluationFailure('javascript', 'Invalid console language.');
+  }
+  if (typeof request.code !== 'string' || request.code.trim().length === 0) {
+    return createReplEvaluationFailure(request.language, 'Enter code before evaluating.');
+  }
+
+  try {
+    return await enqueueReplRuntime(() => evaluateReplConsoleNow(request.language, request.code));
+  } catch (error: unknown) {
+    return createReplEvaluationFailure(request.language, getErrorMessage(error));
+  }
+}
+
+async function reinitializeReplConsole(
+  request: ReplConsoleReinitializeRequest,
+): Promise<ReplConsoleReinitializeResult> {
+  if (!isReplConsoleLanguage(request?.language)) {
+    return {
+      ...createReplOpenResult('javascript', 'error', 'Invalid console language.'),
+      message: 'Invalid console language.',
+    };
+  }
+
+  return enqueueReplRuntime(async () => {
+    try {
+      if (request.language === 'javascript') {
+        const session = await ensureJavaScriptConsoleSession();
+        session.reinitialize();
+      } else if (request.language === 'python') {
+        await ensureJavaRuntimeConsoleSession();
+        if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
+        await javaRuntimeSessionManager.reinitializeJython(
+          currentData,
+          currentProjectSessionId,
+          currentFilePath,
+        );
+      } else {
+        if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
+        await javaRuntimeSessionManager.reinitializeClojure(
+          currentData,
+          currentProjectSessionId,
+          currentFilePath,
+        );
+      }
+
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+
+      return {
+        ...createReplOpenResult(request.language, 'ready'),
+        message: `${request.language} interpreter reinitialized.`,
+      };
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      return {
+        ...createReplOpenResult(request.language, currentData ? 'error' : 'unavailable', message),
+        message,
+      };
+    }
+  });
+}
+
 async function disposeJavaRuntimeSession(): Promise<void> {
   lastProjectOnLoadState = null;
   if (javaRuntimeSessionManager) {
@@ -3708,6 +4017,33 @@ for (const channel of [
     runScoreObjectTestRequest(request)
   ));
 }
+
+ipcMain.handle(
+  REPL_CONSOLE_OPEN_CHANNEL,
+  async (_event, request: ReplConsoleOpenRequest): Promise<ReplConsoleOpenResult> => {
+    if (!isReplConsoleLanguage(request?.language)) {
+      return createReplOpenResult('javascript', 'error', 'Invalid console language.');
+    }
+    return openReplConsole(request.language);
+  },
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  async (_event, request: ReplConsoleEvaluateRequest): Promise<ReplConsoleEvaluateResult> =>
+    evaluateReplConsole(request),
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  async (_event, request: ReplConsoleReinitializeRequest): Promise<ReplConsoleReinitializeResult> =>
+    reinitializeReplConsole(request),
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  (_event, _request: ReplConsoleCloseRequest): ReplConsoleCloseResult => ({ ok: true }),
+);
 
 ipcMain.handle('java-runtime:reinitialize', async () => {
   if (!currentData) {

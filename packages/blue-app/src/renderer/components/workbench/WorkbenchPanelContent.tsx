@@ -21,6 +21,7 @@ import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 import LibrariesPanel from './panels/LibrariesPanel';
 import SoundObjectLibraryPanel from './panels/SoundObjectLibraryPanel';
 import SoundFontViewerPanel from './panels/tools/SoundFontViewerPanel';
+import ReplConsolePanel from './panels/repl-console/ReplConsolePanel';
 import { LibraryItemEditorPanel } from '../libraries/LibraryItemEditorPanel';
 import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
 
@@ -84,6 +85,12 @@ export default function WorkbenchPanelContent({
       return <LibrariesPanel />;
     case 'SoundObjectLibraryTopComponent':
       return <SoundObjectLibraryPanel />;
+    case 'JavaScriptConsoleTopComponent':
+      return <ReplConsolePanel language="javascript" />;
+    case 'JythonConsoleTopComponent':
+      return <ReplConsolePanel language="python" />;
+    case 'ClojureConsoleTopComponent':
+      return <ReplConsolePanel language="clojure" />;
     default:
       return <PlaceholderPanel descriptor={descriptor} showHeader={false} />;
   }

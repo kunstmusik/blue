@@ -38,6 +38,10 @@ export interface JavaRuntimeClientOptions {
   onTransportFailure?: () => void;
 }
 
+export interface JavaRuntimeRequestOptions {
+  timeout?: number;
+}
+
 class JavaRuntimeRequestError extends Error {
   readonly code: string;
   readonly details?: Record<string, unknown>;
@@ -107,8 +111,9 @@ export class JavaRuntimeClient {
 
   evaluateClojure(
     params: ClojureEvalParams,
+    options?: JavaRuntimeRequestOptions,
   ): Promise<JavaRuntimeResponseEnvelope<ClojureEvalResult>> {
-    return this.sendRequest(JAVA_RUNTIME_METHODS.EVAL_CLOJURE, params);
+    return this.sendRequest(JAVA_RUNTIME_METHODS.EVAL_CLOJURE, params, options);
   }
 
   evaluateClojureScoreObject(
@@ -129,8 +134,9 @@ export class JavaRuntimeClient {
 
   evaluateJythonScript(
     params: JythonEvalScriptParams,
+    options?: JavaRuntimeRequestOptions,
   ): Promise<JavaRuntimeResponseEnvelope<JythonEvalScriptResult>> {
-    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_SCRIPT, params);
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_SCRIPT, params, options);
   }
 
   evaluateJythonScoreObject(
@@ -168,9 +174,13 @@ export class JavaRuntimeClient {
   private async sendRequest<TResult, TParams extends Record<string, unknown>>(
     method: JavaRuntimeRequestEnvelope<TParams>['method'],
     params: TParams,
+    options?: JavaRuntimeRequestOptions,
   ): Promise<JavaRuntimeResponseEnvelope<TResult>> {
     const operation = this.requestQueue.then(async () => {
       const socket = this.ensureRequestSocket();
+      const timeout = options?.timeout ?? this.timeout;
+      socket.sendTimeout = timeout;
+      socket.receiveTimeout = timeout;
       const id = `req-${++this.requestIndex}`;
       const request = createJavaRuntimeRequest(id, method, this.authToken, params);
 
