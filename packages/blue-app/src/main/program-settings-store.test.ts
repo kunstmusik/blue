@@ -80,6 +80,22 @@ describe('program-settings-store', () => {
     expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
   });
 
+  it('removes the legacy alpha marquee setting from persisted snapshots', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({
+      version: 2,
+      general: {
+        drawAlphaBackgroundOnMarquee: true,
+        messageColorsEnabled: true,
+      },
+    }));
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(Object.hasOwn(settings.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).general.drawAlphaBackgroundOnMarquee).toBeUndefined();
+  });
+
   it('migrates a valid legacy OSC input port without treating output placeholders as live settings', () => {
     const filePath = path.join(tempDir, 'program-settings.json');
     fs.writeFileSync(filePath, JSON.stringify({

@@ -54,7 +54,7 @@ Automated validation completed:
 ## Notes
 
 - `@blue/app` consumes `packages/blue-data/dist`, so rebuilding `@blue/data` remains necessary before rerunning app-side tests after data-layer edits.
-- The final usage-matrix distribution is 20 `used-by-workflow`, 33 `used-as-new-project-default`, 21 `blocked-by-missing-feature`, and 1 `resource-only-stale` for 75 classified entries.
+- The final usage-matrix distribution is 21 `used-by-workflow`, 33 `used-as-new-project-default`, 19 `blocked-by-missing-feature`, and 1 `resource-only-stale` for 74 classified entries.
 - `AGENTS.md` already reflected the SPEC044 technology context and did not require a manual update during closeout.
 - Manual Settings-window smoke scenarios were not rerun during the documentation closeout step; the recorded automated coverage and matrix audit are the basis for closure.
 

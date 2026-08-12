@@ -34,7 +34,6 @@ export type ProgramSettingsPanelId =
 export interface GeneralSettingsSnapshot {
   workDirectory: string;
   newUserDefaultsEnabled: boolean;
-  drawAlphaBackgroundOnMarquee: boolean;
   messageColorsEnabled: boolean;
   csoundErrorWarningEnabled: boolean;
   directoryTempFileLimit: number;
@@ -305,7 +304,6 @@ export function createDefaultGeneralSettings(): GeneralSettingsSnapshot {
   return {
     workDirectory: '',
     newUserDefaultsEnabled: true,
-    drawAlphaBackgroundOnMarquee: false,
     messageColorsEnabled: false,
     csoundErrorWarningEnabled: true,
     directoryTempFileLimit: 3,
@@ -675,7 +673,15 @@ export function mergeWithDefaults(
 
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
-    general: { ...defaults.general, ...saved.general },
+    // Pick known fields so removed compatibility settings do not survive in
+    // the in-memory snapshot or get written back to program-settings.json.
+    general: {
+      workDirectory: saved.general?.workDirectory ?? defaults.general.workDirectory,
+      newUserDefaultsEnabled: saved.general?.newUserDefaultsEnabled ?? defaults.general.newUserDefaultsEnabled,
+      messageColorsEnabled: saved.general?.messageColorsEnabled ?? defaults.general.messageColorsEnabled,
+      csoundErrorWarningEnabled: saved.general?.csoundErrorWarningEnabled ?? defaults.general.csoundErrorWarningEnabled,
+      directoryTempFileLimit: saved.general?.directoryTempFileLimit ?? defaults.general.directoryTempFileLimit,
+    },
     projectDefaults: {
       ...defaults.projectDefaults,
       ...saved.projectDefaults,

@@ -53,11 +53,11 @@ The closeout correction versus the draft report is that `projectDefaults.default
 - **Current Status**: Code repository default insertion workflow is not implemented.
 - **Recommended Scope**: Create a code-repository spec if default code repository insertion is desired.
 
-### 8. Alpha Marquee and Csound Error Warning
-- **Affected Settings**: `general.drawAlphaBackgroundOnMarquee`, `general.csoundErrorWarningEnabled`
-- **Java Workflow**: Java Blue uses alpha marquee for score selection drawing and Csound error warning for output parsing.
-- **Current Status**: Score selection marquee and Csound error output warning behaviors are not implemented.
-- **Recommended Scope**: Implement score selection marquee alpha drawing and Csound output error warning in their respective UI specs.
+### 8. Csound Error Warning
+- **Affected Settings**: `general.csoundErrorWarningEnabled`
+- **Java Workflow**: Java Blue's command-line realtime renderer shows a modal warning after Csound exits with an error and points the user to the Csound output dialog.
+- **Current Status**: Implemented for terminal and command-level errors reported by TypeScript Blue's realtime `EngineBridge`, including orchestra compile failures; detailed output remains available in the Csound output panel. Alpha marquee drawing is intentionally excluded as a legacy Swing-only presentation option.
+- **Recommended Scope**: No follow-up required for the current realtime engine path.
 
 ## Stale Resources
 
@@ -67,11 +67,11 @@ The closeout correction versus the draft report is that `projectDefaults.default
 
 | Status | Count |
 |--------|-------|
-| used-by-workflow | 20 |
+| used-by-workflow | 21 |
 | used-as-new-project-default | 33 |
-| blocked-by-missing-feature | 21 |
+| blocked-by-missing-feature | 19 |
 | resource-only-stale | 1 |
-| **Total** | **75** |
+| **Total** | **74** |
 
 ## What IS Implemented
 
@@ -140,7 +140,7 @@ Automated validation completed:
 ## Notes
 
 - `@blue/app` consumes `packages/blue-data/dist`, so rebuilding `@blue/data` remains necessary before rerunning app-side tests after data-layer edits.
-- The final usage-matrix distribution is 20 `used-by-workflow`, 33 `used-as-new-project-default`, 21 `blocked-by-missing-feature`, and 1 `resource-only-stale` for 75 classified entries.
+- The final usage-matrix distribution is 21 `used-by-workflow`, 33 `used-as-new-project-default`, 19 `blocked-by-missing-feature`, and 1 `resource-only-stale` for 74 classified entries.
 - `AGENTS.md` already reflected the SPEC044 technology context and did not require a manual update during closeout.
 - Manual Settings-window smoke scenarios were not rerun during the documentation closeout step; the recorded automated coverage and matrix audit are the basis for closure.
 

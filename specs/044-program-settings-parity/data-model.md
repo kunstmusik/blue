@@ -32,7 +32,6 @@
 **Fields**:
 - `workDirectory`: string path, default empty.
 - `newUserDefaultsEnabled`: boolean, default true.
-- `drawAlphaBackgroundOnMarquee`: boolean, default false.
 - `messageColorsEnabled`: boolean, default false.
 - `csoundErrorWarningEnabled`: boolean, default true.
 - `directoryTempFileLimit`: integer, default 3.
@@ -41,7 +40,7 @@
 - File chooser/import/export default locations.
 - Render option message-color behavior.
 - Temporary CSD snapshot cleanup grouping where supported.
-- Future code repository defaults, marquee drawing, and Csound error warnings.
+- Code repository defaults and realtime Csound error warnings.
 
 ## Entity: ProjectDefaultsSettingsSnapshot
 

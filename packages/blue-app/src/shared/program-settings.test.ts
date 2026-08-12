@@ -239,6 +239,18 @@ describe('program-settings mergeWithDefaults', () => {
     expect(merged.general.messageColorsEnabled).toBe(false);
   });
 
+  it('drops the removed alpha marquee setting from legacy snapshots', () => {
+    const merged = mergeWithDefaults({
+      general: {
+        drawAlphaBackgroundOnMarquee: true,
+        messageColorsEnabled: true,
+      } as any,
+    }, 'darwin');
+
+    expect(merged.general.messageColorsEnabled).toBe(true);
+    expect(Object.hasOwn(merged.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
+  });
+
   it('migrates a valid legacy OSC input port and ignores invalid placeholders', () => {
     expect(mergeWithDefaults({
       appSpecific: { oscInputPort: 9020 } as any,

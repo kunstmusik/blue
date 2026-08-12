@@ -340,6 +340,34 @@ function getConfiguredWorkDirectory(): string | undefined {
   return normalizeWorkDirectory(loadProgramSettings().general.workDirectory);
 }
 
+async function showCsoundErrorWarning(message: string): Promise<void> {
+  const settings = loadProgramSettings();
+  if (!settings.general.csoundErrorWarningEnabled || !mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'error',
+    title: 'Csound Error',
+    message: 'There was an error in running Csound.',
+    detail: `Please view the Csound Output panel for more information.\n\n${message}`,
+    checkboxLabel: 'Disable Error Message Dialog',
+    buttons: ['OK'],
+    defaultId: 0,
+  });
+
+  if (result.checkboxChecked) {
+    const current = loadProgramSettings();
+    saveProgramSettings({
+      ...current,
+      general: {
+        ...current.general,
+        csoundErrorWarningEnabled: false,
+      },
+    });
+  }
+}
+
 function getConfiguredWorkDirectoryDefaultPath(fileName?: string): string | undefined {
   return resolveWorkDirectoryDefaultPath(getConfiguredWorkDirectory(), fileName);
 }
@@ -1484,6 +1512,9 @@ function createWindow(): void {
     'realtime',
     engineRuntimeService,
   );
+  engineBridge.setPlaybackErrorWarningCallback((message) => {
+    void showCsoundErrorWarning(message);
+  });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
     if (activeAuditionPlayback) {

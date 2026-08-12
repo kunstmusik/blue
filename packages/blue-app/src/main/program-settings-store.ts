@@ -60,8 +60,12 @@ export function loadProgramSettings(platform: string = process.platform): Progra
   const filePath = getSettingsFilePath();
   const saved = readFromFile(filePath);
   const merged = mergeWithDefaults(saved ?? {}, platform);
+  const containsRemovedAlphaMarqueeSetting = Boolean(
+    saved?.general
+    && Object.prototype.hasOwnProperty.call(saved.general, 'drawAlphaBackgroundOnMarquee'),
+  );
 
-  if (saved && saved.version !== PROGRAM_SETTINGS_VERSION) {
+  if (saved && (saved.version !== PROGRAM_SETTINGS_VERSION || containsRemovedAlphaMarqueeSetting)) {
     merged.version = PROGRAM_SETTINGS_VERSION;
     writeToFile(filePath, merged);
   }

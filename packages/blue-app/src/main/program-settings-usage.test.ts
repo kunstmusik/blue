@@ -31,7 +31,6 @@ describe('program-settings-usage matrix', () => {
     const keys = new Set(matrix.map((e) => e.settingKey));
     expect(keys.has('general.workDirectory')).toBe(true);
     expect(keys.has('general.newUserDefaultsEnabled')).toBe(true);
-    expect(keys.has('general.drawAlphaBackgroundOnMarquee')).toBe(true);
     expect(keys.has('general.messageColorsEnabled')).toBe(true);
     expect(keys.has('general.csoundErrorWarningEnabled')).toBe(true);
     expect(keys.has('general.directoryTempFileLimit')).toBe(true);
@@ -51,6 +50,8 @@ describe('program-settings-usage matrix', () => {
     expect(ids).toContain('disk-render-execution');
     expect(ids).toContain('utility-freeze-unfreeze');
     expect(ids).toContain('soundfont-utility');
+    expect(ids).toContain('csound-error-warning');
+    expect(ids).not.toContain('alpha-marquee-csound-error-warning');
     expect(ids).not.toContain('udo-effect-creation-runtime');
 
     const soundfont = FEATURE_PARITY_NOTES.find((feature) => feature.id === 'soundfont-utility');
@@ -82,6 +83,15 @@ describe('program-settings-usage matrix', () => {
     expect(entry).toMatchObject({
       currentStatus: 'used-by-workflow',
       consumerPath: expect.stringContaining('file chooser'),
+    });
+  });
+
+  it('marks Csound error warnings as consumed by terminal playback errors', () => {
+    const entry = buildUsageMatrix().find((item) => item.settingKey === 'general.csoundErrorWarningEnabled');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('EngineBridge'),
     });
   });
 

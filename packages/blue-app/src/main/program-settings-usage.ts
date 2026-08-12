@@ -79,15 +79,12 @@ export const FEATURE_PARITY_NOTES: readonly FeatureParityNote[] = [
     recommendedSpecScope: 'Implemented by SPEC 069; retain this entry only as a Java-parity usage reference.',
   },
   {
-    id: 'alpha-marquee-csound-error-warning',
-    title: 'Alpha Marquee and Csound Error Warning',
-    affectedSettings: [
-      'general.drawAlphaBackgroundOnMarquee',
-      'general.csoundErrorWarningEnabled',
-    ],
-    javaWorkflow: 'Java Blue uses alpha marquee for score selection drawing and Csound error warning for output parsing.',
-    currentAppStatus: 'Score selection marquee and Csound error output warning behaviors are not implemented.',
-    recommendedSpecScope: 'Implement score selection marquee alpha drawing and Csound output error warning in their respective UI specs.',
+    id: 'csound-error-warning',
+    title: 'Csound Error Warning',
+    affectedSettings: ['general.csoundErrorWarningEnabled'],
+    javaWorkflow: 'Java Blue shows a modal warning after its command-line realtime Csound process exits with an error and points the user to the Csound output dialog.',
+    currentAppStatus: 'Implemented: realtime blue-engine Csound errors, including orchestra compile failures, show a modal warning and keep the detailed error in the Csound output panel.',
+    recommendedSpecScope: 'Implemented in the realtime EngineBridge error paths; retain this entry only as a Java-parity usage reference.',
   },
 ];
 
@@ -115,9 +112,8 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
   return [
     entry('general', 'general.workDirectory', 'Work Directory', '(empty)', 'File chooser default start directory', 'used-by-workflow', { consumerPath: 'main-process import/export and asset file chooser dialogs' }),
     entry('general', 'general.newUserDefaultsEnabled', 'New User Defaults Enabled', 'true', 'Code Repository new-snippet placeholder', 'used-by-workflow', { consumerPath: 'renderer: CodeRepositoryEditorModal' }),
-    entry('general', 'general.drawAlphaBackgroundOnMarquee', 'Draw Alpha Background on Marquee', 'false', 'Score selection marquee drawing', 'blocked-by-missing-feature', { missingFeature: 'alpha-marquee-csound-error-warning' }),
     entry('general', 'general.messageColorsEnabled', 'Message Colors Enabled', 'false', 'Csound -+msg_color command flag', 'used-by-workflow', { consumerPath: 'main.ts:buildRealtimeEngineOptions' }),
-    entry('general', 'general.csoundErrorWarningEnabled', 'Csound Error Warning Enabled', 'true', 'Csound output error warning behavior', 'blocked-by-missing-feature', { missingFeature: 'alpha-marquee-csound-error-warning' }),
+    entry('general', 'general.csoundErrorWarningEnabled', 'Csound Error Warning Enabled', 'true', 'Csound output error warning behavior', 'used-by-workflow', { consumerPath: 'main.ts:EngineBridge playback-error warning' }),
     entry('general', 'general.directoryTempFileLimit', 'Max Temp Files per Directory', '3', 'Temp CSD snapshot cleanup limit', 'used-by-workflow', { consumerPath: 'render-command.ts' }),
 
     entry('projectDefaults', 'projectDefaults.defaultAuthor', 'Default Author', '(empty)', 'New project author', 'used-as-new-project-default', { consumerPath: 'program-settings-application.ts' }),

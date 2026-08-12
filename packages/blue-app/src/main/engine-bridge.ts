@@ -110,6 +110,7 @@ function isUnsupportedIpcEndpointError(stderr: string): boolean {
 
 export type EngineOutputCallback = (text: string, type: 'stdout' | 'stderr') => void;
 export type PlaybackCompleteCallback = (stopReason: string) => void;
+export type PlaybackErrorWarningCallback = (message: string) => void;
 
 export class EngineBridge {
   private engineProcess: ChildProcess | null = null;
@@ -126,6 +127,7 @@ export class EngineBridge {
   private engineStateUnsubscribe: (() => void) | null = null;
   private outputCallback: EngineOutputCallback | null = null;
   private playbackCompleteCallback: PlaybackCompleteCallback | null = null;
+  private playbackErrorWarningCallback: PlaybackErrorWarningCallback | null = null;
   private awaitingPlaybackTerminalState = false;
   private lastEngineStateSequence = 0;
   private pendingPolledTerminalState: PendingTerminalStateCandidate | null = null;
@@ -162,12 +164,21 @@ export class EngineBridge {
     this.playbackCompleteCallback = cb;
   }
 
+  setPlaybackErrorWarningCallback(cb: PlaybackErrorWarningCallback | null): void {
+    this.playbackErrorWarningCallback = cb;
+  }
+
   setWorkingDirectory(directory?: string | null): void {
     this.workingDirectory = directory && directory.trim().length > 0 ? directory : null;
   }
 
   private sendPlaybackStatus(status: 'starting' | 'playing' | 'stopping' | 'stopped' | 'error', message?: string): void {
     broadcastToWorkbenchWindows('playback-status', message ? { status, message } : { status });
+  }
+
+  private sendPlaybackError(message: string): void {
+    this.sendPlaybackStatus('error', message);
+    this.playbackErrorWarningCallback?.(message);
   }
 
   private sendPlaybackClock(snapshot: PlaybackClockSnapshot): void {
@@ -368,7 +379,11 @@ export class EngineBridge {
       const stopReason = snapshot.stopReason ?? 'none';
       await this.teardownClient();
       this.killEngineProcess();
-      this.sendPlaybackStatus(status, message);
+      if (status === 'error') {
+        this.sendPlaybackError(message);
+      } else {
+        this.sendPlaybackStatus(status, message);
+      }
       this.playbackCompleteCallback?.(stopReason);
     })().finally(() => {
       this.terminalCleanupPromise = null;
@@ -560,7 +575,7 @@ export class EngineBridge {
         const detail = stderrMessage
           ? `Engine error: ${stderrMessage.split('\n').pop()}`
           : `Engine exited before publishing terminal playback state (code: ${code}, signal: ${signal})`;
-        this.sendPlaybackStatus('error', detail);
+        this.sendPlaybackError(detail);
       }
     });
 
@@ -722,7 +737,7 @@ export class EngineBridge {
         const resp = await this.client.compileOrc(orchestra);
         console.log(`[EngineBridge] compileOrc: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
-          this.sendPlaybackStatus('error', `Orchestra compile failed: ${resp.message}`);
+          this.sendPlaybackError(`Orchestra compile failed: ${resp.message}`);
           return false;
         }
       }
@@ -738,7 +753,7 @@ export class EngineBridge {
         const resp = await this.client.readScore(score);
         console.log(`[EngineBridge] readScore: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
-          this.sendPlaybackStatus('error', `Score read failed: ${resp.message}`);
+          this.sendPlaybackError(`Score read failed: ${resp.message}`);
           return false;
         }
       }
@@ -748,7 +763,7 @@ export class EngineBridge {
       const startResp = await this.client.start();
       console.log(`[EngineBridge] start: ${startResp.ok ? 'OK' : 'FAILED'} ${startResp.message}`);
       if (!startResp.ok) {
-        this.sendPlaybackStatus('error', `Engine start failed: ${startResp.message}`);
+        this.sendPlaybackError(`Engine start failed: ${startResp.message}`);
         return false;
       }
 

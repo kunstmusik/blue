@@ -37,12 +37,6 @@ export default function GeneralSettings({
       />
 
       <SettingsCheckboxField
-        label="Draw Alpha Background on Marquee"
-        checked={settings.drawAlphaBackgroundOnMarquee}
-        onChange={(checked) => set('drawAlphaBackgroundOnMarquee', checked)}
-      />
-
-      <SettingsCheckboxField
         label="Message Colors Enabled"
         checked={settings.messageColorsEnabled}
         onChange={(checked) => set('messageColorsEnabled', checked)}
