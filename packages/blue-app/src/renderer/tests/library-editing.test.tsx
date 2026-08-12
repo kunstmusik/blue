@@ -176,6 +176,8 @@ describe('library editing UI', () => {
     const onCut = vi.fn();
     const onCopy = vi.fn();
     const onPaste = vi.fn();
+    const onImportInstrument = vi.fn();
+    const onExportInstrument = vi.fn();
     const onReorder = vi.fn();
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -196,6 +198,8 @@ describe('library editing UI', () => {
         onCut={onCut}
         onCopy={onCopy}
         onPaste={onPaste}
+        onImportInstrument={onImportInstrument}
+        onExportInstrument={onExportInstrument}
         onReorder={onReorder}
       />,
     ));
@@ -212,8 +216,25 @@ describe('library editing UI', () => {
     await act(async () => { await Promise.resolve(); });
     expect(document.body.textContent).toContain('Cut');
     expect(document.body.textContent).toContain('Copy');
+    expect(document.body.textContent).toContain('Import…');
+    expect(document.body.querySelector('[data-auxiliary-portal="true"]')).toBeTruthy();
+    act(() => {
+      [...document.body.querySelectorAll('[role="menuitem"]')]
+        .find((entry) => entry.textContent === 'Import…')
+        ?.dispatchEvent(new Event('click', { bubbles: true }));
+    });
+    expect(onImportInstrument).toHaveBeenCalledWith(folder);
 
     const itemRow = container.querySelector('#library-node-child')!;
+    act(() => itemRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(document.body.textContent).toContain('Export…');
+    act(() => {
+      [...document.body.querySelectorAll('[role="menuitem"]')]
+        .find((entry) => entry.textContent === 'Export…')
+        ?.dispatchEvent(new Event('click', { bubbles: true }));
+    });
+    expect(onExportInstrument).toHaveBeenCalledWith(child);
     act(() => itemRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
     await act(async () => { await Promise.resolve(); });
     const paste = [...document.body.querySelectorAll('[role="menuitem"]')]

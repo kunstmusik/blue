@@ -1993,6 +1993,7 @@ export type OrchestraPatch =
   | {
       type: 'pasteInstrument';
       instrument: InstrumentSnapshot;
+      insertAfterAssignmentId?: string;
     }
   | {
       type: 'updateAssignment';
@@ -9618,10 +9619,21 @@ export function applyProjectDocumentPatch(
         }
         break;
       }
-      case 'pasteInstrument':
-        arrangement.addInstrument(createInstrumentFromSnapshot(orchestraPatch.instrument), undefined);
+      case 'pasteInstrument': {
+        const instrument = createInstrumentFromSnapshot(orchestraPatch.instrument);
+        const insertAfterIndex = orchestraPatch.insertAfterAssignmentId
+          ? arrangement.getArrangement().findIndex(
+              (assignment) => assignment.arrangementId === orchestraPatch.insertAfterAssignmentId,
+            )
+          : -1;
+        if (insertAfterIndex >= 0) {
+          arrangement.addInstrumentAtIndex(instrument, insertAfterIndex + 1);
+        } else {
+          arrangement.addInstrument(instrument, undefined);
+        }
         changed = true;
         break;
+      }
       case 'updateAssignment': {
         const oldId = orchestraPatch.assignmentId;
         const newId = orchestraPatch.nextAssignmentId?.trim();

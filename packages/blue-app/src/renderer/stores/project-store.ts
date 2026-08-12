@@ -3859,15 +3859,20 @@ function applyOrchestraPatchSnapshot(
       pastedInstrument.assignmentId = assignmentId;
       const nextRows = cloneArrangementRowsForMutation(next);
       const nextInstruments = cloneInstrumentsForMutation(next);
-      nextRows.push({
+      const pastedRow = {
         assignmentId,
         enabled: pastedInstrument.enabled,
         instrumentName: pastedInstrument.name,
         instrumentType: pastedInstrument.type,
         instrumentSummary: pastedInstrument.type,
         editable: true,
-      });
-      nextInstruments.push(pastedInstrument);
+      };
+      const insertAfterIndex = patch.insertAfterAssignmentId
+        ? nextRows.findIndex((row) => row.assignmentId === patch.insertAfterAssignmentId)
+        : -1;
+      const insertIndex = insertAfterIndex >= 0 ? insertAfterIndex + 1 : nextRows.length;
+      nextRows.splice(insertIndex, 0, pastedRow);
+      nextInstruments.splice(insertIndex, 0, pastedInstrument);
       break;
     }
     case 'updateAssignment': {

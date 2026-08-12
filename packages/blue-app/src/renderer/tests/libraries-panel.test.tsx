@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LibraryBrowseNode } from '../../shared/unified-library';
 import { LibraryTree } from '../components/libraries/LibraryTree';
 import LibrariesPanel from '../components/workbench/panels/LibrariesPanel';
+import { isAuxiliaryInteractionTarget } from '../components/workbench/auxiliary-layout';
 import { useLibraryStore } from '../stores/library-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -175,6 +176,27 @@ describe('Libraries panel', () => {
     expect(exportCurrent?.getAttribute('aria-disabled')).toBe('true');
     expect(document.activeElement?.getAttribute('role')).toBe('menu');
     expect(document.body.querySelector('.editor-context-menu')).toBeTruthy();
+    const menuItem = document.body.querySelector('[role="menuitem"]') as HTMLElement;
+    expect(menuItem).toBeTruthy();
+    expect(isAuxiliaryInteractionTarget(menuItem)).toBe(true);
+
+    const listbox = document.createElement('div');
+    listbox.setAttribute('role', 'listbox');
+    const option = document.createElement('div');
+    listbox.appendChild(option);
+    document.body.appendChild(listbox);
+    expect(isAuxiliaryInteractionTarget(option)).toBe(true);
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    const dialogButton = document.createElement('button');
+    dialog.appendChild(dialogButton);
+    document.body.appendChild(dialog);
+    expect(isAuxiliaryInteractionTarget(dialogButton)).toBe(true);
+
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    expect(isAuxiliaryInteractionTarget(outside)).toBe(false);
     act(() => { root.unmount(); });
   });
 

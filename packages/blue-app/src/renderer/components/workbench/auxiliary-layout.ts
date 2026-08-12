@@ -71,6 +71,27 @@ export interface AuxiliarySlideoutView {
 
 export type AuxiliaryDockedSizeSnapshot = Record<AuxiliaryEdge, number>;
 
+/**
+ * Returns whether a document event target belongs to an auxiliary surface.
+ *
+ * Radix menus and other interactive overlays render into document.body, so
+ * their items are outside the slideout DOM even though the interaction
+ * originated from the slideout. Library-owned custom portals opt into the
+ * auxiliary boundary with the explicit marker below; standard menu, listbox,
+ * and dialog roles are covered for all auxiliary panels.
+ */
+export function isAuxiliaryInteractionTarget(target: EventTarget | null): boolean {
+  const element = target as HTMLElement | null;
+  return Boolean(
+    element?.closest?.('[data-auxiliary-slideout="true"]')
+    || element?.closest?.('[data-auxiliary-rail="true"]')
+    || element?.closest?.('[data-auxiliary-portal="true"]')
+    || element?.closest?.('[role="menu"]')
+    || element?.closest?.('[role="listbox"]')
+    || element?.closest?.('[role="dialog"]'),
+  );
+}
+
 interface ApplyAuxiliaryLayoutOptions {
   preserveDockedSizes?: AuxiliaryDockedSizeSnapshot;
 }

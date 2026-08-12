@@ -20,7 +20,10 @@ function DropContextMenu({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu z-[1000] min-w-32">
+        <ContextMenu.Content
+          className="editor-context-menu z-[1000] min-w-32"
+          data-auxiliary-portal="true"
+        >
           <ContextMenu.Item disabled={!canPaste} className={MENU_ITEM_CLASS} onSelect={paste}>
             Paste
           </ContextMenu.Item>

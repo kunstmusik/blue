@@ -55,6 +55,7 @@ import {
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 import type { RepositoryClipboardNode, RepositoryNode } from './repository';
+import { parseLegacyLibraryDocument } from '@blue/data';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 import { LibraryMigrationStateStore } from './migration-state-store';
@@ -87,6 +88,20 @@ function hashText(value: string): string {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, '0');
+}
+
+function parseStandaloneInstrumentXml(source: string) {
+  const withoutDeclaration = source
+    .replace(/^\uFEFF?\s*<\?xml[\s\S]*?\?>\s*/u, '')
+    .trim();
+  const plan = parseLegacyLibraryDocument(
+    `<instrumentLibrary><instrumentCategory categoryName="Instrument Library" isRoot="true">${withoutDeclaration}</instrumentCategory></instrumentLibrary>`,
+  );
+  const [item] = plan.root.children;
+  if (plan.root.children.length !== 1 || !item || item.kind !== 'item') {
+    throw new Error('The .binstr file must contain one instrument root element.');
+  }
+  return item;
 }
 
 export class UnifiedLibraryService {
@@ -1113,6 +1128,80 @@ export class UnifiedLibraryService {
       const browseNode = await this.userNodeToBrowseNode(client, node);
       this.publishChanged({ contentRevision: repository.contentRevision, cause: 'mutation', requiresFullRefresh: true });
       return { ok: true, value: { contentRevision: repository.contentRevision, affectedNodes: [browseNode] } };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async importInstrumentFile(
+    parentId: string,
+    sourcePath: string,
+  ): Promise<LibraryResult<LibraryMutationReceipt>> {
+    const client = this.getReadyClient();
+    if (!client || !this.snapshot.writable) return this.notReady();
+    try {
+      const parent = await client.getNode(parentId);
+      if (parent.libraryType !== 'instrument' || parent.nodeKind === 'item') {
+        throw new Error('The destination must be a folder in the Instrument Library.');
+      }
+      const item = parseStandaloneInstrumentXml(
+        await fs.promises.readFile(sourcePath, 'utf8'),
+      );
+      const node = await client.createItem({
+        libraryType: 'instrument',
+        parentId,
+        displayName: item.displayName,
+        payload: {
+          embeddedName: item.payload.embeddedName,
+          objectType: item.payload.objectType,
+          supportStatus: item.payload.supportStatus,
+          supportReasonCode: item.payload.supportReasonCode,
+          supportMessage: item.payload.supportMessage,
+          payloadXml: item.payload.rawXml,
+          rawHash: item.payload.rawHash,
+          canonicalContentHash: item.payload.canonicalContentHash,
+          serializerRevision: '1',
+          preview: item.payload.preview,
+          dependencies: item.payload.dependencies,
+          metadataRevision: 1,
+        },
+      });
+      const repository = await this.refreshRepositorySnapshot(client);
+      const browseNode = await this.userNodeToBrowseNode(client, node);
+      this.publishChanged({
+        contentRevision: repository.contentRevision,
+        cause: 'import',
+        requiresFullRefresh: true,
+      });
+      return {
+        ok: true,
+        value: {
+          contentRevision: repository.contentRevision,
+          affectedNodes: [browseNode],
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async exportInstrumentFile(
+    key: LibraryItemKey,
+    targetPath: string,
+  ): Promise<LibraryResult<true>> {
+    const client = this.getReadyClient();
+    if (!client || !this.snapshot.writable) return this.notReady();
+    try {
+      if (key.scope !== 'user' || key.libraryType !== 'instrument') {
+        throw new Error('Only user Instrument Library items can be exported as .binstr files.');
+      }
+      const node = await client.getNode(key.nodeId);
+      if (node.libraryType !== 'instrument' || node.nodeKind !== 'item') {
+        throw new Error('Only an Instrument Library item can be exported as a .binstr file.');
+      }
+      const payload = await client.getItemPayload(node.id);
+      await fs.promises.writeFile(targetPath, payload.payloadXml, 'utf8');
+      return { ok: true, value: true };
     } catch (error) {
       return this.failureResult(error);
     }

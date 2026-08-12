@@ -97,6 +97,8 @@ interface LibraryState {
   selectImportDirectory: () => Promise<void>;
   executeImport: (folderSelections?: Readonly<Record<string, string>>) => Promise<void>;
   cancelImport: () => void;
+  importInstrumentToFolder: (parent: LibraryBrowseNode) => Promise<boolean>;
+  exportInstrument: (node: LibraryBrowseNode) => Promise<boolean>;
   exportCurrent: () => Promise<void>;
   exportAll: () => Promise<void>;
   retryRecovery: () => Promise<void>;
@@ -848,6 +850,46 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   cancelImport: () => set({ importPreview: null }),
+
+  importInstrumentToFolder: async (parent) => {
+    if (
+      parent.scope !== 'user'
+      || parent.libraryType !== 'instrument'
+      || (parent.nodeKind !== 'root' && parent.nodeKind !== 'folder')
+    ) return false;
+    const result = await window.blueAPI.importLibraryInstrument(parent.nodeId);
+    if (!result) return false;
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    await get().refresh();
+    const imported = result.value.affectedNodes[0];
+    toast.success(imported ? `Imported ${imported.displayName}.` : 'Instrument imported.');
+    return true;
+  },
+
+  exportInstrument: async (node) => {
+    if (
+      node.scope !== 'user'
+      || node.libraryType !== 'instrument'
+      || node.nodeKind !== 'item'
+      || !node.key
+      || node.key.scope !== 'user'
+    ) return false;
+    const result = await window.blueAPI.exportLibraryInstrument(node.key);
+    if (!result) return false;
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    toast.success(`Exported ${node.displayName}.`);
+    return true;
+  },
 
   exportCurrent: async () => {
     const type = get().typeFilter;

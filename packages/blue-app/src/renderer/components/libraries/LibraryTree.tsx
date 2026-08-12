@@ -18,6 +18,8 @@ interface LibraryTreeProps {
   onCut?: (node: LibraryBrowseNode) => void;
   onCopy?: (node: LibraryBrowseNode) => void;
   onPaste?: (node: LibraryBrowseNode) => void;
+  onImportInstrument?: (node: LibraryBrowseNode) => void;
+  onExportInstrument?: (node: LibraryBrowseNode) => void;
   onTransferToUser?: (descriptor: LibraryDragDescriptor, destination: LibraryBrowseNode) => void;
   onMoveToUser?: (source: LibraryBrowseNode, destination: LibraryBrowseNode) => void;
   dropRoot?: LibraryBrowseNode | null;
@@ -57,6 +59,8 @@ export function LibraryTree({
   onCut,
   onCopy,
   onPaste,
+  onImportInstrument,
+  onExportInstrument,
   onTransferToUser,
   onMoveToUser,
   dropRoot = null,
@@ -319,6 +323,8 @@ export function LibraryTree({
             onCut={onCut}
             onCopy={onCopy}
             onPaste={onPaste}
+            onImportInstrument={onImportInstrument}
+            onExportInstrument={onExportInstrument}
             onDelete={onDelete}
             onMoveUp={onReorder && siblingIndex > 0
               ? (candidate) => onReorder(candidate, siblingIndex - 1)

@@ -848,6 +848,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         <div
           ref={contextMenuRef}
           className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-body text-app-text-strong shadow-xl"
+          data-auxiliary-portal="true"
           style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
         >
           <button

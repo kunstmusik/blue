@@ -29,6 +29,7 @@ import {
   getAuxiliarySlideoutForEdge,
   getMinimizedTabsForEdge,
   getGroupInstanceForPanel,
+  isAuxiliaryInteractionTarget,
   isAuxiliaryPanelId,
   shouldPreventAuxiliaryPanelDrop,
   type AuxiliaryDockedSizeSnapshot,
@@ -416,17 +417,9 @@ export default function WorkbenchShell() {
     }
   }, [auxiliary, persistLayout]);
 
-  const isAuxiliaryOverlayTarget = useCallback((target: EventTarget | null) => {
-    const element = target as HTMLElement | null;
-    return Boolean(
-      element?.closest('[data-auxiliary-slideout="true"]')
-      || element?.closest('[data-auxiliary-rail="true"]'),
-    );
-  }, []);
-
   useDocumentMouseDownOutside({
     enabled: Boolean(leftSlideout || rightSlideout || bottomSlideout),
-    isInside: isAuxiliaryOverlayTarget,
+    isInside: isAuxiliaryInteractionTarget,
     onMouseDownOutside: () => hideAllAuxiliarySlideouts(),
   });
 

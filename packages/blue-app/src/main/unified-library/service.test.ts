@@ -1,3 +1,6 @@
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryService } from './service';
@@ -94,5 +97,58 @@ describe('UnifiedLibraryService foundation', () => {
     expect(service.setBsbClipboard(null)).toBe(true);
     expect(service.getSnapshot().bsbClipboard).toBeNull();
     await service.stop();
+  });
+
+  it('imports and exports a standalone .binstr payload in a user folder', async () => {
+    const service = new UnifiedLibraryService(
+      ':memory:',
+      UnifiedLibraryRepositoryClient.openForTesting,
+    );
+    const directory = await mkdtemp(path.join(tmpdir(), 'blue-binstr-'));
+    const inputPath = path.join(directory, 'input.binstr');
+    const outputPath = path.join(directory, 'output.binstr');
+    const xml = '<instrument type="blue.orchestra.GenericInstrument"><name>Imported Pad</name></instrument>';
+    await writeFile(inputPath, xml, 'utf8');
+
+    try {
+      await service.start();
+      const rootResult = await service.browseLibraries({
+        parent: { scope: 'user', libraryType: 'instrument' },
+        limit: 1,
+      });
+      expect(rootResult.ok).toBe(true);
+      if (!rootResult.ok) return;
+
+      const folderResult = await service.applyLibraryMutation({
+        type: 'createFolder',
+        libraryType: 'instrument',
+        parentId: rootResult.value.parent.nodeId,
+        name: 'Imported',
+      });
+      expect(folderResult.ok).toBe(true);
+      if (!folderResult.ok) return;
+      const folderId = folderResult.value.affectedNodes[0]?.nodeId;
+      expect(folderId).toBeTruthy();
+      if (!folderId) return;
+
+      const imported = await service.importInstrumentFile(folderId, inputPath);
+      expect(imported).toMatchObject({
+        ok: true,
+        value: { affectedNodes: [{ displayName: 'Imported Pad', nodeKind: 'item' }] },
+      });
+      if (!imported.ok) return;
+      const key = imported.value.affectedNodes[0]?.key;
+      expect(key).toMatchObject({ scope: 'user', libraryType: 'instrument' });
+      if (!key) return;
+
+      await expect(service.exportInstrumentFile(key, outputPath)).resolves.toMatchObject({
+        ok: true,
+        value: true,
+      });
+      await expect(readFile(outputPath, 'utf8')).resolves.toBe(xml);
+    } finally {
+      await service.stop();
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });

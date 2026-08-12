@@ -134,6 +134,28 @@ describe('Orchestra project document contract', () => {
     expect(assignments).toHaveLength(2);
     expect(assignments[1]!.instr.getName()).toBe('Pasted Lead');
   });
+
+  it('inserts imported instrument snapshots after the selected assignment', () => {
+    const data = createProjectWithGenericInstrument();
+    const second = new GenericInstrument();
+    second.setName('Second');
+    data.getArrangement().addInstrument(second, '2');
+    const snapshot = createProjectEditorSnapshot(data, null).orchestra.instruments[0]!;
+
+    expect(
+      applyProjectDocumentPatch(data, {
+        orchestra: {
+          type: 'pasteInstrument',
+          instrument: snapshot,
+          insertAfterAssignmentId: '1',
+        },
+      }),
+    ).toBe(true);
+
+    expect(data.getArrangement().getArrangement().map((assignment) => assignment.arrangementId)).toEqual([
+      '1', '3', '2',
+    ]);
+  });
 });
 
 function createProjectWithBSBInstrument(): BlueData {

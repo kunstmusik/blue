@@ -170,8 +170,10 @@ import {
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
@@ -379,6 +381,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
   copyLibraryTransferToUser: (source: LibraryTransferSourceReference, parentId: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, { source, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  importLibraryInstrument: (parentId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, parentId) as Promise<LibraryResult<LibraryMutationReceipt> | null>,
+  exportLibraryInstrument: (key: LibraryItemKey) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, key) as Promise<LibraryResult<true> | null>,
   selectLibraryImportFiles: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
   selectLibraryImportDirectory: () =>
@@ -597,6 +603,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
   importCsoundUdo: () => ipcRenderer.invoke('import-csound-udo'),
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
   exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
+  importArrangementInstrument: () =>
+    ipcRenderer.invoke('import-arrangement-instrument') as Promise<string | null>,
+  exportArrangementInstrument: (assignmentId: string) =>
+    ipcRenderer.invoke('export-arrangement-instrument', assignmentId) as Promise<void>,
   importPresetFile: () => ipcRenderer.invoke('import-preset-file') as Promise<string | null>,
   exportPresetFile: (xmlText: string, presetName: string) =>
     ipcRenderer.invoke('export-preset-file', xmlText, presetName) as Promise<void>,

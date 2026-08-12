@@ -4,7 +4,12 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import type { SupportedNewInstrumentType } from '../../../../../shared/project-editor';
+import { Element, loadInstrumentFromXML } from '@blue/data';
+import { toast } from 'sonner';
+import {
+  createInstrumentSnapshot,
+  type SupportedNewInstrumentType,
+} from '../../../../../shared/project-editor';
 import {
   getAvailableNumericArrangementId,
   getLibraryTransferSourceType,
@@ -186,6 +191,36 @@ function ArrangementPanel({
     }
   }, [libraryInstrumentAvailable, pasteLibraryInstrument]);
 
+  const importInstrument = useCallback(async (insertAfterAssignmentId: string) => {
+    try {
+      const xml = await window.blueAPI.importArrangementInstrument();
+      if (!xml) return;
+      const root = Element.parse(xml);
+      if (root.getName() !== 'instrument') {
+        throw new Error('File did not contain an instrument.');
+      }
+      const instrument = loadInstrumentFromXML(root);
+      if (!instrument) {
+        throw new Error('Could not read instrument from file.');
+      }
+      await onOrchestraPatch({
+        type: 'pasteInstrument',
+        instrument: createInstrumentSnapshot('imported', instrument, instrument.isEnabled()),
+        insertAfterAssignmentId,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not read instrument from file.');
+    }
+  }, [onOrchestraPatch]);
+
+  const exportInstrument = useCallback(async (assignmentId: string) => {
+    try {
+      await window.blueAPI.exportArrangementInstrument(assignmentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not export instrument.');
+    }
+  }, []);
+
   const isAddMenuTarget = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Node)) {
       return false;
@@ -323,6 +358,8 @@ function ArrangementPanel({
                       onCopy={(assignmentId) => captureAssignment(assignmentId, 'copy')}
                       onCut={(assignmentId) => captureAssignment(assignmentId, 'cut')}
                       onPaste={() => pasteInstrument(index + 1)}
+                      onImport={() => importInstrument(row.original.assignmentId)}
+                      onExport={() => exportInstrument(row.original.assignmentId)}
                       onOrchestraPatch={onOrchestraPatch}
                     >
                       <ProjectLibraryDragSource node={projectNode}>

@@ -50,6 +50,8 @@ export default function LibrariesPanel(): React.ReactElement {
     selectImportDirectory: current.selectImportDirectory,
     executeImport: current.executeImport,
     cancelImport: current.cancelImport,
+    importInstrumentToFolder: current.importInstrumentToFolder,
+    exportInstrument: current.exportInstrument,
     exportCurrent: current.exportCurrent,
     exportAll: current.exportAll,
     cancelDelete: current.cancelDelete,
@@ -245,6 +247,8 @@ export default function LibrariesPanel(): React.ReactElement {
                       onCut={(node) => { void state.captureClipboard(node, 'cut'); }}
                       onCopy={(node) => { void state.captureClipboard(node, 'copy'); }}
                       onPaste={(node) => { void state.pasteInto(node); }}
+                      onImportInstrument={(node) => { void state.importInstrumentToFolder(node); }}
+                      onExportInstrument={(node) => { void state.exportInstrument(node); }}
                       onTransferToUser={(descriptor, node) => {
                         void state.transferToUser({ kind: 'drag', dragSessionId: descriptor.dragSessionId }, node);
                       }}

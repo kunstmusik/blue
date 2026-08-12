@@ -13,6 +13,8 @@ interface ArrangementContextMenuProps extends OrchestraMutationProps {
   onCopy: (assignmentId: string) => void;
   onCut: (assignmentId: string) => void;
   onPaste: () => void;
+  onImport: () => void | Promise<void>;
+  onExport: () => void | Promise<void>;
   children: React.ReactNode;
 }
 
@@ -72,6 +74,8 @@ export default function ArrangementContextMenu({
   onCopy,
   onCut,
   onPaste,
+  onImport,
+  onExport,
   onOrchestraPatch,
   children,
 }: ArrangementContextMenuProps): React.ReactElement {
@@ -107,11 +111,11 @@ export default function ArrangementContextMenu({
             Paste
           </MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
-          <MenuItem disabled onSelect={() => {}}>
-            Import .binstr (deferred)
+          <MenuItem onSelect={() => void onImport()}>
+            Import…
           </MenuItem>
-          <MenuItem disabled onSelect={() => {}}>
-            Export .binstr (deferred)
+          <MenuItem onSelect={() => void onExport()}>
+            Export…
           </MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
           <MenuItem

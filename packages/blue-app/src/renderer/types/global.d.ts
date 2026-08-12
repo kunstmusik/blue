@@ -265,6 +265,12 @@ declare global {
         source: LibraryTransferSourceReference,
         parentId: string,
       ) => Promise<LibraryResult<LibraryMutationReceipt>>;
+      importLibraryInstrument: (
+        parentId: string,
+      ) => Promise<LibraryResult<LibraryMutationReceipt> | null>;
+      exportLibraryInstrument: (
+        key: LibraryItemKey,
+      ) => Promise<LibraryResult<true> | null>;
       selectLibraryImportFiles: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       selectLibraryImportDirectory: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       executeLibraryImport: (
@@ -433,6 +439,8 @@ declare global {
       importCsoundUdo: () => Promise<string | null>;
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
+      importArrangementInstrument: () => Promise<string | null>;
+      exportArrangementInstrument: (assignmentId: string) => Promise<void>;
       importPresetFile: () => Promise<string | null>;
       exportPresetFile: (xmlText: string, presetName: string) => Promise<void>;
       exportScoreObject: (xmlText: string, objectName: string) => Promise<ScoreObjectExportResult>;

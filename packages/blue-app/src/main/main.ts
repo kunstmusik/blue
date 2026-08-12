@@ -3366,6 +3366,18 @@ ipcMain.handle('import-blue-udo', async () => {
   return xml;
 });
 
+ipcMain.handle('import-arrangement-instrument', async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Instrument',
+    defaultPath: getConfiguredWorkDirectory(),
+    filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return fs.promises.readFile(result.filePaths[0]!, 'utf-8');
+});
+
 ipcMain.handle('import-csound-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -3440,6 +3452,22 @@ ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
   let filePath = result.filePath;
   if (!filePath.endsWith('.blueUDO')) filePath += '.blueUDO';
   await fs.promises.writeFile(filePath, xmlText, 'utf-8');
+});
+
+ipcMain.handle('export-arrangement-instrument', async (_event, assignmentId: unknown): Promise<void> => {
+  if (!mainWindow || !currentData || typeof assignmentId !== 'string') return;
+  const instrument = currentData.getArrangement().getInstrumentById(assignmentId);
+  if (!instrument) return;
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Instrument',
+    defaultPath: getConfiguredWorkDirectoryDefaultPath('default.binstr'),
+    filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+    properties: ['showOverwriteConfirmation'],
+  });
+  if (result.canceled || !result.filePath) return;
+  let filePath = result.filePath;
+  if (!filePath.toLowerCase().endsWith('.binstr')) filePath += '.binstr';
+  await fs.promises.writeFile(filePath, instrument.saveAsXML().toXml(), 'utf-8');
 });
 
 ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: string) => {

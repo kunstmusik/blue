@@ -35,8 +35,10 @@ import {
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
@@ -306,6 +308,38 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.copyLibraryTransferToUser(value.source, value.parentId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Library transfer request.', false) });
   });
+  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, async (_event, parentId: unknown) => {
+    if (typeof parentId !== 'string' || parentId.trim().length === 0) {
+      return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library folder.', false) };
+    }
+    const owner = getWindows().find((window) => !window.isDestroyed());
+    const options: OpenDialogOptions = {
+      title: 'Import Instrument',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
+      filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+      properties: ['openFile'],
+    };
+    const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return null;
+    return service.importInstrumentFile(parentId, result.filePaths[0]);
+  });
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, async (_event, key: unknown) => {
+    if (!isLibraryItemKey(key) || key.scope !== 'user' || key.libraryType !== 'instrument') {
+      return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library item.', false) };
+    }
+    const owner = getWindows().find((window) => !window.isDestroyed());
+    const options: SaveDialogOptions = {
+      title: 'Export Instrument',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), 'default.binstr'),
+      filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+      properties: ['showOverwriteConfirmation'],
+    };
+    const result = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
+    if (result.canceled || !result.filePath) return null;
+    let targetPath = result.filePath;
+    if (!targetPath.toLowerCase().endsWith('.binstr')) targetPath += '.binstr';
+    return service.exportInstrumentFile(key, targetPath);
+  });
   ipcMain.handle(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
@@ -489,8 +523,10 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL);
