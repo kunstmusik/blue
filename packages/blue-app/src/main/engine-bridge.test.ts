@@ -107,4 +107,52 @@ describe('EngineBridge runtime selection', () => {
     expect(compileOrc).toHaveBeenCalledWith('asdf');
     expect(warning).toHaveBeenCalledWith('Orchestra compile failed: Failed to compile orchestra');
   });
+
+  it('waits for the stopped engine state before resolving stop', async () => {
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const stoppedState = {
+      state: 'stopped',
+      stopReason: 'stop-requested',
+      engineCreated: true,
+      running: false,
+      sampleFrames: 0,
+      sampleRate: 44100,
+      ksmps: 64,
+      sequence: 1,
+      lastError: '',
+    } satisfies EngineStateSnapshot;
+    let resolveState!: (value: { ok: boolean; state: EngineStateSnapshot; message: string }) => void;
+    const stateReady = new Promise<{ ok: boolean; state: EngineStateSnapshot; message: string }>((resolve) => {
+      resolveState = resolve;
+    });
+    const client = {
+      stop: vi.fn().mockResolvedValue({ ok: true, message: '' }),
+      getEngineState: vi.fn().mockReturnValue(stateReady),
+      disconnect: vi.fn().mockResolvedValue(undefined),
+    };
+    const internals = bridge as unknown as {
+      client: typeof client;
+      isPlaying: boolean;
+      awaitingPlaybackTerminalState: boolean;
+    };
+    internals.client = client;
+    internals.isPlaying = true;
+    internals.awaitingPlaybackTerminalState = true;
+
+    let settled = false;
+    const stopPromise = bridge.stopPlayback().then(() => {
+      settled = true;
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(client.stop).toHaveBeenCalledOnce();
+    expect(client.getEngineState).toHaveBeenCalledOnce();
+    expect(settled).toBe(false);
+
+    resolveState({ ok: true, state: stoppedState, message: '' });
+    await stopPromise;
+
+    expect(settled).toBe(true);
+  });
 });

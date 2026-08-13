@@ -285,7 +285,7 @@ export class EngineBridge {
     }
   }
 
-  private describeTerminalState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): {
+  private describeTerminalState(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll' | 'stop-command'): {
     status: 'stopped' | 'error';
     message: string;
   } {
@@ -360,7 +360,7 @@ export class EngineBridge {
     this.terminalCleanupPromise = null;
   }
 
-  private async finalizePlaybackFromEngine(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll'): Promise<void> {
+  private async finalizePlaybackFromEngine(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll' | 'stop-command'): Promise<void> {
     if (!this.awaitingPlaybackTerminalState) {
       return;
     }
@@ -651,6 +651,18 @@ export class EngineBridge {
           if (emitStatus) {
             this.sendPlaybackStatus('error', `Engine stop failed: ${resp.message}`);
           }
+        } else if (this.terminalCleanupPromise) {
+          await this.terminalCleanupPromise;
+        } else if (this.awaitingPlaybackTerminalState) {
+          // The stop response only guarantees that the engine has stopped;
+          // the pub/sub terminal event can arrive on the other socket later.
+          // Resolve that lifecycle before a replacement playback starts so
+          // the old session cannot publish a late stopped status.
+          const stateResp = await this.client.getEngineState();
+          if (!stateResp.ok || !stateResp.state || stateResp.state.state !== 'stopped') {
+            throw new Error(stateResp.message || 'Engine did not reach the stopped state');
+          }
+          await this.finalizePlaybackFromEngine(stateResp.state, 'stop-command');
         }
       } catch (err) {
         console.warn(`[EngineBridge] stop command error: ${err instanceof Error ? err.message : String(err)}`);
