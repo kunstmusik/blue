@@ -44,6 +44,18 @@ if(UNIX AND NOT APPLE)
 endif()
 add_test(NAME CsoundProbeTests COMMAND test_csound_probe)
 
+add_executable(test_csound_runtime_services
+    test_csound_runtime_services.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundRuntimeServices.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+)
+target_include_directories(test_csound_runtime_services PRIVATE ${CMAKE_SOURCE_DIR}/src)
+set_target_properties(test_csound_runtime_services PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_csound_runtime_services PRIVATE dl)
+endif()
+add_test(NAME CsoundRuntimeServicesTests COMMAND test_csound_runtime_services)
+
 add_executable(test_engine_capabilities
     test_engine_capabilities.cpp
     ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
@@ -81,6 +93,7 @@ add_executable(test_csound_integration
     ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundRuntimeServices.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )

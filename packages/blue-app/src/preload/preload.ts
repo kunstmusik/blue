@@ -93,6 +93,17 @@ import type {
   EngineProbeResult,
 } from '../shared/engine-runtime';
 import type {
+  CsoundIoQueryRequest,
+  CsoundIoQueryResult,
+} from '../shared/csound-runtime';
+import {
+  SETTINGS_CLOSE_REQUEST_CHANNEL,
+  SETTINGS_CLOSE_RESPONSE_CHANNEL,
+  SETTINGS_CONFIRM_CLOSE_CHANNEL,
+  type SettingsClosePromptResponse,
+  type SettingsCloseResolution,
+} from '../shared/settings-window';
+import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
@@ -713,6 +724,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Settings
   openSettingsWindow: () => ipcRenderer.invoke('settings:open'),
+  onSettingsCloseRequest: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on(SETTINGS_CLOSE_REQUEST_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(SETTINGS_CLOSE_REQUEST_CHANNEL, handler); };
+  },
+  confirmSettingsClose: () =>
+    ipcRenderer.invoke(SETTINGS_CONFIRM_CLOSE_CHANNEL) as Promise<SettingsClosePromptResponse>,
+  resolveSettingsClose: (resolution: SettingsCloseResolution) => {
+    ipcRenderer.send(SETTINGS_CLOSE_RESPONSE_CHANNEL, resolution);
+  },
   getProgramSettings: () =>
     ipcRenderer.invoke('program-settings:get') as Promise<ProgramSettingsSnapshot>,
   saveProgramSettings: (snapshot: ProgramSettingsSnapshot) =>
@@ -725,6 +746,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
   probeEngineRuntime: (request?: EngineProbeRequest) =>
     ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
+  queryCsoundIo: (request?: CsoundIoQueryRequest) =>
+    ipcRenderer.invoke('engine-runtime:query-csound-io', request) as Promise<CsoundIoQueryResult>,
 
   // OSC Control
   getOscServerSnapshot: () =>

@@ -71,6 +71,10 @@ import type {
   EngineProbeResult,
 } from '../../shared/engine-runtime';
 import type {
+  CsoundIoQueryRequest,
+  CsoundIoQueryResult,
+} from '../../shared/csound-runtime';
+import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
@@ -486,6 +490,11 @@ declare global {
 
       // Settings
       openSettingsWindow: () => Promise<void>;
+      onSettingsCloseRequest: (callback: () => void) => () => void;
+      confirmSettingsClose: () => Promise<import('../../shared/settings-window').SettingsClosePromptResponse>;
+      resolveSettingsClose: (
+        resolution: import('../../shared/settings-window').SettingsCloseResolution,
+      ) => void;
       getProgramSettings: () => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
       saveProgramSettings: (
         snapshot: import('../../shared/program-settings').ProgramSettingsSnapshot,
@@ -498,6 +507,7 @@ declare global {
         snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
       probeEngineRuntime: (request?: EngineProbeRequest) => Promise<EngineProbeResult>;
+      queryCsoundIo: (request?: CsoundIoQueryRequest) => Promise<CsoundIoQueryResult>;
 
       // OSC Control
       getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;

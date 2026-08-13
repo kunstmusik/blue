@@ -127,6 +127,8 @@ export interface DiskRenderSettingsSnapshot {
 
 export interface CurrentAppSettingsSnapshot {
   enginePath: string;
+  /** Empty selects the Csound library discovered by Blue Engine. */
+  csoundLibraryPath: string;
   recentFiles: string[];
   windowBounds: { x: number; y: number; width: number; height: number } | null;
   midiInputDevice: string;
@@ -198,7 +200,7 @@ export interface UsageParityMatrixEntry {
   missingFeature?: string;
 }
 
-export const PROGRAM_SETTINGS_VERSION = 2;
+export const PROGRAM_SETTINGS_VERSION = 3;
 
 export const TIME_BASE_CHOICES: readonly string[] = [
   'BEATS', 'BBT', 'BBST', 'BBF', 'TIME', 'SECONDS', 'SMPTE', 'FRAME',
@@ -267,7 +269,25 @@ export function getDefaultFreezeFlags(platform: string): string {
 }
 
 export function getDefaultAudioDriver(platform: string): string {
-  return platform === 'darwin' ? 'pa_bl' : 'PortAudio';
+  switch (platform) {
+    case 'darwin':
+      // Csound initializes _RTAUDIO to auhal on macOS.
+      return 'auhal';
+    case 'linux':
+      // Csound initializes _RTAUDIO to alsa on Linux.
+      return 'alsa';
+    default:
+      // Csound initializes _RTAUDIO to PortAudio on Windows and other desktop
+      // platforms. Keep this exact identifier; discovery may also expose the
+      // pa_bl/pa_cb implementation choices alongside it.
+      return 'PortAudio';
+  }
+}
+
+export function getDefaultMidiDriver(platform: string): string {
+  // Csound defaults to its PortMIDI module except on Linux, where it uses
+  // ALSA. These are the exact identifiers reported by module discovery.
+  return platform === 'linux' ? 'alsa' : 'portmidi';
 }
 
 export function isAbsoluteEnginePath(value: string): boolean {
@@ -282,6 +302,11 @@ export function normalizeEnginePathSetting(value: unknown): string {
   return normalized === '' || normalized === 'blue-engine'
     ? 'blue-engine'
     : normalized;
+}
+
+export function normalizeCsoundLibraryPath(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.trim();
 }
 
 export function getDefaultSoftwareBufferSize(platform: string): number {
@@ -357,7 +382,7 @@ export function createDefaultRealtimeRenderSettings(platform: string): RealtimeR
     audioInEnabled: false,
     audioInText: 'adc',
     midiDriverEnabled: true,
-    midiDriver: 'PortMidi',
+    midiDriver: getDefaultMidiDriver(platform),
     midiOutEnabled: false,
     midiOutText: '',
     midiInEnabled: false,
@@ -407,6 +432,7 @@ export function createDefaultDiskRenderSettings(platform: string): DiskRenderSet
 export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
   return {
     enginePath: 'blue-engine',
+    csoundLibraryPath: '',
     recentFiles: [],
     windowBounds: null,
     midiInputDevice: '',
@@ -444,6 +470,15 @@ export function validateProgramSettings(
     issues.push({
       path: 'appSpecific.enginePath',
       message: 'Blue Engine override must be an absolute path or the bundled default',
+      severity: 'error',
+    });
+  }
+
+  const csoundLibraryPath = normalizeCsoundLibraryPath(snapshot.appSpecific.csoundLibraryPath);
+  if (csoundLibraryPath !== '' && !isAbsoluteEnginePath(csoundLibraryPath)) {
+    issues.push({
+      path: 'appSpecific.csoundLibraryPath',
+      message: 'Csound library override must be empty or an absolute path',
       severity: 'error',
     });
   }
@@ -655,6 +690,7 @@ export function mergeWithDefaults(
     // without the field, and any malformed/off-step value, default to 100.
     appZoomPercent: normalizeAppZoomPercent(savedAppSpecific.appZoomPercent),
     enginePath: normalizeEnginePathSetting(savedAppSpecific.enginePath),
+    csoundLibraryPath: normalizeCsoundLibraryPath(savedAppSpecific.csoundLibraryPath),
   };
 
   // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder

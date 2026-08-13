@@ -37,6 +37,7 @@ add_executable(blue-engine
     src/ipc/ZmqHandler.cpp
     src/ipc/SharedMemory.cpp
     src/csound/CsoundLoader.cpp
+    src/csound/CsoundRuntimeServices.cpp
     src/automation/AutomationStore.cpp
     src/automation/AutomationManager.cpp
     src/protocol/Capabilities.cpp

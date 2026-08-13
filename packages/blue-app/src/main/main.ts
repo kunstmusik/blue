@@ -26,7 +26,7 @@ import {
   CSDImportMode,
   buildMidiImportProject,
 } from '@blue/data';
-import { openSettingsWindow } from './settings-window';
+import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
 import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
 import { resolveAppMetadata } from './app-metadata';
 import {
@@ -58,6 +58,7 @@ import {
   isTrackInstrumentEditorRequest,
 } from '../shared/track-instrument-editor-contract';
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
+import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
@@ -179,6 +180,12 @@ import {
 } from './midi-permission';
 import { OscControlService } from './osc-control-service';
 import {
+  SETTINGS_CLOSE_RESPONSE_CHANNEL,
+  SETTINGS_CONFIRM_CLOSE_CHANNEL,
+  type SettingsClosePromptResponse,
+  type SettingsCloseResolution,
+} from '../shared/settings-window';
+import {
   OSC_CONTROL_COMMAND_CHANNEL,
   OSC_CONTROL_GET_SNAPSHOT_CHANNEL,
   OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL,
@@ -255,7 +262,7 @@ import {
   executeFreezeUnfreeze,
   type FreezeExecutionSeam,
 } from './freeze-score-objects';
-import { spawn, type ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import { BlueSynthBuilder } from '@blue/data';
 import {
   collectMissingAudioFiles,
@@ -295,7 +302,7 @@ let unregisterCodeRepositoryIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
 let activeRenderOperationId: string | null = null;
-let activeRenderProcess: ChildProcess | null = null;
+let activeRenderAbortController: AbortController | null = null;
 let activeRenderOperationKind: RenderOperationStatus['kind'] | null = null;
 let activeRenderAction: DiskRenderAction | null = null;
 let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
@@ -817,53 +824,43 @@ function createCsoundExecutionSeam(
   const trackRenderProcess = options.trackRenderProcess ?? true;
 
   return {
-    async runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout: string }> {
-      return new Promise((resolve, reject) => {
-        const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
-        if (trackRenderProcess) {
-          activeRenderProcess = child;
-        }
-
-        let stderr = '';
-        let stdout = '';
-        let stderrLineBuffer = '';
-        child.stdout?.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          stdout += text;
-          onOutput?.(text, 'stdout');
-        });
-        child.stderr?.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          stderr += text;
-          onOutput?.(text, 'stderr');
-          stderrLineBuffer += text;
-          const lines = stderrLineBuffer.split('\n');
-          stderrLineBuffer = lines.pop() ?? '';
-          for (const line of lines) {
-            if (!onProgress) continue;
-            const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
-            if (progress !== null) onProgress(progress);
-          }
-        });
-
-        child.on('error', (err) => {
-          if (activeRenderProcess === child) {
-            activeRenderProcess = null;
-          }
-          reject(err);
-        });
-
-        child.on('close', (code) => {
-          if (activeRenderProcess === child) {
-            activeRenderProcess = null;
-          }
-          if (cancellationSignal?.cancelled) {
-            resolve({ exitCode: -1, stderr: 'Operation cancelled.', stdout });
-          } else {
-            resolve({ exitCode: code ?? -1, stderr, stdout });
-          }
-        });
-      });
+    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean }> {
+      const controller = trackRenderProcess && activeRenderAbortController
+        ? activeRenderAbortController
+        : new AbortController();
+      if (cancellationSignal?.cancelled) controller.abort();
+      let stderrLineBuffer = '';
+      const result = await engineRuntimeService?.executeCsound(
+        {
+          kind: 'performance',
+          operationId: activeRenderOperationId ?? `csound-${Date.now()}`,
+          args,
+          cwd,
+        },
+        {
+          signal: controller.signal,
+          onOutput: (text, source) => {
+            onOutput?.(text, source);
+            if (source !== 'stderr' || !onProgress) return;
+            stderrLineBuffer += text;
+            const lines = stderrLineBuffer.split('\n');
+            stderrLineBuffer = lines.pop() ?? '';
+            for (const line of lines) {
+              const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
+              if (progress !== null) onProgress(progress);
+            }
+          },
+        },
+      );
+      if (!result) {
+        return { exitCode: -1, stderr: 'Blue Engine runtime service is unavailable.', stdout: '' };
+      }
+      return {
+        exitCode: result.exitCode ?? -1,
+        stderr: result.stderr || (result.state === 'failed' ? result.message : ''),
+        stdout: result.stdout,
+        cancelled: result.state === 'cancelled',
+      };
     },
   };
 }
@@ -874,7 +871,7 @@ function finishRenderOperation(operationId: string): void {
   activeRenderOperationKind = null;
   activeRenderAction = null;
   activeRenderCancellationSignal = null;
-  activeRenderProcess = null;
+  activeRenderAbortController = null;
   rebuildApplicationMenu();
 }
 
@@ -964,13 +961,8 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
     return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Another render/freeze operation is already running.' };
   }
 
-  // Java Blue's RenderToDiskUtility stops any active realtime render before
-  // opening the output dialog or starting the disk subprocess. This also
-  // terminates an active ScoreObject audition rather than overlapping audio.
-  await stopPlayback();
-  if (!currentData) {
-    return { ok: false, operationId: '', cancelled: true, outputPath: null, error: 'Project closed.' };
-  }
+  // One-shot Blue Engine children are isolated from the realtime ZMQ session;
+  // leave active playback/Blue Live untouched while an offline operation runs.
 
   const projectDirectory = resolveRenderWorkingDirectory(currentFilePath, app.getPath('temp'));
 
@@ -980,6 +972,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
   activeRenderAction = action;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
+  activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
   try {
@@ -1094,6 +1087,7 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
   activeRenderAction = null;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
+  activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
   try {
@@ -1138,13 +1132,7 @@ async function handleCancelRenderOperation(request: CancelRenderOperationRequest
 
   activeRenderCancellationSignal!.cancelled = true;
 
-  if (activeRenderProcess) {
-    try {
-      activeRenderProcess.kill('SIGTERM');
-    } catch {
-      // Process may have already exited
-    }
-  }
+  activeRenderAbortController?.abort();
 
   return true;
 }
@@ -1507,6 +1495,7 @@ function createWindow(): void {
     resourcesPath: process.resourcesPath,
     repoRoot: path.resolve(app.getAppPath(), '..', '..'),
     getSettingsEnginePath: () => loadProgramSettings().appSpecific.enginePath,
+    getCsoundLibraryPath: () => loadProgramSettings().appSpecific.csoundLibraryPath,
   });
 
   // Initialize engine bridge
@@ -3412,13 +3401,11 @@ ipcMain.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => 
     throw new Error('SoundFont file path is required.');
   }
 
-  const settings = loadProgramSettings();
   const seam = createCsoundExecutionSeam(undefined, undefined, {
     trackRenderProcess: false,
   });
   return inspectSoundFont(
     filePath,
-    settings.utility.csoundExecutable,
     seam,
     app.getPath('temp'),
   );
@@ -3661,6 +3648,30 @@ ipcMain.handle('blue-live:get-status', async () => {
 
 // ─── Settings IPC Handler ───
 
+ipcMain.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsClosePromptResponse> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  const options = {
+    type: 'question' as const,
+    title: 'Unsaved Settings',
+    message: 'You have unsaved settings.',
+    detail: 'Do you want to apply them before closing Settings?',
+    buttons: ['Yes', 'No', 'Cancel'],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true,
+  };
+  const result = owner && !owner.isDestroyed()
+    ? await dialog.showMessageBox(owner, options)
+    : await dialog.showMessageBox(options);
+  return result.response === 0 ? 'yes' : result.response === 1 ? 'no' : 'cancel';
+});
+
+ipcMain.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown) => {
+  if (resolution === 'allow' || resolution === 'cancel') {
+    resolveSettingsWindowClose(resolution as SettingsCloseResolution);
+  }
+});
+
 ipcMain.handle('settings:open', async () => {
   if (!mainWindow) return;
   openSettingsWindow(mainWindow, {
@@ -3727,6 +3738,23 @@ ipcMain.handle(
       };
     }
     return engineRuntimeService.probe(request, { retry: true });
+  },
+);
+
+ipcMain.handle(
+  'engine-runtime:query-csound-io',
+  async (_event, request?: CsoundIoQueryRequest): Promise<CsoundIoQueryResult> => {
+    if (!engineRuntimeService) {
+      return {
+        ok: false,
+        selection: null,
+        report: null,
+        errorCode: 'ENGINE_NOT_FOUND',
+        message: 'Blue Engine runtime service is not initialized',
+        durationMs: 0,
+      };
+    }
+    return engineRuntimeService.queryCsoundIo(request, { retry: true });
   },
 );
 

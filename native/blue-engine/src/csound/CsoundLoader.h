@@ -83,9 +83,25 @@ public:
 
   // Compilation and performance
   static csound::csoundCompileOrc_t csoundCompileOrc;
+  static csound::csoundCompile_t csoundCompile;
   static csound::csoundStart_t csoundStart;
   static csound::csoundPerformKsmps_t csoundPerformKsmps;
   static csound::csoundEventString_t csoundEventString;
+
+  // Runtime modules, devices, utilities, and messages
+  static csound::csoundGetModule_t csoundGetModule;
+  static csound::csoundSetRTAudioModule_t csoundSetRTAudioModule;
+  static csound::csoundSetMIDIModule_t csoundSetMIDIModule;
+  static csound::csoundGetAudioDevList_t csoundGetAudioDevList;
+  static csound::csoundGetMIDIDevList_t csoundGetMIDIDevList;
+  static csound::csoundRunUtility_t csoundRunUtility;
+  static csound::csoundListUtilities_t csoundListUtilities;
+  static csound::csoundDeleteUtilityList_t csoundDeleteUtilityList;
+  static csound::csoundCreateMessageBuffer_t csoundCreateMessageBuffer;
+  static csound::csoundGetFirstMessage_t csoundGetFirstMessage;
+  static csound::csoundPopFirstMessage_t csoundPopFirstMessage;
+  static csound::csoundGetMessageCnt_t csoundGetMessageCnt;
+  static csound::csoundDestroyMessageBuffer_t csoundDestroyMessageBuffer;
 
   // Audio parameters
   static csound::csoundGetSr_t csoundGetSr;

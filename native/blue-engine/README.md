@@ -66,6 +66,31 @@ the pinned vcpkg source and native dependencies.
 - `--control-endpoint` and `--pub-endpoint` let you bind alternate ZeroMQ transports such as `ipc://...`.
 - `ipc` transport works on macOS and Linux, but not on Windows with the current libzmq support model.
 
+### Csound runtime one-shot services
+
+The same executable also owns the application Csound boundary for discovery and
+offline work. These modes do not start ZeroMQ and exit after one request:
+
+```bash
+# Probe the selected Csound library and print one JSON document.
+./blue-engine --probe-csound --json [--csound-library /absolute/path]
+
+# Enumerate modules; add one selected module to query only that backend's devices.
+./blue-engine --list-io --json [--audio-module pa_bl] [--midi-module portmidi]
+
+# Run a registered Csound utility without a shell.
+./blue-engine --run-utility sndinfo -- path/to/file.aif
+
+# Compile and perform an argument-driven Csound workload without a shell.
+./blue-engine --run-csound -- -n path/to/workload.csd
+```
+
+`csound-io-v1`, `csound-utility-v1`, and `csound-performance-v1` are advertised
+in the capabilities report. The application checks those feature names before
+dispatching a request. Discovery JSON is written only to stdout; Csound
+messages and diagnostics remain on stderr so warnings cannot corrupt the
+machine-readable response. Empty device arrays are successful results.
+
 ### Environment Variables
 
 | Variable | Description |

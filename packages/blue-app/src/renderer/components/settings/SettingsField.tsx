@@ -23,6 +23,7 @@ interface SettingsFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   description?: string;
   containerClassName?: string;
   inputClassName?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 export default function SettingsField({
@@ -32,6 +33,7 @@ export default function SettingsField({
   description,
   containerClassName,
   inputClassName,
+  inputRef,
   ...inputProps
 }: SettingsFieldProps): React.ReactElement {
   return (
@@ -45,6 +47,7 @@ export default function SettingsField({
         </div>
       )}
       <input
+        ref={inputRef}
         {...inputProps}
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}

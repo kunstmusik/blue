@@ -2,7 +2,7 @@
  * Pure disk-render command planner.
  *
  * Encodes the Java Blue three-layer settings contract:
- *   - Program Disk Render settings provide executable + format/output flags
+ *   - Program Disk Render settings provide format/output flags
  *   - Project ProjectProperties provide message-level flags + advanced settings
  *   - diskCompleteOverride bypasses normal flags and uses project settings verbatim
  *
@@ -15,7 +15,6 @@ export type DiskCommandMode = 'normal' | 'completeOverride';
 
 export interface DiskCommandPlan {
   mode: DiskCommandMode;
-  executable: string;
   args: string[];
   /** Output path extracted from the plan; null when not identifiable. */
   outputPath: string | null;
@@ -156,7 +155,6 @@ export function planDiskCommand(inputs: DiskCommandInputs): DiskCommandPlan {
 
     return {
       mode: 'completeOverride',
-      executable: diskRender.csoundExecutable,
       args,
       outputPath: extractedOutput,
     };
@@ -184,7 +182,6 @@ export function planDiskCommand(inputs: DiskCommandInputs): DiskCommandPlan {
 
   return {
     mode: 'normal',
-    executable: diskRender.csoundExecutable,
     args,
     outputPath: outputFile,
   };
@@ -197,16 +194,14 @@ export function planDiskCommand(inputs: DiskCommandInputs): DiskCommandPlan {
  * No ordinary Disk Render flags are inherited.
  */
 export interface FreezeCommandInputs {
-  csoundExecutable: string;
   freezeFlags: string;
   outputFilePath: string;
   csdPath: string;
 }
 
-export function planFreezeCommand(inputs: FreezeCommandInputs): { executable: string; args: string[] } {
+export function planFreezeCommand(inputs: FreezeCommandInputs): { args: string[] } {
   const flagTokens = tokenizeCommand(inputs.freezeFlags);
   return {
-    executable: inputs.csoundExecutable,
     args: [...flagTokens, inputs.outputFilePath, inputs.csdPath],
   };
 }

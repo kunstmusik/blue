@@ -1,10 +1,11 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { access, readFile, stat } from 'node:fs/promises';
 import * as path from 'node:path';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
+  hasEngineFeature,
 } from '@blue/engine-client/capabilities';
 import {
   boundedDiagnostic,
@@ -17,6 +18,18 @@ import {
   type EngineSelection,
   type EngineSelectionSource,
 } from '../shared/engine-runtime';
+import {
+  CSOUND_IO_FEATURE,
+  decodeCsoundIoReportJson,
+  normalizeCsoundExecutionRequest,
+  normalizeCsoundIoQueryRequest,
+  requiredFeatureForExecution,
+  type CsoundExecutionRequest,
+  type CsoundExecutionResult,
+  type CsoundIoQueryErrorCode,
+  type CsoundIoQueryRequest,
+  type CsoundIoQueryResult,
+} from '../shared/csound-runtime';
 
 interface EngineArtifactManifest {
   schemaVersion: number;
@@ -40,6 +53,27 @@ export type ProbeProcessRunner = (
   timeoutMs: number,
 ) => Promise<ProbeProcessResult>;
 
+export interface ExecutionProcessResult {
+  exitCode: number | null;
+  signal: NodeJS.Signals | null;
+  stdout: string;
+  stderr: string;
+  started: boolean;
+  errorMessage?: string;
+  stdoutTruncated?: boolean;
+  stderrTruncated?: boolean;
+}
+
+export type ExecutionOutputSource = 'stdout' | 'stderr';
+
+export type ExecutionProcessRunner = (
+  executablePath: string,
+  args: string[],
+  cwd: string,
+  signal: AbortSignal | undefined,
+  onOutput: (text: string, source: ExecutionOutputSource) => void,
+) => Promise<ExecutionProcessResult>;
+
 export interface EngineRuntimeOptions {
   isPackaged: boolean;
   resourcesPath: string;
@@ -48,8 +82,10 @@ export interface EngineRuntimeOptions {
   arch?: string;
   environment?: NodeJS.ProcessEnv;
   getSettingsEnginePath: () => string;
+  getCsoundLibraryPath?: () => string;
   probeTimeoutMs?: number;
   runProbeProcess?: ProbeProcessRunner;
+  runExecutionProcess?: ExecutionProcessRunner;
 }
 
 class EngineRuntimeError extends Error {
@@ -110,6 +146,92 @@ async function defaultProbeProcess(
   });
 }
 
+async function defaultExecutionProcess(
+  executablePath: string,
+  args: string[],
+  cwd: string,
+  signal: AbortSignal | undefined,
+  onOutput: (text: string, source: ExecutionOutputSource) => void,
+): Promise<ExecutionProcessResult> {
+  return new Promise((resolve) => {
+    const outputLimit = 1024 * 1024;
+    let started = false;
+    let settled = false;
+    let stdout = '';
+    let stderr = '';
+    let stdoutTruncated = false;
+    let stderrTruncated = false;
+    const retain = (current: string, text: string, stream: 'stdout' | 'stderr'): string => {
+      if (current.length >= outputLimit) {
+        if (stream === 'stdout') stdoutTruncated = true;
+        else stderrTruncated = true;
+        return current;
+      }
+      const remaining = outputLimit - current.length;
+      if (text.length > remaining) {
+        if (stream === 'stdout') stdoutTruncated = true;
+        else stderrTruncated = true;
+      }
+      return current + text.slice(0, remaining);
+    };
+    const child = spawn(executablePath, args, {
+      cwd,
+      shell: false,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const finish = (result: ExecutionProcessResult) => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      resolve(result);
+    };
+    const onAbort = () => {
+      try {
+        child.kill('SIGTERM');
+      } catch {
+        // The child may have exited between the abort and kill calls.
+      }
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString();
+      stdout = retain(stdout, text, 'stdout');
+      onOutput(text, 'stdout');
+    });
+    child.stderr?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString();
+      stderr = retain(stderr, text, 'stderr');
+      onOutput(text, 'stderr');
+    });
+    child.once('spawn', () => { started = true; });
+    child.once('error', (error) => {
+      finish({
+        exitCode: null,
+        signal: null,
+        stdout,
+        stderr,
+        started,
+        errorMessage: error.message,
+        stdoutTruncated,
+        stderrTruncated,
+      });
+    });
+    child.once('close', (exitCode, closeSignal) => {
+      finish({
+        exitCode,
+        signal: closeSignal,
+        stdout,
+        stderr,
+        started,
+        stdoutTruncated,
+        stderrTruncated,
+      });
+    });
+  });
+}
+
 export function developmentEnginePath(
   repoRoot: string,
   platform: NodeJS.Platform,
@@ -131,6 +253,7 @@ export class EngineRuntimeService {
   private readonly environment: NodeJS.ProcessEnv;
   private readonly timeoutMs: number;
   private readonly runProbeProcess: ProbeProcessRunner;
+  private readonly runExecutionProcess: ExecutionProcessRunner;
   private readonly probeCache = new Map<string, EngineProbeResult>();
   private selection: EngineSelection | null = null;
 
@@ -140,6 +263,7 @@ export class EngineRuntimeService {
     this.environment = options.environment ?? process.env;
     this.timeoutMs = options.probeTimeoutMs ?? 3000;
     this.runProbeProcess = options.runProbeProcess ?? defaultProbeProcess;
+    this.runExecutionProcess = options.runExecutionProcess ?? defaultExecutionProcess;
   }
 
   async resolve(requestOverride?: string | null): Promise<EngineSelection> {
@@ -276,6 +400,215 @@ export class EngineRuntimeService {
         durationMs: Date.now() - startedAt,
       };
     }
+  }
+
+  async queryCsoundIo(
+    rawRequest?: CsoundIoQueryRequest,
+    options: { retry?: boolean } = {},
+  ): Promise<CsoundIoQueryResult> {
+    const startedAt = Date.now();
+    let request: CsoundIoQueryRequest;
+    try {
+      request = normalizeCsoundIoQueryRequest(rawRequest);
+      const csoundLibraryPath = request.csoundLibraryPath
+        ?? (this.options.getCsoundLibraryPath?.().trim() || null);
+      const probe = await this.probe({
+        enginePathOverride: request.enginePathOverride,
+        csoundLibraryPath,
+      }, { retry: options.retry });
+      if (!probe.ok || !probe.report || !probe.selection) {
+        return {
+          ok: false,
+          selection: probe.selection,
+          report: null,
+          errorCode: probe.errorCode,
+          message: probe.message,
+          durationMs: Date.now() - startedAt,
+        };
+      }
+      if (!hasEngineFeature(probe.report.engine, CSOUND_IO_FEATURE)) {
+        return {
+          ok: false,
+          selection: probe.selection,
+          report: null,
+          errorCode: 'ENGINE_CAPABILITY_MISSING',
+          message: `Blue Engine does not advertise ${CSOUND_IO_FEATURE}`,
+          durationMs: Date.now() - startedAt,
+        };
+      }
+
+      const args = ['--list-io', '--json'];
+      if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
+      if (request.audioModule) args.push('--audio-module', request.audioModule);
+      if (request.midiModule) args.push('--midi-module', request.midiModule);
+      const processResult = await this.runProbeProcess(
+        probe.selection.executablePath,
+        args,
+        this.timeoutMs,
+      );
+      if (processResult.timedOut) {
+        return {
+          ok: false,
+          selection: probe.selection,
+          report: null,
+          errorCode: 'CSOUND_IO_QUERY_TIMEOUT',
+          message: `Csound device discovery exceeded ${this.timeoutMs} ms`,
+          durationMs: Date.now() - startedAt,
+        };
+      }
+      if (!processResult.stdout.trim()) {
+        return {
+          ok: false,
+          selection: probe.selection,
+          report: null,
+          errorCode: 'CSOUND_IO_QUERY_FAILED',
+          message: boundedDiagnostic(processResult.stderr || 'Blue Engine returned no Csound I/O report'),
+          durationMs: Date.now() - startedAt,
+        };
+      }
+      let report;
+      try {
+        report = decodeCsoundIoReportJson(processResult.stdout.trim());
+      } catch (error) {
+        return {
+          ok: false,
+          selection: probe.selection,
+          report: null,
+          errorCode: 'CSOUND_IO_QUERY_INVALID_JSON',
+          message: boundedDiagnostic(error instanceof Error ? error.message : String(error)),
+          durationMs: Date.now() - startedAt,
+        };
+      }
+      const diagnostic = report.diagnostics[0];
+      const hasScopedFailure = processResult.exitCode !== 0
+        || !report.ready;
+      return {
+        ok: !hasScopedFailure && report.ready,
+        selection: probe.selection,
+        report,
+        errorCode: hasScopedFailure
+          ? (request.audioModule || request.midiModule
+            ? 'CSOUND_MODULE_UNAVAILABLE'
+            : 'CSOUND_IO_QUERY_FAILED')
+          : null,
+        message: hasScopedFailure
+          ? boundedDiagnostic(diagnostic || processResult.stderr || 'Csound I/O discovery failed')
+          : 'Csound modules and devices discovered',
+        durationMs: Date.now() - startedAt,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        selection: null,
+        report: null,
+        errorCode: 'CSOUND_IO_QUERY_FAILED',
+        message: boundedDiagnostic(error instanceof Error ? error.message : String(error)),
+        durationMs: Date.now() - startedAt,
+      };
+    }
+  }
+
+  async executeCsound(
+    rawRequest: CsoundExecutionRequest,
+    hooks: {
+      signal?: AbortSignal;
+      onOutput?: (text: string, source: ExecutionOutputSource) => void;
+    } = {},
+  ): Promise<CsoundExecutionResult> {
+    const request = normalizeCsoundExecutionRequest(rawRequest);
+    const failed = (message: string, errorCode: string, operationId = request.operationId): CsoundExecutionResult => ({
+      operationId,
+      state: 'failed',
+      exitCode: null,
+      signal: null,
+      stdout: '',
+      stderr: '',
+      errorCode,
+      message: boundedDiagnostic(message),
+    });
+    if (hooks.signal?.aborted) {
+      return {
+        operationId: request.operationId,
+        state: 'cancelled',
+        exitCode: null,
+        signal: 'SIGTERM',
+        stdout: '',
+        stderr: '',
+        errorCode: 'CSOUND_EXECUTION_CANCELLED',
+        message: 'Csound operation cancelled before it started',
+      };
+    }
+
+    const csoundLibraryPath = request.csoundLibraryPath
+      ?? (this.options.getCsoundLibraryPath?.().trim() || null);
+    const probe = await this.probe({ csoundLibraryPath }, { retry: true });
+    if (!probe.ok || !probe.selection || !probe.report) {
+      return failed(probe.message, probe.errorCode ?? 'CSOUND_UNAVAILABLE');
+    }
+    const feature = requiredFeatureForExecution(request.kind);
+    if (!hasEngineFeature(probe.report.engine, feature)) {
+      return failed(`Blue Engine does not advertise ${feature}`, 'ENGINE_CAPABILITY_MISSING');
+    }
+    if (!path.isAbsolute(request.cwd)) {
+      return failed('Csound execution working directory must be absolute', 'CSOUND_EXECUTION_INVALID_CWD');
+    }
+    try {
+      const cwdStat = await stat(request.cwd);
+      if (!cwdStat.isDirectory()) {
+        return failed(`Csound execution working directory is not a directory: ${request.cwd}`, 'CSOUND_EXECUTION_INVALID_CWD');
+      }
+    } catch {
+      return failed(`Csound execution working directory was not found: ${request.cwd}`, 'CSOUND_EXECUTION_INVALID_CWD');
+    }
+
+    const args = request.kind === 'utility'
+      ? ['--run-utility', request.utilityName]
+      : ['--run-csound'];
+    if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
+    args.push('--', ...request.args);
+    let processResult: ExecutionProcessResult;
+    try {
+      processResult = await this.runExecutionProcess(
+        probe.selection.executablePath,
+        args,
+        request.cwd,
+        hooks.signal,
+        hooks.onOutput ?? (() => undefined),
+      );
+    } catch (error) {
+      return failed(error instanceof Error ? error.message : String(error), 'CSOUND_PROCESS_FAILED');
+    }
+
+    const cancelled = hooks.signal?.aborted ?? false;
+    const state: CsoundExecutionResult['state'] = cancelled
+      ? 'cancelled'
+      : processResult.exitCode === 0
+        ? 'completed'
+        : 'failed';
+    const message = cancelled
+      ? 'Csound operation cancelled'
+      : processResult.exitCode === 0
+        ? 'Csound operation completed'
+        : processResult.errorMessage
+          ?? (processResult.signal ? `Csound terminated by ${processResult.signal}` : `Csound exited with code ${processResult.exitCode ?? 'unknown'}`);
+    return {
+      operationId: request.operationId,
+      state,
+      exitCode: processResult.exitCode,
+      signal: processResult.signal,
+      stdout: boundedDiagnostic(
+        processResult.stdout + (processResult.stdoutTruncated ? '\n[stdout truncated]' : ''),
+        1024 * 1024,
+      ),
+      stderr: boundedDiagnostic(
+        processResult.stderr + (processResult.stderrTruncated ? '\n[stderr truncated]' : ''),
+        1024 * 1024,
+      ),
+      errorCode: cancelled
+        ? 'CSOUND_EXECUTION_CANCELLED'
+        : state === 'failed' ? 'CSOUND_EXECUTION_FAILED' : null,
+      message: boundedDiagnostic(message),
+    };
   }
 
   private async selectExternal(

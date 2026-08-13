@@ -5,7 +5,7 @@
  *   - Freeze: render source object to project-local freezeN.wav/aif, replace with FrozenSoundObject
  *   - Unfreeze: restore nested source, reference-count cleanup of freeze file
  *
- * Uses Utility settings (separate executable + freeze flags), not Disk Render settings.
+ * Uses Utility freeze flags, not a caller-selected Csound executable.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -52,7 +52,7 @@ export type StatusCallback = (status: RenderOperationStatus) => void;
 
 export interface FreezeExecutionSeam {
   /** Run Csound with the given args in the project directory. Returns exit code. */
-  runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout?: string }>;
+  runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout?: string; cancelled?: boolean }>;
 }
 
 // ─── Filename Allocation ───
@@ -498,14 +498,17 @@ async function freezeOneObject(
 
   // Build and run command
   const cmd = planFreezeCommand({
-    csoundExecutable: utility.csoundExecutable,
     freezeFlags: utility.freezeFlags,
     outputFilePath: outputPath,
     csdPath,
   });
 
   try {
-    const result = await executionSeam.runCsound(cmd.executable, cmd.args, projectDirectory, onProgress);
+    const result = await executionSeam.runCsound(cmd.args, projectDirectory, onProgress);
+
+    if (result.cancelled || context.isCancelled?.()) {
+      throw new Error('Operation cancelled.');
+    }
 
     if (result.exitCode !== 0) {
       throw new Error(`Csound exited with code ${result.exitCode}. ${result.stderr}`);

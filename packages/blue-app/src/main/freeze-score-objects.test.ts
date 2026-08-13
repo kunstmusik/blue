@@ -356,7 +356,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-atomic',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, createWavFile());
             return { exitCode: 0, stderr: '' };
           },
@@ -394,7 +394,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-invalid',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, 'not audio');
             return { exitCode: 0, stderr: '' };
           },
@@ -431,7 +431,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-format',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, buildAiffBytes(1, 100, 16, 100));
             return { exitCode: 0, stderr: '' };
           },
@@ -470,7 +470,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-cancel',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, createWavFile());
             cancelled = true;
             return { exitCode: -1, stderr: 'cancelled' };
@@ -497,7 +497,7 @@ describe('resolveFreezeTargets', () => {
       source.setSubjectiveDuration(TimeDuration.beats(1));
       layer.push(source);
 
-      const runCsound = vi.fn(async (_executable: string, args: string[]) => {
+      const runCsound = vi.fn(async (args: string[]) => {
         fs.writeFileSync(args[1]!, createWavFile(2));
         return { exitCode: 0, stderr: '' };
       });
@@ -520,7 +520,6 @@ describe('resolveFreezeTargets', () => {
       expect((layer[0] as FrozenSoundObject).getNumChannels()).toBe(2);
       expect(layer[0].getSubjectiveDuration().getValue()).toBeGreaterThan(0);
       expect(runCsound).toHaveBeenCalledWith(
-        'csound',
         expect.arrayContaining(['-Wdo', path.join(projectDirectory, 'freeze0.wav')]),
         projectDirectory,
         expect.any(Function),

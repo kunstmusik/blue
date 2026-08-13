@@ -27,9 +27,9 @@ afterEach(() => {
 describe('program-settings-store', () => {
   it('creates defaults when no file exists', () => {
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
     expect(settings.general.messageColorsEnabled).toBe(false);
-    expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(settings.realtimeRender.audioDriver).toBe('auhal');
   });
 
   it('persists and reloads settings', () => {
@@ -77,7 +77,7 @@ describe('program-settings-store', () => {
     const settings = loadProgramSettings('darwin');
     expect(settings.general.workDirectory).toBe('/partial');
     expect(settings.general.messageColorsEnabled).toBe(false);
-    expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(settings.realtimeRender.audioDriver).toBe('auhal');
   });
 
   it('removes the legacy alpha marquee setting from persisted snapshots', () => {
@@ -112,7 +112,7 @@ describe('program-settings-store', () => {
     expect(settings.osc.preferredPort).toBe(9010);
     expect(settings.appSpecific.oscOutputHost).toBe('controller.local');
     expect(settings.appSpecific.oscOutputPort).toBe(9020);
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
   });
 
   it('falls back to defaults when the settings file contains corrupted JSON', () => {
@@ -121,7 +121,7 @@ describe('program-settings-store', () => {
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
     expect(settings.general.workDirectory).toBe('');
   });
 
@@ -131,7 +131,7 @@ describe('program-settings-store', () => {
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
   });
 
   it('creates default midiInput preferences when none are saved', () => {
@@ -297,7 +297,7 @@ describe('program-settings-store appZoomPercent (SPEC 061)', () => {
     clearSettingsCache();
 
     const reloaded = loadProgramSettings('darwin');
-    expect(reloaded.version).toBe(2);
+    expect(reloaded.version).toBe(3);
   });
 
   it('rejects a save with an unsupported appZoomPercent via validation', () => {

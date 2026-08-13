@@ -229,7 +229,7 @@ describe('executeRenderToDisk', () => {
       'disk-progress',
       (status) => statuses.push(status),
       {
-        runCsound: async (_executable, _args, _cwd, onProgress) => {
+        runCsound: async (_args, _cwd, onProgress) => {
           onProgress?.(42);
           fs.writeFileSync(output, 'audio');
           return { exitCode: 0, stderr: '' };

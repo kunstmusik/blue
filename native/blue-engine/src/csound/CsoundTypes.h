@@ -59,6 +59,24 @@ struct controlChannelInfo_t {
     controlChannelHints_t hints;
 };
 
+// Device structures from Csound's public Csound 7 API. Keep these definitions
+// local so the engine remains buildable without Csound development headers.
+struct CS_AUDIODEVICE {
+    char device_name[128];
+    char device_id[128];
+    char rt_module[128];
+    int32_t max_nchnls;
+    int32_t isOutput;
+};
+
+struct CS_MIDIDEVICE {
+    char device_name[128];
+    char interface_name[128];
+    char device_id[128];
+    char midi_module[128];
+    int32_t isOutput;
+};
+
 // Function pointer types for Csound API
 // These match the signatures from csound.h
 
@@ -67,16 +85,39 @@ typedef int (*csoundGetVersion_t)();
 typedef int (*csoundInitialize_t)(int flags);
 typedef CSOUND* (*csoundCreate_t)(void* hostData, const char* opcodeDir);
 typedef void (*csoundDestroy_t)(CSOUND* csound);
-typedef int (*csoundReset_t)(CSOUND* csound);
+typedef void (*csoundReset_t)(CSOUND* csound);
 
 // Configuration
 typedef int (*csoundSetOption_t)(CSOUND* csound, const char* option);
 
 // Compilation and performance
 typedef int (*csoundCompileOrc_t)(CSOUND* csound, const char* orc, int async);
+typedef int32_t (*csoundCompile_t)(CSOUND* csound, int32_t argc,
+                                   const char** argv);
 typedef int (*csoundStart_t)(CSOUND* csound);
 typedef int (*csoundPerformKsmps_t)(CSOUND* csound);
 typedef void (*csoundEventString_t)(CSOUND* csound, const char* message, int async);
+
+// Runtime module, utility, and message services
+typedef int32_t (*csoundGetModule_t)(CSOUND* csound, int32_t number,
+                                     char** name, char** type);
+typedef void (*csoundSetRTAudioModule_t)(CSOUND* csound, const char* module);
+typedef void (*csoundSetMIDIModule_t)(CSOUND* csound, const char* module);
+typedef int32_t (*csoundGetAudioDevList_t)(CSOUND* csound,
+                                           CS_AUDIODEVICE* list,
+                                           int32_t isOutput);
+typedef int32_t (*csoundGetMIDIDevList_t)(CSOUND* csound,
+                                          CS_MIDIDEVICE* list,
+                                          int32_t isOutput);
+typedef int32_t (*csoundRunUtility_t)(CSOUND* csound, const char* name,
+                                      int32_t argc, char** argv);
+typedef char** (*csoundListUtilities_t)(CSOUND* csound);
+typedef void (*csoundDeleteUtilityList_t)(CSOUND* csound, char** list);
+typedef void (*csoundCreateMessageBuffer_t)(CSOUND* csound, int32_t toStdOut);
+typedef const char* (*csoundGetFirstMessage_t)(CSOUND* csound);
+typedef void (*csoundPopFirstMessage_t)(CSOUND* csound);
+typedef int32_t (*csoundGetMessageCnt_t)(CSOUND* csound);
+typedef void (*csoundDestroyMessageBuffer_t)(CSOUND* csound);
 
 // Audio parameters
 typedef double (*csoundGetSr_t)(CSOUND* csound);

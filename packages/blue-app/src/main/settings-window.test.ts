@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { openSettingsWindow, closeSettingsWindow } from './settings-window';
+import { openSettingsWindow, closeSettingsWindow, resolveSettingsWindowClose } from './settings-window';
+import { SETTINGS_CLOSE_REQUEST_CHANNEL } from '../shared/settings-window';
 import {
   clearSettingsCache,
   setSettingsFilePathForTesting,
@@ -15,6 +16,7 @@ const electronMock = vi.hoisted(() => {
   class MockBrowserWindow {
     options: Record<string, unknown>;
     destroyed = false;
+    webContents = { send: vi.fn() };
     focus = vi.fn();
     show = vi.fn();
     loadURL = vi.fn();
@@ -24,8 +26,9 @@ const electronMock = vi.hoisted(() => {
         this.readyToShowHandler = handler;
       }
     });
-    on = vi.fn((event: string, handler: () => void) => {
-      this.eventHandlers[event] = handler;
+    on = vi.fn((event: string, handler: (event?: { preventDefault: () => void }) => void) => {
+      this.eventHandlers[event] ??= [];
+      this.eventHandlers[event]!.push(handler);
     });
     removeListener = vi.fn();
     close = vi.fn(() => {
@@ -42,7 +45,7 @@ const electronMock = vi.hoisted(() => {
 
     private readyToShowHandler?: () => void;
     private closedHandler?: () => void;
-    eventHandlers: Record<string, () => void> = {};
+    eventHandlers: Record<string, Array<(event?: { preventDefault: () => void }) => void>> = {};
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -54,7 +57,8 @@ const electronMock = vi.hoisted(() => {
     }
 
     trigger(event: string): void {
-      this.eventHandlers[event]?.();
+      const nativeEvent = { preventDefault: vi.fn() };
+      this.eventHandlers[event]?.forEach((handler) => handler(nativeEvent));
     }
   }
 
@@ -125,6 +129,23 @@ describe('settings window lifecycle', () => {
 
     openSettingsWindow(mainWindow);
     expect(electronMock.instances).toHaveLength(2);
+  });
+
+  it('intercepts native close until the renderer resolves the unsaved-settings request', () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow);
+    const settingsWindow = electronMock.instances[0]!;
+
+    settingsWindow.trigger('close');
+    expect(settingsWindow.webContents.send).toHaveBeenCalledWith(SETTINGS_CLOSE_REQUEST_CHANNEL);
+    expect(settingsWindow.close).not.toHaveBeenCalled();
+
+    resolveSettingsWindowClose('cancel');
+    expect(settingsWindow.close).not.toHaveBeenCalled();
+
+    settingsWindow.trigger('close');
+    resolveSettingsWindowClose('allow');
+    expect(settingsWindow.close).toHaveBeenCalledTimes(1);
   });
 });
 

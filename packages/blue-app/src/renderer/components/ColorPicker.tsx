@@ -20,6 +20,7 @@ import {
   type ColorPickerAnchorRect,
   type ColorPickerPosition,
 } from './color-picker-utils';
+import { getFloatingViewport } from './floating-position-utils';
 
 export { computeColorPickerPosition } from './color-picker-utils';
 export type { ColorPickerAnchorRect } from './color-picker-utils';
@@ -108,15 +109,18 @@ export function ColorPickerPopover({
   useLayoutEffect(() => {
     if (!open || !anchor) return;
     const bounds = popoverRef.current?.getBoundingClientRect();
+    const viewport = anchorElement
+      ? getFloatingViewport(anchorElement)
+      : { width: window.innerWidth, height: window.innerHeight };
     setPosition(computeColorPickerPosition(
       anchor,
       {
         width: bounds && bounds.width > 0 ? bounds.width : COLOR_PICKER_SIZE.width,
         height: bounds && bounds.height > 0 ? bounds.height : COLOR_PICKER_SIZE.height,
       },
-      { width: window.innerWidth, height: window.innerHeight },
+      viewport,
     ));
-  }, [anchor, open]);
+  }, [anchor, anchorElement, open]);
 
   const isInside = useCallback((target: EventTarget | null) => (
     target instanceof Node

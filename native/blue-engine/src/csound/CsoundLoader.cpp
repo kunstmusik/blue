@@ -20,9 +20,23 @@ csound::csoundDestroy_t CsoundLoader::csoundDestroy = nullptr;
 csound::csoundReset_t CsoundLoader::csoundReset = nullptr;
 csound::csoundSetOption_t CsoundLoader::csoundSetOption = nullptr;
 csound::csoundCompileOrc_t CsoundLoader::csoundCompileOrc = nullptr;
+csound::csoundCompile_t CsoundLoader::csoundCompile = nullptr;
 csound::csoundStart_t CsoundLoader::csoundStart = nullptr;
 csound::csoundPerformKsmps_t CsoundLoader::csoundPerformKsmps = nullptr;
 csound::csoundEventString_t CsoundLoader::csoundEventString = nullptr;
+csound::csoundGetModule_t CsoundLoader::csoundGetModule = nullptr;
+csound::csoundSetRTAudioModule_t CsoundLoader::csoundSetRTAudioModule = nullptr;
+csound::csoundSetMIDIModule_t CsoundLoader::csoundSetMIDIModule = nullptr;
+csound::csoundGetAudioDevList_t CsoundLoader::csoundGetAudioDevList = nullptr;
+csound::csoundGetMIDIDevList_t CsoundLoader::csoundGetMIDIDevList = nullptr;
+csound::csoundRunUtility_t CsoundLoader::csoundRunUtility = nullptr;
+csound::csoundListUtilities_t CsoundLoader::csoundListUtilities = nullptr;
+csound::csoundDeleteUtilityList_t CsoundLoader::csoundDeleteUtilityList = nullptr;
+csound::csoundCreateMessageBuffer_t CsoundLoader::csoundCreateMessageBuffer = nullptr;
+csound::csoundGetFirstMessage_t CsoundLoader::csoundGetFirstMessage = nullptr;
+csound::csoundPopFirstMessage_t CsoundLoader::csoundPopFirstMessage = nullptr;
+csound::csoundGetMessageCnt_t CsoundLoader::csoundGetMessageCnt = nullptr;
+csound::csoundDestroyMessageBuffer_t CsoundLoader::csoundDestroyMessageBuffer = nullptr;
 csound::csoundGetSr_t CsoundLoader::csoundGetSr = nullptr;
 csound::csoundGetKsmps_t CsoundLoader::csoundGetKsmps = nullptr;
 csound::csoundGetChannelPtr_t CsoundLoader::csoundGetChannelPtr = nullptr;
@@ -107,9 +121,23 @@ void clearSymbols() {
   CsoundLoader::csoundReset = nullptr;
   CsoundLoader::csoundSetOption = nullptr;
   CsoundLoader::csoundCompileOrc = nullptr;
+  CsoundLoader::csoundCompile = nullptr;
   CsoundLoader::csoundStart = nullptr;
   CsoundLoader::csoundPerformKsmps = nullptr;
   CsoundLoader::csoundEventString = nullptr;
+  CsoundLoader::csoundGetModule = nullptr;
+  CsoundLoader::csoundSetRTAudioModule = nullptr;
+  CsoundLoader::csoundSetMIDIModule = nullptr;
+  CsoundLoader::csoundGetAudioDevList = nullptr;
+  CsoundLoader::csoundGetMIDIDevList = nullptr;
+  CsoundLoader::csoundRunUtility = nullptr;
+  CsoundLoader::csoundListUtilities = nullptr;
+  CsoundLoader::csoundDeleteUtilityList = nullptr;
+  CsoundLoader::csoundCreateMessageBuffer = nullptr;
+  CsoundLoader::csoundGetFirstMessage = nullptr;
+  CsoundLoader::csoundPopFirstMessage = nullptr;
+  CsoundLoader::csoundGetMessageCnt = nullptr;
+  CsoundLoader::csoundDestroyMessageBuffer = nullptr;
   CsoundLoader::csoundGetSr = nullptr;
   CsoundLoader::csoundGetKsmps = nullptr;
   CsoundLoader::csoundGetChannelPtr = nullptr;
@@ -144,12 +172,40 @@ bool loadAllSymbols(void *handle, std::vector<std::string> &missingSymbols) {
                      missingSymbols);
   loadRequiredSymbol(handle, "csoundCompileOrc", CsoundLoader::csoundCompileOrc,
                      missingSymbols);
+  loadRequiredSymbol(handle, "csoundCompile", CsoundLoader::csoundCompile,
+                     missingSymbols);
   loadRequiredSymbol(handle, "csoundStart", CsoundLoader::csoundStart,
                      missingSymbols);
   loadRequiredSymbol(handle, "csoundPerformKsmps",
                      CsoundLoader::csoundPerformKsmps, missingSymbols);
   loadRequiredSymbol(handle, "csoundEventString",
                      CsoundLoader::csoundEventString, missingSymbols);
+  loadRequiredSymbol(handle, "csoundGetModule", CsoundLoader::csoundGetModule,
+                     missingSymbols);
+  loadRequiredSymbol(handle, "csoundSetRTAudioModule",
+                     CsoundLoader::csoundSetRTAudioModule, missingSymbols);
+  loadRequiredSymbol(handle, "csoundSetMIDIModule",
+                     CsoundLoader::csoundSetMIDIModule, missingSymbols);
+  loadRequiredSymbol(handle, "csoundGetAudioDevList",
+                     CsoundLoader::csoundGetAudioDevList, missingSymbols);
+  loadRequiredSymbol(handle, "csoundGetMIDIDevList",
+                     CsoundLoader::csoundGetMIDIDevList, missingSymbols);
+  loadRequiredSymbol(handle, "csoundRunUtility",
+                     CsoundLoader::csoundRunUtility, missingSymbols);
+  loadRequiredSymbol(handle, "csoundListUtilities",
+                     CsoundLoader::csoundListUtilities, missingSymbols);
+  loadRequiredSymbol(handle, "csoundDeleteUtilityList",
+                     CsoundLoader::csoundDeleteUtilityList, missingSymbols);
+  loadRequiredSymbol(handle, "csoundCreateMessageBuffer",
+                     CsoundLoader::csoundCreateMessageBuffer, missingSymbols);
+  loadRequiredSymbol(handle, "csoundGetFirstMessage",
+                     CsoundLoader::csoundGetFirstMessage, missingSymbols);
+  loadRequiredSymbol(handle, "csoundPopFirstMessage",
+                     CsoundLoader::csoundPopFirstMessage, missingSymbols);
+  loadRequiredSymbol(handle, "csoundGetMessageCnt",
+                     CsoundLoader::csoundGetMessageCnt, missingSymbols);
+  loadRequiredSymbol(handle, "csoundDestroyMessageBuffer",
+                     CsoundLoader::csoundDestroyMessageBuffer, missingSymbols);
   loadRequiredSymbol(handle, "csoundGetSr", CsoundLoader::csoundGetSr,
                      missingSymbols);
   loadRequiredSymbol(handle, "csoundGetKsmps", CsoundLoader::csoundGetKsmps,

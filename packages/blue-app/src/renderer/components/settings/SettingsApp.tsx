@@ -90,8 +90,8 @@ export default function SettingsApp(): React.ReactElement {
     setValidationIssues([]);
   }, []);
 
-  const handleApply = useCallback(async () => {
-    if (!draft) return;
+  const handleApply = useCallback(async (): Promise<boolean> => {
+    if (!draft) return false;
     // Merge the latest MIDI draft back into the program settings draft before
     // saving so the Apply button reflects unsaved Settings edits.
     const merged: ProgramSettingsSnapshot = {
@@ -105,10 +105,50 @@ export default function SettingsApp(): React.ReactElement {
       setMidiSavedPreferences(result.snapshot.midiInput);
       setDirty(false);
       setValidationIssues(result.validationIssues ?? []);
+      return true;
     } else {
       setValidationIssues(result.validationIssues ?? []);
+      return false;
     }
   }, [draft, midiDraft, setMidiSavedPreferences]);
+
+  const handleSettingsCloseRequest = useCallback(async () => {
+    const api = window.blueAPI as unknown as {
+      confirmSettingsClose?: () => Promise<'yes' | 'no' | 'cancel'>;
+      resolveSettingsClose?: (resolution: 'allow' | 'cancel') => void;
+    };
+    if (!api.resolveSettingsClose) return;
+    if (!dirty && !midiDraftDirty) {
+      api.resolveSettingsClose('allow');
+      return;
+    }
+
+    let decision: 'yes' | 'no' | 'cancel';
+    try {
+      decision = await api.confirmSettingsClose?.() ?? 'cancel';
+    } catch {
+      decision = 'cancel';
+    }
+    if (decision === 'yes') {
+      try {
+        api.resolveSettingsClose((await handleApply()) ? 'allow' : 'cancel');
+      } catch {
+        api.resolveSettingsClose('cancel');
+      }
+    } else if (decision === 'no') {
+      api.resolveSettingsClose('allow');
+    } else {
+      api.resolveSettingsClose('cancel');
+    }
+  }, [dirty, handleApply, midiDraftDirty]);
+
+  useEffect(() => {
+    const api = window.blueAPI as unknown as {
+      onSettingsCloseRequest?: (callback: () => void) => () => void;
+    };
+    if (!api.onSettingsCloseRequest) return undefined;
+    return api.onSettingsCloseRequest(() => { void handleSettingsCloseRequest(); });
+  }, [handleSettingsCloseRequest]);
 
   const handleCancel = useCallback(() => {
     if (savedSnapshot) {
@@ -177,10 +217,15 @@ export default function SettingsApp(): React.ReactElement {
           <RealtimeRenderSettings
             settings={draft.realtimeRender}
             enginePath={draft.appSpecific.enginePath}
+            csoundLibraryPath={draft.appSpecific.csoundLibraryPath}
             onChange={(realtimeRender) => handleDraftChange({ ...draft, realtimeRender })}
             onEnginePathChange={(enginePath) => handleDraftChange({
               ...draft,
               appSpecific: { ...draft.appSpecific, enginePath },
+            })}
+            onCsoundLibraryPathChange={(csoundLibraryPath) => handleDraftChange({
+              ...draft,
+              appSpecific: { ...draft.appSpecific, csoundLibraryPath },
             })}
           />
         );

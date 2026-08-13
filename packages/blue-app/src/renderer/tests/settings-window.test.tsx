@@ -11,6 +11,7 @@ import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const defaultSettings = createDefaultProgramSettings('darwin');
+let settingsCloseRequest: (() => void) | null = null;
 
 const mockBlueAPI = {
   getProgramSettings: vi.fn(() => Promise.resolve({ ...defaultSettings })),
@@ -21,6 +22,14 @@ const mockBlueAPI = {
   getProgramSettingsUsageMatrix: vi.fn(() => Promise.resolve([])),
   syncLegacyRendererSettings: vi.fn(() => Promise.resolve({ ...defaultSettings })),
   openSettingsWindow: vi.fn(() => Promise.resolve()),
+  onSettingsCloseRequest: vi.fn((callback: () => void) => {
+    settingsCloseRequest = callback;
+    return () => {
+      if (settingsCloseRequest === callback) settingsCloseRequest = null;
+    };
+  }),
+  confirmSettingsClose: vi.fn(() => Promise.resolve<'yes' | 'no' | 'cancel'>('cancel')),
+  resolveSettingsClose: vi.fn(),
   getOscServerSnapshot: vi.fn(() => Promise.resolve({
     phase: 'listening',
     preferredPort: 8000,
@@ -39,6 +48,7 @@ let root: Root;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  settingsCloseRequest = null;
   (globalThis as any).window = { blueAPI: mockBlueAPI };
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -121,7 +131,8 @@ describe('settings renderer (044)', () => {
     const rtButton = buttons.find((b) => b.textContent === 'Realtime Render');
     await act(() => { rtButton?.click(); });
 
-    expect(container.textContent).toContain('Csound Executable');
+    expect(container.textContent).toContain('Csound Library Override');
+    expect(container.textContent).toContain('managed Blue Engine Csound runtime');
     expect(container.textContent).toContain('Audio Driver');
   });
 
@@ -147,6 +158,96 @@ describe('settings renderer (044)', () => {
       applyButton?.click();
     });
     expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalled();
+  });
+
+  it('closes immediately when native close is requested without unsaved settings', async () => {
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    await act(async () => {
+      settingsCloseRequest?.();
+      await Promise.resolve();
+    });
+
+    expect(mockBlueAPI.confirmSettingsClose).not.toHaveBeenCalled();
+    expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith('allow');
+  });
+
+  it.each([
+    ['yes', 'allow', true],
+    ['no', 'allow', false],
+    ['cancel', 'cancel', false],
+  ] as const)('handles an unsaved native close choice: %s', async (choice, resolution, shouldSave) => {
+    mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce(choice);
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      settingsCloseRequest?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockBlueAPI.confirmSettingsClose).toHaveBeenCalledTimes(1);
+    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledTimes(shouldSave ? 1 : 0);
+    expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith(resolution);
+  });
+
+  it('keeps Settings open when applying from the close prompt fails validation', async () => {
+    mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce('yes');
+    mockBlueAPI.saveProgramSettings.mockResolvedValueOnce({
+      ok: false,
+      validationIssues: [{ path: 'osc.preferredPort', message: 'Invalid port', severity: 'error' }],
+    });
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      settingsCloseRequest?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith('cancel');
+    expect(container.textContent).toContain('Invalid port');
+  });
+
+  it('keeps Settings open when applying from the close prompt throws', async () => {
+    mockBlueAPI.confirmSettingsClose.mockResolvedValueOnce('yes');
+    mockBlueAPI.saveProgramSettings.mockRejectedValueOnce(new Error('write failed'));
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    const input = container.querySelector('input[placeholder="(default user directory)"]') as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '/unsaved-dir');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      settingsCloseRequest?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockBlueAPI.resolveSettingsClose).toHaveBeenCalledWith('cancel');
   });
 
   it('applies, cancels, and resets the OSC preferred-port draft through Settings', async () => {
@@ -192,7 +293,8 @@ describe('settings renderer (044)', () => {
     const utilButton = buttons.find((b) => b.textContent === 'Utility');
     await act(() => { utilButton?.click(); });
 
-    expect(container.textContent).toContain('freeze/unfreeze');
+    expect(container.textContent).toContain('Freeze Flags');
+    expect(container.textContent).toContain('managed Blue Engine Csound runtime');
     expect(container.textContent).toContain('SoundFont inspection');
   });
 });

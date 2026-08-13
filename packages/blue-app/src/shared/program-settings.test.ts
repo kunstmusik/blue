@@ -15,6 +15,8 @@ import {
   getMidiDrivers,
   getDefaultCsoundExecutable,
   getDefaultFreezeFlags,
+  getDefaultAudioDriver,
+  getDefaultMidiDriver,
   isAbsoluteEnginePath,
   normalizeEnginePathSetting,
   PROGRAM_SETTINGS_PANEL_ORDER,
@@ -33,7 +35,7 @@ import {
 describe('program-settings defaults', () => {
   it('creates macOS defaults', () => {
     const s = createDefaultProgramSettings('darwin');
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
     expect(s.general.messageColorsEnabled).toBe(false);
     expect(s.general.csoundErrorWarningEnabled).toBe(true);
     expect(s.general.directoryTempFileLimit).toBe(3);
@@ -47,20 +49,42 @@ describe('program-settings defaults', () => {
     expect(s.utility.freezeFlags).toBe('-Ado');
     expect(s.realtimeRender.defaultKsmps).toBe('64');
     expect(s.diskRender.defaultKsmps).toBe('64');
-    expect(s.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(s.realtimeRender.audioDriver).toBe('auhal');
+    expect(s.realtimeRender.midiDriver).toBe('portmidi');
     expect(s.realtimeRender.softwareBufferSize).toBe(1024);
     expect(s.realtimeRender.hardwareBufferSize).toBe(4096);
     expect(s.diskRender.fileFormat).toBe('WAV');
     expect(s.diskRender.sampleFormat).toBe('SHORT');
     expect(s.appSpecific.enginePath).toBe('blue-engine');
+    expect(s.appSpecific.csoundLibraryPath).toBe('');
     expect(s.osc.preferredPort).toBe(8000);
+  });
+
+  it('migrates a version-2 runtime path without dropping legacy selections', () => {
+    const merged = mergeWithDefaults({
+      version: 2,
+      appSpecific: {
+        enginePath: '/external/blue-engine',
+        csoundLibraryPath: '/Library/Frameworks/CsoundLib64.framework/CsoundLib64',
+      } as any,
+      realtimeRender: {
+        audioDriver: 'custom-audio',
+        audioOutText: 'saved-output',
+      } as any,
+      utility: { csoundExecutable: '/legacy/csound' } as any,
+    }, 'darwin');
+    expect(merged.version).toBe(2);
+    expect(merged.appSpecific.csoundLibraryPath).toContain('CsoundLib64');
+    expect(merged.realtimeRender.audioDriver).toBe('custom-audio');
+    expect(merged.utility.csoundExecutable).toBe('/legacy/csound');
   });
 
   it('creates Linux defaults', () => {
     const s = createDefaultProgramSettings('linux');
     expect(s.utility.csoundExecutable).toBe('csound');
     expect(s.utility.freezeFlags).toBe('-Wdo');
-    expect(s.realtimeRender.audioDriver).toBe('PortAudio');
+    expect(s.realtimeRender.audioDriver).toBe('alsa');
+    expect(s.realtimeRender.midiDriver).toBe('alsa');
     expect(s.realtimeRender.softwareBufferSize).toBe(256);
     expect(s.realtimeRender.hardwareBufferSize).toBe(1024);
   });
@@ -120,6 +144,15 @@ describe('program-settings platform helpers', () => {
     expect(getDefaultCsoundExecutable('linux')).toBe('csound');
   });
 
+  it('uses Csound runtime module defaults by platform', () => {
+    expect(getDefaultAudioDriver('darwin')).toBe('auhal');
+    expect(getDefaultAudioDriver('linux')).toBe('alsa');
+    expect(getDefaultAudioDriver('win32')).toBe('PortAudio');
+    expect(getDefaultMidiDriver('darwin')).toBe('portmidi');
+    expect(getDefaultMidiDriver('linux')).toBe('alsa');
+    expect(getDefaultMidiDriver('win32')).toBe('portmidi');
+  });
+
   it('returns correct default freeze flags', () => {
     expect(getDefaultFreezeFlags('darwin')).toBe('-Ado');
     expect(getDefaultFreezeFlags('linux')).toBe('-Wdo');
@@ -149,7 +182,7 @@ describe('program-settings validation', () => {
       path: 'appSpecific.enginePath',
       severity: 'error',
     }));
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
   });
 
   it('rejects invalid directoryTempFileLimit', () => {
@@ -220,8 +253,8 @@ describe('program-settings mergeWithDefaults', () => {
   it('fills missing sections from defaults', () => {
     const merged = mergeWithDefaults({}, 'darwin');
     expect(merged.general.messageColorsEnabled).toBe(false);
-    expect(merged.realtimeRender.audioDriver).toBe('pa_bl');
-    expect(merged.version).toBe(2);
+    expect(merged.realtimeRender.audioDriver).toBe('auhal');
+    expect(merged.version).toBe(3);
     expect(merged.projectDefaults.defaultLayerGroupType).toBe('TRACK');
   });
 
@@ -374,7 +407,7 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
 
   it('seeds 100 on a fresh ProgramSettingsSnapshot without changing the settings version', () => {
     const s = createDefaultProgramSettings('darwin');
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
     expect(s.appSpecific.appZoomPercent).toBe(100);
   });
 
@@ -396,7 +429,7 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
     expect(merged.appSpecific.appZoomPercent).toBe(170);
     expect(merged.appSpecific.enginePath).toBe('/engine');
     expect(merged.appSpecific.recentFiles).toEqual(['/a.blue']);
-    expect(merged.version).toBe(2);
+    expect(merged.version).toBe(3);
   });
 
   it('mergeWithDefaults falls back to 100 for missing appZoomPercent while preserving other app-specific fields', () => {

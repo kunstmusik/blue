@@ -53,7 +53,7 @@ Preset list of "piano.sf2"
     temporaryDirectories.push(root);
     const filePath = path.join(root, 'test.sf2');
     fs.writeFileSync(filePath, 'not a real soundfont');
-    const runCsound = vi.fn(async (_executable: string, args: string[], cwd: string) => {
+    const runCsound = vi.fn(async (args: string[], cwd: string) => {
       expect(args[0]).toBe('-n');
       expect(cwd).toMatch(/blue-soundfont-/u);
       const csd = fs.readFileSync(args[1]!, 'utf-8');
@@ -68,12 +68,12 @@ Preset list of "piano.sf2"
       };
     });
 
-    await expect(inspectSoundFont(filePath, 'configured-csound', { runCsound }, root)).resolves.toEqual({
+    await expect(inspectSoundFont(filePath, { runCsound }, root)).resolves.toEqual({
       filePath,
       instruments: [{ number: 0, name: 'Piano' }],
       presets: [{ number: 0, name: 'Piano', presetNumber: 0, bank: 0 }],
     });
-    expect(runCsound).toHaveBeenCalledWith('configured-csound', expect.any(Array), expect.stringContaining('blue-soundfont-'));
+    expect(runCsound).toHaveBeenCalledWith(expect.any(Array), expect.stringContaining('blue-soundfont-'));
     expect(fs.readdirSync(root)).toEqual(['test.sf2']);
   });
 });

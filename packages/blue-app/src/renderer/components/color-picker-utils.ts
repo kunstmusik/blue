@@ -1,3 +1,5 @@
+import { computeFloatingPosition } from './floating-position-utils';
+
 export interface ColorPickerAnchorRect {
   left: number;
   right: number;
@@ -18,32 +20,16 @@ export interface ColorPickerSize {
 
 export const COLOR_PICKER_SIZE: ColorPickerSize = { width: 240, height: 260 };
 export const COLOR_PICKER_MARGIN = 8;
-const ANCHOR_GAP = 8;
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
-}
-
 export function computeColorPickerPosition(
   anchor: ColorPickerAnchorRect,
   popup: ColorPickerSize,
   viewport: ColorPickerSize,
 ): ColorPickerPosition {
-  const availableBelow = viewport.height - anchor.bottom - ANCHOR_GAP - COLOR_PICKER_MARGIN;
-  const availableAbove = anchor.top - ANCHOR_GAP - COLOR_PICKER_MARGIN;
-  const placement = availableBelow >= popup.height || availableBelow >= availableAbove
-    ? 'bottom'
-    : 'top';
-  const requestedTop = placement === 'bottom'
-    ? anchor.bottom + ANCHOR_GAP
-    : anchor.top - ANCHOR_GAP - popup.height;
-  const requestedLeft = (anchor.left + anchor.right - popup.width) / 2;
-
-  return {
-    left: clamp(requestedLeft, COLOR_PICKER_MARGIN, viewport.width - popup.width - COLOR_PICKER_MARGIN),
-    top: clamp(requestedTop, COLOR_PICKER_MARGIN, viewport.height - popup.height - COLOR_PICKER_MARGIN),
-    placement,
-  };
+  return computeFloatingPosition(anchor, popup, viewport, {
+    gap: 8,
+    margin: COLOR_PICKER_MARGIN,
+    align: 'center',
+  });
 }
 
 export function normalizeHex(value: string): string {

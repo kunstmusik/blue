@@ -8,9 +8,8 @@ import type {
 } from '../shared/soundfont-viewer';
 
 // SoundFont metadata comes from Csound's text-emitting sfilist/sfplist opcodes.
-// The realtime Blue Engine protocol intentionally exposes no generic CSD runner
-// or Csound message stream, so this utility uses the configured Utility Csound
-// executable while keeping the subprocess behind an injectable seam.
+// SoundFont inspection runs through the main-owned Blue Engine performance seam;
+// no caller-selected Csound executable crosses this module boundary.
 
 export interface SoundFontExecutionResult {
   exitCode: number;
@@ -20,10 +19,9 @@ export interface SoundFontExecutionResult {
 
 export interface SoundFontExecutionSeam {
   runCsound(
-    executable: string,
     args: string[],
     cwd: string,
-  ): Promise<SoundFontExecutionResult>;
+  ): Promise<SoundFontExecutionResult & { cancelled?: boolean }>;
 }
 
 const SOUND_FONT_PROBE_CSD = `<CsoundSynthesizer>
@@ -105,7 +103,6 @@ function formatExecutionError(result: SoundFontExecutionResult): string {
 
 export async function inspectSoundFont(
   filePath: string,
-  executable: string,
   executionSeam: SoundFontExecutionSeam,
   temporaryDirectory: string = os.tmpdir(),
 ): Promise<SoundFontInfo> {
@@ -119,11 +116,6 @@ export async function inspectSoundFont(
     throw new Error('The selected SoundFont is not a file.');
   }
 
-  const command = executable.trim();
-  if (command.length === 0) {
-    throw new Error('Set a Utility Csound executable in Settings before inspecting a SoundFont.');
-  }
-
   const tempDirectory = await fs.promises.mkdtemp(
     path.join(temporaryDirectory, 'blue-soundfont-'),
   );
@@ -131,7 +123,10 @@ export async function inspectSoundFont(
 
   try {
     await fs.promises.writeFile(csdPath, buildSoundFontProbeCsd(resolvedFilePath), 'utf-8');
-    const result = await executionSeam.runCsound(command, ['-n', csdPath], tempDirectory);
+    const result = await executionSeam.runCsound(['-n', csdPath], tempDirectory);
+    if (result.cancelled) {
+      throw new Error('SoundFont inspection cancelled.');
+    }
     if (result.exitCode !== 0) {
       throw new Error(formatExecutionError(result));
     }

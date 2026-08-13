@@ -1,54 +1,155 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RealtimeRenderSettingsSnapshot } from '../../../shared/program-settings';
 import type { EngineProbeResult } from '../../../shared/engine-runtime';
-import { getAudioDrivers, getMidiDrivers } from '../../../shared/program-settings';
+import {
+  formatCsoundRuntimeModuleOption,
+  type CsoundIoQueryResult,
+  type CsoundRuntimeDevice,
+} from '../../../shared/csound-runtime';
 import SettingsSection from './SettingsSection';
 import SettingsField, {
   SettingsCheckboxField,
   SettingsSelectField,
   SettingsSubsectionTitle,
-  SETTINGS_MEDIUM_FIELD_CLASS,
   SETTINGS_NARROW_FIELD_CLASS,
 } from './SettingsField';
+import RuntimeDeviceField from './RuntimeDeviceField';
 
 interface RealtimeRenderSettingsProps {
   settings: RealtimeRenderSettingsSnapshot;
   enginePath: string;
+  csoundLibraryPath?: string;
   onChange: (settings: RealtimeRenderSettingsSnapshot) => void;
   onEnginePathChange: (enginePath: string) => void;
+  onCsoundLibraryPathChange?: (libraryPath: string) => void;
 }
 
 export default function RealtimeRenderSettings({
   settings,
   enginePath,
+  csoundLibraryPath,
   onChange,
   onEnginePathChange,
+  onCsoundLibraryPathChange,
 }: RealtimeRenderSettingsProps): React.ReactElement {
+  const effectiveCsoundLibraryPath = csoundLibraryPath ?? '';
   const [probeResult, setProbeResult] = useState<EngineProbeResult | null>(null);
   const [probing, setProbing] = useState(false);
+  const [ioResult, setIoResult] = useState<CsoundIoQueryResult | null>(null);
+  const [ioLoading, setIoLoading] = useState<{ audio: boolean; midi: boolean }>({ audio: false, midi: false });
+  const ioRequestGeneration = useRef<{ audio: number; midi: number }>({ audio: 0, midi: 0 });
   const set = <K extends keyof RealtimeRenderSettingsSnapshot>(
     key: K,
     value: RealtimeRenderSettingsSnapshot[K],
   ) => onChange({ ...settings, [key]: value });
 
-  const platform = navigator.platform.toLowerCase().includes('mac') ? 'darwin'
-    : navigator.platform.toLowerCase().includes('win') ? 'win32'
-    : 'linux';
-  const audioDrivers = getAudioDrivers(platform);
-  const midiDrivers = getMidiDrivers(platform);
   const usesBundledEngine = enginePath.trim() === '' || enginePath.trim() === 'blue-engine';
   const externalEnginePath = usesBundledEngine ? '' : enginePath;
+
+  const audioModules = useMemo(() => {
+    const runtime = ioResult?.report?.audioModules.map((module) => module.name) ?? [];
+    return settings.audioDriver
+      ? [settings.audioDriver, ...runtime.filter((module) => module !== settings.audioDriver)]
+      : runtime;
+  }, [ioResult, settings.audioDriver]);
+  const midiModules = useMemo(() => {
+    const runtime = ioResult?.report?.midiModules.map((module) => module.name) ?? [];
+    return settings.midiDriver
+      ? [settings.midiDriver, ...runtime.filter((module) => module !== settings.midiDriver)]
+      : runtime;
+  }, [ioResult, settings.midiDriver]);
+  const audioInputs: CsoundRuntimeDevice[] = ioResult?.report?.audioInputs ?? [];
+  const audioOutputs: CsoundRuntimeDevice[] = ioResult?.report?.audioOutputs ?? [];
+  const midiInputs: CsoundRuntimeDevice[] = ioResult?.report?.midiInputs ?? [];
+  const midiOutputs: CsoundRuntimeDevice[] = ioResult?.report?.midiOutputs ?? [];
+  const savedAudioModuleUnavailable = Boolean(
+    ioResult?.report && settings.audioDriver
+      && !ioResult.report.audioModules.some((module) => module.name === settings.audioDriver),
+  );
+  const savedMidiModuleUnavailable = Boolean(
+    ioResult?.report && settings.midiDriver
+      && !ioResult.report.midiModules.some((module) => module.name === settings.midiDriver),
+  );
+  const audioModuleLabel = (name: string) => {
+    const label = formatCsoundRuntimeModuleOption('audio', name);
+    return savedAudioModuleUnavailable && name === settings.audioDriver
+      ? `${label} — saved/unavailable`
+      : label;
+  };
+  const midiModuleLabel = (name: string) => {
+    const label = formatCsoundRuntimeModuleOption('midi', name);
+    return savedMidiModuleUnavailable && name === settings.midiDriver
+      ? `${label} — saved/unavailable`
+      : label;
+  };
 
   const checkEngine = async () => {
     setProbing(true);
     try {
-      setProbeResult(await window.blueAPI.probeEngineRuntime({
+      const request = {
         enginePathOverride: usesBundledEngine ? null : externalEnginePath,
-      }));
+        ...(effectiveCsoundLibraryPath.trim() ? { csoundLibraryPath: effectiveCsoundLibraryPath.trim() } : {}),
+      };
+      const result = await window.blueAPI.probeEngineRuntime(request);
+      setProbeResult(result);
     } finally {
       setProbing(false);
     }
   };
+
+  const queryIo = async (scope: 'audio' | 'midi'): Promise<CsoundIoQueryResult | null> => {
+    const requestId = ++ioRequestGeneration.current[scope];
+    setIoLoading((current) => ({ ...current, [scope]: true }));
+    try {
+      const result = await window.blueAPI.queryCsoundIo({
+        enginePathOverride: usesBundledEngine ? null : externalEnginePath,
+        csoundLibraryPath: effectiveCsoundLibraryPath.trim() || null,
+        ...(scope === 'audio' ? { audioModule: settings.audioDriver } : {}),
+        ...(scope === 'midi' ? { midiModule: settings.midiDriver } : {}),
+      });
+      if (!result || requestId !== ioRequestGeneration.current[scope]) return null;
+      setIoResult((previous) => {
+        if (!previous?.report || !result.report) return result;
+        const report = scope === 'audio'
+          ? {
+              ...previous.report,
+              ...result.report,
+              selectedMidiModule: previous.report.selectedMidiModule,
+              midiInputs: previous.report.midiInputs,
+              midiOutputs: previous.report.midiOutputs,
+            }
+          : {
+              ...previous.report,
+              ...result.report,
+              selectedAudioModule: previous.report.selectedAudioModule,
+              audioInputs: previous.report.audioInputs,
+              audioOutputs: previous.report.audioOutputs,
+            };
+        return { ...result, report };
+      });
+      return result;
+    } catch {
+      return null;
+    } finally {
+      if (requestId === ioRequestGeneration.current[scope]) {
+        setIoLoading((current) => ({ ...current, [scope]: false }));
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!settings.audioDriver || typeof window.blueAPI.queryCsoundIo !== 'function') return;
+    void queryIo('audio');
+  }, [settings.audioDriver, externalEnginePath, effectiveCsoundLibraryPath]);
+
+  useEffect(() => {
+    if (!settings.midiDriver || typeof window.blueAPI.queryCsoundIo !== 'function') return;
+    void queryIo('midi');
+  }, [settings.midiDriver, externalEnginePath, effectiveCsoundLibraryPath]);
+
+  const selectedStatus = ioResult?.report
+    ? `${ioResult.report.audioModules.length} audio module(s), ${ioResult.report.midiModules.length} MIDI module(s)`
+    : null;
 
   return (
     <SettingsSection title="Realtime Render">
@@ -111,11 +212,15 @@ export default function RealtimeRenderSettings({
         </div>
       )}
 
+      <div className="mb-4 text-ui text-app-text-subtle">
+        Realtime and offline work use the managed Blue Engine Csound runtime; legacy executable settings remain preserved for downgrade compatibility.
+      </div>
       <SettingsField
-        label="Csound Executable"
-        value={settings.csoundExecutable}
-        onChange={(value) => set('csoundExecutable', value)}
-        placeholder="/usr/local/bin/csound"
+        label="Csound Library Override"
+        value={effectiveCsoundLibraryPath}
+        onChange={onCsoundLibraryPathChange ?? (() => undefined)}
+        placeholder="Leave empty to auto-detect"
+        description="Optional absolute path to a supported Csound shared library."
       />
 
       <SettingsSubsectionTitle>Project Settings</SettingsSubsectionTitle>
@@ -160,24 +265,35 @@ export default function RealtimeRenderSettings({
         onChange={(checked) => set('audioDriverEnabled', checked)}
       />
       <SettingsSelectField
-        label="Audio Driver"
+        label="Audio Module"
         value={settings.audioDriver}
         onChange={(value) => set('audioDriver', value)}
-        disabled={!settings.audioDriverEnabled}
       >
-        {audioDrivers.map((driver) => <option key={driver} value={driver}>{driver}</option>)}
+        {audioModules.length === 0 && <option value={settings.audioDriver}>{settings.audioDriver ? audioModuleLabel(settings.audioDriver) : 'Scan modules'}</option>}
+        {audioModules.map((driver) => <option key={driver} value={driver}>{audioModuleLabel(driver)}</option>)}
       </SettingsSelectField>
+      <div className="mb-4">
+        <button
+          type="button"
+          disabled={ioLoading.audio}
+          onClick={() => { void queryIo('audio'); }}
+          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
+        >
+          {ioLoading.audio ? 'Scanning Audio Devices…' : 'Rescan Audio Devices'}
+        </button>
+      </div>
 
       <SettingsCheckboxField
         label="Audio Out Enabled"
         checked={settings.audioOutEnabled}
         onChange={(checked) => set('audioOutEnabled', checked)}
       />
-      <SettingsField
+      <RuntimeDeviceField
         label="Audio Out"
         value={settings.audioOutText}
         onChange={(value) => set('audioOutText', value)}
-        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+        devices={audioOutputs}
+        defaultDevice={{ deviceId: 'dac', label: 'Default (dac) - 2 channels' }}
       />
 
       <SettingsCheckboxField
@@ -185,11 +301,12 @@ export default function RealtimeRenderSettings({
         checked={settings.audioInEnabled}
         onChange={(checked) => set('audioInEnabled', checked)}
       />
-      <SettingsField
+      <RuntimeDeviceField
         label="Audio In"
         value={settings.audioInText}
         onChange={(value) => set('audioInText', value)}
-        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+        devices={audioInputs}
+        defaultDevice={{ deviceId: 'adc', label: 'Default (adc) - 2 channels' }}
       />
 
       <SettingsSubsectionTitle>MIDI</SettingsSubsectionTitle>
@@ -200,24 +317,34 @@ export default function RealtimeRenderSettings({
         onChange={(checked) => set('midiDriverEnabled', checked)}
       />
       <SettingsSelectField
-        label="MIDI Driver"
+        label="MIDI Module"
         value={settings.midiDriver}
         onChange={(value) => set('midiDriver', value)}
-        disabled={!settings.midiDriverEnabled}
       >
-        {midiDrivers.map((driver) => <option key={driver} value={driver}>{driver}</option>)}
+        {midiModules.length === 0 && <option value={settings.midiDriver}>{settings.midiDriver ? midiModuleLabel(settings.midiDriver) : 'Scan modules'}</option>}
+        {midiModules.map((driver) => <option key={driver} value={driver}>{midiModuleLabel(driver)}</option>)}
       </SettingsSelectField>
+      <div className="mb-4">
+        <button
+          type="button"
+          disabled={ioLoading.midi}
+          onClick={() => { void queryIo('midi'); }}
+          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
+        >
+          {ioLoading.midi ? 'Scanning MIDI Devices…' : 'Rescan MIDI Devices'}
+        </button>
+      </div>
 
       <SettingsCheckboxField
         label="MIDI Out Enabled"
         checked={settings.midiOutEnabled}
         onChange={(checked) => set('midiOutEnabled', checked)}
       />
-      <SettingsField
+      <RuntimeDeviceField
         label="MIDI Out"
         value={settings.midiOutText}
         onChange={(value) => set('midiOutText', value)}
-        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+        devices={midiOutputs}
       />
 
       <SettingsCheckboxField
@@ -225,12 +352,19 @@ export default function RealtimeRenderSettings({
         checked={settings.midiInEnabled}
         onChange={(checked) => set('midiInEnabled', checked)}
       />
-      <SettingsField
+      <RuntimeDeviceField
         label="MIDI In"
         value={settings.midiInText}
         onChange={(value) => set('midiInText', value)}
-        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+        devices={midiInputs}
       />
+
+      <div role="status" className="mb-3 text-ui text-app-text-muted">
+        {selectedStatus ?? 'Runtime modules and devices load automatically for the selected audio and MIDI modules. Use Rescan when devices are attached or detached.'}
+        {savedAudioModuleUnavailable ? ' — saved audio module is currently unavailable' : ''}
+        {savedMidiModuleUnavailable ? ' — saved MIDI module is currently unavailable' : ''}
+        {ioResult && !ioResult.ok ? ` — ${ioResult.message}` : ''}
+      </div>
 
       <SettingsSubsectionTitle>Buffer Settings</SettingsSubsectionTitle>
 

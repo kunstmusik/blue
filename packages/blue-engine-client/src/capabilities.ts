@@ -1,5 +1,8 @@
 export const BLUE_ENGINE_PROTOCOL_VERSION = 1;
 export const BLUE_ENGINE_CAPABILITIES_SCHEMA_VERSION = 1;
+export const CSOUND_IO_FEATURE = 'csound-io-v1';
+export const CSOUND_UTILITY_FEATURE = 'csound-utility-v1';
+export const CSOUND_PERFORMANCE_FEATURE = 'csound-performance-v1';
 
 export interface EngineCapabilities {
   schemaVersion: 1;
@@ -7,6 +10,13 @@ export interface EngineCapabilities {
   protocolVersion: number;
   sourceRevision: string;
   features: string[];
+}
+
+export function hasEngineFeature(
+  capabilities: EngineCapabilities,
+  feature: string,
+): boolean {
+  return capabilities.features.includes(feature);
 }
 
 export class EngineCapabilitiesDecodeError extends Error {
