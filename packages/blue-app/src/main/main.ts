@@ -159,6 +159,10 @@ import {
 } from '../shared/soundfont-viewer';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
 import {
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  type ScriptRuntimeReinitializeResult,
+} from '../shared/script-runtime';
+import {
   ABOUT_WINDOW_CLOSE_CHANNEL,
   APP_METADATA_GET_CHANNEL,
 } from '../shared/app-metadata';
@@ -1311,6 +1315,8 @@ function rebuildApplicationMenu(): void {
         type: 'open-code-repository-editor',
       });
     },
+    onReinitializeJavaScriptRuntime: () => { void reinitializeJavaScriptRuntime(); },
+    onReinitializeJythonRuntime: () => { void reinitializeJythonRuntime(); },
     onFocusPanel: (panelId) => {
       // Route through the workbench window registry so an already-floating panel
       // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).
@@ -2523,6 +2529,59 @@ async function ensureJavaScriptConsoleSession(): Promise<JavaScriptSession> {
   return javaScriptSession;
 }
 
+async function reinitializeJavaScriptRuntimeNow(): Promise<void> {
+  const session = await ensureJavaScriptConsoleSession();
+  session.reinitialize();
+}
+
+async function reinitializeJavaScriptRuntime(): Promise<ScriptRuntimeReinitializeResult> {
+  return enqueueReplRuntime(async () => {
+    try {
+      await reinitializeJavaScriptRuntimeNow();
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+      return { ok: true };
+    } catch (error: unknown) {
+      return { ok: false, error: getErrorMessage(error) };
+    }
+  });
+}
+
+async function reinitializeJythonRuntimeNow(): Promise<void> {
+  if (!currentData) {
+    throw new Error('No project loaded.');
+  }
+  if (!currentData.usesJavaRuntime()) {
+    throw new Error('Active project does not use the Java runtime.');
+  }
+  if (!javaRuntimeSessionManager) {
+    throw new Error('Java runtime manager is unavailable.');
+  }
+
+  await javaRuntimeSessionManager.reinitializeJython(
+    currentData,
+    currentProjectSessionId,
+    currentFilePath,
+  );
+}
+
+async function reinitializeJythonRuntime(): Promise<ScriptRuntimeReinitializeResult> {
+  return enqueueReplRuntime(async () => {
+    try {
+      await reinitializeJythonRuntimeNow();
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+      return { ok: true };
+    } catch (error: unknown) {
+      return { ok: false, error: getErrorMessage(error) };
+    }
+  });
+}
+
 async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
   if (!currentData) {
     throw new Error('No project loaded.');
@@ -2675,16 +2734,9 @@ async function reinitializeReplConsole(
   return enqueueReplRuntime(async () => {
     try {
       if (request.language === 'javascript') {
-        const session = await ensureJavaScriptConsoleSession();
-        session.reinitialize();
+        await reinitializeJavaScriptRuntimeNow();
       } else if (request.language === 'python') {
-        await ensureJavaRuntimeConsoleSession();
-        if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
-        await javaRuntimeSessionManager.reinitializeJython(
-          currentData,
-          currentProjectSessionId,
-          currentFilePath,
-        );
+        await reinitializeJythonRuntimeNow();
       } else {
         if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
         await javaRuntimeSessionManager.reinitializeClojure(
@@ -4104,6 +4156,11 @@ ipcMain.handle(
   (_event, _request: ReplConsoleCloseRequest): ReplConsoleCloseResult => ({ ok: true }),
 );
 
+ipcMain.handle(
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  async (): Promise<ScriptRuntimeReinitializeResult> => reinitializeJavaScriptRuntime(),
+);
+
 ipcMain.handle('java-runtime:reinitialize', async () => {
   if (!currentData) {
     return { ok: false, error: 'No project loaded.' };
@@ -4131,31 +4188,7 @@ ipcMain.handle('java-runtime:reinitialize', async () => {
   }
 });
 
-ipcMain.handle('java-runtime:reinitialize-jython', async () => {
-  if (!currentData) {
-    return { ok: false, error: 'No project loaded.' };
-  }
-
-  if (!currentData.usesJavaRuntime()) {
-    return { ok: false, error: 'Active project does not use the Java runtime.' };
-  }
-
-  if (!javaRuntimeSessionManager) {
-    return { ok: false, error: 'Java runtime manager is unavailable.' };
-  }
-
-  try {
-    await javaRuntimeSessionManager.reinitializeJython(
-      currentData,
-      currentProjectSessionId,
-      currentFilePath,
-    );
-    await runProjectOnLoad(currentData);
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
-  }
-});
+ipcMain.handle('java-runtime:reinitialize-jython', async () => reinitializeJythonRuntime());
 
 ipcMain.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {
   if (!currentData || !isBsbRealtimeControlUpdate(update)) {

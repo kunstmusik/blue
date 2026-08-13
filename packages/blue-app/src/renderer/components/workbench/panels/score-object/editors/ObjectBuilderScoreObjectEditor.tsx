@@ -5,6 +5,7 @@ import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import BSBInterfaceEditor from '../../orchestra/bsb/BSBInterfaceEditor';
 import { createBsbReplacementKeys } from '../../orchestra/bsb/bsb-completions';
 import GeneratedScoreModal from './GeneratedScoreModal';
+import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import JythonRuntimeStatusIndicator from './JythonRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
@@ -161,6 +162,7 @@ export default function ObjectBuilderScoreObjectEditor({
                 Edit Code
               </label>
               {languageType === 'PYTHON' && <JythonRuntimeStatusIndicator />}
+              {languageType === 'JAVASCRIPT' && <JavaScriptRuntimeStatusIndicator />}
             </div>
             <div className="min-h-0 flex-1">
               <SelectedCodeEditor

@@ -34,6 +34,8 @@ export interface ApplicationMenuTemplateOptions {
   onOpenFTableConverter: () => void;
   onOpenCsoundRCEditor: () => void;
   onOpenCodeRepositoryEditor: () => void;
+  onReinitializeJavaScriptRuntime: () => void;
+  onReinitializeJythonRuntime: () => void;
   onFocusPanel: (panelId: string) => void;
   onToggleDevTools: () => void;
   onResetLayout: () => void;
@@ -204,6 +206,13 @@ function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIt
   ];
 }
 
+function buildScriptMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+  return [
+    { label: 'Reinitialize JavaScript Interpreter', click: () => options.onReinitializeJavaScriptRuntime() },
+    { label: 'Reinitialize Jython Interpreter', enabled: options.hasLoadedProject, click: () => options.onReinitializeJythonRuntime() },
+  ];
+}
+
 function buildWindowMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
     { label: 'Editors', submenu: buildWorkbenchMenuItems('editor', options.onFocusPanel) },
@@ -281,6 +290,11 @@ export function buildApplicationMenuTemplate(
   template.push({
     label: 'Project',
     submenu: buildProjectMenuTemplate(options),
+  });
+
+  template.push({
+    label: 'Script',
+    submenu: buildScriptMenuTemplate(options),
   });
 
   template.push({

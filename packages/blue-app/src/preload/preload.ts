@@ -33,6 +33,10 @@ import type {
 } from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
 import {
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  type ScriptRuntimeReinitializeResult,
+} from '../shared/script-runtime';
+import {
   SOUND_FONT_FILE_SELECT_CHANNEL,
   SOUND_FONT_INSPECT_CHANNEL,
   type SoundFontInfo,
@@ -552,6 +556,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('java-runtime:reinitialize') as Promise<{ ok: boolean; error?: string }>,
   reinitializeJythonRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize-jython') as Promise<{ ok: boolean; error?: string }>,
+  reinitializeJavaScriptRuntime: () =>
+    ipcRenderer.invoke(JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL) as Promise<ScriptRuntimeReinitializeResult>,
   getNestedPolyObjectSnapshot: (location: ScoreObjectLocationRef) =>
     ipcRenderer.invoke('get-nested-poly-object-snapshot', location) as Promise<PolyObjectLayerGroupSnapshot | null>,
   sendBsbRealtimeControlUpdate: (update: BsbRealtimeControlUpdate) =>

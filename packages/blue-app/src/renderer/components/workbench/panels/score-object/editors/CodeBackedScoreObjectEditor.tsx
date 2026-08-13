@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
+import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import JythonRuntimeStatusIndicator from './JythonRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
@@ -17,6 +18,7 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
   };
 
   const isCsoundScore = editor.syntax === 'csound-score';
+  const isJavaScriptBacked = editor.syntax === 'javascript';
   const isJythonBacked = editor.syntax === 'python';
   const supportsOnLoadProcessable = document.target.editorObjectType === 'PythonObject';
   const onLoadProcessable = editor.auxiliaryFlags?.onLoadProcessable === true;
@@ -65,7 +67,7 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
 
   return (
     <div ref={containerRef} className="h-full flex flex-col" tabIndex={-1}>
-      {(isCsoundScore || isJythonBacked) && (
+      {(isCsoundScore || isJavaScriptBacked || isJythonBacked) && (
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-blue-border/30 bg-app-surface-strong px-2 py-1">
           {supportsOnLoadProcessable && (
             <label className="mr-auto flex items-center gap-1 text-ui text-gray-300">
@@ -79,6 +81,7 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
             </label>
           )}
           {isJythonBacked && <JythonRuntimeStatusIndicator />}
+          {isJavaScriptBacked && <JavaScriptRuntimeStatusIndicator />}
           <button
             type="button"
             className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"

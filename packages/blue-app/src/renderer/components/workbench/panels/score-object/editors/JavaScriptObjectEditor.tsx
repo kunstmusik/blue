@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
+import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
 export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
@@ -56,6 +57,7 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
     <div ref={containerRef} className="flex h-full flex-col" tabIndex={-1}>
       <div className="flex items-center gap-2 border-b border-blue-border px-3 py-1 shrink-0">
         <div className="flex-1" />
+        <JavaScriptRuntimeStatusIndicator />
         <label className="flex items-center gap-1 text-ui text-gray-300">
           <input
             type="checkbox"

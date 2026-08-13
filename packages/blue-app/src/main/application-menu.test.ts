@@ -24,6 +24,8 @@ function createHandlers() {
     onOpenFTableConverter: vi.fn(),
     onOpenCsoundRCEditor: vi.fn(),
     onOpenCodeRepositoryEditor: vi.fn(),
+    onReinitializeJavaScriptRuntime: vi.fn(),
+    onReinitializeJythonRuntime: vi.fn(),
     onFocusPanel: vi.fn(),
     onToggleDevTools: vi.fn(),
     onResetLayout: vi.fn(),
@@ -224,7 +226,7 @@ describe('application menu template', () => {
       ...handlers,
     });
 
-    expect(template.map((item) => item.label)).toEqual(['Blue', 'File', 'Edit', 'View', 'Project', 'Tools', 'Window']);
+    expect(template.map((item) => item.label)).toEqual(['Blue', 'File', 'Edit', 'View', 'Project', 'Script', 'Tools', 'Window']);
 
     const blueMenu = getSubmenu(template[0]);
     expect(blueMenu.map((item) => item.label)).toContain('About Blue');
@@ -275,7 +277,14 @@ describe('application menu template', () => {
     expect(handlers.onGenerateRealtimeCsdToScreen).toHaveBeenCalledTimes(1);
     expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
-    const toolsMenu = getSubmenu(template[5]);
+    const scriptMenu = getSubmenu(template[5]);
+    expect(getLabels(scriptMenu)).toEqual(['Reinitialize JavaScript Interpreter', 'Reinitialize Jython Interpreter']);
+    scriptMenu.find((item) => item.label === 'Reinitialize JavaScript Interpreter')?.click?.();
+    scriptMenu.find((item) => item.label === 'Reinitialize Jython Interpreter')?.click?.();
+    expect(handlers.onReinitializeJavaScriptRuntime).toHaveBeenCalledOnce();
+    expect(handlers.onReinitializeJythonRuntime).toHaveBeenCalledOnce();
+
+    const toolsMenu = getSubmenu(template[6]);
     toolsMenu.find((item) => item.label === 'Code Repository Editor')?.click?.();
     expect(handlers.onOpenCodeRepositoryEditor).toHaveBeenCalledTimes(1);
     expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
@@ -284,7 +293,7 @@ describe('application menu template', () => {
     expect(handlers.onOpenEffectsLibrary).toHaveBeenCalledTimes(1);
     expect(toolsMenu.find((item) => item.label === 'SoundFont Viewer')).toBeFalsy();
 
-    const windowMenu = getSubmenu(template[6]);
+    const windowMenu = getSubmenu(template[7]);
     expect(windowMenu.map((item) => item.label).slice(0, 5)).toEqual(['Editors', 'Properties', 'Output', 'REPL', 'Toggle Dev Tools']);
     expect(windowMenu.find((item) => item.label === 'Reset Default Layout')).toBeFalsy();
     expect(windowMenu.find((item) => item.label === 'Reset Windows')).toBeTruthy();
@@ -311,7 +320,7 @@ describe('application menu template', () => {
       ...handlers,
     });
 
-    expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Tools', 'Help', 'Window']);
+    expect(template.map((item) => item.label)).toEqual(['File', 'Edit', 'View', 'Project', 'Script', 'Tools', 'Help', 'Window']);
 
     const fileMenu = getSubmenu(template[0]);
     expect(getLabels(fileMenu)).toEqual(['New Project', 'Open Project', 'Open Example Project...', 'Import CSD File', 'Import from ORC/SCO', 'Import MIDI File', 'Close Project', 'Revert', 'Save', 'Save as...', 'Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open', 'Recent Projects', 'Settings...', 'Quit']);
@@ -334,10 +343,14 @@ describe('application menu template', () => {
     expect(projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.enabled).toBe(false);
     expect(projectMenu.find((item) => item.label === 'Blue Live')?.enabled).toBe(false);
 
-    const toolsMenu = getSubmenu(template[4]);
+    const scriptMenu = getSubmenu(template[4]);
+    expect(scriptMenu.find((item) => item.label === 'Reinitialize JavaScript Interpreter')?.enabled).not.toBe(false);
+    expect(scriptMenu.find((item) => item.label === 'Reinitialize Jython Interpreter')?.enabled).toBe(false);
+
+    const toolsMenu = getSubmenu(template[5]);
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
 
-    const helpMenu = getSubmenu(template[5]);
+    const helpMenu = getSubmenu(template[6]);
     helpMenu.find((item) => item.label === 'About Blue')?.click?.();
     expect(handlers.onOpenAbout).toHaveBeenCalledTimes(1);
   });

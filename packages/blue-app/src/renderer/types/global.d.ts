@@ -55,6 +55,7 @@ import type {
   FreezeOperationResult,
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
+import type { ScriptRuntimeReinitializeResult } from '../../shared/script-runtime';
 import type {
   SoundFontInfo,
 } from '../../shared/soundfont-viewer';
@@ -406,6 +407,7 @@ declare global {
       ) => Promise<ReplConsoleCloseResult>;
       reinitializeClojureRuntime: () => Promise<{ ok: boolean; error?: string }>;
       reinitializeJythonRuntime: () => Promise<{ ok: boolean; error?: string }>;
+      reinitializeJavaScriptRuntime: () => Promise<ScriptRuntimeReinitializeResult>;
       getNestedPolyObjectSnapshot: (
         location: ScoreObjectLocationRef,
       ) => Promise<PolyObjectLayerGroupSnapshot | null>;
