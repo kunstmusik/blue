@@ -17,7 +17,12 @@ import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { TrackList } from './tracker/track-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
-import { applyNoteProcessorChain, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  setScoreStart,
+} from '../utilities/score';
 
 export class TrackerObject extends AbstractSoundObject {
   private _stepsPerBeat = 4;
@@ -54,6 +59,26 @@ export class TrackerObject extends AbstractSoundObject {
     let nl = this._tracks.generateNotes(this._stepsPerBeat);
 
     nl = applyNoteProcessorChain(nl, this._npc);
+
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    const startTime = this.getStartTime().toBeats(context);
+    const rpBeats = this.getRepeatPoint() ? this.getRepeatPoint()!.toBeats(context) : -1.0;
+
+    applyTimeBehavior(nl, this._timeBehavior, duration, rpBeats, this._tracks.getSteps());
+    setScoreStart(nl, startTime);
+
+    return nl;
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    let nl = this._tracks.generateNotes(this._stepsPerBeat);
+
+    nl = await applyNoteProcessorChainAsync(nl, this._npc, compileData);
 
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTime = this.getStartTime().toBeats(context);

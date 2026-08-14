@@ -8,7 +8,12 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { applyNoteProcessorChain, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  setScoreStart,
+} from '../utilities/score';
 import { getJavaScriptCompileContext, setJavaScriptSession } from '../javascript-runtime';
 import type { JavaScriptSession } from '../javascript-runtime';
 
@@ -113,6 +118,31 @@ export class JavaScriptObject extends AbstractSoundObject {
     const scoreText = executeJavaScriptCode(this._javaScriptCode, duration, compileData);
     const noteList = parseScoreText(scoreText);
     const processed = applyNoteProcessorChain(noteList, this.getNoteProcessorChain());
+    const startTime = this.getStartTime().toBeats(context);
+    const repeatPoint = this.getRepeatPoint();
+    const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
+
+    applyTimeBehavior(
+      processed,
+      this.getTimeBehavior(),
+      duration,
+      repeatPointBeats,
+    );
+    setScoreStart(processed, startTime);
+
+    return processed;
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    const duration = this._subjectiveDuration.toBeats(context);
+    const scoreText = executeJavaScriptCode(this._javaScriptCode, duration, compileData);
+    const noteList = parseScoreText(scoreText);
+    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
     const startTime = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;

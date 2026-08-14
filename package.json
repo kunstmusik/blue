@@ -24,5 +24,14 @@
     "prettier": "^3.8.2",
     "typescript": "^5.8.0",
     "vitest": "^4.1.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@electron/rebuild",
+      "electron",
+      "electron-winstaller",
+      "esbuild",
+      "zeromq"
+    ]
   }
 }
