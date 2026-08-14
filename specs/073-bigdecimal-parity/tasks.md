@@ -6,6 +6,8 @@
 
 **Verification**: Every behavior, XML, editor, runtime, native, fixture, performance, and documentation boundary has an explicit validation task. Normal tests consume committed Java-generated fixtures and do not require a JVM.
 
+**Deferred validation**: T034, T046, T051, T052, T059, T060, T061, T066, and T067 are intentionally deferred for this handoff. They remain unchecked so deferred work is not represented as completed work; the reasons and current evidence are recorded in `quickstart.md`.
+
 **Organization**: Tasks are grouped by the four user stories in priority order. Shared exact-decimal, fixture, and contract infrastructure is completed before story work.
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -77,7 +79,7 @@
 - [x] T031 [P] [US2] Add parameter XML load/save/copy and legacy-normalization fixture assertions to `packages/blue-data/src/automation/parameter.test.ts`, including conflicting parameter/nested-line resolutions and unchanged binary64 point/value fields.
 - [x] T032 [P] [US2] Add exact-resolution BSB slider/bank load, copy, widget-to-parameter, and parameter-to-widget tests to `packages/blue-data/src/instruments/blue-synth-builder/bsb-group-automation-parity.test.ts` and the four BSB widget model test files.
 - [x] T033 [P] [US2] Add snapshot/patch round-trip tests for authoritative `resolutionDecimal` and derived display `resolution` in `packages/blue-app/src/shared/project-editor.test.ts`, `packages/blue-app/src/shared/score-timeline-automation-contract.test.ts`, and `packages/blue-app/src/shared/bsb-group-automation-patches.test.ts`.
-- [ ] T034 [P] [US2] Add decimal editor and committed-value snapping tests in `packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/BSBPropertySheet.test.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/score/automation/automation-line-utils.test.ts`.
+- [ ] T034 [P] [US2] [DEFERRED] Add decimal editor and committed-value snapping tests in `packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/BSBPropertySheet.test.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/score/automation/automation-line-utils.test.ts`.
 - [x] T035 [P] [US2] Add protocol-v2 exact-text, malformed-payload, truncation, count-overflow, and mixed-metadata tests to `packages/blue-engine-client/tests/protocol.test.ts`, `packages/blue-engine-client/tests/capabilities.test.ts`, and `native/blue-engine/tests/cpp/test_automation_protocol.cpp`.
 
 ### Implementation for User Story 2
@@ -103,7 +105,7 @@
 
 - [x] T044 [P] [US3] Add manifest schema/count/category assertions and no-JVM fixture-consumer tests to `packages/blue-data/src/test-support/java-parity-fixtures.test.ts` and `native/blue-engine/tests/cpp/test_java_bigdecimal_parity.cpp`.
 - [x] T045 [P] [US3] Add a deliberate one-bit/one-byte mutation regression harness to `packages/blue-data/src/test-support/java-parity-fixtures.test.ts` and `native/blue-engine/tests/cpp/java_parity_fixtures.cpp`, asserting case ID and input diagnostics.
-- [ ] T046 [P] [US3] Add generator determinism and provenance validation tests to `tools/java-blue-automation-fixtures/src/test/` and `scripts/generate-java-blue-automation-fixtures.test.mjs`.
+- [ ] T046 [P] [US3] [DEFERRED] Add generator determinism and provenance validation tests to `tools/java-blue-automation-fixtures/src/test/` and `scripts/generate-java-blue-automation-fixtures.test.mjs`.
 
 ### Implementation for User Story 3
 
@@ -111,8 +113,8 @@
 - [x] T048 [US3] Replace the old approximate/native-duplicated expectations in `native/blue-engine/tests/fixtures/quantization-fixtures.json`, `native/blue-engine/tests/cpp/test_automation_fixedpoint.cpp`, `native/blue-engine/tests/cpp/test_automation_fixedpoint_simple.cpp`, and `native/blue-engine/tests/cpp/CMakeLists.txt` with canonical corpus consumers.
 - [x] T049 [US3] Add canonical corpus adapters for resolution, realtime, offline, protocol, XML, and runtime-boundary sections in `packages/blue-data/src/test-support/`, `packages/blue-engine-client/tests/`, `packages/blue-app/src/main/`, and `native/blue-engine/tests/cpp/` without copying expected results into consumer-specific files.
 - [x] T050 [US3] Add failure-category mapping and case-context output across `packages/blue-data/src/test-support/java-parity-fixtures.ts`, `packages/blue-engine-client/src/`, and `native/blue-engine/src/automation/AutomationErrors.h` so Java exceptions become stable product diagnostics.
-- [ ] T051 [US3] Run the standard no-JVM fixture suite with Java/Maven unavailable, measure completion under the ten-second target after build, and record the result in `specs/073-bigdecimal-parity/quickstart.md`.
-- [ ] T052 [US3] Run `pnpm fixtures:java-automation:check -- --java-blue-root "$JAVA_BLUE_ROOT"` against the pinned Java Blue checkout and record the exact commit/source hashes and byte-identical result in `fixtures/java-blue-automation-parity/v1/manifest.json`.
+- [ ] T051 [US3] [DEFERRED] Run the standard no-JVM fixture suite with Java/Maven unavailable, measure completion under the ten-second target after build, and record the result in `specs/073-bigdecimal-parity/quickstart.md`.
+- [ ] T052 [US3] [DEFERRED] Run `pnpm fixtures:java-automation:check -- --java-blue-root "$JAVA_BLUE_ROOT"` against the pinned Java Blue checkout and record the exact commit/source hashes and byte-identical result in `fixtures/java-blue-automation-parity/v1/manifest.json`.
 
 **Checkpoint**: User Story 3 is independently demonstrable: the committed corpus catches one-bit regressions quickly, is consumed by both runtimes, and can be reproduced only when a maintainer intentionally provides Java Blue.
 
@@ -133,9 +135,9 @@
 - [x] T056 [US4] Remove `highPrecision`, `resolutionScale`, bounded fixed-point quantization, and obsolete positive-mode APIs from `native/blue-engine/src/automation/AutomationTypes.h`, `AutomationStore.*`, `AutomationManager.*`, `FixedPoint.h`, `packages/blue-engine-client/src/`, `packages/blue-app/src/main/`, and `packages/blue-data/src/automation/`.
 - [x] T057 [US4] Preserve the common path's early branch before exact arithmetic, prepared linear slope caches, binding-generation behavior, write deduplication, and completed-envelope fast path in `native/blue-engine/src/automation/AutomationManager.cpp` and `AutomationTypes.h`.
 - [x] T058 [US4] Add exact-path counters and separate benchmark result labels for common/unquantized versus positive-resolution decimal processing in `native/blue-engine/src/benchmark_main.cpp`, `native/blue-engine/docs/automation_system.md`, and `specs/073-bigdecimal-parity/quickstart.md`.
-- [ ] T059 [US4] Run the five-trial Release comparison against the Spec 072 baseline and enforce the no-greater-than-5% common-path median regression gate in `native/blue-engine/scripts/benchmark.mjs` and `native/blue-engine/benchmarks/`.
-- [ ] T060 [US4] Run the 10-minute positive-resolution Csound stress test under ThreadSanitizer and ASan/UBSan, confirming zero deadline misses, stalls, upstream allocations, races, and arena overflows in `native/blue-engine/tests/cpp/test_csound_stress.cpp`.
-- [ ] T061 [US4] Run focused common-path, exact-path, allocation, sanitizer, stress, and benchmark checks and record separate performance evidence in `specs/073-bigdecimal-parity/quickstart.md`.
+- [ ] T059 [US4] [DEFERRED] Run the five-trial Release comparison against the Spec 072 baseline and enforce the no-greater-than-5% common-path median regression gate in `native/blue-engine/scripts/benchmark.mjs` and `native/blue-engine/benchmarks/`.
+- [ ] T060 [US4] [DEFERRED] Run the 10-minute positive-resolution Csound stress test under ThreadSanitizer and ASan/UBSan, confirming zero deadline misses, stalls, upstream allocations, races, and arena overflows in `native/blue-engine/tests/cpp/test_csound_stress.cpp`.
+- [ ] T061 [US4] [DEFERRED] Run focused common-path, exact-path, allocation, sanitizer, stress, and benchmark checks and record separate performance evidence in `specs/073-bigdecimal-parity/quickstart.md`.
 
 **Checkpoint**: User Story 4 is independently demonstrable: common projects retain their optimized path and exact positive-resolution cost is visible without weakening correctness.
 
@@ -147,8 +149,8 @@
 - [x] T063 [P] Update all shipped protocol-v2 automation examples and their README payload descriptions in `native/blue-engine/examples/c/`, `native/blue-engine/examples/cpp/`, `native/blue-engine/examples/java/`, `native/blue-engine/examples/javascript/`, `native/blue-engine/examples/python/`, and `native/blue-engine/examples/rust/`.
 - [x] T064 [P] Update package/app/native artifact metadata and tests for protocol version 2 and `automation-decimal-v1` in `native/blue-engine/scripts/artifact.mjs`, `verify-artifact.test.mjs`, `packages/blue-app/src/main/packaged-runtime-verification.test.ts`, and related runtime tests.
 - [x] T065 [P] Update user-facing data/runtime notes to state that only resolution is BigDecimal, values/points remain doubles, positive resolution always selects exact Java quantization, and zero/negative resolution is unquantized in `packages/blue-data/README.md` and relevant app/native docs.
-- [ ] T066 Run the complete `specs/073-bigdecimal-parity/quickstart.md` validation sequence, including focused package tests, native integration, build, lint, benchmark, sanitizer, stress, and optional fixture-check evidence.
-- [ ] T067 Run `pnpm build`, `pnpm test`, and `pnpm lint` from `/Users/stevenyi/work/blue-electron`, then run the supported macOS, Linux, and Windows CMake/CTest matrices and document any platform-scoped follow-up in `specs/073-bigdecimal-parity/quickstart.md`.
+- [ ] T066 [DEFERRED] Run the complete `specs/073-bigdecimal-parity/quickstart.md` validation sequence, including focused package tests, native integration, build, lint, benchmark, sanitizer, stress, and optional fixture-check evidence.
+- [ ] T067 [DEFERRED] Run `pnpm build`, `pnpm test`, and `pnpm lint` from `/Users/stevenyi/work/blue-electron`, then run the supported macOS, Linux, and Windows CMake/CTest matrices and document any platform-scoped follow-up in `specs/073-bigdecimal-parity/quickstart.md`.
 - [x] T068 Audit `specs/073-bigdecimal-parity/spec.md`, `plan.md`, `data-model.md`, `contracts/`, `quickstart.md`, and `tasks.md` against the constitution and every FR/SC, confirm no stale behavioral `highPrecision` path remains, record current evidence and pending validation gates, and leave unrelated `MISSING_FEATURE_GPT.md` uncommitted.
 - [x] T069 [US1] Reclaim retired automation snapshots after DELETE, ENABLE, DISABLE, and CLEAR mutations and add a regression test that exercises repeated revisions without a follow-up CREATE/UPDATE, preserving the control-thread-only destruction contract in `native/blue-engine/src/automation/AutomationStore.*` and `native/blue-engine/src/ipc/ZmqHandler.cpp`.
 

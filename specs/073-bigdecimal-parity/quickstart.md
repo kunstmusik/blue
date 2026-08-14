@@ -4,9 +4,11 @@
 
 **Date**: 2026-08-14
 
-**Status**: Implementation staged; current evidence recorded; final validation follow-ups remain
+**Status**: Implementation staged; current evidence recorded; remaining validation explicitly deferred for this handoff
 
 This guide validates the staged implementation. Normal validation consumes committed Java results and does not need Java, Maven, network access, or a Java Blue checkout.
+
+The remaining validation gates are intentionally deferred for this handoff. Deferred tasks remain unchecked in `tasks.md` so they are not confused with completed evidence.
 
 ## Prerequisites
 
@@ -58,12 +60,14 @@ pnpm --filter @blue/engine-client test
 pnpm --filter @blue/app test
 ```
 
-The app command should be interpreted together with the Electron prerequisite. In
-this workspace the non-Electron app suites pass, but six suites stop before test
-collection because the installed `electron` package has no usable binary and
-reports `Electron failed to install correctly, please delete node_modules/electron and try installing again`.
-Do not delete the shared dependency tree as part of a
-normal validation run.
+The app command is currently environment-scoped. A normal run stops six suites
+before collection because the installed `electron` package has no usable binary.
+Using the downloaded binary through Electron's override path allowed 309 of 310
+app test files to execute; 309 passed and the remaining SQLite runtime test
+failed because `Electron Framework.framework` was absent. This is an incomplete
+Electron installation artifact, not a BigDecimal feature assertion failure.
+A complete Electron reinstall is deferred before treating the aggregate app
+test as green.
 
 Expected result:
 
@@ -111,8 +115,8 @@ Expected result:
 
 The native package unit/CTest path and its integration label passed in this
 handoff. A full app-to-native localhost run through Electron remains
-environment-scoped and should be repeated on a machine with a usable Electron
-binary.
+environment-scoped and is deferred until a machine with a complete Electron
+installation is available.
 
 ## 5a. Manual application smoke test for mutation reclamation
 
@@ -166,6 +170,8 @@ The current worktree contains no retained Spec 072 baseline artifact under
 `native/blue-engine/benchmarks/`, so the candidate timings below are evidence for
 the separate paths only; the 5% common-path comparison is not claimed.
 
+The baseline comparison gate is explicitly deferred.
+
 ## 7. Run sanitizer and 10-minute stress validation
 
 Configure one sanitizer family at a time:
@@ -190,8 +196,8 @@ Expected result:
 - live exact-resolution edits retire and reclaim prepared arenas on the control thread;
 - channel rebinding, completion, rewind, stop, and restart retain correct final values.
 
-TSan, ASan/UBSan, and the 600-second stress run were not completed in this
-handoff.
+TSan, ASan/UBSan, and the 600-second stress run are explicitly deferred for
+this handoff.
 
 ## 8. Run repository-wide validation
 
@@ -201,14 +207,15 @@ pnpm test
 pnpm lint
 ```
 
-The final non-Electron package build/lint checks and focused app suites pass. The
-last aggregate `pnpm test` run passed all non-Electron packages and 303/309 app
-files (2,781 tests passed and 2 skipped); the remaining six app files were blocked
-before collection by the incomplete Electron binary described in Section 3.
+The final package build and lint checks passed. The focused non-Electron package
+tests also passed. The app suite is deferred: 309/310 files passed when run
+against the available Electron payload, while one SQLite runtime test failed
+because `Electron Framework.framework` was missing, as described in Section 3.
+The full aggregate `pnpm test` and Linux/Windows matrices are deferred.
 
 ## 9. Optional: regenerate Java fixtures
 
-This is a maintainer audit, not a normal test prerequisite. The checkout must be at the commit recorded in `manifest.json` and must have the recorded reference-file hashes.
+This is a maintainer audit, not a normal test prerequisite. The checkout must be at the commit recorded in `manifest.json` and must have the recorded reference-file hashes. This audit is explicitly deferred.
 
 ```bash
 export JAVA_BLUE_ROOT=/absolute/path/to/pinned/java-blue
@@ -240,11 +247,12 @@ Record the following in the completed spec/task notes:
 - five-trial common-path comparison and separate exact-path timings;
 - sanitizer results and 10-minute stress outcome;
 - supported-platform results or explicitly scoped platform follow-ups;
+- the explicit disposition of deferred validation gates and their prerequisites;
 - documentation updated to state that only resolution is BigDecimal and positive resolution always selects the exact path.
 
 ## Validation evidence from 2026-08-14
 
-- `pnpm --filter @blue/data test`: 165 files, 1,606 tests passed.
+- `pnpm --filter @blue/data test`: 165 files, 1,611 tests passed.
 - Canonical corpus: 2,192 cases total (2,092 realtime, 80 resolution, 20 offline); TypeScript and native consumers passed their applicable sections.
 - `pnpm --filter @blue/engine-client test`: 3 files, 35 tests passed.
 - `pnpm test:scripts`: 13 tests passed.
@@ -255,13 +263,19 @@ Record the following in the completed spec/task notes:
 - Native Release CTest: 13/13 tests passed after rebuilding the three parity targets that were absent from the existing Release tree.
 - Focused mutation-reclamation regression: 300 alternating ENABLE, DISABLE, DELETE, CLEAR, and CREATE handoffs passed with zero deferred retirements in both Debug and Release protocol tests.
 - Native integration label: 3/3 tests passed (`ChannelBridgeTests`, `CsoundIntegrationTests`, and `CsoundLifecycleStress`).
-- Release benchmark candidate medians (five trials, 4,096 measured cycles): `linear_32` host average `0.501442us`, `quantized_exact_32` `5.76955us`, and `quantized_exact_large_scale_32` `9.8621us`; no Spec 072 baseline was available for the 5% comparison.
-- The Java fixture regeneration check, sanitizer runs, 10-minute stress run, and Linux/Windows matrices remain follow-up validation rather than completed evidence.
+- Release benchmark candidate medians (five trials, 4,096 measured cycles): `linear_32` host average `0.761734us`, `quantized_exact_32` `8.27123us`, and `quantized_exact_large_scale_32` `14.0239us`; no Spec 072 baseline was available for the 5% comparison.
+- App test execution reached 309/310 files with the available Electron payload; the remaining SQLite runtime failure was caused by the missing Electron Framework, not a feature assertion.
+- T034, T046, T051, T052, T059, T060, T061, T066, and T067 are explicitly deferred. The Java fixture regeneration check, sanitizer runs, 10-minute stress run, baseline comparison, complete validation sequence, and Linux/Windows matrices are not completed evidence.
 
 ## Final staged review status
 
-The exercised exact-decimal, XML, protocol-v2, TypeScript, native, and offline paths are consistent with the feature contract. This is not yet a complete spec sign-off:
+The exercised exact-decimal, XML, protocol-v2, TypeScript, native, and offline paths are consistent with the feature contract. The implementation is accepted for this handoff with the following validation gates explicitly deferred:
 
-- T034, T046, T051/T052, T059-T061, and T066-T067 remain unchecked and are still required for the corresponding editor, generator, baseline, stress, sanitizer, fixture-provenance, and platform claims.
+- T034: renderer/editor committed-value snapping tests are deferred because the required test files have not been added.
+- T046 and T052: generator determinism/provenance and Java regeneration checks are deferred pending the maintainer test additions and a configured pinned Java Blue checkout.
+- T051: the standard no-JVM timing record is deferred, although the available data suite and native fixture consumers passed.
+- T059 and T061: the five-trial baseline comparison and consolidated performance evidence are deferred because the Spec 072 baseline artifact is absent.
+- T060: sanitizer builds and the 600-second positive-resolution stress run are deferred.
+- T066 and T067: complete quickstart, aggregate test, and Linux/Windows matrix validation are deferred; macOS build, lint, package tests, and native Debug/Release CTest evidence are recorded above.
 - T069 is complete: all four previously missing mutation cases now reclaim retired snapshots on the control thread, and the focused regression passes in both build configurations.
-- Exact arithmetic uses an explicit recoverable host-workspace guard for extreme decimal inputs; the exercised corpus covers Java-compatible scales through 3,000. The literal FR-010 extreme-domain claim should be revisited when the remaining stress/edge validation is run.
+- Exact arithmetic uses an explicit recoverable host-workspace guard for extreme decimal inputs; the exercised corpus covers Java-compatible scales through 3,000. The literal FR-010 extreme-domain claim remains deferred with the sanitizer/stress edge validation.

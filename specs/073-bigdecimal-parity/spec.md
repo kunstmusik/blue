@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-14
 
-**Status**: Implementation staged; final validation follow-ups pending
+**Status**: Implementation staged; remaining validation explicitly deferred for this handoff
 
 **Input**: User description: "Create a new branch and spec using Spec-kit for BigDecimal parity with the information from above. Be sure to have tests that compare against Java results (fixtures can be generated from Java so that unit tests can be fast)."
 
