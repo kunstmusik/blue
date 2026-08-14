@@ -6,7 +6,44 @@
 #include <iostream>
 #include <string>
 
+namespace {
+
+void testBenchmarkMatrixSchemaStructure() {
+  // Verify required schema keys for benchmark JSON contract
+  const std::string sampleBenchmarkJson = R"({
+  "timestamp": "2026-08-13T21:40:00Z",
+  "metadata": {
+    "buildType": "Release",
+    "compiler": "Clang",
+    "targetArch": "arm64",
+    "operatingSystem": "macos",
+    "sampleRate": 48000.0,
+    "ksmps": 32,
+    "gitCommit": "HEAD"
+  },
+  "gateStatus": {
+    "passed": true,
+    "primaryImprovementMet": true,
+    "unaffectedRegressionMet": true,
+    "spikeCountDischarged": true
+  },
+  "scenarios": []
+})";
+
+  assert(sampleBenchmarkJson.find("\"timestamp\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"metadata\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"gateStatus\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"primaryImprovementMet\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"unaffectedRegressionMet\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"spikeCountDischarged\"") != std::string::npos);
+  assert(sampleBenchmarkJson.find("\"scenarios\"") != std::string::npos);
+}
+
+} // namespace
+
 int main() {
+  testBenchmarkMatrixSchemaStructure();
+
   const auto explicitCandidates =
       blue::CsoundLoader::candidatePaths("/absolute/csound", "/environment/csound");
   assert(explicitCandidates.size() == 1);

@@ -198,30 +198,41 @@ bool CsoundRuntimeServices::queryIo(csound::CSOUND *csound,
 
 void CsoundRuntimeServices::drainMessages(csound::CSOUND *csound,
                                            const CsoundMessageCallback &onMessage) {
-  if (!csound || !onMessage || !CsoundLoader::csoundGetMessageCnt ||
+  if (!csound || !CsoundLoader::csoundGetMessageCnt ||
       !CsoundLoader::csoundGetFirstMessage ||
       !CsoundLoader::csoundPopFirstMessage) {
     return;
   }
   size_t messageCount = 0;
-  size_t messageBytes = 0;
-  bool truncated = false;
+  std::string batchedBuffer;
+  batchedBuffer.reserve(4096);
+
   while (CsoundLoader::csoundGetMessageCnt(csound) > 0 &&
          messageCount < kMaxMessages) {
     const char *message = CsoundLoader::csoundGetFirstMessage(csound);
-    const std::string text = message ? message : "";
-    if (messageBytes + text.size() <= kMaxMessageBytes) {
-      onMessage(text);
-      messageBytes += text.size();
-    } else if (!truncated) {
-      onMessage("[Csound messages truncated]\n");
-      truncated = true;
+    const size_t len = message ? std::strlen(message) : 0;
+    if (len > 0 && onMessage) {
+      // Flush a bounded batch before appending the next message. This keeps
+      // memory use bounded without dropping diagnostics from message-heavy
+      // offline renders.
+      if (batchedBuffer.size() + len > kMaxMessageBytes &&
+          !batchedBuffer.empty()) {
+        onMessage(batchedBuffer);
+        batchedBuffer.clear();
+      }
+      batchedBuffer.append(message, len);
     }
     CsoundLoader::csoundPopFirstMessage(csound);
     ++messageCount;
+
+    if (onMessage && batchedBuffer.size() >= 4096) {
+      onMessage(batchedBuffer);
+      batchedBuffer.clear();
+    }
   }
-  if (!truncated && CsoundLoader::csoundGetMessageCnt(csound) > 0) {
-    onMessage("[Csound messages truncated]\n");
+
+  if (onMessage && !batchedBuffer.empty()) {
+    onMessage(batchedBuffer);
   }
 }
 
@@ -265,7 +276,10 @@ int CsoundRuntimeServices::runUtility(
 
   const int result = CsoundLoader::csoundRunUtility(
       csound, utilityName.c_str(), static_cast<int32_t>(argv.size()), argv.data());
-  drainMessages(csound, onMessage);
+  while (CsoundLoader::csoundGetMessageCnt &&
+         CsoundLoader::csoundGetMessageCnt(csound) > 0) {
+    drainMessages(csound, onMessage);
+  }
   return result;
 }
 
@@ -289,20 +303,33 @@ int CsoundRuntimeServices::runPerformance(
 
   int result = CsoundLoader::csoundCompile(
       csound, static_cast<int32_t>(argv.size()), argv.data());
-  drainMessages(csound, onMessage);
+  while (CsoundLoader::csoundGetMessageCnt &&
+         CsoundLoader::csoundGetMessageCnt(csound) > 0) {
+    drainMessages(csound, onMessage);
+  }
   if (result != csound::CSOUND_SUCCESS) {
     return result;
   }
   result = CsoundLoader::csoundStart(csound);
-  drainMessages(csound, onMessage);
+  while (CsoundLoader::csoundGetMessageCnt &&
+         CsoundLoader::csoundGetMessageCnt(csound) > 0) {
+    drainMessages(csound, onMessage);
+  }
   if (result != csound::CSOUND_SUCCESS) {
     return result;
   }
 
+  size_t kcycle = 0;
   while ((result = CsoundLoader::csoundPerformKsmps(csound)) == 0) {
+    if ((++kcycle & 127) == 0 && CsoundLoader::csoundGetMessageCnt &&
+        CsoundLoader::csoundGetMessageCnt(csound) > 0) {
+      drainMessages(csound, onMessage);
+    }
+  }
+  while (CsoundLoader::csoundGetMessageCnt &&
+         CsoundLoader::csoundGetMessageCnt(csound) > 0) {
     drainMessages(csound, onMessage);
   }
-  drainMessages(csound, onMessage);
   return result > 0 ? csound::CSOUND_SUCCESS : result;
 }
 

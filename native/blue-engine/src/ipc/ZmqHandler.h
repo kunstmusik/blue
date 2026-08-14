@@ -25,7 +25,7 @@ public:
     bool bind(int port, int pubPort);
     bool bind(const std::string& controlEndpoint, const std::string& pubEndpoint);
 
-    // Process one request (blocking)
+    // Process one request (blocking with event-driven wakeup)
     // Returns false if should shutdown
     bool processOne();
 
@@ -40,6 +40,8 @@ private:
     void* context_ = nullptr;
     void* controlSocket_ = nullptr;
     void* pubSocket_ = nullptr;
+    void* wakeupPullSocket_ = nullptr;
+    void* wakeupPushSocket_ = nullptr;
     std::atomic<bool> shutdownRequested_{false};
     int controlPort_ = 0;
     int pubPort_ = 0;

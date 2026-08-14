@@ -8,7 +8,7 @@
 namespace blue {
 
 // Thread-safe storage for automation definitions
-// Uses immutable data structures with atomic pointer swap for lock-free reads
+// Uses immutable data structures with atomic generation gating for lock-free reads
 class AutomationStore {
 public:
     AutomationStore();
@@ -28,7 +28,7 @@ public:
                              int resolutionScale = 0,
                              bool highPrecision = false);
 
-    // Update existing automation (replaces definition, preserves ID)
+    // Update existing automation (replaces definition, preserves ID, bumps definitionRevision)
     bool updateAutomation(const std::string& channelName,
                          AutomationCurve curve,
                          const std::vector<AutomationPoint>& points,
@@ -49,7 +49,12 @@ public:
     // Get list of all automations (for LIST_AUTOMATIONS command)
     std::vector<AutomationDef> listAutomations() const;
 
-    // Reader operation (called from performance thread).
+    // Fast lock-free revision query for gating snapshot loads in the audio thread
+    uint64_t getRevision() const {
+        return revision_.load(std::memory_order_acquire);
+    }
+
+    // Reader operation (called from performance thread or control thread).
     // Lock-free snapshot load for realtime safety.
     std::shared_ptr<const AutomationList> getList() const {
         return std::atomic_load_explicit(&currentList_, std::memory_order_acquire);
@@ -64,7 +69,10 @@ private:
     // Writes are serialized by listMutex_ and published with atomic store.
     std::shared_ptr<const AutomationList> currentList_;
 
-    // Mutex protects both readers and writers
+    // Lock-free revision counter for gating snapshot acquisition
+    std::atomic<uint64_t> revision_{1};
+
+    // Mutex protects writers
     mutable std::mutex listMutex_;
 
     // ID generation (protected by listMutex_)

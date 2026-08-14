@@ -5,7 +5,9 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -25,10 +27,40 @@ bool approxEqual(double left, double right, double tolerance = 1e-6) {
   return std::abs(left - right) <= tolerance;
 }
 
+void testIeee754BitwiseDeduplicationAndSpecialValues() {
+  const std::string shmName = "be-ieee-test";
+  blue::SharedMemory shm;
+  if (!shm.create(shmName)) {
+    throw std::runtime_error("shared memory unavailable");
+  }
+
+  require(shm.createChannel("pos_zero", +0.0), "Failed pos_zero channel creation");
+  require(shm.createChannel("neg_zero", -0.0), "Failed neg_zero channel creation");
+  require(shm.createChannel("inf_val", std::numeric_limits<double>::infinity()), "Failed inf channel creation");
+
+  double readVal = 0.0;
+  require(shm.getChannel("pos_zero", readVal), "Failed pos_zero read");
+  uint64_t posBits = 0;
+  std::memcpy(&posBits, &readVal, sizeof(double));
+
+  require(shm.getChannel("neg_zero", readVal), "Failed neg_zero read");
+  uint64_t negBits = 0;
+  std::memcpy(&negBits, &readVal, sizeof(double));
+
+  // Verify sign bit distinguishes +0.0 from -0.0 (bit 63)
+  require((posBits & (1ULL << 63)) == 0, "+0.0 sign bit must be 0");
+  require((negBits & (1ULL << 63)) != 0, "-0.0 sign bit must be 1");
+
+  require(shm.getChannel("inf_val", readVal), "Failed inf read");
+  require(std::isinf(readVal) && readVal > 0, "Infinity bit pattern mismatch");
+}
+
 } // namespace
 
 int main() {
   try {
+    testIeee754BitwiseDeduplicationAndSpecialValues();
+
     if (!blue::CsoundLoader::load()) {
       std::cout << "Skipping channel bridge test: "
                 << blue::CsoundLoader::getError() << std::endl;
@@ -118,12 +150,29 @@ endin
     require(std::abs(liveValue - mirroredValue) < 5.0,
             "Shared-memory mirror did not track the live control channel");
 
+    // Exercise the pointer lifetime boundary while playback is active. The
+    // engine must quiesce the perform thread before Csound can replace channel
+    // storage, then publish a fresh binding snapshot before resuming.
+    require(engine.compileOrc(R"(
+instr 2
+    aout init 0
+    out aout, aout
+endin
+)"),
+            "Live orchestra recompilation failed while playback was active");
+
     engine.stop();
     engine.destroy();
 
     std::cout << "Channel bridge tests passed" << std::endl;
     return 0;
   } catch (const std::exception &error) {
+    if (std::string(error.what()).find("shared memory unavailable") !=
+        std::string::npos) {
+      std::cout << "Skipping channel bridge test: shared memory unavailable"
+                << std::endl;
+      return kCtestSkipReturnCode;
+    }
     std::cerr << "Channel bridge test failed: " << error.what() << std::endl;
     return 1;
   }

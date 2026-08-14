@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <deque>
 #include <iostream>
 
 namespace {
@@ -21,6 +22,7 @@ char moduleMidiType[] = "midi";
 char utilityName[] = "sndinfo";
 char *utilities[] = {utilityName, nullptr};
 std::string message;
+std::deque<std::string> messageQueue;
 int performCalls = 0;
 int audioCountOverride = 0;
 int midiCountOverride = 0;
@@ -100,10 +102,24 @@ int32_t runUtility(blue::csound::CSOUND *, const char *, int32_t argc,
 
 void createMessageBuffer(blue::csound::CSOUND *, int32_t) {}
 const char *firstMessage(blue::csound::CSOUND *) {
+  if (!messageQueue.empty()) {
+    return messageQueue.front().c_str();
+  }
   return message.empty() ? "" : message.c_str();
 }
-void popMessage(blue::csound::CSOUND *) { message.clear(); }
-int32_t messageCount(blue::csound::CSOUND *) { return message.empty() ? 0 : 1; }
+void popMessage(blue::csound::CSOUND *) {
+  if (!messageQueue.empty()) {
+    messageQueue.pop_front();
+  } else {
+    message.clear();
+  }
+}
+int32_t messageCount(blue::csound::CSOUND *) {
+  if (!messageQueue.empty()) {
+    return static_cast<int32_t>(messageQueue.size());
+  }
+  return message.empty() ? 0 : 1;
+}
 void destroyMessageBuffer(blue::csound::CSOUND *) {}
 
 int32_t compile(blue::csound::CSOUND *, int32_t argc, const char **argv) {
@@ -197,6 +213,37 @@ int main() {
              [&output](const std::string &value) { output += value; }) == 0);
   assert(output.find("compile message") != std::string::npos);
   assert(output.find("perform message") != std::string::npos);
+
+  // Offline renders can produce far more than one k-cycle's worth of
+  // diagnostics. Verify that the batched drain keeps every line instead of
+  // truncating at the old per-call safety limit.
+  output.clear();
+  messageQueue.assign(100000, "bulk message\n");
+  performCalls = 0;
+  assert(blue::CsoundRuntimeServices::runPerformance(
+             csound, {"fixture.csd"},
+             [&output](const std::string &value) { output += value; }) == 0);
+  size_t bulkLines = 0;
+  for (size_t position = 0;
+       (position = output.find("bulk message\n", position)) != std::string::npos;
+       position += std::strlen("bulk message\n")) {
+    ++bulkLines;
+  }
+  assert(bulkLines == 100000);
+
+  // Test batched multi-message draining
+  output.clear();
+  messageQueue = {"line 1\n", "line 2\n", "line 3\n"};
+  blue::CsoundRuntimeServices::drainMessages(
+      csound, [&output](const std::string &value) { output += value; });
+  assert(output == "line 1\nline 2\nline 3\n");
+
+  // A caller may intentionally suppress diagnostics, but the Csound queue
+  // must still be consumed so message-heavy offline work cannot retain an
+  // unbounded backlog.
+  messageQueue = {"discarded 1\n", "discarded 2\n"};
+  blue::CsoundRuntimeServices::drainMessages(csound, {});
+  assert(messageQueue.empty());
 
   std::cout << "Csound runtime service tests passed\n";
   return 0;

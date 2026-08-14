@@ -3,6 +3,8 @@
 
 #include <cassert>
 #include <cmath>
+#include <iostream>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -47,9 +49,238 @@ void testShrinkingActiveAutomationResetsCachedSegment() {
     assert(std::abs(writtenValue - 12.6) < 1.0e-9);
 }
 
+void testExponentialInterpolationWithLogRatio() {
+    using namespace blue;
+
+    auto store = std::make_shared<AutomationStore>();
+    // Exponential curve from 1.0 to 4.0 over 2.0 seconds
+    const std::vector<AutomationPoint> expPoints = {
+        {0.0, 1.0},
+        {2.0, 4.0},
+    };
+    store->createAutomation("exp_channel", AutomationCurve::EXPONENTIAL, expPoints, true);
+
+    std::string writtenChannel;
+    double writtenValue = 0.0;
+    AutomationManager manager(
+        store,
+        [&](const std::string& channelName, double value) {
+            writtenChannel = channelName;
+            writtenValue = value;
+        });
+
+    // At t = 1.0s (midpoint), y = 1.0 * (4.0 / 1.0)^0.5 = 2.0
+    manager.process(100, 100.0);
+    assert(writtenChannel == "exp_channel");
+    assert(std::abs(writtenValue - 2.0) < 1.0e-7);
+
+    // Test non-positive endpoint fallback to linear
+    const std::vector<AutomationPoint> zeroPoints = {
+        {0.0, 0.0},
+        {2.0, 4.0},
+    };
+    store->updateAutomation("exp_channel", AutomationCurve::EXPONENTIAL, zeroPoints, true);
+
+    // At t = 1.0s (midpoint), linear fallback gives (0.0 + 4.0) / 2 = 2.0
+    manager.process(100, 100.0);
+    assert(std::abs(writtenValue - 2.0) < 1.0e-7);
+}
+
+void testCompletedEnvelopeEarlyOutAndInvalidation() {
+    using namespace blue;
+
+    auto store = std::make_shared<AutomationStore>();
+    const std::vector<AutomationPoint> points = {
+        {0.0, 0.0},
+        {1.0, 5.0},
+    };
+    store->createAutomation("cutoff", AutomationCurve::LINEAR, points, true);
+
+    uint64_t writeCount = 0;
+    double lastWritten = -1.0;
+    AutomationManager manager(
+        store,
+        [&](const std::string&, double value) {
+            writeCount += 1;
+            lastWritten = value;
+        });
+
+    // Process up to t = 1.0s (completion)
+    manager.process(50, 100.0);
+    assert(std::abs(lastWritten - 2.5) < 1.0e-7);
+
+    manager.process(100, 100.0); // t = 1.0s -> reaches 5.0 and marks completed
+    assert(std::abs(lastWritten - 5.0) < 1.0e-7);
+    uint64_t completedWriteCount = writeCount;
+
+    // Process past completion at t = 1.5s -> early-out should skip without extra writes
+    manager.process(150, 100.0);
+    assert(writeCount == completedWriteCount);
+
+    // Live update definition with new end point at t = 3.0s -> should invalidate completed state
+    const std::vector<AutomationPoint> extendedPoints = {
+        {0.0, 0.0},
+        {3.0, 15.0},
+    };
+    store->updateAutomation("cutoff", AutomationCurve::LINEAR, extendedPoints, true);
+
+    // Process at t = 2.0s -> should interpolate to 10.0 and write value
+    manager.process(200, 100.0);
+    assert(std::abs(lastWritten - 10.0) < 1.0e-7);
+    assert(writeCount > completedWriteCount);
+
+    // Rewind time to t = 0.5s -> should reset state and write 2.5
+    manager.process(50, 100.0);
+    assert(std::abs(lastWritten - 2.5) < 1.0e-7);
+}
+
+void testQuantizationStaticHelpers() {
+    using namespace blue;
+
+    // Fast quantization ascending
+    double fastAsc = AutomationManager::quantizeFast(0.57, 0.1, false);
+    assert(std::abs(fastAsc - 0.5) < 1.0e-9);
+
+    // Fast quantization descending (applies + 0.99 * res)
+    double fastDesc = AutomationManager::quantizeFast(0.5, 0.2, true);
+    assert(std::abs(fastDesc - 0.6) < 1.0e-9);
+
+    // High precision ascending (scale 1)
+    double highAsc = AutomationManager::quantizeHighPrecision(0.57, 0.1, 1, false);
+    assert(std::abs(highAsc - 0.5) < 1.0e-9);
+
+    // High precision descending (scale 1)
+    double highDesc = AutomationManager::quantizeHighPrecision(0.5, 0.2, 1, true);
+    assert(std::abs(highDesc - 0.6) < 1.0e-9);
+}
+
+void testChannelResolutionIsGenerationGated() {
+    using namespace blue;
+
+    auto store = std::make_shared<AutomationStore>();
+    store->createAutomation(
+        "late_channel", AutomationCurve::LINEAR,
+        std::vector<AutomationPoint>{{0.0, 1.0}, {1.0, 2.0}}, true);
+
+    double firstChannelValue = 0.0;
+    double secondChannelValue = 0.0;
+    uint64_t bindingGeneration = 1;
+    size_t resolverCalls = 0;
+
+    AutomationManager manager(
+        store,
+        AutomationManager::ChannelWriter{},
+        [&](const std::string&) -> double* {
+            ++resolverCalls;
+            return bindingGeneration == 1 ? nullptr : &secondChannelValue;
+        },
+        [&]() { return bindingGeneration; });
+
+    // An unresolved channel is attempted once for generation 1, not once per
+    // k-cycle. This is the property that removes the old audio-thread lookup.
+    manager.process(0, 100.0);
+    manager.process(1, 100.0);
+    assert(resolverCalls == 1);
+    assert(firstChannelValue == 0.0);
+
+    // Publishing a new binding generation causes exactly one re-resolution and
+    // the next value is written through the new pointer.
+    bindingGeneration = 2;
+    manager.process(100, 100.0);
+    assert(resolverCalls == 2);
+    assert(std::abs(secondChannelValue - 2.0) < 1.0e-9);
+    manager.process(101, 100.0);
+    assert(resolverCalls == 2);
+}
+
+void testCompletedAutomationRebindsFinalValue() {
+    using namespace blue;
+
+    auto store = std::make_shared<AutomationStore>();
+    store->createAutomation(
+        "completed_channel", AutomationCurve::LINEAR,
+        std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 5.0}}, true);
+
+    double firstChannelValue = 0.0;
+    double replacementChannelValue = 0.0;
+    uint64_t bindingGeneration = 1;
+    size_t resolverCalls = 0;
+
+    AutomationManager manager(
+        store,
+        AutomationManager::ChannelWriter{},
+        [&](const std::string&) -> double* {
+            ++resolverCalls;
+            return bindingGeneration == 1 ? &firstChannelValue
+                                          : &replacementChannelValue;
+        },
+        [&]() { return bindingGeneration; });
+
+    manager.process(100, 100.0);
+    assert(resolverCalls == 1);
+    assert(std::abs(firstChannelValue - 5.0) < 1.0e-9);
+
+    // The completed fast path should avoid duplicate writes while the binding
+    // remains unchanged.
+    manager.process(200, 100.0);
+    assert(resolverCalls == 1);
+    assert(std::abs(replacementChannelValue) < 1.0e-12);
+
+    // A replacement Csound binding must receive the already-completed final
+    // value even though curve evaluation was previously bypassed.
+    bindingGeneration = 2;
+    manager.process(200, 100.0);
+    assert(resolverCalls == 2);
+    assert(std::abs(replacementChannelValue - 5.0) < 1.0e-9);
+}
+
+void testPreparedQuantizationMatchesJavaFixtures() {
+    using namespace blue;
+
+    const auto run = [](double first, double second, double resolution,
+                        int scale, bool highPrecision) {
+        auto store = std::make_shared<AutomationStore>();
+        store->createAutomation(
+            "quantized", AutomationCurve::LINEAR,
+            std::vector<AutomationPoint>{{0.0, first}, {1.0, second}}, true,
+            resolution, scale, highPrecision);
+        double value = 0.0;
+        AutomationManager manager(
+            store,
+            [&](const std::string&, double nextValue) { value = nextValue; });
+        manager.process(50, 100.0);
+        return value;
+    };
+
+    // The manager uses the prepared cache here; these are the same negative,
+    // fractional, and descending cases covered by the Java parity fixtures.
+    assert(std::abs(run(0.0, 0.2469, 0.1, 1, true) - 0.1) < 1.0e-12);
+    assert(std::abs(run(0.2469, 0.0, 0.1, 1, true) - 0.2) < 1.0e-12);
+    assert(std::abs(run(0.0, -0.2469, 0.1, 1, true) + 0.1) < 1.0e-12);
+    assert(std::abs(run(0.0, 0.2469, 0.1, 1, false) - 0.1) < 1.0e-12);
+
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double unquantized = run(0.0, 1.0, nan, 2, true);
+    assert(std::abs(unquantized - 0.5) < 1.0e-12);
+}
+
 } // namespace
 
 int main() {
+    std::cout << "Starting test 1..." << std::endl;
     testShrinkingActiveAutomationResetsCachedSegment();
+    std::cout << "Starting test 2..." << std::endl;
+    testExponentialInterpolationWithLogRatio();
+    std::cout << "Starting test 3..." << std::endl;
+    testCompletedEnvelopeEarlyOutAndInvalidation();
+    std::cout << "Starting test 4..." << std::endl;
+    testQuantizationStaticHelpers();
+    std::cout << "Starting test 5..." << std::endl;
+    testChannelResolutionIsGenerationGated();
+    std::cout << "Starting test 6..." << std::endl;
+    testCompletedAutomationRebindsFinalValue();
+    std::cout << "Starting test 7..." << std::endl;
+    testPreparedQuantizationMatchesJavaFixtures();
+    std::cout << "All AutomationManager tests passed successfully!" << std::endl;
     return 0;
 }

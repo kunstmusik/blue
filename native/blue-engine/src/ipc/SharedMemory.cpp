@@ -15,6 +15,18 @@
 
 namespace blue {
 
+namespace {
+
+bool sameDoubleBits(double left, double right) {
+    uint64_t leftBits = 0;
+    uint64_t rightBits = 0;
+    std::memcpy(&leftBits, &left, sizeof(left));
+    std::memcpy(&rightBits, &right, sizeof(right));
+    return leftBits == rightBits;
+}
+
+}  // namespace
+
 SharedMemory::SharedMemory() = default;
 
 SharedMemory::~SharedMemory() {
@@ -68,7 +80,7 @@ bool SharedMemory::create(const std::string& name) {
     std::memset(data_, 0, size_);
     header()->magic = SHM_MAGIC;
     header()->version = SHM_VERSION;
-    header()->num_channels.store(0);
+    header()->num_channels.store(0, std::memory_order_release);
     header()->max_channels = MAX_CHANNELS;
 
     isOwner_ = true;
@@ -107,6 +119,7 @@ bool SharedMemory::open(const std::string& name) {
         std::fprintf(stderr, "MapViewOfFile failed: %lu\n", GetLastError());
         CloseHandle(hMapFile_);
         hMapFile_ = nullptr;
+        data_ = nullptr;
         return false;
     }
 
@@ -183,7 +196,7 @@ bool SharedMemory::create(const std::string& name) {
     std::memset(data_, 0, size_);
     header()->magic = SHM_MAGIC;
     header()->version = SHM_VERSION;
-    header()->num_channels.store(0);
+    header()->num_channels.store(0, std::memory_order_release);
     header()->max_channels = MAX_CHANNELS;
 
     isOwner_ = true;
@@ -253,7 +266,7 @@ void SharedMemory::close() {
 ChannelEntry* SharedMemory::findChannel(const std::string& name) {
     if (!data_) return nullptr;
 
-    uint32_t count = header()->num_channels.load();
+    uint32_t count = header()->num_channels.load(std::memory_order_acquire);
     ChannelEntry* entries = channels();
 
     for (uint32_t i = 0; i < count; ++i) {
@@ -270,7 +283,7 @@ ChannelEntry* SharedMemory::findOrCreateChannel(const std::string& name) {
     if (entry) return entry;
 
     // Create new channel
-    uint32_t index = header()->num_channels.load();
+    uint32_t index = header()->num_channels.load(std::memory_order_acquire);
     if (index >= header()->max_channels) {
         return nullptr;  // Full
     }
@@ -278,10 +291,10 @@ ChannelEntry* SharedMemory::findOrCreateChannel(const std::string& name) {
     entry = &channels()[index];
     std::strncpy(entry->name, name.c_str(), CHANNEL_NAME_SIZE - 1);
     entry->name[CHANNEL_NAME_SIZE - 1] = '\0';
-    entry->value.store(0.0);
+    entry->value.store(0.0, std::memory_order_relaxed);
     entry->flags = 0;
 
-    header()->num_channels.fetch_add(1);
+    header()->num_channels.fetch_add(1, std::memory_order_release);
     return entry;
 }
 
@@ -291,7 +304,10 @@ bool SharedMemory::createChannel(const std::string& name, double initialValue) {
     ChannelEntry* entry = findOrCreateChannel(name);
     if (!entry) return false;
 
-    entry->value.store(initialValue);
+    const double currentValue = entry->value.load(std::memory_order_relaxed);
+    if (!sameDoubleBits(currentValue, initialValue)) {
+        entry->value.store(initialValue, std::memory_order_relaxed);
+    }
     return true;
 }
 
@@ -301,7 +317,10 @@ bool SharedMemory::setChannel(const std::string& name, double value) {
     ChannelEntry* entry = findChannel(name);
     if (!entry) return false;
 
-    entry->value.store(value);
+    const double currentValue = entry->value.load(std::memory_order_relaxed);
+    if (!sameDoubleBits(currentValue, value)) {
+        entry->value.store(value, std::memory_order_relaxed);
+    }
     return true;
 }
 
@@ -311,24 +330,24 @@ bool SharedMemory::getChannel(const std::string& name, double& value) {
     ChannelEntry* entry = findChannel(name);
     if (!entry) return false;
 
-    value = entry->value.load();
+    value = entry->value.load(std::memory_order_relaxed);
     return true;
 }
 
 uint32_t SharedMemory::getChannelCount() const {
     if (!data_) return 0;
-    return header()->num_channels.load();
+    return header()->num_channels.load(std::memory_order_acquire);
 }
 
 bool SharedMemory::getChannelByIndex(uint32_t index, std::string& name, double& value) const {
     if (!data_) return false;
 
-    uint32_t count = header()->num_channels.load();
+    uint32_t count = header()->num_channels.load(std::memory_order_acquire);
     if (index >= count) return false;
 
     const ChannelEntry* entry = &channels()[index];
     name = entry->name;
-    value = entry->value.load();
+    value = entry->value.load(std::memory_order_relaxed);
     return true;
 }
 
@@ -338,8 +357,12 @@ ChannelEntry* SharedMemory::getChannelEntry(const std::string& name) {
 
 ChannelEntry* SharedMemory::getOrCreateChannelEntry(const std::string& name, double initialValue) {
     ChannelEntry* entry = findOrCreateChannel(name);
-    if (entry && entry->value.load() == 0.0) {
-        entry->value.store(initialValue);
+    if (entry) {
+        const double currentValue = entry->value.load(std::memory_order_relaxed);
+        if (sameDoubleBits(currentValue, 0.0) &&
+            !sameDoubleBits(currentValue, initialValue)) {
+            entry->value.store(initialValue, std::memory_order_relaxed);
+        }
     }
     return entry;
 }

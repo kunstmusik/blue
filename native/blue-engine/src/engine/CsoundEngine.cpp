@@ -167,6 +167,11 @@ EngineStateSnapshot CsoundEngine::getStateSnapshot() const {
   };
 }
 
+EnginePerformanceSummary CsoundEngine::getLastPerformanceSummary() const {
+  std::lock_guard<std::mutex> lock(performanceMutex_);
+  return lastPerformanceSummary_;
+}
+
 void CsoundEngine::setStateChangeCallback(StateChangeCallback callback) {
   std::lock_guard<std::mutex> lock(callbackMutex_);
   stateChangeCallback_ = std::move(callback);
@@ -227,6 +232,8 @@ void CsoundEngine::publishStateSnapshot(const EngineStateSnapshot &snapshot) {
 }
 
 bool CsoundEngine::create() {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+
   if (csound_) {
     setLastError("Engine already created");
     return false;
@@ -245,18 +252,15 @@ bool CsoundEngine::create() {
 
   automationManager_ = std::make_unique<AutomationManager>(
       automationStore_,
-      [this](const std::string &name, double value) {
-        writeAutomationValue(name, value);
-      },
+      AutomationManager::ChannelWriter{},
       [this](const std::string &name) {
         return findControlChannelPointer(name);
+      },
+      [this]() {
+        return getChannelBindingGeneration();
       });
 
   sampleNumber_.store(0);
-  std::atomic_store_explicit(
-      &shmMirrorBindings_,
-      std::shared_ptr<const std::vector<ShmMirrorBinding>>(),
-      std::memory_order_release);
   {
     std::lock_guard<std::mutex> lock(stateMutex_);
     sampleRate_ = 0.0;
@@ -268,7 +272,8 @@ bool CsoundEngine::create() {
 }
 
 void CsoundEngine::destroy() {
-  stop();
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+  joinPerformThread(false);
 
   if (csound_) {
     CsoundLoader::csoundDestroy(csound_);
@@ -310,23 +315,43 @@ bool CsoundEngine::setOption(const std::string &option) {
 }
 
 bool CsoundEngine::compileOrc(const std::string &orc) {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+
   if (!csound_) {
     setLastError("Engine not created");
     return false;
   }
 
-  int result = CsoundLoader::csoundCompileOrc(csound_, orc.c_str(), 0);
-  if (result != csound::CSOUND_SUCCESS) {
+  const bool wasRunning = running_.load(std::memory_order_acquire);
+  if (performThread_.joinable()) {
+    // Csound may replace control-channel storage during compilation. Stop
+    // the perform thread at a k-cycle boundary before rebuilding pointers.
+    // A naturally completed thread can still be joinable after publishing
+    // STOPPED, so join it even when running_ is already false.
+    joinPerformThread(wasRunning);
+  }
+
+  const int result = CsoundLoader::csoundCompileOrc(csound_, orc.c_str(), 0);
+  const bool compiled = result == csound::CSOUND_SUCCESS;
+  const bool rebuilt = rebuildControlChannelCache();
+
+  if (rebuilt) {
+    applyPendingChannelValues();
+    syncSharedMemoryFromChannels();
+  }
+
+  if (wasRunning && rebuilt) {
+    resumePerformThread();
+  }
+
+  if (!compiled) {
     setLastError("Failed to compile orchestra");
     return false;
   }
-
-  if (!rebuildControlChannelCache()) {
+  if (!rebuilt) {
     return false;
   }
 
-  applyPendingChannelValues();
-  syncSharedMemoryFromChannels();
   clearLastError();
   return true;
 }
@@ -416,6 +441,8 @@ bool CsoundEngine::getChannel(const std::string &name, double &value) {
 }
 
 bool CsoundEngine::start() {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+
   if (!csound_) {
     setLastError("Engine not created");
     return false;
@@ -426,15 +453,27 @@ bool CsoundEngine::start() {
     return false;
   }
 
+  // A naturally completed performance leaves a joinable std::thread even
+  // though running_ is already false. Reap it before creating the next
+  // perform thread; assigning over a joinable thread would terminate the
+  // process during restart stress.
+  if (performThread_.joinable()) {
+    performThread_.join();
+  }
+
   int result = CsoundLoader::csoundStart(csound_);
   if (result != csound::CSOUND_SUCCESS) {
     setLastError("Failed to start Csound");
     return false;
   }
 
-  shouldStop_.store(false);
-  running_.store(true);
+  shouldStop_.store(false, std::memory_order_release);
+  preservePerformanceState_.store(false, std::memory_order_release);
   sampleNumber_.store(0);
+  {
+    std::lock_guard<std::mutex> lock(performanceMutex_);
+    lastPerformanceSummary_ = EnginePerformanceSummary{};
+  }
 
   {
     std::lock_guard<std::mutex> lock(stateMutex_);
@@ -454,19 +493,34 @@ bool CsoundEngine::start() {
   }
 
   syncSharedMemoryFromChannels();
-  transitionState(EngineLifecycleState::RUNNING, EngineStopReason::NONE);
-  performThread_ = std::thread(&CsoundEngine::performThread, this);
+  resumePerformThread();
   return true;
 }
 
 void CsoundEngine::stop() {
-  shouldStop_.store(true);
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+  joinPerformThread(false);
+}
+
+void CsoundEngine::resumePerformThread() {
+  shouldStop_.store(false, std::memory_order_release);
+  preservePerformanceState_.store(false, std::memory_order_release);
+  running_.store(true, std::memory_order_release);
+  transitionState(EngineLifecycleState::RUNNING, EngineStopReason::NONE);
+  performThread_ = std::thread(&CsoundEngine::performThread, this);
+}
+
+void CsoundEngine::joinPerformThread(bool preservePerformanceState) {
+  preservePerformanceState_.store(preservePerformanceState,
+                                   std::memory_order_release);
+  shouldStop_.store(true, std::memory_order_release);
 
   if (performThread_.joinable()) {
     performThread_.join();
+  } else {
+    running_.store(false, std::memory_order_release);
+    preservePerformanceState_.store(false, std::memory_order_release);
   }
-
-  running_.store(false);
 }
 
 void CsoundEngine::performThread() {
@@ -485,7 +539,9 @@ void CsoundEngine::performThread() {
   const int ksmps = CsoundLoader::csoundGetKsmps(csound_);
   EngineStopReason stopReason = EngineStopReason::STOP_REQUESTED;
   std::string terminalError;
-  int64_t localSample = 0;
+  int64_t localSample = sampleNumber_.load(std::memory_order_relaxed);
+  std::shared_ptr<const RuntimeChannelBindingSnapshot> cachedBindings;
+  uint64_t cachedBindingGeneration = 0;
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
   using Clock = std::chrono::steady_clock;
@@ -503,6 +559,7 @@ void CsoundEngine::performThread() {
   constexpr size_t kMaxBurstWindows = 16;
 
   uint64_t cycleCount = 0;
+  uint64_t totalCycleCount = 0;
   uint64_t slowHostCycleCount = 0;
   uint64_t autoSpikeCount = 0;
   uint64_t performSpikeCount = 0;
@@ -694,18 +751,25 @@ void CsoundEngine::performThread() {
   };
 #endif
 
-  while (!shouldStop_.load()) {
+  while (!shouldStop_.load(std::memory_order_relaxed)) {
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
+    const uint64_t currentCycle = totalCycleCount++;
+    const bool measureCycle =
+        currentCycle >= performanceWarmupCycles_ &&
+        (performanceMeasuredCycles_ == 0 ||
+         cycleCount < performanceMeasuredCycles_);
     const auto loopStart = Clock::now();
     uint64_t loopDeltaNs = 0;
     if (hasLastLoopStart) {
       loopDeltaNs = static_cast<uint64_t>(
           std::chrono::duration_cast<Nanos>(loopStart - lastLoopStart).count());
-      loopDeltaDuration += Nanos(loopDeltaNs);
-      loopDeltaMaxNs = std::max(loopDeltaMaxNs, loopDeltaNs);
-      loopDeltaSamplesNs.add(loopDeltaNs);
-      if (loopDeltaNs >= kSchedulerDeltaThresholdNs) {
-        loopDeltaSpikeCount += 1;
+      if (measureCycle) {
+        loopDeltaDuration += Nanos(loopDeltaNs);
+        loopDeltaMaxNs = std::max(loopDeltaMaxNs, loopDeltaNs);
+        loopDeltaSamplesNs.add(loopDeltaNs);
+        if (loopDeltaNs >= kSchedulerDeltaThresholdNs) {
+          loopDeltaSpikeCount += 1;
+        }
       }
     }
     hasLastLoopStart = true;
@@ -730,7 +794,7 @@ void CsoundEngine::performThread() {
     const auto afterPerformKsmps = Clock::now();
 #endif
 
-    syncSharedMemoryFromChannels();
+    syncSharedMemoryFromChannels(cachedBindings, cachedBindingGeneration);
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     const auto afterSharedMemorySync = Clock::now();
@@ -743,6 +807,8 @@ void CsoundEngine::performThread() {
         std::chrono::duration_cast<Nanos>(
             afterSharedMemorySync - afterPerformKsmps).count());
     const auto hostCycleNs = autoNs + performNs + shmNs;
+
+    if (measureCycle) {
 
     automationDuration += Nanos(autoNs);
     performKsmpsDuration += Nanos(performNs);
@@ -847,6 +913,7 @@ void CsoundEngine::performThread() {
     }
 
     cycleCount += 1;
+    }
 #endif
 
     if (result != 0) {
@@ -860,22 +927,24 @@ void CsoundEngine::performThread() {
     }
 
     localSample += ksmps;
-    sampleNumber_.store(localSample);
+    sampleNumber_.store(localSample, std::memory_order_relaxed);
   }
 
-  if (shouldStop_.load()) {
+  if (shouldStop_.load(std::memory_order_relaxed)) {
     stopReason = EngineStopReason::STOP_REQUESTED;
   }
 
   // Flush one final snapshot so observers catch the latest values before reset.
-  syncSharedMemoryFromChannels();
+  syncSharedMemoryFromChannels(cachedBindings, cachedBindingGeneration);
 
-  if (csound_ && CsoundLoader::csoundReset) {
+  const bool preservePerformanceState =
+      preservePerformanceState_.load(std::memory_order_acquire);
+  if (!preservePerformanceState && csound_ && CsoundLoader::csoundReset) {
     CsoundLoader::csoundReset(csound_);
   }
 
   clearControlChannelCache();
-  running_.store(false);
+  running_.store(false, std::memory_order_relaxed);
   transitionState(EngineLifecycleState::STOPPED, stopReason, terminalError);
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
@@ -912,6 +981,29 @@ void CsoundEngine::performThread() {
 
     const auto slowPct =
         100.0 * (static_cast<double>(slowHostCycleCount) / static_cast<double>(cycleCount));
+
+    {
+      std::lock_guard<std::mutex> lock(performanceMutex_);
+      lastPerformanceSummary_ = EnginePerformanceSummary{
+          true,
+          cycleCount,
+          automationAvgNs / 1.0e3,
+          automationP95Ns / 1.0e3,
+          static_cast<double>(automationMaxNs) / 1.0e3,
+          performAvgNs / 1.0e3,
+          performP95Ns / 1.0e3,
+          static_cast<double>(performKsmpsMaxNs) / 1.0e3,
+          shmSyncAvgNs / 1.0e3,
+          shmP95Ns / 1.0e3,
+          static_cast<double>(sharedMemorySyncMaxNs) / 1.0e3,
+          hostAvgNs / 1.0e3,
+          hostP95Ns / 1.0e3,
+          static_cast<double>(hostCycleMaxNs) / 1.0e3,
+          autoSpikeCount,
+          performSpikeCount,
+          shmSpikeCount,
+          hostSpikeCount};
+    }
 
     std::fprintf(
         stderr,
@@ -1150,28 +1242,41 @@ bool CsoundEngine::rebuildControlChannelCache() {
     CsoundLoader::csoundDeleteChannelList(csound_, channelList);
   }
 
+  const uint64_t nextGen = channelBindingGeneration_.load(std::memory_order_relaxed) + 1;
+  auto snapshot = std::make_shared<RuntimeChannelBindingSnapshot>(nextGen);
+  snapshot->controlChannels = newChannels;
+  snapshot->mirrorBindings = std::move(newMirrorBindings);
+
   {
     std::lock_guard<std::mutex> lock(channelMutex_);
     controlChannels_.swap(newChannels);
   }
 
   std::atomic_store_explicit(
-      &shmMirrorBindings_,
-      std::shared_ptr<const std::vector<ShmMirrorBinding>>(
-          std::make_shared<std::vector<ShmMirrorBinding>>(std::move(newMirrorBindings))),
+      &runtimeChannelBindings_,
+      std::shared_ptr<const RuntimeChannelBindingSnapshot>(std::move(snapshot)),
       std::memory_order_release);
+
+  channelBindingGeneration_.store(nextGen, std::memory_order_release);
 
   return true;
 }
 
 void CsoundEngine::clearControlChannelCache() {
-  std::lock_guard<std::mutex> lock(channelMutex_);
-  controlChannels_.clear();
+  const uint64_t nextGen = channelBindingGeneration_.load(std::memory_order_relaxed) + 1;
+  auto emptySnapshot = std::make_shared<RuntimeChannelBindingSnapshot>(nextGen);
+
+  {
+    std::lock_guard<std::mutex> lock(channelMutex_);
+    controlChannels_.clear();
+  }
 
   std::atomic_store_explicit(
-      &shmMirrorBindings_,
-      std::shared_ptr<const std::vector<ShmMirrorBinding>>(),
+      &runtimeChannelBindings_,
+      std::shared_ptr<const RuntimeChannelBindingSnapshot>(std::move(emptySnapshot)),
       std::memory_order_release);
+
+  channelBindingGeneration_.store(nextGen, std::memory_order_release);
 }
 
 void CsoundEngine::applyPendingChannelValues() {
@@ -1198,18 +1303,52 @@ void CsoundEngine::syncSharedMemoryFromChannels() {
     return;
   }
 
-  auto mirrorBindings = std::atomic_load_explicit(
-      &shmMirrorBindings_, std::memory_order_acquire);
-  if (!mirrorBindings) {
+  auto bindings = std::atomic_load_explicit(
+      &runtimeChannelBindings_, std::memory_order_acquire);
+  syncSharedMemoryFromBindings(bindings.get());
+}
+
+void CsoundEngine::syncSharedMemoryFromChannels(
+    std::shared_ptr<const RuntimeChannelBindingSnapshot> &cachedBindings,
+    uint64_t &cachedGeneration) {
+  if (!shm_) {
     return;
   }
 
-  for (const auto &binding : *mirrorBindings) {
+  const uint64_t currentGeneration =
+      channelBindingGeneration_.load(std::memory_order_acquire);
+  if (cachedGeneration != currentGeneration) {
+    cachedBindings = std::atomic_load_explicit(
+        &runtimeChannelBindings_, std::memory_order_acquire);
+    cachedGeneration = currentGeneration;
+  }
+
+  syncSharedMemoryFromBindings(cachedBindings.get());
+}
+
+void CsoundEngine::syncSharedMemoryFromBindings(
+    const RuntimeChannelBindingSnapshot *bindings) {
+  if (!bindings) {
+    return;
+  }
+
+  for (const auto &binding : bindings->mirrorBindings) {
     if (!binding.pointer || !binding.sharedMemoryEntry) {
       continue;
     }
 
-    binding.sharedMemoryEntry->value.store(*binding.pointer);
+    const double newValue = *binding.pointer;
+    const double currentValue =
+        binding.sharedMemoryEntry->value.load(std::memory_order_relaxed);
+
+    uint64_t newBits = 0;
+    uint64_t currentBits = 0;
+    std::memcpy(&newBits, &newValue, sizeof(double));
+    std::memcpy(&currentBits, &currentValue, sizeof(double));
+
+    if (newBits != currentBits) {
+      binding.sharedMemoryEntry->value.store(newValue, std::memory_order_relaxed);
+    }
   }
 }
 
@@ -1228,7 +1367,16 @@ void CsoundEngine::mirrorChannelValue(const std::string &name, double value) {
   }
 
   if (sharedMemoryEntry) {
-    sharedMemoryEntry->value.store(value);
+    const double currentValue =
+        sharedMemoryEntry->value.load(std::memory_order_relaxed);
+    uint64_t newBits = 0;
+    uint64_t currentBits = 0;
+    std::memcpy(&newBits, &value, sizeof(double));
+    std::memcpy(&currentBits, &currentValue, sizeof(double));
+
+    if (newBits != currentBits) {
+      sharedMemoryEntry->value.store(value, std::memory_order_relaxed);
+    }
     return;
   }
 
@@ -1238,9 +1386,12 @@ void CsoundEngine::mirrorChannelValue(const std::string &name, double value) {
 }
 
 double *CsoundEngine::findControlChannelPointer(const std::string &name) {
-  std::lock_guard<std::mutex> lock(channelMutex_);
-  auto it = controlChannels_.find(name);
-  if (it == controlChannels_.end()) {
+  auto bindings = std::atomic_load_explicit(&runtimeChannelBindings_, std::memory_order_acquire);
+  if (!bindings) {
+    return nullptr;
+  }
+  auto it = bindings->controlChannels.find(name);
+  if (it == bindings->controlChannels.end()) {
     return nullptr;
   }
 
@@ -1248,6 +1399,9 @@ double *CsoundEngine::findControlChannelPointer(const std::string &name) {
 }
 
 bool CsoundEngine::hasActiveAutomation(const std::string &name) const {
+  if (!automationStore_) {
+    return false;
+  }
   auto list = automationStore_->getList();
   if (!list) {
     return false;
@@ -1255,16 +1409,6 @@ bool CsoundEngine::hasActiveAutomation(const std::string &name) const {
 
   auto it = list->automations.find(name);
   return it != list->automations.end() && it->second.enabled;
-}
-
-void CsoundEngine::writeAutomationValue(const std::string &name, double value) {
-  std::lock_guard<std::mutex> lock(channelMutex_);
-  auto it = controlChannels_.find(name);
-  if (it == controlChannels_.end() || !it->second.pointer) {
-    return;
-  }
-
-  *(it->second.pointer) = value;
 }
 
 } // namespace blue

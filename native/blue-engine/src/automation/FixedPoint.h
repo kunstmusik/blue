@@ -18,10 +18,40 @@ enum class RoundingMode {
     HALF_EVEN   // Round towards nearest neighbor, ties go to even (banker's rounding)
 };
 
-// Fixed-point decimal class to match Java BigDecimal behavior
-// Uses integer arithmetic scaled by a power of 10
+// Bounded fixed-point decimal class for the accepted Java-compatible
+// quantization behavior. It uses integer arithmetic scaled by a power of 10;
+// it is not an arbitrary-precision BigDecimal implementation.
 class FixedPoint {
 public:
+    // Lookup table for powers of 10
+    static int64_t getScaleFactor(int scale) {
+        static constexpr int64_t kPowersOf10[] = {
+            1LL,
+            10LL,
+            100LL,
+            1000LL,
+            10000LL,
+            100000LL,
+            1000000LL,
+            10000000LL,
+            100000000LL,
+            1000000000LL,
+            10000000000LL,
+            100000000000LL,
+            1000000000000LL,
+            10000000000000LL,
+            100000000000000LL,
+            1000000000000000LL,
+            10000000000000000LL,
+            100000000000000000LL,
+            1000000000000000000LL
+        };
+        if (scale >= 0 && static_cast<size_t>(scale) < sizeof(kPowersOf10) / sizeof(kPowersOf10[0])) {
+            return kPowersOf10[scale];
+        }
+        return static_cast<int64_t>(std::pow(10.0, scale));
+    }
+
     // Constructors
     FixedPoint() : value_(0), scale_(0) {}
     FixedPoint(int64_t value, int scale) : value_(value), scale_(scale) {
@@ -30,15 +60,17 @@ public:
 
     // Construct from double with specified scale
     static FixedPoint fromDouble(double value, int scale) {
-        double scaleFactor = std::pow(10.0, scale);
+        double scaleFactor = static_cast<double>(getScaleFactor(scale));
         int64_t scaledValue = static_cast<int64_t>(std::round(value * scaleFactor));
         return FixedPoint(scaledValue, scale);
     }
 
-    // Construct from double using FLOOR semantics (matches new BigDecimal(y).setScale(scale, FLOOR))
-    // This avoids the intermediate rounding used by fromDouble and preserves the downward bias.
+    // Construct from double using the engine's existing FLOOR-scale semantics.
+    // This avoids the intermediate rounding used by fromDouble and preserves
+    // the downward bias for the accepted fixture domain. It does not recreate
+    // Java's exact arbitrary-precision new BigDecimal(double) value.
     static FixedPoint fromDoubleFloor(double value, int scale) {
-        double scaleFactor = std::pow(10.0, scale);
+        double scaleFactor = static_cast<double>(getScaleFactor(scale));
         double scaled = std::floor(value * scaleFactor);
         return FixedPoint(static_cast<int64_t>(scaled), scale);
     }
@@ -56,14 +88,14 @@ public:
         int scale = static_cast<int>(fractionalStr.length());
 
         int64_t value = integerPart;
-        value = value * static_cast<int64_t>(std::pow(10, scale)) + fractionalPart;
+        value = value * getScaleFactor(scale) + fractionalPart;
 
         return FixedPoint(value, scale);
     }
 
     // Get the value as double
     double toDouble() const {
-        return static_cast<double>(value_) / std::pow(10.0, scale_);
+        return static_cast<double>(value_) / static_cast<double>(getScaleFactor(scale_));
     }
 
     // Get the scale (number of decimal places)
@@ -118,12 +150,12 @@ public:
 
         if (newScale > scale_) {
             // Scale up - no rounding needed, just multiply
-            int64_t factor = static_cast<int64_t>(std::pow(10, newScale - scale_));
+            int64_t factor = getScaleFactor(newScale - scale_);
             return FixedPoint(value_ * factor, newScale);
         }
 
         // Scale down - need to apply rounding
-        int64_t factor = static_cast<int64_t>(std::pow(10, scale_ - newScale));
+        int64_t factor = getScaleFactor(scale_ - newScale);
         int64_t quotient = value_ / factor;
         int64_t remainder = value_ % factor;
 
@@ -224,12 +256,12 @@ public:
         }
 
         std::string str = std::to_string(value_);
-        if (str.length() <= scale_) {
+        if (str.length() <= static_cast<size_t>(scale_)) {
             // Pad with leading zeros
-            str = std::string(scale_ - str.length() + 1, '0') + str;
+            str = std::string(static_cast<size_t>(scale_) - str.length() + 1, '0') + str;
         }
 
-        size_t insertPos = str.length() - scale_;
+        size_t insertPos = str.length() - static_cast<size_t>(scale_);
         return str.substr(0, insertPos) + "." + str.substr(insertPos);
     }
 
@@ -261,11 +293,11 @@ private:
             return value;
         } else if (currentScale < targetScale) {
             // Scale up
-            int64_t factor = static_cast<int64_t>(std::pow(10, targetScale - currentScale));
+            int64_t factor = getScaleFactor(targetScale - currentScale);
             return value * factor;
         } else {
             // Scale down
-            int64_t factor = static_cast<int64_t>(std::pow(10, currentScale - targetScale));
+            int64_t factor = getScaleFactor(currentScale - targetScale);
             return value / factor;
         }
     }

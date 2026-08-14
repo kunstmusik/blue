@@ -18,9 +18,25 @@ if(USE_PERFORMANCE_TRACKING)
 else()
     set(BLUE_ENGINE_PERFORMANCE_TRACKING_VALUE 0)
 endif()
-add_compile_definitions(
-    BLUE_ENGINE_USE_PERFORMANCE_TRACKING=${BLUE_ENGINE_PERFORMANCE_TRACKING_VALUE}
-)
+
+# Optional build-level optimizations evaluated behind benchmark gates
+option(ENABLE_IPO "Enable Interprocedural Optimization (IPO/LTO)" OFF)
+if(ENABLE_IPO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+    if(ipo_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+        message(STATUS "IPO/LTO enabled")
+    else()
+        message(WARNING "IPO/LTO not supported: ${ipo_error}")
+    endif()
+endif()
+
+option(ENABLE_NO_MATH_ERRNO "Enable -fno-math-errno in Release builds" OFF)
+if(ENABLE_NO_MATH_ERRNO AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU"))
+    add_compile_options("$<$<CONFIG:Release>:-fno-math-errno>")
+    message(STATUS "-fno-math-errno enabled for Release builds")
+endif()
 
 # Release artifacts require the static target supplied by the pinned vcpkg
 # manifest. A missing static target is an error; there is no pkg-config or
@@ -46,6 +62,7 @@ add_executable(blue-engine
 set(BLUE_ENGINE_SOURCE_REVISION "unknown" CACHE STRING
     "Source revision embedded in engine capabilities")
 target_compile_definitions(blue-engine PRIVATE
+    BLUE_ENGINE_USE_PERFORMANCE_TRACKING=${BLUE_ENGINE_PERFORMANCE_TRACKING_VALUE}
     BLUE_ENGINE_SOURCE_REVISION="${BLUE_ENGINE_SOURCE_REVISION}"
 )
 
@@ -54,6 +71,28 @@ target_include_directories(blue-engine PRIVATE
 )
 
 target_link_libraries(blue-engine PRIVATE libzmq-static)
+
+# Benchmark executable
+add_executable(benchmark_engine
+    src/benchmark_main.cpp
+    src/engine/CsoundEngine.cpp
+    src/csound/CsoundLoader.cpp
+    src/ipc/SharedMemory.cpp
+    src/automation/AutomationStore.cpp
+    src/automation/AutomationManager.cpp
+)
+target_include_directories(benchmark_engine PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
+target_link_libraries(benchmark_engine PRIVATE libzmq-static)
+target_compile_definitions(benchmark_engine PRIVATE
+    BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1
+    BLUE_ENGINE_SOURCE_REVISION="${BLUE_ENGINE_SOURCE_REVISION}"
+)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(benchmark_engine PRIVATE dl)
+    target_link_options(benchmark_engine PRIVATE -static-libgcc -static-libstdc++)
+endif()
 
 # Platform-specific dynamic loading library
 if(UNIX AND NOT APPLE)

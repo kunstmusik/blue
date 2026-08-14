@@ -31,10 +31,12 @@ public:
 
     using ChannelWriter = std::function<void(const std::string&, double)>;
     using ChannelResolver = std::function<double*(const std::string&)>;
+    using BindingGenerationProvider = std::function<uint64_t()>;
 
     AutomationManager(const std::shared_ptr<AutomationStore>& store,
                      ChannelWriter writer,
-                     ChannelResolver resolver = {});
+                     ChannelResolver resolver = {},
+                     BindingGenerationProvider bindingGenerationProvider = {});
     ~AutomationManager() = default;
 
     // Non-copyable
@@ -46,6 +48,11 @@ public:
 
     // Reset state (called when engine starts or restarts)
     void reset();
+
+    // Standalone quantization helpers (for differential tests and direct invocation)
+    static double quantizeFast(double y, double resolution, bool isDescending);
+    static double quantizeHighPrecision(double y, double resolution,
+                                        int resolutionScale, bool isDescending);
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     const ProcessDiagnostics& getLastProcessDiagnostics() const {
@@ -60,36 +67,32 @@ private:
         AutomationState* state;
     };
 
-    // Interpolation helpers
-    double interpolateLinear(const AutomationPoint& p0,
-                           const AutomationPoint& p1,
-                           double elapsed);
+    // Prepare invariant segment and quantization caches for an automation definition
+    static void prepareAutomationState(const AutomationDef& def, AutomationState& state);
 
-    double interpolateExponential(const AutomationPoint& p0,
-                                const AutomationPoint& p1,
-                                double elapsed);
-
+    // Interpolation helpers using invariant caches
     double interpolate(const AutomationDef& def, AutomationState& state, double elapsed);
+    static double quantizeFastCached(double y, double resolution,
+                                     const QuantizationCache& cache,
+                                     bool isDescending);
+    static double quantizeHighPrecisionCached(double y, double resolution,
+                                              const QuantizationCache& cache,
+                                              bool isDescending);
 
-    // Quantization helpers
-    // Fast path: simple double-based quantization (default)
-    double quantizeFast(double y, double resolution, bool isDescending);
-
-    // High-precision path: matches Java BigDecimal behavior exactly
-    double quantizeHighPrecision(double y, double resolution,
-                                  int resolutionScale, bool isDescending);
-
-    void rebuildActiveAutomationsIfNeeded(const std::shared_ptr<const AutomationList>& list);
+    void rebuildActiveAutomations(const std::shared_ptr<const AutomationList>& list);
     void pruneStatesForList(const std::shared_ptr<const AutomationList>& list);
 
     std::shared_ptr<AutomationStore> store_;
     ChannelWriter writer_;
     ChannelResolver resolver_;
+    BindingGenerationProvider bindingGenerationProvider_;
 
-    // Local state vector, keyed by channel name
+    // Local state map, keyed by channel name
     std::map<std::string, AutomationState> states_;
     std::shared_ptr<const AutomationList> activeListSnapshot_;
+    uint64_t cachedSnapshotRevision_ = 0;
     std::vector<ActiveAutomation> activeAutomations_;
+
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     size_t activePointCount_ = 0;
     bool snapshotChangedThisCycle_ = false;

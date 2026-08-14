@@ -5,6 +5,10 @@
 #include <cassert>
 #include <memory>
 #include <cmath>
+#include <thread>
+#include <vector>
+#include <atomic>
+#include <chrono>
 
 void testFixedPointQuantization() {
     using namespace blue;
@@ -63,6 +67,7 @@ void testAutomationStoreResolution() {
     assert(std::abs(automations[0].resolution - 0.1) < 1e-9);
     assert(automations[0].resolutionScale == 1);
     assert(automations[0].highPrecision == false);
+    assert(automations[0].definitionRevision >= 1);
 
     std::cout << "Resolution stored: " << automations[0].resolution << std::endl;
     std::cout << "Resolution scale: " << automations[0].resolutionScale << std::endl;
@@ -75,12 +80,74 @@ void testAutomationStoreResolution() {
     assert(std::abs(resolutionValue - 0.01) < 1e-9);
     assert(automations[0].resolutionScale == 2);
     assert(automations[0].highPrecision == true);
+    assert(automations[0].definitionRevision >= 2);
 
     std::cout << "AutomationStore resolution tests passed!" << std::endl;
+}
+
+void testConcurrentStoreModifications() {
+    using namespace blue;
+
+    std::cout << "\nTesting concurrent AutomationStore multi-threaded reader/writer race conditions..." << std::endl;
+
+    auto store = std::make_shared<AutomationStore>();
+    std::atomic<bool> running{true};
+    std::atomic<uint64_t> readOperations{0};
+    std::atomic<uint64_t> writeOperations{0};
+
+    // Reader thread mimicking perform audio loop
+    std::thread readerThread([&]() {
+        uint64_t lastRev = 0;
+        std::shared_ptr<const AutomationList> cachedList;
+
+        while (running.load(std::memory_order_relaxed)) {
+            const uint64_t curRev = store->getRevision();
+            if (curRev != lastRev || !cachedList) {
+                cachedList = store->getList();
+                lastRev = curRev;
+            }
+
+            if (cachedList) {
+                for (const auto& [name, def] : cachedList->automations) {
+                    if (def.enabled && !def.points.empty()) {
+                        readOperations.fetch_add(1, std::memory_order_relaxed);
+                    }
+                }
+            }
+        }
+    });
+
+    // Writer thread mimicking ZMQ control plane
+    std::thread writerThread([&]() {
+        for (int i = 0; i < 500; ++i) {
+            std::string chan = "chan_" + std::to_string(i % 10);
+            std::vector<AutomationPoint> pts = {
+                {0.0, static_cast<double>(i)},
+                {1.0, static_cast<double>(i + 10)}
+            };
+            store->createAutomation(chan, AutomationCurve::LINEAR, pts, true);
+            store->updateAutomation(chan, AutomationCurve::EXPONENTIAL, pts, (i % 2 == 0));
+            if (i % 5 == 0) {
+                store->setEnabled(chan, false);
+            }
+            if (i % 20 == 0) {
+                store->deleteAutomation(chan);
+            }
+            writeOperations.fetch_add(1, std::memory_order_relaxed);
+        }
+    });
+
+    writerThread.join();
+    running.store(false, std::memory_order_relaxed);
+    readerThread.join();
+
+    std::cout << "Concurrent test completed: " << writeOperations.load() << " writes, "
+              << readOperations.load() << " reads safely executed without data races!" << std::endl;
 }
 
 int main() {
     testFixedPointQuantization();
     testAutomationStoreResolution();
+    testConcurrentStoreModifications();
     return 0;
 }

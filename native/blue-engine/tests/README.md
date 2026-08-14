@@ -28,19 +28,20 @@ ctest -R ChannelBridge        # Run native channel bridge integration test
 
 ### FixedPointTests
 
-Tests for the `FixedPoint` class which provides BigDecimal-compatible arithmetic:
+Tests for the bounded `FixedPoint` class used by the Java-compatible
+quantization fixtures (it is not arbitrary-precision `BigDecimal`):
 
 - Basic construction and conversion
 - Arithmetic operations (add, subtract, remainder)
 - `setScale` with various rounding modes (FLOOR, CEILING, DOWN, UP, HALF_UP, etc.)
-- Quantization behavior matching Java BigDecimal
+- Quantization behavior matching the accepted Java Blue fixture set
 
 ### QuantizationTests
 
 Tests for the quantization logic used in AutomationManager:
 
 - Fast path (double-based) quantization
-- High-precision path (FixedPoint-based) quantization
+- High-precision path (cached integer/fixed-point) quantization
 - Descending segment bias behavior
 - Consistency between fast and high-precision modes
 

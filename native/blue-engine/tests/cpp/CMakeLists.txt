@@ -7,7 +7,11 @@ set_target_properties(test_fixedpoint PROPERTIES CXX_STANDARD 17 CXX_STANDARD_RE
 add_test(NAME FixedPointTests COMMAND test_fixedpoint)
 
 # Quantization tests (tests the quantization logic used in AutomationManager)
-add_executable(test_automation_fixedpoint test_automation_fixedpoint.cpp)
+add_executable(test_automation_fixedpoint
+    test_automation_fixedpoint.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+)
 target_include_directories(test_automation_fixedpoint PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_target_properties(test_automation_fixedpoint PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 add_test(NAME QuantizationTests COMMAND test_automation_fixedpoint)
@@ -107,3 +111,55 @@ set_tests_properties(CsoundIntegrationTests PROPERTIES
     LABELS "integration;requires-csound"
     SKIP_RETURN_CODE 77
 )
+
+# Lifecycle stress target used by AddressSanitizer/ThreadSanitizer runs. The
+# default CTest invocation keeps it short; the documented stress command
+# passes --duration-seconds 600 for the full soak.
+add_executable(test_csound_stress
+    test_csound_stress.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+)
+target_include_directories(test_csound_stress PRIVATE ${CMAKE_SOURCE_DIR}/src)
+set_target_properties(test_csound_stress PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_csound_stress PRIVATE dl)
+endif()
+option(ENABLE_SANITIZERS "Enable ASan/UBSan for native stress targets" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer for native stress targets" OFF)
+if(ENABLE_SANITIZERS)
+    target_compile_options(test_csound_stress PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(test_csound_stress PRIVATE -fsanitize=address,undefined)
+endif()
+if(ENABLE_TSAN)
+    target_compile_options(test_csound_stress PRIVATE -fsanitize=thread -fno-omit-frame-pointer)
+    target_link_options(test_csound_stress PRIVATE -fsanitize=thread)
+endif()
+add_test(NAME CsoundLifecycleStress COMMAND test_csound_stress --duration-seconds 2)
+set_tests_properties(CsoundLifecycleStress PROPERTIES
+    LABELS "stress;requires-csound"
+    SKIP_RETURN_CODE 77
+    TIMEOUT 30
+)
+
+# Control-plane idle behavior does not require Csound or a bound TCP port.
+add_executable(test_zmq_idle_wakeup
+    test_zmq_idle_wakeup.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
+)
+target_include_directories(test_zmq_idle_wakeup PRIVATE ${CMAKE_SOURCE_DIR}/src)
+set_target_properties(test_zmq_idle_wakeup PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(test_zmq_idle_wakeup PRIVATE libzmq-static)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_zmq_idle_wakeup PRIVATE dl)
+endif()
+add_test(NAME ZmqIdleWakeupTests COMMAND test_zmq_idle_wakeup)

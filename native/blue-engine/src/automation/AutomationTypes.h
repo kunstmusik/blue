@@ -33,11 +33,13 @@ struct AutomationDef {
     bool enabled;                          // Currently active
     double resolution;                     // Quantization step size (0 = no quantization)
     int resolutionScale;                   // Decimal scale for resolution (e.g., 1 for 0.1, 2 for 0.01)
-    bool highPrecision;                    // Use BigDecimal-compatible quantization
+    bool highPrecision;                    // Use bounded Java-compatible fixed-point quantization
+    uint64_t definitionRevision;           // Incremented whenever points/curve/resolution change
 
     AutomationDef()
         : id(0), curve(AutomationCurve::LINEAR), enabled(true),
-          resolution(0.0), resolutionScale(0), highPrecision(false) {}
+          resolution(0.0), resolutionScale(0), highPrecision(false),
+          definitionRevision(1) {}
 
     AutomationDef(uint32_t autoId, const std::string& channel,
                   AutomationCurve curveType,
@@ -45,10 +47,12 @@ struct AutomationDef {
                   bool isEnabled = true,
                   double res = 0.0,
                   int resScale = 0,
-                  bool highPrec = false)
+                  bool highPrec = false,
+                  uint64_t defRev = 1)
         : id(autoId), channelName(channel), curve(curveType),
           points(pts), enabled(isEnabled), resolution(res),
-          resolutionScale(resScale), highPrecision(highPrec) {}
+          resolutionScale(resScale), highPrecision(highPrec),
+          definitionRevision(defRev) {}
 };
 
 // Immutable container for all active automations
@@ -56,8 +60,27 @@ struct AutomationList {
     // Map channel name -> AutomationDef
     // Each channel can have at most one automation
     std::map<std::string, AutomationDef> automations;
+    uint64_t revision = 0;
 
     AutomationList() = default;
+    explicit AutomationList(uint64_t rev) : revision(rev) {}
+};
+
+// Invariant segment math precalculated when an automation definition is prepared
+struct AutomationSegmentCache {
+    double invDuration = 0.0;
+    double deltaValue = 0.0;
+    double logRatio = 0.0;
+    bool isPositiveLogValid = false;
+    bool isDescending = false;
+};
+
+// Invariant quantization parameters precalculated when an automation definition is prepared
+struct QuantizationCache {
+    int64_t scaleFactor = 1;
+    int64_t scaledResolution = 0;
+    double invResolution = 0.0;
+    bool isFastQuantizeSafe = false;
 };
 
 // Runtime state maintained by the performance thread
@@ -68,6 +91,11 @@ struct AutomationState {
     double lastElapsed;
     double lastWrittenValue;
     bool hasLastWrittenValue;
+    uint64_t cachedDefRevision;
+    uint64_t cachedBindingGeneration;
+    bool bindingGenerationInitialized;
+    std::vector<AutomationSegmentCache> segmentCaches;
+    QuantizationCache quantCache;
 
     AutomationState()
         : currentIndex(0),
@@ -75,7 +103,10 @@ struct AutomationState {
           channelPointer(nullptr),
           lastElapsed(-1.0),
           lastWrittenValue(0.0),
-          hasLastWrittenValue(false) {}
+          hasLastWrittenValue(false),
+          cachedDefRevision(0),
+          cachedBindingGeneration(0),
+          bindingGenerationInitialized(false) {}
 };
 
 }  // namespace blue

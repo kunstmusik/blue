@@ -4,7 +4,8 @@
 namespace blue {
 
 AutomationStore::AutomationStore()
-    : currentList_(std::make_shared<AutomationList>()),
+    : currentList_(std::make_shared<AutomationList>(1)),
+      revision_(1),
       nextId_(1) {
 }
 
@@ -22,9 +23,9 @@ uint32_t AutomationStore::createAutomation(
     uint32_t autoId = nextId_++;
 
     updateList([&](AutomationList& list) {
-        // Create new automation definition
+        // Create new automation definition with initial definitionRevision = 1
         AutomationDef def(autoId, channelName, curve, points, enabled,
-                         resolution, resolutionScale, highPrecision);
+                         resolution, resolutionScale, highPrecision, 1);
 
         // Replace any existing automation for this channel
         list.automations[channelName] = std::move(def);
@@ -52,11 +53,12 @@ bool AutomationStore::updateAutomation(
     }
 
     uint32_t existingId = it->second.id;
+    uint64_t nextDefRev = it->second.definitionRevision + 1;
 
     updateList([&](AutomationList& list) {
-        // Update automation, preserving the ID
+        // Update automation, preserving the ID and bumping definitionRevision
         AutomationDef def(existingId, channelName, curve, points, enabled,
-                         resolution, resolutionScale, highPrecision);
+                         resolution, resolutionScale, highPrecision, nextDefRev);
         list.automations[channelName] = std::move(def);
     });
 
@@ -90,12 +92,14 @@ bool AutomationStore::setEnabled(const std::string& channelName, bool enabled) {
         return false;  // Automation doesn't exist
     }
 
+    uint64_t nextDefRev = it->second.definitionRevision + 1;
+
     updateList([&](AutomationList& list) {
         auto& def = list.automations[channelName];
-        // Create new definition with updated enabled state (preserve all other fields)
+        // Create new definition with updated enabled state and bumped definitionRevision
         AutomationDef newDef(def.id, def.channelName, def.curve,
                             def.points, enabled, def.resolution,
-                            def.resolutionScale, def.highPrecision);
+                            def.resolutionScale, def.highPrecision, nextDefRev);
         list.automations[channelName] = std::move(newDef);
     });
 
@@ -105,11 +109,17 @@ bool AutomationStore::setEnabled(const std::string& channelName, bool enabled) {
 void AutomationStore::clear() {
     std::lock_guard<std::mutex> lock(listMutex_);
 
-    // Replace with empty list
+    const uint64_t nextRev = revision_.load(std::memory_order_relaxed) + 1;
+    auto emptyList = std::make_shared<AutomationList>(nextRev);
+
+    // Publish snapshot first with release ordering
     std::atomic_store_explicit(
         &currentList_,
-        std::shared_ptr<const AutomationList>(std::make_shared<AutomationList>()),
+        std::shared_ptr<const AutomationList>(std::move(emptyList)),
         std::memory_order_release);
+
+    // Bump revision with release ordering
+    revision_.store(nextRev, std::memory_order_release);
 }
 
 std::vector<AutomationDef> AutomationStore::listAutomations() const {
@@ -133,11 +143,17 @@ void AutomationStore::updateList(F&& modifier) {
     // Apply modification
     modifier(*newList);
 
-    // Replace
+    const uint64_t nextRev = revision_.load(std::memory_order_relaxed) + 1;
+    newList->revision = nextRev;
+
+    // Publish snapshot first with release ordering
     std::atomic_store_explicit(
         &currentList_,
         std::shared_ptr<const AutomationList>(std::move(newList)),
         std::memory_order_release);
+
+    // Bump revision with release ordering
+    revision_.store(nextRev, std::memory_order_release);
 }
 
 }  // namespace blue
