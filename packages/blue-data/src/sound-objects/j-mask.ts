@@ -12,7 +12,12 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { applyNoteProcessorChain, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  setScoreStart,
+} from '../utilities/score';
 import { Field, JavaRandom } from './jmask-support';
 
 export class JMask extends AbstractSoundObject {
@@ -40,22 +45,27 @@ export class JMask extends AbstractSoundObject {
   getField(): Field { return this._field; }
   setField(field: Field): void { this._field = field; }
 
-  generateNotes(context: TimeContext, _renderStart = 0, _renderEnd = -1): NoteList {
+  private generateRawNotes(context: TimeContext): { notes: NoteList; duration: number } {
     const field = new Field(this._field);
     const rnd = this._seedUsed ? new JavaRandom(this._seed) : new JavaRandom();
     const duration = this.getSubjectiveDuration().toBeats(context);
+    const notes = field.generateNotes(duration, rnd);
+    return { notes, duration };
+  }
 
-    let notes = field.generateNotes(duration, rnd);
-    notes = applyNoteProcessorChain(notes, this.getNoteProcessorChain());
-
+  private applyTimeAndOffset(notes: NoteList, duration: number, context: TimeContext): void {
     const repeatPoint = this.getRepeatPoint();
     const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
     applyTimeBehavior(notes, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(notes, this.getStartTime().toBeats(context));
-
-    return notes;
   }
 
+  generateNotes(context: TimeContext, _renderStart = 0, _renderEnd = -1): NoteList {
+    const { notes, duration } = this.generateRawNotes(context);
+    const processed = applyNoteProcessorChain(notes, this.getNoteProcessorChain());
+    this.applyTimeAndOffset(processed, duration, context);
+    return processed;
+  }
 
   override generateForCSD(
     context: TimeContext,
@@ -64,6 +74,18 @@ export class JMask extends AbstractSoundObject {
     endTime: number,
   ): NoteList {
     return this.generateNotes(context, startTime, endTime);
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    const { notes, duration } = this.generateRawNotes(context);
+    const processed = await applyNoteProcessorChainAsync(notes, this.getNoteProcessorChain(), compileData);
+    this.applyTimeAndOffset(processed, duration, context);
+    return processed;
   }
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {

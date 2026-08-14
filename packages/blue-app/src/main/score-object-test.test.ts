@@ -7,6 +7,7 @@ import {
   ObjectBuilder,
   PolyObject,
   PythonObject,
+  PythonProcessor,
   SoundLayer,
   TimePosition,
 } from '@blue/data';
@@ -311,5 +312,43 @@ describe('testScoreObject', () => {
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i7');
     expect(ensureJavaScriptEngine).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies PythonProcessor attached to a GenericScore when Java runtime is available', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const score = new GenericScore();
+    score.setScoreText('i1 0 1 440');
+    const processor = new PythonProcessor();
+    processor.setCode("for note in noteList:\n    note.setPField('880', 4)");
+    score.getNoteProcessorChain().addProcessor(processor);
+    layer.push(score);
+
+    const processJythonNoteList = vi.fn(async ({ notes }) => ({
+      ok: true,
+      result: {
+        notes: notes.map((note: any) => ({
+          ...note,
+          pfields: note.pfields.map((val: string, idx: number) => (idx === 3 ? '880' : val)),
+        })),
+      },
+    }));
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('GenericScore', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    }, {
+      javaRuntimeClient: { processJythonNoteList } as any,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('880');
+    expect(result.output).not.toContain('\t440');
+    expect(processJythonNoteList).toHaveBeenCalledTimes(1);
   });
 });

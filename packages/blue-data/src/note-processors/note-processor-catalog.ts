@@ -14,9 +14,10 @@ import { TimeWarpProcessor } from './time-warp-processor';
 import { LineAddProcessor } from './line-add-processor';
 import { LineMultiplyProcessor } from './line-multiply-processor';
 import { TuningProcessor } from './tuning-processor';
+import { PythonProcessor, DEFAULT_PYTHON_PROCESSOR_CODE } from './python-processor';
 import { NoteProcessor } from './note-processor';
 
-export type ParameterValueType = 'string' | 'number' | 'integer' | 'boolean' | 'multilineText';
+export type ParameterValueType = 'string' | 'number' | 'integer' | 'boolean' | 'multilineText' | 'code';
 
 export interface NoteProcessorParameterDefinition {
   name: string;
@@ -198,6 +199,19 @@ const CATALOG: NoteProcessorDefinition[] = [
       { name: 'ratios', label: 'Scale Ratios', valueType: 'multilineText', defaultValue: DEFAULT_TWELVE_TET_RATIOS, required: true },
     ],
     createDefault: () => new TuningProcessor(),
+  },
+  {
+    type: 'PythonProcessor',
+    displayName: 'PythonProcessor',
+    position: 170,
+    parameters: [
+      { name: 'code', label: 'Code', valueType: 'code', defaultValue: DEFAULT_PYTHON_PROCESSOR_CODE, required: false },
+    ],
+    createDefault: () => {
+      const proc = new PythonProcessor();
+      proc.setCode(DEFAULT_PYTHON_PROCESSOR_CODE);
+      return proc;
+    },
   },
 ];
 

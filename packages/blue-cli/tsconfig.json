@@ -4,7 +4,7 @@
     "baseUrl": ".",
     "noEmit": true,
     "paths": {
-      "@blue/data": ["/Users/stevenyi/work/blue-electron/packages/blue-data/src/index.ts"]
+      "@blue/data": ["../blue-data/src/index.ts"]
     },
     "types": ["node"]
   },

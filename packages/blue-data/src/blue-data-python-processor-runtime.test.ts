@@ -54,6 +54,24 @@ describe('BlueData PythonProcessor runtime integration', () => {
     expect(csd).not.toContain('\t440');
   });
 
+  it('applies PythonProcessor on a SoundObject note processor chain', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0];
+    const layer = root[0] as SoundLayer;
+    const score = new GenericScore();
+    score.setScoreText('i1 0 1 440');
+
+    const processor = new PythonProcessor();
+    processor.setCode("for note in noteList:\n    note.setPField('880', 4)");
+    score.getNoteProcessorChain().addProcessor(processor);
+    layer.push(score);
+
+    const csd = await data.toCSDAsync(undefined, createRuntimeClient());
+
+    expect(csd).toContain('880');
+    expect(csd).not.toContain('\t440');
+  });
+
   it('processes nested and library-instance Live Space on-load objects', async () => {
     const data = new BlueData();
     const runtime = createRuntimeClient();

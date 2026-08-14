@@ -138,12 +138,7 @@ export class PianoRoll extends AbstractSoundObject {
     return this._timeBehavior;
   }
 
-  override generateForCSD(
-    context: TimeContext,
-    compileData: CompileData,
-    _startTime: number,
-    _endTime: number,
-  ): NoteList {
+  private generateRawNotes(): NoteList {
     const nl = new NoteList();
     let instrId = this._instrumentId.trim();
 
@@ -211,19 +206,41 @@ export class PianoRoll extends AbstractSoundObject {
     }
 
     nl.sortByStartTime();
+    return nl;
+  }
 
-    // Apply note processor chain
-    const npc = this.getNoteProcessorChain();
-    npc.apply(nl);
-
-    // Apply time behavior and start time offset (mirrors Java PianoRoll.generateNotes)
+  private applyTimeAndOffset(nl: NoteList, context: TimeContext): void {
     const duration = this._subjectiveDuration.toBeats(context);
     const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
     applyTimeBehavior(nl, this._timeBehavior, duration, rpBeats);
 
     const startTime = this._startTime.toBeats(context);
     setScoreStart(nl, startTime);
+  }
 
+  override generateForCSD(
+    context: TimeContext,
+    _compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): NoteList {
+    const nl = this.generateRawNotes();
+    const npc = this.getNoteProcessorChain();
+    npc.apply(nl);
+    this.applyTimeAndOffset(nl, context);
+    return nl;
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    const nl = this.generateRawNotes();
+    const npc = this.getNoteProcessorChain();
+    await npc.applyAsync(nl, compileData);
+    this.applyTimeAndOffset(nl, context);
     return nl;
   }
 

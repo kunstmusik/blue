@@ -8,6 +8,7 @@ import {
 } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
 import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
+import NoteProcessorCodeModal from './NoteProcessorCodeModal';
 
 const CATALOG = getNoteProcessorCatalog();
 
@@ -157,8 +158,12 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
     const procs = [...local.processors];
     const entry = { ...procs[selectedIdx], parameters: { ...procs[selectedIdx].parameters, [paramName]: value } };
     const def = CATALOG.find((d) => d.type === entry.processorType);
-    const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
-    entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
+    if (entry.processorType === 'PythonProcessor') {
+      entry.summary = def?.displayName ?? entry.processorType;
+    } else {
+      const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
+      entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
+    }
     procs[selectedIdx] = entry;
     commit({ ...local, processors: procs });
   }, [local, selectedIdx, commit]);
@@ -305,6 +310,43 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
   );
 }
 
+function NoteProcessorCodeField({
+  value,
+  processorDisplayName,
+  onChange,
+}: {
+  value: string | number | boolean | undefined;
+  processorDisplayName: string;
+  onChange: (value: string) => void;
+}): React.ReactElement {
+  const [showModal, setShowModal] = useState(false);
+  const codeStr = String(value ?? '');
+  const lineCount = codeStr.trim().length > 0 ? codeStr.trim().split('\n').length : 0;
+
+  return (
+    <div className="flex flex-1 items-center gap-2">
+      <span className="flex-1 truncate rounded border border-blue-border bg-blue-bg/60 px-1.5 py-0.5 text-tiny font-mono text-gray-400">
+        {lineCount > 0 ? `${lineCount} line(s) of Python code` : '(empty code)'}
+      </span>
+      <button
+        type="button"
+        className="rounded border border-blue-border px-2 py-0.5 text-tiny text-gray-200 hover:bg-blue-border/40 hover:text-white"
+        onClick={() => setShowModal(true)}
+      >
+        Edit Code...
+      </button>
+      {showModal && (
+        <NoteProcessorCodeModal
+          title={`${processorDisplayName} - Edit Code`}
+          code={codeStr}
+          onClose={() => setShowModal(false)}
+          onSave={onChange}
+        />
+      )}
+    </div>
+  );
+}
+
 function NoteProcessorParameterEditor({
   processorType,
   parameters,
@@ -339,6 +381,13 @@ function NoteProcessorParameterEditor({
                 value={String(value ?? param.defaultValue)}
                 onChange={(e) => onChange(param.name, e.target.value)}
                 readOnly={isReadOnly}
+              />
+            ) : param.valueType === 'code' ? (
+              <NoteProcessorCodeField
+                key={param.name}
+                value={value}
+                processorDisplayName={def.displayName}
+                onChange={(newCode) => onChange(param.name, newCode)}
               />
             ) : (
               <input
