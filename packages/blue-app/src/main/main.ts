@@ -117,6 +117,7 @@ import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { evaluateJavaScriptConsole } from './repl-console-runtime';
 import { testScoreObject } from './score-object-test';
+import { testPythonInstrument, type PythonInstrumentTestRequest, type PythonInstrumentTestResult } from './python-instrument-test';
 import { auditionSelectedScoreObjects } from './audition-score-objects';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { syncRuntimeChannel } from './runtime-channel-sync';
@@ -4156,6 +4157,32 @@ for (const channel of [
     runScoreObjectTestRequest(request)
   ));
 }
+
+async function runPythonInstrumentTestRequest(
+  request: PythonInstrumentTestRequest,
+): Promise<PythonInstrumentTestResult> {
+  let javaRuntimeClient: JavaRuntimeClient | null = null;
+
+  try {
+    if (currentData) {
+      javaRuntimeClient = await runProjectOnLoad(currentData);
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      output: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return testPythonInstrument(request, {
+    javaRuntimeClient,
+  });
+}
+
+ipcMain.handle('test-python-instrument', (_event, request: PythonInstrumentTestRequest) => (
+  runPythonInstrumentTestRequest(request)
+));
 
 ipcMain.handle(
   REPL_CONSOLE_OPEN_CHANNEL,

@@ -6,7 +6,7 @@ import BlueX7Editor from './BlueX7Editor';
 import GenericInstrumentEditor from './GenericInstrumentEditor';
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
 import JavaScriptInstrumentEditor from './JavaScriptInstrumentEditor';
-import PythonInstrumentDummyPanel from './PythonInstrumentDummyPanel';
+import PythonInstrumentEditor from './PythonInstrumentEditor';
 import type { OrchestraMutationProps } from './types';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
@@ -60,8 +60,9 @@ const EditorSurface = React.memo(function EditorSurface({
       );
     case 'python':
       return (
-        <PythonInstrumentDummyPanel
+        <PythonInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
           embeddedUdoTarget={embeddedUdoTarget}

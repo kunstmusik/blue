@@ -5,11 +5,13 @@ import type {
   BlueSynthBuilderInstrumentSnapshot,
   GenericInstrumentSnapshot,
   JavaScriptInstrumentSnapshot,
+  PythonInstrumentSnapshot,
   UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
 import BlueSynthBuilderEditor from '../components/workbench/panels/orchestra/BlueSynthBuilderEditor';
 import GenericInstrumentEditor from '../components/workbench/panels/orchestra/GenericInstrumentEditor';
 import JavaScriptInstrumentEditor from '../components/workbench/panels/orchestra/JavaScriptInstrumentEditor';
+import PythonInstrumentEditor from '../components/workbench/panels/orchestra/PythonInstrumentEditor';
 
 function udoSnapshot(name: string): UdoDefinitionSnapshot {
   return {
@@ -217,6 +219,35 @@ describe('Orchestra code instrument editors', () => {
       expect(scopes).toContain('1:1');
       // JavaScript source is a plain textarea, not a SelectedCodeEditor.
       expect(html).toContain('textarea');
+    });
+
+    it('Python Instrument Global Orc receives owner-plus-project scope; Python source stays excluded from Csound UDO autocompletion', () => {
+      const instrument: PythonInstrumentSnapshot = {
+        assignmentId: '3',
+        type: 'python',
+        name: 'Python',
+        enabled: true,
+        comment: '',
+        text: 'instrument = "aout oscili"',
+        globalOrc: '',
+        globalSco: '',
+        udolist: [udoSnapshot('OwnerUDO')],
+      };
+
+      const html = renderToStaticMarkup(
+        <PythonInstrumentEditor
+          instrument={instrument}
+          projectUdos={[udoSnapshot('ProjectUDO')]}
+          onInstrumentPatch={vi.fn()}
+          onOrchestraPatch={vi.fn()}
+        />,
+      );
+
+      // Global Orc receives owner-plus-project scope (1:1)
+      const scopes = [...html.matchAll(/data-udo-scope="([^"]+)"/g)].map((m) => m[1]);
+      expect(scopes).toContain('1:1');
+      // Python and Global Sco editors have scope 0:0
+      expect(scopes.filter((scope) => scope === '0:0').length).toBe(2);
     });
   });
 });

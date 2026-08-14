@@ -555,6 +555,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('test-external-sound-object', request) as Promise<ScoreObjectTestResult>,
   testJavascriptSoundObject: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('test-javascript-sound-object', request) as Promise<ScoreObjectTestResult>,
+  testPythonInstrument: (request: { code: string; assignmentId?: string }) =>
+    ipcRenderer.invoke('test-python-instrument', request) as Promise<{ ok: boolean; output: string; error?: string }>,
   openReplConsole: (request: ReplConsoleOpenRequest) =>
     ipcRenderer.invoke(REPL_CONSOLE_OPEN_CHANNEL, request) as Promise<ReplConsoleOpenResult>,
   evaluateReplConsole: (request: ReplConsoleEvaluateRequest) =>

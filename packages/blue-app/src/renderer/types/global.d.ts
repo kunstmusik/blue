@@ -397,6 +397,9 @@ declare global {
       testJavascriptSoundObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
+      testPythonInstrument: (
+        request: { code: string; assignmentId?: string },
+      ) => Promise<{ ok: boolean; output: string; error?: string }>;
       openReplConsole: (
         request: ReplConsoleOpenRequest,
       ) => Promise<ReplConsoleOpenResult>;

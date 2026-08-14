@@ -1748,6 +1748,7 @@ export interface PythonInstrumentSnapshot extends InstrumentSnapshotBase {
   text: string;
   globalOrc: string;
   globalSco: string;
+  udolist: UdoDefinitionSnapshot[];
 }
 
 export interface BlueX7InstrumentSnapshot extends InstrumentSnapshotBase {
@@ -5068,6 +5069,7 @@ export function createInstrumentSnapshot(
       text: instrument.getText(),
       globalOrc: instrument.getGlobalOrc(),
       globalSco: instrument.getGlobalSco(),
+      udolist: instrument.getOpcodeList().getOpcodes().map(udoToSnapshot),
     };
   }
 
