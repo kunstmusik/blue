@@ -7,6 +7,7 @@ import {
   Element,
   GenericInstrument,
   JavaScriptInstrument,
+  PythonInstrument,
 } from '@blue/data';
 import {
   createEmptyProjectEditorSnapshot,
@@ -30,6 +31,7 @@ import {
   type EmbeddedOpcodeListPatch,
   type GenericInstrumentSnapshot,
   type JavaScriptInstrumentSnapshot,
+  type PythonInstrumentSnapshot,
   type MidiInputPatch,
   type MidiInputProcessorSnapshot,
   type InstrumentPatch,
@@ -2423,6 +2425,21 @@ function createDefaultInstrumentSnapshot(
         text: instrument.getText(),
         globalOrc: instrument.getGlobalOrc(),
         globalSco: instrument.getGlobalSco(),
+        udolist: [],
+      };
+    }
+    case 'python': {
+      const instrument = new PythonInstrument();
+      return {
+        assignmentId,
+        type: 'python',
+        name: instrument.getName(),
+        enabled,
+        comment: instrument.getComment(),
+        text: instrument.getText(),
+        globalOrc: instrument.getGlobalOrc(),
+        globalSco: instrument.getGlobalSco(),
+        udolist: [],
       };
     }
     case 'blueX7': {
@@ -3602,7 +3619,7 @@ function shouldPreserveWidgetMetadataForBsbPatch(patch: BsbInterfacePatch): bool
 }
 
 function applyEmbeddedOpcodeListPatchToSnapshot(
-  instrument: (GenericInstrumentSnapshot | JavaScriptInstrumentSnapshot),
+  instrument: (GenericInstrumentSnapshot | JavaScriptInstrumentSnapshot | PythonInstrumentSnapshot),
   patch: EmbeddedOpcodeListPatch,
 ): void {
   switch (patch.type) {

@@ -1130,13 +1130,18 @@ describe('Project Store', () => {
     });
     await useProjectStore.getState().updateOrchestra({
       type: 'addInstrument',
+      instrumentType: 'python',
+    });
+    await useProjectStore.getState().updateOrchestra({
+      type: 'addInstrument',
       instrumentType: 'blueSynthBuilder',
     });
 
     const state = useProjectStore.getState();
-    expect(state.orchestra.arrangement.rows).toHaveLength(2);
+    expect(state.orchestra.arrangement.rows).toHaveLength(3);
     expect(state.orchestra.instruments[0]?.type).toBe('generic');
-    expect(state.orchestra.instruments[1]?.type).toBe('blueSynthBuilder');
+    expect(state.orchestra.instruments[1]?.type).toBe('python');
+    expect(state.orchestra.instruments[2]?.type).toBe('blueSynthBuilder');
   });
 
   it('T349: updateOrchestra patches local BSB code immediately', async () => {

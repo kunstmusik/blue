@@ -223,4 +223,44 @@ describe('PythonInstrumentEditor', () => {
 
     expect(window.blueAPI.reinitializeJythonRuntime).toHaveBeenCalled();
   });
+
+  it('successfully creates a PythonInstrument in the orchestra arrangement', async () => {
+    const { useProjectStore } = await import('../stores/project-store');
+    const { createEmptyProjectEditorSnapshot } = await import('../../shared/project-editor');
+    (window as any).blueAPI.updateProjectDocument = vi.fn().mockResolvedValue(null);
+
+    const baseSnapshot = createEmptyProjectEditorSnapshot();
+    useProjectStore.getState().setProjectInfo({
+      title: 'Test',
+      author: 'Test',
+      sampleRate: '44100',
+      version: '2.10.0',
+      filePath: '/path/to/test.blue',
+      loaded: true,
+      globalOrc: baseSnapshot.globalOrc,
+      globalSco: baseSnapshot.globalSco,
+      orchestra: {
+        ...baseSnapshot.orchestra,
+        loaded: true,
+      },
+      projectProperties: {
+        ...baseSnapshot.projectProperties,
+        title: 'Test',
+        author: 'Test',
+      },
+      transport: baseSnapshot.transport,
+    });
+
+    await useProjectStore.getState().updateOrchestra({
+      type: 'addInstrument',
+      instrumentType: 'python',
+    });
+
+    const orchestra = useProjectStore.getState().orchestra;
+    expect(orchestra.arrangement.rows).toHaveLength(1);
+    expect(orchestra.arrangement.rows[0]?.instrumentType).toBe('python');
+    expect(orchestra.instruments).toHaveLength(1);
+    expect(orchestra.instruments[0]?.type).toBe('python');
+    expect(orchestra.instruments[0]?.name).toBe('PythonInstrument');
+  });
 });
