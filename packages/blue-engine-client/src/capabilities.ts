@@ -1,8 +1,17 @@
-export const BLUE_ENGINE_PROTOCOL_VERSION = 1;
+/**
+ * Protocol version 2: automation create/update payloads carry the
+ * authoritative Java-canonical decimal resolution text (see protocol.ts).
+ * The app, engine client, and bundled engine change atomically; version 2 is
+ * an incompatible schema marker so an accidentally mixed pairing fails the
+ * handshake before any automation command is published.
+ */
+export const BLUE_ENGINE_PROTOCOL_VERSION = 2;
 export const BLUE_ENGINE_CAPABILITIES_SCHEMA_VERSION = 1;
 export const CSOUND_IO_FEATURE = 'csound-io-v1';
 export const CSOUND_UTILITY_FEATURE = 'csound-utility-v1';
 export const CSOUND_PERFORMANCE_FEATURE = 'csound-performance-v1';
+/** Declared by engines whose automation payload uses exact decimal text. */
+export const AUTOMATION_DECIMAL_FEATURE = 'automation-decimal-v1';
 
 export interface EngineCapabilities {
   schemaVersion: 1;

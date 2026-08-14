@@ -29,7 +29,7 @@ struct Scenario {
   bool changing;
   bool exponential;
   bool quantized;
-  bool highPrecision;
+  const char* quantizedResolutionText;
   bool completed;
   bool liveEdit;
   bool liveCompile;
@@ -40,29 +40,31 @@ struct Scenario {
 // The matrix deliberately includes the limits called out by the performance
 // contract instead of hiding them behind a synthetic stand-in.
 const std::vector<Scenario> kScenarios = {
-    {"static_0", 0, 0, false, false, false, false, false, false, false, false, false},
-    {"static_1", 1, 0, false, false, false, false, false, false, false, false, false},
-    {"static_32", 32, 0, false, false, false, false, false, false, false, false, false},
-    {"static_128", 128, 0, false, false, false, false, false, false, false, false, false},
-    {"static_256", 256, 0, false, false, false, false, false, false, false, false, false},
-    {"changing_1", 1, 0, true, false, false, false, false, false, false, false, false},
-    {"changing_32", 32, 0, true, false, false, false, false, false, false, false, false},
-    {"changing_128", 128, 0, true, false, false, false, false, false, false, false, false},
-    {"changing_256", 256, 0, true, false, false, false, false, false, false, false, false},
-    {"linear_1", 1, 1, false, false, false, false, false, false, false, false, false},
-    {"linear_32", 32, 32, false, false, false, false, false, false, false, false, false},
-    {"linear_128", 128, 128, false, false, false, false, false, false, false, false, false},
-    {"linear_256", 256, 256, false, false, false, false, false, false, false, false, false},
-    {"exponential_1", 1, 1, false, true, false, false, false, false, false, false, false},
-    {"exponential_32", 32, 32, false, true, false, false, false, false, false, false, false},
-    {"exponential_128", 128, 128, false, true, false, false, false, false, false, false, false},
-    {"exponential_256", 256, 256, false, true, false, false, false, false, false, false, false},
-    {"quantized_fast_32", 32, 32, false, false, true, false, false, false, false, false, false},
-    {"quantized_high_precision_32", 32, 32, false, false, true, true, false, false, false, false, false},
-    {"completed_256", 256, 256, false, false, true, true, true, false, false, false, false},
-    {"live_edit_32", 32, 32, false, false, true, false, false, true, false, false, true},
-    {"live_compile_32", 32, 32, false, false, false, false, false, false, true, false, true},
-    {"missing_binding_32", 32, 1, false, false, false, false, false, false, false, true, false},
+    {"static_0", 0, 0, false, false, false, nullptr, false, false, false, false, false},
+    {"static_1", 1, 0, false, false, false, nullptr, false, false, false, false, false},
+    {"static_32", 32, 0, false, false, false, nullptr, false, false, false, false, false},
+    {"static_128", 128, 0, false, false, false, nullptr, false, false, false, false, false},
+    {"static_256", 256, 0, false, false, false, nullptr, false, false, false, false, false},
+    {"changing_1", 1, 0, true, false, false, nullptr, false, false, false, false, false},
+    {"changing_32", 32, 0, true, false, false, nullptr, false, false, false, false, false},
+    {"changing_128", 128, 0, true, false, false, nullptr, false, false, false, false, false},
+    {"changing_256", 256, 0, true, false, false, nullptr, false, false, false, false, false},
+    {"linear_1", 1, 1, false, false, false, nullptr, false, false, false, false, false},
+    {"linear_32", 32, 32, false, false, false, nullptr, false, false, false, false, false},
+    {"linear_128", 128, 128, false, false, false, nullptr, false, false, false, false, false},
+    {"linear_256", 256, 256, false, false, false, nullptr, false, false, false, false, false},
+    {"exponential_1", 1, 1, false, true, false, nullptr, false, false, false, false, false},
+    {"exponential_32", 32, 32, false, true, false, nullptr, false, false, false, false, false},
+    {"exponential_128", 128, 128, false, true, false, nullptr, false, false, false, false, false},
+    {"exponential_256", 256, 256, false, true, false, nullptr, false, false, false, false, false},
+    // exact decimal quantization scenarios: one ordinary scale and one scale
+    // beyond the former bounded fixed-point range, reported separately
+    {"quantized_exact_32", 32, 32, false, false, true, "0.01", false, false, false, false, false},
+    {"quantized_exact_large_scale_32", 32, 32, false, false, true, "0.0000000000000000001", false, false, false, false, false},
+    {"completed_256", 256, 256, false, false, true, "0.01", true, false, false, false, false},
+    {"live_edit_32", 32, 32, false, false, true, "0.01", false, true, false, false, true},
+    {"live_compile_32", 32, 32, false, false, false, nullptr, false, false, true, false, true},
+    {"missing_binding_32", 32, 1, false, false, false, nullptr, false, false, false, true, false},
 };
 
 struct TrialMetrics {
@@ -261,14 +263,15 @@ TrialMetrics runTrial(const Scenario &scenario, int warmupCycles,
                 channelName,
                 scenario.exponential ? AutomationCurve::EXPONENTIAL
                                      : AutomationCurve::LINEAR,
-                points, true, scenario.quantized ? 0.01 : 0.0, 2,
-                scenario.highPrecision) > 0,
+                points, true,
+                scenario.quantized ? scenario.quantizedResolutionText : "-1") ==
+                AutomationPrepareError::Ok,
             "automation setup failed");
   }
   if (scenario.missingBinding) {
     store->createAutomation(
         "missing_channel", AutomationCurve::LINEAR,
-        std::vector<AutomationPoint>{{0.0, 0.0}, {3.0, 1.0}}, true);
+        std::vector<AutomationPoint>{{0.0, 0.0}, {3.0, 1.0}}, true, "-1");
   }
 
   // Leave enough Csound periods for the requested measurement window. Null
@@ -297,8 +300,7 @@ TrialMetrics runTrial(const Scenario &scenario, int warmupCycles,
             std::vector<AutomationPoint>{{0.0, 0.1},
                                          {0.75, 0.2 + update * 0.01},
                                          {3.0, 0.8}},
-            true, scenario.quantized ? 0.01 : 0.0, 2,
-            scenario.highPrecision);
+            true, scenario.quantized ? scenario.quantizedResolutionText : "-1");
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -454,7 +456,7 @@ std::string buildJson(const std::vector<ScenarioResult> &results,
            << "      \"changing\": " << (result.scenario->changing ? "true" : "false") << ",\n"
            << "      \"exponential\": " << (result.scenario->exponential ? "true" : "false") << ",\n"
            << "      \"quantized\": " << (result.scenario->quantized ? "true" : "false") << ",\n"
-           << "      \"highPrecision\": " << (result.scenario->highPrecision ? "true" : "false") << ",\n"
+           << "      \"resolution\": " << (result.scenario->quantized && result.scenario->quantizedResolutionText ? ("\"" + std::string(result.scenario->quantizedResolutionText) + "\"") : std::string("null")) << ",\n"
            << "      \"completed\": " << (result.scenario->completed ? "true" : "false") << ",\n"
            << "      \"liveEdit\": " << (result.scenario->liveEdit ? "true" : "false") << ",\n"
            << "      \"liveCompile\": " << (result.scenario->liveCompile ? "true" : "false") << ",\n"
@@ -636,10 +638,16 @@ int main(int argc, char **argv) {
       baselineIdentity = baseline.sourceRevision.empty()
                              ? comparePath
                              : baseline.sourceRevision;
-      bool foundTarget = false;
+      bool foundCommonPath = false;
       for (const auto &result : results) {
         const auto baselineIt = baseline.metrics.find(result.scenario->name);
         if (baselineIt == baseline.metrics.end()) {
+          if (std::string(result.scenario->name).find("quantized_exact") == 0) {
+            // Exact-decimal scenarios were added after the SPEC 072 baseline.
+            // They remain visible in the current report without making an
+            // older baseline unusable.
+            continue;
+          }
           throw std::runtime_error("baseline is missing scenario " +
                                    std::string(result.scenario->name));
         }
@@ -654,25 +662,20 @@ int main(int argc, char **argv) {
                                              previous.hostP95Us * 100.0
                                        : 0.0;
         const std::string scenarioName = result.scenario->name;
-        const bool targeted = scenarioName.find("changing") != std::string::npos ||
-                              scenarioName.find("linear") != std::string::npos ||
-                              scenarioName.find("exponential") != std::string::npos ||
-                              scenarioName.find("quantized") != std::string::npos ||
-                              scenarioName.find("completed") != std::string::npos ||
-                              scenarioName.find("live_edit") != std::string::npos;
-        if (targeted) {
-          foundTarget = true;
-          if (hostDeltaPct > -10.0) {
+        const bool exactScenario = scenarioName.find("quantized_exact") == 0;
+        if (scenarioName == "linear_32") {
+          foundCommonPath = true;
+          if (hostDeltaPct > 5.0) {
             primaryImprovementMet = false;
           }
-        } else if (p95DeltaPct > 5.0) {
+        } else if (!exactScenario && p95DeltaPct > 5.0) {
           unaffectedRegressionMet = false;
         }
         if (current.hostCycleSpikeCount > previous.hostSpikeCount) {
           spikeCountDischarged = false;
         }
       }
-      primaryImprovementMet = primaryImprovementMet && foundTarget;
+      primaryImprovementMet = primaryImprovementMet && foundCommonPath;
     }
 
     const std::string output = buildJson(

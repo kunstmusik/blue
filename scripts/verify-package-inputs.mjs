@@ -50,7 +50,7 @@ const repoRoot = resolve(__dirname, '..');
 const appRoot = join(repoRoot, 'packages', 'blue-app');
 const engineStageRoot = join(appRoot, '.engine-stage');
 const releaseMetadataPath = join(appRoot, 'release-metadata.json');
-const engineProtocolVersion = 1;
+const engineProtocolVersion = 2;
 
 /** @typedef {{ ok: boolean, code: string, message: string, detail?: string[] }} Diagnostic */
 

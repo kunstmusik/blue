@@ -246,14 +246,14 @@ def main(selected_test=None):
             ]
 
             # Use a large resolution so you can clearly hear stepped changes
-            resolution = 100.0
+            resolution = "100"
 
             ok, auto_id = client.create_automation(
                 "freq",
                 AutomationCurve.LINEAR,
                 quant_points,
                 enabled=False,
-                resolution=resolution,
+                resolution_decimal=resolution,
             )
             print(
                 f"create_automation (LINEAR + resolution={resolution}): "

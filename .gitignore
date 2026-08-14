@@ -40,6 +40,7 @@ npm-debug.log*
 .pnpm-store
 *.blue~
 packages/blue-java/target
+/tools/java-blue-automation-fixtures/target/
 packages/blue-app/assets/java/blue-java.jar
 packages/blue-app/release/
 packages/blue-app/.engine-stage/

@@ -7,6 +7,7 @@
 import { Request, Subscriber } from 'zeromq';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
   decodeEngineCapabilitiesJson,
   EngineCapabilities,
 } from './capabilities';
@@ -235,6 +236,13 @@ export class EngineClient {
             `received ${actualVersion}`,
         };
       }
+      if (!capabilityResult.capabilities.features.includes(AUTOMATION_DECIMAL_FEATURE)) {
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message: `Blue Engine is missing required capability: ${AUTOMATION_DECIMAL_FEATURE}`,
+        };
+      }
       this.verifiedCapabilities = capabilityResult.capabilities;
     }
 
@@ -382,12 +390,10 @@ export class EngineClient {
     name: string,
     curve: AutomationCurveCode,
     enabled: boolean,
-    resolution: number,
-    resolutionScale: number,
-    highPrecision: boolean,
+    resolutionDecimal: string,
     points: AutomationPoint[],
   ): Promise<{ ok: boolean; message: string }> {
-    const data = encodeCreateAutomation(name, curve, enabled, resolution, resolutionScale, highPrecision, points);
+    const data = encodeCreateAutomation(name, curve, enabled, resolutionDecimal, points);
     return this.sendRaw(CMD_CREATE_AUTOMATION, data);
   }
 
@@ -399,12 +405,10 @@ export class EngineClient {
     name: string,
     curve: AutomationCurveCode,
     enabled: boolean,
-    resolution: number,
-    resolutionScale: number,
-    highPrecision: boolean,
+    resolutionDecimal: string,
     points: AutomationPoint[],
   ): Promise<{ ok: boolean; message: string }> {
-    const data = encodeUpdateAutomation(name, curve, enabled, resolution, resolutionScale, highPrecision, points);
+    const data = encodeUpdateAutomation(name, curve, enabled, resolutionDecimal, points);
     return this.sendRaw(CMD_UPDATE_AUTOMATION, data);
   }
 

@@ -2,9 +2,10 @@
 
 The automation system provides a mechanism for automatically updating native Csound control-channel values over time, with shared memory maintained as a read mirror for external processes. This enables time-based parameter control (e.g., envelopes, fades) that runs efficiently within the engine thread while remaining observable from other processes.
 
-This document describes the implementation on the `072-blue-engine-performance`
-work branch. The performance changes are internal: the ZMQ protocol, generated
-CSD, project data, and observable automation behavior are unchanged.
+This document describes the Spec 073 implementation. The exact-resolution
+contract is shared by the project model, Electron bridge, engine client, and
+native engine. Only the resolution is exact decimal text; automation values,
+times, bounds, and points remain binary64.
 
 ## Overview
 
@@ -123,15 +124,14 @@ Complete automation definition (Immutable):
 
 ```cpp
 struct AutomationDef {
-    uint32_t id;                      // Unique automation ID
-    std::string channelName;          // Target channel (key)
-    AutomationCurve curve;            // Interpolation type
-    std::vector<AutomationPoint> points;  // Envelope points
-    bool enabled;                     // Currently active
-    double resolution;                // Quantization step size (0.0 = no quantization)
-    int resolutionScale;              // Decimal scale for resolution (e.g., 1 for 0.1)
-    bool highPrecision;               // Use bounded Java-compatible fixed-point quantization
-    uint64_t definitionRevision;      // Bumped on every replacement definition
+    uint32_t id;                         // Unique automation ID
+    std::string channelName;             // Target channel (key)
+    AutomationCurve curve;               // Interpolation type
+    std::vector<AutomationPoint> points; // Envelope points, still binary64
+    bool enabled;                        // Currently active
+    std::string resolutionDecimal;       // Canonical Java decimal text
+    double resolutionDouble;             // Prepared Java BigDecimal.doubleValue()
+    uint64_t definitionRevision;         // Bumped on every replacement definition
 };
 ```
 
@@ -153,17 +153,16 @@ Maintained by the performance thread:
 
 ```cpp
 struct AutomationState {
-    size_t currentIndex;       // Current segment index
-    bool completed;             // Has reached end
-    double* channelPointer;     // Current generation's Csound storage
+    size_t currentIndex;
+    bool completed;
+    double* channelPointer;
     double lastElapsed;
     double lastWrittenValue;
     bool hasLastWrittenValue;
     uint64_t cachedDefRevision;
     uint64_t cachedBindingGeneration;
     bool bindingGenerationInitialized;
-    std::vector<AutomationSegmentCache> segmentCaches;
-    QuantizationCache quantCache;
+    uint64_t invalidEvaluationCount;
 };
 ```
 
@@ -181,13 +180,13 @@ struct AutomationState {
 | 0x25 | LIST_AUTOMATIONS | Query active automations |
 | 0x26 | CLEAR_AUTOMATIONS | Remove all automations |
 
-### CREATE_AUTOMATION Payload
+### Protocol version 2 automation payload
 
 ```
-┌──────────────┬──────────────┬───────────┬────────────────┬─────────────────┬───────────────┬───────────┬────────────────────┐
-│ channel_name │ curve (1B)   │ enabled   │ resolution(8B) │ resolutionScale │ highPrecision │ n_points  │ points (n * 16B)   │
-│ (null-term)  │              │ (1B)      │ double (LE)    │ (4B) int32      │ (1B)          │ (4B)      │ (time + value)     │
-└──────────────┴──────────────┴───────────┴────────────────┴─────────────────┴───────────────┴───────────┴────────────────────┘
+┌──────────────┬──────────────┬───────────┬────────────────────┬────────────────────┬───────────┬────────────────────┐
+│ channel_name │ curve (1B)   │ enabled   │ resolutionLength    │ resolution (ASCII) │ n_points  │ points (n * 16B)   │
+│ (null-term)  │              │ (1B)      │ (4B) uint32 LE       │                    │ (4B)      │ (time + value)     │
+└──────────────┴──────────────┴───────────┴────────────────────┴────────────────────┴───────────┴────────────────────┘
 ```
 
 | Field | Size | Description |
@@ -195,9 +194,8 @@ struct AutomationState {
 | channel_name | variable | Null-terminated UTF-8 string |
 | curve | 1 byte | AutomationCurve enum value |
 | enabled | 1 byte | 0 = disabled, non-zero = enabled |
-| resolution | 8 bytes | double, quantization step size (0 = none) |
-| resolutionScale | 4 bytes | int32_t, decimal scale for resolution |
-| highPrecision | 1 byte | 0 = fast path, non-zero = high-precision |
+| resolutionLength | 4 bytes | uint32_t little-endian byte length |
+| resolution | variable | Canonical Java decimal ASCII text; positive `doubleValue()` activates quantization |
 | n_points | 4 bytes | uint32_t, number of points |
 | points | 16 bytes each | (time: double, value: double) pairs |
 
@@ -230,13 +228,15 @@ Manages the immutable `AutomationList` and handles the atomic swap for the main 
 ```cpp
 class AutomationStore {
 public:
-    // Called from ZMQ handler thread (writers)
-    uint32_t createAutomation(const AutomationDef& def);
-    bool deleteAutomation(const std::string& channel);
-    bool setEnabled(const std::string& channel, bool enabled);
+    // Called from the ZMQ handler thread. Parsing and exact workspace
+    // preparation complete before any revision is published.
+    AutomationPrepareError createAutomation(...);
+    AutomationPrepareError updateAutomation(...);
+    AutomationPrepareError deleteAutomation(const std::string& channel);
+    AutomationPrepareError setEnabled(const std::string& channel, bool enabled);
     void clear();
 
-    // Called from performance thread (reader). C++17 uses the atomic
+    // Called from the performance thread (reader). C++17 uses the atomic
     // shared_ptr free functions rather than std::atomic<shared_ptr<T>>.
     uint64_t getRevision() const;
     std::shared_ptr<const AutomationList> getList() const;
@@ -276,11 +276,12 @@ private:
     ChannelResolver resolver_;
     BindingGenerationProvider bindingGenerationProvider_;
 
-    // Local state map is only rebuilt when the immutable list revision changes.
-    std::map<std::string, AutomationState> states_;
+    // Fixed arrays are rebuilt/adopted only at a revision boundary. No
+    // container growth or decimal preparation occurs on the audio thread.
+    std::array<AutomationState, kMaxActiveAutomations> states_;
     std::shared_ptr<const AutomationList> activeListSnapshot_;
     uint64_t cachedSnapshotRevision_ = 0;
-    std::vector<ActiveAutomation> activeAutomations_;
+    size_t activeCount_ = 0;
 
     double interpolate(const AutomationDef& def, AutomationState& state,
                        double elapsed);
@@ -322,7 +323,9 @@ benchmark target enables that definition; the distributed engine does not.
 **Linear**:
 ```cpp
 double t = (elapsed - p0.time) / (p1.time - p0.time);
-double y = p0.value + t * (p1.value - p0.value);
+double m = (p1.value - p0.value) / (p1.time - p0.time);
+double x = elapsed - p0.time;
+double y = (m * x) + p0.value;
 ```
 
 **Exponential**:
@@ -337,47 +340,16 @@ if (segment.isPositiveLogValid) {
 }
 ```
 
-### Quantization (resolution)
+### Exact decimal quantization
 
-After interpolation, if `resolution > 0.0`, the value is quantized to a grid of
-`resolution`-sized steps. The system supports two quantization modes:
+Quantization is active exactly when the prepared resolution's Java
+`doubleValue()` is greater than zero. Zero, negative, and positive values that
+underflow to zero remain unquantized. There is one exact path; no bounded
+fixed-point mode or precision flag is part of the runtime contract.
 
-#### Fast Path (Default)
-
-Simple double-based quantization, suitable for most use cases:
-
-```cpp
-double step = def.resolution; // 0.0 => no quantization
-if (step > 0.0) {
-    // Detect descending segments and apply bias
-    if (p1.value < p0.value) {
-        y += step * 0.99;
-    }
-    // Snap to nearest lower multiple of step
-    double n = std::floor(y / step);
-    y = n * step;
-}
-```
-
-#### High-Precision Path
-
-When `highPrecision` is enabled, the engine uses bounded decimal fixed-point
-arithmetic. Within the validated domain (finite values, `resolutionScale` from
-0 through 18, and scaled values that fit in `int64_t`) it preserves the same
-integer quantization grid as the prior `FixedPoint` path and the accepted Java
-Blue fixtures. This is not arbitrary-precision decimal arithmetic, and the
-cached path is not promised to produce the identical binary64 encoding for
-every high-scale result: the old `FixedPoint` conversion normalizes trailing
-zeroes before division, while the realtime cache divides by the original
-scale factor. The difference is at most a representation-level rounding
-difference in the supported range, not a different quantization step.
-
-Invalid, non-finite, unsupported, or out-of-range inputs retain the existing
-fallback behavior and are returned unquantized. The Java expression shown below
-is the compatibility reference for the accepted fixture set:
+The evaluator follows Java Blue's operation order:
 
 ```cpp
-// Java Line.getValue() implementation:
 if (resolution.doubleValue() > 0.0) {
     if (b.getY() < a.getY()) {
         y += resolution.doubleValue() * 0.99;
@@ -388,38 +360,10 @@ if (resolution.doubleValue() > 0.0) {
 }
 ```
 
-The C++ high-precision implementation:
-
-```cpp
-if (def.highPrecision && def.resolution > 0.0) {
-    if (isDescending) {
-        y += def.resolution * 0.99;
-    }
-    // The real-time path uses the per-definition integer scaleFactor and
-    // scaledResolution prepared in AutomationState. The standalone helper
-    // uses FixedPoint::fromDoubleFloor for differential Java tests.
-    const double scaled = std::floor(y * static_cast<double>(cache.scaleFactor));
-    if (!std::isfinite(scaled) ||
-        scaled < INT64_MIN || scaled > INT64_MAX ||
-        cache.scaledResolution <= 0) {
-        return y; // Invalid/out-of-range resolutions use the existing value.
-    }
-    const int64_t scaledValue = static_cast<int64_t>(scaled);
-    y = static_cast<double>(scaledValue - scaledValue % cache.scaledResolution) /
-        static_cast<double>(cache.scaleFactor);
-}
-```
-
-### FixedPoint Class
-
-The `FixedPoint` class provides bounded decimal arithmetic for the accepted
-Java-compatible quantization fixtures; it is not an arbitrary-precision
-replacement for Java `BigDecimal`:
-
-- **Internal Representation**: Uses `int64_t` unscaled value with decimal scale
-- **Operations**: add, subtract, multiply, remainder, setScale
-- **Rounding Modes**: FLOOR, CEILING, DOWN, UP, HALF_UP, HALF_DOWN, HALF_EVEN
-- **setScale**: Mirrors Java's `BigDecimal.setScale(int, RoundingMode)` behavior for values that fit the fixed-point representation
+The native `JavaBigDecimal` and `ExactDecimalQuantizer` implementations use
+prepared arbitrary-precision decimal state on the control thread. A prepared
+definition owns its workspace; the performance thread only consumes it and
+increments a fixed diagnostic counter if an invalid evaluation is encountered.
 
 ### Per-Cycle Processing & Performance Optimizations
 
@@ -434,9 +378,9 @@ replacement for Java `BigDecimal`:
    - For exponential segments: `logRatio = std::log(p1.value / p0.value)` is computed once per segment transition rather than evaluated every k-cycle.
 
 3. **Precomputed Quantization & Integer Fast Path**:
-   - Power-of-10 scale factors are loaded via `constexpr` lookup table `FixedPoint::getScaleFactor(scale)`.
-   - `scaledResolution`, `invResolution`, and `isFastQuantizeSafe` are cached.
-   - When the prepared high-precision constants are valid, integer remainder arithmetic replaces per-cycle `FixedPoint` construction while preserving the same quantization grid; invalid, non-finite, or out-of-range resolutions fall back to the unquantized value. The cache intentionally does not claim universal bit-for-bit equality with the old normalized `FixedPoint::toDouble()` result at every decimal scale.
+   - Exact decimal parsing, scale preparation, and workspace sizing happen on
+     the control thread. The audio thread consumes the prepared quantizer and
+     never constructs decimal objects or requests system allocation.
 
 4. **Definition-Aware Completed Envelope Bypass**:
    - When an automation envelope reaches its final segment and target time, `state.completed` is set and the final value is written once.
@@ -480,7 +424,7 @@ Csound replaces channel storage. A naturally completed but still joinable
 `benchmark_engine` executes the same `CsoundEngine::performThread()` path used
 by the sidecar. It requires shared memory and covers idle/static/changing
 mirrors at 1, 32, 128, and 256 channels; linear and exponential automation;
-fast and high-precision quantization; completed envelopes; live edits; live
+unquantized and exact-decimal quantization; completed envelopes; live edits; live
 compilation; and missing bindings. It discards at least 1,024 warmup periods,
 records at least 4,096 measured periods for each of five trials by default, and
 emits compiler, architecture, operating-system, sample-rate, `ksmps`, Csound
@@ -517,7 +461,8 @@ callback, so suppressed output cannot accumulate unboundedly.
 
 2. **Reader (Performance Thread)**:
    - Check `store_->getRevision()` (`memory_order_acquire`)
-   - If revision changed, swap active snapshot and rebuild segment cache
+   - If revision changed, adopt the prepared snapshot and copy into fixed
+     audio-thread state slots
    - Direct pointer writes and relaxed shared-memory atomic stores
    - Zero audio-thread mutex acquisitions in the steady-state path; lifecycle
      control joins the perform thread before replacing Csound channel storage.
@@ -532,7 +477,8 @@ src/
 │   ├── AutomationStore.cpp
 │   ├── AutomationManager.h    # Per-cycle logic and invariant caching (the Reader)
 │   ├── AutomationManager.cpp
-│   └── FixedPoint.h           # Decimal fixed-point arithmetic and scale lookup table
+│   ├── JavaBigDecimal.h/.cpp  # Java-compatible exact decimal operations
+│   └── ExactDecimalQuantizer.h/.cpp # Prepared realtime quantizer workspace
 ├── engine/
 │   ├── CsoundEngine.h         # Lock-free channel binding snapshots & perform loop
 │   └── CsoundEngine.cpp
@@ -542,3 +488,51 @@ src/
     ├── ZmqHandler.h           # Event-driven inproc wakeup control plane
     └── ZmqHandler.cpp
 ```
+
+
+---
+
+## Exact Decimal Resolution and Thread Ownership (Spec 073)
+
+Spec 073 uses one Java-compatible exact decimal contract. The payload tables
+and evaluator details above are the normative protocol-v2 and realtime model.
+
+### Canonical ownership
+
+- `.blue` XML is the durable authority; the `bdresolution` attribute stores
+  Java-canonical decimal text at the parameter and nested-line boundaries.
+- The Electron main process owns the active project model (`@blue/data`
+  `Parameter` and BSB slider/bank models hold the exact resolution).
+- Renderer snapshots carry authoritative `resolutionDecimal` text plus a
+  derived display number; patches commit only the decimal string.
+- The Blue Engine owns only a transient prepared copy received through the
+  engine-client protocol-v2 boundary. Protocol v2 transports canonical
+  resolution text (`channelName\0 + curve:u8 + enabled:u8 +
+  resolutionLength:u32-le + resolution:ascii + pointCount:u32-le + points`)
+  and contains no resolution-double, scale, or precision-mode field.
+
+### Realtime ownership and retirement
+
+- The ZMQ control thread parses, validates, and prepares automation
+  definitions: exact-decimal parsing (`JavaBigDecimal`), segment preparation
+  with Java-order slopes, and arena sizing/allocation
+  (`ExactDecimalQuantizer::prepare`).
+- Publication is atomic: a definition revision is fully prepared before the
+  store publishes it; any failure before publication leaves the previous
+  definition intact.
+- The performance thread is the single consumer of each quantizer workspace:
+  it resets the arena cursor per evaluation and never parses, locks, logs,
+  or reaches the system allocator. The `DecimalArenaAllocator` records any
+  bypass in a global counter; tests hard-fail when it is nonzero.
+- Retired prepared definitions (old snapshots) are reclaimed on the control
+  thread after the performance thread releases its snapshot reference, so
+  arena and big-integer destruction never become audio-thread work.
+
+### Quantization activation
+
+Quantization is active exactly when the exact resolution's Java
+`doubleValue() > 0.0`. Zero, negative, and positive-underflow-to-zero
+resolutions branch before any arbitrary-precision work and retain the common
+unquantized path. Positive resolution always uses the exact Java sequence
+(`new BigDecimal(y).setScale(scale, FLOOR).subtract(remainder(resolution))`
+converted back with `doubleValue()`); there is no selectable approximation.

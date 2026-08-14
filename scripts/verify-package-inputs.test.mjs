@@ -14,7 +14,7 @@ async function fixture({
   platform = 'darwin',
   arch = 'arm64',
   revision = 'abc123',
-  protocolVersion = 1,
+  protocolVersion = 2,
   executableName = platform === 'win32' ? 'blue-engine.exe' : 'blue-engine',
 } = {}) {
   const stageRoot = await mkdtemp(join(tmpdir(), 'blue-package-engine-'));

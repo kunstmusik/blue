@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { parseJavaDecimal } from '@blue/data';
 import type {
   InstrumentPatch,
   SoundEditorPayload,
@@ -80,7 +81,12 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
     });
   }, [document.target, onPatch]);
 
-  const handleAutomationPatch = useCallback((parameterId: string, updates: { automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string }) => {
+  const handleAutomationPatch = useCallback((parameterId: string, updates: {
+    automationEnabled?: boolean;
+    points?: Array<{ x: number; y: number }>;
+    curve?: string;
+    resolutionDecimal?: string;
+  }) => {
     onPatch({
       type: 'updateTypeSpecificEditor',
       target: document.target,
@@ -190,7 +196,12 @@ export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObj
 
 interface SoundAutomationPanelProps {
   parameters: SoundAutomationParameterSnapshot[];
-  onAutomationPatch: (parameterId: string, updates: { automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string }) => void;
+  onAutomationPatch: (parameterId: string, updates: {
+    automationEnabled?: boolean;
+    points?: Array<{ x: number; y: number }>;
+    curve?: string;
+    resolutionDecimal?: string;
+  }) => void;
   startTimeBeats: number;
   durationBeats: number;
 }
@@ -276,6 +287,14 @@ function SoundAutomationPanel({
     [sortedParameters],
   );
   const [selectedParamId, setSelectedParamId] = useState<string | null>(lines[0]?.parameterId ?? null);
+  const selectedParameter = useMemo(
+    () => sortedParameters.find((parameter) => parameter.parameterId === selectedParamId) ?? null,
+    [selectedParamId, sortedParameters],
+  );
+  const selectedResolutionText = selectedParameter?.resolutionDecimal
+    ?? String(selectedParameter?.resolution ?? '-1');
+  const [resolutionDraft, setResolutionDraft] = useState(selectedResolutionText);
+  const [resolutionError, setResolutionError] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [draftEnabledMap, setDraftEnabledMap] = useState<Record<string, boolean>>({});
   const selectedLineIndex = useMemo(() => {
@@ -295,6 +314,26 @@ function SoundAutomationPanel({
       setSelectedParamId(lines[0]?.parameterId ?? null);
     }
   }, [lines, selectedParamId]);
+
+  useEffect(() => {
+    setResolutionDraft(selectedResolutionText);
+    setResolutionError(false);
+  }, [selectedParamId, selectedResolutionText]);
+
+  const commitResolution = useCallback(() => {
+    if (!selectedParamId) return;
+    const parsed = parseJavaDecimal(resolutionDraft);
+    if (!parsed.ok) {
+      setResolutionError(true);
+      return;
+    }
+    const canonicalText = parsed.value.canonicalText;
+    setResolutionDraft(canonicalText);
+    setResolutionError(false);
+    if (canonicalText !== selectedResolutionText) {
+      onAutomationPatch(selectedParamId, { resolutionDecimal: canonicalText });
+    }
+  }, [onAutomationPatch, resolutionDraft, selectedParamId, selectedResolutionText]);
 
   const handleLinesChange = useCallback((nextLines: AutomationLineView[]) => {
     nextLines.forEach((nextLine, index) => {
@@ -373,6 +412,32 @@ function SoundAutomationPanel({
             ))
           )}
         </select>
+        {selectedParameter && (
+          <label className="flex items-center gap-1 text-app-text-soft" title="Exact Java decimal resolution">
+            <span>Resolution</span>
+            <input
+              aria-label="Exact automation resolution"
+              className={`w-24 rounded border bg-app-surface px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none ${resolutionError ? 'border-app-danger' : 'border-app-border'}`}
+              value={resolutionDraft}
+              onChange={(event) => {
+                setResolutionDraft(event.target.value);
+                setResolutionError(false);
+              }}
+              onBlur={commitResolution}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commitResolution();
+                  event.currentTarget.blur();
+                } else if (event.key === 'Escape') {
+                  setResolutionDraft(selectedResolutionText);
+                  setResolutionError(false);
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+          </label>
+        )}
         <button
           type="button"
           className="rounded border border-app-border bg-app-surface px-3 py-1 text-body text-app-text-strong hover:border-app-accent"

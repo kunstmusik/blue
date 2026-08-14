@@ -182,16 +182,16 @@ class BlueEngineClient {
     return { ok: false, value: 0.0 };
   }
 
-  async createAutomation(channelName, curve, points, enabled = true, resolution = 0.0, resolutionScale = 0, highPrecision = false) {
+  async createAutomation(channelName, curve, points, enabled = true, resolutionDecimal = "0") {
     const nameBuf = Buffer.from(channelName + "\0", "utf-8");
-    // header: curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B)
-    const header = Buffer.alloc(2 + 8 + 4 + 1 + 4);
+    const resolutionBuf = Buffer.from(resolutionDecimal, "ascii");
+    // header: curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B)
+    const header = Buffer.alloc(2 + 4 + resolutionBuf.length + 4);
     header.writeUInt8(curve, 0);
     header.writeUInt8(enabled ? 1 : 0, 1);
-    header.writeDoubleLE(resolution, 2);
-    header.writeInt32LE(resolutionScale, 10);
-    header.writeUInt8(highPrecision ? 1 : 0, 14);
-    header.writeUInt32LE(points.length, 15);
+    header.writeUInt32LE(resolutionBuf.length, 2);
+    resolutionBuf.copy(header, 6);
+    header.writeUInt32LE(points.length, 6 + resolutionBuf.length);
 
     const pointsData = Buffer.alloc(points.length * 16);
     for (let i = 0; i < points.length; i++) {
@@ -209,16 +209,16 @@ class BlueEngineClient {
     return { ok: false, id: 0 };
   }
 
-  async updateAutomation(channelName, curve, points, enabled = true, resolution = 0.0, resolutionScale = 0, highPrecision = false) {
+  async updateAutomation(channelName, curve, points, enabled = true, resolutionDecimal = "0") {
     const nameBuf = Buffer.from(channelName + "\0", "utf-8");
-    // header: curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B)
-    const header = Buffer.alloc(2 + 8 + 4 + 1 + 4);
+    const resolutionBuf = Buffer.from(resolutionDecimal, "ascii");
+    // header: curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B)
+    const header = Buffer.alloc(2 + 4 + resolutionBuf.length + 4);
     header.writeUInt8(curve, 0);
     header.writeUInt8(enabled ? 1 : 0, 1);
-    header.writeDoubleLE(resolution, 2);
-    header.writeInt32LE(resolutionScale, 10);
-    header.writeUInt8(highPrecision ? 1 : 0, 14);
-    header.writeUInt32LE(points.length, 15);
+    header.writeUInt32LE(resolutionBuf.length, 2);
+    resolutionBuf.copy(header, 6);
+    header.writeUInt32LE(points.length, 6 + resolutionBuf.length);
 
     const pointsData = Buffer.alloc(points.length * 16);
     for (let i = 0; i < points.length; i++) {
@@ -528,7 +528,7 @@ async function main(selectedTest) {
         { time: 6.0, value: 880.0 },
       ];
 
-      const resolution = 100.0;
+      const resolution = "100";
       let autoResp = await client.createAutomation(
         "freq",
         AutomationCurve.LINEAR,

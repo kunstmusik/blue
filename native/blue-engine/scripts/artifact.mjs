@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 export const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const repoRoot = resolve(packageRoot, '../..');
-export const protocolVersion = 1;
+export const protocolVersion = 2;
 export const vcpkgBaseline = '9d7f79f56ae1a9b4704d6a7fb8237e347a974133';
 
 const externalDependencies = {

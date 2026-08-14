@@ -22,7 +22,7 @@ void testShrinkingActiveAutomationResetsCachedSegment() {
         {3.0, 3.0},
     };
     store->createAutomation(
-        "gain", AutomationCurve::LINEAR, initialPoints, true);
+        "gain", AutomationCurve::LINEAR, initialPoints, true, "-1");
 
     std::string writtenChannel;
     double writtenValue = 0.0;
@@ -42,7 +42,8 @@ void testShrinkingActiveAutomationResetsCachedSegment() {
         {4.0, 14.0},
     };
     assert(store->updateAutomation(
-        "gain", AutomationCurve::LINEAR, replacementPoints, true));
+        "gain", AutomationCurve::LINEAR, replacementPoints, true, "-1") ==
+        AutomationPrepareError::Ok);
 
     manager.process(260, 100.0);
     assert(writtenChannel == "gain");
@@ -58,7 +59,7 @@ void testExponentialInterpolationWithLogRatio() {
         {0.0, 1.0},
         {2.0, 4.0},
     };
-    store->createAutomation("exp_channel", AutomationCurve::EXPONENTIAL, expPoints, true);
+    store->createAutomation("exp_channel", AutomationCurve::EXPONENTIAL, expPoints, true, "-1");
 
     std::string writtenChannel;
     double writtenValue = 0.0;
@@ -79,7 +80,7 @@ void testExponentialInterpolationWithLogRatio() {
         {0.0, 0.0},
         {2.0, 4.0},
     };
-    store->updateAutomation("exp_channel", AutomationCurve::EXPONENTIAL, zeroPoints, true);
+    store->updateAutomation("exp_channel", AutomationCurve::EXPONENTIAL, zeroPoints, true, "-1");
 
     // At t = 1.0s (midpoint), linear fallback gives (0.0 + 4.0) / 2 = 2.0
     manager.process(100, 100.0);
@@ -94,7 +95,7 @@ void testCompletedEnvelopeEarlyOutAndInvalidation() {
         {0.0, 0.0},
         {1.0, 5.0},
     };
-    store->createAutomation("cutoff", AutomationCurve::LINEAR, points, true);
+    store->createAutomation("cutoff", AutomationCurve::LINEAR, points, true, "-1");
 
     uint64_t writeCount = 0;
     double lastWritten = -1.0;
@@ -122,7 +123,7 @@ void testCompletedEnvelopeEarlyOutAndInvalidation() {
         {0.0, 0.0},
         {3.0, 15.0},
     };
-    store->updateAutomation("cutoff", AutomationCurve::LINEAR, extendedPoints, true);
+    store->updateAutomation("cutoff", AutomationCurve::LINEAR, extendedPoints, true, "-1");
 
     // Process at t = 2.0s -> should interpolate to 10.0 and write value
     manager.process(200, 100.0);
@@ -134,24 +135,32 @@ void testCompletedEnvelopeEarlyOutAndInvalidation() {
     assert(std::abs(lastWritten - 2.5) < 1.0e-7);
 }
 
-void testQuantizationStaticHelpers() {
+void testExactQuantizationThroughManager() {
     using namespace blue;
 
-    // Fast quantization ascending
-    double fastAsc = AutomationManager::quantizeFast(0.57, 0.1, false);
-    assert(std::abs(fastAsc - 0.5) < 1.0e-9);
+    // Exact Java quantization through the production manager, replacing the
+    // former fast/high-precision static helpers. Expected values are
+    // Java-verified (see the realtime fixture corpus for full coverage).
+    const auto run = [](double first, double second, const char* resolutionText) {
+        auto store = std::make_shared<AutomationStore>();
+        store->createAutomation(
+            "quantized", AutomationCurve::LINEAR,
+            std::vector<AutomationPoint>{{0.0, first}, {1.0, second}}, true,
+            resolutionText);
+        double value = 0.0;
+        AutomationManager manager(
+            store,
+            [&](const std::string&, double nextValue) { value = nextValue; });
+        manager.process(50, 100.0);
+        return value;
+    };
 
-    // Fast quantization descending (applies + 0.99 * res)
-    double fastDesc = AutomationManager::quantizeFast(0.5, 0.2, true);
-    assert(std::abs(fastDesc - 0.6) < 1.0e-9);
-
-    // High precision ascending (scale 1)
-    double highAsc = AutomationManager::quantizeHighPrecision(0.57, 0.1, 1, false);
-    assert(std::abs(highAsc - 0.5) < 1.0e-9);
-
-    // High precision descending (scale 1)
-    double highDesc = AutomationManager::quantizeHighPrecision(0.5, 0.2, 1, true);
-    assert(std::abs(highDesc - 0.6) < 1.0e-9);
+    assert(std::abs(run(0.0, 0.2469, "0.1") - 0.1) < 1.0e-12);
+    assert(std::abs(run(0.2469, 0.0, "0.1") - 0.2) < 1.0e-12);
+    assert(std::abs(run(0.0, -0.2469, "0.1") + 0.1) < 1.0e-12);
+    assert(std::abs(run(0.0, 1.0, "0.0000000000000000001") - 0.5) < 1.0e-12);
+    assert(std::abs(run(0.0, 1.0, "1E-400") - 0.5) < 1.0e-12);
+    assert(std::abs(run(0.0, 1.0, "-1") - 0.5) < 1.0e-12);
 }
 
 void testChannelResolutionIsGenerationGated() {
@@ -160,7 +169,7 @@ void testChannelResolutionIsGenerationGated() {
     auto store = std::make_shared<AutomationStore>();
     store->createAutomation(
         "late_channel", AutomationCurve::LINEAR,
-        std::vector<AutomationPoint>{{0.0, 1.0}, {1.0, 2.0}}, true);
+        std::vector<AutomationPoint>{{0.0, 1.0}, {1.0, 2.0}}, true, "-1");
 
     double firstChannelValue = 0.0;
     double secondChannelValue = 0.0;
@@ -199,7 +208,7 @@ void testCompletedAutomationRebindsFinalValue() {
     auto store = std::make_shared<AutomationStore>();
     store->createAutomation(
         "completed_channel", AutomationCurve::LINEAR,
-        std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 5.0}}, true);
+        std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 5.0}}, true, "-1");
 
     double firstChannelValue = 0.0;
     double replacementChannelValue = 0.0;
@@ -234,34 +243,31 @@ void testCompletedAutomationRebindsFinalValue() {
     assert(std::abs(replacementChannelValue - 5.0) < 1.0e-9);
 }
 
-void testPreparedQuantizationMatchesJavaFixtures() {
+void testInvalidDefinitionKeepsPreviousRevision() {
     using namespace blue;
 
-    const auto run = [](double first, double second, double resolution,
-                        int scale, bool highPrecision) {
-        auto store = std::make_shared<AutomationStore>();
-        store->createAutomation(
-            "quantized", AutomationCurve::LINEAR,
-            std::vector<AutomationPoint>{{0.0, first}, {1.0, second}}, true,
-            resolution, scale, highPrecision);
-        double value = 0.0;
-        AutomationManager manager(
-            store,
-            [&](const std::string&, double nextValue) { value = nextValue; });
-        manager.process(50, 100.0);
-        return value;
-    };
+    auto store = std::make_shared<AutomationStore>();
+    assert(store->createAutomation(
+               "kept", AutomationCurve::LINEAR,
+               std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 1.0}}, true,
+               "0.1") == AutomationPrepareError::Ok);
 
-    // The manager uses the prepared cache here; these are the same negative,
-    // fractional, and descending cases covered by the Java parity fixtures.
-    assert(std::abs(run(0.0, 0.2469, 0.1, 1, true) - 0.1) < 1.0e-12);
-    assert(std::abs(run(0.2469, 0.0, 0.1, 1, true) - 0.2) < 1.0e-12);
-    assert(std::abs(run(0.0, -0.2469, 0.1, 1, true) + 0.1) < 1.0e-12);
-    assert(std::abs(run(0.0, 0.2469, 0.1, 1, false) - 0.1) < 1.0e-12);
+    // malformed resolution text is rejected; the previous revision remains
+    assert(store->updateAutomation(
+               "kept", AutomationCurve::LINEAR,
+               std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 1.0}}, true,
+               "not-a-decimal") == AutomationPrepareError::InvalidDecimalSyntax);
+    assert(store->updateAutomation(
+               "kept", AutomationCurve::LINEAR,
+               std::vector<AutomationPoint>{{0.0, 0.0}, {1.0, 1.0}}, true,
+               "1E-2147483648") == AutomationPrepareError::DecimalScaleOverflow);
 
-    const double nan = std::numeric_limits<double>::quiet_NaN();
-    const double unquantized = run(0.0, 1.0, nan, 2, true);
-    assert(std::abs(unquantized - 0.5) < 1.0e-12);
+    double value = -1.0;
+    AutomationManager manager(
+        store, [&](const std::string&, double nextValue) { value = nextValue; });
+    manager.process(50, 100.0);
+    // 0.5 floored to the 0.1 grid
+    assert(std::abs(value - 0.5) < 1.0e-12);
 }
 
 } // namespace
@@ -274,13 +280,13 @@ int main() {
     std::cout << "Starting test 3..." << std::endl;
     testCompletedEnvelopeEarlyOutAndInvalidation();
     std::cout << "Starting test 4..." << std::endl;
-    testQuantizationStaticHelpers();
+    testExactQuantizationThroughManager();
     std::cout << "Starting test 5..." << std::endl;
     testChannelResolutionIsGenerationGated();
     std::cout << "Starting test 6..." << std::endl;
     testCompletedAutomationRebindsFinalValue();
     std::cout << "Starting test 7..." << std::endl;
-    testPreparedQuantizationMatchesJavaFixtures();
+    testInvalidDefinitionKeepsPreviousRevision();
     std::cout << "All AutomationManager tests passed successfully!" << std::endl;
     return 0;
 }

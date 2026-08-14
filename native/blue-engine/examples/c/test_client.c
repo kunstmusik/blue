@@ -151,13 +151,32 @@ int set_channel(BlueEngineClient* client, const char* name, double value,
     return result;
 }
 
+static void write_u32_le(uint8_t* destination, uint32_t value) {
+    destination[0] = (uint8_t)(value & 0xffu);
+    destination[1] = (uint8_t)((value >> 8) & 0xffu);
+    destination[2] = (uint8_t)((value >> 16) & 0xffu);
+    destination[3] = (uint8_t)((value >> 24) & 0xffu);
+}
+
+static void write_f64_le(uint8_t* destination, double value) {
+    uint64_t bits = 0;
+    memcpy(&bits, &value, sizeof(bits));
+    for (unsigned int shift = 0; shift < 64; shift += 8) {
+        destination[shift / 8] = (uint8_t)((bits >> shift) & 0xffu);
+    }
+}
+
 int create_automation(BlueEngineClient* client, const char* channel_name,
                      uint8_t curve, AutomationPoint* points, uint32_t num_points,
-                     uint8_t enabled, double resolution, int32_t resolution_scale,
-                     uint8_t high_precision, char* response, size_t response_max) {
+                     uint8_t enabled, const char* resolution_decimal,
+                     char* response, size_t response_max) {
     size_t name_len = strlen(channel_name) + 1;
-    /* payload: name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points */
-    size_t payload_len = name_len + 2 + 8 + 4 + 1 + 4 + (num_points * 16);
+    size_t resolution_len = strlen(resolution_decimal);
+    if (resolution_len > UINT32_MAX || num_points > (SIZE_MAX - name_len - 2 - 4 - resolution_len - 4) / 16) {
+        return -1;
+    }
+    /* payload: name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points */
+    size_t payload_len = name_len + 2 + 4 + resolution_len + 4 + (num_points * 16);
     uint8_t* payload = (uint8_t*)malloc(payload_len);
     if (!payload) return -1;
 
@@ -166,18 +185,17 @@ int create_automation(BlueEngineClient* client, const char* channel_name,
 
     payload[offset++] = curve;
     payload[offset++] = enabled;
-    memcpy(payload + offset, &resolution, sizeof(double));
-    offset += sizeof(double);
-    memcpy(payload + offset, &resolution_scale, sizeof(int32_t));
-    offset += sizeof(int32_t);
-    payload[offset++] = high_precision;
-    memcpy(payload + offset, &num_points, 4);
+    write_u32_le(payload + offset, (uint32_t)resolution_len);
+    offset += 4;
+    memcpy(payload + offset, resolution_decimal, resolution_len);
+    offset += resolution_len;
+    write_u32_le(payload + offset, num_points);
     offset += 4;
 
     for (uint32_t i = 0; i < num_points; i++) {
-        memcpy(payload + offset, &points[i].time, sizeof(double));
+        write_f64_le(payload + offset, points[i].time);
         offset += sizeof(double);
-        memcpy(payload + offset, &points[i].value, sizeof(double));
+        write_f64_le(payload + offset, points[i].value);
         offset += sizeof(double);
     }
 
@@ -348,7 +366,7 @@ int main(int argc, char** argv) {
         printf("create_channel(amp): OK\n");
 
         AutomationPoint linear_points[2] = {{2.0, 440.0}, {4.0, 880.0}};
-        if (create_automation(&client, "freq", CURVE_LINEAR, linear_points, 2, 0, 0.0, 0, 0, response, sizeof(response)) == 0) {
+        if (create_automation(&client, "freq", CURVE_LINEAR, linear_points, 2, 0, "0", response, sizeof(response)) == 0) {
             printf("create_automation (LINEAR): OK\n");
         } else {
             printf("create_automation (LINEAR): FAILED\n");
@@ -387,7 +405,7 @@ int main(int argc, char** argv) {
         AutomationPoint step_points[5] = {
             {2.0, 440.0}, {2.5, 550.0}, {3.0, 660.0}, {3.5, 880.0}, {4.0, 660.0}
         };
-        create_automation(&client, "freq", CURVE_STEP, step_points, 5, 0, 0.0, 0, 0, response, sizeof(response));
+        create_automation(&client, "freq", CURVE_STEP, step_points, 5, 0, "0", response, sizeof(response));
         printf("create_automation (STEP): OK\n");
 
         send_command(&client, CMD_READ_SCORE, "i1 0 6", 6, response, sizeof(response));
@@ -418,7 +436,7 @@ int main(int argc, char** argv) {
         create_channel(&client, "amp", 0.5, response, sizeof(response));
 
         AutomationPoint exp_points[2] = {{2.0, 220.0}, {4.0, 880.0}};
-        create_automation(&client, "freq", CURVE_EXPONENTIAL, exp_points, 2, 0, 0.0, 0, 0, response, sizeof(response));
+        create_automation(&client, "freq", CURVE_EXPONENTIAL, exp_points, 2, 0, "0", response, sizeof(response));
         printf("create_automation (EXPONENTIAL): OK\n");
 
         send_command(&client, CMD_READ_SCORE, "i1 0 6", 6, response, sizeof(response));
@@ -464,12 +482,12 @@ int main(int argc, char** argv) {
             {6.0, 880.0}
         };
 
-        double resolution = 100.0;
+        const char* resolution = "100";
 
-        if (create_automation(&client, "freq", CURVE_LINEAR, quant_points, 2, 0, resolution, 0, 0, response, sizeof(response)) == 0) {
-            printf("create_automation (LINEAR + resolution=%.1f): OK\n", resolution);
+        if (create_automation(&client, "freq", CURVE_LINEAR, quant_points, 2, 0, resolution, response, sizeof(response)) == 0) {
+            printf("create_automation (LINEAR + resolution=%s): OK\n", resolution);
         } else {
-            printf("create_automation (LINEAR + resolution=%.1f): FAILED\n", resolution);
+            printf("create_automation (LINEAR + resolution=%s): FAILED\n", resolution);
         }
 
         send_command(&client, CMD_READ_SCORE, "i1 0 8", 6, response, sizeof(response));

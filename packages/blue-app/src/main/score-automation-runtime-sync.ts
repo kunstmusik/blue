@@ -82,6 +82,7 @@ export function collectAffectedScoreAutomationParameterIds(
     case 'insertAutomationPoint':
     case 'deleteAutomationPoint':
     case 'moveAutomationPoint':
+    case 'setAutomationResolution':
       add(patch.parameterId);
       break;
 

@@ -113,6 +113,10 @@ vi.mock('zeromq', () => {
 
 import { EngineClient } from '../src/engine-client';
 import {
+  BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
+} from '../src/capabilities';
+import {
   CMD_CREATE_ENGINE,
   CMD_DESTROY_ENGINE,
   CMD_GET_CAPABILITIES,
@@ -129,13 +133,13 @@ function encodeOkResponse(payload = ''): Buffer {
   return response;
 }
 
-function capabilities(protocolVersion = 1): string {
+function capabilities(protocolVersion = BLUE_ENGINE_PROTOCOL_VERSION, features = [AUTOMATION_DECIMAL_FEATURE]): string {
   return JSON.stringify({
     schemaVersion: 1,
     engineVersion: '0.1.0',
     protocolVersion,
     sourceRevision: 'test',
-    features: ['engine-state-v1'],
+    features: ['engine-state-v1', ...features],
   });
 }
 
@@ -306,7 +310,7 @@ describe('EngineClient', () => {
     expect(request.sent[0].readUInt8(0)).toBe(CMD_GET_CAPABILITIES);
     expect(result).toEqual({
       ok: true,
-      capabilities: expect.objectContaining({ protocolVersion: 1 }),
+      capabilities: expect.objectContaining({ protocolVersion: BLUE_ENGINE_PROTOCOL_VERSION }),
       message: '',
     });
     request.responses.push(encodeOkResponse());
@@ -354,7 +358,7 @@ describe('EngineClient', () => {
 
     expect(result).toEqual({
       ok: false,
-      message: 'Blue Engine protocol mismatch: expected 1, received 99',
+      message: `Blue Engine protocol mismatch: expected ${BLUE_ENGINE_PROTOCOL_VERSION}, received 99`,
     });
     expect(request.sent.map((message) => message.readUInt8(0))).toEqual([
       CMD_GET_CAPABILITIES,

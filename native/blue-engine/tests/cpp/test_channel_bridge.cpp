@@ -119,8 +119,11 @@ endin
         {0.0, 330.0},
         {0.3, 660.0},
     };
-    uint32_t automationId = store->createAutomation(
-        "freq", blue::AutomationCurve::LINEAR, automationPoints, true);
+    uint32_t automationId = 0;
+    require(store->createAutomation(
+                "freq", blue::AutomationCurve::LINEAR, automationPoints, true,
+                "-1", &automationId) == blue::AutomationPrepareError::Ok,
+            "Failed to create automation");
     require(automationId > 0, "Failed to create automation");
 
     require(engine.readScore("i1 0 0.4"), engine.getLastError());

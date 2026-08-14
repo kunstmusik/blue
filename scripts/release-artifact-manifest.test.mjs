@@ -104,7 +104,7 @@ try {
     "generated stable entries must be verified",
   );
   assert(
-    manifest.engine?.protocolVersion === 1 &&
+    manifest.engine?.protocolVersion === 2 &&
       manifest.engine?.sourceRevision === sourceRevision &&
       manifest.engine?.verificationStatus === "verified",
     "manifest must record verified revision-matched Blue Engine protocol metadata",

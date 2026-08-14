@@ -50,6 +50,50 @@ if(NOT TARGET libzmq-static)
     message(FATAL_ERROR "The vcpkg ZeroMQ package did not provide libzmq-static")
 endif()
 
+# Header-only Boost.Multiprecision backs the private exact-decimal automation
+# modules (JavaBigDecimal/ExactDecimalQuantizer). No Boost linkage is required
+# beyond the headers; the feature-owned arena keeps audio-path use allocation
+# free after control-thread preparation.
+find_package(Boost CONFIG REQUIRED)
+
+# Floating-point parity controls: the Java-linear automation translation unit
+# must not use fused multiply-add contraction or algebraic reassociation.
+# Only the parity unit is restricted; unrelated DSP/host code is untouched.
+set(BLUE_ENGINE_PARITY_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    foreach(parity_source ${BLUE_ENGINE_PARITY_SOURCES})
+        set_source_files_properties(${parity_source} PROPERTIES
+            COMPILE_OPTIONS "-ffp-contract=off;-fno-associative-math")
+    endforeach()
+elseif(MSVC)
+    # /fp:precise is MSVC's documented mode that disallows contraction and
+    # reassociation of floating-point expressions.
+    foreach(parity_source ${BLUE_ENGINE_PARITY_SOURCES})
+        set_source_files_properties(${parity_source} PROPERTIES
+            COMPILE_OPTIONS "/fp:precise")
+    endforeach()
+endif()
+
+# =============================================================================
+# Java parity fixture corpus (canonical copy for CTest)
+# =============================================================================
+# The committed corpus at the repository root is the single authority for
+# native exact-bit expectations. CMake copies it into the build tree and
+# injects the copy's path so tests never parse relative to their cwd and no
+# native JSON dependency is introduced.
+set(BLUE_ENGINE_PARITY_FIXTURES_SOURCE_DIR
+    "${CMAKE_SOURCE_DIR}/../../fixtures/java-blue-automation-parity/v1")
+set(BLUE_ENGINE_PARITY_FIXTURES_DIR
+    "${CMAKE_BINARY_DIR}/parity-fixtures/java-blue-automation-parity/v1")
+if(NOT EXISTS "${BLUE_ENGINE_PARITY_FIXTURES_SOURCE_DIR}/manifest.json")
+    message(FATAL_ERROR
+        "Java parity fixture corpus missing: ${BLUE_ENGINE_PARITY_FIXTURES_SOURCE_DIR}/manifest.json")
+endif()
+file(COPY "${BLUE_ENGINE_PARITY_FIXTURES_SOURCE_DIR}/" DESTINATION
+    "${BLUE_ENGINE_PARITY_FIXTURES_DIR}")
+
 # Main executable
 add_executable(blue-engine
     src/main.cpp
@@ -60,6 +104,8 @@ add_executable(blue-engine
     src/csound/CsoundRuntimeServices.cpp
     src/automation/AutomationStore.cpp
     src/automation/AutomationManager.cpp
+    src/automation/JavaBigDecimal.cpp
+    src/automation/ExactDecimalQuantizer.cpp
     src/protocol/Capabilities.cpp
 )
 
@@ -74,7 +120,12 @@ target_include_directories(blue-engine PRIVATE
     ${CMAKE_SOURCE_DIR}/src
 )
 
-target_link_libraries(blue-engine PRIVATE libzmq-static)
+target_link_libraries(blue-engine PRIVATE libzmq-static Boost::boost)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(blue-engine PRIVATE -ffp-contract=off -fno-associative-math)
+elseif(MSVC)
+    target_compile_options(blue-engine PRIVATE /fp:precise)
+endif()
 
 # Benchmark executable
 add_executable(benchmark_engine
@@ -84,11 +135,18 @@ add_executable(benchmark_engine
     src/ipc/SharedMemory.cpp
     src/automation/AutomationStore.cpp
     src/automation/AutomationManager.cpp
+    src/automation/JavaBigDecimal.cpp
+    src/automation/ExactDecimalQuantizer.cpp
 )
 target_include_directories(benchmark_engine PRIVATE
     ${CMAKE_SOURCE_DIR}/src
 )
-target_link_libraries(benchmark_engine PRIVATE libzmq-static)
+target_link_libraries(benchmark_engine PRIVATE libzmq-static Boost::boost)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(benchmark_engine PRIVATE -ffp-contract=off -fno-associative-math)
+elseif(MSVC)
+    target_compile_options(benchmark_engine PRIVATE /fp:precise)
+endif()
 target_compile_definitions(benchmark_engine PRIVATE
     BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1
     BLUE_ENGINE_SOURCE_REVISION="${BLUE_ENGINE_SOURCE_REVISION}"

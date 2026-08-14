@@ -7,6 +7,7 @@
 #include "../automation/AutomationTypes.h"
 
 #include <zmq.h>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -19,6 +20,105 @@ namespace {
 
 std::string tcpEndpointForPort(int port) {
     return "tcp://*:" + std::to_string(port);
+}
+
+bool isValidUtf8(const std::string& text) {
+    for (size_t i = 0; i < text.size();) {
+        const auto byte = static_cast<unsigned char>(text[i]);
+        if (byte <= 0x7f) {
+            i += 1;
+            continue;
+        }
+        size_t continuationCount = 0;
+        unsigned char firstContinuationMin = 0x80;
+        unsigned char firstContinuationMax = 0xbf;
+        if (byte >= 0xc2 && byte <= 0xdf) {
+            continuationCount = 1;
+        } else if (byte == 0xe0) {
+            continuationCount = 2;
+            firstContinuationMin = 0xa0;
+        } else if (byte >= 0xe1 && byte <= 0xec) {
+            continuationCount = 2;
+        } else if (byte == 0xed) {
+            continuationCount = 2;
+            firstContinuationMax = 0x9f;
+        } else if (byte >= 0xee && byte <= 0xef) {
+            continuationCount = 2;
+        } else if (byte == 0xf0) {
+            continuationCount = 3;
+            firstContinuationMin = 0x90;
+        } else if (byte >= 0xf1 && byte <= 0xf3) {
+            continuationCount = 3;
+        } else if (byte == 0xf4) {
+            continuationCount = 3;
+            firstContinuationMax = 0x8f;
+        } else {
+            return false;
+        }
+        if (i + continuationCount >= text.size()) return false;
+        const auto firstContinuation = static_cast<unsigned char>(text[i + 1]);
+        if (firstContinuation < firstContinuationMin || firstContinuation > firstContinuationMax) {
+            return false;
+        }
+        for (size_t j = 2; j <= continuationCount; ++j) {
+            const auto continuation = static_cast<unsigned char>(text[i + j]);
+            if (continuation < 0x80 || continuation > 0xbf) return false;
+        }
+        i += continuationCount + 1;
+    }
+    return true;
+}
+
+bool parseNamePayload(const std::string& payload, std::string& name) {
+    const size_t terminator = payload.find('\0');
+    if (terminator == std::string::npos || terminator == 0 || terminator + 1 != payload.size()) {
+        return false;
+    }
+    name.assign(payload.data(), terminator);
+    return isValidUtf8(name);
+}
+
+uint32_t readUint32LE(const char* bytes) {
+    const auto* data = reinterpret_cast<const unsigned char*>(bytes);
+    return static_cast<uint32_t>(data[0])
+         | (static_cast<uint32_t>(data[1]) << 8)
+         | (static_cast<uint32_t>(data[2]) << 16)
+         | (static_cast<uint32_t>(data[3]) << 24);
+}
+
+uint64_t readUint64LE(const char* bytes) {
+    const auto* data = reinterpret_cast<const unsigned char*>(bytes);
+    uint64_t value = 0;
+    for (unsigned int index = 0; index < sizeof(value); ++index) {
+        value |= static_cast<uint64_t>(data[index]) << (index * 8);
+    }
+    return value;
+}
+
+double readDoubleLE(const char* bytes) {
+    const uint64_t bits = readUint64LE(bytes);
+    double value = 0.0;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+void appendUint32LE(std::string& output, uint32_t value) {
+    output.push_back(static_cast<char>(value & 0xffu));
+    output.push_back(static_cast<char>((value >> 8) & 0xffu));
+    output.push_back(static_cast<char>((value >> 16) & 0xffu));
+    output.push_back(static_cast<char>((value >> 24) & 0xffu));
+}
+
+void appendUint64LE(std::string& output, uint64_t value) {
+    for (unsigned int index = 0; index < sizeof(value); ++index) {
+        output.push_back(static_cast<char>((value >> (index * 8)) & 0xffu));
+    }
+}
+
+void appendDoubleLE(std::string& output, double value) {
+    uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    appendUint64LE(output, bits);
 }
 
 }  // namespace
@@ -237,8 +337,7 @@ bool ZmqHandler::processOne() {
                 size_t nameLen = std::strlen(req.payload.c_str());
                 if (req.payload.size() >= nameLen + 1 + sizeof(double)) {
                     std::string name = req.payload.substr(0, nameLen);
-                    double value;
-                    std::memcpy(&value, req.payload.data() + nameLen + 1, sizeof(double));
+                    const double value = readDoubleLE(req.payload.data() + nameLen + 1);
                     if (engine_.setChannel(name, value)) {
                         resp = Response::ok();
                     } else {
@@ -255,8 +354,9 @@ bool ZmqHandler::processOne() {
                 std::string name = req.payload.c_str();
                 double value;
                 if (engine_.getChannel(name, value)) {
-                    std::string payload(sizeof(double), '\0');
-                    std::memcpy(payload.data(), &value, sizeof(double));
+                    std::string payload;
+                    payload.reserve(sizeof(double));
+                    appendDoubleLE(payload, value);
                     resp = Response::ok(payload);
                 } else {
                     resp = Response::error(engine_.getLastError());
@@ -269,7 +369,7 @@ bool ZmqHandler::processOne() {
                 size_t nameLen = std::strlen(req.payload.c_str());
                 double initialValue = 0.0;
                 if (req.payload.size() >= nameLen + 1 + sizeof(double)) {
-                    std::memcpy(&initialValue, req.payload.data() + nameLen + 1, sizeof(double));
+                    initialValue = readDoubleLE(req.payload.data() + nameLen + 1);
                 }
                 std::string name = req.payload.substr(0, nameLen);
                 if (engine_.createChannel(name, initialValue)) {
@@ -284,120 +384,191 @@ bool ZmqHandler::processOne() {
                 resp = Response::ok(shm_.getName());
                 break;
 
-            // Automation commands
+            // Automation commands (protocol version 2: exact decimal text)
             case Command::CREATE_AUTOMATION:
             case Command::UPDATE_AUTOMATION: {
-                // payload: channel_name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points
+                // payload: channel_name\0 + curve(1B) + enabled(1B) +
+                //          resolutionLength(u32-le) + resolution(ascii) +
+                //          n_points(u32-le) + points
                 const char* payload = req.payload.c_str();
-                size_t nameLen = std::strlen(payload);
+                const size_t payloadSize = req.payload.size();
+                const size_t nameLen = strnlen(payload, payloadSize);
 
-                // Minimum size: name + null + curve(1) + enabled(1) + resolution(8) + resolutionScale(4) + highPrecision(1) + n_points(4)
-                if (req.payload.size() < nameLen + 1 + 1 + 1 + sizeof(double) + sizeof(int32_t) + 1 + sizeof(uint32_t)) {
-                    resp = Response::error("Invalid automation payload (too small)");
+                if (nameLen == 0 || nameLen == payloadSize) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] channel name must be a non-empty NUL-terminated string");
                     break;
                 }
-
                 std::string channelName(payload, nameLen);
+                if (!isValidUtf8(channelName)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] channel name must be valid UTF-8");
+                    break;
+                }
                 size_t offset = nameLen + 1;
 
-                uint8_t curveValue = static_cast<uint8_t>(req.payload[offset]);
-                AutomationCurve curve = static_cast<AutomationCurve>(curveValue);
-                offset += 1;
-
-                uint8_t enabledValue = static_cast<uint8_t>(req.payload[offset]);
-                bool enabled = (enabledValue != 0);
-                offset += 1;
-
-                // Read resolution (double, little-endian)
-                double resolution = 0.0;
-                std::memcpy(&resolution, req.payload.data() + offset, sizeof(double));
-                offset += sizeof(double);
-
-                // Read resolutionScale (int32_t, little-endian)
-                int32_t resolutionScale = 0;
-                std::memcpy(&resolutionScale, req.payload.data() + offset, sizeof(int32_t));
-                offset += sizeof(int32_t);
-
-                // Read highPrecision (1 byte)
-                uint8_t highPrecisionValue = static_cast<uint8_t>(req.payload[offset]);
-                bool highPrecision = (highPrecisionValue != 0);
-                offset += 1;
-
-                uint32_t nPoints;
-                std::memcpy(&nPoints, req.payload.data() + offset, sizeof(uint32_t));
-                offset += sizeof(uint32_t);
-
-                // Validate remaining size for points
-                if (req.payload.size() < offset + nPoints * 16) {
-                    resp = Response::error("Invalid automation points data");
+                if (payloadSize < offset + 1 + 1 + sizeof(uint32_t)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] payload too small for curve, enabled, and resolution length");
                     break;
                 }
 
-                // Parse points
+                const uint8_t curveValue = static_cast<uint8_t>(req.payload[offset]);
+                if (curveValue > static_cast<uint8_t>(AutomationCurve::EXPONENTIAL)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] unknown curve code");
+                    break;
+                }
+                const AutomationCurve curve = static_cast<AutomationCurve>(curveValue);
+                offset += 1;
+
+                const uint8_t enabledValue = static_cast<uint8_t>(req.payload[offset]);
+                if (enabledValue > 1) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] enabled must be 0 or 1");
+                    break;
+                }
+                const bool enabled = (enabledValue == 1);
+                offset += 1;
+
+                uint32_t resolutionLength = 0;
+                resolutionLength = readUint32LE(req.payload.data() + offset);
+                offset += sizeof(uint32_t);
+
+                if (resolutionLength == 0 || resolutionLength > payloadSize - offset) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution length does not fit the payload");
+                    break;
+                }
+                const std::string resolutionText(req.payload.data() + offset, resolutionLength);
+                offset += resolutionLength;
+                bool resolutionAsciiValid = true;
+                for (const char c : resolutionText) {
+                    if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) > 0x7e) {
+                        resolutionAsciiValid = false;
+                        break;
+                    }
+                }
+                if (!resolutionAsciiValid) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution must be printable ASCII");
+                    break;
+                }
+
+                JavaBigDecimal parsedResolution;
+                const auto resolutionStatus = parseJavaBigDecimal(resolutionText, parsedResolution);
+                if (resolutionStatus == DecimalParseError::InvalidSyntax) {
+                    resp = Response::error("[INVALID_DECIMAL_SYNTAX] automation resolution is not valid Java decimal text");
+                    break;
+                }
+                if (resolutionStatus == DecimalParseError::ScaleOverflow) {
+                    resp = Response::error("[DECIMAL_SCALE_OVERFLOW] automation resolution scale is outside Java int range");
+                    break;
+                }
+                if (parsedResolution.canonicalText() != resolutionText) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution must use canonical Java decimal text");
+                    break;
+                }
+
+                if (payloadSize < offset + sizeof(uint32_t)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] payload too small for point count");
+                    break;
+                }
+                uint32_t nPoints = 0;
+                nPoints = readUint32LE(req.payload.data() + offset);
+                offset += sizeof(uint32_t);
+
+                const uint64_t pointsBytes = static_cast<uint64_t>(nPoints) * 16u;
+                if (pointsBytes != payloadSize - offset) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] point count does not match remaining bytes");
+                    break;
+                }
+
                 std::vector<AutomationPoint> points;
                 points.reserve(nPoints);
+                bool finitePoints = true;
                 for (uint32_t i = 0; i < nPoints; ++i) {
-                    double time, value;
-                    std::memcpy(&time, req.payload.data() + offset, sizeof(double));
+                    const double time = readDoubleLE(req.payload.data() + offset);
                     offset += sizeof(double);
-                    std::memcpy(&value, req.payload.data() + offset, sizeof(double));
+                    const double value = readDoubleLE(req.payload.data() + offset);
                     offset += sizeof(double);
+                    if (!std::isfinite(time) || !std::isfinite(value)) {
+                        finitePoints = false;
+                        break;
+                    }
                     points.emplace_back(time, value);
+                }
+                if (!finitePoints) {
+                    resp = Response::error("[NON_FINITE_AUTOMATION_INPUT] automation points must be finite");
+                    break;
                 }
 
                 auto store = engine_.getAutomationStore();
                 if (req.command == Command::CREATE_AUTOMATION) {
-                    uint32_t id = store->createAutomation(channelName, curve, points, enabled,
-                                                          resolution, resolutionScale, highPrecision);
+                    uint32_t id = 0;
+                    const auto status = store->createAutomation(channelName, curve, points,
+                                                                enabled, resolutionText, &id);
+                    if (status != AutomationPrepareError::Ok) {
+                        resp = Response::error(std::string("[") + automationPrepareErrorName(status) + "] automation definition rejected");
+                        break;
+                    }
                     // Return automation ID
-                    std::string payload(sizeof(uint32_t), '\0');
-                    std::memcpy(payload.data(), &id, sizeof(uint32_t));
-                    resp = Response::ok(payload);
+                    std::string idPayload;
+                    idPayload.reserve(sizeof(uint32_t));
+                    appendUint32LE(idPayload, id);
+                    resp = Response::ok(idPayload);
                 } else {
                     // UPDATE_AUTOMATION
-                    if (store->updateAutomation(channelName, curve, points, enabled,
-                                                resolution, resolutionScale, highPrecision)) {
-                        resp = Response::ok();
+                    const auto status = store->updateAutomation(channelName, curve, points,
+                                                                enabled, resolutionText);
+                    if (status == AutomationPrepareError::NotFound) {
+                        resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
+                    } else if (status != AutomationPrepareError::Ok) {
+                        resp = Response::error(std::string("[") + automationPrepareErrorName(status) + "] automation definition rejected");
                     } else {
-                        resp = Response::error("Automation not found");
+                        resp = Response::ok();
                     }
                 }
+                // reclaim snapshots retired by the performance thread
+                store->reclaimRetired();
                 break;
             }
 
             case Command::DELETE_AUTOMATION: {
                 // payload: channel_name\0
-                std::string channelName = req.payload.c_str();
+                std::string channelName;
                 auto store = engine_.getAutomationStore();
-                if (store->deleteAutomation(channelName)) {
+                if (!parseNamePayload(req.payload, channelName)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] expected one UTF-8 channel name");
+                } else if (store->deleteAutomation(channelName)) {
                     resp = Response::ok();
                 } else {
-                    resp = Response::error("Automation not found");
+                    resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
+                store->reclaimRetired();
                 break;
             }
 
             case Command::ENABLE_AUTOMATION: {
                 // payload: channel_name\0
-                std::string channelName = req.payload.c_str();
+                std::string channelName;
                 auto store = engine_.getAutomationStore();
-                if (store->setEnabled(channelName, true)) {
+                if (!parseNamePayload(req.payload, channelName)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] expected one UTF-8 channel name");
+                } else if (store->setEnabled(channelName, true)) {
                     resp = Response::ok();
                 } else {
-                    resp = Response::error("Automation not found");
+                    resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
+                store->reclaimRetired();
                 break;
             }
 
             case Command::DISABLE_AUTOMATION: {
                 // payload: channel_name\0
-                std::string channelName = req.payload.c_str();
+                std::string channelName;
                 auto store = engine_.getAutomationStore();
-                if (store->setEnabled(channelName, false)) {
+                if (!parseNamePayload(req.payload, channelName)) {
+                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] expected one UTF-8 channel name");
+                } else if (store->setEnabled(channelName, false)) {
                     resp = Response::ok();
                 } else {
-                    resp = Response::error("Automation not found");
+                    resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
+                store->reclaimRetired();
                 break;
             }
 
@@ -408,11 +579,11 @@ bool ZmqHandler::processOne() {
                 // Build response: count(4B) + entries
                 std::string payload;
                 uint32_t count = static_cast<uint32_t>(automations.size());
-                payload.append(reinterpret_cast<const char*>(&count), sizeof(uint32_t));
+                appendUint32LE(payload, count);
 
                 for (const auto& def : automations) {
                     // id(4B) + enabled(1B) + channel(64B) + n_points(4B)
-                    payload.append(reinterpret_cast<const char*>(&def.id), sizeof(uint32_t));
+                    appendUint32LE(payload, def.id);
 
                     uint8_t enabledByte = def.enabled ? 1 : 0;
                     payload.append(reinterpret_cast<const char*>(&enabledByte), 1);
@@ -422,7 +593,7 @@ bool ZmqHandler::processOne() {
                     payload.append(channelBuf, 64);
 
                     uint32_t nPoints = static_cast<uint32_t>(def.points.size());
-                    payload.append(reinterpret_cast<const char*>(&nPoints), sizeof(uint32_t));
+                    appendUint32LE(payload, nPoints);
                 }
 
                 resp = Response::ok(payload);
@@ -432,6 +603,7 @@ bool ZmqHandler::processOne() {
             case Command::CLEAR_AUTOMATIONS: {
                 auto store = engine_.getAutomationStore();
                 store->clear();
+                store->reclaimRetired();
                 resp = Response::ok();
                 break;
             }

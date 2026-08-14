@@ -311,6 +311,45 @@ describe('setAutomationLineColor patch', () => {
   });
 });
 
+describe('setAutomationResolution patch', () => {
+  it('mutates the exact resolution and snaps existing points', () => {
+    const { data, paramId } = createProjectWithParameter();
+    const parameter = data.getMixer().getChannels()[0]!.getLevelParameter();
+    parameter.addPoint(0, 0.37);
+
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'setAutomationResolution',
+        parameterId: paramId,
+        resolutionDecimal: '0.10',
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(parameter.getResolutionText()).toBe('0.10');
+    expect(parameter.getPoints()[0]?.value).toBeCloseTo(0.3, 12);
+  });
+
+  it('rejects malformed exact text without changing the project', () => {
+    const { data, paramId } = createProjectWithParameter();
+    const parameter = data.getMixer().getChannels()[0]!.getLevelParameter();
+    parameter.setResolutionText('0.10');
+    const beforePoints = parameter.getPoints();
+
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'setAutomationResolution',
+        parameterId: paramId,
+        resolutionDecimal: 'not-a-decimal',
+      },
+    });
+
+    expect(changed).toBe(false);
+    expect(parameter.getResolutionText()).toBe('0.10');
+    expect(parameter.getPoints()).toEqual(beforePoints);
+  });
+});
+
 describe('setAutomationPoints patch', () => {
   it('replaces all points on a parameter', () => {
     const { data, paramId } = createProjectWithParameter();

@@ -39,6 +39,10 @@ import {
   assignParameterNames,
 } from "./automation/parameter-helper";
 import { Parameter } from "./automation/parameter";
+import {
+  appendParameterScoreJava,
+  getParameterInstrumentTextJava,
+} from './automation/csd-parameter-automation';
 import { BSBCompilationUnit } from "./instruments/blue-synth-builder/bsb-compilation-unit";
 import { Effect } from "./mixer/effect";
 import { EffectsChain } from "./mixer/effects-chain";
@@ -1574,19 +1578,7 @@ export class BlueData implements BlueDataObject {
 
       const instr = new GenericInstrument();
       instr.setName(`Param: ${param.getName()}`);
-
-      if (param.getResolution() > 0.0) {
-        instr.setText(`${compilationVarName} init p4\nturnoff`);
-      } else {
-        instr.setText(
-          `if (p4 == p5) then\n` +
-            `${compilationVarName} init p4\n` +
-            `turnoff\n` +
-            `else\n` +
-            `${compilationVarName} line p4, p3, p5\n` +
-            `endif`,
-        );
-      }
+      instr.setText(getParameterInstrumentTextJava(compilationVarName, param.getResolution()));
 
       const instrId = arrangement.addInstrumentAtEnd(instr);
       this.appendParameterScore(
@@ -1606,128 +1598,15 @@ export class BlueData implements BlueDataObject {
     renderStart: number,
     renderEnd: number,
   ): void {
-    const points = param.getPoints();
-    if (points.length < 2) {
-      return;
-    }
-
-    const resolution = param.getResolution();
-    const hasRenderEnd = renderEnd > renderStart;
-
-    if (resolution > 0.0) {
-      for (let i = 1; i < points.length; i++) {
-        const p1 = points[i - 1]!;
-        const p2 = points[i]!;
-
-        const startTime = p1.time;
-        const endTime = p2.time;
-
-        if (hasRenderEnd && startTime >= renderEnd) {
-          return;
-        }
-        if (endTime <= renderStart) {
-          continue;
-        }
-        if (startTime === endTime || p1.value === p2.value) {
-          continue;
-        }
-
-        const dur = endTime - startTime;
-        const numSteps = Math.abs(Math.round((p2.value - p1.value) / resolution));
-        if (numSteps <= 0) {
-          continue;
-        }
-
-        const step = dur / numSteps;
-        const valStep = p2.value < p1.value ? -resolution : resolution;
-        let currentVal = p1.value;
-        let start = startTime;
-
-        for (let j = 0; j < numSteps - 1; j++) {
-          currentVal += valStep;
-          start += step;
-
-          if (start <= renderStart) {
-            continue;
-          }
-          if (hasRenderEnd && start >= renderEnd) {
-            return;
-          }
-
-          this.addScoreNote(
-            notes,
-            `i${instrId}\t${formatJavaDouble(start - renderStart)}\t.0001\t${formatJavaDouble(currentVal)}`,
-          );
-        }
-
-        const finalStart = start + step;
-        if (hasRenderEnd && finalStart >= renderEnd) {
-          return;
-        }
-
-        this.addScoreNote(
-          notes,
-          `i${instrId}\t${formatJavaDouble(finalStart - renderStart)}\t.0001\t${formatJavaDouble(p2.value)}`,
-        );
-      }
-
-      return;
-    }
-
-    let lastValue = points[0]!.value;
-
-    for (let i = 1; i < points.length; i++) {
-      const p1 = points[i - 1]!;
-      const p2 = points[i]!;
-
-      let startTime = p1.time;
-      let endTime = p2.time;
-
-      if (hasRenderEnd && startTime >= renderEnd) {
-        return;
-      }
-      if (endTime <= renderStart) {
-        lastValue = p2.value;
-        continue;
-      }
-      if (startTime === endTime) {
-        if (i === points.length - 1) {
-          this.addScoreNote(
-            notes,
-            `i${instrId}\t${formatJavaDouble(p2.time - renderStart)}\t.0001\t${formatJavaDouble(p2.value)}\t${formatJavaDouble(p2.value)}`,
-          );
-        }
-        continue;
-      }
-
-      let startVal = p1.value;
-      let endVal = p2.value;
-
-      if (startTime < renderStart) {
-        startVal = param.getValue(renderStart);
-        startTime = renderStart;
-      }
-
-      if (hasRenderEnd && endTime > renderEnd) {
-        endVal = param.getValue(renderEnd);
-        endTime = renderEnd;
-      }
-
-      lastValue = endVal;
-
-      const dur = startVal === endVal ? 0.0001 : endTime - startTime;
-      const relativeStart = startTime - renderStart;
-
-      this.addScoreNote(
-        notes,
-        `i${instrId}\t${formatJavaDouble(relativeStart)}\t${formatJavaDouble(dur)}\t${formatJavaDouble(startVal)}\t${formatJavaDouble(endVal)}`,
-      );
-
-      if (i === points.length - 1) {
-        this.addScoreNote(
-          notes,
-          `i${instrId}\t${formatJavaDouble(relativeStart + dur)}\t.0001\t${formatJavaDouble(lastValue)}\t${formatJavaDouble(lastValue)}`,
-        );
+    const score = appendParameterScoreJava({
+      parameter: param,
+      instrumentId: instrId,
+      renderStart,
+      renderEnd,
+    });
+    for (const line of score.split('\n')) {
+      if (line.length > 0) {
+        this.addScoreNote(notes, line);
       }
     }
   }

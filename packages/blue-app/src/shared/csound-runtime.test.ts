@@ -11,7 +11,7 @@ const ioReport = {
   engine: {
     schemaVersion: 1,
     engineVersion: '0.1.0',
-    protocolVersion: 1,
+    protocolVersion: 2,
     sourceRevision: 'test',
     features: ['csound-probe-v1', 'csound-io-v1'],
   },

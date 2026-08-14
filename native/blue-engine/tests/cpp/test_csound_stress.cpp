@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
     for (int index = 0; index < kChannelCount; ++index) {
       store->createAutomation(
           "chan_" + std::to_string(index), blue::AutomationCurve::LINEAR,
-          std::vector<blue::AutomationPoint>{{0.0, 0.0}, {1.0, 1.0}}, true);
+          std::vector<blue::AutomationPoint>{{0.0, 0.0}, {1.0, 1.0}}, true,
+          index % 3 == 0 ? "0.01" : "-1");
     }
 
     std::atomic<bool> stopWriters{false};
@@ -137,8 +138,7 @@ int main(int argc, char **argv) {
                              : blue::AutomationCurve::EXPONENTIAL,
               std::vector<blue::AutomationPoint>{{0.0, 0.0},
                                                   {1.0, endpoint}},
-              true, index % 3 == 0 ? 0.01 : 0.0, 2,
-              index % 4 == 0);
+              true, index % 3 == 0 ? "0.01" : "-1");
         }
         updates.fetch_add(1, std::memory_order_relaxed);
         ++iteration;

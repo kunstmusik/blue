@@ -1,17 +1,19 @@
 #pragma once
 
+#include "ExactDecimalQuantizer.h"
+
 #include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
-#include "FixedPoint.h"
 
 namespace blue {
 
-// Represents a single point in an automation curve
+// Represents a single point in an automation curve. Points remain binary64,
+// consistent with Java Blue storage.
 struct AutomationPoint {
     double time;   // Time in seconds from automation start
-    double value;  // Target value at this time
+    double value;  // Target value at that time
 
     AutomationPoint() : time(0.0), value(0.0) {}
     AutomationPoint(double t, double v) : time(t), value(v) {}
@@ -20,45 +22,46 @@ struct AutomationPoint {
 // Interpolation method between automation points
 enum class AutomationCurve : uint8_t {
     STEP        = 0x00,  // Instant jump to value (no interpolation)
-    LINEAR      = 0x01,  // Linear interpolation
-    EXPONENTIAL = 0x02,  // Exponential curve
+    LINEAR      = 0x01,  // Linear interpolation (Java Line.getValue parity)
+    EXPONENTIAL = 0x02,  // Exponential curve (Blue extension)
 };
 
-// Complete automation definition (immutable)
+// Invariant segment math prepared on the control thread when a definition is
+// created or updated. LINEAR caches the already-rounded Java-order slope
+// (b.value - a.value) / (b.time - a.time); extension curves retain the
+// pre-feature inverse-duration and log caches.
+struct AutomationSegmentCache {
+    double slope = 0.0;        // Java-order linear slope
+    double invDuration = 0.0;  // extension-curve normalized time
+    double deltaValue = 0.0;   // extension-curve linear fallback
+    double logRatio = 0.0;
+    bool isPositiveLogValid = false;
+    bool isDescending = false;  // Java bias condition: b.value < a.value
+};
+
+// Complete automation definition (immutable once published).
+//
+// All preparation happens on the control thread: exact-decimal parsing,
+// quantizer workspace allocation, and segment caches. The performance thread
+// adopts a new revision without parsing, allocating, or constructing error
+// strings. Only the resolution is exact decimal; points, bounds, and values
+// stay binary64, and there is no resolutionScale or highPrecision state.
 struct AutomationDef {
-    uint32_t id;                           // Unique automation ID
+    uint32_t id = 0;                       // Unique automation ID
     std::string channelName;               // Target channel (key)
-    AutomationCurve curve;                 // Interpolation type
-    std::vector<AutomationPoint> points;   // Envelope points (sorted by time)
-    bool enabled;                          // Currently active
-    double resolution;                     // Quantization step size (0 = no quantization)
-    int resolutionScale;                   // Decimal scale for resolution (e.g., 1 for 0.1, 2 for 0.01)
-    bool highPrecision;                    // Use bounded Java-compatible fixed-point quantization
-    uint64_t definitionRevision;           // Incremented whenever points/curve/resolution change
-
-    AutomationDef()
-        : id(0), curve(AutomationCurve::LINEAR), enabled(true),
-          resolution(0.0), resolutionScale(0), highPrecision(false),
-          definitionRevision(1) {}
-
-    AutomationDef(uint32_t autoId, const std::string& channel,
-                  AutomationCurve curveType,
-                  const std::vector<AutomationPoint>& pts,
-                  bool isEnabled = true,
-                  double res = 0.0,
-                  int resScale = 0,
-                  bool highPrec = false,
-                  uint64_t defRev = 1)
-        : id(autoId), channelName(channel), curve(curveType),
-          points(pts), enabled(isEnabled), resolution(res),
-          resolutionScale(resScale), highPrecision(highPrec),
-          definitionRevision(defRev) {}
+    AutomationCurve curve = AutomationCurve::LINEAR;
+    std::vector<AutomationPoint> points;   // Envelope points (ordered by time)
+    bool enabled = true;
+    std::string resolutionDecimal;         // validated canonical text
+    double resolutionDouble = 0.0;         // prepared Java doubleValue()
+    std::shared_ptr<const ExactDecimalQuantizer> quantizer;  // null unless active
+    std::vector<AutomationSegmentCache> segments;            // empty for <= 1 point
+    uint64_t definitionRevision = 1;       // Bumped whenever content changes
 };
 
 // Immutable container for all active automations
 struct AutomationList {
-    // Map channel name -> AutomationDef
-    // Each channel can have at most one automation
+    // Map channel name -> AutomationDef; each channel has at most one automation
     std::map<std::string, AutomationDef> automations;
     uint64_t revision = 0;
 
@@ -66,27 +69,11 @@ struct AutomationList {
     explicit AutomationList(uint64_t rev) : revision(rev) {}
 };
 
-// Invariant segment math precalculated when an automation definition is prepared
-struct AutomationSegmentCache {
-    double invDuration = 0.0;
-    double deltaValue = 0.0;
-    double logRatio = 0.0;
-    bool isPositiveLogValid = false;
-    bool isDescending = false;
-};
-
-// Invariant quantization parameters precalculated when an automation definition is prepared
-struct QuantizationCache {
-    int64_t scaleFactor = 1;
-    int64_t scaledResolution = 0;
-    double invResolution = 0.0;
-    bool isFastQuantizeSafe = false;
-};
-
-// Runtime state maintained by the performance thread
+// Runtime state maintained by the performance thread: small fixed data plus
+// preallocated diagnostic counters; no owned allocations.
 struct AutomationState {
-    size_t currentIndex;   // Current segment index (optimization)
-    bool completed;        // Has reached the end
+    size_t currentIndex;          // Current segment hint (completion bookkeeping)
+    bool completed;               // Has reached the end
     double* channelPointer;
     double lastElapsed;
     double lastWrittenValue;
@@ -94,8 +81,7 @@ struct AutomationState {
     uint64_t cachedDefRevision;
     uint64_t cachedBindingGeneration;
     bool bindingGenerationInitialized;
-    std::vector<AutomationSegmentCache> segmentCaches;
-    QuantizationCache quantCache;
+    uint64_t invalidEvaluationCount;  // audio-time diagnostic counter (no logging)
 
     AutomationState()
         : currentIndex(0),
@@ -106,7 +92,37 @@ struct AutomationState {
           hasLastWrittenValue(false),
           cachedDefRevision(0),
           cachedBindingGeneration(0),
-          bindingGenerationInitialized(false) {}
+          bindingGenerationInitialized(false),
+          invalidEvaluationCount(0) {}
 };
+
+// Diagnostic categories for definition preparation (mirrors AutomationErrors.h)
+enum class AutomationPrepareError {
+    Ok,
+    InvalidDecimalSyntax,
+    DecimalScaleOverflow,
+    NonFiniteAutomationInput,
+    DecimalWorkspaceUnavailable,
+    NotFound,
+};
+
+const char* automationPrepareErrorName(AutomationPrepareError error);
+
+/**
+ * Prepares a fully formed automation definition on the control thread:
+ * parses the exact resolution (Java BigDecimal grammar), prepares the
+ * quantizer workspace when the resolution is active (doubleValue() > 0),
+ * and builds the invariant segment caches. Returns false (leaving out
+ * untouched) on any validation or preparation failure; the caller keeps the
+ * previous definition intact in that case.
+ */
+AutomationPrepareError prepareAutomationDef(uint32_t id,
+                                            const std::string& channel,
+                                            AutomationCurve curve,
+                                            const std::vector<AutomationPoint>& points,
+                                            bool enabled,
+                                            const std::string& resolutionText,
+                                            uint64_t definitionRevision,
+                                            AutomationDef& out);
 
 }  // namespace blue

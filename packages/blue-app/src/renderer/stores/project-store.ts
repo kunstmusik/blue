@@ -225,6 +225,7 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'insertAutomationPoint':
     case 'deleteAutomationPoint':
     case 'moveAutomationPoint':
+    case 'setAutomationResolution':
     case 'moveAutomationRange':
     case 'scaleAutomationRange':
     case 'convertScoreObjectToObjectBuilder':
@@ -2050,6 +2051,7 @@ function applyScorePatchToSnapshot(
     || patch.type === 'insertAutomationPoint'
     || patch.type === 'deleteAutomationPoint'
     || patch.type === 'moveAutomationPoint'
+    || patch.type === 'setAutomationResolution'
   ) {
     return score;
   }
@@ -3156,6 +3158,19 @@ export function applyBsbInterfacePatchToSnapshot(
             case 'width': node.width = value as number; break;
             case 'height': node.height = value as number; break;
             case 'value': node.value = value as number; break;
+            case 'resolution':
+              // Preserve the exact decimal text in the optimistic snapshot;
+              // the numeric projection is display/layout-only.
+              if (typeof value === 'string') {
+                node.properties.resolutionDecimal = value;
+                const numeric = Number(value);
+                if (Number.isFinite(numeric)) {
+                  node.properties.resolution = numeric;
+                }
+              } else if (typeof value === 'number') {
+                node.properties.resolution = value;
+              }
+              break;
             case 'defaultValue':
               node.properties.defaultValue = value as number;
               if (node.type === 'BSBValue') {

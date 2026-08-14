@@ -96,6 +96,7 @@ describe('ScoreLayerAutomationSnapshot shape', () => {
 describe('AutomationParameterSnapshot shape', () => {
   it('includes lineColor, points, and metadata fields', () => {
     const { data } = createProjectWithMixerParameter();
+    data.getMixer().getChannels()[0]!.getLevelParameter().setResolutionText('0.10');
     const snap = createScoreDocumentSnapshot(data);
     const automation = snap.layerGroups[0]!.layers[0]!.automation!;
 
@@ -107,6 +108,7 @@ describe('AutomationParameterSnapshot shape', () => {
     expect(typeof param.displayName).toBe('string');
     expect(typeof param.minimum).toBe('number');
     expect(typeof param.maximum).toBe('number');
+    expect(param.resolutionDecimal).toBe('0.10');
     expect(typeof param.resolution).toBe('number');
     expect(typeof param.curve).toBe('string');
     expect(typeof param.fixedValue).toBe('number');

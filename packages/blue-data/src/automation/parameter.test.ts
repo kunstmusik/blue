@@ -127,3 +127,37 @@ describe('Parameter point sorting', () => {
     expect(pts.map(p => p.value)).toEqual([0.1, 0.3, 0.5]);
   });
 });
+
+describe('Parameter exact resolution ownership', () => {
+  it('gives top-level bdresolution precedence and preserves it through copy/save', () => {
+    const xml = `<parameter uniqueId="p1" name="gain" label="Gain" min="0" max="1"
+        resolution="0.1" bdresolution="0.10" automationEnabled="true" value="0.5">
+      <line min="0" max="1" bdresolution="0.01">
+        <linePoint x="0" y="0.14"/>
+        <linePoint x="1" y="0.26"/>
+      </line>
+    </parameter>`;
+
+    const parameter = Parameter.loadFromXML(Element.parse(xml));
+    expect(parameter.getResolutionText()).toBe('0.10');
+    expect(parameter.getPoints().map((point) => point.value)).toEqual([0.1, 0.2]);
+
+    const copy = parameter.deepCopy() as Parameter;
+    expect(copy.getResolutionText()).toBe('0.10');
+    expect(copy.getPoints()).toEqual(parameter.getPoints());
+
+    const saved = parameter.saveAsXML();
+    expect(saved.getAttribute('bdresolution')).toBe('0.10');
+    expect(saved.getElement('line')?.getAttribute('bdresolution')).toBe('0.10');
+    expect(saved.getAttribute('resolution')).toBeNull();
+  });
+
+  it('normalizes a legacy numeric resolution only when exact bdresolution is absent', () => {
+    const xml = `<parameter name="gain" min="0" max="1" resolution="0.123456789">
+      <line min="0" max="1"><linePoint x="0" y="0.2"/></line>
+    </parameter>`;
+
+    const parameter = Parameter.loadFromXML(Element.parse(xml));
+    expect(parameter.getResolutionText()).toBe('0.12346');
+  });
+});

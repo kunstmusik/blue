@@ -4,6 +4,10 @@
   "version-semver": "0.1.0",
   "builtin-baseline": "9d7f79f56ae1a9b4704d6a7fb8237e347a974133",
   "dependencies": [
-    "zeromq"
+    "zeromq",
+    {
+      "name": "boost-multiprecision",
+      "features": []
+    }
   ]
 }

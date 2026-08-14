@@ -135,8 +135,8 @@ std::string engineCapabilitiesJson() {
          std::to_string(BLUE_ENGINE_PROTOCOL_VERSION) +
          ",\"sourceRevision\":\"" + escapeJson(BLUE_ENGINE_SOURCE_REVISION) +
          "\",\"features\":[\"engine-state-v1\",\"channel-bridge-v1\","
-         "\"automation-v1\",\"csound-probe-v1\",\"csound-io-v1\","
-         "\"csound-utility-v1\",\"csound-performance-v1\"]}";
+         "\"automation-v1\",\"automation-decimal-v1\",\"csound-probe-v1\","
+         "\"csound-io-v1\",\"csound-utility-v1\",\"csound-performance-v1\"]}";
 }
 
 std::string csoundProbeJson(const CsoundLoadReport &report) {

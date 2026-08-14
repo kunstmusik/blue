@@ -3,6 +3,7 @@
  */
 
 #include <iostream>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <cstring>
@@ -95,38 +96,51 @@ public:
         return sendCommand(blue::Command::SET_CHANNEL, payload);
     }
 
+    static void appendUint32LE(std::string& payload, uint32_t value) {
+        for (unsigned int shift = 0; shift < 32; shift += 8) {
+            payload.push_back(static_cast<char>((value >> shift) & 0xffu));
+        }
+    }
+
+    static void appendDoubleLE(std::string& payload, double value) {
+        uint64_t bits = 0;
+        std::memcpy(&bits, &value, sizeof(bits));
+        for (unsigned int shift = 0; shift < 64; shift += 8) {
+            payload.push_back(static_cast<char>((bits >> shift) & 0xffu));
+        }
+    }
+
     std::pair<bool, uint32_t> createAutomation(const std::string& channelName,
                                                 AutomationCurve curve,
                                                 const std::vector<AutomationPoint>& points,
                                                 bool enabled = true,
-                                                double resolution = 0.0,
-                                                int32_t resolutionScale = 0,
-                                                bool highPrecision = false) {
+                                                const std::string& resolutionDecimal = "0") {
         std::string payload = channelName;
         payload.push_back('\0');
 
         uint8_t curveVal = static_cast<uint8_t>(curve);
         uint8_t enabledVal = enabled ? 1 : 0;
-        uint8_t highPrecisionVal = highPrecision ? 1 : 0;
         uint32_t numPoints = static_cast<uint32_t>(points.size());
 
-        // payload: name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points
+        // payload: name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points
         payload.append(reinterpret_cast<const char*>(&curveVal), sizeof(curveVal));
         payload.append(reinterpret_cast<const char*>(&enabledVal), sizeof(enabledVal));
-        payload.append(reinterpret_cast<const char*>(&resolution), sizeof(double));
-        payload.append(reinterpret_cast<const char*>(&resolutionScale), sizeof(int32_t));
-        payload.append(reinterpret_cast<const char*>(&highPrecisionVal), sizeof(highPrecisionVal));
-        payload.append(reinterpret_cast<const char*>(&numPoints), sizeof(numPoints));
+        appendUint32LE(payload, static_cast<uint32_t>(resolutionDecimal.size()));
+        payload.append(resolutionDecimal);
+        appendUint32LE(payload, numPoints);
 
         for (const auto& pt : points) {
-            payload.append(reinterpret_cast<const char*>(&pt.time), sizeof(double));
-            payload.append(reinterpret_cast<const char*>(&pt.value), sizeof(double));
+            appendDoubleLE(payload, pt.time);
+            appendDoubleLE(payload, pt.value);
         }
 
         auto [ok, msg] = sendCommand(blue::Command::CREATE_AUTOMATION, payload);
         uint32_t id = 0;
         if (ok && msg.size() >= sizeof(uint32_t)) {
-            std::memcpy(&id, msg.data(), sizeof(uint32_t));
+            id = static_cast<uint32_t>(static_cast<unsigned char>(msg[0]))
+                | (static_cast<uint32_t>(static_cast<unsigned char>(msg[1])) << 8)
+                | (static_cast<uint32_t>(static_cast<unsigned char>(msg[2])) << 16)
+                | (static_cast<uint32_t>(static_cast<unsigned char>(msg[3])) << 24);
         }
         return {ok, id};
     }
@@ -135,28 +149,24 @@ public:
                          AutomationCurve curve,
                          const std::vector<AutomationPoint>& points,
                          bool enabled = true,
-                         double resolution = 0.0,
-                         int32_t resolutionScale = 0,
-                         bool highPrecision = false) {
+                         const std::string& resolutionDecimal = "0") {
         std::string payload = channelName;
         payload.push_back('\0');
 
         uint8_t curveVal = static_cast<uint8_t>(curve);
         uint8_t enabledVal = enabled ? 1 : 0;
-        uint8_t highPrecisionVal = highPrecision ? 1 : 0;
         uint32_t numPoints = static_cast<uint32_t>(points.size());
 
-        // payload: name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points
+        // payload: name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points
         payload.append(reinterpret_cast<const char*>(&curveVal), sizeof(curveVal));
         payload.append(reinterpret_cast<const char*>(&enabledVal), sizeof(enabledVal));
-        payload.append(reinterpret_cast<const char*>(&resolution), sizeof(double));
-        payload.append(reinterpret_cast<const char*>(&resolutionScale), sizeof(int32_t));
-        payload.append(reinterpret_cast<const char*>(&highPrecisionVal), sizeof(highPrecisionVal));
-        payload.append(reinterpret_cast<const char*>(&numPoints), sizeof(numPoints));
+        appendUint32LE(payload, static_cast<uint32_t>(resolutionDecimal.size()));
+        payload.append(resolutionDecimal);
+        appendUint32LE(payload, numPoints);
 
         for (const auto& pt : points) {
-            payload.append(reinterpret_cast<const char*>(&pt.time), sizeof(double));
-            payload.append(reinterpret_cast<const char*>(&pt.value), sizeof(double));
+            appendDoubleLE(payload, pt.time);
+            appendDoubleLE(payload, pt.value);
         }
 
         return sendCommand(blue::Command::UPDATE_AUTOMATION, payload);
@@ -413,7 +423,7 @@ int main(int argc, char** argv) {
         client.createChannel("amp", 0.5);
 
         std::vector<AutomationPoint> quantPoints = {{2.0, 220.0}, {6.0, 880.0}};
-        double resolution = 100.0;
+        const std::string resolution = "100";
         auto [autoOk, autoId] = client.createAutomation("freq", AutomationCurve::LINEAR, quantPoints, false, resolution);
         std::cout << "create_automation (LINEAR + resolution=" << resolution << "): "
                   << (autoOk ? "OK" : "FAILED") << ", ID=" << autoId << "\n";

@@ -307,6 +307,9 @@ export interface AutomationParameterSnapshot {
   displayName: string;
   minimum: number;
   maximum: number;
+  /** Canonical Java BigDecimal text; this is the persistence/runtime authority. */
+  resolutionDecimal: string;
+  /** Derived binary64 projection for legacy display consumers only. */
   resolution: number;
   curve: string;
   fixedValue: number;
@@ -901,6 +904,13 @@ export interface MoveAutomationPointPatch {
   point: AutomationPointSnapshot;
 }
 
+export interface SetAutomationResolutionPatch {
+  type: 'setAutomationResolution';
+  parameterId: string;
+  /** Canonical Java BigDecimal text; never a numeric projection. */
+  resolutionDecimal: string;
+}
+
 export interface MoveAutomationRangePatch {
   type: 'moveAutomationRange';
   range: AutomationRangeRef;
@@ -943,6 +953,7 @@ export type ScoreAutomationPatch =
   | InsertAutomationPointPatch
   | DeleteAutomationPointPatch
   | MoveAutomationPointPatch
+  | SetAutomationResolutionPatch
   | MoveAutomationRangePatch
   | ScaleAutomationRangePatch
   | CleanupLayerAutomationPatch;
@@ -1889,6 +1900,7 @@ export interface SoundAutomationParameterSnapshot {
   value: number;
   minimum: number;
   maximum: number;
+  resolutionDecimal?: string;
   resolution?: number;
   curve: string;
   points: Array<{ x: number; y: number }>;
@@ -2416,6 +2428,24 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
     properties,
     children: childSnapshots.length > 0 ? childSnapshots : undefined,
   };
+
+  if (
+    (ctorName === 'BSBHSlider'
+      || ctorName === 'BSBVSlider'
+      || ctorName === 'BSBHSliderBank'
+      || ctorName === 'BSBVSliderBank')
+    && typeof record.getResolutionText === 'function'
+  ) {
+    try {
+      const resolutionText = (record.getResolutionText as () => unknown).call(widget);
+      if (typeof resolutionText === 'string') {
+        snapshot.properties.resolutionDecimal = resolutionText;
+      }
+    } catch {
+      // Keep the numeric projection available for legacy/malformed widgets;
+      // explicit exact edits are validated by the canonical model.
+    }
+  }
 
   if (ctorName !== 'BSBGroup') {
     const displaySize = getBsbWidgetDisplaySize(snapshot);
@@ -4482,6 +4512,7 @@ function buildSoundAutomationParameters(bsb: BlueSynthBuilder): SoundAutomationP
     value: param.getFixedValue(),
     minimum: param.getMinimum(),
     maximum: param.getMaximum(),
+    resolutionDecimal: param.getResolutionText(),
     resolution: param.getResolution(),
     curve: param.getCurve(),
     points: param.getPoints().map((p) => ({ x: p.time, y: p.value })),
@@ -4498,6 +4529,7 @@ function buildAutomationParameterSnapshot(param: BlueDataParameter): AutomationP
     displayName: label || name || param.getUniqueId(),
     minimum: param.getMinimum(),
     maximum: param.getMaximum(),
+    resolutionDecimal: param.getResolutionText(),
     resolution: param.getResolution(),
     curve: param.getCurve(),
     fixedValue: param.getFixedValue(),
@@ -5319,7 +5351,13 @@ function restoreBsbAutomationParameters(
     parameter.setLabel(snapshot.label);
     parameter.setMinimum(snapshot.minimum, true);
     parameter.setMaximum(snapshot.maximum, true);
-    if (snapshot.resolution !== undefined) parameter.setResolution(snapshot.resolution);
+    if (snapshot.resolutionDecimal !== undefined) {
+      parameter.setResolutionText(snapshot.resolutionDecimal);
+    } else if (snapshot.resolution !== undefined) {
+      // Legacy renderer snapshots carry only a number. Normalize it through
+      // Parameter's Java-compatible legacy setter at this boundary.
+      parameter.setResolution(snapshot.resolution);
+    }
     parameter.setFixedValue(snapshot.value);
     parameter.setPoints(snapshot.points.map((point) => ({ time: point.x, value: point.y })));
     const curve = snapshot.curve as keyof typeof BlueDataAutomationCurve;
@@ -7601,6 +7639,19 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
       return true;
     }
 
+    case 'setAutomationResolution': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      try {
+        // Parameter parses before mutating, so a malformed edit leaves the
+        // canonical project document and its existing point values intact.
+        param.setResolutionText(patch.resolutionDecimal);
+      } catch {
+        return false;
+      }
+      return true;
+    }
+
     case 'setAutomationPoints': {
       const param = findParameterById(data, patch.parameterId);
       if (!param) return false;
@@ -9137,6 +9188,7 @@ function applyScoreObjectPatch(
             automationEnabled?: boolean;
             points?: Array<{ x: number; y: number }>;
             curve?: string;
+            resolutionDecimal?: string;
           };
           const bsb = parseSoundBSB(snd.getBSBInstrumentText());
           if (bsb) {
@@ -9145,6 +9197,15 @@ function applyScoreObjectPatch(
               (pr: BlueDataParameter) => pr.getUniqueId() === autoPatch.parameterId || pr.getName() === autoPatch.parameterId,
             );
             if (param) {
+              if (autoPatch.resolutionDecimal !== undefined) {
+                try {
+                  // Parse before applying the rest of the patch so malformed
+                  // exact text cannot partially mutate the canonical sound.
+                  param.setResolutionText(autoPatch.resolutionDecimal);
+                } catch {
+                  return false;
+                }
+              }
               if (autoPatch.automationEnabled !== undefined) param.setAutomationEnabled(autoPatch.automationEnabled);
               if (autoPatch.points !== undefined) {
                 param.setPoints(autoPatch.points.map((pt: { x: number; y: number }) => ({ time: pt.x, value: pt.y })));

@@ -22,6 +22,7 @@ import {
 } from './java-runtime/java-runtime-path';
 import { resolveAppMetadata } from './app-metadata';
 import type { AppRuntimeVersions } from '../shared/app-metadata';
+import { BLUE_ENGINE_PROTOCOL_VERSION } from '@blue/engine-client/capabilities';
 
 /** Kinds of runtime aspects the verifier inspects. */
 export type RuntimeAspect =
@@ -368,7 +369,7 @@ export function verifyBundledEngine(
     };
   }
   if (manifest.schemaVersion !== 1 ||
-      manifest.protocolVersion !== 1 ||
+      manifest.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
       manifest.platform !== platform ||
       manifest.arch !== arch ||
       manifest.executableName !== executableName) {
@@ -376,7 +377,7 @@ export function verifyBundledEngine(
       aspect: 'bundled-engine',
       ok: false,
       code: 'BLUE_ENGINE_RESOURCE_MISMATCH',
-      message: `Bundled Blue Engine metadata does not match ${platform}-${arch} protocol 1`,
+      message: `Bundled Blue Engine metadata does not match ${platform}-${arch} protocol ${BLUE_ENGINE_PROTOCOL_VERSION}`,
     };
   }
   const hash = createHash('sha256')
@@ -412,7 +413,7 @@ export function verifyBundledEngine(
     if (probe.status !== 2 ||
         report.schemaVersion !== 1 ||
         report.ready !== false ||
-        report.engine?.protocolVersion !== 1 ||
+        report.engine?.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION ||
         report.csound?.status === 'ready') {
       throw new Error(`unexpected probe status ${probe.status}`);
     }

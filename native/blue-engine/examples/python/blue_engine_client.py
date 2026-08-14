@@ -157,9 +157,7 @@ class BlueEngineClient:
         curve: AutomationCurve,
         points: list,
         enabled: bool = True,
-        resolution: float = 0.0,
-        resolution_scale: int = 0,
-        high_precision: bool = False,
+        resolution_decimal: str = "0",
     ) -> Tuple[bool, int]:
         """Create an automation for a channel.
 
@@ -168,22 +166,18 @@ class BlueEngineClient:
             curve: Interpolation curve type
             points: List of (time, value) tuples
             enabled: Whether automation starts enabled
-            resolution: Quantization step size (0 = no quantization)
-            resolution_scale: Decimal scale for resolution (e.g., 1 for 0.1, 2 for 0.01)
-            high_precision: Use BigDecimal-compatible quantization
+            resolution_decimal: Canonical Java BigDecimal text. Positive values
+                enable exact Java-compatible quantization.
 
         Returns:
             (success, automation_id)
         """
-        # Build payload: channel_name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points
+        resolution_bytes = resolution_decimal.encode("ascii")
+        # Build payload: channel_name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points
         payload = channel_name.encode("utf-8") + b"\x00"
-        payload += struct.pack("<BBdiBI",
-                               curve,
-                               1 if enabled else 0,
-                               float(resolution),
-                               resolution_scale,
-                               1 if high_precision else 0,
-                               len(points))
+        payload += struct.pack("<BBI", curve, 1 if enabled else 0, len(resolution_bytes))
+        payload += resolution_bytes
+        payload += struct.pack("<I", len(points))
 
         for time, value in points:
             payload += struct.pack("<dd", time, value)
@@ -200,19 +194,14 @@ class BlueEngineClient:
         curve: AutomationCurve,
         points: list,
         enabled: bool = True,
-        resolution: float = 0.0,
-        resolution_scale: int = 0,
-        high_precision: bool = False,
+        resolution_decimal: str = "0",
     ) -> Tuple[bool, str]:
         """Update an existing automation."""
+        resolution_bytes = resolution_decimal.encode("ascii")
         payload = channel_name.encode("utf-8") + b"\x00"
-        payload += struct.pack("<BBdiBI",
-                               curve,
-                               1 if enabled else 0,
-                               float(resolution),
-                               resolution_scale,
-                               1 if high_precision else 0,
-                               len(points))
+        payload += struct.pack("<BBI", curve, 1 if enabled else 0, len(resolution_bytes))
+        payload += resolution_bytes
+        payload += struct.pack("<I", len(points))
 
         for time, value in points:
             payload += struct.pack("<dd", time, value)

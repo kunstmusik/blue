@@ -2,19 +2,21 @@
 
 #include "AutomationStore.h"
 #include "AutomationTypes.h"
+#include <array>
 #include <functional>
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
 #include <cstdint>
 #endif
-#include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace blue {
 
-// Handles per-k-cycle processing of automations
-// Runs in the Csound performance thread
+// Handles per-k-cycle processing of automations. Runs on the Csound
+// performance thread. All preparation (decimal parsing, quantizer workspaces,
+// segment caches) happens on the control thread; this class only evaluates
+// prepared definitions, keeps small fixed per-channel state, and hands
+// retired snapshots back to the store for control-thread reclamation.
 class AutomationManager {
 public:
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
@@ -26,6 +28,7 @@ public:
         uint32_t resetIndexOutOfRangeCount = 0;
         uint32_t resetBeforeSegmentCount = 0;
         uint32_t resetCompletedRewindCount = 0;
+        uint32_t invalidEvaluationCount = 0;
     };
 #endif
 
@@ -46,13 +49,19 @@ public:
     // Called once per k-cycle, before csoundPerformKsmps()
     void process(int64_t currentSample, double sampleRate);
 
+#ifdef BLUE_ENGINE_TESTING
+    // Test-only seam for the Java parity corpus. Runtime callers enter through
+    // the integer sample boundary above; fixture times are arbitrary binary64
+    // values and cannot all be represented as int64 samples at one rate.
+    void processAtElapsedTimeForTesting(double elapsed);
+#endif
+
     // Reset state (called when engine starts or restarts)
     void reset();
 
-    // Standalone quantization helpers (for differential tests and direct invocation)
-    static double quantizeFast(double y, double resolution, bool isDescending);
-    static double quantizeHighPrecision(double y, double resolution,
-                                        int resolutionScale, bool isDescending);
+    // Total audio-time invalid-evaluation diagnostics (non-finite values that
+    // could not participate in exact quantization)
+    uint64_t totalInvalidEvaluationCount() const { return totalInvalidEvaluationCount_; }
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     const ProcessDiagnostics& getLastProcessDiagnostics() const {
@@ -61,37 +70,36 @@ public:
 #endif
 
 private:
+    static constexpr size_t kMaxActiveAutomations = 256;
+
     struct ActiveAutomation {
-        std::string channelName;
-        const AutomationDef* def;
-        AutomationState* state;
+        const std::string* channelName = nullptr;
+        const AutomationDef* def = nullptr;
+        AutomationState state{};
     };
 
-    // Prepare invariant segment and quantization caches for an automation definition
-    static void prepareAutomationState(const AutomationDef& def, AutomationState& state);
+    // Java Line.getValue(double) evaluation over a prepared definition.
+    // Sets valid=false when a non-finite value blocks exact quantization; the
+    // caller keeps the last written channel value and counts a diagnostic.
+    double evaluate(const AutomationDef& def, AutomationState& state, double elapsed,
+                    bool& valid);
 
-    // Interpolation helpers using invariant caches
-    double interpolate(const AutomationDef& def, AutomationState& state, double elapsed);
-    static double quantizeFastCached(double y, double resolution,
-                                     const QuantizationCache& cache,
-                                     bool isDescending);
-    static double quantizeHighPrecisionCached(double y, double resolution,
-                                              const QuantizationCache& cache,
-                                              bool isDescending);
+    void processElapsed(double elapsed);
 
     void rebuildActiveAutomations(const std::shared_ptr<const AutomationList>& list);
-    void pruneStatesForList(const std::shared_ptr<const AutomationList>& list);
 
     std::shared_ptr<AutomationStore> store_;
     ChannelWriter writer_;
     ChannelResolver resolver_;
     BindingGenerationProvider bindingGenerationProvider_;
 
-    // Local state map, keyed by channel name
-    std::map<std::string, AutomationState> states_;
     std::shared_ptr<const AutomationList> activeListSnapshot_;
     uint64_t cachedSnapshotRevision_ = 0;
-    std::vector<ActiveAutomation> activeAutomations_;
+    std::array<ActiveAutomation, kMaxActiveAutomations> activeAutomations_{};
+    std::array<AutomationState, kMaxActiveAutomations> previousStates_{};
+    std::array<const std::string*, kMaxActiveAutomations> previousChannelNames_{};
+    size_t activeAutomationCount_ = 0;
+    uint64_t totalInvalidEvaluationCount_ = 0;
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     size_t activePointCount_ = 0;

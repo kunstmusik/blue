@@ -25,8 +25,8 @@ enum class Command : uint8_t {
     CREATE_CHANNEL  = 0x12,  // payload: name\0 + double initial (8 bytes)
     GET_SHM_NAME    = 0x13,  // no payload, response: shm name string
 
-    // Automation commands
-    CREATE_AUTOMATION  = 0x20,  // payload: channel_name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points
+    // Automation commands (protocol version 2: exact decimal resolution)
+    CREATE_AUTOMATION  = 0x20,  // payload: channel_name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(canonical ASCII) + n_points(4B) + points
     UPDATE_AUTOMATION  = 0x21,  // payload: same as CREATE_AUTOMATION
     DELETE_AUTOMATION  = 0x22,  // payload: channel_name\0
     ENABLE_AUTOMATION  = 0x23,  // payload: channel_name\0
@@ -36,17 +36,24 @@ enum class Command : uint8_t {
 };
 
 /*
- * Automation payload format details:
+ * Automation payload format details (protocol version 2):
  *
  * CREATE_AUTOMATION and UPDATE_AUTOMATION:
  * - channel_name: null-terminated string
  * - curve: 1 byte (AutomationCurve enum value)
- * - enabled: 1 byte (0 = disabled, non-zero = enabled)
- * - resolution: 8-byte double (quantization step size, 0.0 = no quantization)
- * - resolutionScale: 4-byte int32_t (decimal scale for resolution, e.g., 1 for 0.1, 2 for 0.01)
- * - highPrecision: 1 byte (0 = fast double path, non-zero = BigDecimal-compatible path)
- * - n_points: 4-byte uint32_t (number of automation points)
- * - points: array of (time, value) pairs, each 16 bytes (2 doubles)
+ * - enabled: 1 byte (0 = disabled, 1 = enabled; no other values)
+ * - resolutionLength: 4-byte uint32 little-endian (ASCII byte count)
+ * - resolution: resolutionLength ASCII bytes of the authoritative
+ *   Java-canonical decimal text (exact-decimal-resolution contract); there
+ *   are no resolution-double, scale, or precision-mode fields
+ * - n_points: 4-byte uint32 little-endian
+ * - points: array of (time, value) pairs, each 16 bytes (2 doubles LE)
+ *
+ * Version 2 is an incompatible schema marker: the app, engine client, and
+ * bundled engine change together, so no version-1 automation parser or
+ * lossy fallback is retained. The capability handshake must agree on
+ * protocol version 2 and the automation-decimal-v1 feature before any
+ * automation command is published.
  */
 
 // Response status codes
@@ -60,16 +67,25 @@ struct Request {
     Command command;
     std::string payload;
 
+    static uint32_t readUint32LE(const uint8_t* bytes) {
+        return static_cast<uint32_t>(bytes[0])
+             | (static_cast<uint32_t>(bytes[1]) << 8)
+             | (static_cast<uint32_t>(bytes[2]) << 16)
+             | (static_cast<uint32_t>(bytes[3]) << 24);
+    }
+
     // Parse from raw bytes
     static bool parse(const uint8_t* data, size_t size, Request& req) {
         if (size < 5) return false;  // minimum: 1 byte cmd + 4 bytes len
 
         req.command = static_cast<Command>(data[0]);
 
-        uint32_t payloadLen;
-        std::memcpy(&payloadLen, data + 1, sizeof(payloadLen));
+        const uint32_t payloadLen = readUint32LE(data + 1);
 
-        if (size < 5 + payloadLen) return false;
+        // The request envelope is length-delimited. Accepting trailing bytes
+        // would let a malformed v2 payload be interpreted differently by
+        // different command handlers.
+        if (payloadLen > size - 5 || size != 5 + payloadLen) return false;
 
         req.payload.assign(reinterpret_cast<const char*>(data + 5), payloadLen);
         return true;
@@ -88,10 +104,11 @@ struct Response {
 
         data.push_back(static_cast<uint8_t>(status));
 
-        uint32_t payloadLen = static_cast<uint32_t>(payload.size());
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&payloadLen),
-                    reinterpret_cast<uint8_t*>(&payloadLen) + sizeof(payloadLen));
+        const uint32_t payloadLen = static_cast<uint32_t>(payload.size());
+        data.push_back(static_cast<uint8_t>(payloadLen & 0xffu));
+        data.push_back(static_cast<uint8_t>((payloadLen >> 8) & 0xffu));
+        data.push_back(static_cast<uint8_t>((payloadLen >> 16) & 0xffu));
+        data.push_back(static_cast<uint8_t>((payloadLen >> 24) & 0xffu));
 
         data.insert(data.end(), payload.begin(), payload.end());
         return data;

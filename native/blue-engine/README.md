@@ -155,7 +155,7 @@ Binary protocol over two ZeroMQ transports:
 | 0x11 | GET_CHANNEL | `name\0` (response: double value) |
 | 0x12 | CREATE_CHANNEL | `name\0` + initial double value (8B) |
 | 0x13 | GET_SHM_NAME | none (response: shared memory name as UTF-8) |
-| 0x20 | CREATE_AUTOMATION | `channel\0` + curve(1B) + enabled(1B) + **resolution(double, 8B)** + n_points(4B) + points(time,value) pairs (16B each) |
+| 0x20 | CREATE_AUTOMATION | `channel\0` + curve(1B) + enabled(1B) + resolutionLength(u32-le) + canonical resolution text (UTF-8) + n_points(u32-le) + points(time,value) pairs (16B each, f64-le) |
 | 0x21 | UPDATE_AUTOMATION | same payload as CREATE_AUTOMATION |
 | 0x22 | DELETE_AUTOMATION | `channel\0` |
 | 0x23 | ENABLE_AUTOMATION | `channel\0` |
@@ -196,6 +196,23 @@ Example payload:
 |------|---------|
 | 0x00 | OK |
 | 0x01 | ERROR (payload contains error message) |
+
+### Automation protocol version
+
+Automation decimal resolution is part of protocol version 2 and is advertised
+by the `automation-decimal-v1` capability. `CREATE_AUTOMATION` and
+`UPDATE_AUTOMATION` use the same payload shape:
+
+```
+channel\0 + curve (1B) + enabled (1B) +
+resolutionLength (u32 little-endian) + canonical ASCII resolution +
+n_points (u32 little-endian) + n_points × (time f64 little-endian, value f64 little-endian)
+```
+
+The resolution is an exact Java-compatible decimal string. It is not a binary
+floating-point value and there are no behavioral `resolutionScale` or
+`highPrecision` fields. Automation times, values, bounds, and channel values
+remain binary64.
 
 ## Test Clients
 

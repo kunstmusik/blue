@@ -232,7 +232,7 @@ async function generate(flags) {
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
   const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
   const verificationStatus = flags['verification-status'] ?? 'pending';
-  const engineProtocolVersion = Number(flags['engine-protocol-version'] ?? 1);
+  const engineProtocolVersion = Number(flags['engine-protocol-version'] ?? 2);
   if (verificationStatus !== 'pending' && verificationStatus !== 'verified') {
     throw new Error(`Unsupported --verification-status value: ${verificationStatus}`);
   }
@@ -356,7 +356,7 @@ async function validate(flags) {
   if (!manifest.engine || typeof manifest.engine !== 'object') {
     errors.push('Manifest engine metadata is missing.');
   } else {
-    const expectedProtocolVersion = Number(flags['engine-protocol-version'] ?? 1);
+    const expectedProtocolVersion = Number(flags['engine-protocol-version'] ?? 2);
     if (manifest.engine.protocolVersion !== expectedProtocolVersion) {
       errors.push(
         `Manifest engine protocolVersion "${manifest.engine.protocolVersion}" does not match "${expectedProtocolVersion}".`,

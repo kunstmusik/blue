@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Maintainer-only Java oracle module. The canonical generation path is the
+      repository script scripts/generate-java-blue-automation-fixtures.mjs,
+      which drives Maven/javac/java directly against the pinned Java Blue
+      checkout. This descriptor exists for IDE/Maven use after the pinned
+      checkout has been installed into the local repository.
+
+      Requires JDK 25 (validated by the generator and the wrapper script).
+    -->
+
+    <groupId>com.blue-electron</groupId>
+    <artifactId>java-blue-automation-fixtures</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Pinned Java Blue artifact inputs; see README.md and the corpus
+             manifest for the exact commit and source-file hashes. -->
+        <java-blue.version>2.10.3</java-blue.version>
+    </properties>
+
+    <dependencies>
+        <!-- Pinned Java Blue oracle artifacts (provided: never shipped or
+             published; resolved from the local repository after installing
+             the pinned checkout). -->
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-core</artifactId>
+            <version>${java-blue.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ui-core</artifactId>
+            <version>${java-blue.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>blue.parity.FixtureGenerator</mainClass>
+                    <commandLineArgs>--output ${project.basedir}/../../fixtures/java-blue-automation-parity/v1</commandLineArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -284,6 +284,19 @@ export { ParameterIdList } from './automation/parameter-id-list';
 export { ParameterNameManager } from './automation/parameter-name-manager';
 export { ParameterTimeManager } from './automation/parameter-time-manager';
 export { ParameterHelper } from './automation/parameter-helper';
+export {
+  parseJavaDecimal,
+  normalizeLegacyResolution,
+  snapToResolutionJava,
+  quantizeToResolutionJava,
+  javaDecimalEquals,
+} from './automation/java-decimal';
+export type {
+  JavaDecimal,
+  JavaDecimalDiagnostic,
+  JavaDecimalDiagnosticCode,
+  JavaDecimalResult,
+} from './automation/java-decimal';
 export type { Automatable } from './automation/automatable';
 export type { AutomatableCollectionListener } from './automation/automatable-collection-listener';
 export { LineColors } from './automation/line-colors';

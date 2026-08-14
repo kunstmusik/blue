@@ -57,7 +57,7 @@ describe('RealtimeRenderSettings engine controls', () => {
     engine: {
       schemaVersion: 1,
       engineVersion: '0.1.0',
-      protocolVersion: 1,
+      protocolVersion: 2,
       sourceRevision: 'test',
       features: ['csound-io-v1', 'csound-utility-v1', 'csound-performance-v1'],
     },
@@ -117,7 +117,7 @@ describe('RealtimeRenderSettings engine controls', () => {
       selection: { source: 'settings-override', executablePath: '/external/blue-engine' },
       report: null,
       errorCode: 'ENGINE_PROTOCOL_MISMATCH',
-      message: 'Blue Engine protocol mismatch: expected 1, received 99',
+      message: 'Blue Engine protocol mismatch: expected 2, received 99',
       durationMs: 10,
     });
     render('/external/blue-engine');
@@ -144,7 +144,7 @@ describe('RealtimeRenderSettings engine controls', () => {
         engine: {
           schemaVersion: 1,
           engineVersion: '0.1.0',
-          protocolVersion: 1,
+          protocolVersion: 2,
           sourceRevision: 'test',
           features: [],
         },
@@ -195,7 +195,7 @@ describe('RealtimeRenderSettings engine controls', () => {
           engine: {
             schemaVersion: 1,
             engineVersion: '0.1.0',
-            protocolVersion: 1,
+            protocolVersion: 2,
             sourceRevision: 'test',
             features: [],
           },

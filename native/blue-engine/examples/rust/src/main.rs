@@ -158,18 +158,15 @@ impl BlueEngineClient {
         curve: AutomationCurve,
         points: &[AutomationPoint],
         enabled: bool,
-        resolution: f64,
-        resolution_scale: i32,
-        high_precision: bool,
+        resolution_decimal: &str,
     ) -> Result<(bool, u32), zmq::Error> {
         let mut payload = Vec::new();
         payload.extend_from_slice(channel_name.as_bytes());
         payload.push(0); // null terminator
         payload.push(curve as u8);
         payload.push(if enabled { 1 } else { 0 });
-        payload.extend_from_slice(&resolution.to_le_bytes());
-        payload.extend_from_slice(&resolution_scale.to_le_bytes());
-        payload.push(if high_precision { 1 } else { 0 });
+        payload.extend_from_slice(&(resolution_decimal.len() as u32).to_le_bytes());
+        payload.extend_from_slice(resolution_decimal.as_bytes());
         payload.extend_from_slice(&(points.len() as u32).to_le_bytes());
 
         for pt in points {
@@ -336,7 +333,7 @@ fn main() -> Result<(), zmq::Error> {
             AutomationPoint { time: 2.0, value: 440.0 },
             AutomationPoint { time: 4.0, value: 880.0 },
         ];
-        let (ok, id) = client.create_automation("freq", AutomationCurve::Linear, &linear_points, false, 0.0, 0, false)?;
+        let (ok, id) = client.create_automation("freq", AutomationCurve::Linear, &linear_points, false, "0")?;
         println!("create_automation (LINEAR): {}, ID={}", if ok { "OK" } else { "FAILED" }, id);
 
         client.read_score("i1 0 6")?;
@@ -375,7 +372,7 @@ fn main() -> Result<(), zmq::Error> {
             AutomationPoint { time: 3.5, value: 880.0 },
             AutomationPoint { time: 4.0, value: 660.0 },
         ];
-        let (ok, id) = client.create_automation("freq", AutomationCurve::Step, &step_points, false, 0.0, 0, false)?;
+        let (ok, id) = client.create_automation("freq", AutomationCurve::Step, &step_points, false, "0")?;
         println!("create_automation (STEP): {}, ID={}", if ok { "OK" } else { "FAILED" }, id);
 
         client.read_score("i1 0 6")?;
@@ -409,7 +406,7 @@ fn main() -> Result<(), zmq::Error> {
             AutomationPoint { time: 2.0, value: 220.0 },
             AutomationPoint { time: 4.0, value: 880.0 },
         ];
-        let (ok, id) = client.create_automation("freq", AutomationCurve::Exponential, &exp_points, false, 0.0, 0, false)?;
+        let (ok, id) = client.create_automation("freq", AutomationCurve::Exponential, &exp_points, false, "0")?;
         println!("create_automation (EXPONENTIAL): {}, ID={}", if ok { "OK" } else { "FAILED" }, id);
 
         client.read_score("i1 0 6")?;
@@ -458,8 +455,8 @@ fn main() -> Result<(), zmq::Error> {
             AutomationPoint { time: 2.0, value: 220.0 },
             AutomationPoint { time: 6.0, value: 880.0 },
         ];
-        let resolution = 100.0;
-        let (ok, id) = client.create_automation("freq", AutomationCurve::Linear, &quant_points, false, resolution, 0, false)?;
+        let resolution = "100";
+        let (ok, id) = client.create_automation("freq", AutomationCurve::Linear, &quant_points, false, resolution)?;
         println!(
             "create_automation (LINEAR + resolution={}): {}, ID={}",
             resolution,

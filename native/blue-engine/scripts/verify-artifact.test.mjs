@@ -17,7 +17,7 @@ const target = resolveTarget('darwin', 'arm64');
 const baseManifest = {
   schemaVersion: 1,
   engineVersion: '0.1.0',
-  protocolVersion: 1,
+  protocolVersion: 2,
   sourceRevision: '0123456789012345678901234567890123456789',
   platform: 'darwin',
   arch: 'arm64',

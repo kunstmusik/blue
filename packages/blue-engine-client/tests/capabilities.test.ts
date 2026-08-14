@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
   CSOUND_IO_FEATURE,
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
@@ -14,7 +15,7 @@ const validCapabilities = {
   engineVersion: '0.1.0',
   protocolVersion: BLUE_ENGINE_PROTOCOL_VERSION,
   sourceRevision: 'abc123',
-  features: ['engine-state-v1', 'unknown-future-feature'],
+  features: ['engine-state-v1', AUTOMATION_DECIMAL_FEATURE, 'unknown-future-feature'],
 };
 
 describe('engine capabilities decoder', () => {
@@ -30,6 +31,10 @@ describe('engine capabilities decoder', () => {
     expect(hasEngineFeature(capabilities, CSOUND_IO_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, CSOUND_UTILITY_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, 'future-feature')).toBe(false);
+  });
+
+  it('exposes the exact-decimal automation capability', () => {
+    expect(hasEngineFeature(validCapabilities, AUTOMATION_DECIMAL_FEATURE)).toBe(true);
   });
 
   it.each([

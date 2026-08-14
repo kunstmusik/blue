@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { parseJavaDecimal } from '@blue/data';
 import type {
   BsbWidgetNodeSnapshot,
   BsbInterfacePatch,
@@ -109,7 +110,6 @@ const NUMBER_PROPS = new Set([
   'textFieldWidth',
   'canvasWidth',
   'canvasHeight',
-  'resolution',
   'gap',
   'numberOfSliders',
   'selectedIndex',
@@ -223,6 +223,9 @@ function getPropertyBinding(widgetType: string, key: string): PropertyBinding | 
 }
 
 function getDisplayPropertyValue(widget: BsbWidgetNodeSnapshot, key: string): unknown {
+  if (key === 'resolution' && typeof widget.properties?.resolutionDecimal === 'string') {
+    return widget.properties.resolutionDecimal;
+  }
   const binding = getPropertyBinding(widget.type, key);
   if (binding?.source === 'top') {
     return (widget as unknown as Record<string, unknown>)[binding.readKey ?? key];
@@ -409,7 +412,8 @@ function EditableBsbPropertySheet({
           );
         }
 
-        const isNumber = NUMBER_PROPS.has(key) || typeof rawVal === 'number';
+        const isExactResolution = key === 'resolution' && typeof rawVal === 'string';
+        const isNumber = !isExactResolution && (NUMBER_PROPS.has(key) || typeof rawVal === 'number');
         const isObjectName = key === 'objectName';
 
         return (
@@ -421,7 +425,11 @@ function EditableBsbPropertySheet({
               widget={widget}
               widgetId={widget.id}
               allObjectNames={allObjectNames}
-              validate={isNumber ? (v: string) => validateNumericProperty(key, v, widget) : undefined}
+              validate={isExactResolution
+                ? validateExactResolutionProperty
+                : isNumber
+                  ? (v: string) => validateNumericProperty(key, v, widget)
+                  : undefined}
               onCommit={(val) => {
                 if (isNumber) {
                   updateProperty(key, val === '' ? 0 : parseFloat(val as string));
@@ -476,6 +484,11 @@ function EditableBsbPropertySheet({
       />
     </div>
   );
+}
+
+function validateExactResolutionProperty(proposed: string): string | null {
+  const parsed = parseJavaDecimal(proposed);
+  return parsed.ok ? parsed.value.canonicalText : null;
 }
 
 function PropertyRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {

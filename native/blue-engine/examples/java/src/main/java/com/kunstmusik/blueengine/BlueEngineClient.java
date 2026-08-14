@@ -176,30 +176,24 @@ public class BlueEngineClient implements AutoCloseable {
 
     public AutomationResponse createAutomation(String channelName, byte curve,
                                               AutomationPoint[] points, boolean enabled) {
-        return createAutomation(channelName, curve, points, enabled, 0.0, 0, false);
+        return createAutomation(channelName, curve, points, enabled, "0");
     }
 
     public AutomationResponse createAutomation(String channelName, byte curve,
                                               AutomationPoint[] points, boolean enabled,
-                                              double resolution) {
-        return createAutomation(channelName, curve, points, enabled, resolution, 0, false);
-    }
-
-    public AutomationResponse createAutomation(String channelName, byte curve,
-                                              AutomationPoint[] points, boolean enabled,
-                                              double resolution, int resolutionScale,
-                                              boolean highPrecision) {
+                                              String resolutionDecimal) {
         byte[] nameBytes = (channelName + "\0").getBytes(StandardCharsets.UTF_8);
-        // payload: name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points(16B each)
-        int payloadLen = nameBytes.length + 2 + 8 + 4 + 1 + 4 + (points.length * 16);
+        byte[] resolutionBytes = resolutionDecimal.getBytes(StandardCharsets.US_ASCII);
+        // payload: name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points(16B each)
+        int payloadLen = Math.addExact(nameBytes.length + 2 + 4 + resolutionBytes.length + 4,
+                Math.multiplyExact(points.length, 16));
         ByteBuffer payload = ByteBuffer.allocate(payloadLen);
         payload.order(ByteOrder.LITTLE_ENDIAN);
         payload.put(nameBytes);
         payload.put(curve);
         payload.put((byte) (enabled ? 1 : 0));
-        payload.putDouble(resolution);
-        payload.putInt(resolutionScale);
-        payload.put((byte) (highPrecision ? 1 : 0));
+        payload.putInt(resolutionBytes.length);
+        payload.put(resolutionBytes);
         payload.putInt(points.length);
         for (AutomationPoint pt : points) {
             payload.putDouble(pt.time());
@@ -218,30 +212,24 @@ public class BlueEngineClient implements AutoCloseable {
 
     public Response updateAutomation(String channelName, byte curve,
                                     AutomationPoint[] points, boolean enabled) {
-        return updateAutomation(channelName, curve, points, enabled, 0.0, 0, false);
+        return updateAutomation(channelName, curve, points, enabled, "0");
     }
 
     public Response updateAutomation(String channelName, byte curve,
                                     AutomationPoint[] points, boolean enabled,
-                                    double resolution) {
-        return updateAutomation(channelName, curve, points, enabled, resolution, 0, false);
-    }
-
-    public Response updateAutomation(String channelName, byte curve,
-                                    AutomationPoint[] points, boolean enabled,
-                                    double resolution, int resolutionScale,
-                                    boolean highPrecision) {
+                                    String resolutionDecimal) {
         byte[] nameBytes = (channelName + "\0").getBytes(StandardCharsets.UTF_8);
-        // payload: name\0 + curve(1B) + enabled(1B) + resolution(8B) + resolutionScale(4B) + highPrecision(1B) + n_points(4B) + points(16B each)
-        int payloadLen = nameBytes.length + 2 + 8 + 4 + 1 + 4 + (points.length * 16);
+        byte[] resolutionBytes = resolutionDecimal.getBytes(StandardCharsets.US_ASCII);
+        // payload: name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(ASCII) + n_points(4B) + points(16B each)
+        int payloadLen = Math.addExact(nameBytes.length + 2 + 4 + resolutionBytes.length + 4,
+                Math.multiplyExact(points.length, 16));
         ByteBuffer payload = ByteBuffer.allocate(payloadLen);
         payload.order(ByteOrder.LITTLE_ENDIAN);
         payload.put(nameBytes);
         payload.put(curve);
         payload.put((byte) (enabled ? 1 : 0));
-        payload.putDouble(resolution);
-        payload.putInt(resolutionScale);
-        payload.put((byte) (highPrecision ? 1 : 0));
+        payload.putInt(resolutionBytes.length);
+        payload.put(resolutionBytes);
         payload.putInt(points.length);
         for (AutomationPoint pt : points) {
             payload.putDouble(pt.time());
@@ -504,7 +492,7 @@ public class BlueEngineClient implements AutoCloseable {
                     new AutomationPoint(6.0, 880.0)
                 };
 
-                double resolution = 100.0;
+                String resolution = "100";
                 AutomationResponse autoResp = client.createAutomation(
                         "freq",
                         CURVE_LINEAR,

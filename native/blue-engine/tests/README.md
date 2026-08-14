@@ -19,39 +19,47 @@ integration suite and `test:profiling` for the opt-in profiler configuration.
 Or run specific test suites:
 
 ```bash
-ctest -R FixedPoint           # Run FixedPoint tests
-ctest -R AutomationFixedPoint # Run Automation FixedPoint tests
-ctest -R ChannelBridge        # Run native channel bridge integration test
+ctest -R JavaBigDecimal       # Decimal arithmetic and Java parity
+ctest -R AutomationProtocol   # Protocol-v2 exact-resolution payloads
+ctest -R AutomationManager    # Realtime state and quantization
+ctest -R ChannelBridge        # Native channel bridge integration test
 ```
 
 ## Test Suites
 
-### FixedPointTests
+### JavaBigDecimalTests and JavaBigDecimalParityTests
 
-Tests for the bounded `FixedPoint` class used by the Java-compatible
-quantization fixtures (it is not arbitrary-precision `BigDecimal`):
+Tests for the bounded, allocation-free runtime decimal implementation and the
+committed Java Blue corpus:
 
-- Basic construction and conversion
-- Arithmetic operations (add, subtract, remainder)
-- `setScale` with various rounding modes (FLOOR, CEILING, DOWN, UP, HALF_UP, etc.)
-- Quantization behavior matching the accepted Java Blue fixture set
+- `BigDecimal` parsing, scale, sign, rounding, division, and remainder
+- Exact quantization including the descending-segment `resolution * 0.99` bias
+- More than 2,000 realtime fixture cases through the production manager
+- Prepared-resource evaluation with an upstream-allocation guard
 
-### QuantizationTests
+### AutomationProtocolTests
 
-Tests for the quantization logic used in AutomationManager:
+Protocol-v2 request validation and little-endian boundary coverage:
 
-- Fast path (double-based) quantization
-- High-precision path (cached integer/fixed-point) quantization
-- Descending segment bias behavior
-- Consistency between fast and high-precision modes
+- Canonical decimal text and malformed payload diagnostics
+- Exact resolution round-trip through create/update requests
+- Rejection of trailing bytes and non-finite point values
 
 ### AutomationStoreTests
 
-Tests for AutomationStore with resolution parameters:
+Tests for immutable automation snapshots and realtime-safe publication:
 
-- Create and update automations with resolution
-- Resolution scale and high-precision flag storage
-- Automation listing and retrieval
+- Fixed-capacity active definitions and revision-aware state reset
+- Deferred snapshot retirement without audio-thread locks or allocation
+- Zero/negative resolution as an unquantized path
+
+### Benchmark scenarios
+
+`benchmark_engine --scenario all` reports the common `linear_32` binary64 path
+and exact-decimal paths separately (`quantized_exact_32` and
+`quantized_exact_large_scale_32`). The release comparison gate allows at most a
+5% median host-cycle regression for `linear_32`; exact paths are reported for
+visibility and are not substituted for that common-path budget.
 
 ### ChannelBridgeTests
 

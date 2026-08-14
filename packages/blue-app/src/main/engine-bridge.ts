@@ -838,9 +838,7 @@ export class EngineBridge {
             varName,
             curveCode,
             true, // enabled
-            param.getResolution(),
-            param.getResolutionScale(),
-            param.isHighPrecision(),
+            getAutomationResolutionText(param),
             points,
           );
           if (!resp.ok) {
@@ -981,9 +979,7 @@ export class EngineBridge {
         varName,
         curveCode,
         true,
-        parameter.getResolution(),
-        parameter.getResolutionScale(),
-        parameter.isHighPrecision(),
+        getAutomationResolutionText(parameter),
         points,
       );
       if (updateResp.ok) {
@@ -999,9 +995,7 @@ export class EngineBridge {
         varName,
         curveCode,
         true,
-        parameter.getResolution(),
-        parameter.getResolutionScale(),
-        parameter.isHighPrecision(),
+        getAutomationResolutionText(parameter),
         points,
       );
       if (!createResp.ok) {
@@ -1145,6 +1139,22 @@ function mapAutomationCurve(curve: AutomationCurve): AutomationCurveCode {
     case AutomationCurve.EXPONENTIAL: return AutomationCurveCode.EXPONENTIAL;
     default: return AutomationCurveCode.LINEAR;
   }
+}
+
+/**
+ * Keep the bridge tolerant of lightweight Parameter doubles used by callers
+ * while the exact-resolution API is rolled out. Real Parameters always
+ * provide getResolutionText(); the numeric fallback is only for legacy
+ * objects and test doubles.
+ */
+function getAutomationResolutionText(parameter: Parameter): string {
+  const exactParameter = parameter as Parameter & {
+    getResolutionText?: () => string;
+  };
+  if (typeof exactParameter.getResolutionText === 'function') {
+    return exactParameter.getResolutionText();
+  }
+  return String(parameter.getResolution());
 }
 
 function isAutomationNotFoundMessage(message: string): boolean {

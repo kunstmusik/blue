@@ -1125,13 +1125,24 @@ export function applyPatchToDocument(
 
     // Sound-specific automation patches (optimistic)
     if (p.automationPatch !== undefined && Array.isArray(payload.automationParameters)) {
-      const autoPatch = p.automationPatch as { parameterId: string; automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string };
+      const autoPatch = p.automationPatch as {
+        parameterId: string;
+        automationEnabled?: boolean;
+        points?: Array<{ x: number; y: number }>;
+        curve?: string;
+        resolutionDecimal?: string;
+      };
       const params = (payload.automationParameters as Array<Record<string, unknown>>).map((param) => {
         if (param.parameterId !== autoPatch.parameterId && param.name !== autoPatch.parameterId) return param;
         const updated = { ...param };
         if (autoPatch.automationEnabled !== undefined) updated.automationEnabled = autoPatch.automationEnabled;
         if (autoPatch.points !== undefined) updated.points = autoPatch.points;
         if (autoPatch.curve !== undefined) updated.curve = autoPatch.curve;
+        if (autoPatch.resolutionDecimal !== undefined) {
+          updated.resolutionDecimal = autoPatch.resolutionDecimal;
+          const numeric = Number(autoPatch.resolutionDecimal);
+          if (Number.isFinite(numeric)) updated.resolution = numeric;
+        }
         return updated;
       });
       payload.automationParameters = params;

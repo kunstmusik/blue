@@ -41,7 +41,7 @@ describe('EngineBridge runtime selection', () => {
         selection: {
           source: 'development',
           executablePath: '/workspace/native/blue-engine/dist/darwin-arm64/blue-engine',
-          expectedProtocolVersion: 1,
+          expectedProtocolVersion: 2,
           artifactSha256: 'hash',
           diagnostic: null,
         },

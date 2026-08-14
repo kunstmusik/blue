@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { developmentEnginePath, EngineRuntimeService, type ProbeProcessRunner } from './engine-runtime';
 
-function report(protocolVersion = 1, ready = true): string {
+function report(protocolVersion = 2, ready = true): string {
   return JSON.stringify({
     schemaVersion: 1,
     engine: {
@@ -45,7 +45,7 @@ describe('EngineRuntimeService', () => {
     await chmod(enginePath, 0o755);
     await writeFile(path.join(path.dirname(enginePath), 'artifact.json'), JSON.stringify({
       schemaVersion: 1,
-      protocolVersion: 1,
+      protocolVersion: 2,
       platform: 'darwin',
       arch: 'arm64',
       executableName: 'blue-engine',
@@ -96,7 +96,7 @@ describe('EngineRuntimeService', () => {
       await chmod(packagedPath, 0o755);
       await writeFile(path.join(path.dirname(packagedPath), 'artifact.json'), JSON.stringify({
         schemaVersion: 1,
-        protocolVersion: 1,
+        protocolVersion: 2,
         platform,
         arch,
         executableName,
@@ -137,7 +137,7 @@ describe('EngineRuntimeService', () => {
     runner = async (selectedPath, args) => {
       expect(selectedPath).toBe(enginePath);
       expect(args).toEqual(['--probe-csound', '--json']);
-      return { exitCode: 2, stdout: report(1, false), stderr: '', timedOut: false };
+      return { exitCode: 2, stdout: report(2, false), stderr: '', timedOut: false };
     };
     const result = await service().probe();
     expect(result.ok).toBe(false);

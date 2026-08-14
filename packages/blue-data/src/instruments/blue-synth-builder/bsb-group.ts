@@ -184,6 +184,7 @@ const SKIPPED_WIDGET_FIELDS = new Set([
   'textValue',
   'defaultValue',
   'resolution',
+  'resolutionDecimal',
   'objectName',
   'x',
   'y',
@@ -284,7 +285,7 @@ export function saveBsbWidgetAsXML(widget: BSBWidget): Element {
     addPrimitiveElement(elem, 'value', widget.value);
   }
   if (widget instanceof BSBHSlider || widget instanceof BSBVSlider) {
-    elem.addElement('bdresolution').setText(String(widget.resolution));
+    elem.addElement('bdresolution').setText(widget.getResolutionText());
   }
   if (widget instanceof BSBTextField) {
     addPrimitiveElement(elem, 'value', widget.textValue);
@@ -297,7 +298,7 @@ export function saveBsbWidgetAsXML(widget: BSBWidget): Element {
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     addPrimitiveElement(elem, 'minimum', widget.minimum);
     addPrimitiveElement(elem, 'maximum', widget.maximum);
-    elem.addElement('bdresolution').setText(String(widget.resolution));
+    elem.addElement('bdresolution').setText(widget.getResolutionText());
   }
   if (widget.parameterName) {
     addPrimitiveElement(elem, 'parameterName', widget.parameterName);

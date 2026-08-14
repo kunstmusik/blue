@@ -1,37 +1,86 @@
 # Unit tests for CTest
 
-# FixedPoint unit tests (header-only, no linking needed)
-add_executable(test_fixedpoint test_fixedpoint.cpp)
-target_include_directories(test_fixedpoint PRIVATE ${CMAKE_SOURCE_DIR}/src)
-set_target_properties(test_fixedpoint PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-add_test(NAME FixedPointTests COMMAND test_fixedpoint)
+# All test targets that include the production automation evaluator must use
+# the same Java-order floating-point controls as the engine target. Applying
+# the options at directory scope is intentional: CMake may compile the same
+# AutomationManager.cpp source independently for each test target, so a
+# source-file property from the parent directory is not sufficient here.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(-ffp-contract=off -fno-associative-math)
+elseif(MSVC)
+    add_compile_options(/fp:precise)
+endif()
 
-# Quantization tests (tests the quantization logic used in AutomationManager)
-add_executable(test_automation_fixedpoint
-    test_automation_fixedpoint.cpp
+# Exact-decimal arithmetic tests (Boost.Multiprecision behind private modules,
+# hard-fail upstream allocator, allocation-contract instrumentation).
+add_executable(test_java_bigdecimal
+    test_java_bigdecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
+)
+target_include_directories(test_java_bigdecimal PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_java_bigdecimal PRIVATE Boost::boost)
+set_target_properties(test_java_bigdecimal PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+add_test(NAME JavaBigDecimalTests COMMAND test_java_bigdecimal)
+
+# Java parity fixture corpus consumers: exact output bits for the production
+# evaluators plus the shared TSV reader. The canonical corpus is copied into
+# the build tree by the root CMakeLists and its path injected here; tests never
+# keep an independent expected-result copy.
+add_executable(test_java_bigdecimal_parity
+    test_java_bigdecimal_parity.cpp
+    java_parity_fixtures.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
-target_include_directories(test_automation_fixedpoint PRIVATE ${CMAKE_SOURCE_DIR}/src)
-set_target_properties(test_automation_fixedpoint PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-add_test(NAME QuantizationTests COMMAND test_automation_fixedpoint)
+target_include_directories(test_java_bigdecimal_parity PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_java_bigdecimal_parity PRIVATE Boost::boost)
+target_compile_definitions(test_java_bigdecimal_parity PRIVATE
+    BLUE_ENGINE_PARITY_FIXTURES_DIR="${BLUE_ENGINE_PARITY_FIXTURES_DIR}"
+    BLUE_ENGINE_TESTING=1)
+set_target_properties(test_java_bigdecimal_parity PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+add_test(NAME JavaBigDecimalParityTests COMMAND test_java_bigdecimal_parity)
 
-# AutomationStore tests
-add_executable(test_automation_fixedpoint_simple
-    test_automation_fixedpoint_simple.cpp
+# Automation protocol v2 payload parsing through the ZMQ handler boundary.
+add_executable(test_automation_protocol
+    test_automation_protocol.cpp
+    java_parity_fixtures.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
 )
-target_include_directories(test_automation_fixedpoint_simple PRIVATE ${CMAKE_SOURCE_DIR}/src)
-set_target_properties(test_automation_fixedpoint_simple PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-add_test(NAME AutomationStoreTests COMMAND test_automation_fixedpoint_simple)
+target_include_directories(test_automation_protocol PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_automation_protocol PRIVATE libzmq-static Boost::boost)
+target_compile_definitions(test_automation_protocol PRIVATE
+    BLUE_ENGINE_PARITY_FIXTURES_DIR="${BLUE_ENGINE_PARITY_FIXTURES_DIR}")
+set_target_properties(test_automation_protocol PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_automation_protocol PRIVATE dl)
+endif()
+add_test(NAME AutomationProtocolTests COMMAND test_automation_protocol)
+
+# The former FixedPoint/quantization fixtures and their duplicated native
+# expectation tables were replaced by the canonical corpus consumers above
+# (test_java_bigdecimal, test_java_bigdecimal_parity) per Spec 073.
 
 # AutomationManager state invalidation tests
 add_executable(test_automation_manager
     test_automation_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
 target_include_directories(test_automation_manager PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_automation_manager PRIVATE Boost::boost)
 set_target_properties(test_automation_manager PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 add_test(NAME AutomationManagerTests COMMAND test_automation_manager)
 
@@ -79,9 +128,12 @@ add_executable(test_channel_bridge
     ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
 target_include_directories(test_channel_bridge PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_channel_bridge PRIVATE Boost::boost)
 set_target_properties(test_channel_bridge PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 if(UNIX AND NOT APPLE)
     target_link_libraries(test_channel_bridge PRIVATE dl)
@@ -99,9 +151,12 @@ add_executable(test_csound_integration
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundRuntimeServices.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
 target_include_directories(test_csound_integration PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_csound_integration PRIVATE Boost::boost)
 set_target_properties(test_csound_integration PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 if(UNIX AND NOT APPLE)
     target_link_libraries(test_csound_integration PRIVATE dl)
@@ -121,9 +176,12 @@ add_executable(test_csound_stress
     ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
 target_include_directories(test_csound_stress PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_csound_stress PRIVATE Boost::boost)
 set_target_properties(test_csound_stress PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 if(UNIX AND NOT APPLE)
     target_link_libraries(test_csound_stress PRIVATE dl)
@@ -153,10 +211,13 @@ add_executable(test_zmq_idle_wakeup
     ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
     ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
 )
 target_include_directories(test_zmq_idle_wakeup PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_zmq_idle_wakeup PRIVATE Boost::boost)
 set_target_properties(test_zmq_idle_wakeup PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 target_link_libraries(test_zmq_idle_wakeup PRIVATE libzmq-static)
 if(UNIX AND NOT APPLE)

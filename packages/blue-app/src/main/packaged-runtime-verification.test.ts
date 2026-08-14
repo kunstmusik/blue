@@ -26,7 +26,7 @@ function createEngineResources(
   chmodSync(path.join(root, executableName), 0o755);
   writeFileSync(path.join(root, 'artifact.json'), JSON.stringify({
     schemaVersion: 1,
-    protocolVersion: 1,
+    protocolVersion: 2,
     platform,
     arch,
     executableName,
@@ -40,7 +40,7 @@ const recoverableMissingCsoundProbe = () => ({
   stdout: JSON.stringify({
     schemaVersion: 1,
     ready: false,
-    engine: { protocolVersion: 1 },
+    engine: { protocolVersion: 2 },
     csound: { status: 'not-found' },
   }),
   stderr: '',

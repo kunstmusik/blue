@@ -10,7 +10,7 @@ const readyReport = JSON.stringify({
   engine: {
     schemaVersion: 1,
     engineVersion: '0.1.0',
-    protocolVersion: 1,
+    protocolVersion: 2,
     sourceRevision: 'test',
     features: ['csound-probe-v1', 'csound-performance-v1'],
   },
@@ -39,7 +39,7 @@ describe('Csound runtime operation isolation', () => {
     await chmod(enginePath, 0o755);
     await writeFile(path.join(path.dirname(enginePath), 'artifact.json'), JSON.stringify({
       schemaVersion: 1,
-      protocolVersion: 1,
+      protocolVersion: 2,
       platform: 'darwin',
       arch: 'arm64',
       executableName: 'blue-engine',

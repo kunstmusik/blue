@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "id": "java-blue-automation-fixtures",
+    "version": "1.0.0"
+  },
+  "java": {
+    "release": 25
+  },
+  "javaBlue": {
+    "repository": "https://github.com/kunstmusik/blue.git",
+    "commit": "3ca3f40579c48a023299a68130d8ab6b9e950974",
+    "sourceFiles": [
+      {
+        "path": "blue-core/src/main/java/blue/components/lines/Line.java",
+        "sha256": "1ad1dc343f89f26c3fde90f2eaa3e4bb92c229af5f4537859ab39ae9ba575a72"
+      },
+      {
+        "path": "blue-core/src/main/java/blue/components/lines/LinePoint.java",
+        "sha256": "c334c958e916253e65923ee5ac768b2e88e56c66f1f40c248976492d63350c4b"
+      },
+      {
+        "path": "blue-core/src/main/java/blue/components/lines/LineUtils.java",
+        "sha256": "fa59efd7e205c79323ae9da586ec89ce6affdc4c0df7a35cd42183b60a3a6b42"
+      },
+      {
+        "path": "blue-core/src/main/java/blue/automation/Parameter.java",
+        "sha256": "e45c3859821d4d06baf4f0e64330734540f9221de0560f4516529c8312fde810"
+      },
+      {
+        "path": "blue-core/src/main/java/blue/utility/NumberUtilities.java",
+        "sha256": "e85620e611c36965ca507fe6c89d21efa8e15aa490f2dea366a374a4d9c214f8"
+      },
+      {
+        "path": "blue-ui-core/src/main/java/blue/ui/core/render/CSDRender.java",
+        "sha256": "f3f9a4d8140ee4ad12f75b5c149c299d4b45deba1bcf277b1e37f3f58e37a5fb"
+      }
+    ]
+  },
+  "referenceMethods": ["blue.components.lines.Line#getValue(double)", "blue.components.lines.Line#loadFromXML(electric.xml.Element)", "blue.components.lines.Line#saveAsXML()", "blue.automation.Parameter#loadFromXML(electric.xml.Element)", "blue.automation.Parameter#saveAsXML()", "blue.components.lines.LineUtils#snapToResolution(double,double,double,java.math.BigDecimal)", "blue.ui.core.render.CSDRender#appendParameterScore(blue.automation.Parameter,int,java.lang.StringBuilder,double,double)", "blue.utility.NumberUtilities#formatDouble(double)"],
+  "seed": {
+    "algorithm": "SplitMix64",
+    "value": "243f6a8885a308d3"
+  },
+  "generationCommand": "pnpm fixtures:java-automation -- --java-blue-root \"$JAVA_BLUE_ROOT\"",
+  "counts": {
+    "total": 2192,
+    "bySection": {
+      "realtime": 2092,
+      "resolution": 80,
+      "offline": 20
+    },
+    "byOrigin": {
+      "seeded": 2048,
+      "curated": 144
+    },
+    "byCategory": {
+      "DECIMAL_SCALE_OVERFLOW": 3,
+      "INVALID_DECIMAL_SYNTAX": 17,
+      "adjacent-grid": 2,
+      "after-last": 2,
+      "ascending": 1,
+      "before-first": 2,
+      "descending": 1,
+      "direct-point": 2,
+      "disabled": 1,
+      "duplicate-time": 2,
+      "empty-line": 1,
+      "exact-grid": 1,
+      "final-note": 1,
+      "flat": 1,
+      "init-value": 3,
+      "legacy-normalize": 21,
+      "line-path": 3,
+      "manager-boundary": 4,
+      "non-finite": 4,
+      "parameter-load-save": 10,
+      "parse": 17,
+      "render-clip": 3,
+      "repeat-times": 1,
+      "resolution-variant": 12,
+      "seeded-linear": 2048,
+      "sentinel": 1,
+      "single-point": 1,
+      "snap": 12,
+      "special-values": 5,
+      "stepped-ascending": 1,
+      "stepped-descending": 1,
+      "stepped-flat": 1,
+      "stepped-negative-scale": 1,
+      "stepped-tiny": 1,
+      "time-zero": 2,
+      "zero-crossing": 1,
+      "zero-step": 2
+    }
+  }
+}

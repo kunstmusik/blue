@@ -72,6 +72,8 @@ benchmarkData.timestamp = new Date().toISOString();
 // 3. Compare with baseline if provided. Keep this wrapper's artifact shape
 // stable for callers, but compute every gate from the retained trial data.
 let gatePassed = true;
+// Keep the historical field name for consumers of the benchmark artifact, but
+// its contract is now the common-path regression budget from SPEC 073.
 let primaryImprovementMet = !baselinePath;
 let unaffectedRegressionMet = true;
 let spikeCountDischarged = true;
@@ -83,10 +85,17 @@ if (baselinePath) {
 
     const baselineScenarios = new Map(baselineData.scenarios.map(s => [s.name, s]));
 
-    let foundTargetScenario = false;
+    let foundCommonPath = false;
     for (const scenario of benchmarkData.scenarios) {
       const baseScenario = baselineScenarios.get(scenario.name);
       if (!baseScenario) {
+        // The exact-decimal scenarios were added by SPEC 073 and may be
+        // absent from an older SPEC 072 baseline. They are reported when
+        // present, but are not silently treated as the common-path gate.
+        if (scenario.name.startsWith('quantized_exact')) {
+          scenario.comparisonToBaseline = { baselineMissing: true };
+          continue;
+        }
         throw new Error(`Baseline is missing scenario ${scenario.name}`);
       }
 
@@ -116,18 +125,13 @@ if (baselinePath) {
         shmAvgDeltaPct,
       };
 
-      const targeted = scenario.name.includes('changing') ||
-        scenario.name.includes('linear') ||
-        scenario.name.includes('exponential') ||
-        scenario.name.includes('quantized') ||
-        scenario.name.includes('completed') ||
-        scenario.name.includes('live_edit');
-      if (targeted) {
-        foundTargetScenario = true;
-        if (hostCycleAvgDeltaPct > -10.0) {
+      if (scenario.name === 'linear_32') {
+        foundCommonPath = true;
+        if (hostCycleAvgDeltaPct > 5.0) {
           primaryImprovementMet = false;
         }
-      } else if (hostCycleP95DeltaPct > 5.0) {
+      } else if (!scenario.name.startsWith('quantized_exact') &&
+                 hostCycleP95DeltaPct > 5.0) {
         // Regression on p95 must be <= 5% for unaffected scenarios.
         unaffectedRegressionMet = false;
       }
@@ -135,7 +139,7 @@ if (baselinePath) {
         spikeCountDischarged = false;
       }
     }
-    primaryImprovementMet = foundTargetScenario && primaryImprovementMet;
+    primaryImprovementMet = foundCommonPath && primaryImprovementMet;
   } catch (err) {
     process.stderr.write(`Failed to compare baseline ${baselinePath}: ${err.message}\n`);
     process.exit(2);
