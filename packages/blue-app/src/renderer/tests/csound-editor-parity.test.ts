@@ -246,7 +246,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
     ]);
 
     expect(menuItems[1]).toMatchObject({
-      kind: 'disabled',
+      kind: 'submenu',
       label: 'Opcodes',
     });
     // Custom is disabled when no repository root is provided; Add to Code

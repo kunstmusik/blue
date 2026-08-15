@@ -225,6 +225,7 @@
 
   .editor-context-menu {
     min-width: 176px;
+    max-height: min(80vh, 500px);
     padding: 0;
     border: 1px solid var(--color-app-border-muted);
     border-radius: 8px;
@@ -234,7 +235,8 @@
       inset 0 0 0 1px var(--color-app-outline-subtle);
     color: var(--color-app-text-bright);
     z-index: 120;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .editor-context-menu__item {

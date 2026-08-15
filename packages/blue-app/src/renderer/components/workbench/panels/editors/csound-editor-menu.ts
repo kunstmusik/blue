@@ -5,6 +5,9 @@ import type {
   CsoundEditorMenuItem,
   CsoundEditorSubmenuItem,
 } from './editor-adapter-types';
+import { createOpcodesSubmenu } from './csound-opcode-menu';
+
+export { createOpcodesSubmenu };
 
 export interface CsoundEditorMenuOptions {
   readOnly?: boolean;
@@ -145,10 +148,6 @@ export function createBlueOpcodesSubmenu(options: CsoundEditorMenuOptions = {}):
   );
 }
 
-function createDisabledCategory(label: string, reason: string): CsoundEditorDisabledItem {
-  return createDisabledItem(label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label, reason);
-}
-
 /**
  * Build a Custom submenu recursively from a repository snapshot. Each group
  * becomes a nested submenu; each snippet becomes an insertion item carrying its
@@ -246,10 +245,7 @@ export function createJavaBlueCsoundEditorMenuItems(
 
   return [
     createBlueVariablesSubmenu(options),
-    createDisabledCategory(
-      'Opcodes',
-      'Opcode browser is deferred until the Java Blue opcode browser is ported into the renderer.',
-    ),
+    createOpcodesSubmenu(options),
     createBlueOpcodesSubmenu(options),
     {
       kind: 'separator',
