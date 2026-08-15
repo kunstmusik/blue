@@ -37,13 +37,14 @@ std::vector<std::vector<std::string>> parseTsv(const std::string& path) {
             if (start == text.size()) break;
             throw std::runtime_error("fixture file must end with a newline: " + path);
         }
+        const std::size_t lineEnd = end > start && text[end - 1] == '\r' ? end - 1 : end;
         std::vector<std::string> fields;
         std::size_t fieldStart = start;
         while (true) {
             std::size_t fieldEnd = text.find('\t', fieldStart);
-            if (fieldEnd == std::string::npos || fieldEnd > end) fieldEnd = end;
+            if (fieldEnd == std::string::npos || fieldEnd > lineEnd) fieldEnd = lineEnd;
             fields.push_back(text.substr(fieldStart, fieldEnd - fieldStart));
-            if (fieldEnd == end) break;
+            if (fieldEnd == lineEnd) break;
             fieldStart = fieldEnd + 1;
         }
         if (columns == 0) {

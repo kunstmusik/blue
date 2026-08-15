@@ -137,13 +137,11 @@ export function doubleToBits(value: number): string {
   return bitsView.getBigUint64(0).toString(16).padStart(16, "0");
 }
 
-function readTsv(name: string): string[][] {
-  const filePath = path.join(CORPUS_DIR, name);
-  const text = fs.readFileSync(filePath, "utf8");
+export function parseTsvText(name: string, text: string): string[][] {
   if (text.charCodeAt(0) === 0xfeff) {
     throw new Error(`${name} must not contain a BOM`);
   }
-  const lines = text.split("\n");
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
   if (lines[lines.length - 1] !== "") {
     throw new Error(`${name} must end with a newline`);
   }
@@ -157,6 +155,12 @@ function readTsv(name: string): string[][] {
     rows.push(fields);
   }
   return rows;
+}
+
+function readTsv(name: string): string[][] {
+  const filePath = path.join(CORPUS_DIR, name);
+  const text = fs.readFileSync(filePath, "utf8");
+  return parseTsvText(name, text);
 }
 
 function indexMap(header: string[]): Map<string, number> {

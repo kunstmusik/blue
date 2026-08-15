@@ -6,6 +6,7 @@ import {
   doubleToBits,
   loadJavaParityManifest,
   loadOfflineFixtureCases,
+  parseTsvText,
   loadRealtimeFixtureCases,
   loadResolutionFixtureCases,
   type RealtimeFixtureCase,
@@ -72,6 +73,15 @@ describe("Java parity fixture corpus (no JVM required)", () => {
     expect(bitsToDouble("8000000000000000")).toBe(-0.0);
     expect(doubleToBits(-0.0)).toBe("8000000000000000");
     expect(bitsToDouble("7ff8000000000000")).toBeNaN();
+  });
+
+  it("parses CRLF TSV text without leaking carriage returns into fields", () => {
+    const rows = parseTsvText(
+      "synthetic.tsv",
+      ["name\toptionalBits", "empty-sample-number\t", ""].join("\r\n"),
+    );
+
+    expect(rows).toEqual([["empty-sample-number", ""]]);
   });
 
   it("carries manager-level sample rate/number metadata", () => {
