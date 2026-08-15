@@ -15,7 +15,9 @@ import {
 } from './score-object-file-operations';
 
 describe('score-object-file-operations', () => {
-  const projectDir = '/test/project';
+  const projectDir = path.resolve('test', 'project');
+  const externalAudioPath = path.resolve('external', 'audio.aif');
+  const sfDir = path.resolve('sfx');
   const validWav = buildWavBytes(2, 44100, 16, 44100);
   const validAiff = buildAiffBytes(1, 48000, 16, 48000);
 
@@ -24,10 +26,10 @@ describe('score-object-file-operations', () => {
     const dirs = new Set<string>([projectDir]);
 
     files.set(path.join(projectDir, 'sample.wav'), validWav);
-    files.set('/external/audio.aif', validAiff);
+    files.set(externalAudioPath, validAiff);
     files.set(path.join(projectDir, 'freeze0.wav'), validWav);
     files.set(path.join(projectDir, 'freeze-unreadable.wav'), validWav);
-    files.set('/sfx/voice.wav', validWav);
+    files.set(path.join(sfDir, 'voice.wav'), validWav);
     files.set(path.join(projectDir, 'corrupt.wav'), new Uint8Array([1, 2, 3, 4]));
 
     const probe: ScoreObjectFileOperationProbe = {
@@ -119,7 +121,7 @@ describe('score-object-file-operations', () => {
 
     it('resolves a separator-less file through the effective SFDIR context', () => {
       const { deps } = createTestFixtureFS();
-      const result = inspectAudioFileMetadata('voice.wav', { projectDirectory: null, sfDir: '/sfx' }, deps);
+      const result = inspectAudioFileMetadata('voice.wav', { projectDirectory: null, sfDir }, deps);
 
       expect(result.status).toBe('available');
       if (result.status === 'available') {
@@ -190,7 +192,7 @@ describe('score-object-file-operations', () => {
 
     it('selects external file without media copy and returns absolute path', async () => {
       const { deps } = createTestFixtureFS();
-      deps.showOpenDialog = vi.fn().mockResolvedValue('/external/audio.aif');
+      deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
 
       const result = await selectScoreObjectAudioFile(
         {
@@ -202,7 +204,7 @@ describe('score-object-file-operations', () => {
 
       expect(result.status).toBe('selected');
       if (result.status === 'selected') {
-        expect(result.storedPath).toBe('/external/audio.aif');
+        expect(result.storedPath).toBe(externalAudioPath);
         expect(result.objectName).toBe('audio.aif');
         expect(result.copiedToMedia).toBe(false);
         expect(result.metadata.formatType).toBe('AIFF');
@@ -233,7 +235,7 @@ describe('score-object-file-operations', () => {
 
     it('copies to media folder on import and updates storedPath to media-relative path', async () => {
       const { deps, files } = createTestFixtureFS();
-      deps.showOpenDialog = vi.fn().mockResolvedValue('/external/audio.aif');
+      deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
 
       const result = await selectScoreObjectAudioFile(
         {
@@ -257,7 +259,7 @@ describe('score-object-file-operations', () => {
       const mediaFile = path.join(projectDir, 'media/audio.aif');
       files.set(mediaFile, validAiff); // identical content
 
-      deps.showOpenDialog = vi.fn().mockResolvedValue('/external/audio.aif');
+      deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
 
       const result = await selectScoreObjectAudioFile(
         {
@@ -279,7 +281,7 @@ describe('score-object-file-operations', () => {
       const mediaFile = path.join(projectDir, 'media/audio.aif');
       files.set(mediaFile, new Uint8Array([9, 9, 9])); // different content
 
-      deps.showOpenDialog = vi.fn().mockResolvedValue('/external/audio.aif');
+      deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
 
       const result = await selectScoreObjectAudioFile(
         {
