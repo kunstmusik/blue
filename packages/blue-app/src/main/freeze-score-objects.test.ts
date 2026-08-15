@@ -536,10 +536,10 @@ describe('resolveFreezeTargets', () => {
 
       const document = createScoreObjectEditorDocument(data, { target: row.editorTarget! });
       expect(document?.editor).toMatchObject({
-        kind: 'file',
-        objectType: 'FrozenSoundObject',
-        filePath: 'freeze0.wav',
-        originalObjectType: 'GenericScore',
+        kind: 'frozenSoundObject',
+        frozenWaveFileName: 'freeze0.wav',
+        sourceName: 'Pattern1',
+        sourceType: 'GenericScore',
       });
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });

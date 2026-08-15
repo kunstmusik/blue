@@ -26,6 +26,8 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
+  AudioFileSelectionResult,
+  FrozenSoundObjectSaveCopyResult,
 } from '../shared/project-editor';
 import type {
   ScoreObjectExportResult,
@@ -545,6 +547,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('read-authorized-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   getScoreObjectEditorDocument: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('get-score-object-editor-document', request) as Promise<ScoreObjectEditorDocumentSnapshot | null>,
+  selectScoreObjectAudioFile: (request?: { currentPath?: string }) =>
+    ipcRenderer.invoke('select-score-object-audio-file', request) as Promise<AudioFileSelectionResult>,
+  saveFrozenSoundObjectCopy: (request: { frozenWaveFileName: string }) =>
+    ipcRenderer.invoke('save-frozen-sound-object-copy', request) as Promise<FrozenSoundObjectSaveCopyResult>,
   getNamedChainNames: () =>
     ipcRenderer.invoke('get-named-chain-names') as Promise<string[]>,
   getNamedChain: (name: string) =>

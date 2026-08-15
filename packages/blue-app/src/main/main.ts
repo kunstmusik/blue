@@ -234,7 +234,15 @@ import {
   type ScoreObjectLocationRef,
   type ScoreObjectEditorTargetSnapshot,
   type PolyObjectLayerGroupSnapshot,
+  type AudioFileSelectionResult,
+  type FrozenSoundObjectSaveCopyResult,
 } from '../shared/project-editor';
+import {
+  inspectAudioFileMetadata,
+  inspectFrozenArtifact,
+  selectScoreObjectAudioFile,
+  saveFrozenSoundObjectCopy,
+} from './score-object-file-operations';
 import {
   prepareScoreObjectImport,
   validateScoreObjectExport,
@@ -1151,15 +1159,28 @@ function getCurrentProjectDirectory(): string | null {
   return currentFilePath ? path.dirname(currentFilePath) : null;
 }
 
-function getRealtimeSfDirOption(data: BlueData, projectDirectory: string | null): string | null {
-  if (!projectDirectory) {
-    return null;
-  }
+function getProjectMediaDirectory(data: BlueData, projectDirectory: string | null): string | null {
+  if (!projectDirectory) return null;
 
   const mediaFolder = data.getProjectProperties().mediaFolder?.trim() ?? '';
-  const sfDir = path.isAbsolute(mediaFolder)
+  return path.isAbsolute(mediaFolder)
     ? mediaFolder
     : path.resolve(projectDirectory, mediaFolder.length > 0 ? mediaFolder : 'media');
+}
+
+function getScoreObjectFileResolutionContext(data: BlueData): {
+  projectDirectory: string | null;
+  sfDir: string | null;
+} {
+  const projectDirectory = getCurrentProjectDirectory();
+  const sfDir = getProjectMediaDirectory(data, projectDirectory)
+    ?? (process.env.SFDIR && process.env.SFDIR.length > 0 ? process.env.SFDIR : null);
+  return { projectDirectory, sfDir };
+}
+
+function getRealtimeSfDirOption(data: BlueData, projectDirectory: string | null): string | null {
+  const sfDir = getProjectMediaDirectory(data, projectDirectory);
+  if (!sfDir) return null;
 
   fs.mkdirSync(sfDir, { recursive: true });
   return `--env:SFDIR=${sfDir}`;
@@ -4104,7 +4125,107 @@ ipcMain.handle('get-audio-file-stat', async (
 
 ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObjectEditorRequest): ScoreObjectEditorDocumentSnapshot | null => {
   if (!currentData) return null;
-  return createScoreObjectEditorDocument(currentData, request);
+  const doc = createScoreObjectEditorDocument(currentData, request);
+  if (!doc) return null;
+
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  if (doc.editor.kind === 'audioFile') {
+    doc.editor.metadata = inspectAudioFileMetadata(doc.editor.filePath, context);
+  } else if (doc.editor.kind === 'frozenSoundObject') {
+    const inspection = inspectFrozenArtifact(doc.editor.frozenWaveFileName, context);
+    doc.editor.artifactStatus = inspection.artifactStatus;
+    doc.editor.canSaveCopy = inspection.canSaveCopy;
+    if (inspection.message) {
+      doc.editor.message = inspection.message;
+    }
+  }
+
+  return doc;
+});
+
+ipcMain.handle('select-score-object-audio-file', async (_event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
+  if (!currentData) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No project open.',
+    };
+  }
+
+  const projectProps = currentData.getProjectProperties();
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  return selectScoreObjectAudioFile(
+    {
+      currentPath: request?.currentPath,
+      context,
+      projectProps: {
+        copyToMediaFileOnImport: projectProps.copyToMediaFileOnImport,
+        mediaFolder: projectProps.mediaFolder,
+      },
+    },
+    {
+      showOpenDialog: async (defaultPath) => {
+        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
+        const result = await dialog.showOpenDialog(win ?? (undefined as unknown as BrowserWindow), {
+          title: 'Select Audio File',
+          defaultPath,
+          properties: ['openFile'],
+          filters: [
+            { name: 'Audio Files (*.wav, *.aif, *.aiff, *.aifc)', extensions: ['wav', 'aif', 'aiff', 'aifc', 'WAV', 'AIF', 'AIFF', 'AIFC'] },
+            { name: 'All Files (*.*)', extensions: ['*'] },
+          ],
+        });
+        return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]!;
+      },
+    },
+  );
+});
+
+ipcMain.handle('save-frozen-sound-object-copy', async (_event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
+  if (!currentData || !currentFilePath) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No saved project open.',
+    };
+  }
+
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  return saveFrozenSoundObjectCopy(
+    {
+      frozenWaveFileName: request.frozenWaveFileName,
+      context,
+    },
+    {
+      showSaveDialog: async (defaultPath, defaultFileName) => {
+        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
+        const result = await dialog.showSaveDialog(win ?? (undefined as unknown as BrowserWindow), {
+          title: 'Save Copy of Frozen Audio',
+          defaultPath: defaultPath && defaultFileName ? path.join(defaultPath, defaultFileName) : defaultPath,
+          filters: [
+            { name: 'Audio Files (*.wav, *.aif, *.aiff)', extensions: ['wav', 'aif', 'aiff'] },
+            { name: 'All Files (*.*)', extensions: ['*'] },
+          ],
+        });
+        return result.canceled || !result.filePath ? null : result.filePath;
+      },
+      confirmOverwrite: async (fileName) => {
+        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
+        const res = await dialog.showMessageBox(win ?? (undefined as unknown as BrowserWindow), {
+          type: 'question',
+          buttons: ['Overwrite', 'Cancel'],
+          defaultId: 1,
+          cancelId: 1,
+          title: 'Overwrite File?',
+          message: `File already exists: ${fileName}\n\nDo you want to overwrite it?`,
+        });
+        return res.response === 0;
+      },
+    },
+  );
 });
 
 ipcMain.handle('get-named-chain-names', (): string[] => {

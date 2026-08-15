@@ -23,11 +23,13 @@ describe('Score object editor panel routing', () => {
     const html = renderToStaticMarkup(createElement(ScoreObjectPropertiesPanel));
 
     expect(html).toContain('No project loaded');
+    expect(html).not.toContain('PlaceholderPanel');
   });
 
   it('routes ScoreObjectEditorTopComponent to ScoreObjectEditorPanel (not PlaceholderPanel)', () => {
     const html = renderToStaticMarkup(createElement(ScoreObjectEditorPanel));
 
     expect(html).toContain('No project loaded');
+    expect(html).not.toContain('PlaceholderPanel');
   });
 });

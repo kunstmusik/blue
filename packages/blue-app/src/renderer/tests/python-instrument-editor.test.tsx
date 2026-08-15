@@ -40,9 +40,27 @@ describe('PythonInstrumentEditor', () => {
 
   let container: HTMLDivElement;
   let root: Root;
+  let rangeRectsDescriptor: PropertyDescriptor | undefined;
+  let rectSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    rangeRectsDescriptor = Object.getOwnPropertyDescriptor(Range.prototype, 'getClientRects');
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: () => ({ length: 0, item: () => null }),
+    });
+    rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 400,
+      bottom: 300,
+      width: 400,
+      height: 300,
+      toJSON: () => ({}),
+    } as DOMRect);
     (window as any).blueAPI = {
       testPythonInstrument: vi.fn(async () => ({
         ok: true,
@@ -63,6 +81,12 @@ describe('PythonInstrumentEditor', () => {
       root.unmount();
     });
     container.remove();
+    rectSpy.mockRestore();
+    if (rangeRectsDescriptor) {
+      Object.defineProperty(Range.prototype, 'getClientRects', rangeRectsDescriptor);
+    } else {
+      delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+    }
     vi.unstubAllGlobals();
   });
 

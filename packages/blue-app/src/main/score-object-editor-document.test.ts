@@ -276,27 +276,103 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
 });
 
 describe('createScoreObjectEditorDocument — file-backed types', () => {
-  it('returns file editor for AudioFile', () => {
+  it('returns audioFile editor for AudioFile', () => {
     const af = new AudioFile();
     af.setName('Sound File');
+    af.setSoundFileName('audio.wav');
+    af.setCsoundPostCode('; post code');
     const data = makeDataWithObject(af);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('AudioFile') });
     expect(doc).not.toBeNull();
-    expect(doc!.editor.kind).toBe('file');
-    if (doc!.editor.kind === 'file') {
-      expect(doc!.editor.filePath).toBeDefined();
+    expect(doc!.editor.kind).toBe('audioFile');
+    if (doc!.editor.kind === 'audioFile') {
+      expect(doc!.editor.filePath).toBe('audio.wav');
+      expect(doc!.editor.csoundPostCode).toBe('; post code');
+      expect(doc!.editor.metadata.status).toBe('empty');
+      expect(doc!.editor.canChooseFile).toBe(true);
     }
   });
 
-  it('returns file editor for FrozenSoundObject', () => {
+  it('returns frozenSoundObject editor for FrozenSoundObject', () => {
+    const inner = new GenericScore();
+    inner.setName('Source Generic');
     const fso = new FrozenSoundObject();
-    fso.setName('Frozen');
+    fso.setFrozenSoundObject(inner);
+    fso.setFrozenWaveFileName('freeze0.wav');
     const data = makeDataWithObject(fso);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('FrozenSoundObject') });
     expect(doc).not.toBeNull();
-    expect(doc!.editor.kind).toBe('file');
+    expect(doc!.editor.kind).toBe('frozenSoundObject');
+    if (doc!.editor.kind === 'frozenSoundObject') {
+      expect(doc!.editor.frozenWaveFileName).toBe('freeze0.wav');
+      expect(doc!.editor.sourceName).toBe('Source Generic');
+      expect(doc!.editor.sourceType).toBe('GenericScore');
+      expect(doc!.editor.numChannels).toBe(0);
+      expect(doc!.editor.artifactStatus).toBe('empty');
+      expect(doc!.editor.canSaveCopy).toBe(true);
+    }
+  });
+
+  it('applies replaceAudioFileSource patch atomically to soundFileName and name', () => {
+    const af = new AudioFile();
+    af.setName('Original Name');
+    af.setSoundFileName('original.wav');
+    af.setCsoundPostCode('; keep post code');
+    const data = makeDataWithObject(af);
+
+    const target = makeTimelineTarget('AudioFile');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'replaceAudioFileSource',
+        target,
+        filePath: 'media/new_audio.wav',
+        name: 'new_audio.wav',
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(af.getSoundFileName()).toBe('media/new_audio.wav');
+    expect(af.getName()).toBe('new_audio.wav');
+    expect(af.getCsoundPostCode()).toBe('; keep post code');
+  });
+
+  it('applies updateAudioFilePostCode patch to csoundPostCode', () => {
+    const af = new AudioFile();
+    af.setSoundFileName('sample.wav');
+    af.setCsoundPostCode('');
+    const data = makeDataWithObject(af);
+
+    const target = makeTimelineTarget('AudioFile');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateAudioFilePostCode',
+        target,
+        csoundPostCode: 'aChannel1 = aChannel1 * 0.5',
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(af.getCsoundPostCode()).toBe('aChannel1 = aChannel1 * 0.5');
+  });
+
+  it('rejects mutating FrozenSoundObject file path via updateTypeSpecificEditor patch', () => {
+    const fso = new FrozenSoundObject();
+    fso.setFrozenWaveFileName('freeze0.wav');
+    const data = makeDataWithObject(fso);
+
+    const target = makeTimelineTarget('FrozenSoundObject');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { filePath: 'hacked.wav' },
+      },
+    });
+
+    expect(changed).toBe(false);
+    expect(fso.getFrozenWaveFileName()).toBe('freeze0.wav');
   });
 });
 

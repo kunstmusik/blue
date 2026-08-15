@@ -24,6 +24,8 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
+  AudioFileSelectionResult,
+  FrozenSoundObjectSaveCopyResult,
 } from '../../shared/project-editor';
 import type {
   ScoreObjectExportResult,
@@ -388,6 +390,12 @@ declare global {
       getScoreObjectEditorDocument: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectEditorDocumentSnapshot | null>;
+      selectScoreObjectAudioFile: (
+        request?: { currentPath?: string },
+      ) => Promise<AudioFileSelectionResult>;
+      saveFrozenSoundObjectCopy: (
+        request: { frozenWaveFileName: string },
+      ) => Promise<FrozenSoundObjectSaveCopyResult>;
       testScoreObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;

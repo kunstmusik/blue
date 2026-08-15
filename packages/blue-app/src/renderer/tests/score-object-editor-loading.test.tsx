@@ -163,6 +163,7 @@ describe('ScoreObjectEditorPanel selection loading', () => {
       await Promise.resolve();
     });
     expect(container.textContent).toContain('Second editor');
+    expect(container.textContent).not.toContain('First editor');
     expect(container.querySelector('.max-w-sm')).toBe(mountedEditor);
   });
 });

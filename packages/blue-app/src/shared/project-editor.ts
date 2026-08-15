@@ -520,6 +520,75 @@ export interface TrackerColumnSnapshot {
   sourceIndex?: number | null;
 }
 
+export type AudioFileMetadataStatus = 'empty' | 'missing' | 'unreadable' | 'unsupported' | 'available';
+
+export type AudioFileMetadataState =
+  | { status: 'empty' }
+  | { status: 'missing'; path: string; message: string }
+  | { status: 'unreadable'; path: string; message: string }
+  | { status: 'unsupported'; path: string; message: string }
+  | {
+      status: 'available';
+      path: string;
+      formatType: string;
+      byteLength: number;
+      encodingType: string;
+      sampleRate: number;
+      sampleSizeInBits: number;
+      channels: number;
+      isBigEndian: boolean;
+      durationSeconds: number;
+      frameCount: number;
+      channelVariables: string;
+      unavailableFields: string[];
+    };
+
+export interface AudioFileMetadataSnapshot {
+  formatType: string;
+  byteLength: number;
+  encodingType: string;
+  sampleRate: number;
+  sampleSizeInBits: number;
+  channels: number;
+  isBigEndian: boolean;
+  durationSeconds: number;
+  frameCount: number;
+  channelVariables: string;
+  unavailableFields: string[];
+}
+
+export type AudioFileSelectionResult =
+  | { status: 'cancelled' }
+  | {
+      status: 'selected';
+      storedPath: string;
+      objectName: string;
+      metadata: AudioFileMetadataSnapshot;
+      copiedToMedia: boolean;
+    }
+  | {
+      status: 'error';
+      code: 'no-project' | 'not-a-file' | 'missing' | 'unreadable' | 'unsupported' | 'copy-failed';
+      message: string;
+      path?: string;
+    };
+
+export type FrozenSoundObjectSaveCopyResult =
+  | { status: 'cancelled' }
+  | { status: 'copied'; destinationPath: string; byteLength: number }
+  | {
+      status: 'error';
+      code:
+        | 'no-project'
+        | 'missing-artifact'
+        | 'unreadable-artifact'
+        | 'invalid-artifact'
+        | 'directory-destination'
+        | 'freeze-destination'
+        | 'copy-failed';
+      message: string;
+    };
+
 export type TypeSpecificScoreObjectEditorSnapshot =
   | {
       kind: 'code';
@@ -550,6 +619,26 @@ export type TypeSpecificScoreObjectEditorSnapshot =
       fadeOut: number;
       fadeOutType: string;
       looping: boolean;
+    }
+  | {
+      kind: 'audioFile';
+      target: ScoreObjectEditorTargetSnapshot;
+      filePath: string;
+      csoundPostCode: string;
+      metadata: AudioFileMetadataState;
+      canChooseFile: boolean;
+    }
+  | {
+      kind: 'frozenSoundObject';
+      target: ScoreObjectEditorTargetSnapshot;
+      frozenWaveFileName: string;
+      sourceName: string;
+      sourceType: string;
+      sourceDurationBeats: number | null;
+      numChannels: number;
+      artifactStatus: 'empty' | 'available' | 'missing' | 'unreadable';
+      message?: string;
+      canSaveCopy: boolean;
     }
   | {
       kind: 'file';
@@ -705,6 +794,17 @@ export type ScorePatch =
       type: 'replaceNoteProcessorChain';
       target: ScoreObjectEditorTargetSnapshot;
       chain: NoteProcessorChainSnapshot | null;
+    }
+  | {
+      type: 'replaceAudioFileSource';
+      target: ScoreObjectEditorTargetSnapshot;
+      filePath: string;
+      name: string;
+    }
+  | {
+      type: 'updateAudioFilePostCode';
+      target: ScoreObjectEditorTargetSnapshot;
+      csoundPostCode: string;
     }
   | {
       type: 'updateTypeSpecificEditor';
@@ -3576,6 +3676,10 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
   switch (objectType) {
     case 'AudioClip':
       return 'audioClip';
+    case 'AudioFile':
+      return 'audioFile';
+    case 'FrozenSoundObject':
+      return 'frozenSoundObject';
     case 'External':
       return 'external';
     case 'PolyObject':
@@ -3589,9 +3693,6 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
     case 'JavaScriptObject':
     case 'Comment':
       return 'code';
-    case 'AudioFile':
-    case 'FrozenSoundObject':
-      return 'file';
     case 'PatternObject':
     case 'PianoRoll':
     case 'LineObject':
@@ -3863,6 +3964,35 @@ export function createScoreObjectEditorDocument(
         fadeOut: clip.getFadeOut ? clip.getFadeOut() : 0,
         fadeOutType: normalizeAudioFadeType(clip.getFadeOutType ? String(clip.getFadeOutType()) : 'LINEAR'),
         looping: clip.isLooping ? clip.isLooping() : false,
+      };
+      break;
+    }
+    case 'audioFile': {
+      const af = sObj as AudioFile;
+      editor = {
+        kind: 'audioFile',
+        target,
+        filePath: af.getSoundFileName ? af.getSoundFileName() : '',
+        csoundPostCode: af.getCsoundPostCode ? af.getCsoundPostCode() : '',
+        metadata: { status: 'empty' },
+        canChooseFile: true,
+      };
+      break;
+    }
+    case 'frozenSoundObject': {
+      const fso = sObj as FrozenSoundObject;
+      const inner = fso.getFrozenSoundObject ? fso.getFrozenSoundObject() : null;
+      const frozenWaveFileName = fso.getFrozenWaveFileName ? fso.getFrozenWaveFileName() : '';
+      editor = {
+        kind: 'frozenSoundObject',
+        target,
+        frozenWaveFileName,
+        sourceName: inner ? inner.getName() : '',
+        sourceType: inner ? inner.constructor.name : '',
+        sourceDurationBeats: inner ? inner.getSubjectiveDuration().toBeats(context) : null,
+        numChannels: fso.getNumChannels ? fso.getNumChannels() : 0,
+        artifactStatus: 'empty',
+        canSaveCopy: Boolean(frozenWaveFileName && frozenWaveFileName.length > 0),
       };
       break;
     }
@@ -8355,6 +8485,17 @@ function applyScoreObjectPatch(
       }
       return true;
     }
+    case 'replaceAudioFileSource': {
+      if (!(sObj instanceof AudioFile)) return false;
+      sObj.setSoundFileName(patch.filePath);
+      sObj.setName(patch.name);
+      return true;
+    }
+    case 'updateAudioFilePostCode': {
+      if (!(sObj instanceof AudioFile)) return false;
+      sObj.setCsoundPostCode(patch.csoundPostCode);
+      return true;
+    }
     case 'updateTypeSpecificEditor': {
       if (sObj instanceof ObjectBuilder) {
         const p = patch.patch;
@@ -8781,15 +8922,20 @@ function applyScoreObjectPatch(
       if (sObj instanceof AudioFile) {
         const af = sObj as AudioFile;
         const p = patch.patch;
-        if (p.filePath !== undefined) af.setSoundFileName(p.filePath as string);
-        if (p.csoundPostCode !== undefined) af.setCsoundPostCode(p.csoundPostCode as string);
-        return true;
+        let changed = false;
+        if (p.filePath !== undefined) {
+          af.setSoundFileName(p.filePath as string);
+          changed = true;
+        }
+        if (p.csoundPostCode !== undefined) {
+          af.setCsoundPostCode(p.csoundPostCode as string);
+          changed = true;
+        }
+        return changed;
       }
       if (sObj instanceof FrozenSoundObject) {
-        const fso = sObj as FrozenSoundObject;
-        const p = patch.patch;
-        if (p.filePath !== undefined) fso.setFrozenWaveFileName(p.filePath as string);
-        return true;
+        // FrozenSoundObject file path cannot be mutated through editor patch
+        return false;
       }
       if (sObj instanceof PatternObject) {
         const po = sObj as PatternObject;

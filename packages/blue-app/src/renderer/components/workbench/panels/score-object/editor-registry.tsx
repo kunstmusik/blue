@@ -66,6 +66,8 @@ export function resolveEditorComponent(
       return ExternalScoreObjectEditor;
     case 'audioClip':
       return AudioClipScoreObjectEditor;
+    case 'audioFile':
+    case 'frozenSoundObject':
     case 'file':
       return FileBackedScoreObjectEditor;
     case 'polyObject':

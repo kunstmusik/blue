@@ -5,11 +5,12 @@ import {
   AudioFileMetadataError,
   buildWavBytes,
   buildAiffBytes,
+  buildAifcBytes,
 } from './audio-file-metadata';
 
 describe('parseAudioFileMetadata', () => {
   describe('WAV', () => {
-    it('parses stereo 44100Hz 16-bit WAV', () => {
+    it('parses stereo 44100Hz 16-bit WAV with full metadata', () => {
       const bytes = buildWavBytes(2, 44100, 16, 44100);
       const meta = parseAudioFileMetadata(bytes);
 
@@ -19,6 +20,10 @@ describe('parseAudioFileMetadata', () => {
       expect(meta.bitsPerSample).toBe(16);
       expect(meta.frameCount).toBe(44100);
       expect(meta.durationSeconds).toBeCloseTo(1.0, 5);
+      expect(meta.byteLength).toBe(bytes.length);
+      expect(meta.encodingType).toBe('PCM');
+      expect(meta.isBigEndian).toBe(false);
+      expect(meta.unavailableFields).toEqual([]);
     });
 
     it('parses mono 48000Hz 24-bit WAV', () => {
@@ -30,6 +35,9 @@ describe('parseAudioFileMetadata', () => {
       expect(meta.bitsPerSample).toBe(24);
       expect(meta.frameCount).toBe(96000);
       expect(meta.durationSeconds).toBeCloseTo(2.0, 5);
+      expect(meta.byteLength).toBe(bytes.length);
+      expect(meta.encodingType).toBe('PCM');
+      expect(meta.isBigEndian).toBe(false);
     });
 
     it('parses 6-channel 96000Hz WAV', () => {
@@ -50,11 +58,23 @@ describe('parseAudioFileMetadata', () => {
       expect(meta.sampleRate).toBe(44100);
       expect(meta.frameCount).toBe(0);
       expect(meta.durationSeconds).toBe(0);
+      expect(meta.unavailableFields).toEqual([]);
+    });
+
+    it('reports duration fields as unavailable when the data chunk is absent', () => {
+      const bytes = buildWavBytes(2, 44100, 16, 0);
+      bytes.set([0x4a, 0x55, 0x4e, 0x4b], 36); // JUNK instead of data
+
+      const meta = parseAudioFileMetadata(bytes);
+
+      expect(meta.channels).toBe(2);
+      expect(meta.sampleRate).toBe(44100);
+      expect(meta.unavailableFields).toEqual(['frameCount', 'durationSeconds']);
     });
   });
 
   describe('AIFF', () => {
-    it('parses stereo 44100Hz 16-bit AIFF', () => {
+    it('parses stereo 44100Hz 16-bit AIFF with full metadata', () => {
       const bytes = buildAiffBytes(2, 44100, 16, 44100);
       const meta = parseAudioFileMetadata(bytes);
 
@@ -64,6 +84,9 @@ describe('parseAudioFileMetadata', () => {
       expect(meta.bitsPerSample).toBe(16);
       expect(meta.frameCount).toBe(44100);
       expect(meta.durationSeconds).toBeCloseTo(1.0, 5);
+      expect(meta.byteLength).toBe(bytes.length);
+      expect(meta.encodingType).toBe('PCM');
+      expect(meta.isBigEndian).toBe(true);
     });
 
     it('parses the normalized 80-bit 44100Hz value written by Csound AIFF files', () => {
@@ -94,6 +117,41 @@ describe('parseAudioFileMetadata', () => {
       expect(meta.channels).toBe(1);
       expect(meta.sampleRate).toBe(8000);
       expect(meta.durationSeconds).toBeCloseTo(1.0, 5);
+    });
+  });
+
+  describe('AIFC', () => {
+    it('parses AIFC with NONE compression (big-endian PCM)', () => {
+      const bytes = buildAifcBytes(2, 44100, 16, 44100, 'NONE');
+      const meta = parseAudioFileMetadata(bytes);
+
+      expect(meta.format).toBe('AIFC');
+      expect(meta.channels).toBe(2);
+      expect(meta.sampleRate).toBe(44100);
+      expect(meta.bitsPerSample).toBe(16);
+      expect(meta.frameCount).toBe(44100);
+      expect(meta.durationSeconds).toBeCloseTo(1.0, 5);
+      expect(meta.byteLength).toBe(bytes.length);
+      expect(meta.encodingType).toBe('PCM');
+      expect(meta.isBigEndian).toBe(true);
+    });
+
+    it('parses AIFC with sowt compression (little-endian PCM)', () => {
+      const bytes = buildAifcBytes(2, 44100, 16, 44100, 'sowt');
+      const meta = parseAudioFileMetadata(bytes);
+
+      expect(meta.format).toBe('AIFC');
+      expect(meta.encodingType).toBe('PCM');
+      expect(meta.isBigEndian).toBe(false);
+    });
+
+    it('parses AIFC with fl32 compression (IEEE_FLOAT)', () => {
+      const bytes = buildAifcBytes(2, 48000, 32, 48000, 'fl32');
+      const meta = parseAudioFileMetadata(bytes);
+
+      expect(meta.format).toBe('AIFC');
+      expect(meta.encodingType).toBe('IEEE_FLOAT');
+      expect(meta.isBigEndian).toBe(true);
     });
   });
 

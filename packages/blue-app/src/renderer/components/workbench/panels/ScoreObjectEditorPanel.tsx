@@ -318,6 +318,24 @@ export function applyPatchToDocument(
   doc: ScoreObjectEditorDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreObjectEditorDocumentSnapshot {
+  if (patch.type === 'replaceAudioFileSource' && doc.editor.kind === 'audioFile') {
+    const editor: TypeSpecificScoreObjectEditorSnapshot = {
+      ...doc.editor,
+      filePath: patch.filePath,
+    };
+    const shared = {
+      ...doc.shared,
+      name: patch.name,
+    };
+    return { ...doc, shared, editor };
+  }
+  if (patch.type === 'updateAudioFilePostCode' && doc.editor.kind === 'audioFile') {
+    const editor: TypeSpecificScoreObjectEditorSnapshot = {
+      ...doc.editor,
+      csoundPostCode: patch.csoundPostCode,
+    };
+    return { ...doc, editor };
+  }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'external') {
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
