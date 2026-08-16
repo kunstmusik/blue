@@ -18,6 +18,8 @@ describe('score-object-file-operations', () => {
   const projectDir = path.resolve('test', 'project');
   const externalAudioPath = path.resolve('external', 'audio.aif');
   const sfDir = path.resolve('sfx');
+  const mediaAudioPath = path.join('media', 'audio.aif');
+  const mediaCollisionPath = path.join('media', 'audio-001.aif');
   const validWav = buildWavBytes(2, 44100, 16, 44100);
   const validAiff = buildAiffBytes(1, 48000, 16, 48000);
 
@@ -247,16 +249,16 @@ describe('score-object-file-operations', () => {
 
       expect(result.status).toBe('selected');
       if (result.status === 'selected') {
-        expect(result.storedPath).toBe('media/audio.aif');
+        expect(result.storedPath).toBe(mediaAudioPath);
         expect(result.objectName).toBe('audio.aif');
         expect(result.copiedToMedia).toBe(true);
-        expect(files.has(path.join(projectDir, 'media/audio.aif'))).toBe(true);
+        expect(files.has(path.join(projectDir, mediaAudioPath))).toBe(true);
       }
     });
 
     it('reuses existing identical file in media folder without allocating new suffix', async () => {
       const { deps, files } = createTestFixtureFS();
-      const mediaFile = path.join(projectDir, 'media/audio.aif');
+      const mediaFile = path.join(projectDir, mediaAudioPath);
       files.set(mediaFile, validAiff); // identical content
 
       deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
@@ -271,14 +273,14 @@ describe('score-object-file-operations', () => {
 
       expect(result.status).toBe('selected');
       if (result.status === 'selected') {
-        expect(result.storedPath).toBe('media/audio.aif');
-        expect(files.has(path.join(projectDir, 'media/audio-001.aif'))).toBe(false);
+        expect(result.storedPath).toBe(mediaAudioPath);
+        expect(files.has(path.join(projectDir, mediaCollisionPath))).toBe(false);
       }
     });
 
     it('allocates suffixed filename in media folder when collision has different content', async () => {
       const { deps, files } = createTestFixtureFS();
-      const mediaFile = path.join(projectDir, 'media/audio.aif');
+      const mediaFile = path.join(projectDir, mediaAudioPath);
       files.set(mediaFile, new Uint8Array([9, 9, 9])); // different content
 
       deps.showOpenDialog = vi.fn().mockResolvedValue(externalAudioPath);
@@ -293,9 +295,9 @@ describe('score-object-file-operations', () => {
 
       expect(result.status).toBe('selected');
       if (result.status === 'selected') {
-        expect(result.storedPath).toBe('media/audio-001.aif');
+        expect(result.storedPath).toBe(mediaCollisionPath);
         expect(result.objectName).toBe('audio-001.aif');
-        expect(files.has(path.join(projectDir, 'media/audio-001.aif'))).toBe(true);
+        expect(files.has(path.join(projectDir, mediaCollisionPath))).toBe(true);
       }
     });
   });
