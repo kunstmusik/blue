@@ -1745,7 +1745,7 @@ export default function ScoreTimeCanvas({
               style={{
                 height: layer.height || DEFAULT_ROW_HEIGHT,
                 backgroundColor: 'var(--color-app-canvas)',
-                borderBottom: '1px solid #2a2a2a',
+                borderBottom: '1px solid var(--color-app-timeline-divider)',
               }}
             >
               <SnapLinesLayer
@@ -2158,7 +2158,7 @@ function SnapLinesLayer({ layerId, contentWidth, lineXPositions, height }: {
         d={pathData}
         fill="none"
         shapeRendering="crispEdges"
-        stroke="rgba(64, 64, 64, 1)"
+        stroke="var(--color-app-timeline-grid)"
         strokeWidth="1"
         vectorEffect="non-scaling-stroke"
       />

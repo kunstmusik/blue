@@ -45,6 +45,10 @@
   --color-app-outline-panel: rgba(94, 119, 168, 0.08);
   --color-app-outline-strong: rgba(255, 255, 255, 0.12);
   --color-app-code-flash: rgba(255, 255, 255, 0.48);
+  --color-app-timeline-grid: #404040;
+  --color-app-timeline-divider: #2a2a2a;
+  --color-app-pattern-cell: rgba(165, 195, 235, 0.5);
+  --color-app-pattern-cell-preview: rgba(165, 195, 235, 0.35);
 
   --color-blue-bg: var(--color-app-bg);
   --color-blue-surface: var(--color-app-surface);

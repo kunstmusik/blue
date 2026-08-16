@@ -37,6 +37,7 @@ import {
   SoundLayer,
   TrackLayer,
   TrackLayerGroup,
+  PatternLayer,
   PatternsLayerGroup,
   TimeBase,
   isValidSnapValueName,
@@ -392,13 +393,33 @@ export interface TrackLayerGroupSnapshot {
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }
 
+export interface PatternSourceObjectSnapshot {
+  objectId: string;
+  objectType: string;
+  name: string;
+  backgroundColor: number;
+  editorTarget: ScoreObjectEditorTargetSnapshot;
+  serializedXml?: string;
+  barRenderer: ScoreObjectBarRendererSnapshot;
+}
+
+export interface PatternLayerSnapshot extends ScoreLayerSnapshot {
+  items: [];
+  sourceObject: PatternSourceObjectSnapshot;
+  activeCellIndices: number[];
+}
+
 export interface PatternsLayerGroupSnapshot {
   groupId: string;
   groupType: 'patterns';
   name: string;
   layerCount: number;
-  isOpenableContainer: boolean;
-  layers: ScoreLayerSnapshot[];
+  isOpenableContainer: false;
+  /** Raw canonical value; malformed legacy values are retained untouched. */
+  patternBeatsLength: number;
+  /** Positive display-only fallback used for geometry and gestures. */
+  effectivePatternBeatsLength: number;
+  layers: PatternLayerSnapshot[];
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }
 
@@ -439,6 +460,12 @@ export interface BlueLiveScoreObjectRef {
   row: number;
 }
 
+export interface PatternSourceObjectLocationRef {
+  groupId: string;
+  layerId: string;
+  sourceObjectId: string;
+}
+
 export interface ScoreObjectEditorTargetSnapshot {
   selectionId: string;
   selectedObjectType: string;
@@ -449,6 +476,10 @@ export interface ScoreObjectEditorTargetSnapshot {
   sourceInstanceLocation?: ScoreObjectLocationRef;
   library?: ScoreObjectLibraryEntryRef;
   blueLive?: BlueLiveScoreObjectRef;
+  /** Present when the target is a pattern layer's embedded source object.
+   *  Such targets are resolved through the pattern group/row/source chain and
+   *  are invalid for ordinary timeline add/move/remove/conversion handlers. */
+  patternSource?: PatternSourceObjectLocationRef;
   supportsTimeBehavior: boolean;
   supportsRepeatPoint: boolean;
   supportsNoteProcessorChain: boolean;
@@ -769,8 +800,27 @@ export type TrackScorePatch =
   | { type: 'clearTrackInstrument'; track: TrackRef }
   | { type: 'updateTrackInstrument'; track: TrackRef; patch: InstrumentPatch };
 
+export interface PatternCellEdit {
+  layerId: string;
+  cellIndex: number;
+  active: boolean;
+}
+
+export type PatternScorePatch =
+  | {
+      type: 'updatePatternCells';
+      groupId: string;
+      changes: readonly PatternCellEdit[];
+    }
+  | {
+      type: 'updatePatternBeatsLength';
+      groupId: string;
+      patternBeatsLength: number;
+    };
+
 export type ScorePatch =
   | TrackScorePatch
+  | PatternScorePatch
   | { type: 'updateTimeState'; patch: Partial<ScoreTimeStateSnapshot> }
   | {
       type: 'updateSharedProperties';
@@ -3150,6 +3200,17 @@ let nextLayerGroupId = 1;
 const SCORE_OBJECT_ID_MAP = new WeakMap<object, string>();
 let nextScoreObjectId = 1;
 
+const PATTERN_LAYER_ID_MAP = new WeakMap<object, string>();
+let nextPatternLayerId = 1;
+
+function assignPatternLayerId(obj: object): string {
+  const existing = PATTERN_LAYER_ID_MAP.get(obj);
+  if (existing) return existing;
+  const id = `pl-${nextPatternLayerId++}`;
+  PATTERN_LAYER_ID_MAP.set(obj, id);
+  return id;
+}
+
 function assignLayerGroupId(obj: object): string {
   const existing = LAYER_GROUP_ID_MAP.get(obj);
   if (existing) return existing;
@@ -3277,7 +3338,7 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
     } else if (lg instanceof TrackLayerGroup) {
       result.push(createTrackLayerGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap));
     } else if (lg instanceof PatternsLayerGroup) {
-      result.push(createPatternsLayerGroupSnapshot(lg));
+      result.push(createPatternsLayerGroupSnapshot(lg, context));
     }
   }
 
@@ -3477,19 +3538,63 @@ function createTrackLayerGroupSnapshot(
   };
 }
 
-function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup): PatternsLayerGroupSnapshot {
+/** Display-only fallback when the raw canonical step length is malformed. */
+const PATTERN_BEATS_LENGTH_FALLBACK = 4;
+
+function collectActivePatternCellIndices(layer: PatternLayer): number[] {
+  const patternData = layer.getPatternData();
+  const indices: number[] = [];
+  const maxSelected = patternData.getMaxSelected();
+  for (let i = 0; i <= maxSelected; i++) {
+    if (patternData.isPatternSet(i)) indices.push(i);
+  }
+  return indices;
+}
+
+function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup, context: TimeContext): PatternsLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
-  const layers: ScoreLayerSnapshot[] = [];
+  const rawBeatsLength = lg.getPatternBeatsLength();
+  const effectiveBeatsLength = Number.isFinite(rawBeatsLength) && rawBeatsLength > 0
+    ? rawBeatsLength
+    : PATTERN_BEATS_LENGTH_FALLBACK;
+  const layers: PatternLayerSnapshot[] = [];
 
   for (let i = 0; i < lg.length; i++) {
     const layer = lg[i];
+    if (!layer) continue;
+    const layerId = assignPatternLayerId(layer);
+    const source = layer.getSoundObject();
+    const objectId = assignScoreObjectId(source, 'sobj');
+    const editorTarget: ScoreObjectEditorTargetSnapshot = {
+      selectionId: objectId,
+      selectedObjectType: source.constructor.name,
+      editorObjectType: source.constructor.name,
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      patternSource: { groupId, layerId, sourceObjectId: objectId },
+      supportsTimeBehavior: source instanceof AbstractSoundObject,
+      supportsRepeatPoint: source instanceof AbstractSoundObject,
+      supportsNoteProcessorChain: source instanceof AbstractSoundObject,
+    };
     layers.push({
-      layerId: `${groupId}-layer-${i}`,
+      layerId,
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
       solo: layer.isSolo(),
       items: [],
+      sourceObject: {
+        objectId,
+        objectType: source.constructor.name,
+        name: source.getName(),
+        backgroundColor: source.getBackgroundColor(),
+        editorTarget,
+        serializedXml: source.saveAsXML().toXml(),
+        barRenderer: source instanceof AbstractSoundObject
+          ? createBarRendererForSoundObject(source, context)
+          : { kind: 'fallback' as const, labelLines: splitLabelLines(source.getName()), reason: 'unknown-type' as const },
+      },
+      activeCellIndices: collectActivePatternCellIndices(layer),
     });
   }
 
@@ -3500,6 +3605,8 @@ function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup): PatternsLayer
     name: lg.getName(),
     layerCount: lg.length,
     isOpenableContainer: false,
+    patternBeatsLength: rawBeatsLength,
+    effectivePatternBeatsLength: effectiveBeatsLength,
     layers,
     noteProcessorChain: groupChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(groupChain) : undefined,
   };
@@ -3768,11 +3875,46 @@ export function resolveTimelineTarget(
   return null;
 }
 
+/**
+ * Resolve a pattern-source reference by walking the owning PatternsLayerGroup
+ * and PatternLayer and verifying the embedded source object's assigned ID.
+ */
+function resolvePatternSourceTarget(
+  score: Score,
+  ref: PatternSourceObjectLocationRef,
+): SoundObject | null {
+  for (const group of score) {
+    if (!(group instanceof PatternsLayerGroup)) continue;
+    if (assignLayerGroupId(group) !== ref.groupId) continue;
+    for (const layer of group) {
+      if (assignPatternLayerId(layer) !== ref.layerId) continue;
+      const source = layer.getSoundObject();
+      return assignScoreObjectId(source, 'sobj') === ref.sourceObjectId ? source : null;
+    }
+    return null;
+  }
+  return null;
+}
+
+function findPatternsLayerGroupByGroupId(score: Score, groupId: string): PatternsLayerGroup | null {
+  for (const group of score) {
+    if (group instanceof PatternsLayerGroup && assignLayerGroupId(group) === groupId) {
+      return group;
+    }
+  }
+  return null;
+}
+
 export function resolveEditorTarget(data: BlueData, target: ScoreObjectEditorTargetSnapshot): { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null {
   const score = data.getScore();
 
   let sObj: SoundObject | AudioClip | null = null;
   let isLibraryOwned = false;
+
+  if (target.patternSource) {
+    const source = resolvePatternSourceTarget(score, target.patternSource);
+    return source ? { sObj: source, isLibraryOwned: false } : null;
+  }
 
   if (target.ownerKind === 'blueLive' && target.displayContext === 'blueLive') {
     const ref = target.blueLive;
@@ -4494,6 +4636,9 @@ function isNonEmptyScorePatch(patch: ScorePatch): boolean {
   }
   if (patch.type === 'removeScoreObjects') {
     return patch.targets.length > 0;
+  }
+  if (patch.type === 'updatePatternCells') {
+    return patch.changes.length > 0;
   }
   return true;
 }
@@ -8238,6 +8383,69 @@ function applyConvertToPolyObjectPatch(
   return true;
 }
 
+/**
+ * Atomic boolean-cell mutation for one PatternsLayerGroup. All layer IDs and
+ * cell indices are validated before any PatternData is touched; duplicate
+ * (layerId, cellIndex) writes reduce to the last change in patch order. A
+ * valid patch that only repeats existing values is a no-op (changed: false).
+ */
+function applyUpdatePatternCellsPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'updatePatternCells' },
+): boolean {
+  if (patch.changes.length === 0) return false;
+  const group = findPatternsLayerGroupByGroupId(data.getScore(), patch.groupId);
+  if (!group) return false;
+
+  const layerById = new Map<string, PatternLayer>();
+  for (const layer of group) {
+    layerById.set(assignPatternLayerId(layer), layer);
+  }
+
+  const writes: Array<{ layerId: string; cellIndex: number; active: boolean }> = [];
+  const writeIndexByKey = new Map<string, number>();
+  for (const change of patch.changes) {
+    if (!Number.isInteger(change.cellIndex) || change.cellIndex < 0) return false;
+    if (!layerById.has(change.layerId)) return false;
+    const key = `${change.layerId}:${change.cellIndex}`;
+    const existingIndex = writeIndexByKey.get(key);
+    if (existingIndex === undefined) {
+      writeIndexByKey.set(key, writes.length);
+      writes.push({ layerId: change.layerId, cellIndex: change.cellIndex, active: change.active });
+    } else {
+      writes[existingIndex] = { layerId: change.layerId, cellIndex: change.cellIndex, active: change.active };
+    }
+  }
+
+  let changed = false;
+  for (const write of writes) {
+    const layer = layerById.get(write.layerId)!;
+    const patternData = layer.getPatternData();
+    if (patternData.isPatternSet(write.cellIndex) === write.active) continue;
+    patternData.setPattern(write.cellIndex, write.active);
+    changed = true;
+  }
+  return changed;
+}
+
+/**
+ * Validated group-wide step-length update. Only finite positive integers are
+ * accepted (preserving the Java int model); malformed raw values stay in place
+ * until an explicit valid resize. An unchanged value is a no-op.
+ */
+function applyUpdatePatternBeatsLengthPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'updatePatternBeatsLength' },
+): boolean {
+  const group = findPatternsLayerGroupByGroupId(data.getScore(), patch.groupId);
+  if (!group) return false;
+  const length = patch.patternBeatsLength;
+  if (!Number.isInteger(length) || length <= 0) return false;
+  if (group.getPatternBeatsLength() === length) return false;
+  group.setPatternBeatsLength(length);
+  return true;
+}
+
 function applyScoreObjectPatch(
   data: BlueData,
   patch: ScorePatch,
@@ -8245,6 +8453,12 @@ function applyScoreObjectPatch(
 ): boolean {
   if (isTrackScorePatch(patch)) {
     return applyTrackScorePatch(data, patch, patchContext);
+  }
+  if (patch.type === 'updatePatternCells') {
+    return applyUpdatePatternCellsPatch(data, patch);
+  }
+  if (patch.type === 'updatePatternBeatsLength') {
+    return applyUpdatePatternBeatsLengthPatch(data, patch);
   }
   if (patch.type === 'addScoreObjects') {
     return applyAddScoreObjectsPatch(data, patch);

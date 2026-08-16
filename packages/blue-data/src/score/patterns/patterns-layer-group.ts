@@ -20,6 +20,8 @@ import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score-generation-options';
 
 export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGroup<PatternLayer> {
+  static get [Symbol.species](): ArrayConstructor { return Array; }
+
   private _name = 'Patterns Layer Group';
   private _patternBeatsLength = 4;
   private _npc = new NoteProcessorChain();

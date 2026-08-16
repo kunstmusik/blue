@@ -10,6 +10,7 @@ import type {
   PolyObjectLayerGroupSnapshot,
 } from "./score/types";
 import { DEFAULT_ROW_HEIGHT } from "./score/types";
+import { computePatternExtentBeats } from "./score/layer-groups/patterns-timeline-utils";
 import type { TempoMapSnapshot, TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
 import type { SnapValueName } from "@blue/data";
 import type { RulerConfigChanges } from "./score/RulerConfigDialog";
@@ -32,6 +33,7 @@ import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
 import TrackInstrumentControl from "./score/TrackInstrumentControl";
 import ColorPickerButton from "../../ColorPicker";
+import PatternLayerHeader from "./score/PatternLayerHeader";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -813,7 +815,7 @@ function LeftPanel({
               </button>
             </RowHeader>
             {tempoMapVisible && (
-              <div className="border-b border-blue-border/20 bg-blue-surface/30" style={{ height: 80 }} />
+              <div className="border-b border-app-border-muted bg-blue-surface/30" style={{ height: 80 }} />
             )}
           </>
         )}
@@ -836,7 +838,7 @@ function LeftPanel({
           </button>
         </RowHeader>
         {timeState.secondaryRulerEnabled && (
-          <div className="h-5 border-b border-blue-border/20 bg-blue-surface/30" />
+          <div className="h-5 border-b border-app-border-muted bg-blue-surface/30" />
         )}
       </div>
 
@@ -860,25 +862,35 @@ function LeftPanel({
 
           return (
             <div key={group.groupId}>
-              {group.layers.map((layer, li) => (
-                <SoundLayerHeader
-                  key={layer.layerId}
-                  layer={layer}
-                  groupType={group.groupType}
-                  groupId={group.groupId}
-                  layerIndex={li}
-                  layerCount={group.layers.length}
-                  rootGroupIndex={gi}
-                  projectSessionId={projectSessionId}
-                  projectRevision={projectRevision}
-                  onNoteProcessorChain={(groupId, layerIndex) => onSoundLayerNoteProcessorChain(
-                    groupId,
-                    layerIndex,
-                    group.groupType === 'track' ? layer.layerId : undefined,
-                  )}
-                  noteProcessorChain={layer.noteProcessorChain}
-                />
-              ))}
+              {group.groupType === 'patterns'
+                ? group.layers.map((layer, li) => (
+                  <PatternLayerHeader
+                    key={layer.layerId}
+                    layer={layer}
+                    groupId={group.groupId}
+                    layerIndex={li}
+                    layerCount={group.layers.length}
+                  />
+                ))
+                : group.layers.map((layer, li) => (
+                  <SoundLayerHeader
+                    key={layer.layerId}
+                    layer={layer}
+                    groupType={group.groupType}
+                    groupId={group.groupId}
+                    layerIndex={li}
+                    layerCount={group.layers.length}
+                    rootGroupIndex={gi}
+                    projectSessionId={projectSessionId}
+                    projectRevision={projectRevision}
+                    onNoteProcessorChain={(groupId, layerIndex) => onSoundLayerNoteProcessorChain(
+                      groupId,
+                      layerIndex,
+                      group.groupType === 'track' ? layer.layerId : undefined,
+                    )}
+                    noteProcessorChain={layer.noteProcessorChain}
+                  />
+                ))}
               {spacer}
             </div>
           );
@@ -910,7 +922,7 @@ function RowHeader({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className={`h-5 border-b border-blue-border/20 flex items-center ${center ? 'justify-center' : 'justify-end pr-2'} bg-blue-surface/30 ${borderLeft ? 'border-l-2 border-l-blue-border/30' : !center ? 'gap-1' : ''}`}
+          className={`h-5 border-b border-app-border-muted flex items-center ${center ? 'justify-center' : 'justify-end pr-2'} bg-blue-surface/30 ${borderLeft ? 'border-l-2 border-l-blue-border/30' : !center ? 'gap-1' : ''}`}
         >
           {children}
         </div>
@@ -979,7 +991,7 @@ function SpacerPanel({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className="group relative flex items-center justify-center border-b border-blue-border/10 bg-blue-surface/10 hover:bg-blue-surface/30 cursor-pointer"
+          className="group relative flex items-center justify-center border-b border-app-border-muted bg-blue-surface/10 hover:bg-blue-surface/30 cursor-pointer"
           style={{ height: GROUP_SPACER }}
           onDoubleClick={() => addLayer(groupId, layerCount - 1)}
         >
@@ -1180,7 +1192,7 @@ function SoundLayerHeader({
         <div
           data-midi-focused={midiFocused ? 'true' : undefined}
           className={[
-            'relative flex items-start overflow-hidden border-b border-l-2 border-l-transparent border-app-border/20 select-none',
+            'relative flex items-start overflow-hidden border-b border-l-2 border-l-transparent border-app-border-muted select-none',
             midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
           ].join(' ')}
           style={{ height }}
@@ -1419,6 +1431,12 @@ function SoundLayerHeader({
 function computeTotalBeats(score: ScoreDocumentSnapshot): number {
   let maxBeat = 64;
   for (const lg of score.layerGroups) {
+    if (lg.groupType === 'patterns') {
+      // Active pattern cells live outside the generic items envelope; keep
+      // their derived extent horizontally reachable on the shared timeline.
+      maxBeat = Math.max(maxBeat, computePatternExtentBeats(lg));
+      continue;
+    }
     for (const layer of lg.layers) {
       for (const item of layer.items) {
         maxBeat = Math.max(maxBeat, item.startBeats + item.durationBeats);

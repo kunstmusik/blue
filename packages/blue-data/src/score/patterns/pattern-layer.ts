@@ -19,6 +19,9 @@ import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registr
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { setScoreStart } from '../../utilities/score';
+import { TimeBehavior } from '../../sound-objects/time-behavior';
+import { TimePosition } from '../../time/time-position';
+import { TimeDuration } from '../../time/time-duration';
 
 export class PatternLayer implements Layer {
   private _soundObject: SoundObject;
@@ -35,11 +38,12 @@ export class PatternLayer implements Layer {
       this._soundObject = other._soundObject.deepCopy();
       this._patternData = new PatternData(other._patternData);
     } else {
-      // Default: GenericScore with 4-beat duration
+      // Mirrors the Java PatternLayer constructor: a GenericScore with a real
+      // beat-based start/duration (serializable) and no time behavior.
       this._soundObject = new GenericScore();
-      this._soundObject.setStartTime({ toBeats: () => 0 } as any);
-      (this._soundObject as any)._subjectiveDuration = { toBeats: () => 4 };
-      (this._soundObject as any)._timeBehavior = 'NONE';
+      this._soundObject.setStartTime(TimePosition.beats(0));
+      this._soundObject.setSubjectiveDuration(TimeDuration.beats(4));
+      this._soundObject.setTimeBehavior(TimeBehavior.NONE);
       this._patternData = new PatternData();
     }
   }
@@ -89,6 +93,9 @@ export class PatternLayer implements Layer {
   ): NoteList {
     const notes = new NoteList();
 
+    // Java Blue treats the row's embedded source object as a pattern template:
+    // its own score start must not offset every generated cell.
+    this._soundObject.setStartTime(TimePosition.beats(0));
     const baseNotes = this._soundObject.generateForCSD(context, compileData, -1, -1);
 
     let currentIndex = Math.floor(startTime / patternBeatsLength);

@@ -144,6 +144,20 @@ describe('PatternLayer', () => {
     expect(times[2]).toBe(16);
   });
 
+  it('normalizes the embedded source start before repeating its generated notes', () => {
+    const layer = new PatternLayer();
+    const source = new GenericScore();
+    source.setScoreText('i1 0 1\n');
+    source.setStartTime(TimePosition.beats(6));
+    source.setSubjectiveDuration(TimeDuration.beats(1));
+    layer.setSoundObject(source);
+    layer.getPatternData().setPattern(1, true);
+
+    const notes = layer.generateForCSD(new TimeContext(), new CompileData(), 0, -1, 4);
+    expect(notes.length).toBe(1);
+    expect(notes.getNote(0).getStartTime()).toBe(4);
+  });
+
   it('round-trips through XML', () => {
     const layer = new PatternLayer();
     layer.setName('Test Pattern');
@@ -609,5 +623,106 @@ describe('PatternLayer with unknown type', () => {
     // Should retain the default GenericScore instead of crashing
     expect(layer.getSoundObject()).toBeInstanceOf(GenericScore);
     expect(layer.getPatternData().isPatternSet(0)).toBe(true);
+  });
+});
+
+
+function attachSerializableSource(group: PatternsLayerGroup): void {
+  for (const layer of group) {
+    const gs = new GenericScore();
+    gs.setName('Source');
+    gs.setScoreText('i1 0 1\n');
+    gs.setStartTime(TimePosition.beats(0));
+    gs.setSubjectiveDuration(TimeDuration.beats(1));
+    layer.setSoundObject(gs);
+  }
+}
+
+describe('PatternsLayerGroup canvas-contract round trips', () => {
+  it('retains a malformed raw step length through save and reload', () => {
+    const group = new PatternsLayerGroup();
+    group.setPatternBeatsLength(Number.NaN);
+    const layer = group.newLayerAt(0);
+    attachSerializableSource(group);
+    layer.getPatternData().setPattern(0, true);
+
+    const reloaded = PatternsLayerGroup.loadFromXML(group.saveAsXML());
+    // NaN serializes as "NaN"; parseInt yields NaN again, preserving the
+    // malformed raw value rather than silently rewriting it.
+    expect(Number.isNaN(reloaded.getPatternBeatsLength())).toBe(true);
+    expect(reloaded[0]!.getPatternData().isPatternSet(0)).toBe(true);
+  });
+
+  it('grows active cells beyond the current capacity but not inactive clears', () => {
+    const group = new PatternsLayerGroup();
+    const layer = group.newLayerAt(0);
+    attachSerializableSource(group);
+    layer.getPatternData().setPattern(20, true);
+    expect(layer.getPatternData().getSize()).toBe(32);
+    layer.getPatternData().setPattern(31, false);
+    expect(layer.getPatternData().getSize()).toBe(32);
+    expect(layer.getPatternData().getMaxSelected()).toBe(20);
+
+    const reloaded = PatternsLayerGroup.loadFromXML(group.saveAsXML());
+    expect(reloaded[0]!.getPatternData().isPatternSet(20)).toBe(true);
+    expect(reloaded[0]!.getPatternData().isPatternSet(19)).toBe(false);
+  });
+
+  it('does not serialize trailing inactive capacity as pattern content', () => {
+    const group = new PatternsLayerGroup();
+    const layer = group.newLayerAt(0);
+    attachSerializableSource(group);
+    layer.getPatternData().setPattern(20, true);
+    layer.getPatternData().setPattern(20, false);
+    layer.getPatternData().setPattern(3, true);
+    expect(layer.getPatternData().getSize()).toBe(32);
+    const xmlText = group.saveAsXML().toXml();
+    const patternDataMatch = xmlText.match(/<patternData>([01]*)<\/patternData>/);
+    expect(patternDataMatch).not.toBeNull();
+    // Capacity trims to the 16-cell block holding the highest active cell
+    // (index 3 → block of 16), never to the grown 32-cell array.
+    expect(patternDataMatch![1]).toBe('0001000000000000');
+  });
+
+  it('tolerates unknown elements and attributes without corrupting known data', () => {
+    const elem = new Element('patternsLayerGroup');
+    elem.setAttribute('name', 'Future Group');
+    elem.setAttribute('futureAttr', 'keep');
+    elem.addElement('futureElement').setText('unknown');
+    elem.addElement('patternBeatsLength').setText('5');
+    const layers = elem.addElement('patternLayers');
+    const layerEl = layers.addElement('patternLayer');
+    layerEl.setAttribute('name', 'Row');
+    layerEl.setAttribute('muted', 'true');
+    layerEl.setAttribute('solo', 'false');
+    const so = layerEl.addElement('soundObject');
+    so.setAttribute('type', 'blue.soundObject.GenericScore');
+    so.addElement('name').setText('Source');
+    layerEl.addElement('patternData').setText('1001');
+    elem.addElement('noteProcessorChain');
+
+    const group = PatternsLayerGroup.loadFromXML(elem);
+    expect(group.getName()).toBe('Future Group');
+    expect(group.getPatternBeatsLength()).toBe(5);
+    expect(group[0]!.getName()).toBe('Row');
+    expect(group[0]!.isMuted()).toBe(true);
+    expect(group[0]!.getPatternData().isPatternSet(0)).toBe(true);
+    expect(group[0]!.getPatternData().isPatternSet(3)).toBe(true);
+    expect(group[0]!.getSoundObject().getName()).toBe('Source');
+  });
+
+  it('supports layer removal and reordering (Array species safety)', () => {
+    const group = new PatternsLayerGroup();
+    group.newLayerAt(0).setName('A');
+    group.newLayerAt(1).setName('B');
+    group.newLayerAt(2).setName('C');
+
+    group.removeLayers(1, 1);
+    expect(group.map((layer) => layer.getName())).toEqual(['A', 'C']);
+
+    // splice-based move as used by the shared moveLayer patch
+    const [moved] = group.splice(0, 1);
+    group.splice(1, 0, moved!);
+    expect(group.map((layer) => layer.getName())).toEqual(['C', 'A']);
   });
 });

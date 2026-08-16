@@ -271,3 +271,74 @@ describe('project-store — MIDI focus reconciliation', () => {
     expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
   });
 });
+
+describe('project-store — pattern layer optimistic projection', () => {
+  afterEach(() => {
+    useProjectStore.getState().clearProject();
+    delete (window as unknown as { blueAPI?: unknown }).blueAPI;
+  });
+
+  it('inserts a full PatternLayerSnapshot when a layer is added to a patterns group', async () => {
+    const patternsGroup = {
+      groupId: 'grp',
+      groupType: 'patterns' as const,
+      name: 'Patterns',
+      layerCount: 1,
+      isOpenableContainer: false as const,
+      patternBeatsLength: 4,
+      effectivePatternBeatsLength: 4,
+      layers: [{
+        layerId: 'pl-1',
+        name: 'Row A',
+        height: 44,
+        muted: false,
+        solo: false,
+        items: [],
+        sourceObject: {
+          objectId: 'src-1',
+          objectType: 'GenericScore',
+          name: 'Source',
+          backgroundColor: 0x404040,
+          editorTarget: {
+            selectionId: 'src-1',
+            selectedObjectType: 'GenericScore',
+            editorObjectType: 'GenericScore',
+            ownerKind: 'timeline' as const,
+            displayContext: 'timeline' as const,
+            patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'src-1' },
+            supportsTimeBehavior: true,
+            supportsRepeatPoint: true,
+            supportsNoteProcessorChain: true,
+          },
+          barRenderer: { kind: 'generic' as const, labelLines: ['Source'], timeBehavior: 'NONE', repeatPointBeats: null },
+        },
+        activeCellIndices: [0],
+      }],
+    };
+    const snapshot = createEmptyProjectEditorSnapshot();
+    snapshot.loaded = true;
+    snapshot.score!.layerGroups = [patternsGroup];
+    useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
+
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: async () => ({ changed: true }),
+      getProjectDocument: async () => null,
+    };
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: { type: 'addLayer', groupId: 'grp', layerIndex: 0 },
+    });
+
+    const group = useProjectStore.getState().score.layerGroups[0]!;
+    if (group.groupType !== 'patterns') throw new Error('expected patterns group');
+    expect(group.layers).toHaveLength(2);
+    const added = group.layers[1]!;
+    // The optimistic row must be a full PatternLayerSnapshot: the pattern grid
+    // reads activeCellIndices/sourceObject synchronously during render.
+    expect(Array.isArray(added.activeCellIndices)).toBe(true);
+    expect(added.sourceObject).toBeDefined();
+    expect(added.sourceObject.editorTarget.patternSource?.groupId).toBe('grp');
+
+    await useProjectStore.getState().flushPendingPatches();
+  });
+});

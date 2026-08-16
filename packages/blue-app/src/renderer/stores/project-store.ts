@@ -45,6 +45,9 @@ import {
   type MixerSendEntrySnapshot,
   type MixerSnapshot,
   type NoteProcessorChainSnapshot,
+  type PatternLayerSnapshot,
+  type PatternScorePatch,
+  type PatternSourceObjectSnapshot,
   type PresetGroupSnapshot,
   type PresetSnapshot,
   type ProjectDocumentPatch,
@@ -232,7 +235,14 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'convertToPolyObject':
       return true;
     case 'addLayerGroup':
-      return patch.groupType === 'track';
+      // Pattern groups need the canonical snapshot because row/source identities
+      // are assigned by the main process; track groups pull mixer state.
+      return patch.groupType === 'track' || patch.groupType === 'patterns';
+    case 'updateSoundObjectBehavior':
+    case 'replaceNoteProcessorChain':
+      // Pattern source objects have no optimistic projection for these
+      // patches; the canonical snapshot must refresh their bar renderer.
+      return (patch as { target?: { patternSource?: unknown } }).target?.patternSource !== undefined;
     case 'addScoreObjects':
       return patch.objects.some((object) => object.objectType === 'PolyObject');
     case 'addTrackItem':
@@ -289,6 +299,39 @@ function createLocalScoreObjectId(objectType: string): string {
   return `local-${prefix}-${nextLocalScoreObjectId++}`;
 }
 
+function createDefaultPatternLayerSnapshot(groupId: string, layerIndex: number): PatternLayerSnapshot {
+  const layerId = `pl-local-${groupId}-${layerIndex}`;
+  const objectId = `local-sobj-pattern-${groupId}-${layerIndex}`;
+  const sourceObject: PatternSourceObjectSnapshot = {
+    objectId,
+    objectType: 'GenericScore',
+    name: '',
+    backgroundColor: 0x404040,
+    editorTarget: {
+      selectionId: objectId,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      patternSource: { groupId, layerId, sourceObjectId: objectId },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    },
+    barRenderer: { kind: 'generic', labelLines: [''], timeBehavior: 'NONE', repeatPointBeats: null },
+  };
+  return {
+    layerId,
+    name: '',
+    height: 44,
+    muted: false,
+    solo: false,
+    items: [],
+    sourceObject,
+    activeCellIndices: [],
+  };
+}
+
 function createDefaultScoreLayerSnapshot(groupId: string, layerIndex: number): ScoreLayerSnapshot {
   return {
     layerId: `${groupId}-layer-${layerIndex}`,
@@ -328,9 +371,11 @@ function createAddedLayerGroupSnapshot(groupType: ScoreLayerGroupType | undefine
         groupId,
         groupType: 'patterns',
         name: 'Patterns Layer Group',
-        layerCount: layers.length,
+        layerCount: 1,
         isOpenableContainer: false,
-        layers,
+        patternBeatsLength: 4,
+        effectivePatternBeatsLength: 4,
+        layers: [createDefaultPatternLayerSnapshot(groupId, 0)],
       };
     case 'polyObject':
     default:
@@ -1777,6 +1822,91 @@ function cloneVisibleNoteProcessorChain(
   return cloneSnapshotValue(chain);
 }
 
+function applyPatternCellsToLayer(layer: PatternLayerSnapshot, cellIndex: number, active: boolean): PatternLayerSnapshot {
+  const has = layer.activeCellIndices.includes(cellIndex);
+  if (active === has) return layer;
+  if (active) {
+    const next = [...layer.activeCellIndices, cellIndex];
+    next.sort((a, b) => a - b);
+    return { ...layer, activeCellIndices: next };
+  }
+  return { ...layer, activeCellIndices: layer.activeCellIndices.filter((index) => index !== cellIndex) };
+}
+
+/**
+ * Optimistic projection for the canonical pattern patch family. Cell writes
+ * apply immutably per row (unknown rows are skipped; the canonical snapshot
+ * corrects them), and step-length writes update both raw and effective values.
+ */
+function applyPatternPatchToSnapshot(
+  score: ScoreDocumentSnapshot,
+  patch: PatternScorePatch,
+): ScoreDocumentSnapshot {
+  if (patch.type === 'updatePatternBeatsLength') {
+    const length = patch.patternBeatsLength;
+    if (!Number.isInteger(length) || length <= 0) return score;
+    const nextLayerGroups = score.layerGroups.map((lg) => (
+      lg.groupType === 'patterns' && lg.groupId === patch.groupId && lg.patternBeatsLength !== length
+        ? { ...lg, patternBeatsLength: length, effectivePatternBeatsLength: length }
+        : lg
+    ));
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.changes.length === 0) return score;
+  let changed = false;
+  const nextLayerGroups = score.layerGroups.map((lg) => {
+    if (lg.groupType !== 'patterns' || lg.groupId !== patch.groupId) return lg;
+    let layers = lg.layers;
+    let groupChanged = false;
+    for (const change of patch.changes) {
+      if (!Number.isInteger(change.cellIndex) || change.cellIndex < 0) continue;
+      const layerIndex = layers.findIndex((layer) => layer.layerId === change.layerId);
+      if (layerIndex < 0) continue;
+      const nextLayer = applyPatternCellsToLayer(layers[layerIndex]!, change.cellIndex, change.active);
+      if (nextLayer === layers[layerIndex]) continue;
+      layers = [...layers];
+      layers[layerIndex] = nextLayer;
+      groupChanged = true;
+    }
+    if (!groupChanged) return lg;
+    changed = true;
+    return { ...lg, layers };
+  });
+  return changed ? { ...score, layerGroups: nextLayerGroups } : score;
+}
+
+function applyPatternSourceSharedProperties(
+  score: ScoreDocumentSnapshot,
+  target: ScoreObjectEditorTargetSnapshot,
+  patch: { name?: string; backgroundColor?: number },
+): ScoreDocumentSnapshot {
+  const ref = target.patternSource!;
+  let changed = false;
+  const nextLayerGroups = score.layerGroups.map((lg) => {
+    if (lg.groupType !== 'patterns' || lg.groupId !== ref.groupId) return lg;
+    const layers = lg.layers.map((layer) => {
+      if (layer.layerId !== ref.layerId || layer.sourceObject.objectId !== ref.sourceObjectId) return layer;
+      let sourceObject = layer.sourceObject;
+      if (patch.name !== undefined && sourceObject.name !== patch.name) {
+        sourceObject = {
+          ...sourceObject,
+          name: patch.name,
+          barRenderer: { ...sourceObject.barRenderer, labelLines: splitBarLabelLines(patch.name) },
+        };
+      }
+      if (patch.backgroundColor !== undefined && sourceObject.backgroundColor !== patch.backgroundColor) {
+        sourceObject = { ...sourceObject, backgroundColor: patch.backgroundColor };
+      }
+      if (sourceObject === layer.sourceObject) return layer;
+      changed = true;
+      return { ...layer, sourceObject };
+    });
+    return { ...lg, layers };
+  });
+  return changed ? { ...score, layerGroups: nextLayerGroups } : score;
+}
+
 function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
@@ -1793,6 +1923,14 @@ function applyScorePatchToSnapshot(
     || patch.type === 'updateTrackInstrument'
   ) {
     return applyTrackPatchToSnapshot(score, patch);
+  }
+
+  if (patch.type === 'updatePatternCells' || patch.type === 'updatePatternBeatsLength') {
+    return applyPatternPatchToSnapshot(score, patch);
+  }
+
+  if (patch.type === 'updateSharedProperties' && patch.target.patternSource) {
+    return applyPatternSourceSharedProperties(score, patch.target, patch.patch);
   }
 
   if (patch.type === 'removeScoreObjects') {
@@ -1815,17 +1953,22 @@ function applyScorePatchToSnapshot(
   if (patch.type === 'addLayer') {
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
-      const newLayer: ScoreLayerSnapshot = {
-        layerId: `layer-${Date.now()}`,
-        name: '',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [],
-      };
+      // Pattern rows need the full pattern snapshot shape; a generic layer
+      // snapshot would be missing the required source/cell fields before the
+      // canonical refresh arrives.
+      const newLayer: ScoreLayerSnapshot = lg.groupType === 'patterns'
+        ? createDefaultPatternLayerSnapshot(lg.groupId, patch.layerIndex + 1)
+        : {
+          layerId: `layer-${Date.now()}`,
+          name: '',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [],
+        };
       const layers = [...lg.layers];
       layers.splice(patch.layerIndex + 1, 0, newLayer);
-      return { ...lg, layers, layerCount: layers.length };
+      return { ...lg, layers, layerCount: layers.length } as ScoreLayerGroupSnapshot;
     });
     return { ...score, layerGroups: nextLayerGroups };
   }

@@ -5,6 +5,7 @@ import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
 import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
+import { computePatternExtentBeats } from "./layer-groups/patterns-timeline-utils";
 import TrackLayerGroupCanvas from "./layer-groups/TrackLayerGroupCanvas";
 import MultiLineOverlay from "./automation/MultiLineOverlay";
 
@@ -61,7 +62,14 @@ export default function LayerPanel({
     );
   }
 
-  const contentWidth = totalBeats * pixelsPerBeat;
+  // The content width must cover the shared timeline and any active pattern
+  // cell extent that reaches beyond it.
+  const maxPatternExtentBeats = visibleGroups.reduce((max, group) => (
+    group.groupType === 'patterns'
+      ? Math.max(max, computePatternExtentBeats(group))
+      : max
+  ), 0);
+  const contentWidth = Math.max(totalBeats, maxPatternExtentBeats) * pixelsPerBeat;
 
   return (
     <div style={{ minWidth: contentWidth }} className="relative bg-app-canvas">
@@ -125,7 +133,15 @@ export default function LayerPanel({
               <div key={group.groupId}>
                 <PatternsLayerGroupCanvas
                   group={group}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
+                  totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
+                  snapEnabled={snapEnabled}
+                  snapValue={snapValue}
+                  tempo={tempo}
+                  smpteFrameRate={smpteFrameRate}
+                  meterMap={meterMap}
                 />
                 {spacer}
               </div>
