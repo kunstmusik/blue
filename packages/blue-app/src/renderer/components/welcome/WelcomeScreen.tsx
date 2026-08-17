@@ -39,28 +39,38 @@ export default function WelcomeScreen(): React.ReactElement {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-app-text-muted">
             Recent Files
           </h2>
-          <ul className="space-y-1 rounded-md border border-app-border/40 bg-black p-2">
-            {recentFiles.map((filePath) => (
-              <li
-                key={filePath}
-                className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-blue-surface cursor-pointer group"
-                onClick={() => openRecentFile(filePath)}
-              >
-                <span className="text-sm truncate flex-1" title={filePath}>
-                  {filePath.split('/').pop()}
-                </span>
-                <button
-                  className="opacity-0 group-hover:opacity-100 text-blue-muted hover:text-red-400 px-2 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeRecentFile(filePath);
-                  }}
-                  title="Remove from recent files"
+          <ul className="space-y-1">
+            {recentFiles.map((filePath) => {
+              const fileName = filePath.split(/[/\\]/).pop() || filePath;
+              return (
+                <li
+                  key={filePath}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-md hover:bg-blue-surface cursor-pointer group"
+                  onClick={() => openRecentFile(filePath)}
                 >
-                  ×
-                </button>
-              </li>
-            ))}
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-medium text-app-text-strong truncate" title={filePath}>
+                      {fileName}
+                    </span>
+                    <span className="text-xs text-app-text-muted truncate" title={filePath}>
+                      {filePath}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="opacity-0 group-hover:opacity-100 text-app-text-muted hover:text-red-400 px-2 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeRecentFile(filePath);
+                    }}
+                    title="Remove from recent files"
+                    aria-label={`Remove ${fileName} from recent files`}
+                  >
+                    ×
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
