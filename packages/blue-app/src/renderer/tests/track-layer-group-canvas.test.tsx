@@ -156,6 +156,11 @@ function renderTrackCanvas(group: TrackLayerGroupSnapshot, allLayerGroups: Score
       snapEnabled={false}
       snapValue="BEAT"
       tempo={120}
+      tempoMap={{
+        enabled: false,
+        visible: false,
+        points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
+      }}
       smpteFrameRate={30}
       meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
     />);

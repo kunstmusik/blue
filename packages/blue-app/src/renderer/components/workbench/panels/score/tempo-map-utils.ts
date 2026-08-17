@@ -76,6 +76,66 @@ export function getTempoAtBeat(points: TempoPointSnapshot[], beat: number): numb
   return points[0].tempo;
 }
 
+export function secondsToBeats(seconds: number, tempoMap: TempoMapSnapshot): number {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0;
+  if (!tempoMap.enabled || tempoMap.points.length === 0) return seconds;
+
+  const points = [...tempoMap.points].sort((a, b) => a.beat - b.beat);
+  const cumulativeSeconds: number[] = [0];
+  for (let i = 1; i < points.length; i += 1) {
+    const previous = points[i - 1]!;
+    const current = points[i]!;
+    const deltaBeats = current.beat - previous.beat;
+    const previousSeconds = cumulativeSeconds[i - 1]!;
+    if (deltaBeats <= 0) {
+      cumulativeSeconds.push(previousSeconds);
+      continue;
+    }
+
+    if (previous.curveType === 'constant') {
+      cumulativeSeconds.push(previousSeconds + deltaBeats * (60 / previous.tempo));
+      continue;
+    }
+
+    const factor1 = 60 / previous.tempo;
+    const acceleration = (60 / current.tempo - factor1) / deltaBeats;
+    cumulativeSeconds.push(
+      previousSeconds
+      + (factor1 * deltaBeats)
+      + (0.5 * acceleration * deltaBeats * deltaBeats),
+    );
+  }
+
+  let index = 0;
+  for (let i = points.length - 1; i >= 0; i -= 1) {
+    if (seconds >= cumulativeSeconds[i]!) {
+      index = i;
+      break;
+    }
+  }
+
+  const current = points[index]!;
+  const elapsed = seconds - cumulativeSeconds[index]!;
+  if (index >= points.length - 1 || current.curveType === 'constant') {
+    return current.beat + elapsed * (current.tempo / 60);
+  }
+
+  const next = points[index + 1]!;
+  const segmentBeats = next.beat - current.beat;
+  if (segmentBeats <= 0 || current.tempo === next.tempo) {
+    return current.beat + elapsed * (current.tempo / 60);
+  }
+
+  const factor1 = 60 / current.tempo;
+  const acceleration = (60 / next.tempo - factor1) / segmentBeats;
+  if (acceleration === 0) {
+    return current.beat + elapsed / factor1;
+  }
+
+  const discriminant = factor1 * factor1 + 2 * acceleration * elapsed;
+  return current.beat + (Math.sqrt(Math.max(0, discriminant)) - factor1) / acceleration;
+}
+
 export function beatToScreenX(beat: number, pixelsPerBeat: number): number {
   return beat * pixelsPerBeat;
 }

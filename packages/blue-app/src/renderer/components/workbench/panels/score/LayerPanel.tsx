@@ -1,7 +1,7 @@
 import { GROUP_SPACER } from "./types";
 import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from "./types";
 import type { SnapValueName } from "@blue/data";
-import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
+import type { MeterMapSnapshot, TempoMapSnapshot } from "../../../../../shared/project-editor";
 import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
@@ -29,6 +29,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
 }
@@ -46,6 +47,7 @@ export default function LayerPanel({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
   meterMap,
 }: Props) {
@@ -162,6 +164,7 @@ export default function LayerPanel({
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}
                   tempo={tempo}
+                  tempoMap={tempoMap}
                   smpteFrameRate={smpteFrameRate}
                   meterMap={meterMap}
                   onDoubleClickObject={(objectId) => {

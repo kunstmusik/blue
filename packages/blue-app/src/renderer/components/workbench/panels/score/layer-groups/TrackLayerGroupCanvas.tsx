@@ -13,6 +13,7 @@ import type {
   MeterMapSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreObjectEditorTargetSnapshot,
+  TempoMapSnapshot,
   TrackLayerGroupSnapshot,
   TrackItemTransfer,
 } from '../../../../../../shared/project-editor';
@@ -43,6 +44,7 @@ import {
   selectionIntersectsTimelineItem,
   timelinePointerDeltaBeats,
 } from './score-timeline-gesture-utils';
+import { secondsToBeats as tempoMapSecondsToBeats } from '../tempo-map-utils';
 import type { ScoreInsertionLocation } from '../../../../../../shared/unified-library';
 import { isCsoundAudioSourcePath } from '../../../../../../shared/file-manager';
 import {
@@ -67,6 +69,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
   onDoubleClickObject?: (objectId: string) => void;
@@ -183,6 +186,7 @@ export default function TrackLayerGroupCanvas({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
   meterMap,
   onDoubleClickObject,
@@ -351,7 +355,7 @@ export default function TrackLayerGroupCanvas({
         const layerHit = findTimelineLayerAtY(group.layers, last.y, DEFAULT_ROW_HEIGHT);
         if (!layerHit) return;
         const startBeats = clampBeat(snapBeat(last.x / pixelsPerBeat, 'floor'), totalBeats);
-        const durationBeats = tempo > 0 ? (durationSeconds * tempo / 60) : 4;
+        const durationBeats = tempoMapSecondsToBeats(durationSeconds, tempoMap);
         setAudioDropGhost({
           left: startBeats * pixelsPerBeat,
           top: layerHit.layerTop,
@@ -360,7 +364,7 @@ export default function TrackLayerGroupCanvas({
         });
       }
     });
-  }, [clampBeat, group.layers, pixelsPerBeat, snapBeat, tempo, totalBeats]);
+  }, [clampBeat, group.layers, pixelsPerBeat, snapBeat, tempoMap, totalBeats]);
 
   useEffect(() => {
     return () => {
@@ -1274,8 +1278,8 @@ export default function TrackLayerGroupCanvas({
             const source = getPathForFile ? readAudioDropSource(event.dataTransfer, getPathForFile) : null;
             lastAudioDropSourceRef.current = source ? { path: source.path, x, y } : null;
             const durationSeconds = source ? getAudioFileDuration(source.path) : null;
-            const durationBeats = durationSeconds !== null && durationSeconds > 0 && tempo > 0
-              ? (durationSeconds * tempo / 60)
+            const durationBeats = durationSeconds !== null && durationSeconds > 0
+              ? tempoMapSecondsToBeats(durationSeconds, tempoMap)
               : 4;
 
             const left = startBeats * pixelsPerBeat;

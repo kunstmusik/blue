@@ -4,7 +4,9 @@
  * The File Manager regular-file row is a copy-only drag source using a
  * versioned custom MIME payload. The Track audio-layer target reads either
  * that payload or a single external OS file/URI drop; both source classes
- * are revalidated by the main process before any project mutation.
+ * are revalidated by the main process before any project mutation. The
+ * in-flight internal payload is mirrored across renderer windows so popout
+ * targets can render a drag preview while Chromium protects drag data.
  */
 import {
   BLUE_FILE_MANAGER_DRAG_MIME,
@@ -20,7 +22,41 @@ export type AudioDropSource =
   | { kind: 'file-manager'; path: string; name: string }
   | { kind: 'external-os'; path: string };
 
+const FILE_MANAGER_DRAG_CHANNEL = 'blue-electron-file-manager-drag-v1';
+
+type FileManagerDragMessage =
+  | { type: 'start'; payload: FileManagerDragPayload }
+  | { type: 'clear' };
+
 let activeFileManagerDragPayload: FileManagerDragPayload | null = null;
+let fileManagerDragChannel: BroadcastChannel | null = null;
+
+function getFileManagerDragChannel(): BroadcastChannel | null {
+  if (fileManagerDragChannel) return fileManagerDragChannel;
+  if (typeof window === 'undefined' || typeof window.BroadcastChannel !== 'function') return null;
+
+  fileManagerDragChannel = new window.BroadcastChannel(FILE_MANAGER_DRAG_CHANNEL);
+  fileManagerDragChannel.addEventListener('message', (event: MessageEvent<FileManagerDragMessage>) => {
+    if (event.data.type === 'clear') {
+      activeFileManagerDragPayload = null;
+      return;
+    }
+    const payload = event.data.payload;
+    if (
+      payload.version === 1
+      && payload.kind === 'file'
+      && typeof payload.path === 'string'
+      && typeof payload.name === 'string'
+    ) {
+      activeFileManagerDragPayload = payload;
+    }
+  });
+  return fileManagerDragChannel;
+}
+
+function broadcastFileManagerDragMessage(message: FileManagerDragMessage): void {
+  getFileManagerDragChannel()?.postMessage(message);
+}
 
 export function getActiveFileManagerDragPayload(): FileManagerDragPayload | null {
   return activeFileManagerDragPayload;
@@ -28,9 +64,11 @@ export function getActiveFileManagerDragPayload(): FileManagerDragPayload | null
 
 export function clearActiveFileManagerDragPayload(): void {
   activeFileManagerDragPayload = null;
+  broadcastFileManagerDragMessage({ type: 'clear' });
 }
 
 if (typeof window !== 'undefined') {
+  getFileManagerDragChannel();
   window.addEventListener('dragend', () => {
     clearActiveFileManagerDragPayload();
   });
@@ -45,6 +83,7 @@ export function writeFileManagerDragPayload(
   payload: FileManagerDragPayload,
 ): void {
   activeFileManagerDragPayload = payload;
+  broadcastFileManagerDragMessage({ type: 'start', payload });
   dataTransfer.setData(BLUE_FILE_MANAGER_DRAG_MIME, serializeFileManagerDragPayload(payload));
   dataTransfer.setData('text/plain', payload.path);
   dataTransfer.effectAllowed = 'copy';
@@ -95,6 +134,7 @@ export function readAudioDropSource(
  */
 export function dataTransferMayCarryAudioDrop(dataTransfer: DataTransfer): boolean {
   if (dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return false;
+  if (dataTransfer.files.length > 1) return false;
   return (
     dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME)
     || dataTransfer.types.includes('Files')
@@ -108,6 +148,7 @@ export function dataTransferCanAcceptAudioDrop(
   dataTransfer: DataTransfer,
   getPathForFile: (file: File) => string,
 ): boolean {
+  if (dataTransfer.files.length > 1) return false;
   const source = readAudioDropSource(dataTransfer, getPathForFile);
   if (source) {
     return isCsoundAudioSourcePath(source.path);

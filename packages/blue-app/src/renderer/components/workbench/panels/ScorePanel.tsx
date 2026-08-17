@@ -11,7 +11,7 @@ import type {
 } from "./score/types";
 import { DEFAULT_ROW_HEIGHT } from "./score/types";
 import { computePatternExtentBeats } from "./score/layer-groups/patterns-timeline-utils";
-import type { TempoMapSnapshot, TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
+import type { TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
 import type { SnapValueName } from "@blue/data";
 import type { RulerConfigChanges } from "./score/RulerConfigDialog";
 import SplitPane from "./orchestra/SplitPane";
@@ -34,6 +34,7 @@ import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcess
 import TrackInstrumentControl from "./score/TrackInstrumentControl";
 import ColorPickerButton from "../../ColorPicker";
 import PatternLayerHeader from "./score/PatternLayerHeader";
+import { secondsToBeats as tempoMapSecondsToBeats } from "./score/tempo-map-utils";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -311,7 +312,7 @@ export default function ScorePanel() {
 
   const timePointerBeats = hasLivePlaybackClock && clockElapsed >= 0
     ? livePlayheadTransport.renderStartTime
-      + elapsedSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
+      + tempoMapSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
     : null;
 
   useEffect(() => {
@@ -669,6 +670,7 @@ export default function ScorePanel() {
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}
                   meterMap={transport.meterMap}
+                  tempoMap={transport.tempoMap}
                   tempo={
                     transport.tempoMap.points.length > 0
                       ? transport.tempoMap.points[0].tempo
@@ -1444,40 +1446,4 @@ function computeTotalBeats(score: ScoreDocumentSnapshot): number {
     }
   }
   return maxBeat + 16;
-}
-
-function elapsedSecondsToBeats(seconds: number, tempoMap: TempoMapSnapshot): number {
-  if (!tempoMap.enabled || tempoMap.points.length === 0) {
-    return seconds;
-  }
-  const points = [...tempoMap.points].sort((a, b) => a.beat - b.beat);
-  const t0 = points[0]!.tempo;
-  if (points.length === 1) {
-    return seconds * (t0 / 60);
-  }
-  const cumSec: number[] = [0];
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1]!;
-    const cur = points[i]!;
-    const deltaBeats = cur.beat - prev.beat;
-    if (deltaBeats <= 0) { cumSec.push(cumSec[i - 1]!); continue; }
-    const f1 = 60 / prev.tempo;
-    const accel = (60 / cur.tempo - f1) / deltaBeats;
-    cumSec.push(cumSec[i - 1]! + f1 * deltaBeats + 0.5 * accel * deltaBeats * deltaBeats);
-  }
-  let idx = 0;
-  for (let i = points.length - 1; i >= 0; i--) {
-    if (seconds >= cumSec[i]!) { idx = i; break; }
-  }
-  const p = points[idx]!;
-  const elapsed = seconds - cumSec[idx]!;
-  if (idx >= points.length - 1) {
-    return p.beat + elapsed * (p.tempo / 60);
-  }
-  const next = points[idx + 1]!;
-  const f1 = 60 / p.tempo;
-  const accel = (60 / next.tempo - f1) / (next.beat - p.beat);
-  if (accel === 0) return p.beat + elapsed / f1;
-  const disc = f1 * f1 + 2 * accel * elapsed;
-  return p.beat + (Math.sqrt(Math.max(0, disc)) - f1) / accel;
 }

@@ -140,6 +140,11 @@ describe('Track audio-layer file drop target', () => {
         snapEnabled={false}
         snapValue="BEAT"
         tempo={120}
+        tempoMap={{
+          enabled: false,
+          visible: false,
+          points: [{ beat: 0, tempo: 120, curveType: 'constant' }],
+        }}
         smpteFrameRate={30}
         meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
       />);
@@ -268,6 +273,20 @@ describe('Track audio-layer file drop target', () => {
       surface!.dispatchEvent(dragEvent('drop', dataTransfer, 50, 22));
     });
     expect(commitAudioFileDrop).not.toHaveBeenCalled();
+  });
+
+  it('does not advertise a copy effect for multiple external files during dragover', () => {
+    const dataTransfer = makeDataTransfer({
+      types: ['Files'],
+      files: [{ name: 'a.wav' } as unknown as File, { name: 'b.wav' } as unknown as File],
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+
+    expect(dataTransfer.dropEffect).toBe('none');
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).toBeNull();
   });
 
   it('rejects an unsupported extension before committing', async () => {
@@ -421,8 +440,9 @@ describe('Track audio-layer file drop target', () => {
     expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBe(2);
   });
 
-  it('updates ghost rectangle with cached audio file duration when available', () => {
-    // 3.0 seconds at tempo 120 (2 beats/sec) = 6 beats = 150px
+  it('updates ghost rectangle with cached audio file duration using the project tempo map', () => {
+    // The disabled map uses Blue's canonical 1 second = 1 beat conversion,
+    // even though the toolbar tempo value is 120.
     setCachedAudioFileDuration('/Users/me/a.wav', 3.0);
 
     const dataTransfer = makeDataTransfer({
@@ -439,7 +459,7 @@ describe('Track audio-layer file drop target', () => {
 
     const ghostRect = surface!.querySelector('[data-audio-drop-ghost-rect="true"]') as HTMLDivElement | null;
     expect(ghostRect).not.toBeNull();
-    expect(ghostRect?.style.width).toBe('150px');
+    expect(ghostRect?.style.width).toBe('75px');
   });
 
   it('clears ghost rectangle and guide line on dragleave', () => {
