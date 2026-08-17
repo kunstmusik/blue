@@ -44,6 +44,12 @@ import {
   timelinePointerDeltaBeats,
 } from './score-timeline-gesture-utils';
 import type { ScoreInsertionLocation } from '../../../../../../shared/unified-library';
+import { isCsoundAudioSourcePath } from '../../../../../../shared/file-manager';
+import {
+  dataTransferCanAcceptAudioDrop,
+  dataTransferMayCarryAudioDrop,
+  readAudioDropSource,
+} from '../../tools/file-manager/file-manager-drag-drop';
 import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
 import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
 
@@ -1137,6 +1143,34 @@ export default function TrackLayerGroupCanvas({
     };
   }, []);
 
+  // SPEC 076: accept a File Manager regular-file drag or one external OS
+  // audio file, mapped to the layer under the pointer and the snapped start
+  // beat. The typed main commit revalidates everything before mutating.
+  const commitAudioFileDrop = useCallback(async (event: React.DragEvent<HTMLDivElement>) => {
+    const blueAPI = window.blueAPI;
+    if (!blueAPI?.commitAudioFileDrop || !blueAPI.getPathForFile) return;
+    const source = readAudioDropSource(event.dataTransfer, (file) => blueAPI.getPathForFile(file));
+    if (!source) return;
+    if (!isCsoundAudioSourcePath(source.path)) {
+      toast.error(`Unsupported audio source: ${source.path}`);
+      return;
+    }
+    const { x, y } = toLocalXY(event.clientX, event.clientY);
+    const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
+    const layer = layerHit ? group.layers[layerHit.layerIndex] : undefined;
+    if (!layer) return;
+    const startBeats = clampBeat(snapBeat(x / pixelsPerBeat, 'floor'), totalBeats);
+    const result = await blueAPI.commitAudioFileDrop({
+      sourcePath: source.path,
+      sourceKind: source.kind,
+      track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
+      startBeats,
+    });
+    if (result.status === 'rejected') {
+      toast.error(result.message);
+    }
+  }, [clampBeat, group, pixelsPerBeat, projectRevision, projectSessionId, snapBeat, totalBeats]);
+
   const rows = useMemo(() => group.layers.map((layer) => ({
     layer,
     height: layer.height || DEFAULT_ROW_HEIGHT,
@@ -1172,6 +1206,21 @@ export default function TrackLayerGroupCanvas({
           }}
           onDoubleClick={handleDoubleClick}
           onKeyDown={handleKeyDown}
+          onDragOver={(event) => {
+            if (!dataTransferMayCarryAudioDrop(event.dataTransfer)) return;
+            const getPathForFile = window.blueAPI?.getPathForFile;
+            if (!getPathForFile || !dataTransferCanAcceptAudioDrop(event.dataTransfer, getPathForFile)) return;
+            const { y } = toLocalXY(event.clientX, event.clientY);
+            if (!findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+          }}
+          onDrop={(event) => {
+            if (!dataTransferMayCarryAudioDrop(event.dataTransfer)) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            void commitAudioFileDrop(event);
+          }}
           onContextMenu={(event) => {
             const { x, y } = toLocalXY(event.clientX, event.clientY);
             const hit = findTimelineHit(group.layers, x / pixelsPerBeat, y, pixelsPerBeat, DEFAULT_ROW_HEIGHT);

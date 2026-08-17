@@ -5,6 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SoundFontViewerPanel from '../components/workbench/panels/tools/SoundFontViewerPanel';
+import { emitPendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -104,6 +105,82 @@ describe('SoundFont Viewer panel', () => {
       dropTarget.dispatchEvent(invalidDropEvent);
     });
     expect(document.body.textContent).toContain('Choose or drop an .sf2 SoundFont file.');
+  });
+
+  it('rejects a File Manager regular-file payload through its existing .sf2 filter', async () => {
+    act(() => {
+      root!.render(<SoundFontViewerPanel />);
+    });
+
+    const dropTarget = container!.querySelector('[data-soundfont-drop-target]')!;
+    const fileManagerDrop = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(fileManagerDrop, 'dataTransfer', {
+      value: {
+        files: [],
+        getData: (type: string) => (type === 'text/plain'
+          ? '/Users/me/samples/a.wav'
+          : type === 'application/x-blue-file-manager-file'
+            ? JSON.stringify({ version: 1, kind: 'file', path: '/Users/me/samples/a.wav', name: 'a.wav' })
+            : ''),
+      },
+    });
+    await act(async () => {
+      dropTarget.dispatchEvent(fileManagerDrop);
+    });
+
+    // The embedded browser retains its own .sf2-scoped behavior; no File
+    // Manager drop operation is implied.
+    expect(inspectSoundFont).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Choose or drop an .sf2 SoundFont file.');
+  });
+
+  it('inspects a File Manager double-clicked .sf2 delivered on the pending-file bus', async () => {
+    act(() => {
+      root!.render(<SoundFontViewerPanel />);
+    });
+
+    emitPendingSoundFontFile('/SoundFonts/Choir.sf2');
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    expect(inspectSoundFont).toHaveBeenCalledWith('/SoundFonts/Choir.sf2');
+    expect(document.body.textContent).toContain('Choir.sf2');
+  });
+
+  it('holds a pending .sf2 emitted before mount and inspects it on mount', async () => {
+    root!.unmount();
+    container!.remove();
+
+    emitPendingSoundFontFile('/SoundFonts/Late.sf2');
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const lateRoot = createRoot(host);
+    act(() => {
+      lateRoot.render(<SoundFontViewerPanel />);
+    });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    expect(inspectSoundFont).toHaveBeenCalledWith('/SoundFonts/Late.sf2');
+
+    act(() => { lateRoot.unmount(); });
+    host.remove();
+  });
+
+  it('keeps the scoped Copy full path action working after File Manager integration', async () => {
+    act(() => {
+      root!.render(<SoundFontViewerPanel />);
+    });
+
+    const chooseButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes('Choose file'));
+    await act(async () => {
+      chooseButton?.click();
+    });
+
+    const copyButton = container!.querySelector<HTMLButtonElement>('[aria-label="Copy full path"]')!;
+    expect(copyButton).toBeTruthy();
+    await act(async () => {
+      copyButton.click();
+    });
+    expect(writeClipboardText).toHaveBeenCalledWith('/SoundFonts/Piano.sf2');
   });
 
   it('switches the splitter to left/right when the panel reaches the wide breakpoint', () => {

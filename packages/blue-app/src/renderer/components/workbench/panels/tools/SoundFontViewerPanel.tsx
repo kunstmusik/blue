@@ -6,6 +6,7 @@ import {
   Music2,
 } from 'lucide-react';
 import type { SoundFontInfo } from '../../../../shared/soundfont-viewer';
+import { subscribePendingSoundFontFile } from './soundfont-viewer-bus';
 
 const WIDE_PANEL_BREAKPOINT = 640;
 const MIN_SPLIT_RATIO = 0.25;
@@ -125,6 +126,14 @@ export default function SoundFontViewerPanel(): React.ReactElement {
       setIsInspecting(false);
     }
   }, []);
+
+  // SPEC 076: a File Manager double-clicked .sf2 file arrives on the
+  // pending-file bus (delivered here on mount when the panel was closed).
+  useEffect(() => {
+    return subscribePendingSoundFontFile((path) => {
+      void inspectFile(path);
+    });
+  }, [inspectFile]);
 
   const chooseFile = useCallback(async () => {
     setError(null);

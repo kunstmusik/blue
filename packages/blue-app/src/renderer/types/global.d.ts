@@ -447,6 +447,20 @@ declare global {
       getPathForFile: (file: File) => string;
       selectSoundFontFile: () => Promise<string | null>;
       inspectSoundFont: (filePath: string) => Promise<SoundFontInfo>;
+
+      // File Manager (SPEC 076)
+      getFileManagerRoots: () => Promise<
+        import('../../shared/file-manager').FileManagerRootSnapshot[]
+      >;
+      listFileManagerDirectory: (
+        request: { path: string },
+      ) => Promise<import('../../shared/file-manager').FileManagerDirectoryResult>;
+      validateFileManagerDirectory: (
+        request: { path: string },
+      ) => Promise<import('../../shared/file-manager').FileManagerValidateDirectoryResult>;
+      commitAudioFileDrop: (
+        request: import('../../shared/file-manager').CommitAudioFileDropRequest,
+      ) => Promise<import('../../shared/file-manager').CommitAudioFileDropResult>;
       getAppMetadata: () => Promise<AppMetadata>;
       closeAboutWindow: () => Promise<boolean>;
       generateCsdToScreen: () => Promise<void>;
@@ -564,6 +578,7 @@ declare global {
 
       // Audio File Player
       openAudioFile: () => Promise<string | null>;
+      authorizeAudioFile: (filePath: string) => Promise<boolean>;
       getAudioFileStat: (
         filePath: string,
       ) => Promise<{ size: number; mtime: number } | null>;

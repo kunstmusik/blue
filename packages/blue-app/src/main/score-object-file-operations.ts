@@ -225,6 +225,81 @@ export interface SelectScoreObjectAudioFileOptions {
   };
 }
 
+export interface MediaFolderCopySuccess {
+  status: 'ok';
+  /** Absolute path of the source to use: the new copy, or the reused target when identical content already exists. */
+  finalPath: string;
+  copiedToMedia: boolean;
+  /**
+   * Path of a media file created by this call. Callers that later reject the
+   * import must clean up only this file, never an existing or reused one.
+   */
+  createdMediaPath: string | null;
+}
+
+/**
+ * Collision-safe copy of an audio source into the configured project media
+ * folder (SPEC 076 preparation step, shared by AudioFile selection and the
+ * File Manager audio-layer drop commit). When the target already exists with
+ * identical content it is reused; otherwise a `-001`-style sibling name is
+ * allocated.
+ */
+export function copySourceToProjectMediaFolder(
+  options: {
+    sourcePath: string;
+    projectDirectory: string;
+    mediaFolder?: string;
+  },
+  deps: ScoreObjectFileOperationDeps = defaultOperationDeps,
+): MediaFolderCopySuccess | { status: 'error'; code: 'copy-failed'; message: string } {
+  const { sourcePath, projectDirectory } = options;
+  const probe = deps.probe ?? defaultOperationProbe;
+  const mediaFolder = (options.mediaFolder ?? '').trim();
+  const mediaDir = path.isAbsolute(mediaFolder)
+    ? mediaFolder
+    : path.resolve(projectDirectory, mediaFolder.length > 0 ? mediaFolder : 'media');
+
+  const ensureDir = deps.ensureDir ?? defaultOperationDeps.ensureDir!;
+  const copyFile = deps.copyFile ?? defaultOperationDeps.copyFile!;
+  const compareFiles = deps.compareFiles ?? defaultOperationDeps.compareFiles!;
+
+  try {
+    ensureDir(mediaDir);
+    const baseName = path.basename(sourcePath);
+    const targetPath = path.join(mediaDir, baseName);
+
+    if (probe.isFile(targetPath)) {
+      if (compareFiles(sourcePath, targetPath)) {
+        return { status: 'ok', finalPath: targetPath, copiedToMedia: true, createdMediaPath: null };
+      }
+      const ext = path.extname(baseName);
+      const nameWithoutExt = path.basename(baseName, ext);
+      for (let i = 1; i < 1000; i++) {
+        const indexStr = String(i).padStart(3, '0');
+        const candidate = path.join(mediaDir, `${nameWithoutExt}-${indexStr}${ext}`);
+        if (!probe.isFile(candidate)) {
+          copyFile(sourcePath, candidate);
+          return { status: 'ok', finalPath: candidate, copiedToMedia: true, createdMediaPath: candidate };
+        }
+      }
+      return {
+        status: 'error',
+        code: 'copy-failed',
+        message: `Could not allocate unique media filename for ${baseName}`,
+      };
+    }
+
+    copyFile(sourcePath, targetPath);
+    return { status: 'ok', finalPath: targetPath, copiedToMedia: true, createdMediaPath: targetPath };
+  } catch (err) {
+    return {
+      status: 'error',
+      code: 'copy-failed',
+      message: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 export async function selectScoreObjectAudioFile(
   options: SelectScoreObjectAudioFileOptions,
   deps: ScoreObjectFileOperationDeps = defaultOperationDeps,
@@ -259,60 +334,24 @@ export async function selectScoreObjectAudioFile(
   let copiedToMedia = false;
 
   if (projectProps?.copyToMediaFileOnImport && context.projectDirectory) {
-    const mediaFolder = (projectProps.mediaFolder ?? '').trim();
-    const mediaDir = path.isAbsolute(mediaFolder)
-      ? mediaFolder
-      : path.resolve(context.projectDirectory, mediaFolder.length > 0 ? mediaFolder : 'media');
-
-    const ensureDir = deps.ensureDir ?? defaultOperationDeps.ensureDir!;
-    const copyFile = deps.copyFile ?? defaultOperationDeps.copyFile!;
-    const compareFiles = deps.compareFiles ?? defaultOperationDeps.compareFiles!;
-
-    try {
-      ensureDir(mediaDir);
-      const baseName = path.basename(selectedPath);
-      const targetPath = path.join(mediaDir, baseName);
-
-      if (probe.isFile(targetPath)) {
-        if (compareFiles(selectedPath, targetPath)) {
-          finalPath = targetPath;
-        } else {
-          const ext = path.extname(baseName);
-          const nameWithoutExt = path.basename(baseName, ext);
-          let allocatedPath: string | null = null;
-          for (let i = 1; i < 1000; i++) {
-            const indexStr = String(i).padStart(3, '0');
-            const candidate = path.join(mediaDir, `${nameWithoutExt}-${indexStr}${ext}`);
-            if (!probe.isFile(candidate)) {
-              copyFile(selectedPath, candidate);
-              allocatedPath = candidate;
-              break;
-            }
-          }
-          if (allocatedPath) {
-            finalPath = allocatedPath;
-          } else {
-            return {
-              status: 'error',
-              code: 'copy-failed',
-              message: `Could not allocate unique media filename for ${baseName}`,
-              path: selectedPath,
-            };
-          }
-        }
-      } else {
-        copyFile(selectedPath, targetPath);
-        finalPath = targetPath;
-      }
-      copiedToMedia = true;
-    } catch (err) {
+    const copyResult = copySourceToProjectMediaFolder(
+      {
+        sourcePath: selectedPath,
+        projectDirectory: context.projectDirectory,
+        mediaFolder: projectProps.mediaFolder,
+      },
+      deps,
+    );
+    if (copyResult.status === 'error') {
       return {
         status: 'error',
-        code: 'copy-failed',
-        message: err instanceof Error ? err.message : String(err),
+        code: copyResult.code,
+        message: copyResult.message,
         path: selectedPath,
       };
     }
+    finalPath = copyResult.finalPath;
+    copiedToMedia = copyResult.copiedToMedia;
   }
 
   const storedPath = normalizeReplacementPath(finalPath, context.projectDirectory);

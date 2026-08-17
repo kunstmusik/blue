@@ -51,6 +51,19 @@ import {
 } from './window-state-manager';
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
+import {
+  commitAudioFileDrop,
+  getFileManagerRoots,
+  listFileManagerDirectory,
+  validateFileManagerDirectory,
+} from './file-manager-service';
+import {
+  COMMIT_AUDIO_FILE_DROP_CHANNEL,
+  FILE_MANAGER_GET_ROOTS_CHANNEL,
+  FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
+  FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL,
+  type CommitAudioFileDropRequest,
+} from '../shared/file-manager';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
 import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
 import {
@@ -3804,6 +3817,39 @@ ipcMain.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy
   return syncLegacyRendererSettings(legacy);
 });
 
+// ─── File Manager IPC Handlers (SPEC 076) ───
+
+ipcMain.handle(FILE_MANAGER_GET_ROOTS_CHANNEL, () => {
+  const settings = loadProgramSettings();
+  return getFileManagerRoots({
+    loadFavoritePaths: () => settings.appSpecific.fileManagerFavorites,
+    loadRootLabels: () => settings.appSpecific.fileManagerRootLabels,
+  });
+});
+
+ipcMain.handle(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+  return listFileManagerDirectory(request);
+});
+
+ipcMain.handle(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+  return validateFileManagerDirectory(request);
+});
+
+ipcMain.handle(COMMIT_AUDIO_FILE_DROP_CHANNEL, (_event, request: CommitAudioFileDropRequest) => {
+  return commitAudioFileDrop(request, {
+    getCurrentProject: () => (currentData
+      ? {
+          sessionId: currentProjectSessionId,
+          revision: currentProjectRevision,
+          projectDirectory: getCurrentProjectDirectory(),
+          copyToMediaFileOnImport: currentData.getProjectProperties().copyToMediaFileOnImport,
+          mediaFolder: currentData.getProjectProperties().mediaFolder,
+        }
+      : null),
+    commitProjectDocumentPatch: (patch) => commitProjectDocumentPatchBatch([patch]),
+  });
+});
+
 // ─── Window Layout IPC Handlers ───
 
 ipcMain.handle('window-layout:get', () => {
@@ -4005,7 +4051,9 @@ ipcMain.handle('get-project-document', () => {
   return getCurrentProjectDocument();
 });
 
-ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
+async function commitProjectDocumentPatchBatch(
+  patches: ProjectDocumentPatch[],
+): Promise<ProjectDocumentCommitReceipt> {
   if (!currentData) {
     throw new Error('No project loaded');
   }
@@ -4063,6 +4111,10 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
     changed: anyCanonicalMutation,
   };
   return receipt;
+}
+
+ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
+  return commitProjectDocumentPatchBatch(patches);
 });
 
 ipcMain.handle('read-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
@@ -4104,6 +4156,14 @@ ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
   if (result.canceled || result.filePaths.length === 0) return null;
   const filePath = result.filePaths[0];
   return filePath && authorizeAudioFilePath(filePath) ? filePath : null;
+});
+
+// SPEC 076: authorize a File Manager double-clicked file for the audio
+// stream protocol (same policy as dialog-selected and play-render outputs).
+ipcMain.handle('authorize-audio-file', (_event, filePath: string): boolean => {
+  return typeof filePath === 'string' && filePath.length > 0
+    ? authorizeAudioFilePath(filePath)
+    : false;
 });
 
 ipcMain.handle('get-audio-file-stat', async (

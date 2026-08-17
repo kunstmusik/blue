@@ -21,6 +21,7 @@ import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 import LibrariesPanel from './panels/LibrariesPanel';
 import SoundObjectLibraryPanel from './panels/SoundObjectLibraryPanel';
 import SoundFontViewerPanel from './panels/tools/SoundFontViewerPanel';
+import FileManagerPanel from './panels/tools/FileManagerPanel';
 import ReplConsolePanel from './panels/repl-console/ReplConsolePanel';
 import { LibraryItemEditorPanel } from '../libraries/LibraryItemEditorPanel';
 import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
@@ -81,6 +82,8 @@ export default function WorkbenchPanelContent({
       return <AudioPlayerPanel />;
     case 'SoundFontViewerTopComponent':
       return <SoundFontViewerPanel />;
+    case 'BlueFileManagerTopComponent':
+      return <FileManagerPanel />;
     case 'LibrariesTopComponent':
       return <LibrariesPanel />;
     case 'SoundObjectLibraryTopComponent':

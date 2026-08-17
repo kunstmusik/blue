@@ -292,6 +292,32 @@ describe('program-settings mergeWithDefaults', () => {
       appSpecific: { oscInputPort: 0 } as any,
     }, 'darwin').osc.preferredPort).toBe(8000);
   });
+
+  it('defaults File Manager favorites to an empty list and normalizes saved entries', () => {
+    expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerFavorites).toEqual([]);
+    expect(mergeWithDefaults({
+      appSpecific: {
+        fileManagerFavorites: ['/Users/a/music', '  ', 7, '/Users/a/music', '/Users/b'],
+      } as any,
+    }, 'darwin').appSpecific.fileManagerFavorites).toEqual(['/Users/a/music', '/Users/b']);
+  });
+
+  it('defaults File Manager root labels to an empty map and normalizes saved entries', () => {
+    expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerRootLabels).toEqual({});
+    expect(mergeWithDefaults({
+      appSpecific: {
+        fileManagerRootLabels: {
+          '/Users/a': 'Home Folder',
+          '/': '  ',
+          '/Volumes/media': 123,
+          '/Volumes/backup': 'Backup Drive',
+        },
+      } as any,
+    }, 'darwin').appSpecific.fileManagerRootLabels).toEqual({
+      '/Users/a': 'Home Folder',
+      '/Volumes/backup': 'Backup Drive',
+    });
+  });
 });
 
 describe('program-settings appSpecific.windowLayout', () => {

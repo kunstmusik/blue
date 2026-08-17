@@ -20,6 +20,10 @@ import {
   isSupportedAppZoomPercent,
   normalizeAppZoomPercent,
 } from './app-zoom';
+import {
+  normalizeFileManagerFavorites,
+  normalizeFileManagerRootLabels,
+} from './file-manager';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -143,6 +147,18 @@ export interface CurrentAppSettingsSnapshot {
    * Owned by the main-process app zoom controller, not the Settings renderer.
    */
   appZoomPercent: number;
+  /**
+   * File Manager favorite root paths (SPEC 076). Absolute host paths stored as
+   * application preferences; never `.blue` project data. Host validation of
+   * each path (existence, directory, dedupe against static roots) is owned by
+   * the main-process File Manager service.
+   */
+  fileManagerFavorites: string[];
+  /**
+   * File Manager custom root labels (SPEC 076). Keyed by root path identity;
+   * unrenamed roots omit their entry or map to empty string to keep defaults.
+   */
+  fileManagerRootLabels: Record<string, string>;
 }
 
 export interface ProgramSettingsSnapshot {
@@ -442,6 +458,8 @@ export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
     oscOutputPort: 0,
     windowLayout: createDefaultWindowLayoutSettings(),
     appZoomPercent: APP_ZOOM_DEFAULT_PERCENT,
+    fileManagerFavorites: [],
+    fileManagerRootLabels: {},
   };
 }
 
@@ -691,6 +709,8 @@ export function mergeWithDefaults(
     appZoomPercent: normalizeAppZoomPercent(savedAppSpecific.appZoomPercent),
     enginePath: normalizeEnginePathSetting(savedAppSpecific.enginePath),
     csoundLibraryPath: normalizeCsoundLibraryPath(savedAppSpecific.csoundLibraryPath),
+    fileManagerFavorites: normalizeFileManagerFavorites(savedAppSpecific.fileManagerFavorites),
+    fileManagerRootLabels: normalizeFileManagerRootLabels(savedAppSpecific.fileManagerRootLabels),
   };
 
   // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder

@@ -382,6 +382,19 @@ describe('workbench auxiliary layout helpers', () => {
     expect(isAuxiliaryPanelId('VirtualKeyboardTopComponent')).toBe(true);
   });
 
+  it('keeps the File Manager a single stable output auxiliary identity for layout restore (SPEC 076)', () => {
+    expect(isAuxiliaryPanelId('BlueFileManagerTopComponent')).toBe(true);
+    expect(getAuxiliaryGroupIdForPanel('BlueFileManagerTopComponent')).toBe('output-main');
+    // Restoring a saved layout must reuse one seed group instance rather than
+    // creating a duplicate File Manager registration.
+    const state = createDefaultAuxiliaryLayoutState();
+    seedGroupPanels(state, 'output-main', ['BlueFileManagerTopComponent'], []);
+    const hosting = state.groups.filter((group) =>
+      group.panelIds.includes('BlueFileManagerTopComponent'));
+    expect(hosting).toHaveLength(1);
+    expect(getGroupInstanceForPanel(state, 'BlueFileManagerTopComponent')).toBe(hosting[0]);
+  });
+
   it('derives minimized edge tabs and the active slideout panel from per-tool state', () => {
     const state = createDefaultAuxiliaryLayoutState();
     seedGroupPanels(state, 'properties-main', ALL_PROPERTY_PANEL_IDS, [

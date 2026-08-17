@@ -43,6 +43,17 @@ import {
   SOUND_FONT_INSPECT_CHANNEL,
   type SoundFontInfo,
 } from '../shared/soundfont-viewer';
+import {
+  COMMIT_AUDIO_FILE_DROP_CHANNEL,
+  FILE_MANAGER_GET_ROOTS_CHANNEL,
+  FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
+  FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL,
+  type CommitAudioFileDropRequest,
+  type CommitAudioFileDropResult,
+  type FileManagerDirectoryResult,
+  type FileManagerRootSnapshot,
+  type FileManagerValidateDirectoryResult,
+} from '../shared/file-manager';
 import type {
   MidiImportCommitResult,
   MidiImportSettings,
@@ -614,6 +625,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
   inspectSoundFont: (filePath: string) =>
     ipcRenderer.invoke(SOUND_FONT_INSPECT_CHANNEL, filePath) as Promise<SoundFontInfo>,
 
+  // File Manager (SPEC 076)
+  getFileManagerRoots: () =>
+    ipcRenderer.invoke(FILE_MANAGER_GET_ROOTS_CHANNEL) as Promise<FileManagerRootSnapshot[]>,
+  listFileManagerDirectory: (request: { path: string }) =>
+    ipcRenderer.invoke(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, request) as Promise<FileManagerDirectoryResult>,
+  validateFileManagerDirectory: (request: { path: string }) =>
+    ipcRenderer.invoke(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, request) as Promise<FileManagerValidateDirectoryResult>,
+  commitAudioFileDrop: (request: CommitAudioFileDropRequest) =>
+    ipcRenderer.invoke(COMMIT_AUDIO_FILE_DROP_CHANNEL, request) as Promise<CommitAudioFileDropResult>,
+
   // About
   getAppMetadata: () => ipcRenderer.invoke(APP_METADATA_GET_CHANNEL) as Promise<AppMetadata>,
   closeAboutWindow: () => ipcRenderer.invoke(ABOUT_WINDOW_CLOSE_CHANNEL) as Promise<boolean>,
@@ -837,6 +858,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   // Audio File Player
   openAudioFile: () =>
     ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
+  authorizeAudioFile: (filePath: string) =>
+    ipcRenderer.invoke('authorize-audio-file', filePath) as Promise<boolean>,
   getAudioFileStat: (filePath: string) =>
     ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{ size: number; mtime: number } | null>,
 
