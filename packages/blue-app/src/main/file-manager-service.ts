@@ -401,7 +401,7 @@ export async function commitAudioFileDrop(
   if (durationSeconds > 0) {
     clip.setNumChannels(channels);
     clip.setAudioDuration(durationSeconds);
-    clip.setSubjectiveDuration(TimeDuration.seconds(durationSeconds));
+    clip.setSubjectiveDuration(TimeDuration.fromSeconds(durationSeconds));
   } else {
     clip.setSubjectiveDuration(TimeDuration.beats(4));
   }
