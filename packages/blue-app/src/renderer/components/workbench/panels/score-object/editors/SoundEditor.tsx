@@ -453,7 +453,7 @@ function SoundAutomationPanel({
             <div className="border-b border-app-border px-4 py-3 text-lg font-semibold text-app-text-strong">
               Choose Parameters to Automate
             </div>
-            <div className="max-h-[50vh] overflow-auto">
+            <div className="max-h-[50vh] overflow-auto bg-black">
               <table className="w-full border-collapse text-sm text-app-text">
                 <thead>
                   <tr className="border-b border-app-border bg-app-menu">

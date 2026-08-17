@@ -190,7 +190,7 @@ export default function LibrariesPanel(): React.ReactElement {
       <div
         ref={scrollRef}
         data-library-scroll
-        className="min-h-0 flex-1 overflow-auto p-1"
+        className="min-h-0 flex-1 overflow-auto p-1 bg-black"
         onScroll={(event) => { scrollTopRef.current = event.currentTarget.scrollTop; }}
       >
           {state.error && <p role="alert" className="px-2 py-1 text-xs text-red-400">{state.error}</p>}

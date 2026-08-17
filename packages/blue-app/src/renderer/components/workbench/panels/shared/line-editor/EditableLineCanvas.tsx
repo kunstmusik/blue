@@ -904,7 +904,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
               <div className="border-b border-app-border px-4 py-2 text-sm font-semibold text-app-text-strong">
                 Line Point Editor
               </div>
-              <div className="overflow-auto" style={{ maxHeight: 230 }}>
+              <div className="overflow-auto bg-black" style={{ maxHeight: 230 }}>
                 <table className="w-full border-collapse text-body text-app-text">
                   <thead>
                     <tr className="border-b border-app-border bg-app-menu">

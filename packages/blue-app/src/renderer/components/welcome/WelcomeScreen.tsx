@@ -39,7 +39,7 @@ export default function WelcomeScreen(): React.ReactElement {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-app-text-muted">
             Recent Files
           </h2>
-          <ul className="space-y-1">
+          <ul className="space-y-1 rounded-md border border-app-border/40 bg-black p-2">
             {recentFiles.map((filePath) => (
               <li
                 key={filePath}

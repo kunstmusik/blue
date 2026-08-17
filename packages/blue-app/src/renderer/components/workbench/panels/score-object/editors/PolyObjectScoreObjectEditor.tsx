@@ -73,7 +73,7 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>
       )}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-black">
         <table className="w-full border-collapse text-body">
           <thead>
             <tr className="border-b border-blue-border">

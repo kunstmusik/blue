@@ -164,7 +164,7 @@ export default function FileManagerPanel(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex h-full flex-col bg-app-background">
+    <div className="flex h-full flex-col bg-app-bg">
       <div className="flex items-center justify-end border-b border-app-border/40 px-2 py-1">
         <button
           type="button"
@@ -176,7 +176,7 @@ export default function FileManagerPanel(): React.ReactElement {
           <RotateCw aria-hidden="true" className="h-3.5 w-3.5" />
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden p-1">
+      <div className="min-h-0 flex-1 overflow-hidden p-1 bg-black">
         {error !== null && (
           <p role="alert" className="px-1 py-2 text-ui text-red-400">
             Could not load roots: {error}

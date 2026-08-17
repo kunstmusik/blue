@@ -714,7 +714,7 @@ function TrackPropertiesModal({
                 + Add Column
               </button>
             </div>
-            <div className="flex flex-col gap-2 rounded border border-app-border/40 bg-app-overlay p-2">
+            <div className="flex flex-col gap-2 rounded border border-app-border/40 bg-black p-2">
               {columns.length === 0 && (
                 <div className="py-2 text-center text-ui text-app-text-muted">No data columns</div>
               )}
@@ -1434,7 +1434,7 @@ export default function TrackerScoreObjectEditor({
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto bg-app-overlay">
+      <div className="flex-1 overflow-auto bg-black">
         {editor.tracks.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-body text-app-text-muted">
             No tracks -- click "+ TRACK" to add one

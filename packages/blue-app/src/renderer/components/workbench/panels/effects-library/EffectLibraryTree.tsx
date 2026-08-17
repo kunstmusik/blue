@@ -348,7 +348,7 @@ export default function EffectLibraryTree({
   );
 
   return (
-    <div ref={containerRef} className="h-full w-full">
+    <div ref={containerRef} className="h-full w-full bg-black">
       <TreeActionsContext.Provider value={contextActions}>
         <Tree<LibraryTreeNode>
           ref={treeRef}

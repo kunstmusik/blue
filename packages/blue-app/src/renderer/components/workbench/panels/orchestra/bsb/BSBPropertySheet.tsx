@@ -494,7 +494,7 @@ function validateExactResolutionProperty(proposed: string): string | null {
 function PropertyRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
     <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-      <label className="truncate text-ui text-app-text-muted">{label}</label>
+      <label className="truncate text-ui text-app-text">{label}</label>
       {children}
     </div>
   );

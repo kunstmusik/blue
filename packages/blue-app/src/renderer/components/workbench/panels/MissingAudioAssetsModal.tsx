@@ -134,7 +134,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
           </h2>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
+        <div className="min-h-0 flex-1 overflow-auto bg-black px-4 py-3">
           <table className="w-full border-collapse text-left text-sm text-app-text">
             <thead>
               <tr className="border-b border-app-hover text-app-text-muted">

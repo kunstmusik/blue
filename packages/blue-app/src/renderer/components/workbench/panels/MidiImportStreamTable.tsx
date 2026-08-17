@@ -20,7 +20,7 @@ export default function MidiImportStreamTable({
   onUpdate,
 }: MidiImportStreamTableProps): React.ReactElement {
   return (
-    <div className="min-h-0 flex-1 overflow-auto rounded border border-app-border/30">
+    <div className="min-h-0 flex-1 overflow-auto rounded border border-app-border/30 bg-black">
       <table className="w-full border-collapse text-xs text-app-text">
         <thead className="sticky top-0 bg-app-surface text-left text-app-text-muted">
           <tr>

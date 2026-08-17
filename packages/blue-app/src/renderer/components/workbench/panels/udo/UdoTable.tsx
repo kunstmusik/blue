@@ -187,7 +187,7 @@ export default function UdoTable({
       </div>
 
       <div
-        className="flex min-h-0 flex-1 flex-col overflow-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-auto bg-black"
         data-library-autoscroll
         tabIndex={0}
         onKeyDown={(event) => {

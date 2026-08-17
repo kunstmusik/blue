@@ -418,7 +418,7 @@ export default function PatternObjectEditor({
     <div className="pattern-root flex flex-col h-full select-none">
       <div className="flex items-center gap-3 px-3 py-1 border-b border-blue-border shrink-0 bg-blue-bg/30">
         <div className="flex items-center gap-1.5">
-          <label className="text-ui text-blue-muted">Beats</label>
+          <label className="text-ui text-app-text">Beats</label>
           <input
             type="number"
             min={1}
@@ -429,7 +429,7 @@ export default function PatternObjectEditor({
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <label className="text-ui text-blue-muted">Sub</label>
+          <label className="text-ui text-app-text">Sub</label>
           <input
             type="number"
             min={1}
@@ -439,7 +439,7 @@ export default function PatternObjectEditor({
             onChange={handleSubDivisionsChange}
           />
         </div>
-        <span className="text-ui text-blue-muted">{numSteps} steps</span>
+        <span className="text-ui text-app-text">{numSteps} steps</span>
         <button
           type="button"
           className="ml-auto rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent disabled:opacity-50"

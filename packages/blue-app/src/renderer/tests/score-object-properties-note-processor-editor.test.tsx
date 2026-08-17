@@ -121,7 +121,7 @@ describe('ScoreObjectPropertiesForm note processor editor', () => {
     const { container, root } = renderForm(makeDocument('object-a', 'AddProcessor'));
 
     expect(container.innerHTML).toContain('w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 focus:border-blue-accent focus:outline-none');
-    expect(container.innerHTML).toContain('w-28 shrink-0 text-right text-body text-blue-muted');
+    expect(container.innerHTML).toContain('w-28 shrink-0 text-right text-body text-app-text');
     expect(container.innerHTML).not.toContain('px-3 py-2 text-sm');
     expect(container.innerHTML).not.toContain('w-28 shrink-0 text-right text-sm text-blue-muted');
 

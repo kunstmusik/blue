@@ -123,7 +123,7 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
           {ITEM_LIST_MODES.map((m, i) => <option key={i} value={i}>{m}</option>)}
         </select>
       </div>
-      <div className="max-h-24 overflow-auto border border-blue-border bg-blue-bg">
+      <div className="max-h-24 overflow-auto border border-blue-border bg-black">
         <table className="w-full text-ui">
           <tbody>
             {listItems.map((item, i) => (

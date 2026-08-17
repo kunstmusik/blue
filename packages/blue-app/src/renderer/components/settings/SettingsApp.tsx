@@ -251,7 +251,7 @@ export default function SettingsApp(): React.ReactElement {
 
   return (
     <div className="flex h-screen bg-app-bg text-app-text text-content">
-      <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-app-surface py-3">
+      <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-black py-3">
         {PROGRAM_SETTINGS_PANEL_ORDER.map((cat) => (
           <button
             key={cat.id}

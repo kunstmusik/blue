@@ -368,7 +368,7 @@ function SoundFontTable({
         </div>
         <span className="rounded-full bg-app-accent/10 px-1.5 py-0.5 text-[10px] tabular-nums text-app-accent">{count}</span>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto bg-black">
         <table className="w-full border-collapse text-left text-xs">
           <thead className="sticky top-0 bg-app-menu text-[10px] uppercase tracking-wider text-app-text-muted">
             <tr>

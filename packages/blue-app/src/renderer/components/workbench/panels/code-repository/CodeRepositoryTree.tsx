@@ -229,7 +229,7 @@ export default function CodeRepositoryTree({
     <div className="flex h-full flex-col">
       <p className="mb-2 text-tiny text-app-text-muted">Right-click an item for actions. Double-click to rename.</p>
       <TreeActionsContext.Provider value={actions}>
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto rounded bg-black p-1">
           <Tree<RepoTreeNode>
             data={treeData}
             openByDefault

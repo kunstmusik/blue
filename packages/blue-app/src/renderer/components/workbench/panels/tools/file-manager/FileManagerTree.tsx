@@ -171,7 +171,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
 
   const nodeContent = (
     <div
-      ref={dragHandle}
+      ref={node.data.kind === 'file' ? dragHandle : undefined}
       style={style}
       className={[
         'flex items-center gap-1.5 pr-2 text-content select-none cursor-pointer',
@@ -540,7 +540,7 @@ export default function FileManagerTree({
           onNavigateToSegment={handleNavigateToSegment}
         />
       )}
-      <div ref={containerRef} className="min-h-0 flex-1 w-full overflow-hidden">
+      <div ref={containerRef} className="min-h-0 flex-1 w-full overflow-hidden bg-black">
         <TreeActionsContext.Provider value={actions}>
           <Tree<FileTreeNode>
             key={focusedNodeId ?? 'roots'}

@@ -213,7 +213,7 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
       </FieldRow>
 
       <div className="mx-3 mt-2 rounded border border-blue-border/60 p-2">
-        <div className="mb-1 text-ui text-blue-muted">File Properties</div>
+        <div className="mb-1 text-ui text-app-text">File Properties</div>
 
         <FieldRow label="File Start">
           <input

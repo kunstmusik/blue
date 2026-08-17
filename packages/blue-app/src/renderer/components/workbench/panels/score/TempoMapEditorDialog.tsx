@@ -279,7 +279,7 @@ export default function TempoMapEditorDialog({
       >
         <h3 className="px-4 pb-2 pt-3 text-sm font-medium text-app-text">Edit Tempo Map</h3>
 
-        <div className="px-4 pb-2 max-h-[200px] overflow-y-auto">
+        <div className="px-4 pb-2 max-h-[200px] overflow-y-auto bg-black">
           <table className="w-full text-ui">
             <thead>
               <tr className="text-app-text-muted">

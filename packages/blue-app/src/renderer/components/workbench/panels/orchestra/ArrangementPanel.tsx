@@ -282,7 +282,7 @@ function ArrangementPanel({
       </div>
 
       <div
-        className="min-h-0 flex-1 overflow-auto"
+        className="min-h-0 flex-1 overflow-auto bg-black"
         data-library-autoscroll
         tabIndex={0}
         onKeyDown={(event) => {

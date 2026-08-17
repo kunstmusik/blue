@@ -181,7 +181,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
               </DropdownMenu.Root>
               <button className={btnClass} onClick={handleRemoveLayerGroup} disabled={!selectedGroup} title="Remove Layer Group">-</button>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto bg-black">
               {groups.map((g, i) => (
                 <GroupRow
                   key={g.groupId}
@@ -207,7 +207,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
               <button className={btnClass} onClick={handleAddLayer} disabled={!selectedGroup} title="Add Layer">+</button>
               <button className={btnClass} onClick={handleRemoveLayer} disabled={!selectedGroup || selectedLayerIndex < 0 || layers.length <= 1} title="Remove Layer">-</button>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto bg-black">
               <table className="w-full border-collapse text-ui">
                 <thead>
                   <tr className="border-b border-app-border/20 text-left text-app-text-muted">

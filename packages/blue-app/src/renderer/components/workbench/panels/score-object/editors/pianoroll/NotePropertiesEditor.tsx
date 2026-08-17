@@ -60,7 +60,7 @@ export default function NotePropertiesEditor({
 
   return (
     <div className="flex items-center gap-2 min-w-0 flex-1">
-      <label className="flex items-center gap-1 text-tiny text-blue-muted cursor-pointer shrink-0">
+      <label className="flex items-center gap-1 text-tiny text-app-text cursor-pointer shrink-0">
         <input
           type="checkbox"
           className="accent-blue-accent"

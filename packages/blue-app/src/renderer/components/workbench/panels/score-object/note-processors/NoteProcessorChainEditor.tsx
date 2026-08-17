@@ -273,7 +273,7 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
         )}
       </div>
 
-      <div className="border border-blue-border rounded max-h-36 overflow-y-auto">
+      <div className="border border-blue-border rounded max-h-36 overflow-y-auto bg-black">
         {local.processors.length === 0 ? (
           <div className="px-2 py-2 text-body text-blue-muted">No processors</div>
         ) : (

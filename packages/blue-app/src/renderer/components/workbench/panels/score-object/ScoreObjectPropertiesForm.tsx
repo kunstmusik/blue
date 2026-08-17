@@ -82,7 +82,7 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
           onChange((0xFF000000 | (r << 16) | (g << 8) | b) >>> 0);
         }}
       />
-      <span className="text-body text-blue-muted">{hex}</span>
+      <span className="text-body text-app-text">{hex}</span>
     </div>
   );
 }

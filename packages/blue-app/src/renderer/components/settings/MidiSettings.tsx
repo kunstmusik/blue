@@ -176,7 +176,7 @@ export default function MidiSettings(): React.ReactElement {
           has granted MIDI access to Blue.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-app-border">
+        <div className="overflow-hidden rounded-md border border-app-border bg-black">
           <table className="w-full text-body">
             <thead className="bg-app-surface text-app-text-muted">
               <tr>

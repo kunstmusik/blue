@@ -1183,6 +1183,7 @@
   height: 50px;
   overflow-y: auto;
   overflow-x: hidden;
+  background: #000000;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear)) var(--color-app-clear);
   outline: none;

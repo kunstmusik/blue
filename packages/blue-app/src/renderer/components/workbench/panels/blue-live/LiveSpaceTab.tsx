@@ -384,7 +384,7 @@ export default function LiveSpaceTab(): React.ReactElement {
           }}>
             Saved Sets
           </div>
-          <div style={{ flex: 1, overflow: 'auto' }}>
+          <div style={{ flex: 1, overflow: 'auto', background: '#000000' }}>
             {sets.length === 0 && (
               <div style={{ padding: '8px', fontSize: 'var(--text-ui)', color: 'var(--color-app-text-subtle)' }}>No saved sets</div>
             )}
@@ -400,7 +400,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                   cursor: 'pointer',
                   background: selectedSetIndex === i ? 'var(--color-app-accent-muted)' : undefined,
                   color: selectedSetIndex === i ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
-                  borderLeft: selectedSetIndex === i ? '2px solid var(--color-app-accent)' : '2px solid var(--color-app-surface)',
+                  borderLeft: selectedSetIndex === i ? '2px solid var(--color-app-accent)' : '2px solid transparent',
                 }}
                 title={set.name}
               >
@@ -454,7 +454,7 @@ export default function LiveSpaceTab(): React.ReactElement {
           </div>
 
           {/* Grid rows */}
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 4px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: '0 4px', background: '#000000' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
@@ -502,7 +502,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                                 ? 'var(--color-app-warning)'
                                 : isHoveredSet
                                   ? 'var(--color-app-outline-strong)'
-                                  : 'var(--color-app-bg)',
+                                  : '#000000',
                               color: cell?.enabled ? 'var(--color-app-canvas)' : 'var(--color-app-text-subtle)',
                               fontWeight: cell?.enabled ? 500 : 400,
                               overflow: 'hidden',

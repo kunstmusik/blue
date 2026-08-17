@@ -41,8 +41,8 @@ export default function MarkersPanel(): React.ReactElement {
   }
 
   return (
-    <div className="h-full flex flex-col bg-blue-bg text-blue-text">
-      <div className="flex-1 min-h-0 overflow-auto">
+    <div className="h-full flex flex-col bg-black text-blue-text">
+      <div className="flex-1 min-h-0 overflow-auto bg-black">
         {markers.length === 0 ? (
           <div className="p-4 text-blue-muted text-ui text-center">
             No markers defined.
