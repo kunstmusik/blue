@@ -23,6 +23,18 @@ Run commands from the repository root with `pnpm`.
 - Before handoff, run `pnpm test` and `pnpm lint` when the change spans packages or shared behavior.
 - Run `git diff --check` for whitespace errors.
 
+## Git worktrees
+
+When the agent is responsible for choosing a Git worktree path, create it under:
+
+`<repository-root>/.worktrees/<worktree-name>`
+
+For example:
+
+`git worktree add .worktrees/feature-name -b feature-name`
+
+Do not manually create worktrees beside the repository or in a tool-specific default directory. If the host application creates the worktree before the task starts, configure that application separately; this instruction does not override its managed-worktree location.
+
 ## Architecture boundaries
 
 - `@blue/data` production source must remain browser-safe and host-neutral: no Node.js
