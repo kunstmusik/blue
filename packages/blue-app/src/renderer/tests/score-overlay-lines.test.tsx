@@ -94,4 +94,15 @@ describe('ScoreOverlayLines', () => {
     act(() => root.unmount());
     container.remove();
   });
+
+  it('renders a vertical guide line when audioDropGuideBeat is provided', () => {
+    const { container, root } = renderOverlay({ audioDropGuideBeat: 8, pixelsPerBeat: 100 });
+
+    const dragLine = container.querySelector('[data-score-overlay-audio-drop-line]') as HTMLDivElement | null;
+    expect(dragLine).not.toBeNull();
+    expect(dragLine?.style.left).toBe('800px');
+
+    act(() => root.unmount());
+    container.remove();
+  });
 });

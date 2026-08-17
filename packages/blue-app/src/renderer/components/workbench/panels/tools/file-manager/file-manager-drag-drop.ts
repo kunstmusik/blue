@@ -20,11 +20,31 @@ export type AudioDropSource =
   | { kind: 'file-manager'; path: string; name: string }
   | { kind: 'external-os'; path: string };
 
+let activeFileManagerDragPayload: FileManagerDragPayload | null = null;
+
+export function getActiveFileManagerDragPayload(): FileManagerDragPayload | null {
+  return activeFileManagerDragPayload;
+}
+
+export function clearActiveFileManagerDragPayload(): void {
+  activeFileManagerDragPayload = null;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('dragend', () => {
+    clearActiveFileManagerDragPayload();
+  });
+  window.addEventListener('drop', () => {
+    clearActiveFileManagerDragPayload();
+  });
+}
+
 /** Writes the versioned copy-only payload for a regular-file row drag start. */
 export function writeFileManagerDragPayload(
   dataTransfer: DataTransfer,
   payload: FileManagerDragPayload,
 ): void {
+  activeFileManagerDragPayload = payload;
   dataTransfer.setData(BLUE_FILE_MANAGER_DRAG_MIME, serializeFileManagerDragPayload(payload));
   dataTransfer.setData('text/plain', payload.path);
   dataTransfer.effectAllowed = 'copy';
@@ -40,7 +60,9 @@ export function readAudioDropSource(
   dataTransfer: DataTransfer,
   getPathForFile: (file: File) => string,
 ): AudioDropSource | null {
-  const internal = parseFileManagerDragPayload(dataTransfer.getData(BLUE_FILE_MANAGER_DRAG_MIME));
+  const raw = dataTransfer.getData(BLUE_FILE_MANAGER_DRAG_MIME);
+  const internal = (raw ? parseFileManagerDragPayload(raw) : null)
+    ?? (dataTransfer.types.includes(BLUE_FILE_MANAGER_DRAG_MIME) ? activeFileManagerDragPayload : null);
   if (internal) {
     return { kind: 'file-manager', path: internal.path, name: internal.name };
   }
@@ -87,5 +109,10 @@ export function dataTransferCanAcceptAudioDrop(
   getPathForFile: (file: File) => string,
 ): boolean {
   const source = readAudioDropSource(dataTransfer, getPathForFile);
-  return source !== null && isCsoundAudioSourcePath(source.path);
+  if (source) {
+    return isCsoundAudioSourcePath(source.path);
+  }
+  // During dragover from external OS, dataTransfer.getData is inaccessible in Chromium,
+  // but 'Files' type indicates a file drop is in progress.
+  return dataTransfer.types.includes('Files') && !dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME);
 }

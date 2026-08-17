@@ -6,7 +6,7 @@ import {
   getFileManagerActionState,
   type FileManagerRootSnapshot,
 } from '../../../../../../shared/file-manager';
-import { writeFileManagerDragPayload } from './file-manager-drag-drop';
+import { clearActiveFileManagerDragPayload, writeFileManagerDragPayload } from './file-manager-drag-drop';
 import {
   attachDiagnostics,
   childToNode,
@@ -169,6 +169,10 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
     });
   };
 
+  const handleDragEnd = () => {
+    clearActiveFileManagerDragPayload();
+  };
+
   const nodeContent = (
     <div
       ref={node.data.kind === 'file' ? dragHandle : undefined}
@@ -181,6 +185,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
       onDoubleClick={handleDoubleClick}
       draggable={node.data.kind === 'file'}
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
       {node.data.canExpand ? (
         <ChevronRight

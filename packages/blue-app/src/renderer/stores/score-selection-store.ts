@@ -39,6 +39,7 @@ interface ScoreSelectionState {
   liveSharedProperties: Readonly<Record<string, { startBeats?: number; durationBeats?: number }>>;
   clipboard: ScoreObjectClipboardEntry[];
   patternClipboard: PatternClipboardShape | null;
+  audioDropGuideBeat: number | null;
   select: (
     objectId: string,
     additive: boolean,
@@ -56,6 +57,7 @@ interface ScoreSelectionState {
   clearClipboard: () => void;
   copyPatternShape: (shape: PatternClipboardShape) => void;
   clearPatternClipboard: () => void;
+  setAudioDropGuideBeat: (beat: number | null) => void;
 }
 
 /** Only timeline-owned selections identify objects in the canonical Score. */
@@ -90,6 +92,7 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
   liveSharedProperties: {},
   clipboard: [],
   patternClipboard: null,
+  audioDropGuideBeat: null,
 
   select(objectId, additive, editorTarget) {
     set((state) => {
@@ -286,6 +289,10 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
 
   clearPatternClipboard() {
     set({ patternClipboard: null });
+  },
+
+  setAudioDropGuideBeat(beat) {
+    set({ audioDropGuideBeat: beat });
   },
 
 }));

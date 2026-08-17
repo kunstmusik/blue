@@ -16,6 +16,10 @@ import {
   BLUE_FILE_MANAGER_DRAG_MIME,
   serializeFileManagerDragPayload,
 } from '../../shared/file-manager';
+import {
+  clearAudioFileDurationCache,
+  setCachedAudioFileDuration,
+} from '../components/workbench/panels/score/layer-groups/audio-file-duration-cache';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -86,11 +90,18 @@ function makeDataTransfer(options: {
   };
 }
 
-function dragEvent(type: 'dragover' | 'drop', dataTransfer: DataTransferStub, x: number, y: number) {
+function dragEvent(
+  type: 'dragover' | 'drop' | 'dragleave' | 'dragenter',
+  dataTransfer?: DataTransferStub,
+  x: number = 0,
+  y: number = 0,
+  relatedTarget: EventTarget | null = null,
+) {
   const event = new Event(type, { bubbles: true, cancelable: true });
-  Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+  if (dataTransfer) Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
   Object.defineProperty(event, 'clientX', { value: x });
   Object.defineProperty(event, 'clientY', { value: y });
+  if (relatedTarget) Object.defineProperty(event, 'relatedTarget', { value: relatedTarget });
   return event;
 }
 
@@ -173,6 +184,8 @@ describe('Track audio-layer file drop target', () => {
     useScoreSelectionStore.getState().clearClipboard();
     useMidiRoutingStore.getState().clearFocusForProjectSession();
     useWorkbenchStore.setState({ openPanel: originalOpenPanel } as Partial<ReturnType<typeof useWorkbenchStore.getState>>);
+    useScoreSelectionStore.getState().setAudioDropGuideBeat(null);
+    clearAudioFileDurationCache();
     window.blueAPI = originalBlueAPI;
     vi.clearAllMocks();
   });
@@ -377,5 +390,125 @@ describe('Track audio-layer file drop target', () => {
       surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 500));
     });
     expect(dataTransfer.dropEffect).toBe('none');
+  });
+
+  it('displays a ghost rectangle and vertical guide line while dragging over a track layer', () => {
+    const dataTransfer = makeDataTransfer({
+      payloadByType: {
+        [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
+          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+        }),
+      },
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+
+    const guideLine = surface!.querySelector('[data-audio-drop-guide-line="true"]') as HTMLDivElement | null;
+    const ghostRect = surface!.querySelector('[data-audio-drop-ghost-rect="true"]') as HTMLDivElement | null;
+
+    expect(guideLine).not.toBeNull();
+    expect(guideLine?.style.left).toBe('50px');
+
+    expect(ghostRect).not.toBeNull();
+    expect(ghostRect?.style.left).toBe('50px');
+    expect(ghostRect?.style.top).toBe('0px');
+    expect(ghostRect?.style.height).toBe('44px');
+    // Default duration: 4 beats * 25 px/beat = 100px
+    expect(ghostRect?.style.width).toBe('100px');
+
+    expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBe(2);
+  });
+
+  it('updates ghost rectangle with cached audio file duration when available', () => {
+    // 3.0 seconds at tempo 120 (2 beats/sec) = 6 beats = 150px
+    setCachedAudioFileDuration('/Users/me/a.wav', 3.0);
+
+    const dataTransfer = makeDataTransfer({
+      payloadByType: {
+        [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
+          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+        }),
+      },
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+
+    const ghostRect = surface!.querySelector('[data-audio-drop-ghost-rect="true"]') as HTMLDivElement | null;
+    expect(ghostRect).not.toBeNull();
+    expect(ghostRect?.style.width).toBe('150px');
+  });
+
+  it('clears ghost rectangle and guide line on dragleave', () => {
+    const dataTransfer = makeDataTransfer({
+      payloadByType: {
+        [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
+          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+        }),
+      },
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).not.toBeNull();
+    expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBe(2);
+
+    const outsideNode = document.createElement('div');
+    document.body.appendChild(outsideNode);
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragleave', dataTransfer, 0, 0, outsideNode));
+    });
+
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).toBeNull();
+    expect(surface!.querySelector('[data-audio-drop-guide-line="true"]')).toBeNull();
+    expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBeNull();
+
+    outsideNode.remove();
+  });
+
+  it('clears ghost rectangle and guide line on drop', async () => {
+    const dataTransfer = makeDataTransfer({
+      payloadByType: {
+        [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
+          version: 1, kind: 'file', path: '/Users/me/a.wav', name: 'a.wav',
+        }),
+      },
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).not.toBeNull();
+
+    await act(async () => {
+      surface!.dispatchEvent(dragEvent('drop', dataTransfer, 50, 22));
+    });
+
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).toBeNull();
+    expect(surface!.querySelector('[data-audio-drop-guide-line="true"]')).toBeNull();
+    expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBeNull();
+  });
+
+  it('does not display ghost rectangle when dragging unsupported or non-audio payload', () => {
+    const dataTransfer = makeDataTransfer({
+      payloadByType: {
+        [BLUE_FILE_MANAGER_DRAG_MIME]: serializeFileManagerDragPayload({
+          version: 1, kind: 'file', path: '/Users/me/readme.txt', name: 'readme.txt',
+        }),
+      },
+    });
+
+    act(() => {
+      surface!.dispatchEvent(dragEvent('dragover', dataTransfer, 50, 22));
+    });
+
+    expect(surface!.querySelector('[data-audio-drop-ghost-rect="true"]')).toBeNull();
+    expect(surface!.querySelector('[data-audio-drop-guide-line="true"]')).toBeNull();
+    expect(useScoreSelectionStore.getState().audioDropGuideBeat).toBeNull();
   });
 });

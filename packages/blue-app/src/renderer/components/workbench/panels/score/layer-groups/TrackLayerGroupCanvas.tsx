@@ -50,6 +50,7 @@ import {
   dataTransferMayCarryAudioDrop,
   readAudioDropSource,
 } from '../../tools/file-manager/file-manager-drag-drop';
+import { getAudioFileDuration, subscribeAudioFileDuration } from './audio-file-duration-cache';
 import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
 import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
 
@@ -201,6 +202,13 @@ export default function TrackLayerGroupCanvas({
   const [fadeContextMenu, setFadeContextMenu] = useState<FadeContextMenuState | null>(null);
   const [hoveredAudioObjectId, setHoveredAudioObjectId] = useState<string | null>(null);
   const [cursorOverride, setCursorOverride] = useState<string | null>(null);
+  const [audioDropGhost, setAudioDropGhost] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const lastAudioDropSourceRef = useRef<{ path: string; x: number; y: number } | null>(null);
   const pendingMovePatchRef = useRef<Array<{
     target: ScoreObjectEditorTargetSnapshot;
     targetStartBeats: number;
@@ -218,6 +226,7 @@ export default function TrackLayerGroupCanvas({
   const setSelection = useScoreSelectionStore((state) => state.setSelection);
   const addToSelection = useScoreSelectionStore((state) => state.addToSelection);
   const copySelected = useScoreSelectionStore((state) => state.copySelected);
+  const setAudioDropGuideBeat = useScoreSelectionStore((state) => state.setAudioDropGuideBeat);
   const captureScoreSoundObject = useLibraryStore((state) => state.captureScoreSoundObject);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
@@ -332,6 +341,32 @@ export default function TrackLayerGroupCanvas({
     });
     settled.forEach(clearAudioClipEditorPreview);
   }, [audioPreviewByObjectId, clearAudioClipEditorPreview, group.layers]);
+
+  useEffect(() => {
+    return subscribeAudioFileDuration(() => {
+      const last = lastAudioDropSourceRef.current;
+      if (!last) return;
+      const durationSeconds = getAudioFileDuration(last.path);
+      if (durationSeconds !== null && durationSeconds > 0) {
+        const layerHit = findTimelineLayerAtY(group.layers, last.y, DEFAULT_ROW_HEIGHT);
+        if (!layerHit) return;
+        const startBeats = clampBeat(snapBeat(last.x / pixelsPerBeat, 'floor'), totalBeats);
+        const durationBeats = tempo > 0 ? (durationSeconds * tempo / 60) : 4;
+        setAudioDropGhost({
+          left: startBeats * pixelsPerBeat,
+          top: layerHit.layerTop,
+          width: Math.max(4, durationBeats * pixelsPerBeat),
+          height: layerHit.layer.height || DEFAULT_ROW_HEIGHT,
+        });
+      }
+    });
+  }, [clampBeat, group.layers, pixelsPerBeat, snapBeat, tempo, totalBeats]);
+
+  useEffect(() => {
+    return () => {
+      setAudioDropGuideBeat(null);
+    };
+  }, [setAudioDropGuideBeat]);
 
   const getSelectedEntries = useCallback(() => (
     collectClipboardEntriesForSelection(allLayerGroups, selectedObjectIds)
@@ -1206,16 +1241,66 @@ export default function TrackLayerGroupCanvas({
           }}
           onDoubleClick={handleDoubleClick}
           onKeyDown={handleKeyDown}
-          onDragOver={(event) => {
+          onDragEnter={(event) => {
             if (!dataTransferMayCarryAudioDrop(event.dataTransfer)) return;
+            event.preventDefault();
+          }}
+          onDragOver={(event) => {
+            if (!dataTransferMayCarryAudioDrop(event.dataTransfer)) {
+              setAudioDropGhost(null);
+              setAudioDropGuideBeat(null);
+              lastAudioDropSourceRef.current = null;
+              return;
+            }
             const getPathForFile = window.blueAPI?.getPathForFile;
-            if (!getPathForFile || !dataTransferCanAcceptAudioDrop(event.dataTransfer, getPathForFile)) return;
-            const { y } = toLocalXY(event.clientX, event.clientY);
-            if (!findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)) return;
+            if (getPathForFile && !dataTransferCanAcceptAudioDrop(event.dataTransfer, getPathForFile)) {
+              setAudioDropGhost(null);
+              setAudioDropGuideBeat(null);
+              lastAudioDropSourceRef.current = null;
+              return;
+            }
+            const { x, y } = toLocalXY(event.clientX, event.clientY);
+            const layerHit = findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT);
+            if (!layerHit) {
+              setAudioDropGhost(null);
+              setAudioDropGuideBeat(null);
+              lastAudioDropSourceRef.current = null;
+              return;
+            }
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
+
+            const startBeats = clampBeat(snapBeat(x / pixelsPerBeat, 'floor'), totalBeats);
+            const source = getPathForFile ? readAudioDropSource(event.dataTransfer, getPathForFile) : null;
+            lastAudioDropSourceRef.current = source ? { path: source.path, x, y } : null;
+            const durationSeconds = source ? getAudioFileDuration(source.path) : null;
+            const durationBeats = durationSeconds !== null && durationSeconds > 0 && tempo > 0
+              ? (durationSeconds * tempo / 60)
+              : 4;
+
+            const left = startBeats * pixelsPerBeat;
+            const width = Math.max(4, durationBeats * pixelsPerBeat);
+            const layerHeight = layerHit.layer.height || DEFAULT_ROW_HEIGHT;
+
+            setAudioDropGhost({
+              left,
+              top: layerHit.layerTop,
+              width,
+              height: layerHeight,
+            });
+            setAudioDropGuideBeat(startBeats);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setAudioDropGhost(null);
+              setAudioDropGuideBeat(null);
+              lastAudioDropSourceRef.current = null;
+            }
           }}
           onDrop={(event) => {
+            setAudioDropGhost(null);
+            setAudioDropGuideBeat(null);
+            lastAudioDropSourceRef.current = null;
             if (!dataTransferMayCarryAudioDrop(event.dataTransfer)) return;
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
@@ -1354,6 +1439,25 @@ export default function TrackLayerGroupCanvas({
                 border: '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
               }}
             />
+          )}
+          {audioDropGhost && (
+            <>
+              <div
+                data-audio-drop-guide-line="true"
+                className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-blue-400/90 shadow-[0_0_2px_rgba(0,0,0,0.5)]"
+                style={{ left: audioDropGhost.left }}
+              />
+              <div
+                data-audio-drop-ghost-rect="true"
+                className="pointer-events-none absolute z-20 rounded-xs border border-white/40 bg-neutral-500/30"
+                style={{
+                  left: audioDropGhost.left,
+                  top: audioDropGhost.top,
+                  width: audioDropGhost.width,
+                  height: audioDropGhost.height,
+                }}
+              />
+            </>
           )}
         </div>
       </ContextMenu.Trigger>
