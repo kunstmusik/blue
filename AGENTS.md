@@ -1,140 +1,63 @@
-# blue-electron Development Guidelines
+# blue-electron Agent Guidance
 
-Auto-generated from all feature plans. Last updated: 2026-08-09
+This file contains stable, cross-cutting rules for coding agents. Feature-specific
+requirements belong in `specs/<feature>/`; historical changes belong in git history.
+The governing rules are in `.specify/memory/constitution.md`.
 
-## Active Technologies
-- React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/store code + `dockview` 5.2.0 / `dockview-core` 5.2.0, Zustand 5.x, Vitest 4.x, existing workbench shell in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench` (014-window-system-parity)
-- Renderer-side localStorage layout envelope for the parity slice, combining dockview JSON with supplemental minimized-edge metadata (014-window-system-parity)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/store code + `dockview` 5.2.0 / `dockview-core` 5.2.0, Zustand 5.x, Vitest 4.x, current workbench shell in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/workbench` (015-left-edge-parity)
-- Renderer-side localStorage layout envelope for the parity slice, migrated from version 4 to version 5 instance-based auxiliary state (015-left-edge-parity)
-- Markdown planning documents derived from TypeScript 5.8.x renderer code and Java NetBeans sources + Java Blue `TopComponent` registrations and window-manager metadata, current React 19 / Electron 35 / Dockview 5.2.0 renderer implementation, candidate UI approaches under study: Radix primitives, shadcn/ui-style wrappers, and Electron-native menus (016-component-system-research)
-- Repository documentation only (`specs/016-component-system-research/`) (016-component-system-research)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, React 19, Zustand 5.x, `dockview` 5.2.0, Vitest 4.x, existing Electron preload/main IPC bridge (017-global-project-editors)
-- Main-process in-memory `currentData` plus `.blue` XML serialization through `@blue/data`; renderer mirrors an editable snapshot for the active projec (017-global-project-editors)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, React 19, Zustand 5.x, `dockview` 5.2.0, Vitest 4.x, CodeMirror 6 via `codemirror`, `@codemirror/autocomplete`, `@codemirror/state`, `@codemirror/view`, plus `@kunstmusik/codemirror-lang-csound`; Monaco and `tree-sitter-csound` are deferred fallback/research inputs (018-csound-editor-tooling)
-- Main-process in-memory current project document plus existing `.blue` XML serialization through `@blue/data`; renderer edits flow through the existing project snapshot/store bridge (018-csound-editor-tooling)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages + CodeMirror 6 (`codemirror`, `@codemirror/view`, `@codemirror/state`, `@codemirror/autocomplete`), `@kunstmusik/codemirror-lang-csound`, Radix Context Menu already present in `@blue/app`, existing `@blue/data` project model (019-csound-editor-parity)
-- Existing project snapshot and `.blue` XML serialization for Global Orchestra; optional code repository data remains read-only or deferred unless the Java-backed format can be safely ported in this slice (019-csound-editor-parity)
-- 019-csound-editor-parity now includes a reusable `SelectedCodeEditor` surface with renderer-owned context menus, Java Blue-style completion sources, and deferred project-level UDO support
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + Electron `Menu`/`BrowserWindow`, Zustand 5.x stores, `@blue/data` time/tempo utilities, `dockview` 5.2.0 workbench state, `lucide-react` transport icons (020-main-toolbar-parity)
-- Existing renderer Zustand stores plus project snapshot IPC; optional lightweight renderer preference persistence for toolbar-only toggles via existing local storage patterns (020-main-toolbar-parity)
-- Existing renderer Zustand stores plus project snapshot IPC; fixed-per-performance playback clock metadata cached in the renderer playback store; optional lightweight renderer preference persistence for toolbar-only toggles via existing local storage patterns (020-main-toolbar-parity)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `@blue/data`, Zustand 5.x project store, Dockview 5.2.0 workbench panel registry, CodeMirror 6 editor surface from specs 018/019, Radix Context Menu, proposed `@tanstack/react-table` for arrangement table behavior, existing `@tanstack/react-virtual` if large table virtualization becomes necessary (021-orchestra-editor)
-- Main-process in-memory `BlueData` remains canonical; renderer consumes serializable project/orchestra snapshots and sends explicit patch intents through the existing project document IPC bridge; `.blue` XML remains the persistence forma (021-orchestra-editor)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `@blue/data` `Tables`/`OpcodeList`/`OpcodeDefinition`/`BlueData.toCSD()`, Zustand 5.x project store, Dockview 5.2.0 panel registry, existing CodeMirror 6 `SelectedCodeEditor`, existing Java Blue-style Csound context menu/completion helpers, Radix Context Menu for renderer menus, Electron `Menu`/`dialog`/`BrowserWindow` for native menu and save/modal flows, Spec 021 BSB UDO components as reuse source (026-tables-udo-csd)
-- Main-process in-memory `BlueData` remains canonical; renderer consumes serializable project snapshots and sends explicit project document patches; `.blue` XML remains persistence; generated `.csd` files are user-selected disk outputs only (026-tables-udo-csd)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `@blue/data` `BlueData`/`LiveData`/`LiveObject*`/CSD generation, `@blue/engine-client` ZMQ protocol, existing `EngineBridge`, Electron `Menu`/`BrowserWindow`/IPC, Zustand 5.x project/playback/workbench stores, Dockview 5.2.0 panel registry, CodeMirror 6 `SelectedCodeEditor`, existing Csound context menu/completion helpers, Radix Context Menu for renderer menus, existing Output window IPC (027-blue-live-part1)
-- Main-process in-memory `BlueData` remains canonical; renderer consumes serializable LiveData snapshots and sends explicit project document patches; `.blue` XML remains persistence; Settings window categories are placeholders in this part and do not require durable settings storage (027-blue-live-part1)
-- TypeScript 5.8.x, strict mode + `@rgrove/parse-xml`, existing `Element` wrapper utilities, Vitest, pure `@blue/data` classes (028-blue-data-xml-preservation)
-- In-memory project model plus `.blue` XML round-trip through `BlueData.loadFromString()` and `saveToString()` (028-blue-data-xml-preservation)
-- TypeScript 5.8.x, strict mode + existing `@blue/data` score, sound object, library, and XML utility classes; Vitest; pure XML parsing helpers (029-blue-data-score-library-parity)
-- In-memory score graph and `.blue` XML round-trip through `@blue/data` (029-blue-data-score-library-parity)
-- TypeScript 5.8.x, strict mode + existing `@blue/data` note, score utility, and note processor classes; Vitest; pure XML parsing helpers (030-blue-data-note-processing-parity)
-- In-memory note lists and `.blue` XML round-trip through `@blue/data` (030-blue-data-note-processing-parity)
-- TypeScript 5.8.x, strict mode + existing `@blue/data` render classes, arrangement models, mixer models, Vitest, pure XML/model helpers (031-blue-data-csd-render-parity)
-- In-memory project model and generated CSD text from `@blue/data` (031-blue-data-csd-render-parity)
-- TypeScript 5.8.x, strict mode + existing `@blue/data` instrument, mixer, automation, and time classes; Vitest; pure XML/model helpers (032-blue-data-runtime-model-parity)
-- In-memory project model, generated orchestra fragments, and `.blue` XML round-trip through `@blue/data` (032-blue-data-runtime-model-parity)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + existing `@blue/data` score and time classes (`Score`, `PolyObject`, `AudioLayerGroup`, `PatternsLayerGroup`, `TimeContext`, `TimeState`, `MeterMap`, `TempoMap`, `MarkersList`), shared `ProjectEditorSnapshot`/`ProjectDocumentPatch`, Zustand 5.x renderer stores, Dockview 5.2.0 workbench shell, existing workbench panel routing, Vitest 4.x (036-score-editor-foundation)
-- main-process in-memory `BlueData` remains canonical; renderer consumes serializable score shell snapshots and dispatches explicit `score` patches for canonical time-state updates; nested score-path session state remains renderer-local and is not persisted into the project documen (036-score-editor-foundation)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + existing `@blue/data` score and sound-object classes (`Score`, `PolyObject`, `AudioClip`, `SoundObjectLibrary`, `NoteProcessorChain`, `TimePosition`, `TimeDuration`, `TimeBehavior`), shared `ProjectEditorSnapshot` and `ProjectDocumentPatch`, Zustand 5.x renderer stores, Dockview 5.2.0 auxiliary workbench layout, existing CodeMirror `SelectedCodeEditor`, Vitest 4.x (037-score-object-editor-parity)
-- main-process in-memory `BlueData` remains canonical; renderer reads score object editor documents on demand for the active selection and writes canonical mutations through shared score patches (037-score-object-editor-parity)
-- TypeScript 5.8.x, strict mode + `@blue/data` BSB models, automation `Parameter`/`ParameterList`, `Sound`, `CopyBuffer`, pure XML helpers, Vitest 4.x (043-uuid-deepcopy-safety)
-- In-memory `@blue/data` model plus `.blue` XML round-trip through `BlueData.loadFromString()` and `saveToString()`; `Sound` still stores embedded BSB XML text at this slice boundary (043-uuid-deepcopy-safety)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` for project mutation helpers + Electron `app`/`BrowserWindow`/IPC/settings window, existing `settings-window.ts`, preload `blueAPI`, Zustand 5.x where still useful for renderer-local app preferences, `@blue/data` `BlueData`/`ProjectProperties`/`TimeState`/`Mixer`/`UDOStyle`/`TimeBase`/`SnapValueName`, existing playback store and `EngineBridge`, existing CSD export/render-command helpers, Vitest 4.x (044-program-settings-parity)
-- Main-process JSON settings file under the Electron user data area for Java-compatible program settings; existing renderer-persisted `blue-settings` values are migrated or retained as app-specific preferences; `.blue` project XML is only affected when Java Blue seeds new project-owned values from program settings (044-program-settings-parity)
-- TypeScript 5.8.x, React 19.x, Electron 35.x + `@blue/data`, React 19 renderer components, Zustand 5.x project store, Dockview 5.2.0 score workbench shell, Vitest 4.x, existing Electron main/preload IPC only if waveform file access requires app-side file reads (047-score-object-bar-renderers)
-- Existing in-memory `BlueData` project model and `.blue` XML; waveform cache data is derived app state only and is not persisted (047-score-object-bar-renderers)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` note processors and score model, Electron main/preload IPC bridge, Zustand 5.x project store, React renderer components, Radix Context Menu, Vitest 4.x (048-note-processor-parity)
-- Main-process in-memory `BlueData` remains canonical; `.blue` XML remains canonical persistence; renderer edits are transient snapshots and explicit project document patches (048-note-processor-parity)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x build + `@blue/data`, `@blue/app` Electron main/preload/renderer IPC, Node `zeromq` in Electron main, Java JeroMQ, Clojure 1.12.x, Pomegranate for Java Blue Clojure dependency metadata, Jackson or equivalent JSON binding inside the helper, Vitest 4.x, JUnit 5 (049-blue-java-runtime)
-- `.blue` XML remains canonical project persistence; `BlueData` remains main-process canonical project document; Clojure project dependency metadata remains in `pluginData`; helper JAR is a build artifact copied into `packages/blue-app/assets/java/` (049-blue-java-runtime)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x, Jython 2.7.4 + Existing `@blue/data`, `@blue/app`, `@blue/java-runtime`, Node `zeromq`, Java JeroMQ, Jackson, Clojure 1.12.x from SPEC 049, `org.python:jython-standalone:2.7.4`, Java Blue `blue-ext-jython/src/main/release/pythonLib`, Vitest 4.x, JUnit 5 (050-jython-support)
-- `.blue` XML remains canonical project persistence; helper runtime assets live under `packages/blue-app/assets/java/` as `blue-java.jar` plus packaged `pythonLib`; Jython interpreter state is transient project-session state; user Python library remains outside project XML (050-jython-support)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer code + Tailwind CSS v4 CSS-first theme tokens, `@tailwindcss/postcss`, `clsx`, `tailwind-merge`, Dockview 5.2.0, CodeMirror 6, Radix Context Menu, existing Vite/Vitest renderer tooling (051-theme-token-cleanup)
-- N/A - renderer styling only; no project XML, localStorage, or settings persistence changes (051-theme-token-cleanup)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` automation/score/mixer classes, `@blue/app` shared project-editor IPC model, Zustand 5.x stores, Dockview 5.2.0 workbench shell, Radix Context Menu, existing score timeline components, Vitest 4.x (052-score-timeline-automation)
-- Main-process in-memory `BlueData` remains canonical; `.blue` XML remains canonical persistence. Layer automation assignments persist through Java-compatible `parameterId` entries, and line data persists on the underlying `Parameter` XML. Renderer state for current edit mode and active range selection is local UI state. (052-score-timeline-automation)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only (053-missing-audio-assets)
-- Main-process in-memory `BlueData` remains canonical; `.blue` XML format is unchanged; AudioFile replacement changes persist only when the user saves the project (053-missing-audio-assets)
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + Existing `@blue/app` program settings store, Electron `BrowserWindow`/`screen`/IPC, preload `blueAPI`, React renderer, Zustand workbench/settings stores, Dockview 5.2.0, reusable `SplitPane`, Vitest 4.x (054-window-layout-persistence)
-- Main-process app-wide `program-settings.json` under Electron user data; layout state lives under app-specific program settings; legacy renderer storage keys `blue-settings.windowBounds` and `blue-workbench-layout` migrate once; `.blue` project XML is unchanged (054-window-layout-persistence)
-- TypeScript 5.8.x, React 19.x, Electron 35.x + Dockview 5.2.0 / dockview-core 5.2.0, Zustand 5.x, Radix Context Menu, Electron `BrowserWindow`/IPC/Menu, existing `@blue/data` project snapshot IPC (055-window-float-dock-parity)
-- Existing app-wide `program-settings.json` window-layout settings; workbench layout stored as a serialized layout envelope under `appSpecific.windowLayout.workbench`; `.blue` project XML remains unchanged (055-window-float-dock-parity)
-- TypeScript 5.8.x with strict mode; React 19.x; Electron 35.x; Node.js APIs in the Electron main process only + `@blue/data`, `@blue/java-runtime`, Electron `dialog`/`shell`/IPC, Node `child_process`/`fs`/`path`, existing program-settings store, existing project snapshot/patch bridge, Vitest 4.x (056-render-freeze-parity)
-- `.blue` XML remains canonical project persistence; app-wide program settings remain in `program-settings.json`; generated freeze audio is project-relative derived data; temporary CSD files are main-process temporary artifacts (056-render-freeze-parity)
-- TypeScript 5.8.x, strict mode + React 19.x, Electron 35.x, Lucide React, Web Audio API, Vitest 4.x (057-audio-file-player)
-- Transient renderer player state; disk files remain user-selected or render-derived; no project XML changes (057-audio-file-player)
-- TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge (058-midi-live-input)
-- Main-process `program-settings.json` under Electron user data for durable enabled-device identities; transient renderer/main runtime snapshots for availability, connections, and held notes; `.blue` XML unchanged (058-midi-live-input)
-- TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge (059-osc-control-parity)
-- Main-process `program-settings.json` for the preferred port; transient main-process listener status; `.blue` project XML unchanged (059-osc-control-parity)
-- TypeScript 5.8.x in strict mode; React 19.x; Electron pinned to 35.7.5 with embedded Node 22.16.0 and SQLite 3.49.1 + built-in `node:sqlite` (`DatabaseSync` and `backup`) and `node:worker_threads` in Electron main; existing `@rgrove/parse-xml` and `@blue/data` models/codecs; Electron `app`/`dialog`/IPC; Dockview 5.2.0; Zustand 5.x; `react-arborist` 3.5.x; Radix menus; existing type-specific Instrument/UDO/Effect/SoundObject editors (060-unified-libraries)
-- main-owned `${app.getPath('userData')}/blue_libraries.sqlite`; separate atomic `${app.getPath('userData')}/blue-libraries-state.json` for legacy-migration/recovery state; verified pre-upgrade SQLite backups beside the database; `.blue` XML remains the only project persistence (060-unified-libraries)
-- TypeScript 5.8.x in strict mode; Electron 35.7.5 with embedded Node 22.16.0; React 19.x renderers + Electron `Menu`/`BrowserWindow`/`WebContents`/`app`, existing `@blue/app` program-settings store, Dockview popout lifecycle, Vitest 4.x, Playwright 1.60.x Electron automation (061-app-zooming)
-- Existing main-process `${app.getPath('userData')}/program-settings.json`; one validated `appSpecific.appZoomPercent` scalar; `.blue` project XML and workbench layout state remain unchanged (061-app-zooming)
-- C++17, TypeScript 5.8.x strict mode, Electron 35.7.5, Node.js 22, pnpm 10 + CMake 3.21+, pinned vcpkg manifest/triplets, statically linked ZeroMQ/libsodium, runtime-loaded Csound 7, `@blue/engine-client`, CTest, Vitest 4.x, electron-builder 26.x (064-bundle-blue-engine)
-- Blue Engine source and pinned dependency inputs live under `native/blue-engine`; engine artifacts and compatibility reports are derived/transient, the existing main-owned `program-settings.json` retains the explicit engine override, and `.blue` XML is unchanged (064-bundle-blue-engine)
-- TypeScript 5.8.x strict mode, React 19.x, Electron 35.7.5 + `@blue/data` Blue Live/SoundObject/runtime models, Zustand project/selection/live stores, Radix Context Menu, existing ScoreObject Editor/Properties and unified-library transfer contracts, Vitest 4.x (065-blue-live-parity)
-- Main-process `BlueData` remains canonical and `.blue` XML remains unchanged; trigger preparations, session generations, selection targets, and shared ScoreObject/Instrument/BSB widget clipboards are transient and explicitly separated (065-blue-live-parity)
-- No new durable storage. Electron main retains canonical `BlueData`; compiled target catalogs, renderer focus/routing mode, and held-note ledgers are transient. `.blue` XML and `program-settings.json` are unchanged. (067-virtual-keyboard-track-targeting-research)
-- TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces (067-virtual-keyboard-track-targeting-research)
-- TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `midi-file` 1.2.4 in Electron main, portable `@blue/data` MIDI pairing/template/project conversion, existing preload IPC and native File menu, TrackLayerGroup/PolyObject score roots, Vitest 4.x (068-midi-file-import)
-- Main-process pending MIDI documents are transient; successful import replaces canonical `BlueData`, starts unsaved, and persists only through the existing `.blue` XML save path. MIDI tempo events populate the existing Score tempo map; no new storage format is introduced. (068-midi-file-import)
-- TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `AudioClip`/`TimeDuration`/`parseAudioFileMetadata`, existing program-settings store and project patch bridge, `react-arborist` 3.5.x, Radix Context Menu, existing preload IPC, existing `TrackLayerGroupCanvas` geometry helpers, Vitest 4.x (076-file-manager-panel)
-- Favorite root paths persist in main-process `program-settings.json` under `appSpecific.fileManagerFavorites`; File Manager browsing/expansion state is disposable renderer session state (cached across docked/slideout remounts, never persisted); audio clips created by valid drops flow through the canonical project document and existing `.blue` save path; one shared Csound audio-source allowlist governs both File Manager node drags and external single-file OS drops onto Track audio layers; double-clicking a player-supported file authorizes through the audio stream protocol and routes to the Audio File Player pending-file bus, and double-clicking an `.sf2` file routes to the SoundFont Viewer pending-file bus (076-file-manager-panel)
+## Repository map
 
-- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
-- BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
+- `packages/blue-data` (`@blue/data`) — platform-neutral project models, XML, and CSD generation.
+- `packages/blue-app` (`@blue/app`) — Electron main, preload, and renderer code.
+- `packages/blue-engine-client` — versioned engine protocol and client.
+- `packages/blue-java` (`@blue/java-runtime`) — Java helper integration.
+- `native/blue-engine` — native Blue Engine source and build inputs.
+- `specs/` — feature specifications, plans, research, and tasks.
+- `.specify/` — Spec Kit workflow files and constitution.
 
-- TypeScript 5.x, strict mode + `@rgrove/parse-xml` (XML parsing), `vitest` (testing), `esbuild` (bundling for Electron)
+## Validation
 
-## Project Structure
+Run commands from the repository root with `pnpm`.
 
-```text
-src/
-tests/
-```
+- Start with the affected package: `pnpm --filter @blue/app test` or the relevant package test.
+- For main-process changes, run `pnpm --filter @blue/app build:main`.
+- Before handoff, run `pnpm test` and `pnpm lint` when the change spans packages or shared behavior.
+- Run `git diff --check` for whitespace errors.
 
-## Commands
+## Architecture boundaries
 
-npm test && npm run lint
+- `@blue/data` production source must remain browser-safe and host-neutral: no Node.js
+  built-ins, DOM APIs, Electron APIs, `require()`, dynamic `import()`, or inline
+  `import("...").Type` annotations.
+- Electron main owns filesystem, process, Java-runtime, engine, and other host APIs. Keep
+  renderer code on typed, serializable preload/IPC contracts.
+- `BlueData` is the canonical in-memory project owner and `.blue` XML is the canonical
+  project format. Preserve unknown project data and route project mutations through the
+  existing document bridge.
 
-## Code Style
+## Java-first parity
 
-TypeScript 5.x, strict mode: Follow standard conventions
+- For behavior mismatches, rendering failures, XML compatibility, formatting, or parity bugs,
+  consult the Java implementation before changing TypeScript.
+- Primary references, when available, are `~/work/nbprojects/blue/blue-core` and
+  `~/work/nbprojects/blue/blue-ui-core`.
+- Compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`; document any
+  intentional TypeScript divergence and cover it with a focused test.
 
-<!-- MANUAL ADDITIONS START -->
-## Java-First Debugging Guidance
+## Host filesystem and embedded-text paths
 
-- For behavior mismatches, render failures, XML-compatibility issues, or formatting/parity bugs in the TypeScript port, consult the Java implementation first before changing TypeScript code.
-- Primary reference roots: `~/work/nbprojects/blue/blue-core` and `~/work/nbprojects/blue/blue-ui-core`.
-- When applicable, compare against Java-generated artifacts first, especially `~/work/blue/demo2026/01.csd`, and only keep a TypeScript-side divergence if it is intentional and documented.
+- Keep native OS paths unchanged for `fs`, `path`, `os`, and process APIs. Do not globally
+  replace separators in filesystem paths.
+- Convert paths only at an explicit boundary: canonical host identity, external text, or
+  embedded Csound text. Csound paths use forward slashes; escape quotes and Csound string
+  syntax at that boundary.
+- Build test paths with `path.join()` and `os.tmpdir()`. Include synthetic Windows paths such
+  as `C:\\Users\\...`; do not compare native filesystem paths directly with embedded text.
+- Do not use POSIX `chmod` as a Windows permission test. Inject `EACCES`/`EPERM` or run a
+  native Windows ACL test. Path-sensitive changes require Windows CI or equivalent native
+  Windows coverage.
 
-## Csound-Embedded Path Convention
+## Import discipline
 
-- Keep filesystem paths in native OS form when using `fs`, `path`, `os.tmpdir()`, and when passing paths as separate `spawn`/`execFile` arguments.
-- Before embedding a file path in generated Csound source text—CSD, orchestra, score, `sfload`, `diskin2`, or quoted p-fields—convert backslashes to forward slashes. Escape quotes and other Csound string syntax at the same boundary.
-- Tests for Csound text should include a synthetic Windows path such as `C:\\Users\\...` and assert the exact normalized Csound representation. For OS-derived paths, normalize only the expected Csound value: `const expectedCsoundPath = filePath.replaceAll('\\', '/');`
-- Do not compare an OS-native filesystem path directly with a path embedded in Csound text.
-
-## Host Filesystem Path Convention
-
-- Treat native filesystem paths, canonical host identities, and external or embedded path text as different values with explicit conversion boundaries.
-- Keep native paths in the form required by `fs`, `path`, `os`, and process APIs. Do not globally replace separators in a filesystem path; normalize only when producing a named identity or text representation.
-- Use one platform-aware helper for canonical identities used by comparison, de-duplication, or serialized host snapshots. Tests must not compare a raw `fs.realpathSync` result with a canonical identity unless the same documented normalization is applied.
-- Path-sensitive tests MUST construct paths with `path.join`/`os.tmpdir()` and include synthetic Windows path fixtures. Do not use POSIX `chmod` as a Windows permission test; inject `EACCES`/`EPERM` or run a native Windows ACL test instead.
-- A path-sensitive change is incomplete until the supported Windows CI target or an equivalent native Windows test passes; green macOS/Linux tests are not sufficient evidence.
-
-## Constraints
-
-- No `require()` or dynamic `import()` calls in `@blue/data` (esbuild bundle constraint).
-- No Node.js built-ins in `@blue/data` — browser-safe and Node-safe library code only.
-- Static ES `import` statements only — no `require()`, no dynamic `import()`, and no inline `import("...").Type` type annotations; use top-level static imports instead.
-<!-- MANUAL ADDITIONS END -->
-
-## Recent Changes
-- 068-midi-file-import: Added native Standard MIDI File import with PPQ format-0/1 parsing, channel-aware mapping, Java-compatible note templates, tempo-map import, project-default Track/SoundObject roots, safe replacement IPC, and XML round-trip coverage
-- 067-virtual-keyboard-track-targeting-research: Added TypeScript 5.8.x strict mode; React 19.x; Electron 35.7.5 + `@blue/data` `BlueData`/`Score`/`Track`/`Arrangement`/`CompileData`; Zustand 5.x; existing Web MIDI input service; existing Blue Live engine session and `@blue/engine-client` transport; existing Track, Orchestra, and Virtual Keyboard renderer surfaces
-- 066-track-layer-foundation: Replaced the runtime AudioLayer model with canonical mixed Track/TrackLayerGroup data, Track-owned instruments, historical migration, Track mixer association, and Track-first new-project defaults; canonical Track XML is TypeScript-only
+Use top-level static ES imports in `@blue/data` production source. Keep any host-specific or
+test-only import exceptions outside that package boundary and document them when they affect
+runtime behavior.
