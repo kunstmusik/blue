@@ -1,4 +1,19 @@
 <!--
+Sync Impact Report (2026-08-17)
+- Version change: 2.0.0 → 2.1.0
+- Modified principles: none
+- Added sections:
+  - Host-Path Portability and Boundary Forms
+- Removed sections: none
+- Templates and guidance:
+  - ✅ updated: .specify/templates/plan-template.md
+  - ✅ updated: .specify/templates/tasks-template.md
+  - ✅ updated: AGENTS.md
+  - ✅ reviewed/no change: .specify/templates/spec-template.md and README.md
+- Follow-up TODOs: none
+-->
+
+<!--
 Sync Impact Report
 - Version change: 1.0.0 → 2.0.0
 - Modified principles:
@@ -99,6 +114,18 @@ audio/CSD artifacts are distinct stores. A feature MUST identify which store it 
 and MUST define recovery for migrations or partial failure. Derived state MUST remain disposable;
 project mutations MUST flow through the canonical project document bridge.
 
+### Host-Path Portability and Boundary Forms
+
+Host filesystem paths MUST remain in native OS form when passed to `fs`, `path`, `os`, or process
+APIs. Values used for identity or de-duplication, and values serialized, embedded, or sent through
+external text protocols, MUST be explicitly converted at a named boundary. Native paths, canonical
+host identities, and external path text MUST NOT be compared interchangeably. Canonical identity
+rules MUST be implemented by a reusable platform-aware helper rather than ad hoc conversion at
+call sites. Path-sensitive tests MUST use `path`/`os` builders, synthetic Windows fixtures, and
+injected OS errors or native runners for non-portable permissions and symlink behavior; POSIX
+`chmod` behavior MUST NOT be assumed on Windows. Cross-platform host-path changes MUST be validated
+on the supported Windows CI target.
+
 ## Development Workflow
 
 ### Java-First Parity
@@ -137,4 +164,4 @@ Code review MUST treat an unexplained MUST violation as blocking. A necessary ex
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 2.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-07-21
+**Version**: 2.1.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-08-17

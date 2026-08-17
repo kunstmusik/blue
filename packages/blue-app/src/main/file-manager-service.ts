@@ -64,6 +64,10 @@ function listStaticRootPaths(platform: string, homeDirectory: string): string[] 
  * Host path identity used for de-duplication: realpath where available, with
  * case-insensitive comparison on Windows.
  */
+export function normalizeFileManagerHostIdentity(filePath: string, platform: string): string {
+  return platform === 'win32' ? filePath.replaceAll('\\', '/').toLowerCase() : filePath;
+}
+
 async function resolveHostIdentity(filePath: string, platform: string): Promise<string> {
   const normalized = path.resolve(filePath);
   const real = await fs.promises.realpath(normalized).then(
@@ -71,7 +75,7 @@ async function resolveHostIdentity(filePath: string, platform: string): Promise<
     () => null,
   );
   const base = real ?? normalized;
-  return platform === 'win32' ? base.replaceAll('\\', '/').toLowerCase() : base;
+  return normalizeFileManagerHostIdentity(base, platform);
 }
 
 function mapStatError(err: unknown): { code: 'not-found' | 'not-directory' | 'permission-denied' | 'read-failed'; message: string } {

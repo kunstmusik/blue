@@ -6,6 +6,7 @@ import {
   commitAudioFileDrop,
   getFileManagerRoots,
   listFileManagerDirectory,
+  normalizeFileManagerHostIdentity,
   validateFileManagerDirectory,
   type AudioFileDropCommitContext,
 } from './file-manager-service';
@@ -156,6 +157,14 @@ describe('getFileManagerRoots', () => {
 });
 
 describe('listFileManagerDirectory', () => {
+  it('normalizes host identities explicitly at the platform boundary', () => {
+    const windowsPath = String.raw`C:\Users\RunnerAdmin\AppData\Local\Temp\Sample`;
+    expect(normalizeFileManagerHostIdentity(windowsPath, 'win32')).toBe(
+      'c:/users/runneradmin/appdata/local/temp/sample',
+    );
+    expect(normalizeFileManagerHostIdentity('/tmp/Sample', 'darwin')).toBe('/tmp/Sample');
+  });
+
   it('lists visible direct children in deterministic order and omits dot entries', async () => {
     const root = makeListingFixture();
     const result = await listFileManagerDirectory({ path: root });
@@ -175,7 +184,8 @@ describe('listFileManagerDirectory', () => {
   it('reports kinds, expandability, parent paths, and symlinks', async () => {
     const root = makeListingFixture();
     const linkTarget = makeTempDir();
-    fs.symlinkSync(linkTarget, path.join(root, 'dir-link'));
+    const linkPath = path.join(root, 'dir-link');
+    fs.symlinkSync(linkTarget, linkPath);
 
     const result = await listFileManagerDirectory({ path: root });
     expect(result.status).toBe('ok');
@@ -184,8 +194,12 @@ describe('listFileManagerDirectory', () => {
 
     expect(children.get('nested')).toMatchObject({ kind: 'directory', canExpand: true, isSymlink: false, parentPath: root });
     expect(children.get('A-file.txt')).toMatchObject({ kind: 'file', canExpand: false });
+    const expectedLinkIdentity = normalizeFileManagerHostIdentity(
+      await fs.promises.realpath(linkPath),
+      process.platform,
+    );
     expect(children.get('dir-link')).toMatchObject({
-      id: fs.realpathSync(path.join(root, 'dir-link')),
+      id: expectedLinkIdentity,
       kind: 'directory',
       canExpand: true,
       isSymlink: true,
@@ -219,14 +233,15 @@ describe('listFileManagerDirectory', () => {
     expect(empty).toMatchObject({ status: 'error', code: 'not-found' });
   });
 
-  it('reports permission-denied for an unreadable directory', async () => {
+  it('maps a permission failure while reading a directory to permission-denied', async () => {
     const root = makeTempDir();
-    fs.chmodSync(root, 0o000);
+    const permissionError = Object.assign(new Error('access denied'), { code: 'EACCES' });
+    const readdir = vi.spyOn(fs.promises, 'readdir').mockRejectedValueOnce(permissionError);
     try {
       const result = await listFileManagerDirectory({ path: root });
       expect(result).toMatchObject({ status: 'error', code: 'permission-denied' });
     } finally {
-      fs.chmodSync(root, 0o755);
+      readdir.mockRestore();
     }
   });
 

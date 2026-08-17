@@ -119,6 +119,14 @@ TypeScript 5.x, strict mode: Follow standard conventions
 - Tests for Csound text should include a synthetic Windows path such as `C:\\Users\\...` and assert the exact normalized Csound representation. For OS-derived paths, normalize only the expected Csound value: `const expectedCsoundPath = filePath.replaceAll('\\', '/');`
 - Do not compare an OS-native filesystem path directly with a path embedded in Csound text.
 
+## Host Filesystem Path Convention
+
+- Treat native filesystem paths, canonical host identities, and external or embedded path text as different values with explicit conversion boundaries.
+- Keep native paths in the form required by `fs`, `path`, `os`, and process APIs. Do not globally replace separators in a filesystem path; normalize only when producing a named identity or text representation.
+- Use one platform-aware helper for canonical identities used by comparison, de-duplication, or serialized host snapshots. Tests must not compare a raw `fs.realpathSync` result with a canonical identity unless the same documented normalization is applied.
+- Path-sensitive tests MUST construct paths with `path.join`/`os.tmpdir()` and include synthetic Windows path fixtures. Do not use POSIX `chmod` as a Windows permission test; inject `EACCES`/`EPERM` or run a native Windows ACL test instead.
+- A path-sensitive change is incomplete until the supported Windows CI target or an equivalent native Windows test passes; green macOS/Linux tests are not sufficient evidence.
+
 ## Constraints
 
 - No `require()` or dynamic `import()` calls in `@blue/data` (esbuild bundle constraint).
