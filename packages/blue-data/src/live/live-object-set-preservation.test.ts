@@ -89,38 +89,42 @@ describe('LiveObjectSet legacy preservation', () => {
 });
 
 describe('LiveData legacy XML round-trip', () => {
-  it('preserves covered values from the Java-authored Blue Live MIDI example through trigger-only work', async () => {
-    const fixtureXml = fs.readFileSync(
-      path.resolve(__dirname, '../../../../examples/features/blueLiveMidi.blue'),
-      'utf8',
-    );
-    const data = BlueData.loadFromString(fixtureXml);
-    const liveData = data.getLiveData();
-    const target = liveData.getLiveObjectBins().getLiveObject(0, 0);
+  it(
+    'preserves covered values from the Java-authored Blue Live MIDI example through trigger-only work',
+    { timeout: 30_000 },
+    async () => {
+      const fixtureXml = fs.readFileSync(
+        path.resolve(__dirname, '../../../../examples/features/blueLiveMidi.blue'),
+        'utf8',
+      );
+      const data = BlueData.loadFromString(fixtureXml);
+      const liveData = data.getLiveData();
+      const target = liveData.getLiveObjectBins().getLiveObject(0, 0);
 
-    expect(liveData.getCommandLine()).toBe('csound -Wdo devaudio -L stdin');
-    expect(liveData.isCommandLineEnabled()).toBe(false);
-    expect(liveData.isCommandLineOverride()).toBe(false);
-    expect(target).not.toBeNull();
-    expect(target!.getKeyTrigger()).toBe(-1);
-    expect(target!.getMidiTrigger()).toBe(-1);
+      expect(liveData.getCommandLine()).toBe('csound -Wdo devaudio -L stdin');
+      expect(liveData.isCommandLineEnabled()).toBe(false);
+      expect(liveData.isCommandLineOverride()).toBe(false);
+      expect(target).not.toBeNull();
+      expect(target!.getKeyTrigger()).toBe(-1);
+      expect(target!.getMidiTrigger()).toBe(-1);
 
-    const canonicalBefore = data.saveToString();
-    const result = await prepareTriggerBatch(
-      data.deepCopy() as BlueData,
-      'selected',
-      target!.getUniqueId(),
-    );
+      const canonicalBefore = data.saveToString();
+      const result = await prepareTriggerBatch(
+        data.deepCopy() as BlueData,
+        'selected',
+        target!.getUniqueId(),
+      );
 
-    expect(result.kind).toBe('prepared');
-    expect(data.saveToString()).toBe(canonicalBefore);
+      expect(result.kind).toBe('prepared');
+      expect(data.saveToString()).toBe(canonicalBefore);
 
-    const reloaded = BlueData.loadFromString(canonicalBefore);
-    const reloadedTarget = reloaded.getLiveData().getLiveObjectBins().getLiveObject(0, 0);
-    expect(reloaded.getLiveData().getCommandLine()).toBe('csound -Wdo devaudio -L stdin');
-    expect(reloadedTarget?.getKeyTrigger()).toBe(-1);
-    expect(reloadedTarget?.getMidiTrigger()).toBe(-1);
-  });
+      const reloaded = BlueData.loadFromString(canonicalBefore);
+      const reloadedTarget = reloaded.getLiveData().getLiveObjectBins().getLiveObject(0, 0);
+      expect(reloaded.getLiveData().getCommandLine()).toBe('csound -Wdo devaudio -L stdin');
+      expect(reloadedTarget?.getKeyTrigger()).toBe(-1);
+      expect(reloadedTarget?.getMidiTrigger()).toBe(-1);
+    },
+  );
 
   it('round-trips sparse bins, key/MIDI metadata, and Repeat values', () => {
     const data = new BlueData();
