@@ -198,6 +198,34 @@ export interface ProgramSettingsSaveResult {
   validationIssues?: SettingsValidationIssue[];
 }
 
+/**
+ * Narrow playback-preference update request. At least one field must be
+ * present. Main merges only the provided boolean fields into the current
+ * snapshot, validates the result, and writes atomically. Invalid payloads
+ * are rejected without changing the settings file.
+ */
+export interface PlaybackPreferencePatch {
+  followPlayback?: boolean;
+  followPlaybackOnStart?: boolean;
+}
+
+/**
+ * Validate a PlaybackPreferencePatch payload. Returns true when the patch
+ * contains at least one boolean field and no non-boolean values.
+ */
+export function isValidPlaybackPreferencePatch(
+  patch: unknown,
+): patch is PlaybackPreferencePatch {
+  if (patch == null || typeof patch !== 'object') return false;
+  const p = patch as Record<string, unknown>;
+  const hasFollow = 'followPlayback' in p;
+  const hasOnStart = 'followPlaybackOnStart' in p;
+  if (!hasFollow && !hasOnStart) return false;
+  if (hasFollow && typeof p.followPlayback !== 'boolean') return false;
+  if (hasOnStart && typeof p.followPlaybackOnStart !== 'boolean') return false;
+  return true;
+}
+
 export type UsageStatus =
   | 'used-by-workflow'
   | 'used-as-new-project-default'

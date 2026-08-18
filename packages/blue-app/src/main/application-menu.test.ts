@@ -525,3 +525,61 @@ describe('application menu template', () => {
     expect(disabledEditMeterMap?.enabled).toBe(false);
   });
 });
+
+describe('application menu follow playback mirror (SPEC 079)', () => {
+  function buildFollowMenu(followPlaybackEnabled: boolean, followPlaybackOnStartEnabled: boolean, hasLoadedProject: boolean) {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled,
+      followPlaybackOnStartEnabled,
+      ...handlers,
+    });
+    const projectMenu = getSubmenu(template.find((item: any) => item.label === 'Project'));
+    return {
+      handlers,
+      follow: projectMenu.find((item: any) => item.label === 'Follow playback by scrolling score'),
+      onStart: projectMenu.find((item: any) => item.label === 'Enable follow playback on render start'),
+    };
+  }
+
+  it('mirrors the hydrated saved follow values in the checkbox state', () => {
+    const { follow, onStart } = buildFollowMenu(false, false, true);
+
+    expect(follow?.checked).toBe(false);
+    expect(onStart?.checked).toBe(false);
+  });
+
+  it('reflects an active session suspension through the mirror cache', () => {
+    const { follow } = buildFollowMenu(false, true, true);
+
+    expect(follow?.checked).toBe(false);
+  });
+
+  it('restores the checkbox when the renderer mirrors the saved value again', () => {
+    const { follow } = buildFollowMenu(true, true, true);
+
+    expect(follow?.checked).toBe(true);
+  });
+
+  it('disables the follow controls without a loaded project', () => {
+    const { follow, onStart } = buildFollowMenu(true, true, false);
+
+    expect(follow?.enabled).toBe(false);
+    expect(onStart?.enabled).toBe(false);
+  });
+
+  it('wires the follow items to their toggle handlers', () => {
+    const { handlers, follow, onStart } = buildFollowMenu(true, true, true);
+
+    follow?.click?.();
+    onStart?.click?.();
+
+    expect(handlers.onToggleFollowPlayback).toHaveBeenCalledOnce();
+    expect(handlers.onToggleFollowPlaybackOnStart).toHaveBeenCalledOnce();
+  });
+});

@@ -40,6 +40,17 @@ const LAYER_HEIGHT = 22;
  * after the scale change, matching Java Blue's ScoreMouseWheelListener
  * behaviour.
  */
+/**
+ * Scroll-origin provenance for follow playback: cursor-anchored zoom writes
+ * report `view-scale` with the expected post-zoom scroll position so the
+ * induced scroll events do not suspend follow, while Shift+wheel horizontal
+ * movement reports `user-navigation`.
+ */
+export type ScoreWheelScrollOriginNotifier = (
+  origin: 'user-navigation' | 'view-scale',
+  expectedScrollLeft?: number,
+) => void;
+
 export function useScoreWheelZoom(
   scrollContainerRef: RefObject<HTMLDivElement | null>,
   timelineHeaderRef: RefObject<HTMLDivElement | null>,
@@ -48,6 +59,7 @@ export function useScoreWheelZoom(
   loaded: boolean,
   setTimeState: Dispatch<SetStateAction<ScoreTimeStateSnapshot>>,
   effectiveLayerGroups: ScoreLayerGroupSnapshot[],
+  onScrollOrigin?: ScoreWheelScrollOriginNotifier,
 ): void {
   // Keep mutable refs so the handler always sees the latest values without
   // needing to re-attach the listener on every render.
@@ -55,6 +67,9 @@ export function useScoreWheelZoom(
   const ppbRef = useRef(pixelsPerBeat);
   zoomRef.current = zoomIterations;
   ppbRef.current = pixelsPerBeat;
+
+  const onScrollOriginRef = useRef(onScrollOrigin);
+  onScrollOriginRef.current = onScrollOrigin;
 
   // Keep a mutable ref of layer groups to avoid re-attaching listeners
   const layersRef = useRef(effectiveLayerGroups);
@@ -154,6 +169,7 @@ export function useScoreWheelZoom(
 
         const scale = newPpb / oldPpb;
         const newScrollLeft = Math.max(0, scale * localX - cursorOffsetInContainer);
+        onScrollOriginRef.current?.('view-scale', newScrollLeft);
         container.scrollLeft = newScrollLeft;
         if (header) header.scrollLeft = newScrollLeft;
 
@@ -173,6 +189,7 @@ export function useScoreWheelZoom(
         e.preventDefault();
         e.stopPropagation();
 
+        onScrollOriginRef.current?.('user-navigation');
         const scrollDelta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
         container.scrollLeft += scrollDelta;
         if (header) header.scrollLeft = container.scrollLeft;
@@ -211,6 +228,7 @@ export function useScoreWheelZoom(
 
       const scale = newPpb / oldPpb;
       const newScrollLeft = Math.max(0, scale * localX - cursorOffsetInContainer);
+      onScrollOriginRef.current?.('view-scale', newScrollLeft);
       container.scrollLeft = newScrollLeft;
       if (header) header.scrollLeft = newScrollLeft;
 

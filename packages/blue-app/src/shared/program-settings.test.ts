@@ -25,6 +25,7 @@ import {
   SMPTE_FRAME_RATES,
   FILE_FORMAT_CHOICES,
   SAMPLE_FORMAT_CHOICES,
+  isValidPlaybackPreferencePatch,
   type ProgramSettingsSnapshot,
 } from './program-settings';
 import {
@@ -515,5 +516,28 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
       appSpecific: {} as any,
     } as any, 'darwin');
     expect(merged.version).toBe(savedVersion);
+  });
+});
+
+describe('isValidPlaybackPreferencePatch (SPEC 079)', () => {
+  it('accepts patches with at least one boolean field', () => {
+    expect(isValidPlaybackPreferencePatch({ followPlayback: true })).toBe(true);
+    expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: false })).toBe(true);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: false, followPlaybackOnStart: true })).toBe(true);
+  });
+
+  it('rejects empty or non-object payloads', () => {
+    expect(isValidPlaybackPreferencePatch({})).toBe(false);
+    expect(isValidPlaybackPreferencePatch(null)).toBe(false);
+    expect(isValidPlaybackPreferencePatch(undefined)).toBe(false);
+    expect(isValidPlaybackPreferencePatch('followPlayback')).toBe(false);
+    expect(isValidPlaybackPreferencePatch(42)).toBe(false);
+  });
+
+  it('rejects non-boolean field values', () => {
+    expect(isValidPlaybackPreferencePatch({ followPlayback: 'yes' })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: 1 })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: null })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: true, followPlaybackOnStart: 'no' })).toBe(false);
   });
 });

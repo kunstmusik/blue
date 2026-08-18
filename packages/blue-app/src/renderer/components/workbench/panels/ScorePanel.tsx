@@ -29,6 +29,7 @@ import { useScoreSelectionStore } from "../../../stores/score-selection-store";
 import { useMidiRoutingStore } from "../../../stores/midi-routing-store";
 import { useLayerSelectionStore } from "../../../stores/layer-selection-store";
 import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
+import { getFollowScrollTarget } from "./score/follow-playback";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
@@ -215,6 +216,62 @@ export default function ScorePanel() {
   const [scrollOverlayLeft, setScrollOverlayLeft] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  // Follow-navigation provenance (FR-007): programmatic horizontal writes
+  // record their expected target per scroll surface so the scroll events they
+  // induce are consumed instead of being classified as user navigation.
+  const expectedHorizontalScrollsRef = useRef<{ body: number | null; header: number | null }>({
+    body: null,
+    header: null,
+  });
+  const lastScrollPositionsRef = useRef<{
+    body: { left: number; top: number } | null;
+    header: { left: number; top: number } | null;
+  }>({ body: null, header: null });
+
+  /**
+   * Classifies a native scroll event on one of the two horizontal scroll
+   * surfaces. Matching an expected automatic target consumes it; an otherwise
+   * unexplained horizontal delta is user navigation and suspends active
+   * follow. Vertical-only movement never suspends (FR-008).
+   */
+  const classifyHorizontalScroll = useCallback((source: 'body' | 'header', el: HTMLElement) => {
+    // Before any scroll event, both surfaces sit at the origin.
+    const last = lastScrollPositionsRef.current[source] ?? { left: 0, top: 0 };
+    const next = { left: el.scrollLeft, top: el.scrollTop };
+    lastScrollPositionsRef.current[source] = next;
+
+    const expected = expectedHorizontalScrollsRef.current[source];
+    if (expected !== null && Math.abs(next.left - expected) < 1) {
+      expectedHorizontalScrollsRef.current[source] = null;
+      return;
+    }
+
+    if (next.left === last.left) {
+      return;
+    }
+
+    const playback = usePlaybackStore.getState();
+    if (playback.isPlaying && playback.followPlayback) {
+      playback.suspendFollowForSession();
+    }
+  }, []);
+
+  /** Marks an unmatched horizontal delta as explicit user navigation. */
+  const suspendForUserNavigation = useCallback(() => {
+    const playback = usePlaybackStore.getState();
+    if (playback.isPlaying && playback.followPlayback) {
+      playback.suspendFollowForSession();
+    }
+  }, []);
+
+  /**
+   * Records a programmatic horizontal scroll target so the scroll events it
+   * induces on both surfaces are consumed rather than suspending follow.
+   */
+  const markExpectedHorizontalScroll = useCallback((nextScrollLeft: number) => {
+    expectedHorizontalScrollsRef.current = { body: nextScrollLeft, header: nextScrollLeft };
+  }, []);
+
   const synchronizeHorizontalScroll = useCallback((nextScrollLeft: number) => {
     const timeline = scrollContainerRef.current;
     const header = timelineHeaderRef.current;
@@ -229,6 +286,27 @@ export default function ScorePanel() {
     }
     setScrollOverlayLeft(resolvedScrollLeft);
   }, [scrollContainerRef]);
+
+  const applyProgrammaticHorizontalScroll = useCallback((nextScrollLeft: number) => {
+    markExpectedHorizontalScroll(nextScrollLeft);
+    synchronizeHorizontalScroll(nextScrollLeft);
+  }, [markExpectedHorizontalScroll, synchronizeHorizontalScroll]);
+
+  /**
+   * Scroll-origin callback for wheel/gesture handling: cursor-anchored and
+   * pinch zoom reposition the viewport without suspending follow (FR-008),
+   * while Shift+wheel horizontal movement is user navigation (FR-005).
+   */
+  const handleWheelScrollOrigin = useCallback((
+    origin: 'user-navigation' | 'view-scale',
+    expectedScrollLeft?: number,
+  ) => {
+    if (origin === 'view-scale' && typeof expectedScrollLeft === 'number') {
+      markExpectedHorizontalScroll(expectedScrollLeft);
+      return;
+    }
+    suspendForUserNavigation();
+  }, [markExpectedHorizontalScroll, suspendForUserNavigation]);
 
   const activeSegment = session.segments[session.segments.length - 1];
 
@@ -278,7 +356,7 @@ export default function ScorePanel() {
 
   const pixelsPerBeat = computePixelsPerBeat(timeState.zoomIterations);
 
-  useScoreWheelZoom(scrollContainerRef, timelineHeaderRef, timeState.zoomIterations, pixelsPerBeat, loaded, setTimeState, effectiveLayerGroups);
+  useScoreWheelZoom(scrollContainerRef, timelineHeaderRef, timeState.zoomIterations, pixelsPerBeat, loaded, setTimeState, effectiveLayerGroups, handleWheelScrollOrigin);
 
   // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
   useLayoutEffect(() => {
@@ -310,6 +388,7 @@ export default function ScorePanel() {
     tempo: initialTempo,
     smpteFrameRate: timeState.smpteFrameRate || 24,
     sampleRate: transport.sampleRate,
+    onUserNavigation: suspendForUserNavigation,
   });
 
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
@@ -340,13 +419,13 @@ export default function ScorePanel() {
       + tempoMapSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
     : null;
 
+  // Follow playback (Java ScoreTopComponent parity): keep the viewport
+  // stationary while the playhead is visible; when it reaches or passes the
+  // right edge — or lands outside the viewport after a seek/wrap — jump so
+  // the playhead becomes the left edge, clamped to the scroll range. Only
+  // writes on a boundary/catch-up event, never per display tick.
   useEffect(() => {
-    if (
-      !followPlayback ||
-      !isPlaying ||
-      !isRootTimeline ||
-      timePointerBeats == null
-    ) {
+    if (!isRootTimeline || timePointerBeats == null) {
       return;
     }
 
@@ -356,20 +435,20 @@ export default function ScorePanel() {
     }
 
     const pointerPixel = timePointerBeats * pixelsPerBeat;
-    const leadPadding = Math.max(96, timeline.clientWidth * 0.35);
-    const leftVisible = timeline.scrollLeft + 48;
-    const rightVisible = timeline.scrollLeft + timeline.clientWidth - leadPadding;
+    const targetScrollLeft = getFollowScrollTarget({
+      isPlaybackActive: isPlaying,
+      isFollowEnabled: followPlayback,
+      pointerPixel,
+      scrollLeft: timeline.scrollLeft,
+      clientWidth: timeline.clientWidth,
+      scrollWidth: timeline.scrollWidth,
+    });
 
-    if (pointerPixel >= leftVisible && pointerPixel <= rightVisible) {
+    if (targetScrollLeft === null || targetScrollLeft === timeline.scrollLeft) {
       return;
     }
 
-    const targetScrollLeft = Math.max(0, pointerPixel - leadPadding);
-    if (Math.abs(targetScrollLeft - timeline.scrollLeft) < 1) {
-      return;
-    }
-
-    synchronizeHorizontalScroll(targetScrollLeft);
+    applyProgrammaticHorizontalScroll(targetScrollLeft);
   }, [
     followPlayback,
     isPlaying,
@@ -377,7 +456,7 @@ export default function ScorePanel() {
     timePointerBeats,
     pixelsPerBeat,
     scrollContainerRef,
-    synchronizeHorizontalScroll,
+    applyProgrammaticHorizontalScroll,
   ]);
 
   useEffect(() => {
@@ -385,25 +464,35 @@ export default function ScorePanel() {
     const pointerPixel = scrollToBeatTarget * pixelsPerBeat;
     const w = scrollContainerRef.current.clientWidth;
     const newX = Math.max(0, pointerPixel - (w / 8));
-    synchronizeHorizontalScroll(newX);
+    // Marker/rewind navigation is explicit user navigation even though the
+    // resulting scroll is applied programmatically (FR-005).
+    suspendForUserNavigation();
+    applyProgrammaticHorizontalScroll(newX);
     clearScrollTarget(null);
-  }, [scrollToBeatTarget, pixelsPerBeat, scrollContainerRef, clearScrollTarget, synchronizeHorizontalScroll]);
+  }, [scrollToBeatTarget, pixelsPerBeat, scrollContainerRef, clearScrollTarget, applyProgrammaticHorizontalScroll, suspendForUserNavigation]);
 
   useLayoutEffect(() => {
     const timeline = scrollContainerRef.current;
     if (timeline) {
+      // Body/header alignment after layout changes is layout-sync, never user
+      // navigation; consume the events it induces on both surfaces.
+      markExpectedHorizontalScroll(timeline.scrollLeft);
       synchronizeHorizontalScroll(timeline.scrollLeft);
     }
-  }, [session.activeGroupId, pixelsPerBeat, totalBeats, scrollContainerRef, synchronizeHorizontalScroll]);
+  }, [session.activeGroupId, pixelsPerBeat, totalBeats, scrollContainerRef, synchronizeHorizontalScroll, markExpectedHorizontalScroll]);
 
   const handleTimelineScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
     const left = leftHeaderRef.current;
     if (timeline) {
       if (left) left.scrollTop = timeline.scrollTop;
+      classifyHorizontalScroll('body', timeline);
+      // Aligning the header below writes horizontally; mark it expected so
+      // the induced header scroll event is not classified as navigation.
+      expectedHorizontalScrollsRef.current.header = timeline.scrollLeft;
       synchronizeHorizontalScroll(timeline.scrollLeft);
     }
-  }, [scrollContainerRef, synchronizeHorizontalScroll]);
+  }, [scrollContainerRef, synchronizeHorizontalScroll, classifyHorizontalScroll]);
 
   // Clicking the empty score background (the scroll container showing through
   // below the last layer row, when there are fewer layers than the viewport)
@@ -522,9 +611,13 @@ export default function ScorePanel() {
   const handleTimelineHeaderScroll = useCallback(() => {
     const header = timelineHeaderRef.current;
     if (header) {
+      classifyHorizontalScroll('header', header);
+      // Synchronizing the body below writes horizontally; mark it expected so
+      // the induced body scroll event is not classified as navigation.
+      expectedHorizontalScrollsRef.current.body = header.scrollLeft;
       synchronizeHorizontalScroll(header.scrollLeft);
     }
-  }, [synchronizeHorizontalScroll]);
+  }, [synchronizeHorizontalScroll, classifyHorizontalScroll]);
 
   const handleLeftHeaderScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
