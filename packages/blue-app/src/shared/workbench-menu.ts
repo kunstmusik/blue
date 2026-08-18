@@ -144,6 +144,8 @@ export type NativeMenuCommand =
   | { type: 'open-midi-import' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }
+  | { type: 'set-follow-playback'; enabled: boolean }
+  | { type: 'set-follow-playback-on-render-start'; enabled: boolean }
   | { type: 'toggle-loop-rendering' }
   | { type: 'add-marker' }
   | { type: 'navigate-next-marker' }

@@ -1641,6 +1641,14 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
       case 'toggle-follow-playback-on-render-start':
         usePlaybackStore.getState().toggleFollowPlaybackOnStart();
         return;
+      // Main resolved the value and already persisted it; apply without a
+      // second toggle or a second settings write.
+      case 'set-follow-playback':
+        usePlaybackStore.getState().applyResolvedFollowPlayback(command.enabled);
+        return;
+      case 'set-follow-playback-on-render-start':
+        usePlaybackStore.getState().applyResolvedFollowPlaybackOnStart(command.enabled);
+        return;
       case 'toggle-loop-rendering':
         useProjectStore
           .getState()

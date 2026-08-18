@@ -1,6 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { BlueData, PolyObject, TrackLayerGroup } from '@blue/data';
 import { applyProgramSettingsToNewProject } from './program-settings-application';
+import {
+  loadProgramSettings,
+  saveProgramSettings,
+  resetPanel,
+  clearSettingsCache,
+  setSettingsFilePathForTesting,
+} from './program-settings-store';
 import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
 
 describe('program-settings-application', () => {
@@ -167,5 +177,65 @@ describe('program-settings-application', () => {
     applyProgramSettingsToNewProject(data, settings);
     expect(data.getScore()[0]).toBeInstanceOf(PolyObject);
     expect((data.getScore()[0] as PolyObject).length).toBe(1);
+  });
+});
+
+describe('program settings follow synchronization inputs (SPEC 079)', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-settings-follow-sync-'));
+    setSettingsFilePathForTesting(path.join(tempDir, 'program-settings.json'));
+    clearSettingsCache();
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    clearSettingsCache();
+  });
+
+  it('persists follow preference changes made through the full Settings save', () => {
+    const snapshot = loadProgramSettings();
+    expect(snapshot.playback.followPlayback).toBe(true);
+
+    const saved = saveProgramSettings({
+      ...snapshot,
+      playback: { ...snapshot.playback, followPlayback: false },
+    });
+    expect(saved.ok).toBe(true);
+
+    expect(loadProgramSettings().playback.followPlayback).toBe(false);
+  });
+
+  it('restores default follow preferences when the playback panel is reset', () => {
+    const snapshot = loadProgramSettings();
+    saveProgramSettings({
+      ...snapshot,
+      playback: {
+        ...snapshot.playback,
+        followPlayback: false,
+        followPlaybackOnStart: false,
+      },
+    });
+    expect(loadProgramSettings().playback.followPlayback).toBe(false);
+
+    const reset = resetPanel('playback');
+
+    const defaults = createDefaultProgramSettings('darwin');
+    expect(reset.playback.followPlayback).toBe(defaults.playback.followPlayback);
+    expect(reset.playback.followPlaybackOnStart).toBe(defaults.playback.followPlaybackOnStart);
+    expect(loadProgramSettings().playback.followPlayback).toBe(defaults.playback.followPlayback);
+  });
+
+  it('leaves follow preferences untouched when another panel is reset', () => {
+    const snapshot = loadProgramSettings();
+    saveProgramSettings({
+      ...snapshot,
+      playback: { ...snapshot.playback, followPlayback: false },
+    });
+
+    resetPanel('osc');
+
+    expect(loadProgramSettings().playback.followPlayback).toBe(false);
   });
 });

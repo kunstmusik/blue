@@ -9,7 +9,9 @@ import {
   syncLegacyRendererSettings,
   clearSettingsCache,
   setSettingsFilePathForTesting,
+  updatePlaybackPreferences,
 } from './program-settings-store';
+import { createDefaultProgramSettings } from '../shared/program-settings';
 
 let tempDir: string;
 
@@ -306,5 +308,77 @@ describe('program-settings-store appZoomPercent (SPEC 061)', () => {
     const result = saveProgramSettings(settings, 'darwin');
     expect(result.ok).toBe(false);
     expect(result.validationIssues?.some((i) => i.path === 'appSpecific.appZoomPercent')).toBe(true);
+  });
+});
+
+describe('updatePlaybackPreferences', () => {
+  it('updates only followPlayback', () => {
+    const result = updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlayback).toBe(false);
+    expect(settings.playback.followPlaybackOnStart).toBe(createDefaultProgramSettings('darwin').playback.followPlaybackOnStart);
+  });
+
+  it('updates only followPlaybackOnStart', () => {
+    const result = updatePlaybackPreferences({ followPlaybackOnStart: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlaybackOnStart).toBe(false);
+    expect(settings.playback.followPlayback).toBe(createDefaultProgramSettings('darwin').playback.followPlayback);
+  });
+
+  it('updates both followPlayback and followPlaybackOnStart', () => {
+    const result = updatePlaybackPreferences({ followPlayback: false, followPlaybackOnStart: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlayback).toBe(false);
+    expect(settings.playback.followPlaybackOnStart).toBe(false);
+  });
+
+  it('rejects invalid non-boolean payload', () => {
+    const result = updatePlaybackPreferences({ followPlayback: 'yes' as any }, 'darwin');
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects empty object payload', () => {
+    const result = updatePlaybackPreferences({}, 'darwin');
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects missing-field request (null/undefined)', () => {
+    const result = updatePlaybackPreferences(null as any, 'darwin');
+    expect(result.ok).toBe(false);
+    const result2 = updatePlaybackPreferences(undefined as any, 'darwin');
+    expect(result2.ok).toBe(false);
+  });
+
+  it('preserves unrelated settings', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.workDirectory = '/my/work/dir';
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+
+    settings = loadProgramSettings('darwin');
+    expect(settings.general.workDirectory).toBe('/my/work/dir');
+  });
+
+  it('preserves existing unrelated fields when a previous save failed', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.workDirectory = '/my/valid/dir';
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    settings = loadProgramSettings('darwin');
+    settings.general.directoryTempFileLimit = -1;
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+
+    settings = loadProgramSettings('darwin');
+    expect(settings.general.workDirectory).toBe('/my/valid/dir');
   });
 });

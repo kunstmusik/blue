@@ -343,7 +343,88 @@ describe('useIPCListeners', () => {
       },
     });
     expect(persistedLayout.windows.main?.normalBounds).toEqual(legacyBounds);
-    expect(persistedLayout.workbench?.serializedLayout).toBe(legacyWorkbench);
+    expect(persistedLayout.workbench?.serializedLayout).toEqual(legacyWorkbench);
     expect(useLayoutSettingsStore.getState().layout?.windows.main?.normalBounds).toEqual(legacyBounds);
+  });
+
+  it('hydrates saved follow preferences from program settings at startup (SPEC 079)', async () => {
+    const defaults = createDefaultProgramSettings('darwin');
+    blueAPI.getProgramSettings.mockResolvedValue({
+      ...defaults,
+      playback: {
+        ...defaults.playback,
+        followPlayback: false,
+        followPlaybackOnStart: false,
+      },
+    });
+
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('preserves hydrated follow preferences when the project closes (SPEC 079)', async () => {
+    const defaults = createDefaultProgramSettings('darwin');
+    blueAPI.getProgramSettings.mockResolvedValue({
+      ...defaults,
+      playback: { ...defaults.playback, followPlayback: false },
+    });
+
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    // An active suspended session must end with the project close while the
+    // hydrated saved preference survives the runtime reset.
+    act(() => {
+      usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      usePlaybackStore.getState().suspendFollowForSession();
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+
+    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as () => void;
+    act(() => {
+      projectClosedHandler();
+    });
+
+    expect(usePlaybackStore.getState().status).toBe('idle');
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+  });
+
+  it('applies resolved follow commands delivered on the native-menu channel (SPEC 079)', async () => {
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const nativeMenuHandler = listeners.get('native-menu-command')!.values().next().value as (
+      command: unknown,
+    ) => void;
+
+    act(() => {
+      nativeMenuHandler({ type: 'set-follow-playback', enabled: false });
+    });
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    act(() => {
+      nativeMenuHandler({ type: 'set-follow-playback-on-render-start', enabled: false });
+    });
+
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
   });
 });

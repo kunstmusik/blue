@@ -35,6 +35,7 @@ import {
   saveProgramSettings,
   resetPanel,
   syncLegacyRendererSettings,
+  updatePlaybackPreferences,
   clearSettingsCache,
 } from './program-settings-store';
 import {
@@ -375,6 +376,7 @@ let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
+let currentSavedFollowPlayback = true;
 let currentFollowPlaybackOnStartEnabled = true;
 let lastProjectOnLoadState: ProjectOnLoadState | null = null;
 
@@ -1411,8 +1413,25 @@ function rebuildApplicationMenu(): void {
         mainWindow.webContents.send('native-menu-command', { type: 'reset-windows' });
       }
     },
-    onToggleFollowPlayback: () => { currentFollowPlaybackEnabled = !currentFollowPlaybackEnabled; mainWindow?.webContents.send('native-menu-command', { type: 'toggle-follow-playback' }); rebuildApplicationMenu(); },
-    onToggleFollowPlaybackOnStart: () => { currentFollowPlaybackOnStartEnabled = !currentFollowPlaybackOnStartEnabled; mainWindow?.webContents.send('native-menu-command', { type: 'toggle-follow-playback-on-render-start' }); rebuildApplicationMenu(); },
+    onToggleFollowPlayback: () => {
+      const next = !currentFollowPlaybackEnabled;
+      const result = updatePlaybackPreferences({ followPlayback: next });
+      if (result.ok) {
+        currentFollowPlaybackEnabled = next;
+        currentSavedFollowPlayback = next;
+        mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback', enabled: next });
+        rebuildApplicationMenu();
+      }
+    },
+    onToggleFollowPlaybackOnStart: () => {
+      const next = !currentFollowPlaybackOnStartEnabled;
+      const result = updatePlaybackPreferences({ followPlaybackOnStart: next });
+      if (result.ok) {
+        currentFollowPlaybackOnStartEnabled = next;
+        mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback-on-render-start', enabled: next });
+        rebuildApplicationMenu();
+      }
+    },
     onToggleLoopRendering: () => { mainWindow?.webContents.send('native-menu-command', { type: 'toggle-loop-rendering' }); },
     onAddMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'add-marker' }); },
     onNavigateNextMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-next-marker' }); },
@@ -3579,7 +3598,8 @@ ipcMain.on('sync-audition-score-object-availability', (event, enabled: unknown) 
   setAuditionScoreObjectAvailability(enabled === true);
 });
 
-ipcMain.on('sync-follow-playback-state', (_event, enabled: boolean) => {
+ipcMain.on('sync-follow-playback-state', (event, enabled: boolean) => {
+  if (event.sender !== mainWindow?.webContents) return;
   if (currentFollowPlaybackEnabled !== enabled) {
     currentFollowPlaybackEnabled = enabled;
     rebuildApplicationMenu();
@@ -3917,6 +3937,31 @@ ipcMain.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(event.sen
 
 // ─── Program Settings IPC Handlers ───
 
+/**
+ * Refresh the native follow menu cache from an authoritative settings
+ * snapshot (Settings-window save or playback-panel reset) and broadcast
+ * explicit resolved follow values to the workbench renderer when either
+ * follow field changed.
+ */
+function syncFollowPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): void {
+  // The active menu mirror can be false during a session-only suspension, so
+  // compare full-settings saves against the durable preference separately.
+  const followChanged = snapshot.playback.followPlayback !== currentSavedFollowPlayback;
+  const onStartChanged = snapshot.playback.followPlaybackOnStart !== currentFollowPlaybackOnStartEnabled;
+  currentSavedFollowPlayback = snapshot.playback.followPlayback;
+  currentFollowPlaybackOnStartEnabled = snapshot.playback.followPlaybackOnStart;
+  if (followChanged) {
+    currentFollowPlaybackEnabled = snapshot.playback.followPlayback;
+    mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback', enabled: currentFollowPlaybackEnabled });
+  }
+  if (onStartChanged) {
+    mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback-on-render-start', enabled: currentFollowPlaybackOnStartEnabled });
+  }
+  if (followChanged || onStartChanged) {
+    rebuildApplicationMenu();
+  }
+}
+
 ipcMain.handle('program-settings:get', () => {
   return loadProgramSettings();
 });
@@ -3941,6 +3986,11 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
     && previousOscPort !== result.snapshot.osc.preferredPort
   ) {
     void oscControlService.restart(result.snapshot.osc);
+  }
+  // Refresh follow menu cache and broadcast explicit state when follow
+  // fields changed via the full Settings window save.
+  if (result.ok && result.snapshot) {
+    syncFollowPreferencesFromSnapshot(result.snapshot);
   }
   return result;
 });
@@ -3987,6 +4037,9 @@ ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   if (panel === 'osc' && oscControlService) {
     void oscControlService.restart(snapshot.osc);
   }
+  if (panel === 'playback') {
+    syncFollowPreferencesFromSnapshot(snapshot);
+  }
   return snapshot;
 });
 
@@ -4001,6 +4054,18 @@ ipcMain.handle('program-settings:usage-matrix', () => {
 
 ipcMain.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy: any) => {
   return syncLegacyRendererSettings(legacy);
+});
+
+ipcMain.handle('program-settings:update-playback-preferences', (_event, patch: unknown) => {
+  const result = updatePlaybackPreferences(patch as any);
+  if (result.ok && result.snapshot) {
+    // Refresh main menu cache from the updated settings
+    currentFollowPlaybackEnabled = result.snapshot.playback.followPlayback;
+    currentSavedFollowPlayback = result.snapshot.playback.followPlayback;
+    currentFollowPlaybackOnStartEnabled = result.snapshot.playback.followPlaybackOnStart;
+    rebuildApplicationMenu();
+  }
+  return result;
 });
 
 // ─── File Manager IPC Handlers (SPEC 076) ───
@@ -4776,6 +4841,15 @@ app.whenReady().then(async () => {
     window.webContents.on('did-start-navigation', applyCurrentZoom);
     window.webContents.on('did-navigate', applyCurrentZoom);
   });
+
+  // Hydrate follow playback menu state from settings before the first menu
+  // build so the native checkmarks reflect saved preferences, not hard-coded
+  // defaults. loadProgramSettings() is cached, so this does not add a second
+  // disk read.
+  const initialSettings = loadProgramSettings();
+  currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
+  currentSavedFollowPlayback = initialSettings.playback.followPlayback;
+  currentFollowPlaybackOnStartEnabled = initialSettings.playback.followPlaybackOnStart;
 
   createWindow();
   unifiedLibraryService = new UnifiedLibraryService(

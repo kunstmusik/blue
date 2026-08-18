@@ -1130,6 +1130,58 @@ describe('workbench store native menu commands', () => {
     }
   });
 
+  it('applies resolved set-follow-playback commands without a second toggle or write (SPEC 079)', () => {
+    usePlaybackStore.setState({
+      followPlayback: true,
+      savedFollowPlayback: true,
+    });
+
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'set-follow-playback',
+      enabled: false,
+    } as never);
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+  });
+
+  it('applies resolved set-follow-playback-on-render-start commands (SPEC 079)', () => {
+    usePlaybackStore.setState({ followPlaybackOnStart: true });
+
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'set-follow-playback-on-render-start',
+      enabled: false,
+    } as never);
+
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('routes legacy follow toggle commands through the explicit persisting action (SPEC 079)', async () => {
+    const updatePlaybackPreferences = vi.fn().mockResolvedValue({ ok: true });
+    const syncFollowPlaybackState = vi.fn();
+    vi.stubGlobal('window', {
+      blueAPI: { updatePlaybackPreferences, syncFollowPlaybackState },
+    });
+
+    try {
+      usePlaybackStore.setState({
+        followPlayback: true,
+        savedFollowPlayback: true,
+      });
+
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'toggle-follow-playback',
+      });
+
+      expect(usePlaybackStore.getState().followPlayback).toBe(false);
+      expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+      expect(updatePlaybackPreferences).toHaveBeenCalledTimes(1);
+      expect(updatePlaybackPreferences).toHaveBeenCalledWith({ followPlayback: false });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('passes the current score selection to the audition playback path', () => {
     const auditionScoreObjects = vi
       .spyOn(usePlaybackStore.getState(), 'auditionScoreObjects')

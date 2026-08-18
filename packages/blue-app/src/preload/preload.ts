@@ -103,6 +103,7 @@ import type {
   ProgramSettingsSnapshot,
   ProgramSettingsSaveResult,
   ProgramSettingsPanelId,
+  PlaybackPreferencePatch,
   CurrentAppSettingsSnapshot,
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
@@ -788,6 +789,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+  updatePlaybackPreferences: (patch: PlaybackPreferencePatch) =>
+    ipcRenderer.invoke('program-settings:update-playback-preferences', patch) as Promise<ProgramSettingsSaveResult>,
   probeEngineRuntime: (request?: EngineProbeRequest) =>
     ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
   queryCsoundIo: (request?: CsoundIoQueryRequest) =>

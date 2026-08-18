@@ -534,6 +534,9 @@ declare global {
       syncLegacyRendererSettings: (
         snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+      updatePlaybackPreferences: (
+        patch: import('../../shared/program-settings').PlaybackPreferencePatch,
+      ) => Promise<import('../../shared/program-settings').ProgramSettingsSaveResult>;
       probeEngineRuntime: (request?: EngineProbeRequest) => Promise<EngineProbeResult>;
       queryCsoundIo: (request?: CsoundIoQueryRequest) => Promise<CsoundIoQueryResult>;
 

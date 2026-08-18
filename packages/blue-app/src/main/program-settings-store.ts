@@ -5,6 +5,8 @@ import {
   type ProgramSettingsSnapshot,
   type ProgramSettingsPanelId,
   type ProgramSettingsSaveResult,
+  type PlaybackPreferencePatch,
+  isValidPlaybackPreferencePatch,
   createDefaultProgramSettings,
   validateProgramSettings,
   resetProgramSettingsPanel,
@@ -135,4 +137,37 @@ export function syncLegacyRendererSettings(
     throw new Error('Failed to sync legacy settings');
   }
   return result.snapshot;
+}
+
+/**
+ * Atomically merge a narrow playback-preference patch into the current
+ * settings. Only `followPlayback` and `followPlaybackOnStart` are accepted.
+ * Invalid payloads are rejected without changing the settings file.
+ */
+export function updatePlaybackPreferences(
+  patch: PlaybackPreferencePatch,
+  platform: string = process.platform,
+): ProgramSettingsSaveResult {
+  if (!isValidPlaybackPreferencePatch(patch)) {
+    return {
+      ok: false,
+      validationIssues: [{
+        path: 'playback',
+        message: 'Playback preference patch must contain at least one boolean field (followPlayback, followPlaybackOnStart)',
+        severity: 'error',
+      }],
+    };
+  }
+
+  const current = loadProgramSettings(platform);
+  const merged: ProgramSettingsSnapshot = {
+    ...current,
+    playback: {
+      ...current.playback,
+      ...(patch.followPlayback !== undefined ? { followPlayback: patch.followPlayback } : {}),
+      ...(patch.followPlaybackOnStart !== undefined ? { followPlaybackOnStart: patch.followPlaybackOnStart } : {}),
+    },
+  };
+
+  return saveProgramSettings(merged, platform);
 }
