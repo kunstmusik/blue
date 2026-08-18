@@ -17,6 +17,7 @@ import {
 } from '../components/workbench/panels/score/layer-groups/patterns-timeline-utils';
 import { mapPatternShapeToTarget } from '../components/workbench/panels/score/layer-groups/patterns-clipboard-utils';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -150,6 +151,7 @@ describe('PatternsLayerGroupCanvas', () => {
     container.remove();
     useScoreSelectionStore.getState().clearSelection();
     useScoreSelectionStore.getState().clearPatternClipboard();
+    useLayerSelectionStore.getState().clear();
   });
 
   function render(group: PatternsLayerGroupSnapshot, pixelsPerBeat = 20) {
@@ -212,6 +214,38 @@ describe('PatternsLayerGroupCanvas', () => {
     expect(cell.style.left).toBe('160px');
     expect(cell.style.width).toBe('160px');
     expect(canvasEl().querySelector<HTMLElement>('[data-pattern-grid]')!.dataset.patternStepWidth).toBe('160');
+  });
+
+  it('keeps selection state accessible without highlighting pattern timeline rows', () => {
+    const group = makeGroup(4, [makeLayer('pl-1', 'A', []), makeLayer('pl-2', 'B', [])]);
+    render(group);
+
+    const row = canvasEl().querySelector<HTMLElement>('[data-pattern-row-id="pl-1"]')!;
+    expect(row.getAttribute('aria-selected')).toBe('false');
+    expect(row.className).toContain('bg-app-canvas');
+
+    act(() => {
+      useLayerSelectionStore.getState().selectSingle(
+        'grp:pl-1',
+        group.layers.map((layer, localIndex) => ({
+          scopeKey: 'test',
+          groupId: 'grp',
+          groupType: 'patterns' as const,
+          layerSelectionId: layer.layerId,
+          layerId: layer.layerId,
+          localIndex,
+          globalIndex: localIndex,
+          layer,
+        })),
+        'test',
+      );
+    });
+
+    expect(row.getAttribute('aria-selected')).toBe('true');
+    expect(row.dataset.selectedLayer).toBe('true');
+    expect(row.className).not.toContain('border-l-app-accent');
+    expect(row.className).not.toContain('bg-app-selection');
+    expect(row.className).toContain('bg-app-canvas');
   });
 
   it('paints every skipped cell using the first pressed cell mode', () => {

@@ -18,6 +18,7 @@ import { useProjectStore } from '../stores/project-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -699,5 +700,44 @@ describe('Track layer timeline gestures', () => {
       },
     });
     act(() => root.unmount());
+  });
+
+  it('keeps selection state accessible without highlighting the track timeline row', () => {
+    useLayerSelectionStore.getState().clear();
+    const group = makeTrackGroup([makeItem('track-object', 1, 1)]);
+    const { root, host } = renderTrackCanvas(group);
+
+    const row = host.querySelector<HTMLElement>('[data-timeline-layer-row]')!;
+    expect(row).toBeTruthy();
+    expect(row.getAttribute('aria-selected')).toBe('false');
+    expect(row.style.backgroundColor).toBe('var(--color-app-canvas)');
+    expect(row.className).not.toContain('bg-app-selection');
+
+    // Layer select the track row
+    act(() => {
+      useLayerSelectionStore.getState().selectSingle(
+        'track-group:track-row',
+        [{
+          scopeKey: 'test',
+          groupId: 'track-group',
+          groupType: 'track',
+          layerSelectionId: 'track-row',
+          layerId: 'track-row',
+          localIndex: 0,
+          globalIndex: 0,
+          layer: group.layers[0]!,
+        }],
+        'test',
+      );
+    });
+
+    expect(row.getAttribute('aria-selected')).toBe('true');
+    expect(row.dataset.selectedLayer).toBe('true');
+    expect(row.className).not.toContain('border-l-app-accent');
+    expect(row.className).not.toContain('bg-app-selection');
+    expect(row.style.backgroundColor).toBe('var(--color-app-canvas)');
+
+    act(() => root.unmount());
+    useLayerSelectionStore.getState().clear();
   });
 });

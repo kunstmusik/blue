@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown } from "lucide-react";
 import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
@@ -27,6 +27,7 @@ import { useScorePathState } from "./score/useScorePathState";
 import { useScoreWheelZoom, computePixelsPerBeat } from "./score/useScoreWheelZoom";
 import { useScoreSelectionStore } from "../../../stores/score-selection-store";
 import { useMidiRoutingStore } from "../../../stores/midi-routing-store";
+import { useLayerSelectionStore } from "../../../stores/layer-selection-store";
 import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
@@ -34,7 +35,21 @@ import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcess
 import TrackInstrumentControl from "./score/TrackInstrumentControl";
 import ColorPickerButton from "../../ColorPicker";
 import PatternLayerHeader from "./score/PatternLayerHeader";
+import LayerRemovalConfirmationDialog from "./score/LayerRemovalConfirmationDialog";
 import { secondsToBeats as tempoMapSecondsToBeats } from "./score/tempo-map-utils";
+import {
+  buildLayerRemovalPlan,
+  buildSelectionKey,
+  createMoveLayerRangePatch,
+  createRemoveLayerRangesPatch,
+  deriveSelectedLayerRanges,
+  flattenVisibleLayers,
+  getLayerOperationAvailability,
+  getLayerSelectionId,
+  getPushDisabledReasonLabel,
+  type LayerRemovalPlan,
+  type VisibleLayerRef,
+} from "./score/layer-selection-utils";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -251,6 +266,16 @@ export default function ScorePanel() {
       ? [nestedSnapshot]
       : score.layerGroups;
 
+  const scopeKey = `${sessionId}:${session.activeGroupId ?? 'root'}`;
+  const visibleLayers = useMemo(
+    () => flattenVisibleLayers(effectiveLayerGroups, scopeKey),
+    [effectiveLayerGroups, scopeKey],
+  );
+
+  useEffect(() => {
+    useLayerSelectionStore.getState().reconcile(scopeKey, visibleLayers);
+  }, [scopeKey, visibleLayers]);
+
   const pixelsPerBeat = computePixelsPerBeat(timeState.zoomIterations);
 
   useScoreWheelZoom(scrollContainerRef, timelineHeaderRef, timeState.zoomIterations, pixelsPerBeat, loaded, setTimeState, effectiveLayerGroups);
@@ -409,6 +434,7 @@ export default function ScorePanel() {
   const handleTimelineBackgroundMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.target !== e.currentTarget) return;
     if (e.metaKey || e.ctrlKey) return;
+    useLayerSelectionStore.getState().clear();
     if (!e.shiftKey) {
       useScoreSelectionStore.getState().clearSelection();
     }
@@ -605,6 +631,8 @@ export default function ScorePanel() {
             onTempoVisibleChange={handleTempoVisibleChange}
             onRowVisibilityChange={handleRowVisibilityChange}
             layerGroups={effectiveLayerGroups}
+            visibleLayers={visibleLayers}
+            scopeKey={scopeKey}
             projectSessionId={sessionId}
             projectRevision={getProjectDocumentRevision()}
             leftHeaderRef={leftHeaderRef}
@@ -771,6 +799,8 @@ interface LeftPanelProps {
   onTempoVisibleChange: (visible: boolean) => void;
   onRowVisibilityChange: (key: 'tempoRowVisible' | 'meterRowVisible' | 'markersRowVisible', value: boolean) => void;
   layerGroups: ScoreLayerGroupSnapshot[];
+  visibleLayers?: VisibleLayerRef[];
+  scopeKey?: string;
   projectSessionId: number;
   projectRevision: number;
   leftHeaderRef: React.RefObject<HTMLDivElement | null>;
@@ -788,6 +818,8 @@ function LeftPanel({
   onTempoVisibleChange,
   onRowVisibilityChange,
   layerGroups,
+  visibleLayers,
+  scopeKey,
   projectSessionId,
   projectRevision,
   leftHeaderRef,
@@ -797,6 +829,16 @@ function LeftPanel({
   onSoundLayerNoteProcessorChain,
 }: LeftPanelProps) {
   const visibleGroups = layerGroups;
+  const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
+  const [pendingRemovalPlan, setPendingRemovalPlan] = useState<LayerRemovalPlan | null>(null);
+
+  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
+    if (!pendingRemovalPlan) return;
+    void applyProjectDocumentPatch({
+      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+    });
+    setPendingRemovalPlan(null);
+  }, [applyProjectDocumentPatch, pendingRemovalPlan]);
 
   return (
     <div className="h-full flex flex-col bg-blue-surface border-r border-blue-border/40">
@@ -846,8 +888,56 @@ function LeftPanel({
 
       <div
         ref={leftHeaderRef}
-        className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        data-layer-headers-list
+        tabIndex={0}
+        className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden focus:outline-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         onScroll={onLeftScroll}
+        onFocus={() => useLayerSelectionStore.getState().setKeyboardFocus(true)}
+        onBlur={() => useLayerSelectionStore.getState().setKeyboardFocus(false)}
+        onKeyDown={(event) => {
+          const eventTarget = event.target as HTMLElement | null;
+          if (eventTarget?.closest('input, textarea, [contenteditable="true"]')) {
+            return;
+          }
+
+          const currentVisibleLayers = visibleLayers ?? [];
+          if (event.altKey && event.key === 'ArrowUp') {
+            event.preventDefault();
+            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            const availability = getLayerOperationAvailability(visibleGroups, ranges);
+            if (availability.canPushUp && ranges.length === 1) {
+              const r = ranges[0]!;
+              void applyProjectDocumentPatch({
+                score: createMoveLayerRangePatch(r, r.startIndex - 1),
+              });
+            }
+          } else if (event.altKey && event.key === 'ArrowDown') {
+            event.preventDefault();
+            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            const availability = getLayerOperationAvailability(visibleGroups, ranges);
+            if (availability.canPushDown && ranges.length === 1) {
+              const r = ranges[0]!;
+              void applyProjectDocumentPatch({
+                score: createMoveLayerRangePatch(r, r.startIndex + 1),
+              });
+            }
+          } else if (event.key === 'Delete' || event.key === 'Backspace') {
+            event.preventDefault();
+            const ranges = useLayerSelectionStore.getState().getSelectedRanges(currentVisibleLayers);
+            if (ranges.length > 0) {
+              const plan = buildLayerRemovalPlan(visibleGroups, ranges);
+              if (plan.totalLayerCount > 0) {
+                setPendingRemovalPlan(plan);
+              }
+            }
+          } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            useLayerSelectionStore.getState().moveFocus('up', currentVisibleLayers, event.shiftKey, scopeKey);
+          } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            useLayerSelectionStore.getState().moveFocus('down', currentVisibleLayers, event.shiftKey, scopeKey);
+          }
+        }}
       >
         {visibleGroups.map((group, gi) => {
           const spacer = (
@@ -872,6 +962,9 @@ function LeftPanel({
                     groupId={group.groupId}
                     layerIndex={li}
                     layerCount={group.layers.length}
+                    layerGroups={visibleGroups}
+                    visibleLayers={visibleLayers}
+                    scopeKey={scopeKey}
                   />
                 ))
                 : group.layers.map((layer, li) => (
@@ -882,9 +975,12 @@ function LeftPanel({
                     groupId={group.groupId}
                     layerIndex={li}
                     layerCount={group.layers.length}
+                    layerGroups={visibleGroups}
                     rootGroupIndex={gi}
                     projectSessionId={projectSessionId}
                     projectRevision={projectRevision}
+                    visibleLayers={visibleLayers}
+                    scopeKey={scopeKey}
                     onNoteProcessorChain={(groupId, layerIndex) => onSoundLayerNoteProcessorChain(
                       groupId,
                       layerIndex,
@@ -898,7 +994,13 @@ function LeftPanel({
           );
         })}
       </div>
-
+      {pendingRemovalPlan && (
+        <LayerRemovalConfirmationDialog
+          plan={pendingRemovalPlan}
+          onCancel={() => setPendingRemovalPlan(null)}
+          onConfirm={handleRemovalConfirm}
+        />
+      )}
     </div>
   );
 }
@@ -1061,9 +1163,12 @@ function SoundLayerHeader({
   groupId,
   layerIndex,
   layerCount,
+  layerGroups,
   rootGroupIndex,
   projectSessionId,
   projectRevision,
+  visibleLayers,
+  scopeKey,
   onNoteProcessorChain,
   noteProcessorChain,
 }: {
@@ -1072,9 +1177,12 @@ function SoundLayerHeader({
   groupId: string;
   layerIndex: number;
   layerCount: number;
+  layerGroups?: ScoreLayerGroupSnapshot[];
   rootGroupIndex: number;
   projectSessionId: number;
   projectRevision: number;
+  visibleLayers?: VisibleLayerRef[];
+  scopeKey?: string;
   onNoteProcessorChain?: (groupId: string, layerIndex: number) => void;
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
@@ -1083,9 +1191,30 @@ function SoundLayerHeader({
   const renameLayer = useProjectStore((s) => s.renameLayer);
   const setLayerHeight = useProjectStore((s) => s.setLayerHeight);
   const addLayer = useProjectStore((s) => s.addLayer);
-  const removeLayer = useProjectStore((s) => s.removeLayer);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
+
+  const layerSelectionId = getLayerSelectionId(layer);
+  const selectionKey = buildSelectionKey(groupId, layerSelectionId);
+  const selectedKeys = useLayerSelectionStore((state) => state.selectedKeys);
+  const isLayerSelected = selectedKeys.has(selectionKey);
+  const selectSingle = useLayerSelectionStore((state) => state.selectSingle);
+  const extendTo = useLayerSelectionStore((state) => state.extendTo);
+
+  const fallbackVisibleLayers = useMemo((): VisibleLayerRef[] => [
+    {
+      scopeKey: scopeKey ?? 'test',
+      groupId,
+      groupType,
+      layerSelectionId,
+      layerId: layer.layerId,
+      localIndex: layerIndex,
+      globalIndex: layerIndex,
+      layer,
+    },
+  ], [groupId, groupType, layer, layerIndex, layerSelectionId, scopeKey]);
+  const effectiveVisibleLayers = visibleLayers ?? fallbackVisibleLayers;
+
   const midiFocused = useMidiRoutingStore((state) => (
     groupType === 'track'
     && state.focusedTarget?.kind === 'track'
@@ -1188,22 +1317,78 @@ function SoundLayerHeader({
     ? `#${((selectedAutomationParameter.lineColor >>> 0) & 0x00ffffff).toString(16).padStart(6, '0')}`
     : '#808080';
 
+  const isFocusKey = useLayerSelectionStore((state) => state.focusKey === selectionKey);
+  const keyboardFocus = useLayerSelectionStore((state) => state.keyboardFocus);
+
+  const singleLayerRange = {
+    groupId,
+    groupType,
+    startIndex: layerIndex,
+    endIndex: layerIndex,
+    layerSelectionIds: [layerSelectionId],
+    count: 1,
+  };
+
+  const currentRanges = isLayerSelected
+    ? deriveSelectedLayerRanges(effectiveVisibleLayers, selectedKeys)
+    : [singleLayerRange];
+  const effectiveLayerGroups = layerGroups ?? useProjectStore.getState().score.layerGroups;
+  const availability = getLayerOperationAvailability(effectiveLayerGroups, currentRanges);
+  const removalPlan = buildLayerRemovalPlan(effectiveLayerGroups, currentRanges);
+  const [pendingRemovalPlan, setPendingRemovalPlan] = useState<LayerRemovalPlan | null>(null);
+
+  const getContextRanges = () => {
+    const currentSelectedKeys = useLayerSelectionStore.getState().selectedKeys;
+    return currentSelectedKeys.has(selectionKey)
+      ? deriveSelectedLayerRanges(effectiveVisibleLayers, currentSelectedKeys)
+      : [singleLayerRange];
+  };
+
+  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
+    if (!pendingRemovalPlan) return;
+    void applyProjectDocumentPatch({
+      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+    });
+    setPendingRemovalPlan(null);
+  }, [applyProjectDocumentPatch, pendingRemovalPlan]);
+
   return (
-    <ContextMenu.Root>
+    <>
+    <ContextMenu.Root onOpenChange={(open) => {
+      if (open && !isLayerSelected) {
+        selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
+      }
+    }}>
       <ContextMenu.Trigger asChild>
         <div
+          tabIndex={-1}
+          data-score-layer-header
+          data-layer-id={layer.layerId}
+          data-layer-selection-id={layerSelectionId}
           data-midi-focused={midiFocused ? 'true' : undefined}
+          data-keyboard-focused={isFocusKey && keyboardFocus ? 'true' : undefined}
+          aria-selected={isLayerSelected ? 'true' : 'false'}
+          data-selected-layer={isLayerSelected ? 'true' : undefined}
           className={[
-            'relative flex items-start overflow-hidden border-b border-l-2 border-l-transparent border-app-border-muted select-none',
-            midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
-          ].join(' ')}
+            'relative flex items-start overflow-hidden border-b border-l-2 border-app-border-muted select-none focus:outline-none',
+            isLayerSelected ? 'border-l-app-accent bg-app-selection' : 'border-l-transparent',
+            midiFocused ? 'ring-1 ring-inset ring-app-accent/70' : '',
+            isFocusKey && keyboardFocus ? 'ring-1 ring-app-accent/80' : '',
+          ].filter(Boolean).join(' ')}
           style={{ height }}
           onDoubleClick={startEdit}
+          onMouseDown={(event) => {
+            if (event.button !== 0) return;
+            const target = event.target as HTMLElement;
+            if (target.closest('button, input, [data-track-instrument-control]')) return;
+            if (event.shiftKey) {
+              extendTo(selectionKey, effectiveVisibleLayers, scopeKey);
+            } else {
+              selectSingle(selectionKey, effectiveVisibleLayers, scopeKey);
+            }
+            event.currentTarget.focus();
+          }}
           onPointerDown={(event) => {
-            // Spec 067: an explicit pointer selection of a Track row header
-            // focuses that Track for MIDI routing. Buttons (Mute/Solo/automation/
-            // note processors) and the instrument control stop propagation or are
-            // skipped here so they do not steal performance focus.
             if (groupType !== 'track' || event.button !== 0) return;
             const target = event.target as HTMLElement;
             if (target.closest('button, [data-track-instrument-control]')) return;
@@ -1211,7 +1396,7 @@ function SoundLayerHeader({
               projectSessionId,
               rootGroupId: groupId,
               trackId: layer.layerId,
-              displayName: layer.name,
+              displayName: layer.name || `Track ${layerIndex + 1}`,
             });
           }}
         >
@@ -1228,7 +1413,7 @@ function SoundLayerHeader({
           {editing ? (
             <input
               ref={inputRef}
-              className="flex-1 min-w-0 px-1 text-ui bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
+              className="flex-1 min-w-0 px-1 text-body bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
@@ -1238,7 +1423,7 @@ function SoundLayerHeader({
               onBlur={commitEdit}
             />
           ) : (
-            <span className="flex-1 min-w-0 px-1.5 text-ui text-blue-text truncate pointer-events-none leading-4 mt-0.5">
+            <span className={`flex-1 min-w-0 px-1.5 text-body text-blue-text truncate pointer-events-none leading-4 mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : ''}`}>
               {layer.name}
             </span>
           )}
@@ -1246,6 +1431,7 @@ function SoundLayerHeader({
             <button
               className={btnClass(!!layer.muted, 'bg-app-warning')}
               title="Mute"
+              style={layer.muted ? { color: 'var(--color-app-text-strong)' } : {}}
               onClick={(e) => {
                 e.stopPropagation();
                 setLayerMute(groupId, layerIndex, !(layer.muted ?? false));
@@ -1302,7 +1488,7 @@ function SoundLayerHeader({
                 }}
               />
             )}
-           </div>
+          </div>
           {showAutomationFooter && (
             <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
               <ColorPickerButton
@@ -1312,68 +1498,81 @@ function SoundLayerHeader({
                 ariaLabel="Automation line color"
                 onChange={handleAutomationColorChange}
               />
-              <span className="min-w-0 flex-1 truncate">
-                {selectedAutomationParameter.displayName}
+              <span
+                className="max-w-[70px] truncate"
+                title={selectedAutomationParameter.parameterName}
+              >
+                {selectedAutomationParameter.parameterName}
               </span>
-              <div className="ml-auto flex shrink-0 items-center gap-px">
-                <button
-                  className="flex h-4 w-4 items-center justify-center rounded-sm border border-app-border/40 bg-app-surface/70 text-[11px] text-app-text-muted hover:bg-app-hover hover:text-app-text"
-                  title="Previous automation"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleAutomationPrevNext(-1);
-                  }}
-                >
-                  ‹
-                </button>
-                <button
-                  className="flex h-4 w-4 items-center justify-center rounded-sm border border-app-border/40 bg-app-surface/70 text-[11px] text-app-text-muted hover:bg-app-hover hover:text-app-text"
-                  title="Next automation"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleAutomationPrevNext(1);
-                  }}
-                >
-                  ›
-                </button>
-              </div>
+              <button
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-[8px]"
+                title="Previous Parameter"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAutomationPrevNext(-1);
+                }}
+              >
+                ◀
+              </button>
+              <button
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-[8px]"
+                title="Next Parameter"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAutomationPrevNext(1);
+                }}
+              >
+                ▶
+              </button>
             </div>
           )}
          </div>
        </ContextMenu.Trigger>
        <ContextMenu.Portal>
         <ContextMenu.Content className="editor-context-menu">
-          <ContextMenu.Item
-            className={ctxItemClass}
-            onSelect={() => addLayer(groupId, layerIndex - 1)}
-          >
-            Add Layer Above
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className={ctxItemClass}
-            onSelect={() => addLayer(groupId, layerIndex)}
-          >
-            Add Layer Below
-          </ContextMenu.Item>
+          {availability.canAdd && (
+            <>
+              <ContextMenu.Item
+                className={ctxItemClass}
+                data-layer-add-above
+                onSelect={() => addLayer(groupId, layerIndex - 1)}
+              >
+                Add Layer Above
+              </ContextMenu.Item>
+              <ContextMenu.Item
+                className={ctxItemClass}
+                data-layer-add-below
+                onSelect={() => addLayer(groupId, layerIndex)}
+              >
+                Add Layer Below
+              </ContextMenu.Item>
+            </>
+          )}
           <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className={ctxItemClass}
-            onSelect={() => removeLayer(groupId, layerIndex)}
+            disabled={removalPlan.totalLayerCount === 0}
+            onSelect={() => {
+              const ranges = getContextRanges();
+              const plan = buildLayerRemovalPlan(effectiveLayerGroups, ranges);
+              if (plan.totalLayerCount === 0) return;
+              setPendingRemovalPlan(plan);
+            }}
           >
-            Remove Layer
+            {removalPlan.totalLayerCount > 1 ? `Remove ${removalPlan.totalLayerCount} Layers` : 'Remove Layer'}
           </ContextMenu.Item>
           <ContextMenu.Item
             className={ctxItemClass}
-            disabled={layerIndex <= 0}
+            disabled={!availability.canPushUp}
+            data-push-disabled-reason={getPushDisabledReasonLabel(availability.pushUpDisabledReason)}
+            title={getPushDisabledReasonLabel(availability.pushUpDisabledReason)}
             onSelect={() => {
-              if (layerIndex <= 0) return;
+              const ranges = getContextRanges();
+              const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
+              if (!avail.canPushUp || ranges.length !== 1) return;
+              const r = ranges[0]!;
               void applyProjectDocumentPatch({
-                score: {
-                  type: 'moveLayer',
-                  groupId,
-                  layerIndex,
-                  targetIndex: layerIndex - 1,
-                },
+                score: createMoveLayerRangePatch(r, r.startIndex - 1),
               });
             }}
           >
@@ -1381,16 +1580,16 @@ function SoundLayerHeader({
           </ContextMenu.Item>
           <ContextMenu.Item
             className={ctxItemClass}
-            disabled={layerIndex >= layerCount - 1}
+            disabled={!availability.canPushDown}
+            data-push-disabled-reason={getPushDisabledReasonLabel(availability.pushDownDisabledReason)}
+            title={getPushDisabledReasonLabel(availability.pushDownDisabledReason)}
             onSelect={() => {
-              if (layerIndex >= layerCount - 1) return;
+              const ranges = getContextRanges();
+              const avail = getLayerOperationAvailability(effectiveLayerGroups, ranges);
+              if (!avail.canPushDown || ranges.length !== 1) return;
+              const r = ranges[0]!;
               void applyProjectDocumentPatch({
-                score: {
-                  type: 'moveLayer',
-                  groupId,
-                  layerIndex,
-                  targetIndex: layerIndex + 1,
-                },
+                score: createMoveLayerRangePatch(r, r.startIndex + 1),
               });
             }}
           >
@@ -1408,13 +1607,16 @@ function SoundLayerHeader({
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="editor-context-menu">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((idx) => (
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
                       <ContextMenu.Item
                         key={idx}
-                        className={`${ctxItemClass} ${heightIndex === idx - 1 ? 'bg-app-accent/20 font-medium' : ''}`}
-                        onSelect={() => setLayerHeight(groupId, layerIndex, idx - 1)}
+                        className={ctxItemClass}
+                        onSelect={() => setLayerHeight(groupId, layerIndex, idx)}
                       >
-                        {idx}
+                        <span className="w-4 flex items-center justify-center mr-1">
+                          {heightIndex === idx && <Check className="w-3 h-3 text-app-accent" />}
+                        </span>
+                        <span>{idx + 1}</span>
                       </ContextMenu.Item>
                     ))}
                   </ContextMenu.SubContent>
@@ -1425,10 +1627,16 @@ function SoundLayerHeader({
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>
+    {pendingRemovalPlan && (
+      <LayerRemovalConfirmationDialog
+        plan={pendingRemovalPlan}
+        onCancel={() => setPendingRemovalPlan(null)}
+        onConfirm={handleRemovalConfirm}
+      />
+    )}
+    </>
   );
 }
-
-// computePixelsPerBeat is now imported from ./score/useScoreWheelZoom
 
 function computeTotalBeats(score: ScoreDocumentSnapshot): number {
   let maxBeat = 64;

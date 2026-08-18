@@ -278,6 +278,7 @@ export interface ScoreRowObjectSnapshot {
 
 export interface ScoreLayerSnapshot {
   layerId: string;
+  layerSelectionId?: string;
   name: string;
   height: number;
   muted?: boolean;
@@ -929,6 +930,22 @@ export type ScorePatch =
       targetIndex: number;
     }
   | {
+      type: 'moveLayerRange';
+      groupId: string;
+      startIndex: number;
+      endIndex: number;
+      targetIndex: number;
+    }
+  | {
+      type: 'removeLayerRanges';
+      ranges: ReadonlyArray<{
+        groupId: string;
+        startIndex: number;
+        endIndex: number;
+      }>;
+      deleteEmptyLayerGroups: boolean;
+    }
+  | {
       type: 'updateLayerState';
       groupId: string;
       layerIndex: number;
@@ -1556,6 +1573,71 @@ export interface BlueLiveNoteTriggerResult {
   ok: boolean;
   message?: string;
   submittedScoreText?: string;
+}
+
+export interface LayerIndexRange {
+  groupId: string;
+  startIndex: number;
+  endIndex: number;
+}
+
+export function isValidLayerRange(
+  startIndex: number,
+  endIndex: number,
+  groupLength: number,
+): boolean {
+  return Number.isInteger(startIndex)
+    && Number.isInteger(endIndex)
+    && Number.isInteger(groupLength)
+    && groupLength >= 0
+    && startIndex >= 0
+    && endIndex >= startIndex
+    && endIndex < groupLength;
+}
+
+export function isValidLayerRangeTarget(
+  startIndex: number,
+  endIndex: number,
+  targetIndex: number,
+  groupLength: number,
+): boolean {
+  if (!isValidLayerRange(startIndex, endIndex, groupLength) || !Number.isInteger(targetIndex)) {
+    return false;
+  }
+  const count = endIndex - startIndex + 1;
+  return targetIndex >= 0 && targetIndex <= groupLength - count;
+}
+
+export function areLayerRangesValid(
+  ranges: readonly LayerIndexRange[],
+  getGroupLength: (groupId: string) => number | undefined,
+): boolean {
+  if (!Array.isArray(ranges) || ranges.length === 0) return false;
+
+  const rangesByGroup = new Map<string, LayerIndexRange[]>();
+  for (const range of ranges) {
+    if (!range || typeof range.groupId !== 'string' || range.groupId.trim().length === 0) {
+      return false;
+    }
+    const groupLength = getGroupLength(range.groupId);
+    if (groupLength === undefined || !isValidLayerRange(range.startIndex, range.endIndex, groupLength)) {
+      return false;
+    }
+    const groupRanges = rangesByGroup.get(range.groupId) ?? [];
+    groupRanges.push(range);
+    rangesByGroup.set(range.groupId, groupRanges);
+  }
+
+  for (const groupRanges of rangesByGroup.values()) {
+    groupRanges.sort((left, right) => left.startIndex - right.startIndex);
+    for (let i = 1; i < groupRanges.length; i++) {
+      if (groupRanges[i - 1]!.endIndex >= groupRanges[i]!.startIndex) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 export type BlueLivePatch =
@@ -3203,6 +3285,17 @@ let nextScoreObjectId = 1;
 const PATTERN_LAYER_ID_MAP = new WeakMap<object, string>();
 let nextPatternLayerId = 1;
 
+const LAYER_SELECTION_ID_MAP = new WeakMap<object, string>();
+let nextLayerSelectionId = 1;
+
+export function assignLayerSelectionId(obj: object): string {
+  const existing = LAYER_SELECTION_ID_MAP.get(obj);
+  if (existing) return existing;
+  const id = `lsel-${nextLayerSelectionId++}`;
+  LAYER_SELECTION_ID_MAP.set(obj, id);
+  return id;
+}
+
 function assignPatternLayerId(obj: object): string {
   const existing = PATTERN_LAYER_ID_MAP.get(obj);
   if (existing) return existing;
@@ -3388,6 +3481,7 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
     );
     layers.push({
       layerId,
+      layerSelectionId: assignLayerSelectionId(layer),
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
@@ -3501,6 +3595,7 @@ function createTrackLayerGroupSnapshot(
     layers.push({
       layerKind: 'track',
       layerId,
+      layerSelectionId: assignLayerSelectionId(layer),
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
@@ -3578,6 +3673,7 @@ function createPatternsLayerGroupSnapshot(lg: PatternsLayerGroup, context: TimeC
     };
     layers.push({
       layerId,
+      layerSelectionId: assignLayerSelectionId(layer),
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
@@ -4647,6 +4743,7 @@ function scorePatchTouchesMixerAudioChannels(patch: ScorePatch): boolean {
   switch (patch.type) {
     case 'addLayer':
     case 'removeLayer':
+    case 'removeLayerRanges':
     case 'renameLayer':
     case 'renameLayerGroup':
     case 'moveLayerGroup':
@@ -7016,16 +7113,45 @@ function createManagedLayerGroup(
 }
 
 function findLayerGroupByGroupId(score: Score, groupId: string): ManagedLayerGroup | null {
-  for (let i = 0; i < score.length; i++) {
-    const lg = score[i];
-    if (!isManagedLayerGroup(lg)) continue;
-    if (getManagedLayerGroupId(lg) === groupId) return lg;
-    if (lg instanceof PolyObject) {
-      const found = findPolyObjectByGroupIdRecursive(lg, groupId);
-      if (found) return found;
+  return collectManagedLayerGroupLocations(score)
+    .find((location) => getManagedLayerGroupId(location.group) === groupId)?.group ?? null;
+}
+
+interface ManagedLayerGroupLocation {
+  group: ManagedLayerGroup;
+  parent: unknown[];
+  index: number;
+  depth: number;
+}
+
+function collectManagedLayerGroupLocations(score: Score): ManagedLayerGroupLocation[] {
+  const locations: ManagedLayerGroupLocation[] = [];
+  const visited = new Set<ManagedLayerGroup>();
+
+  const visit = (group: ManagedLayerGroup, parent: unknown[], index: number, depth: number): void => {
+    if (visited.has(group)) return;
+    visited.add(group);
+    locations.push({ group, parent, index, depth });
+
+    if (!(group instanceof PolyObject)) return;
+    for (const layer of group) {
+      for (let objectIndex = 0; objectIndex < layer.length; objectIndex++) {
+        const soundObject = layer[objectIndex];
+        if (soundObject instanceof PolyObject) {
+          visit(soundObject, layer, objectIndex, depth + 1);
+        }
+      }
+    }
+  };
+
+  for (let index = 0; index < score.length; index++) {
+    const group = score[index];
+    if (isManagedLayerGroup(group)) {
+      visit(group, score, index, 0);
     }
   }
-  return null;
+
+  return locations;
 }
 
 function findRootLayerGroupIndexByGroupId(score: Score, groupId: string): number {
@@ -7058,6 +7184,72 @@ function moveLayerInManagedGroup(
   const [layer] = group.splice(layerIndex, 1);
   if (!layer) return false;
   group.splice(targetIndex, 0, layer);
+  return true;
+}
+
+function moveLayerRangeInManagedGroup(
+  group: ManagedLayerGroup,
+  startIndex: number,
+  endIndex: number,
+  targetIndex: number,
+): boolean {
+  if (!isValidLayerRange(startIndex, endIndex, group.length)
+    || !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, group.length)) {
+    return false;
+  }
+  const count = endIndex - startIndex + 1;
+  if (startIndex === targetIndex) return false;
+
+  const layers = group.splice(startIndex, count);
+  group.splice(targetIndex, 0, ...layers);
+  return true;
+}
+
+function applyRemoveLayerRangesPatch(
+  data: BlueData,
+  patch: Extract<ScorePatch, { type: 'removeLayerRanges' }>,
+): boolean {
+  const score = data.getScore();
+  const ranges = patch.ranges;
+  if (!areLayerRangesValid(ranges, (groupId) => findLayerGroupByGroupId(score, groupId)?.length)) return false;
+
+  const byGroup = new Map<string, Array<{ startIndex: number; endIndex: number }>>();
+  for (const r of ranges) {
+    let list = byGroup.get(r.groupId);
+    if (!list) {
+      list = [];
+      byGroup.set(r.groupId, list);
+    }
+    list.push({ startIndex: r.startIndex, endIndex: r.endIndex });
+  }
+
+  for (const [groupId, groupRanges] of byGroup.entries()) {
+    const group = findLayerGroupByGroupId(score, groupId);
+    if (!group) continue;
+    groupRanges.sort((a, b) => b.startIndex - a.startIndex);
+    for (const r of groupRanges) {
+      group.removeLayers(r.startIndex, r.endIndex);
+    }
+  }
+
+  if (patch.deleteEmptyLayerGroups) {
+    const affectedGroupIds = new Set(byGroup.keys());
+    const emptyGroups = collectManagedLayerGroupLocations(score)
+      .filter((location) => (
+        affectedGroupIds.has(getManagedLayerGroupId(location.group))
+        && location.group.length === 0
+      ))
+      .sort((left, right) => (
+        right.depth - left.depth
+        || right.index - left.index
+      ));
+    for (const location of emptyGroups) {
+      if (location.parent[location.index] === location.group) {
+        location.parent.splice(location.index, 1);
+      }
+    }
+  }
+
   return true;
 }
 
@@ -8547,6 +8739,18 @@ function applyScoreObjectPatch(
     const clampedTarget = Math.max(0, Math.min(targetIndex, targetGroup.length - 1));
     if (layerIndex === clampedTarget) return false;
     return moveLayerInManagedGroup(targetGroup, layerIndex, clampedTarget);
+  }
+
+  if (patch.type === 'moveLayerRange') {
+    const score = data.getScore();
+    const targetGroup = findLayerGroupByGroupId(score, patch.groupId);
+    if (!targetGroup) return false;
+    const { startIndex, endIndex, targetIndex } = patch;
+    return moveLayerRangeInManagedGroup(targetGroup, startIndex, endIndex, targetIndex);
+  }
+
+  if (patch.type === 'removeLayerRanges') {
+    return applyRemoveLayerRangesPatch(data, patch);
   }
 
   if (patch.type === 'renameLayer') {
@@ -11190,6 +11394,7 @@ export function createNestedPolyObjectSnapshot(
     );
     layers.push({
       layerId,
+      layerSelectionId: assignLayerSelectionId(subLayer),
       name: subLayer.getName(),
       height: subLayer.getLayerHeight(),
       muted: subLayer.isMuted(),

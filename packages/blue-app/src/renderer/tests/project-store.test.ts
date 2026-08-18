@@ -341,4 +341,121 @@ describe('project-store — pattern layer optimistic projection', () => {
 
     await useProjectStore.getState().flushPendingPatches();
   });
+
+  it('optimistically projects moveLayerRange and removeLayerRanges', async () => {
+    const group = {
+      groupId: 'sound-grp',
+      groupType: 'polyObject' as const,
+      name: 'Sound Group',
+      layerCount: 4,
+      isOpenableContainer: true as const,
+      layers: [
+        { layerId: 'l-0', name: 'L0', height: 44, muted: false, solo: false, items: [] },
+        { layerId: 'l-1', name: 'L1', height: 44, muted: false, solo: false, items: [] },
+        { layerId: 'l-2', name: 'L2', height: 44, muted: false, solo: false, items: [] },
+        { layerId: 'l-3', name: 'L3', height: 44, muted: false, solo: false, items: [] },
+      ],
+    };
+    const snapshot = createEmptyProjectEditorSnapshot();
+    snapshot.loaded = true;
+    snapshot.score!.layerGroups = [group];
+    useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
+
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: async () => ({ changed: true }),
+      getProjectDocument: async () => null,
+    };
+
+    // Optimistically move [1, 2] to 0 -> order should be L1, L2, L0, L3
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: { type: 'moveLayerRange', groupId: 'sound-grp', startIndex: 1, endIndex: 2, targetIndex: 0 },
+    });
+
+    let currentGroup = useProjectStore.getState().score.layerGroups[0]!;
+    expect(currentGroup.layers.map((l) => l.name)).toEqual(['L1', 'L2', 'L0', 'L3']);
+
+    // Optimistically remove [0, 1] (L1, L2) -> order should be L0, L3
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'removeLayerRanges',
+        ranges: [{ groupId: 'sound-grp', startIndex: 0, endIndex: 1 }],
+        deleteEmptyLayerGroups: false,
+      },
+    });
+
+    currentGroup = useProjectStore.getState().score.layerGroups[0]!;
+    expect(currentGroup.layers.map((l) => l.name)).toEqual(['L0', 'L3']);
+    expect(currentGroup.layerCount).toBe(2);
+
+    await useProjectStore.getState().flushPendingPatches();
+  });
+
+  it('rejects invalid optimistic removal ranges without deleting unrelated empty groups', async () => {
+    const snapshot = createEmptyProjectEditorSnapshot();
+    snapshot.loaded = true;
+    snapshot.score.layerGroups = [
+      {
+        groupId: 'selected-group',
+        groupType: 'polyObject',
+        name: 'Selected',
+        layerCount: 1,
+        isOpenableContainer: true,
+        layers: [{ layerId: 'selected-layer', name: 'Selected Layer', height: 44, muted: false, solo: false, items: [] }],
+      },
+      {
+        groupId: 'unrelated-empty-group',
+        groupType: 'polyObject',
+        name: 'Keep Empty',
+        layerCount: 0,
+        isOpenableContainer: true,
+        layers: [],
+      },
+    ];
+    useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'removeLayerRanges',
+        ranges: [{ groupId: 'selected-group', startIndex: 0, endIndex: 3 }],
+        deleteEmptyLayerGroups: true,
+      },
+    });
+
+    expect(useProjectStore.getState().score.layerGroups.map((group) => group.groupId)).toEqual([
+      'selected-group',
+      'unrelated-empty-group',
+    ]);
+    await useProjectStore.getState().flushPendingPatches();
+  });
+
+  it('rejects an invalid optimistic move target without changing layer order', async () => {
+    const snapshot = createEmptyProjectEditorSnapshot();
+    snapshot.loaded = true;
+    snapshot.score!.layerGroups = [{
+      groupId: 'move-group',
+      groupType: 'polyObject',
+      name: 'Move Group',
+      layerCount: 2,
+      isOpenableContainer: true,
+      layers: [
+        { layerId: 'move-0', name: 'L0', height: 44, muted: false, solo: false, items: [] },
+        { layerId: 'move-1', name: 'L1', height: 44, muted: false, solo: false, items: [] },
+      ],
+    }];
+    useProjectStore.getState().applyMissingAudioResolvedSnapshot(snapshot);
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'moveLayerRange',
+        groupId: 'move-group',
+        startIndex: 0,
+        endIndex: 0,
+        targetIndex: 2,
+      },
+    });
+
+    expect(useProjectStore.getState().score.layerGroups[0]!.layers.map((layer) => layer.name))
+      .toEqual(['L0', 'L1']);
+    await useProjectStore.getState().flushPendingPatches();
+  });
 });

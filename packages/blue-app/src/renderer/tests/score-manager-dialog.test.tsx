@@ -16,7 +16,6 @@ const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(),
     addLayer: vi.fn(),
-    removeLayer: vi.fn(),
   },
 }));
 
@@ -93,7 +92,6 @@ function setTextInputValue(input: HTMLInputElement, value: string): void {
 beforeEach(() => {
   mockProjectState.applyProjectDocumentPatch.mockReset();
   mockProjectState.addLayer.mockReset();
-  mockProjectState.removeLayer.mockReset();
 });
 
 afterEach(() => {
@@ -165,6 +163,42 @@ describe('ScoreManagerDialog', () => {
         type: 'renameLayerGroup',
         groupId: 'lg-1',
         name: 'Renamed Group',
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('confirms removal of the last layer and exposes empty-group cleanup', () => {
+    const { container, root } = renderDialog();
+    const layerRow = container.querySelector('tbody tr') as HTMLTableRowElement;
+    expect(layerRow).toBeTruthy();
+
+    act(() => {
+      layerRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const removeButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer"]')!;
+    expect(removeButton.disabled).toBe(false);
+    act(() => {
+      removeButton.click();
+    });
+
+    const dialog = container.querySelector('[data-layer-removal-dialog]');
+    expect(dialog).toBeTruthy();
+    const cleanupCheckbox = container.querySelector<HTMLInputElement>('[data-delete-empty-layer-groups]');
+    expect(cleanupCheckbox?.checked).toBe(true);
+
+    act(() => {
+      dialog?.querySelector<HTMLButtonElement>('[data-layer-removal-confirm]')?.click();
+    });
+
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'removeLayerRanges',
+        ranges: [{ groupId: 'lg-1', startIndex: 0, endIndex: 0 }],
+        deleteEmptyLayerGroups: true,
       },
     });
 

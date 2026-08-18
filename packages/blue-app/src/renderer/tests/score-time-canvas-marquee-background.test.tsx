@@ -11,6 +11,7 @@ import type {
 } from '../components/workbench/panels/score/types';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { useLayerSelectionStore } from '../stores/layer-selection-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -93,6 +94,7 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
       resizeScoreObjects: vi.fn(),
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
     useScoreSelectionStore.getState().clearSelection();
+    useLayerSelectionStore.getState().clear();
 
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -137,6 +139,7 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
       resizeScoreObjects: originalProjectState.resizeScoreObjects,
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
     useScoreSelectionStore.getState().clearSelection();
+    useLayerSelectionStore.getState().clear();
     container.remove();
     document.body.innerHTML = '';
   });
@@ -158,5 +161,34 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
 
     dispatchMouseDown(surface, true, 10, 80);
     expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['a']);
+  });
+
+  it('keeps selection state accessible without highlighting SoundObject timeline rows', () => {
+    const row = container.querySelector<HTMLElement>('[data-timeline-layer-row]')!;
+    expect(row.getAttribute('aria-selected')).toBe('false');
+    expect(row.style.backgroundColor).toBe('var(--color-app-canvas)');
+
+    act(() => {
+      useLayerSelectionStore.getState().selectSingle(
+        'g1:g1-layer-0',
+        [{
+          scopeKey: 'test',
+          groupId: 'g1',
+          groupType: 'polyObject',
+          layerSelectionId: 'g1-layer-0',
+          layerId: 'g1-layer-0',
+          localIndex: 0,
+          globalIndex: 0,
+          layer: makeGroup().layers[0]!,
+        }],
+        'test',
+      );
+    });
+
+    expect(row.getAttribute('aria-selected')).toBe('true');
+    expect(row.dataset.selectedLayer).toBe('true');
+    expect(row.className).not.toContain('border-l-app-accent');
+    expect(row.className).not.toContain('bg-app-selection');
+    expect(row.style.backgroundColor).toBe('var(--color-app-canvas)');
   });
 });

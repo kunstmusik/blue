@@ -8,6 +8,7 @@ import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
+import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -150,6 +151,7 @@ function renderPanel(): { container: HTMLDivElement; root: Root } {
 
 beforeEach(() => {
   useProjectStore.getState().clearProject();
+  useLayerSelectionStore.getState().clear();
   mockResetSession.mockClear();
   mockScorePathState.session = {
     activeGroupId: null,
@@ -165,6 +167,7 @@ beforeEach(() => {
 afterEach(() => {
   __testClearPendingPatches();
   useProjectStore.getState().clearProject();
+  useLayerSelectionStore.getState().clear();
   usePlaybackStore.getState().reset();
   delete (window as any).blueAPI;
 });
@@ -373,7 +376,7 @@ describe('ScorePanel session resets', () => {
 
     expect(focusedHeader).toBeTruthy();
     expect(focusedHeader?.textContent).toContain('Audio 1');
-    expect(focusedHeader?.className).toContain('border-l-app-accent');
+    expect(focusedHeader?.className).toContain('ring-app-accent');
 
     act(() => {
       root.unmount();
@@ -412,6 +415,30 @@ describe('ScorePanel session resets', () => {
       }));
     });
     expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
+
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('does not trigger project document patch or dirty state on layer selection (US4)', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    const { container, root } = renderPanel();
+    const commitPatchesSpy = (window as any).blueAPI.commitProjectDocumentPatches;
+    const isDirtyBefore = useProjectStore.getState().isDirty;
+
+    const audioHeader = container.querySelector('[data-layer-id="audio-layer-0"]') as HTMLElement;
+    const polyHeader = container.querySelector('[data-layer-id="poly-layer-0"]') as HTMLElement;
+
+    act(() => {
+      audioHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    });
+    act(() => {
+      polyHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+    });
+
+    expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);
+    expect(commitPatchesSpy).not.toHaveBeenCalled();
+    expect(useProjectStore.getState().isDirty).toBe(isDirtyBefore);
 
     act(() => root.unmount());
     container.remove();

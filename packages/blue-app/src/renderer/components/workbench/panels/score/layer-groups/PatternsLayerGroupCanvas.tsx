@@ -249,6 +249,7 @@ export default function PatternsLayerGroupCanvas({
             <PatternGridRow
               key={layer.layerId}
               layer={layer}
+              groupId={group.groupId}
               pixelsPerBeat={scale}
               stepBeats={stepBeats}
               stepWidth={stepWidth}

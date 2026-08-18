@@ -1,6 +1,8 @@
 import type { PatternLayerSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT } from '../types';
 import { beatToPixelX } from './patterns-timeline-utils';
+import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
+import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 
 export interface PatternGridPreviewCell {
   cellIndex: number;
@@ -9,6 +11,8 @@ export interface PatternGridPreviewCell {
 
 interface Props {
   layer: PatternLayerSnapshot;
+  groupId?: string;
+  isLayerSelected?: boolean;
   pixelsPerBeat: number;
   stepBeats: number;
   stepWidth: number;
@@ -23,6 +27,8 @@ function validCellIndices(layer: PatternLayerSnapshot): number[] {
 
 export default function PatternGridRow({
   layer,
+  groupId,
+  isLayerSelected: propIsLayerSelected,
   pixelsPerBeat,
   stepBeats,
   stepWidth,
@@ -30,12 +36,19 @@ export default function PatternGridRow({
 }: Props) {
   const activeCells = validCellIndices(layer);
   const previewByCell = new Map(paintPreview.map((cell) => [cell.cellIndex, cell.active] as const));
+  const selectedKeys = useLayerSelectionStore((s) => s.selectedKeys);
+  const isSelected = propIsLayerSelected ?? (groupId ? selectedKeys.has(buildSelectionKey(groupId, getLayerSelectionId(layer))) : false);
 
   return (
     <div
       data-pattern-row-id={layer.layerId}
+      data-timeline-layer-row
+      aria-selected={isSelected ? 'true' : 'false'}
+      data-selected-layer={isSelected ? 'true' : undefined}
       className="relative overflow-hidden border-b border-app-timeline-divider bg-app-canvas"
-      style={{ height: layer.height || DEFAULT_ROW_HEIGHT }}
+      style={{
+        height: layer.height || DEFAULT_ROW_HEIGHT,
+      }}
     >
       <div
         data-pattern-grid

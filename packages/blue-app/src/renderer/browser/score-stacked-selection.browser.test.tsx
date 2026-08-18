@@ -170,4 +170,43 @@ describe('stacked Score timeline selection', () => {
       new Set(['second-group-item']),
     );
   });
+
+  it('renders stacked timeline canvas rows with normal canvas background', () => {
+    const firstGroup = createGroup('first-group', 0, [44, 44]);
+    const layerGroups = [firstGroup];
+    useProjectStore.setState({
+      score: {
+        ...useProjectStore.getState().score,
+        layerGroups,
+      },
+    });
+
+    act(() => {
+      root.render(
+        <div data-testid="timeline-scroll" style={{ width: 400, height: 200 }}>
+          <LayerPanel
+            layerGroups={layerGroups}
+            onOpenNested={() => undefined}
+            projectSessionId={1}
+            projectRevision={1}
+            pixelsPerBeat={25}
+            totalBeats={16}
+            snapEnabled
+            snapValue="BEAT"
+            tempo={120}
+            tempoMap={{
+              enabled: false,
+              visible: false,
+              points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
+            }}
+            smpteFrameRate={24}
+            meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+          />
+        </div>,
+      );
+    });
+
+    const canvasRow = container.querySelector('[data-group-id="first-group"] [data-layer-id="first-group-layer-0"]');
+    expect(canvasRow).toBeTruthy();
+  });
 });

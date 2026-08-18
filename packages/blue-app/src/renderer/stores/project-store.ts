@@ -75,6 +75,9 @@ import {
   type TempoMapPatch,
   type ToolbarProjectTransportSnapshot,
   type UdoDefinitionSnapshot,
+  areLayerRangesValid,
+  isValidLayerRange,
+  isValidLayerRangeTarget,
 } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 import {
@@ -93,6 +96,7 @@ import {
   useMidiRoutingStore,
   type MidiRoutingReconciliation,
 } from './midi-routing-store';
+import { useLayerSelectionStore } from './layer-selection-store';
 
 interface ProjectState {
   title: string;
@@ -213,6 +217,8 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
   switch (patch.type) {
     case 'addLayer':
     case 'removeLayer':
+    case 'moveLayerRange':
+    case 'removeLayerRanges':
     case 'renameLayer':
     case 'renameLayerGroup':
     case 'moveLayerGroup':
@@ -657,6 +663,7 @@ function applyProjectInfoToState(
       resetTransientProjectMutationState();
       storeSet(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
+      useLayerSelectionStore.getState().clear();
     }
     return;
   }
@@ -666,6 +673,7 @@ function applyProjectInfoToState(
     const incomingSessionId = info.sessionId ?? state.sessionId;
     if (incomingSessionId !== latestProjectSessionId) {
       resetTransientProjectMutationState();
+      useLayerSelectionStore.getState().clear();
       latestProjectSessionId = incomingSessionId;
     }
 
@@ -1994,6 +2002,59 @@ function applyScorePatchToSnapshot(
       layers.splice(clampedTarget, 0, moved!);
       return { ...lg, layers };
     });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'moveLayerRange') {
+    const nextLayerGroups = score.layerGroups.map((lg) => {
+      if (lg.groupId !== patch.groupId) return lg;
+      const { startIndex, endIndex, targetIndex } = patch;
+      if (!isValidLayerRange(startIndex, endIndex, lg.layers.length)
+        || !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, lg.layers.length)) return lg;
+      const count = endIndex - startIndex + 1;
+      if (startIndex === targetIndex) return lg;
+      const layers = [...lg.layers];
+      const moved = layers.splice(startIndex, count);
+      layers.splice(targetIndex, 0, ...moved);
+      return { ...lg, layers };
+    });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'removeLayerRanges') {
+    const ranges = patch.ranges;
+    if (!areLayerRangesValid(ranges, (groupId) => (
+      score.layerGroups.find((group) => group.groupId === groupId)?.layers.length
+    ))) return score;
+
+    const byGroup = new Map<string, Array<{ startIndex: number; endIndex: number }>>();
+    for (const r of ranges) {
+      let list = byGroup.get(r.groupId);
+      if (!list) {
+        list = [];
+        byGroup.set(r.groupId, list);
+      }
+      list.push({ startIndex: r.startIndex, endIndex: r.endIndex });
+    }
+
+    let nextLayerGroups = score.layerGroups.map((lg) => {
+      const groupRanges = byGroup.get(lg.groupId);
+      if (!groupRanges || groupRanges.length === 0) return lg;
+      const sorted = [...groupRanges].sort((a, b) => b.startIndex - a.startIndex);
+      let layers = [...lg.layers];
+      for (const r of sorted) {
+        layers.splice(r.startIndex, r.endIndex - r.startIndex + 1);
+      }
+      return { ...lg, layers, layerCount: layers.length };
+    });
+
+    if (patch.deleteEmptyLayerGroups) {
+      const affectedGroupIds = new Set(ranges.map((range) => range.groupId));
+      nextLayerGroups = nextLayerGroups.filter((lg) => (
+        !affectedGroupIds.has(lg.groupId) || lg.layers.length > 0
+      ));
+    }
+
     return { ...score, layerGroups: nextLayerGroups };
   }
 
@@ -4246,6 +4307,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       resetTransientProjectMutationState();
       set(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
+      useLayerSelectionStore.getState().clear();
     },
 
   revertProject: async () => {

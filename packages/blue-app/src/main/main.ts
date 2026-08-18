@@ -16,6 +16,7 @@ import * as fs from 'fs';
 import {
   BlueData,
   Effect,
+  PolyObject,
   Send,
   BSBGroup,
   BSBWidget,
@@ -815,16 +816,58 @@ function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): v
     return;
   }
 
+  if (scorePatch.type === 'removeLayerRanges') {
+    const removedCountByGroup = new Map<string, number>();
+    for (const r of scorePatch.ranges) {
+      const group = findTrackLayerGroupById(currentData.getScore(), r.groupId);
+      if (group) {
+        const startIndex = Math.max(0, r.startIndex);
+        const endIndex = Math.min(group.length - 1, r.endIndex);
+        for (let i = startIndex; i <= endIndex; i++) {
+          const track = group[i];
+          if (track) {
+            closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
+          }
+        }
+        if (endIndex >= startIndex) {
+          removedCountByGroup.set(
+            r.groupId,
+            (removedCountByGroup.get(r.groupId) ?? 0) + endIndex - startIndex + 1,
+          );
+        }
+      }
+    }
+    if (scorePatch.deleteEmptyLayerGroups) {
+      for (const [groupId, removedCount] of removedCountByGroup) {
+        const group = findTrackLayerGroupById(currentData.getScore(), groupId);
+        if (group && group.length > 0 && removedCount >= group.length) {
+          closeTrackInstrumentEditorWindowsForGroup(groupId);
+        }
+      }
+    }
+    return;
+  }
+
   if (scorePatch.type !== 'removeLayer') return;
-  const group = currentData.getScore().find(
-    (candidate): candidate is TrackLayerGroup => (
-      candidate instanceof TrackLayerGroup && candidate.getUniqueId() === scorePatch.groupId
-    ),
-  );
+  const group = findTrackLayerGroupById(currentData.getScore(), scorePatch.groupId);
   const track = group?.[scorePatch.layerIndex];
   if (track) {
     closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
   }
+}
+
+function findTrackLayerGroupById(groups: readonly unknown[], groupId: string): TrackLayerGroup | null {
+  for (const candidate of groups) {
+    if (candidate instanceof TrackLayerGroup) {
+      const trackGroup = candidate as TrackLayerGroup;
+      if (trackGroup.getUniqueId() === groupId) return trackGroup;
+    }
+    if (candidate instanceof PolyObject) {
+      const nested = findTrackLayerGroupById(candidate as readonly unknown[], groupId);
+      if (nested) return nested;
+    }
+  }
+  return null;
 }
 
 function updateWindowTitle(): void {

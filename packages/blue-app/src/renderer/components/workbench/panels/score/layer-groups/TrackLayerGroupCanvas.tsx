@@ -19,6 +19,8 @@ import type {
 } from '../../../../../../shared/project-editor';
 import type { ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
+import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
+import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useLibraryStore } from '../../../../../stores/library-store';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
@@ -231,6 +233,8 @@ export default function TrackLayerGroupCanvas({
   const addToSelection = useScoreSelectionStore((state) => state.addToSelection);
   const copySelected = useScoreSelectionStore((state) => state.copySelected);
   const setAudioDropGuideBeat = useScoreSelectionStore((state) => state.setAudioDropGuideBeat);
+  const selectedLayerKeys = useLayerSelectionStore((state) => state.selectedKeys);
+  const clearLayerSelection = useLayerSelectionStore((state) => state.clear);
   const captureScoreSoundObject = useLibraryStore((state) => state.captureScoreSoundObject);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
@@ -723,7 +727,10 @@ export default function TrackLayerGroupCanvas({
     }
 
     if (!hit) {
-      if (!event.shiftKey) clearSelection();
+      if (!event.shiftKey) {
+        clearSelection();
+        clearLayerSelection();
+      }
       gestureRef.current = {
         mode: 'marquee',
         startClientX: event.clientX,
@@ -833,7 +840,7 @@ export default function TrackLayerGroupCanvas({
       additive: false,
       originals,
     };
-  }, [allLayerGroups, clearSelection, clipboard.length, collectSelectedOriginals, getDisplayItem, group.groupId, group.layers, pasteAtTrackPosition, pixelsPerBeat, select, selectedObjectIds, toLocalXY]);
+  }, [allLayerGroups, clearLayerSelection, clearSelection, clipboard.length, collectSelectedOriginals, getDisplayItem, group.groupId, group.layers, pasteAtTrackPosition, pixelsPerBeat, select, selectedObjectIds, toLocalXY]);
 
   const startFadeHandleDrag = useCallback((
     event: React.MouseEvent<HTMLDivElement>,
@@ -1351,9 +1358,15 @@ export default function TrackLayerGroupCanvas({
         >
           <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
           {rows.map(({ layer, height }, layerIndex) => {
+            const isLayerSelected = selectedLayerKeys.has(
+              buildSelectionKey(group.groupId, getLayerSelectionId(layer)),
+            );
             return (
               <div
                 key={layer.layerId}
+                data-timeline-layer-row
+                aria-selected={isLayerSelected ? 'true' : 'false'}
+                data-selected-layer={isLayerSelected ? 'true' : undefined}
                 className="relative border-b border-app-border/30"
                 style={{ height, backgroundColor: 'var(--color-app-canvas)' }}
               >

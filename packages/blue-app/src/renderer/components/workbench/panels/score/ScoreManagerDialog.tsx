@@ -7,6 +7,16 @@ import type {
   ScoreLayerGroupType,
   ScoreLayerSnapshot,
 } from '../../../../../shared/project-editor';
+import LayerRemovalConfirmationDialog from './LayerRemovalConfirmationDialog';
+import {
+  buildLayerRemovalPlan,
+  createMoveLayerRangePatch,
+  createRemoveLayerRangesPatch,
+  getLayerOperationAvailability,
+  getLayerSelectionId,
+  type LayerRemovalPlan,
+  type SelectedLayerRange,
+} from './layer-selection-utils';
 
 interface Props {
   score: ScoreDocumentSnapshot;
@@ -19,10 +29,25 @@ const ADD_LAYER_GROUP_OPTIONS: Array<{ groupType: ScoreLayerGroupType; label: st
   { groupType: 'patterns', label: 'Add Patterns Layer Group' },
 ];
 
+function createSingleLayerRange(
+  group: ScoreLayerGroupSnapshot | undefined,
+  layerIndex: number,
+): SelectedLayerRange | null {
+  const layer = group?.layers[layerIndex];
+  if (!group || !layer || layerIndex < 0) return null;
+  return {
+    groupId: group.groupId,
+    groupType: group.groupType,
+    startIndex: layerIndex,
+    endIndex: layerIndex,
+    layerSelectionIds: [getLayerSelectionId(layer)],
+    count: 1,
+  };
+}
+
 export default function ScoreManagerDialog({ score, onClose }: Props) {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const addLayer = useProjectStore((s) => s.addLayer);
-  const removeLayer = useProjectStore((s) => s.removeLayer);
 
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedLayerIndex, setSelectedLayerIndex] = useState(-1);
@@ -30,10 +55,16 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
   const [editGroupName, setEditGroupName] = useState('');
   const [editingLayerRow, setEditingLayerRow] = useState(-1);
   const [editLayerName, setEditLayerName] = useState('');
+  const [pendingRemovalPlan, setPendingRemovalPlan] = useState<LayerRemovalPlan | null>(null);
 
   const groups = score.layerGroups;
   const selectedGroup = groups[selectedGroupIndex];
   const layers = selectedGroup?.layers ?? [];
+  const selectedLayerRange = createSingleLayerRange(selectedGroup, selectedLayerIndex);
+  const layerAvailability = getLayerOperationAvailability(
+    score.layerGroups,
+    selectedLayerRange ? [selectedLayerRange] : [],
+  );
 
   const handleAddLayerGroup = useCallback((groupType: ScoreLayerGroupType) => {
     const insertAtIndex = selectedGroup ? selectedGroupIndex + 1 : groups.length;
@@ -92,25 +123,34 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
   }, [selectedGroup, selectedLayerIndex, layers.length, addLayer]);
 
   const handleRemoveLayer = useCallback(() => {
-    if (!selectedGroup || selectedLayerIndex < 0) return;
-    if (layers.length <= 1) return;
-    const count = 1;
-    if (!confirm(`Delete ${count} layer(s)?`)) return;
-    removeLayer(selectedGroup.groupId, selectedLayerIndex);
+    if (!selectedLayerRange || !layerAvailability.canRemove) return;
+    setPendingRemovalPlan(buildLayerRemovalPlan(score.layerGroups, [selectedLayerRange]));
+  }, [layerAvailability.canRemove, score.layerGroups, selectedLayerRange]);
+
+  const handleRemovalConfirm = useCallback((deleteEmptyLayerGroups: boolean) => {
+    if (!pendingRemovalPlan) return;
+    void applyPatch({
+      score: createRemoveLayerRangesPatch(pendingRemovalPlan, deleteEmptyLayerGroups),
+    });
+    setPendingRemovalPlan(null);
     setSelectedLayerIndex(-1);
-  }, [selectedGroup, selectedLayerIndex, layers.length, removeLayer]);
+  }, [applyPatch, pendingRemovalPlan]);
 
   const handlePushLayerUp = useCallback(() => {
-    if (!selectedGroup || selectedLayerIndex <= 0) return;
-    applyPatch({ score: { type: 'moveLayer', groupId: selectedGroup.groupId, layerIndex: selectedLayerIndex, targetIndex: selectedLayerIndex - 1 } });
+    if (!selectedLayerRange || !layerAvailability.canPushUp) return;
+    void applyPatch({
+      score: createMoveLayerRangePatch(selectedLayerRange, selectedLayerRange.startIndex - 1),
+    });
     setSelectedLayerIndex(selectedLayerIndex - 1);
-  }, [selectedGroup, selectedLayerIndex, applyPatch]);
+  }, [applyPatch, layerAvailability.canPushUp, selectedLayerIndex, selectedLayerRange]);
 
   const handlePushLayerDown = useCallback(() => {
-    if (!selectedGroup || selectedLayerIndex < 0 || selectedLayerIndex >= layers.length - 1) return;
-    applyPatch({ score: { type: 'moveLayer', groupId: selectedGroup.groupId, layerIndex: selectedLayerIndex, targetIndex: selectedLayerIndex + 1 } });
+    if (!selectedLayerRange || !layerAvailability.canPushDown) return;
+    void applyPatch({
+      score: createMoveLayerRangePatch(selectedLayerRange, selectedLayerRange.startIndex + 1),
+    });
     setSelectedLayerIndex(selectedLayerIndex + 1);
-  }, [selectedGroup, selectedLayerIndex, layers.length, applyPatch]);
+  }, [applyPatch, layerAvailability.canPushDown, selectedLayerIndex, selectedLayerRange]);
 
   const commitLayerRename = useCallback(() => {
     setEditingLayerRow(-1);
@@ -202,10 +242,10 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
 
           <div className="flex-1 flex flex-col">
             <div className="flex items-center gap-1 border-b border-app-border/20 px-2 py-1">
-              <button className={btnClass} onClick={handlePushLayerUp} disabled={!selectedGroup || selectedLayerIndex <= 0} title="Push Up">&#9650;</button>
-              <button className={btnClass} onClick={handlePushLayerDown} disabled={!selectedGroup || selectedLayerIndex < 0 || selectedLayerIndex >= layers.length - 1} title="Push Down">&#9660;</button>
+              <button className={btnClass} onClick={handlePushLayerUp} disabled={!layerAvailability.canPushUp} title="Push Up">&#9650;</button>
+              <button className={btnClass} onClick={handlePushLayerDown} disabled={!layerAvailability.canPushDown} title="Push Down">&#9660;</button>
               <button className={btnClass} onClick={handleAddLayer} disabled={!selectedGroup} title="Add Layer">+</button>
-              <button className={btnClass} onClick={handleRemoveLayer} disabled={!selectedGroup || selectedLayerIndex < 0 || layers.length <= 1} title="Remove Layer">-</button>
+              <button className={btnClass} onClick={handleRemoveLayer} disabled={!layerAvailability.canRemove} title="Remove Layer">-</button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto bg-black">
               <table className="w-full border-collapse text-ui">
@@ -237,6 +277,13 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
           </div>
         </div>
       </div>
+      {pendingRemovalPlan && (
+        <LayerRemovalConfirmationDialog
+          plan={pendingRemovalPlan}
+          onCancel={() => setPendingRemovalPlan(null)}
+          onConfirm={handleRemovalConfirm}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import type { PolyObjectLayerGroupSnapshot, ScoreLayerGroupSnapshot, ScoreLayerS
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import { useScoreSelectionStore, type ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
+import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
+import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
@@ -271,6 +273,8 @@ export default function ScoreTimeCanvas({
   const selectedObjectTarget = useScoreSelectionStore((s) => s.selectedObjectTarget);
   const selectedObjectTargets = useScoreSelectionStore((s) => s.selectedObjectTargets);
   const select = useScoreSelectionStore((s) => s.select);
+  const selectedLayerKeys = useLayerSelectionStore((s) => s.selectedKeys);
+  const clearLayerSelection = useLayerSelectionStore((s) => s.clear);
   const clearSelection = useScoreSelectionStore((s) => s.clearSelection);
   const setSelection = useScoreSelectionStore((s) => s.setSelection);
   const addToSelection = useScoreSelectionStore((s) => s.addToSelection);
@@ -537,6 +541,7 @@ export default function ScoreTimeCanvas({
     if (!item) {
       if (!e.shiftKey) {
         clearSelection();
+        clearLayerSelection();
       }
       gestureRef.current = {
         mode: 'marquee', startClientX: e.clientX, startClientY: e.clientY,
@@ -668,7 +673,7 @@ export default function ScoreTimeCanvas({
         originalPositions: origPositions,
       };
     }
-  }, [toLocalXY, pixelsPerBeat, group.layers, group.groupId, select, clearSelection, selectedObjectIds, selectedObjectTarget, clipboard, snapBeatValueStart, addScoreObjects, interactionLayerGroups, previewByObjectId]);
+  }, [toLocalXY, pixelsPerBeat, group.layers, group.groupId, select, clearSelection, clearLayerSelection, selectedObjectIds, selectedObjectTarget, clipboard, snapBeatValueStart, addScoreObjects, interactionLayerGroups, previewByObjectId]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!gestureRef.current) {
@@ -1738,16 +1743,23 @@ export default function ScoreTimeCanvas({
           }}
         >
           <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
-          {group.layers.map((layer: ScoreLayerSnapshot) => (
-            <div
-              key={layer.layerId}
-              className="relative"
-              style={{
-                height: layer.height || DEFAULT_ROW_HEIGHT,
-                backgroundColor: 'var(--color-app-canvas)',
-                borderBottom: '1px solid var(--color-app-timeline-divider)',
-              }}
-            >
+          {group.layers.map((layer: ScoreLayerSnapshot) => {
+            const isLayerSelected = selectedLayerKeys.has(
+              buildSelectionKey(group.groupId, getLayerSelectionId(layer)),
+            );
+            return (
+              <div
+                key={layer.layerId}
+                data-timeline-layer-row
+                aria-selected={isLayerSelected ? 'true' : 'false'}
+                data-selected-layer={isLayerSelected ? 'true' : undefined}
+                className="relative"
+                style={{
+                  height: layer.height || DEFAULT_ROW_HEIGHT,
+                  backgroundColor: 'var(--color-app-canvas)',
+                  borderBottom: '1px solid var(--color-app-timeline-divider)',
+                }}
+              >
               <SnapLinesLayer
                 layerId={layer.layerId}
                 contentWidth={contentWidth}
@@ -1791,7 +1803,8 @@ export default function ScoreTimeCanvas({
                 />
               )}
             </div>
-          ))}
+            );
+          })}
 
           {marqueeStyle && (
             <div
