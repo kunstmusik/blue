@@ -76,7 +76,7 @@ import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
-import { BlueLiveEngineSession } from './blue-live-engine';
+import { BlueLiveEngineSession, type BlueLiveStatusSnapshot } from './blue-live-engine';
 import {
   BlueLiveTriggerController,
   stopBlueLiveForProjectReplacement,
@@ -87,6 +87,13 @@ import { buildApplicationMenuTemplate } from './application-menu';
 import { resolveExampleProjectPath } from './example-project-path';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
+import {
+  classifyEngineFailure,
+  EngineRecoveryCoordinator,
+  EngineRecoveryError,
+} from './engine-recovery';
+import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
+import type { EngineRecoverySessionKind } from '../shared/engine-recovery';
 import {
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
@@ -357,6 +364,7 @@ let isQuitting = false;
 let pendingQuit = false;
 let shutdownPromise: Promise<void> | null = null;
 let playbackStartPromise: Promise<boolean> | null = null;
+const engineRecoveryCoordinator = new EngineRecoveryCoordinator();
 let activeAuditionPlayback = false;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
@@ -3012,20 +3020,49 @@ async function startPlayback(
       return false;
     }
 
-    const success = await engineBridge.playCSD(
-      csd,
-      parameters,
-      automationTiming,
-      projectDirectory,
-      extraRealtimeOptions,
+    const playAttempt = async (): Promise<boolean> => {
+      const result = await engineBridge!.playCSD(
+        csd,
+        parameters,
+        automationTiming,
+        projectDirectory,
+        extraRealtimeOptions,
+      );
+      if (!result.ok) {
+        throw new EngineRecoveryError(
+          result.errorMessage || 'Engine playback initialization failed',
+          result.failureCategory || 'unexpected',
+        );
+      }
+      return true;
+    };
+
+    const recoveryResult = await engineRecoveryCoordinator.runWithRecovery(
+      'realtime',
+      playAttempt,
+      async () => {
+        await engineBridge?.killAndWait();
+        // FR-017: recovery cleanup also removes obsolete records and
+        // terminates only provably orphaned managed engines (dead owner plus
+        // verified process identity); live-owner sessions are never touched.
+        await sweepStaleBlueEngineProcesses();
+      },
     );
 
-    if (!success) {
+    if (!recoveryResult.ok) {
       activeAuditionPlayback = false;
       broadcastToWorkbenchWindows('playback-status', {
         status: 'error',
-        message: 'Failed to start playback',
+        message: recoveryResult.errorMessage || 'Failed to start playback',
       });
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        void presentEngineRecoveryFailure(
+          'realtime',
+          recoveryResult.errorMessage || 'Failed to start playback',
+          recoveryResult.diagnostics,
+        );
+      }
       return false;
     }
 
@@ -3035,6 +3072,77 @@ async function startPlayback(
     broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
     return false;
   }
+}
+
+/**
+ * Builds the FR-018 diagnostic text: the failed operation, the sanitized
+ * failure detail, and the structured lifecycle report (session kind, owner,
+ * communication readiness, actions performed, outcome) recorded by the
+ * engine bridge for the failed session.
+ */
+function collectEngineDiagnostics(
+  kind: EngineRecoverySessionKind,
+  base: string | undefined,
+): string {
+  const sections: string[] = [
+    `Failed operation: start ${kind === 'blue-live' ? 'Blue Live' : 'realtime playback'}`,
+  ];
+  if (base && base.trim()) {
+    sections.push(base.trim());
+  }
+  const lifecycleReport =
+    kind === 'blue-live'
+      ? blueLiveSession?.getLastDiagnosticReport()
+      : engineBridge?.getLastDiagnosticReport();
+  if (lifecycleReport) {
+    sections.push(lifecycleReport);
+  }
+  return sections.join('\n\n');
+}
+
+/**
+ * FR-017 restart: clean up current-owner sessions, remove obsolete records,
+ * terminate only provably orphaned managed engines, then make one fresh
+ * attempt at the requested engine activity.
+ */
+async function restartEngineActivityAfterRecovery(
+  kind: EngineRecoverySessionKind,
+): Promise<void> {
+  try {
+    if (kind === 'blue-live') {
+      await blueLiveSession?.stop();
+    } else {
+      await engineBridge?.killAndWait();
+    }
+    await sweepStaleBlueEngineProcesses();
+  } catch (error: unknown) {
+    console.warn(
+      `[EngineRecovery] pre-restart cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  if (kind === 'blue-live') {
+    await blueLiveToggle();
+  } else {
+    await restartPlayback();
+  }
+}
+
+async function presentEngineRecoveryFailure(
+  kind: EngineRecoverySessionKind,
+  errorMessage: string,
+  baseDiagnostics: string | undefined,
+): Promise<void> {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  await showEngineRecoveryFailureDialog(
+    mainWindow,
+    errorMessage,
+    collectEngineDiagnostics(kind, baseDiagnostics),
+    {
+      onRestart: () => restartEngineActivityAfterRecovery(kind),
+    },
+  );
 }
 
 async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
@@ -3094,7 +3202,51 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
   // (sessionId) is the independent runtime fence key.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+
+  const liveProjectData = currentData;
+  let startSnapshot: BlueLiveStatusSnapshot | null = null;
+  const liveStart = async (): Promise<boolean> => {
+    startSnapshot = await blueLiveSession!.start(
+      liveProjectData,
+      currentProjectRevision,
+      getCurrentProjectDirectory(),
+      javaScriptSession ?? undefined,
+    );
+    if (startSnapshot.status === 'error') {
+      const message = startSnapshot.message || 'Blue Live engine start failed';
+      throw new EngineRecoveryError(message, classifyEngineFailure(message));
+    }
+    return true;
+  };
+
+  const liveRecovery = await engineRecoveryCoordinator.runWithRecovery(
+    'blue-live',
+    liveStart,
+    async () => {
+      await blueLiveSession?.stop();
+      await sweepStaleBlueEngineProcesses();
+    },
+  );
+
+  if (!liveRecovery.ok) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      void presentEngineRecoveryFailure(
+        'blue-live',
+        liveRecovery.errorMessage || 'Failed to start Blue Live',
+        liveRecovery.diagnostics,
+      );
+    }
+    if (!startSnapshot) {
+      return {
+        status: 'error',
+        running: false,
+        sessionId: 0,
+        message: liveRecovery.errorMessage || 'Failed to start Blue Live',
+      };
+    }
+  }
+
+  return startSnapshot!;
 }
 
 async function blueLiveRecompile(): Promise<void> {
@@ -3668,16 +3820,7 @@ ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName
 // ─── Blue Live IPC Handlers ───
 
 ipcMain.handle('blue-live:toggle', async () => {
-  if (!blueLiveSession || !currentData) {
-    return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
-  }
-  if (blueLiveSession.isRunning()) {
-    return blueLiveSession.stop();
-  }
-  // Start is a runtime lifecycle change, not a project edit.
-  mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
-  mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+  return blueLiveToggle();
 });
 
 ipcMain.handle('blue-live:stop', async () => {
@@ -4602,9 +4745,9 @@ app.whenReady().then(async () => {
   initWorkbenchWindowHost();
   try {
     const report = await sweepStaleBlueEngineProcesses();
-    if (report.inspected > 0 || report.removed > 0 || report.terminated > 0) {
+    if (report.inspected > 0 || report.removed > 0 || report.terminated > 0 || report.retained > 0) {
       console.log(
-        `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}`,
+        `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}, retained=${report.retained}`,
       );
     }
   } catch (error: unknown) {

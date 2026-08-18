@@ -60,7 +60,9 @@ function createMockClient(overrides: Partial<MockEngineClient> = {}): MockEngine
 
 function createBridge(client: MockEngineClient): EngineBridge {
   const bridge = new EngineBridge({ webContents: { send: vi.fn() } } as never);
-  (bridge as unknown as { client: MockEngineClient }).client = client;
+  (bridge as unknown as { activeSession: { getClient: () => MockEngineClient } }).activeSession = {
+    getClient: () => client,
+  };
   return bridge;
 }
 

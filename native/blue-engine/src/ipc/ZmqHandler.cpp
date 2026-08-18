@@ -128,20 +128,6 @@ ZmqHandler::ZmqHandler(CsoundEngine& engine, SharedMemory& shm)
 {
     context_ = zmq_ctx_new();
 
-    // Create inproc wakeup pair to wake up control thread when engine state changes occur
-    wakeupPullSocket_ = zmq_socket(context_, ZMQ_PULL);
-    if (wakeupPullSocket_) {
-        const int linger = 0;
-        zmq_setsockopt(wakeupPullSocket_, ZMQ_LINGER, &linger, sizeof(linger));
-        zmq_bind(wakeupPullSocket_, "inproc://blue_engine_wakeup");
-    }
-    wakeupPushSocket_ = zmq_socket(context_, ZMQ_PUSH);
-    if (wakeupPushSocket_) {
-        const int linger = 0;
-        zmq_setsockopt(wakeupPushSocket_, ZMQ_LINGER, &linger, sizeof(linger));
-        zmq_connect(wakeupPushSocket_, "inproc://blue_engine_wakeup");
-    }
-
     engine_.setStateChangeCallback([this](const EngineStateSnapshot &snapshot) {
         enqueueStateSnapshot(snapshot);
     });
@@ -149,12 +135,6 @@ ZmqHandler::ZmqHandler(CsoundEngine& engine, SharedMemory& shm)
 
 ZmqHandler::~ZmqHandler() {
     engine_.setStateChangeCallback(nullptr);
-    if (wakeupPushSocket_) {
-        zmq_close(wakeupPushSocket_);
-    }
-    if (wakeupPullSocket_) {
-        zmq_close(wakeupPullSocket_);
-    }
     if (controlSocket_) {
         zmq_close(controlSocket_);
     }
@@ -208,19 +188,16 @@ bool ZmqHandler::processOne() {
         return false;
     }
 
-    zmq_pollitem_t items[2];
-    items[0].socket = controlSocket_;
-    items[0].fd = 0;
-    items[0].events = ZMQ_POLLIN;
-    items[0].revents = 0;
+    zmq_pollitem_t item;
+    item.socket = controlSocket_;
+    item.fd = 0;
+    item.events = ZMQ_POLLIN;
+    item.revents = 0;
 
-    items[1].socket = wakeupPullSocket_;
-    items[1].fd = 0;
-    items[1].events = ZMQ_POLLIN;
-    items[1].revents = 0;
-
-    // Sleep efficiently in kernel until request arrives or state change wakes us up
-    int rc = zmq_poll(items, 2, 500);
+    // ZeroMQ sockets are thread-affine. A bounded poll keeps requestShutdown
+    // safe from signal and owner-monitor threads without sending on an
+    // inproc socket owned by this thread.
+    int rc = zmq_poll(&item, 1, 50);
     if (rc == -1) {
         if (zmq_errno() == EINTR) {
             publishPendingStateSnapshots();
@@ -229,16 +206,7 @@ bool ZmqHandler::processOne() {
         return false;
     }
 
-    if (items[1].revents & ZMQ_POLLIN) {
-        char drainBuf[64];
-        while (zmq_recv(wakeupPullSocket_, drainBuf, sizeof(drainBuf), ZMQ_DONTWAIT) > 0) {}
-        publishPendingStateSnapshots();
-        if (shutdownRequested_.load(std::memory_order_relaxed)) {
-            return false;
-        }
-    }
-
-    if (!(items[0].revents & ZMQ_POLLIN)) {
+    if (!(item.revents & ZMQ_POLLIN)) {
         publishPendingStateSnapshots();
         return !shutdownRequested_.load(std::memory_order_relaxed);
     }
@@ -625,20 +593,12 @@ bool ZmqHandler::processOne() {
 
 void ZmqHandler::requestShutdown() {
     shutdownRequested_.store(true, std::memory_order_release);
-    if (wakeupPushSocket_) {
-        char sig = 1;
-        zmq_send(wakeupPushSocket_, &sig, 1, ZMQ_DONTWAIT);
-    }
 }
 
 void ZmqHandler::enqueueStateSnapshot(const EngineStateSnapshot &snapshot) {
     {
         std::lock_guard<std::mutex> lock(pendingStateMutex_);
         pendingStateSnapshots_.push_back(snapshot);
-    }
-    if (wakeupPushSocket_) {
-        char sig = 1;
-        zmq_send(wakeupPushSocket_, &sig, 1, ZMQ_DONTWAIT);
     }
 }
 

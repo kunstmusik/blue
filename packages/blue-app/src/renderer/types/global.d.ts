@@ -498,6 +498,9 @@ declare global {
       onEngineOutputReset: (cb: (payload: { tabName: string }) => void) => () => void;
       onGeneratedCsd: (cb: (csdText: string) => void) => () => void;
       onGeneratedCsdError: (cb: (error: string) => void) => () => void;
+      onEngineRecoveryStatus: (
+        cb: (status: import('../../shared/engine-recovery').EngineRecoveryStatus) => void,
+      ) => () => void;
 
       // Blue Live
       toggleBlueLive: () => Promise<BlueLiveStatusSnapshot>;

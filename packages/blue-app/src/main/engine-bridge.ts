@@ -2,28 +2,43 @@
  * EngineBridge — manages the blue-engine subprocess and ZMQ connection.
  * Bridges the Electron main process to the C++ blue-engine.
  *
- * Lifecycle: For each playback, a fresh engine is spawned.
- * After stop (or natural completion), the engine is force-killed.
+ * Lifecycle: For each playback, a fresh engine session is spawned.
+ * After stop (or natural completion), the engine session is shut down.
  * A playback lock prevents concurrent operations.
  */
-import { ChildProcess, spawn } from 'child_process';
 import { EngineClient, AutomationCurveCode, type EngineStateSnapshot } from '@blue/engine-client';
-import { BrowserWindow, dialog } from 'electron';
+import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
-import { createHash, randomUUID } from 'crypto';
 import type { Parameter, TempoMap } from '@blue/data';
 import { AutomationCurve, getEngineAutomationPoints } from '@blue/data';
 import type { PlaybackClockSnapshot } from '../shared/project-editor';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
-import {
-  registerEngineProcess,
-  removeEngineProcessRecord,
-  type EngineSessionKind,
-} from './engine-process-registry';
+import type { EngineSessionKind } from './engine-process-registry';
 import { broadcastToWorkbenchWindows } from './workbench-window-host';
 import type { EngineRuntimeService } from './engine-runtime';
+import type { EngineProbeErrorCode } from '../shared/engine-runtime';
+import type { EngineRecoveryFailureCategory } from '../shared/engine-recovery';
+import {
+  hasEngineFeature,
+  OWNER_LIVENESS_FEATURE,
+} from '@blue/engine-client/capabilities';
+import { allocateTcpEndpointPair, type EndpointAllocationOptions, type TcpEndpointPair } from './engine-endpoints';
+import {
+  EngineSession,
+  classifyProcessError,
+  formatLifecycleDiagnosticReport,
+  isSessionActive,
+  validateSessionAuthority,
+  type EngineSessionCreationRequest,
+} from './engine-session';
+
+// Keep the existing test/helper import surface while keeping endpoint and
+// shared-memory construction in the session boundary.
+export {
+  buildSessionEndpoints as buildEngineEndpoints,
+  createEngineSharedMemoryName,
+} from './engine-session';
 
 export interface AutomationTimingContext {
   renderStartTime: number;
@@ -49,11 +64,6 @@ interface PendingTerminalStateCandidate {
 
 type EngineTransport = 'tcp' | 'ipc';
 
-interface EngineEndpoints {
-  controlEndpoint: string;
-  pubEndpoint: string;
-}
-
 function resolveEngineTransport(): EngineTransport {
   const requestedTransport = process.env.BLUE_ENGINE_TRANSPORT?.toLowerCase();
 
@@ -73,48 +83,58 @@ function resolveEngineTransport(): EngineTransport {
   return process.platform === 'win32' ? 'tcp' : 'ipc';
 }
 
-export function buildEngineEndpoints(
-  transport: EngineTransport,
-  port: number,
-  pubPort: number,
-  shmName: string,
-): EngineEndpoints {
-  if (transport === 'ipc') {
-    const basePath = path.join(os.tmpdir(), shmName);
-    return {
-      controlEndpoint: `ipc://${basePath}-control.ipc`,
-      pubEndpoint: `ipc://${basePath}-pub.ipc`,
-    };
-  }
-
-  return {
-    controlEndpoint: `tcp://localhost:${port}`,
-    pubEndpoint: `tcp://localhost:${pubPort}`,
-  };
-}
-
-export function createEngineSharedMemoryName(
-  kind: EngineSessionKind,
-  ownerPid = process.pid,
-  token: string = randomUUID(),
-): string {
-  const kindCode = kind === 'realtime' ? 'r' : 'l';
-  const compactPid = ownerPid.toString(36);
-  const compactToken = createHash('sha256').update(token).digest('hex').slice(0, 16);
-  return `be-${kindCode}-${compactPid}-${compactToken}`;
-}
-
 function isUnsupportedIpcEndpointError(stderr: string): boolean {
   return stderr.includes('Unknown option: --control-endpoint') || stderr.includes('Unknown option: --pub-endpoint');
+}
+
+function isUnknownOwnerPidOptionError(stderr: string): boolean {
+  return stderr.includes('Unknown option: --owner-pid');
+}
+
+function classifyEngineProbeFailure(
+  errorCode: EngineProbeErrorCode | null,
+): EngineRecoveryFailureCategory {
+  switch (errorCode) {
+    case 'CSOUND_UNAVAILABLE':
+      return 'runtime-unavailable';
+    case 'ENGINE_PROBE_TIMEOUT':
+      return 'readiness-timeout';
+    case 'ENGINE_NOT_FOUND':
+    case 'ENGINE_NOT_EXECUTABLE':
+    case 'ENGINE_ARCH_MISMATCH':
+    case 'ENGINE_PROBE_FAILED':
+    case 'ENGINE_PROBE_INVALID_JSON':
+    case 'ENGINE_PROTOCOL_MISMATCH':
+      return 'engine-unavailable';
+    default:
+      return 'unexpected';
+  }
 }
 
 export type EngineOutputCallback = (text: string, type: 'stdout' | 'stderr') => void;
 export type PlaybackCompleteCallback = (stopReason: string) => void;
 export type PlaybackErrorWarningCallback = (message: string) => void;
 
+export interface EngineOperationResult {
+  ok: boolean;
+  failureCategory?: EngineRecoveryFailureCategory;
+  errorMessage?: string;
+}
+
+interface EngineTransportStartResult extends EngineOperationResult {
+  fallbackToTcp: boolean;
+  retryWithoutOwnerPid: boolean;
+}
+
+export interface EngineBridgeDependencies {
+  /** Creates the captured session for each engine launch. Injectable for tests. */
+  createSession?: (request: EngineSessionCreationRequest) => EngineSession;
+  /** Selects isolated TCP endpoint pairs. Injectable for tests. */
+  allocateEndpoints?: (options: EndpointAllocationOptions) => Promise<TcpEndpointPair>;
+}
+
 export class EngineBridge {
-  private engineProcess: ChildProcess | null = null;
-  private client: EngineClient | null = null;
+  private activeSession: EngineSession | null = null;
   private mainWindow: BrowserWindow;
   private isPlaying = false;
   private enginePath: string;
@@ -124,7 +144,6 @@ export class EngineBridge {
   private playbackLock = false;
   private playbackSessionId = 0;
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
-  private engineStateUnsubscribe: (() => void) | null = null;
   private outputCallback: EngineOutputCallback | null = null;
   private playbackCompleteCallback: PlaybackCompleteCallback | null = null;
   private playbackErrorWarningCallback: PlaybackErrorWarningCallback | null = null;
@@ -133,12 +152,14 @@ export class EngineBridge {
   private pendingPolledTerminalState: PendingTerminalStateCandidate | null = null;
   private terminalCleanupPromise: Promise<void> | null = null;
   private workingDirectory: string | null = null;
-  private engineProcessRecordPath: string | null = null;
+  private lastDiagnosticReport: string | null = null;
+  private ownerLivenessSupported = false;
   private readonly engineSessionKind: EngineSessionKind;
   private readonly engineRuntime: EngineRuntimeService | null;
   private readonly automationSyncIntervalMs = 33;
   private readonly pendingAutomationSyncs = new Map<string, PendingAutomationSync>();
   private readonly lastAutomationSyncAt = new Map<string, number>();
+  private readonly bridgeDependencies: EngineBridgeDependencies;
 
   constructor(
     mainWindow: BrowserWindow,
@@ -147,6 +168,7 @@ export class EngineBridge {
     pubPort?: number,
     engineSessionKind: EngineSessionKind = 'realtime',
     engineRuntime?: EngineRuntimeService,
+    dependencies: EngineBridgeDependencies = {},
   ) {
     this.mainWindow = mainWindow;
     this.enginePath = enginePath || 'blue-engine';
@@ -154,10 +176,30 @@ export class EngineBridge {
     this.pubPort = pubPort || this.port + 1;
     this.engineSessionKind = engineSessionKind;
     this.engineRuntime = engineRuntime ?? null;
+    this.bridgeDependencies = dependencies;
   }
 
   setOutputCallback(cb: EngineOutputCallback | null): void {
     this.outputCallback = cb;
+  }
+
+  /**
+   * Last formatted lifecycle diagnostic report for the most recent failed or
+   * abnormally terminated session, or null when every session ended cleanly.
+   */
+  getLastDiagnosticReport(): string | null {
+    return this.lastDiagnosticReport;
+  }
+
+  /**
+   * Formats a session's lifecycle diagnostics, retains them for the Show
+   * Diagnostics action, and appends the bounded report to the engine output
+   * tab so failures leave operational evidence next to Csound output.
+   */
+  private recordSessionDiagnostics(session: EngineSession, outcome: string): void {
+    const text = formatLifecycleDiagnosticReport(session.getDiagnostics(outcome));
+    this.lastDiagnosticReport = text;
+    this.outputCallback?.(`${text}\n`, 'stdout');
   }
 
   setPlaybackCompleteCallback(cb: PlaybackCompleteCallback | null): void {
@@ -199,20 +241,6 @@ export class EngineBridge {
     this.lastEngineStateSequence = 0;
   }
 
-  private detachEngineStateListener(): void {
-    if (this.engineStateUnsubscribe) {
-      this.engineStateUnsubscribe();
-      this.engineStateUnsubscribe = null;
-    }
-  }
-
-  private attachEngineStateListener(client: EngineClient): void {
-    this.detachEngineStateListener();
-    this.engineStateUnsubscribe = client.onEngineState((snapshot) => {
-      void this.handleEngineState(snapshot, 'pubsub');
-    });
-  }
-
   private startStatePolling(sessionId: number): void {
     this.clearStatePolling();
     this.statePollingTimer = setInterval(() => {
@@ -221,12 +249,13 @@ export class EngineBridge {
   }
 
   private async pollEngineState(sessionId: number): Promise<void> {
-    if (sessionId !== this.playbackSessionId || !this.client || !this.awaitingPlaybackTerminalState) {
+    const client = this.activeSession?.getClient();
+    if (sessionId !== this.playbackSessionId || !client || !this.awaitingPlaybackTerminalState) {
       return;
     }
 
     try {
-      const resp = await this.client.getEngineState();
+      const resp = await client.getEngineState();
       if (resp.ok && resp.state) {
         await this.handleEngineState(resp.state, 'poll');
       }
@@ -311,53 +340,12 @@ export class EngineBridge {
     }
   }
 
-  private async teardownClient(): Promise<void> {
-    const client = this.client;
-    this.client = null;
-    this.detachEngineStateListener();
-
-    if (!client) {
-      return;
-    }
-
-    try {
-      await client.disconnect();
-    } catch (error: unknown) {
-      console.warn(`[EngineBridge] client disconnect failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
   private clearPendingAutomationSyncs(): void {
     for (const pending of this.pendingAutomationSyncs.values()) {
       clearTimeout(pending.timer);
     }
     this.pendingAutomationSyncs.clear();
     this.lastAutomationSyncAt.clear();
-  }
-
-  private killEngineProcess(): void {
-    if (this.engineProcess && !this.engineProcess.killed) {
-      try {
-        this.engineProcess.kill('SIGKILL');
-      } catch {
-        // Process already dead
-      }
-    }
-
-    this.engineProcess = null;
-    if (this.engineProcessRecordPath) {
-      void removeEngineProcessRecord(this.engineProcessRecordPath);
-      this.engineProcessRecordPath = null;
-    }
-  }
-
-  private async resetEngineResources(): Promise<void> {
-    this.resetPlaybackTracking();
-    this.clearPendingAutomationSyncs();
-    await this.teardownClient();
-    this.killEngineProcess();
-    this.isPlaying = false;
-    this.terminalCleanupPromise = null;
   }
 
   private async finalizePlaybackFromEngine(snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll' | 'stop-command'): Promise<void> {
@@ -377,8 +365,11 @@ export class EngineBridge {
     this.terminalCleanupPromise = (async () => {
       this.isPlaying = false;
       const stopReason = snapshot.stopReason ?? 'none';
-      await this.teardownClient();
-      this.killEngineProcess();
+      const session = this.activeSession;
+      this.activeSession = null;
+      if (session) {
+        await session.shutdown('terminal-state');
+      }
       if (status === 'error') {
         this.sendPlaybackError(message);
       } else {
@@ -400,107 +391,155 @@ export class EngineBridge {
     return null;
   }
 
-  /**
-   * Force-kill the engine process and clean up all resources.
-   * Does NOT send playback status.
-   */
-  private async killEngine(): Promise<void> {
-    await this.resetEngineResources();
+  private async killEngine(): Promise<boolean> {
+    const pendingTerminalCleanup = this.terminalCleanupPromise;
+    if (pendingTerminalCleanup) {
+      try {
+        await pendingTerminalCleanup;
+      } catch (error: unknown) {
+        console.warn(
+          `[EngineBridge] Pending terminal cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    this.resetPlaybackTracking();
+    this.clearPendingAutomationSyncs();
+    this.isPlaying = false;
+    this.terminalCleanupPromise = null;
+    const session = this.activeSession;
+    this.activeSession = null;
+    if (session) {
+      try {
+        const result = await session.shutdown('kill');
+        if (result.status !== 'cleanup-failed') {
+          return true;
+        }
+        this.recordSessionDiagnostics(session, 'Cleanup failed: process exit could not be confirmed');
+      } catch (error: unknown) {
+        this.recordSessionDiagnostics(
+          session,
+          `Cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return false;
+    }
+    return true;
   }
 
   /**
    * Start a fresh blue-engine process and connect via ZMQ.
    */
-  async startEngine(): Promise<boolean> {
+  async startEngine(): Promise<EngineOperationResult> {
     // Ensure no leftover process
-    await this.killEngine();
+    this.lastDiagnosticReport = null;
+    if (!(await this.killEngine())) {
+      return {
+        ok: false,
+        failureCategory: 'cleanup-failed',
+        errorMessage: 'The previous Blue Engine session could not be confirmed stopped.',
+      };
+    }
 
     let enginePath: string | null = null;
     if (this.engineRuntime) {
       const probeResult = await this.engineRuntime.probe();
       if (!probeResult.ok || !probeResult.selection) {
-        await dialog.showErrorBox(
-          probeResult.errorCode === 'CSOUND_UNAVAILABLE'
-            ? 'Csound Is Not Available'
-            : 'Blue Engine Is Not Available',
-          probeResult.message,
-        );
-        return false;
+        return {
+          ok: false,
+          failureCategory: classifyEngineProbeFailure(probeResult.errorCode),
+          errorMessage: probeResult.message,
+        };
       }
       enginePath = probeResult.selection.executablePath;
       this.enginePath = enginePath;
+      this.ownerLivenessSupported = Boolean(
+        probeResult.report && hasEngineFeature(probeResult.report.engine, OWNER_LIVENESS_FEATURE),
+      );
     } else {
+      this.ownerLivenessSupported = false;
       enginePath = this.findEngine();
     }
 
     if (!enginePath) {
-      await dialog.showErrorBox(
-        'blue-engine Not Found',
-        `Could not resolve an absolute Blue Engine path.\n\n` +
-        `Build the workspace engine or select an explicit external engine in Settings.`,
-      );
-      return false;
+      return {
+        ok: false,
+        failureCategory: 'engine-unavailable',
+        errorMessage:
+          'Could not resolve an absolute Blue Engine path. Build the workspace engine or select an explicit external engine in Settings.',
+      };
     }
 
-    // Use unique port and shm name per instance to avoid stale shm collisions
-    const shmName = createEngineSharedMemoryName(this.engineSessionKind);
     const transport = resolveEngineTransport();
     const transportsToTry: EngineTransport[] = transport === 'ipc' ? ['ipc', 'tcp'] : ['tcp'];
-    let lastError = '';
+    let lastResult: EngineTransportStartResult = {
+      ok: false,
+      failureCategory: 'unexpected',
+      errorMessage: 'The blue-engine process failed to start.',
+      fallbackToTcp: false,
+      retryWithoutOwnerPid: false,
+    };
+    let tcpAttempts = 0;
 
-    for (const currentTransport of transportsToTry) {
-      const result = await this.startEngineWithTransport(enginePath, shmName, currentTransport);
+    let transportIndex = 0;
+    while (transportIndex < transportsToTry.length) {
+      const currentTransport = transportsToTry[transportIndex];
+      const result = await this.startEngineWithTransport(enginePath, currentTransport);
+      lastResult = result;
       if (result.ok) {
-        return true;
+        return result;
       }
 
-      lastError = result.errorMessage;
+      if (result.retryWithoutOwnerPid) {
+        // Keep compatibility with an engine whose probe report was stale or
+        // inaccurate, but never optimistically pass the flag to unknown engines.
+        continue;
+      }
       if (currentTransport === 'ipc' && result.fallbackToTcp) {
         console.warn('[EngineBridge] Installed blue-engine does not support IPC endpoints yet; retrying with TCP.');
+        transportIndex++;
+        continue;
+      }
+
+      if (
+        currentTransport === 'tcp' &&
+        result.failureCategory === 'address-contention' &&
+        tcpAttempts < 2
+      ) {
+        tcpAttempts += 1;
         continue;
       }
 
       break;
     }
 
-    await dialog.showErrorBox(
-      'blue-engine Failed',
-      `The blue-engine process exited immediately.\n\n` +
-      `Error output:\n${lastError || '(no output)'}`,
-    );
-    return false;
+    return lastResult;
   }
 
   private async startEngineWithTransport(
     enginePath: string,
-    shmName: string,
     transport: EngineTransport,
-  ): Promise<{ ok: boolean; fallbackToTcp: boolean; errorMessage: string }> {
-    const endpoints = buildEngineEndpoints(transport, this.port, this.pubPort, shmName);
+  ): Promise<EngineTransportStartResult> {
     const sharedMemoryDisabled = process.env.BLUE_ENGINE_DISABLE_SHARED_MEMORY === '1';
     const channelMirroringDisabled = process.env.BLUE_ENGINE_DISABLE_CHANNEL_MIRRORING === '1';
     const threadPriorityElevationDisabled = process.env.BLUE_ENGINE_DISABLE_THREAD_PRIORITY_ELEVATION === '1';
-    const spawnArgs = transport === 'ipc'
-      ? ['--control-endpoint', endpoints.controlEndpoint, '--pub-endpoint', endpoints.pubEndpoint, '--shm', shmName]
-      : ['--port', `${this.port}`, '--pub-port', `${this.pubPort}`, '--shm', shmName];
 
+    const extraArgs: string[] = [];
     if (sharedMemoryDisabled) {
-      spawnArgs.push('--disable-shared-memory');
+      extraArgs.push('--disable-shared-memory');
     }
-
     if (channelMirroringDisabled) {
-      spawnArgs.push('--disable-channel-mirroring');
+      extraArgs.push('--disable-channel-mirroring');
     }
-
     if (threadPriorityElevationDisabled) {
-      spawnArgs.push('--disable-thread-priority-elevation');
+      extraArgs.push('--disable-thread-priority-elevation');
     }
 
     this.stderr = '';
     console.log(`[EngineBridge] Shared memory: ${sharedMemoryDisabled ? 'disabled' : 'enabled'}`);
     console.log(`[EngineBridge] Channel mirroring: ${channelMirroringDisabled ? 'disabled' : 'enabled'}`);
     console.log(`[EngineBridge] Thread priority elevation: ${threadPriorityElevationDisabled ? 'disabled' : 'enabled'}`);
-    console.log(`[EngineBridge] Starting (${transport}): ${enginePath} ${spawnArgs.join(' ')}`);
+    console.log(`[EngineBridge] Starting session (${transport}): ${enginePath}`);
 
     const spawnWorkingDirectory =
       this.workingDirectory &&
@@ -509,142 +548,177 @@ export class EngineBridge {
         ? this.workingDirectory
         : undefined;
 
-    this.engineProcess = spawn(
-      enginePath,
-      spawnArgs,
-      {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: spawnWorkingDirectory,
-      },
-    );
-
-    if (typeof this.engineProcess.pid === 'number') {
+    let port = this.port;
+    let pubPort = this.pubPort;
+    if (transport === 'tcp') {
       try {
-        this.engineProcessRecordPath = await registerEngineProcess({
-          version: 1,
-          kind: this.engineSessionKind,
-          pid: this.engineProcess.pid,
-          ownerPid: process.pid,
-          enginePath,
-          spawnArgs,
-          controlEndpoint: endpoints.controlEndpoint,
-          pubEndpoint: endpoints.pubEndpoint,
-          shmName,
-          startedAt: Date.now(),
+        const tcpPair = await (this.bridgeDependencies.allocateEndpoints ?? allocateTcpEndpointPair)({
+          basePort: this.port,
         });
-      } catch (error) {
-        console.warn(`[EngineBridge] Failed to register engine process: ${error instanceof Error ? error.message : String(error)}`);
-        this.engineProcessRecordPath = null;
+        port = tcpPair.controlPort;
+        pubPort = tcpPair.pubPort;
+      } catch (err) {
+        // Report bounded address exhaustion instead of silently falling back
+        // to the fixed default pair, which another owner may already hold.
+        const errorMessage =
+          `No isolated TCP endpoint pair available (address-contention): ` +
+          `${err instanceof Error ? err.message : String(err)}`;
+        console.error(`[EngineBridge] ${errorMessage}`);
+        return {
+          ok: false,
+          failureCategory: 'address-contention',
+          fallbackToTcp: false,
+          retryWithoutOwnerPid: false,
+          errorMessage,
+        };
       }
     }
 
-    this.engineProcess.stderr?.on('data', (data: Buffer) => {
-      const text = data.toString();
-      this.stderr += text;
-      console.error(`[EngineBridge] stderr: ${text.trim()}`);
-      this.outputCallback?.(text, 'stderr');
+    const session = (this.bridgeDependencies.createSession ?? ((request: EngineSessionCreationRequest) => new EngineSession(request)))({
+      kind: this.engineSessionKind,
+      enginePath,
+      generation: ++this.playbackSessionId,
+      transport,
+      port,
+      pubPort,
+      workingDirectory: spawnWorkingDirectory,
+      extraArgs,
+      ownerLivenessCapability: this.ownerLivenessSupported,
     });
 
-    this.engineProcess.stdout?.on('data', (data: Buffer) => {
-      const text = data.toString();
-      console.log(`[EngineBridge] stdout: ${text.trim()}`);
-    });
-
-    this.engineProcess.on('exit', (code, signal) => {
-      console.log(`[EngineBridge] Engine exited: code=${code}, signal=${signal}`);
-      const awaitingTerminalState = this.awaitingPlaybackTerminalState;
-      const stderrMessage = this.stderr.trim();
-      const exitingClient = this.client;
-
-      this.resetPlaybackTracking();
-      this.clearPendingAutomationSyncs();
-      this.detachEngineStateListener();
-      this.engineProcess = null;
-      this.client = null;
-      this.isPlaying = false;
-      if (this.engineProcessRecordPath) {
-        void removeEngineProcessRecord(this.engineProcessRecordPath);
-        this.engineProcessRecordPath = null;
+    session.onOutput((text, type) => {
+      if (type === 'stderr') {
+        this.stderr += text;
+        console.error(`[EngineBridge] stderr: ${text.trim()}`);
+      } else {
+        console.log(`[EngineBridge] stdout: ${text.trim()}`);
       }
-
-      if (exitingClient) {
-        void exitingClient.disconnect(false).catch(() => undefined);
-      }
-
-      if (awaitingTerminalState && !this.terminalCleanupPromise) {
-        const detail = stderrMessage
-          ? `Engine error: ${stderrMessage.split('\n').pop()}`
-          : `Engine exited before publishing terminal playback state (code: ${code}, signal: ${signal})`;
-        this.sendPlaybackError(detail);
-      }
+      this.outputCallback?.(text, type);
     });
 
-    this.engineProcess.on('error', (err) => {
-      console.error(`[EngineBridge] Spawn error: ${err.message}`);
-      this.isPlaying = false;
-      broadcastToWorkbenchWindows('playback-error', `Engine error: ${err.message}`);
-    });
+    try {
+      await session.spawn(spawnWorkingDirectory);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`[EngineBridge] Spawn error: ${errorMessage}`);
+      this.recordSessionDiagnostics(session, `Spawn failed: ${errorMessage}`);
+      return {
+        ok: false,
+        failureCategory: 'engine-unavailable',
+        fallbackToTcp: false,
+        retryWithoutOwnerPid: false,
+        errorMessage,
+      };
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    if (!this.engineProcess || this.engineProcess.killed || this.engineProcess.exitCode !== null) {
-      const stderrMessage = this.stderr.trim();
+    const readyResult = await session.awaitReady();
+    if (readyResult.status !== 'ready') {
+      const stderrMessage = session.getStderr().trim();
       const fallbackToTcp = transport === 'ipc' && isUnsupportedIpcEndpointError(stderrMessage);
-      const errorMessage = stderrMessage || 'The blue-engine process exited immediately.';
-      await this.killEngine();
-      return { ok: false, fallbackToTcp, errorMessage };
-    }
 
-    try {
-      this.client = new EngineClient({
-        endpoint: endpoints.controlEndpoint,
-        pubEndpoint: endpoints.pubEndpoint,
-        timeout: 10000,
-      });
-      await this.client.connect();
-      this.attachEngineStateListener(this.client);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error(`[EngineBridge] ZMQ connect failed: ${errorMessage}`);
-      await this.killEngine();
-      return { ok: false, fallbackToTcp: false, errorMessage };
-    }
-
-    try {
-      const createResp = await this.client.createEngine();
-      if (!createResp.ok) {
-        console.error(`[EngineBridge] createEngine failed: ${createResp.message}`);
-        await this.killEngine();
-        return { ok: false, fallbackToTcp: false, errorMessage: createResp.message };
+      let retryWithoutOwnerPid = false;
+      if (this.ownerLivenessSupported && isUnknownOwnerPidOptionError(stderrMessage)) {
+        this.ownerLivenessSupported = false;
+        retryWithoutOwnerPid = true;
+        console.warn(
+          '[EngineBridge] Selected blue-engine does not support --owner-pid; ' +
+          'retrying without owner lifetime monitoring for this engine.',
+        );
       }
 
-      const optResp = await this.client.setOption('-d');
-      if (!optResp.ok) {
-        console.warn(`[EngineBridge] setOption(-d) warning: ${optResp.message}`);
+      const errorMessage = readyResult.errorMessage || stderrMessage || 'The blue-engine process exited immediately.';
+      const failureCategory = readyResult.failureCategory ?? 'unexpected';
+      this.recordSessionDiagnostics(session, `Startup failed: ${errorMessage}`);
+      const cleanupResult = await session.shutdown('readiness-failed');
+      if (cleanupResult.status === 'cleanup-failed') {
+        const cleanupMessage = 'Startup failed and the engine process could not be confirmed stopped.';
+        this.recordSessionDiagnostics(session, cleanupMessage);
+        return {
+          ok: false,
+          failureCategory: 'cleanup-failed',
+          fallbackToTcp: false,
+          retryWithoutOwnerPid: false,
+          errorMessage: `${errorMessage} ${cleanupMessage}`,
+        };
       }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error(`[EngineBridge] Engine init failed: ${errorMessage}`);
-      await this.killEngine();
-      return { ok: false, fallbackToTcp: false, errorMessage };
+      return {
+        ok: false,
+        failureCategory,
+        fallbackToTcp,
+        retryWithoutOwnerPid,
+        errorMessage,
+      };
     }
+
+    this.activeSession = session;
+
+    session.onEngineState((snapshot) => {
+      if (isSessionActive(session, this.activeSession)) {
+        void this.handleEngineState(snapshot, 'pubsub');
+      }
+    });
+
+    void session.awaitExit().then(async (lifecycleResult) => {
+      if (validateSessionAuthority(session, this.activeSession)) {
+        console.log(`[EngineBridge] Engine exited: code=${lifecycleResult.exitCode}, signal=${lifecycleResult.signalCode}`);
+        const awaitingTerminalState = this.awaitingPlaybackTerminalState;
+        const hadPendingTerminalCleanup = this.terminalCleanupPromise !== null;
+        const stderrMessage = session.getStderr().trim();
+
+        const cleanup = (async () => {
+          this.recordSessionDiagnostics(
+            session,
+            `Engine exited unexpectedly (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`,
+          );
+
+          this.resetPlaybackTracking();
+          this.clearPendingAutomationSyncs();
+          this.activeSession = null;
+          this.isPlaying = false;
+
+          const cleanupResult = await session.shutdown('process-exit');
+          if (cleanupResult.status === 'cleanup-failed') {
+            this.recordSessionDiagnostics(session, 'Cleanup failed after process exit');
+          }
+
+          if (awaitingTerminalState && !hadPendingTerminalCleanup) {
+            const detail = stderrMessage
+              ? `Engine error: ${stderrMessage.split('\n').pop()}`
+              : `Engine exited before publishing terminal playback state (code: ${lifecycleResult.exitCode}, signal: ${lifecycleResult.signalCode})`;
+            this.sendPlaybackError(detail);
+          }
+        })();
+        let trackedCleanup!: Promise<void>;
+        trackedCleanup = cleanup.finally(() => {
+          if (this.terminalCleanupPromise === trackedCleanup) {
+            this.terminalCleanupPromise = null;
+          }
+        });
+        this.terminalCleanupPromise = trackedCleanup;
+        await trackedCleanup;
+      }
+    }).catch((error: unknown) => {
+      console.error(`[EngineBridge] Exit cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+    });
 
     console.log('[EngineBridge] Engine started successfully');
-    return { ok: true, fallbackToTcp: false, errorMessage: '' };
+    return { ok: true, fallbackToTcp: false, retryWithoutOwnerPid: false };
   }
 
   /**
    * Stop playback, kill the engine, and reset state.
    */
   async stopEngine(emitStatus = true, message?: string): Promise<void> {
-    // Send stop command if client is available and playing
-    if (this.client && this.isPlaying) {
+    const session = this.activeSession;
+    const client = session?.getClient();
+
+    if (session && client && this.isPlaying) {
       if (emitStatus) {
         this.sendPlaybackStatus('stopping', message ?? 'Stopping playback...');
       }
 
       try {
-        const resp = await this.client.stop();
+        const resp = await client.stop();
         console.log(`[EngineBridge] stop: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
           await this.killEngine();
@@ -654,11 +728,7 @@ export class EngineBridge {
         } else if (this.terminalCleanupPromise) {
           await this.terminalCleanupPromise;
         } else if (this.awaitingPlaybackTerminalState) {
-          // The stop response only guarantees that the engine has stopped;
-          // the pub/sub terminal event can arrive on the other socket later.
-          // Resolve that lifecycle before a replacement playback starts so
-          // the old session cannot publish a late stopped status.
-          const stateResp = await this.client.getEngineState();
+          const stateResp = await client.getEngineState();
           if (!stateResp.ok || !stateResp.state || stateResp.state.state !== 'stopped') {
             throw new Error(stateResp.message || 'Engine did not reach the stopped state');
           }
@@ -692,11 +762,14 @@ export class EngineBridge {
     automationTiming?: AutomationTimingContext,
     workingDirectory?: string | null,
     extraOptions: string[] = [],
-  ): Promise<boolean> {
-    // Prevent concurrent playback
+  ): Promise<EngineOperationResult> {
     if (this.playbackLock) {
       console.warn('[EngineBridge] Playback already in progress, ignoring');
-      return false;
+      return {
+        ok: false,
+        failureCategory: 'unexpected',
+        errorMessage: 'Playback is already in progress.',
+      };
     }
     this.playbackLock = true;
     this.setWorkingDirectory(workingDirectory);
@@ -710,7 +783,6 @@ export class EngineBridge {
       console.log(`[EngineBridge] Orchestra: ${orchestra?.length || 0} chars`);
       console.log(`[EngineBridge] Score: ${score?.length || 0} chars`);
 
-      // Emit first so the output tab always starts with Java-style render command text.
       const tempCsdPath = await writeTempCsdSnapshot(csd, this.workingDirectory);
       const renderCommandOptions = options.includes('-d') ? [...options] : ['-d', ...options];
       this.outputCallback?.(
@@ -719,21 +791,32 @@ export class EngineBridge {
       );
 
       const started = await this.startEngine();
-      if (!started) return false;
-      if (!this.client) return false;
+      if (!started.ok) return started;
+      const client = this.activeSession?.getClient();
+      if (!client) {
+        const cleaned = await this.killEngine();
+        return {
+          ok: false,
+          failureCategory: cleaned ? 'session-unresponsive' : 'cleanup-failed',
+          errorMessage: 'Blue Engine client was not ready after startup.',
+        };
+      }
 
-      // Check if we have anything to play
       if (!orchestra && !score) {
         console.warn('[EngineBridge] Empty CSD — no orchestra or score to play');
         this.sendPlaybackStatus('error', 'No instruments or score events to play');
-        return false;
+        const cleaned = await this.killEngine();
+        return {
+          ok: false,
+          failureCategory: cleaned ? 'unexpected' : 'cleanup-failed',
+          errorMessage: 'No instruments or score events to play.',
+        };
       }
 
-      // Set options (skip ones that cause errors)
       for (const opt of options) {
         console.log(`[EngineBridge] setOption: ${opt}`);
         try {
-          const resp = await this.client.setOption(opt);
+          const resp = await client.setOption(opt);
           if (!resp.ok) {
             console.warn(`[EngineBridge] setOption skipped: ${opt} — ${resp.message}`);
           }
@@ -742,41 +825,51 @@ export class EngineBridge {
         }
       }
 
-      // Compile orchestra first so Csound exports control channels before
-      // fixed values and automation definitions are applied through the engine.
       if (orchestra) {
         console.log(`[EngineBridge] compileOrc (${orchestra.length} chars)`);
-        const resp = await this.client.compileOrc(orchestra);
+        const resp = await client.compileOrc(orchestra);
         console.log(`[EngineBridge] compileOrc: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
           this.sendPlaybackError(`Orchestra compile failed: ${resp.message}`);
-          return false;
+          const cleaned = await this.killEngine();
+          return {
+            ok: false,
+            failureCategory: cleaned ? classifyProcessError(null, resp.message) : 'cleanup-failed',
+            errorMessage: `Orchestra compile failed: ${resp.message}`,
+          };
         }
       }
 
-      // Send automation definitions after compileOrc so exported channels exist.
       if (parameters && parameters.length > 0) {
-        await this.sendAutomationDefinitions(this.client, parameters, automationTiming);
+        await this.sendAutomationDefinitions(client, parameters, automationTiming);
       }
 
-      // Read score
       if (score) {
         console.log(`[EngineBridge] readScore (${score.length} chars)`);
-        const resp = await this.client.readScore(score);
+        const resp = await client.readScore(score);
         console.log(`[EngineBridge] readScore: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
           this.sendPlaybackError(`Score read failed: ${resp.message}`);
-          return false;
+          const cleaned = await this.killEngine();
+          return {
+            ok: false,
+            failureCategory: cleaned ? classifyProcessError(null, resp.message) : 'cleanup-failed',
+            errorMessage: `Score read failed: ${resp.message}`,
+          };
         }
       }
 
-      // Start performance
       console.log(`[EngineBridge] start()`);
-      const startResp = await this.client.start();
+      const startResp = await client.start();
       console.log(`[EngineBridge] start: ${startResp.ok ? 'OK' : 'FAILED'} ${startResp.message}`);
       if (!startResp.ok) {
         this.sendPlaybackError(`Engine start failed: ${startResp.message}`);
-        return false;
+        const cleaned = await this.killEngine();
+        return {
+          ok: false,
+          failureCategory: cleaned ? classifyProcessError(null, startResp.message) : 'cleanup-failed',
+          errorMessage: `Engine start failed: ${startResp.message}`,
+        };
       }
 
       this.isPlaying = true;
@@ -794,22 +887,27 @@ export class EngineBridge {
       });
       this.sendPlaybackStatus('playing', 'Playing via blue-engine');
 
-      return true;
+      return { ok: true };
+    } catch (error) {
+      const cleaned = await this.killEngine();
+      if (!cleaned) {
+        return {
+          ok: false,
+          failureCategory: 'cleanup-failed',
+          errorMessage: 'Engine operation failed and the process could not be confirmed stopped.',
+        };
+      }
+      throw error;
     } finally {
       this.playbackLock = false;
     }
   }
 
-  /**
-   * Send automation definitions from all Parameters to the engine.
-   * Called after compileOrc so the engine can bind them to exported channels.
-   */
   private async sendAutomationDefinitions(
     client: EngineClient,
     parameters: Parameter[],
     automationTiming?: AutomationTimingContext,
   ): Promise<void> {
-    // Clear any stale automation from previous playbacks
     try {
       await client.clearAutomations();
     } catch (err) {
@@ -821,12 +919,7 @@ export class EngineBridge {
       if (!varName) continue;
 
       if (param.isAutomationEnabled() && param.getPoints().length >= 2) {
-        // Map AutomationCurve enum to protocol codes
         const curveCode = mapAutomationCurve(param.getCurve());
-
-        // Java stores automation points in beat time. blue-engine currently
-        // evaluates automation in elapsed seconds, so convert the point times
-        // before sending them over the protocol.
         const points = getEngineAutomationPoints(
           param,
           automationTiming?.renderStartTime ?? 0,
@@ -837,7 +930,7 @@ export class EngineBridge {
           const resp = await client.createAutomation(
             varName,
             curveCode,
-            true, // enabled
+            true,
             getAutomationResolutionText(param),
             points,
           );
@@ -848,14 +941,10 @@ export class EngineBridge {
           console.warn(`[EngineBridge] createAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
         }
       } else {
-        // Non-automated parameter: create/update the channel value. The engine
-        // treats createChannel as a compatible "set or stage initial value"
-        // command and falls back to setChannel when the channel already exists.
         try {
           const fixedVal = getRuntimeFixedChannelValue(param, automationTiming);
           const resp = await client.createChannel(varName, fixedVal);
           if (!resp.ok) {
-            // Channel might already exist after orchestra export, try setChannel
             await client.setChannel(varName, fixedVal);
           }
         } catch (err) {
@@ -867,18 +956,12 @@ export class EngineBridge {
     console.log(`[EngineBridge] Sent ${parameters.length} parameter definitions`);
   }
 
-  /**
-   * Synchronize one automation parameter to the running engine.
-   *
-   * Default calls are coalesced per Csound channel to approximately 30 Hz so
-   * mouse-drag automation edits do not flood the engine request socket.
-   */
   async syncAutomationParameter(
     parameter: Parameter,
     automationTiming?: AutomationTimingContext,
     options: AutomationSyncOptions = {},
   ): Promise<void> {
-    const client = this.client;
+    const client = this.activeSession?.getClient();
     const varName = parameter.getCompilationVarName();
     if (!client || !varName) {
       return;
@@ -908,7 +991,7 @@ export class EngineBridge {
     }
 
     if (elapsed >= this.automationSyncIntervalMs) {
-      const client = this.client;
+      const client = this.activeSession?.getClient();
       if (!client) {
         return;
       }
@@ -922,7 +1005,7 @@ export class EngineBridge {
     const timer = setTimeout(() => {
       const pending = this.pendingAutomationSyncs.get(varName);
       this.pendingAutomationSyncs.delete(varName);
-      const client = this.client;
+      const client = this.activeSession?.getClient();
       if (!pending || !client) {
         return;
       }
@@ -1039,50 +1122,46 @@ export class EngineBridge {
    * Stop playback. Kills the engine and resets state.
    */
   async stopPlayback(): Promise<void> {
-    if (!this.isPlaying && !this.client) {
-      // Nothing to stop
+    if (!this.isPlaying && !this.activeSession) {
       this.sendPlaybackStatus('stopped');
       return;
     }
 
-    this.playbackLock = false; // Release lock so next playCSD can proceed
+    this.playbackLock = false;
     await this.stopEngine();
   }
 
-  /**
-   * Set a channel value during playback.
-   */
   async setChannel(name: string, value: number): Promise<void> {
-    if (this.client) {
-      const resp = await this.client.setChannel(name, value);
+    const client = this.activeSession?.getClient();
+    if (client) {
+      const resp = await client.setChannel(name, value);
       if (!resp.ok) {
         console.warn(`[EngineBridge] setChannel(${name}) failed: ${resp.message}`);
       }
     }
   }
 
-  /**
-   * Get a channel value during playback.
-   */
   async getChannel(name: string): Promise<number> {
-    if (this.client) {
-      const resp = await this.client.getChannel(name);
+    const client = this.activeSession?.getClient();
+    if (client) {
+      const resp = await client.getChannel(name);
       if (resp.ok) return resp.value;
     }
     return 0;
   }
 
   getClient(): EngineClient | null {
-    return this.client;
+    return this.activeSession?.getClient() ?? null;
+  }
+
+  getActiveSession(): EngineSession | null {
+    return this.activeSession;
   }
 
   isCurrentlyPlaying(): boolean {
     return this.isPlaying;
   }
 
-  /**
-   * Clean up all resources.
-   */
   async dispose(): Promise<void> {
     this.playbackLock = false;
     await this.killEngine();
@@ -1094,15 +1173,11 @@ export class EngineBridge {
   }
 }
 
-/**
- * Parse a CSD string into its components.
- */
 function parseCSD(csd: string): { orchestra: string; score: string; options: string[] } {
   const options: string[] = [];
   let orchestra = '';
   let score = '';
 
-  // Extract CsOptions
   const optsMatch = csd.match(/<CsOptions>([\s\S]*?)<\/CsOptions>/);
   if (optsMatch) {
     const optsText = optsMatch[1].trim();
@@ -1114,13 +1189,11 @@ function parseCSD(csd: string): { orchestra: string; score: string; options: str
     }
   }
 
-  // Extract CsInstruments (orchestra)
   const orcMatch = csd.match(/<CsInstruments>([\s\S]*?)<\/CsInstruments>/);
   if (orcMatch) {
     orchestra = orcMatch[1].trim();
   }
 
-  // Extract CsScore
   const scoMatch = csd.match(/<CsScore>([\s\S]*?)<\/CsScore>/);
   if (scoMatch) {
     score = scoMatch[1].trim();
@@ -1129,9 +1202,6 @@ function parseCSD(csd: string): { orchestra: string; score: string; options: str
   return { orchestra, score, options };
 }
 
-/**
- * Map blue-data AutomationCurve enum to blue-engine protocol AutomationCurveCode.
- */
 function mapAutomationCurve(curve: AutomationCurve): AutomationCurveCode {
   switch (curve) {
     case AutomationCurve.STEP: return AutomationCurveCode.STEP;
@@ -1141,12 +1211,6 @@ function mapAutomationCurve(curve: AutomationCurve): AutomationCurveCode {
   }
 }
 
-/**
- * Keep the bridge tolerant of lightweight Parameter doubles used by callers
- * while the exact-resolution API is rolled out. Real Parameters always
- * provide getResolutionText(); the numeric fallback is only for legacy
- * objects and test doubles.
- */
 function getAutomationResolutionText(parameter: Parameter): string {
   const exactParameter = parameter as Parameter & {
     getResolutionText?: () => string;

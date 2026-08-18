@@ -224,3 +224,48 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(test_zmq_idle_wakeup PRIVATE dl)
 endif()
 add_test(NAME ZmqIdleWakeupTests COMMAND test_zmq_idle_wakeup)
+
+# Owner lifetime monitor unit tests
+add_executable(test_owner_monitor
+    test_owner_monitor.cpp
+    ${CMAKE_SOURCE_DIR}/src/process/OwnerMonitor.cpp
+)
+target_include_directories(test_owner_monitor PRIVATE ${CMAKE_SOURCE_DIR}/src .)
+set_target_properties(test_owner_monitor PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_owner_monitor PRIVATE pthread)
+endif()
+add_test(NAME OwnerMonitorTests COMMAND test_owner_monitor)
+
+# Concurrent independent endpoint binding test
+add_executable(test_engine_concurrency
+    test_engine_concurrency.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
+    ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/ExactDecimalQuantizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
+)
+target_include_directories(test_engine_concurrency PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_engine_concurrency PRIVATE Boost::boost libzmq-static)
+set_target_properties(test_engine_concurrency PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_engine_concurrency PRIVATE dl pthread)
+endif()
+add_test(NAME EngineConcurrencyTests COMMAND test_engine_concurrency)
+
+# Short-lived owner termination integration test
+add_executable(test_owner_monitor_integration
+    test_owner_monitor_integration.cpp
+    ${CMAKE_SOURCE_DIR}/src/process/OwnerMonitor.cpp
+)
+target_include_directories(test_owner_monitor_integration PRIVATE ${CMAKE_SOURCE_DIR}/src .)
+set_target_properties(test_owner_monitor_integration PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_owner_monitor_integration PRIVATE pthread)
+endif()
+add_test(NAME OwnerMonitorIntegrationTests COMMAND test_owner_monitor_integration)

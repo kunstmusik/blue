@@ -391,7 +391,7 @@ increments a fixed diagnostic counter if an invalid evaluation is encountered.
    - Shared memory mirror updates use relaxed atomic stores (`memory_order_relaxed`) with IEEE 754 64-bit bitwise deduplication via `memcpy`, writing only when float bits change.
 
 6. **Event-Driven Control Plane**:
-   - In-process wakeup sockets (`inproc://blue_engine_wakeup`) wake the control loop immediately on state transitions and shutdown signals instead of waiting for the 500 ms poll timeout. The wakeup path is tested for sub-200 ms shutdown response.
+   - The control loop uses a bounded poll interval so state transitions and shutdown requests from other threads do not require cross-thread ZeroMQ socket access. The shutdown response is tested below 200 ms.
 
 ### Shared-Memory Publication
 

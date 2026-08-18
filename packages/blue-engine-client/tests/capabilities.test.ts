@@ -5,6 +5,7 @@ import {
   CSOUND_IO_FEATURE,
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
+  OWNER_LIVENESS_FEATURE,
   decodeEngineCapabilities,
   decodeEngineCapabilitiesJson,
   hasEngineFeature,
@@ -23,13 +24,14 @@ describe('engine capabilities decoder', () => {
     expect(decodeEngineCapabilities(validCapabilities)).toEqual(validCapabilities);
   });
 
-  it('recognizes the additive Csound runtime feature names', () => {
+  it('recognizes the additive Csound runtime feature names and owner-liveness capability', () => {
     const capabilities = {
       ...validCapabilities,
-      features: [CSOUND_IO_FEATURE, CSOUND_UTILITY_FEATURE, CSOUND_PERFORMANCE_FEATURE],
+      features: [CSOUND_IO_FEATURE, CSOUND_UTILITY_FEATURE, CSOUND_PERFORMANCE_FEATURE, OWNER_LIVENESS_FEATURE],
     };
     expect(hasEngineFeature(capabilities, CSOUND_IO_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, CSOUND_UTILITY_FEATURE)).toBe(true);
+    expect(hasEngineFeature(capabilities, OWNER_LIVENESS_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, 'future-feature')).toBe(false);
   });
 

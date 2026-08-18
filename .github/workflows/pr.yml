@@ -60,6 +60,7 @@ jobs:
         shell: bash
         run: |
           pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native test
           pnpm --filter @blue/engine-native verify
           pnpm --filter @blue/engine-client test
 

@@ -14,6 +14,7 @@ namespace blue {
 constexpr int BLUE_ENGINE_PROTOCOL_VERSION = 2;
 constexpr int BLUE_ENGINE_CAPABILITIES_SCHEMA_VERSION = 1;
 constexpr const char* BLUE_ENGINE_AUTOMATION_DECIMAL_FEATURE = "automation-decimal-v1";
+constexpr const char* BLUE_ENGINE_OWNER_LIVENESS_FEATURE = "owner-liveness-v1";
 
 std::string engineCapabilitiesJson();
 std::string csoundProbeJson(const CsoundLoadReport &report);

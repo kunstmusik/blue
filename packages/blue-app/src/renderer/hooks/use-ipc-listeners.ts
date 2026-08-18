@@ -167,6 +167,16 @@ export function useIPCListeners(): void {
       setError(error);
     });
 
+    const unsubEngineRecoveryStatus = window.blueAPI.onEngineRecoveryStatus?.((status) => {
+      if (status.phase === 'recovering') {
+        toast.loading(status.message, { id: status.operationId });
+      } else if (status.phase === 'recovered') {
+        toast.success(status.message, { id: status.operationId });
+      } else if (status.phase === 'failed') {
+        toast.error(status.message, { id: status.operationId });
+      }
+    });
+
     const unsubNativeMenuCommand = window.blueAPI.onNativeMenuCommand((command) => {
       if (
         !useProjectStore.getState().loaded
@@ -284,6 +294,7 @@ export function useIPCListeners(): void {
       unsubSelect();
       unsubReset();
       unsubRenderStatus();
+      unsubEngineRecoveryStatus?.();
       unsubCsd();
       unsubCsdErr();
       unsubBlueLiveStatus();

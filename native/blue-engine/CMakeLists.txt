@@ -107,6 +107,7 @@ add_executable(blue-engine
     src/automation/JavaBigDecimal.cpp
     src/automation/ExactDecimalQuantizer.cpp
     src/protocol/Capabilities.cpp
+    src/process/OwnerMonitor.cpp
 )
 
 set(BLUE_ENGINE_SOURCE_REVISION "unknown" CACHE STRING

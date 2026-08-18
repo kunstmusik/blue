@@ -12,6 +12,8 @@ export const CSOUND_UTILITY_FEATURE = 'csound-utility-v1';
 export const CSOUND_PERFORMANCE_FEATURE = 'csound-performance-v1';
 /** Declared by engines whose automation payload uses exact decimal text. */
 export const AUTOMATION_DECIMAL_FEATURE = 'automation-decimal-v1';
+/** Declared by engines supporting the native owner lifetime monitor. */
+export const OWNER_LIVENESS_FEATURE = 'owner-liveness-v1';
 
 export interface EngineCapabilities {
   schemaVersion: 1;

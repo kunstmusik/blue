@@ -71,10 +71,8 @@ function createRunningSession(opts: {
   const bridge = {
     setWorkingDirectory: vi.fn(),
     setOutputCallback: vi.fn(),
-    startEngine: vi.fn(async () => true),
+    startEngine: vi.fn(async () => ({ ok: true })),
     getClient: vi.fn(() => client),
-    // triggerNote accesses the bridge's internal client via bracket notation.
-    client,
     killAndWait,
   } as unknown as EngineBridge;
   const session = trackSession(new BlueLiveEngineSession(
@@ -188,13 +186,13 @@ describe('BlueLiveEngineSession', () => {
   });
 
   it('cancels and fully awaits a start that is still acquiring the engine', async () => {
-    let resolveStart = (_started: boolean): void => {};
-    const engineStart = new Promise<boolean>((resolve) => {
+    let resolveStart = (_started: { ok: boolean }): void => {};
+    const engineStart = new Promise<{ ok: boolean }>((resolve) => {
       resolveStart = resolve;
     });
     const getClient = vi.fn();
     const killAndWait = vi.fn(async () => {
-      resolveStart(false);
+      resolveStart({ ok: false });
     });
     const bridge = {
       setWorkingDirectory: vi.fn(),
@@ -298,10 +296,8 @@ describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
     const bridge = {
       setWorkingDirectory: vi.fn(),
       setOutputCallback: vi.fn(),
-      startEngine: vi.fn(async () => true),
+      startEngine: vi.fn(async () => ({ ok: true })),
       getClient: vi.fn(() => client),
-      // triggerNote accesses the bridge's internal client via bracket notation.
-      client,
       killAndWait,
     } as unknown as EngineBridge;
     const session = trackSession(new BlueLiveEngineSession(

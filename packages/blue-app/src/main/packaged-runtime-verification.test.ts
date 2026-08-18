@@ -8,6 +8,9 @@ import {
   verifyPackagedProject,
   verifyPackagedRuntime,
 } from './packaged-runtime-verification';
+import { EngineSession } from './engine-session';
+import { FakeChildProcess, FakeEngineClient, FakeProcessRegistry } from './engine-session.test-support';
+import { sanitizeEngineDiagnostics } from './engine-recovery';
 
 const RESOURCES = '/Applications/Blue.app/Contents/Resources';
 const HOST_PLATFORM = process.platform;
@@ -243,6 +246,64 @@ describe('packaged-runtime-verification', () => {
       ...base,
       runBlueEngineProbe: () => ({ status: 1, stdout: '{}', stderr: 'failed' }),
     }).results.at(-1)?.code).toBe('BLUE_ENGINE_NO_CSOUND_PROBE_FAILED');
+  });
+
+  it('passes --owner-pid only when owner-liveness is requested (bridge negotiates the flag; legacy engines never receive it)', async () => {
+    let capturedArgs: string[] = [];
+    const child = new FakeChildProcess(5001);
+    const registry = new FakeProcessRegistry();
+
+    // Supporting engine
+    const sessionWithLiveness = new EngineSession(
+      {
+        kind: 'realtime',
+        enginePath: '/bin/blue-engine',
+        ownerLivenessCapability: true,
+      },
+      {
+        spawn: (_path, args) => {
+          capturedArgs = args;
+          return child as any;
+        },
+        createClient: () => new FakeEngineClient() as any,
+        registerManifest: (m) => registry.registerEngineProcess(m),
+        removeManifest: (p) => registry.removeEngineProcessRecord(p),
+      },
+    );
+    await sessionWithLiveness.spawn();
+    expect(capturedArgs).toContain('--owner-pid');
+    expect(capturedArgs).toContain(String(process.pid));
+
+    // Legacy external engine without liveness
+    capturedArgs = [];
+    const legacySession = new EngineSession(
+      {
+        kind: 'realtime',
+        enginePath: '/bin/legacy-blue-engine',
+        ownerLivenessCapability: false,
+      },
+      {
+        spawn: (_path, args) => {
+          capturedArgs = args;
+          return child as any;
+        },
+        createClient: () => new FakeEngineClient() as any,
+        registerManifest: (m) => registry.registerEngineProcess(m),
+        removeManifest: (p) => registry.removeEngineProcessRecord(p),
+      },
+    );
+    await legacySession.spawn();
+    expect(capturedArgs).not.toContain('--owner-pid');
+  });
+
+  it('sanitizes diagnostic strings in packaged execution reports', () => {
+    const errorReport = 'Csound error in /Users/username/Library/Blue/project.csd: table not found\nTOKEN=secret_12345';
+    const sanitized = sanitizeEngineDiagnostics(errorReport);
+
+    expect(sanitized).not.toContain('/Users/username');
+    expect(sanitized).not.toContain('TOKEN=secret_12345');
+    expect(sanitized).toContain('/Users/[user]');
+    expect(sanitized).toContain('table not found');
   });
 
   it('verifies that the requested project becomes the current document', async () => {

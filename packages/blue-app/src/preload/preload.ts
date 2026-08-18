@@ -39,6 +39,11 @@ import {
   type ScriptRuntimeReinitializeResult,
 } from '../shared/script-runtime';
 import {
+  ENGINE_RECOVERY_STATUS_CHANNEL,
+  decodeEngineRecoveryStatus,
+  type EngineRecoveryStatus,
+} from '../shared/engine-recovery';
+import {
   SOUND_FONT_FILE_SELECT_CHANNEL,
   SOUND_FONT_INSPECT_CHANNEL,
   type SoundFontInfo,
@@ -733,6 +738,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
     const handler = (_event: Electron.IpcRendererEvent, error: unknown) => callback(error as string);
     ipcRenderer.on('generated-csd-error', handler);
     return () => { ipcRenderer.removeListener('generated-csd-error', handler); };
+  },
+  onEngineRecoveryStatus: (callback: (status: EngineRecoveryStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, raw: unknown) => {
+      const decoded = decodeEngineRecoveryStatus(raw);
+      if (decoded) {
+        callback(decoded);
+      }
+    };
+    ipcRenderer.on(ENGINE_RECOVERY_STATUS_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(ENGINE_RECOVERY_STATUS_CHANNEL, handler); };
   },
 
   // Blue Live

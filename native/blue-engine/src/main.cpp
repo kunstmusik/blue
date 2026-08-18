@@ -3,6 +3,7 @@
 #include "engine/CsoundEngine.h"
 #include "ipc/SharedMemory.h"
 #include "ipc/ZmqHandler.h"
+#include "process/OwnerMonitor.h"
 #include "protocol/Capabilities.h"
 
 #include <csignal>
@@ -190,6 +191,7 @@ void printUsage(const char *progname) {
   std::printf("  --disable-channel-mirroring  Disable shared-memory channel mirroring\n");
   std::printf("  --disable-shared-memory  Disable shared-memory subsystem entirely\n");
   std::printf("  --disable-thread-priority-elevation  Disable perform-thread priority elevation\n");
+  std::printf("  --owner-pid <pid>  Owner process PID to monitor for lifetime\n");
   std::printf("  --probe-csound --json  Print one compatibility report and exit\n");
   std::printf("  --list-io --json  List Csound modules and selected devices\n");
   std::printf("  --run-utility <name> -- [args...]  Run a Csound utility\n");
@@ -206,6 +208,7 @@ int main(int argc, char *argv[]) {
   std::string shmName = "blue-engine";
   std::string controlEndpoint;
   std::string pubEndpoint;
+  int64_t ownerPid = 0;
   bool channelMirroringEnabled = true;
   bool sharedMemoryEnabled = true;
   bool threadPriorityElevationEnabled = true;
@@ -239,6 +242,13 @@ int main(int argc, char *argv[]) {
       pubEndpoint = argv[++i];
     } else if (std::strcmp(argv[i], "--shm") == 0 && i + 1 < argc) {
       shmName = argv[++i];
+    } else if (std::strcmp(argv[i], "--owner-pid") == 0 && i + 1 < argc) {
+      char *endptr = nullptr;
+      ownerPid = std::strtoll(argv[++i], &endptr, 10);
+      if (ownerPid <= 0 || *endptr != '\0') {
+        std::fprintf(stderr, "Invalid --owner-pid value\n");
+        return 64;
+      }
     } else if (std::strcmp(argv[i], "--disable-channel-mirroring") == 0) {
       channelMirroringEnabled = false;
     } else if (std::strcmp(argv[i], "--disable-shared-memory") == 0) {
@@ -372,6 +382,22 @@ int main(int argc, char *argv[]) {
   blue::ZmqHandler handler(engine, shm);
   g_handler = &handler;
 
+  // Validate and start owner monitoring before opening IPC endpoints. The
+  // monitor owns no ZeroMQ socket, so its callback can safely request shutdown
+  // from its watcher thread.
+  blue::OwnerMonitor ownerMonitor;
+  if (ownerPid > 0) {
+    if (!ownerMonitor.start(ownerPid, [&handler]() {
+          handler.requestShutdown();
+        })) {
+      std::fprintf(stderr, "Failed to start owner process monitor for PID %lld\n",
+                   static_cast<long long>(ownerPid));
+      return 1;
+    }
+    std::printf("Monitoring owner process PID: %lld\n",
+                static_cast<long long>(ownerPid));
+  }
+
   // Bind to port
   if (!controlEndpoint.empty()) {
     if (!handler.bind(controlEndpoint, pubEndpoint)) {
@@ -386,6 +412,8 @@ int main(int argc, char *argv[]) {
   while (handler.processOne()) {
     // Continue processing
   }
+
+  ownerMonitor.stop();
 
   std::printf("blue-engine shutdown complete.\n");
   return 0;

@@ -17,6 +17,7 @@ int main() {
   assert(json.find("\"channel-bridge-v1\"") != std::string::npos);
   assert(json.find("\"automation-v1\"") != std::string::npos);
   assert(json.find(blue::BLUE_ENGINE_AUTOMATION_DECIMAL_FEATURE) != std::string::npos);
+  assert(json.find(blue::BLUE_ENGINE_OWNER_LIVENESS_FEATURE) != std::string::npos);
   assert(json.find("\"csound-probe-v1\"") != std::string::npos);
   assert(json.find("\"csound-io-v1\"") != std::string::npos);
   assert(json.find("\"csound-utility-v1\"") != std::string::npos);

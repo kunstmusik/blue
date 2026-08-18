@@ -25,8 +25,8 @@ int main() {
 
   assert(!processed);
   assert(handler.isShutdownRequested());
-  // The wakeup socket should interrupt the poll immediately rather than
-  // waiting for the historical 500 ms timeout.
+  // The bounded poll should notice shutdown without waiting for the old
+  // 500 ms timeout.
   assert(elapsed.count() < 200);
   std::cout << "ZMQ idle wakeup passed in " << elapsed.count() << " ms\n";
   return 0;

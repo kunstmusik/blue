@@ -84,6 +84,7 @@ export class BlueLiveEngineSession {
   private cleanupPromise: Promise<void> | null = null;
   private stopPromise: Promise<BlueLiveStatusSnapshot> | null = null;
   private startCompletion: Promise<void> | null = null;
+  private lastDiagnosticReport: string | null = null;
   private lifecycleGeneration = 0;
   private readonly dependencies: BlueLiveEngineSessionDependencies;
 
@@ -304,6 +305,7 @@ export class BlueLiveEngineSession {
     }
 
     const lifecycleGeneration = ++this.lifecycleGeneration;
+    this.lastDiagnosticReport = null;
     this.setStatus('starting', 'Starting Blue Live...');
     this.sessionId++;
     this.projectRevision = revision;
@@ -376,8 +378,8 @@ export class BlueLiveEngineSession {
       if (await this.stopCancelledStart(lifecycleGeneration)) {
         return this.getSnapshot();
       }
-      if (!started) {
-        this.setStatus('error', 'Failed to start Blue Live engine');
+      if (!started.ok) {
+        this.setStatus('error', started.errorMessage || 'Failed to start Blue Live engine');
         await this.cleanup();
         return this.getSnapshot();
       }
@@ -602,6 +604,11 @@ export class BlueLiveEngineSession {
     return this.status === 'running';
   }
 
+  /** Last lifecycle diagnostic report from this session's engine bridge, for the Show Diagnostics action. */
+  getLastDiagnosticReport(): string | null {
+    return this.lastDiagnosticReport ?? this.bridge?.getLastDiagnosticReport?.() ?? null;
+  }
+
   async setChannel(name: string, value: number): Promise<void> {
     if (this.status !== 'running' || !this.bridge) {
       return;
@@ -613,7 +620,7 @@ export class BlueLiveEngineSession {
   async triggerNote(
     request: BlueLiveNoteTriggerRequest,
   ): Promise<BlueLiveNoteTriggerResult> {
-    const client = this.bridge?.['client'];
+    const client = this.bridge?.getClient();
     const projectData = this.projectData;
 
     if (this.status !== 'running' || !client || !projectData) {
@@ -675,10 +682,11 @@ export class BlueLiveEngineSession {
       this.projectData = null;
       if (this.bridge) {
         const bridge = this.bridge;
+        this.lastDiagnosticReport = bridge.getLastDiagnosticReport?.() ?? this.lastDiagnosticReport;
         this.bridge = null;
         await bridge.killAndWait();
       }
-      const delayMs = this.dependencies.cleanupDelayMs ?? 200;
+      const delayMs = this.dependencies.cleanupDelayMs ?? 0;
       if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }

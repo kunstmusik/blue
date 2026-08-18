@@ -62,6 +62,12 @@ export interface EngineClientOptions {
 
 export type EngineStateListener = (snapshot: EngineStateSnapshot) => void;
 
+interface EngineResponse {
+  ok: boolean;
+  message: string;
+  payload: Buffer;
+}
+
 export class EngineClient {
   private socket: Request | null = null;
   private subscriber: Subscriber | null = null;
@@ -72,7 +78,12 @@ export class EngineClient {
   private subscriptionLoop: Promise<void> | null = null;
   private subscriptionClosed = false;
   private subscriptionError: Error | null = null;
-  private requestQueue: Promise<any> = Promise.resolve();
+  private requestQueue: Promise<EngineResponse> = Promise.resolve({
+    ok: true,
+    message: '',
+    payload: Buffer.alloc(0),
+  });
+  private disconnectPromise: Promise<void> | null = null;
   private verifiedCapabilities: EngineCapabilities | null = null;
 
   constructor(options: EngineClientOptions = {}) {
@@ -116,28 +127,70 @@ export class EngineClient {
    * Disconnect from the engine.
    */
   async disconnect(destroyEngine = true): Promise<void> {
+    if (this.disconnectPromise) {
+      return this.disconnectPromise;
+    }
+
+    const disconnectPromise = this.performDisconnect(destroyEngine);
+    this.disconnectPromise = disconnectPromise;
+    try {
+      await disconnectPromise;
+    } finally {
+      if (this.disconnectPromise === disconnectPromise) {
+        this.disconnectPromise = null;
+      }
+    }
+  }
+
+  private async performDisconnect(destroyEngine: boolean): Promise<void> {
     this.subscriptionClosed = true;
 
-    if (this.subscriber) {
-      this.subscriber.close();
-      this.subscriber = null;
-    }
+    const subscriber = this.subscriber;
+    this.subscriber = null;
+    const subscriptionLoop = this.subscriptionLoop;
+    this.subscriptionLoop = null;
+    const socket = this.socket;
 
-    if (this.socket) {
-      if (destroyEngine) {
-        try {
-          await this.sendRaw(CMD_DESTROY_ENGINE);
-        } catch {
-          // The engine process may already be gone.
-        }
+    if (subscriber) {
+      try {
+        subscriber.close();
+      } catch {
+        // The native socket may already be closed during process teardown.
       }
-      this.socket.close();
-      this.socket = null;
     }
 
-    if (this.subscriptionLoop) {
-      await this.subscriptionLoop;
-      this.subscriptionLoop = null;
+    if (socket && destroyEngine) {
+      try {
+        await this.sendRaw(CMD_DESTROY_ENGINE);
+      } catch {
+        // The engine process may already be gone.
+      }
+    }
+
+    this.socket = null;
+    if (socket) {
+      try {
+        socket.close();
+      } catch {
+        // The native socket may already be closed during process teardown.
+      }
+    }
+
+    // Closing the socket rejects any in-flight request and lets queued
+    // requests observe the disconnected state. Wait for both to settle before
+    // allowing the host process to tear down the native addon.
+    try {
+      await this.requestQueue;
+    } catch {
+      // sendRaw normalizes request failures, but keep teardown best-effort.
+    }
+
+    if (subscriptionLoop) {
+      try {
+        await subscriptionLoop;
+      } catch {
+        // consumeStateEvents suppresses expected close errors.
+      }
     }
 
     this.subscriptionError = null;
@@ -169,7 +222,7 @@ export class EngineClient {
    * Response format: [status: uint8][msg_len: uint32 LE][message: bytes]
    * All requests must use the 5-byte header format, even with no payload.
    */
-  private async sendRaw(cmd: number, payload?: Buffer): Promise<{ ok: boolean; message: string; payload: Buffer }> {
+  private async sendRaw(cmd: number, payload?: Buffer): Promise<EngineResponse> {
     return (this.requestQueue = this.requestQueue
       .then(async () => {
         if (!this.socket) {
