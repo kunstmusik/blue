@@ -273,6 +273,13 @@ describe('project-store — MIDI focus reconciliation', () => {
 });
 
 describe('project-store — pattern layer optimistic projection', () => {
+  beforeEach(() => {
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: async () => ({ changed: true }),
+      getProjectDocument: async () => null,
+    };
+  });
+
   afterEach(() => {
     useProjectStore.getState().clearProject();
     delete (window as unknown as { blueAPI?: unknown }).blueAPI;

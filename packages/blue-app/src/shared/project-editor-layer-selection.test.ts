@@ -148,6 +148,56 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
     expect(afterSnap.layerGroups[0]!.layers.map((l) => l.layerSelectionId)).toEqual([selIds[1], selIds[2], selIds[0], selIds[3]]);
   });
 
+  it('moves ranges through the shared LayerGroup operations for every managed group type', () => {
+    const data = new BlueData();
+    const score = data.getScore();
+    score.length = 0;
+
+    const polyGroup = new PolyObject();
+    for (const name of ['P0', 'P1', 'P2', 'P3']) {
+      const layer = new SoundLayer();
+      layer.setName(name);
+      polyGroup.push(layer);
+    }
+
+    const trackGroup = new TrackLayerGroup();
+    for (const name of ['T0', 'T1', 'T2', 'T3']) {
+      const layer = new TrackLayer();
+      layer.setName(name);
+      trackGroup.push(layer);
+    }
+
+    const patternGroup = new PatternsLayerGroup();
+    for (const name of ['R0', 'R1', 'R2', 'R3']) {
+      const layer = new PatternLayer();
+      layer.setName(name);
+      patternGroup.push(layer);
+    }
+
+    score.push(polyGroup, trackGroup, patternGroup);
+    const groupIds = createScoreDocumentSnapshot(data).layerGroups.map((group) => group.groupId);
+
+    for (const groupId of groupIds) {
+      expect(applyProjectDocumentPatch(data, {
+        score: { type: 'moveLayerRange', groupId, startIndex: 1, endIndex: 2, targetIndex: 0 },
+      })).toBe(true);
+    }
+
+    expect(Array.from(polyGroup, (layer) => layer.getName())).toEqual(['P1', 'P2', 'P0', 'P3']);
+    expect(Array.from(trackGroup, (layer) => layer.getName())).toEqual(['T1', 'T2', 'T0', 'T3']);
+    expect(Array.from(patternGroup, (layer) => layer.getName())).toEqual(['R1', 'R2', 'R0', 'R3']);
+
+    for (const groupId of groupIds) {
+      expect(applyProjectDocumentPatch(data, {
+        score: { type: 'moveLayerRange', groupId, startIndex: 0, endIndex: 1, targetIndex: 1 },
+      })).toBe(true);
+    }
+
+    expect(Array.from(polyGroup, (layer) => layer.getName())).toEqual(['P0', 'P1', 'P2', 'P3']);
+    expect(Array.from(trackGroup, (layer) => layer.getName())).toEqual(['T0', 'T1', 'T2', 'T3']);
+    expect(Array.from(patternGroup, (layer) => layer.getName())).toEqual(['R0', 'R1', 'R2', 'R3']);
+  });
+
   it('pushes up multiple selected layers 2, 3, 4 (indices 1..3) in a 4-layer group to index 0', () => {
     const data = new BlueData();
     const score = data.getScore();
@@ -372,7 +422,7 @@ describe('project-editor moveLayerRange and removeLayerRanges patches', () => {
       },
     })).toBe(true);
 
-    expect(score.map((group) => group === unrelatedEmptyGroup)).toEqual([true]);
+    expect(Array.from(score, (group) => group === unrelatedEmptyGroup)).toEqual([true]);
     expect(createScoreDocumentSnapshot(data).layerGroups[0]?.groupId).toBe(unrelatedGroupId);
   });
 

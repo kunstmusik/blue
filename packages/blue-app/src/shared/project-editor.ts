@@ -7164,27 +7164,26 @@ function findRootLayerGroupIndexByGroupId(score: Score, groupId: string): number
   return -1;
 }
 
+function moveLayerRangeInTypedGroup<T>(
+  group: T[],
+  startIndex: number,
+  endIndex: number,
+  targetIndex: number,
+): boolean {
+  if (startIndex === targetIndex) return false;
+
+  const count = endIndex - startIndex + 1;
+  const layers = group.splice(startIndex, count);
+  group.splice(targetIndex, 0, ...layers);
+  return true;
+}
+
 function moveLayerInManagedGroup(
   group: ManagedLayerGroup,
   layerIndex: number,
   targetIndex: number,
 ): boolean {
-  if (group instanceof PolyObject) {
-    const [layer] = group.splice(layerIndex, 1);
-    if (!layer) return false;
-    group.splice(targetIndex, 0, layer);
-    return true;
-  }
-  if (group instanceof TrackLayerGroup) {
-    const [layer] = group.splice(layerIndex, 1);
-    if (!layer) return false;
-    group.splice(targetIndex, 0, layer);
-    return true;
-  }
-  const [layer] = group.splice(layerIndex, 1);
-  if (!layer) return false;
-  group.splice(targetIndex, 0, layer);
-  return true;
+  return moveLayerRangeInManagedGroup(group, layerIndex, layerIndex, targetIndex);
 }
 
 function moveLayerRangeInManagedGroup(
@@ -7197,12 +7196,13 @@ function moveLayerRangeInManagedGroup(
     || !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, group.length)) {
     return false;
   }
-  const count = endIndex - startIndex + 1;
-  if (startIndex === targetIndex) return false;
-
-  const layers = group.splice(startIndex, count);
-  group.splice(targetIndex, 0, ...layers);
-  return true;
+  if (group instanceof PolyObject) {
+    return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
+  }
+  if (group instanceof TrackLayerGroup) {
+    return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
+  }
+  return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
 }
 
 function applyRemoveLayerRangesPatch(
