@@ -2,6 +2,7 @@
 #include "csound/CsoundLoader.h"
 #include "automation/AutomationStore.h"
 #include "ipc/SharedMemory.h"
+#include "revision.h"
 
 #include <algorithm>
 #include <chrono>

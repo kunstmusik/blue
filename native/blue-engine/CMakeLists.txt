@@ -112,9 +112,16 @@ add_executable(blue-engine
 
 set(BLUE_ENGINE_SOURCE_REVISION "unknown" CACHE STRING
     "Source revision embedded in engine capabilities")
+# The revision is delivered via a generated header rather than a
+# target-wide compile definition: a changed definition invalidates every
+# object in the target, while a changed header only rebuilds the
+# translation units that include it (Capabilities.cpp,
+# benchmark_main.cpp). configure_file rewrites the header only when the
+# substituted content changes, so unchanged revisions do not rebuild.
+configure_file(cmake/revision.h.in "${CMAKE_BINARY_DIR}/generated/revision.h" @ONLY)
+include_directories("${CMAKE_BINARY_DIR}/generated")
 target_compile_definitions(blue-engine PRIVATE
     BLUE_ENGINE_USE_PERFORMANCE_TRACKING=${BLUE_ENGINE_PERFORMANCE_TRACKING_VALUE}
-    BLUE_ENGINE_SOURCE_REVISION="${BLUE_ENGINE_SOURCE_REVISION}"
 )
 
 target_include_directories(blue-engine PRIVATE
@@ -150,7 +157,6 @@ elseif(MSVC)
 endif()
 target_compile_definitions(benchmark_engine PRIVATE
     BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1
-    BLUE_ENGINE_SOURCE_REVISION="${BLUE_ENGINE_SOURCE_REVISION}"
 )
 if(UNIX AND NOT APPLE)
     target_link_libraries(benchmark_engine PRIVATE dl)

@@ -1,11 +1,8 @@
 #include "Capabilities.h"
+#include "revision.h"
 
 #include <string>
 #include <vector>
-
-#ifndef BLUE_ENGINE_SOURCE_REVISION
-#define BLUE_ENGINE_SOURCE_REVISION "unknown"
-#endif
 
 namespace blue {
 namespace {
