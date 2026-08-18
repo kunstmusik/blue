@@ -11,6 +11,7 @@ import { ScoreObject } from '../../score/score-object';
 import { TimePosition } from '../../time/time-position';
 import { TimeDuration } from '../../time/time-duration';
 import { TimeContext } from '../../time/time-context';
+import { beatsToDuration } from '../../time/time-unit-math';
 import { beatsToTimePosition } from '../../time/time-utilities';
 import { FadeType, fadeTypeFromString, fadeTypeToCsound } from './fade-type';
 import { Element } from '../../serialization/xml-reader';
@@ -179,11 +180,17 @@ export class AudioClip implements ScoreObject {
   isLooping(): boolean { return this._looping; }
   setLooping(context: TimeContext | null, looping: boolean): void {
     this._looping = looping;
-    if (!looping && context) {
-      const durLimit = this._audioDuration - this._fileStartTime;
+    if (!looping && context && this._audioDuration > 0) {
+      const durLimitBeats = context.secondsToBeats(
+        Math.max(0, this._audioDuration - this._fileStartTime),
+      );
       const durBeats = this._durationUnit.toBeats(context);
-      if (durBeats > durLimit) {
-        this._durationUnit = TimeDuration.beats(durLimit);
+      if (durBeats > durLimitBeats) {
+        this._durationUnit = beatsToDuration(
+          durLimitBeats,
+          this._durationUnit.getTimeBase(),
+          context,
+        );
       }
     }
   }

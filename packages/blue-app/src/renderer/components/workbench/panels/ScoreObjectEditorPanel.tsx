@@ -22,6 +22,7 @@ import {
   applyPianoRollPatchToPayload,
   type PianoRollPayload,
 } from './score-object/editors/pianoroll/types';
+import { secondsToBeats } from '../../../time/time-unit-logic';
 
 function EmptyState({ message }: { message: string }): React.ReactElement {
   return (
@@ -1074,7 +1075,24 @@ export function applyPatchToDocument(
       ...(patch.patch.fadeOutType !== undefined && { fadeOutType: patch.patch.fadeOutType as string }),
       ...(patch.patch.looping !== undefined && { looping: patch.patch.looping as boolean }),
     };
-    return { ...doc, editor };
+    let shared = doc.shared;
+    if (patch.patch.looping === false && doc.editor.audioDuration > 0) {
+      const fileStart = patch.patch.fileStartTime !== undefined ? (patch.patch.fileStartTime as number) : doc.editor.fileStartTime;
+      const durLimit = secondsToBeats(
+        Math.max(0, doc.editor.audioDuration - fileStart),
+        doc.timeContext,
+      );
+      if (shared.subjectiveDuration.value > durLimit) {
+        shared = {
+          ...shared,
+          subjectiveDuration: {
+            ...shared.subjectiveDuration,
+            value: durLimit,
+          },
+        };
+      }
+    }
+    return { ...doc, shared, editor };
   }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'structured' && doc.editor.editorFamily === 'PianoRoll') {
     const editor: TypeSpecificScoreObjectEditorSnapshot = {

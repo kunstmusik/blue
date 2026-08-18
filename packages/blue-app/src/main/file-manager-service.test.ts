@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { AudioClip, buildWavBytes, Element, TimeBase } from '@blue/data';
 import {
   commitAudioFileDrop,
   getFileManagerRoots,
@@ -330,10 +331,10 @@ describe('commitAudioFileDrop', () => {
     return { context, commitProjectDocumentPatch, project };
   }
 
-  function makeSource(name: string): string {
+  function makeSource(name: string, contents: string | Uint8Array = 'not-a-real-audio-header'): string {
     const dir = makeTempDir();
     const source = path.join(dir, name);
-    fs.writeFileSync(source, 'not-a-real-audio-header');
+    fs.writeFileSync(source, contents);
     return source;
   }
 
@@ -363,6 +364,24 @@ describe('commitAudioFileDrop', () => {
     expect(patch.score.item.serializedXml).toContain('<audioClip');
     expect(patch.score.startBeats).toBe(2);
     expect(project.projectDirectory && fs.readdirSync(project.projectDirectory)).toEqual([]);
+  });
+
+  it('stores imported audio duration using Java-compatible TIME units', async () => {
+    const source = makeSource('clip.wav', buildWavBytes(2, 44100, 16, 44100));
+    const { context, commitProjectDocumentPatch } = makeContext();
+
+    await commitAudioFileDrop(
+      { sourcePath: source, sourceKind: 'file-manager', track, startBeats: 0 },
+      context,
+    );
+
+    const patch = commitProjectDocumentPatch.mock.calls[0]![0] as {
+      score: { item: { serializedXml: string } };
+    };
+    const clip = AudioClip.loadFromXML(Element.parse(patch.score.item.serializedXml));
+    expect(clip.getAudioDuration()).toBeCloseTo(1, 5);
+    expect(clip.getSubjectiveDuration().getTimeBase()).toBe(TimeBase.TIME);
+    expect(clip.getSubjectiveDuration().toTotalSecondsValue()).toBeCloseTo(1, 5);
   });
 
   it('copies into the configured media folder when import copying is enabled', async () => {

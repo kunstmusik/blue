@@ -9334,7 +9334,7 @@ function applyScoreObjectPatch(
         if (p.fadeInType !== undefined) clip.setFadeInType(toBlueDataFadeType(p.fadeInType as string));
         if (p.fadeOut !== undefined) clip.setFadeOut(p.fadeOut as number);
         if (p.fadeOutType !== undefined) clip.setFadeOutType(toBlueDataFadeType(p.fadeOutType as string));
-        if (p.looping !== undefined) clip.setLooping(null, p.looping as boolean);
+        if (p.looping !== undefined) clip.setLooping(context, p.looping as boolean);
         return true;
       }
       if (sObj instanceof AudioFile) {
