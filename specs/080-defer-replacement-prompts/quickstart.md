@@ -15,6 +15,7 @@ Run the focused flow and path tests first:
 pnpm --filter @blue/app exec vitest run --config vitest.config.ts \
   src/main/project-path.test.ts \
   src/main/project-replacement-flow.test.ts \
+  src/main/project-replacement-entry-points.test.ts \
   src/main/midi-import-service.test.ts \
   src/renderer/tests/app.test.ts \
   src/renderer/tests/welcome-screen.test.tsx
@@ -34,9 +35,10 @@ there are no whitespace errors.
 
 ### Validation record (2026-08-18, branch 080-defer-replacement-prompts)
 
-- Focused set: 5 files, 133 passed (project-path 10, project-replacement-flow 69,
+- Focused set: 6 files, 143 passed, 2 skipped (project-path 10,
+  project-replacement-flow 70, project-replacement-entry-points 9,
   midi-import-service 8, app.test 41+2 skipped, welcome-screen 5).
-- `pnpm --filter @blue/app test`: 342 files, 3358 passed, 2 skipped.
+- `pnpm --filter @blue/app test`: 343 files, 3368 passed, 2 skipped.
 - `pnpm --filter @blue/app build:main`: clean.
 - `pnpm test` (full repository, includes @blue/data 1626 tests and native
   blue-engine ctest): exit 0.
@@ -44,9 +46,12 @@ there are no whitespace errors.
 - `git diff --check`: clean.
 - `@blue/data` compatibility fixtures (`blue-data-csd-parity.test.ts`,
   `blue-data-root-compatibility.test.ts`): 26 passed, unchanged.
+- Manual desktop acceptance (2026-08-19): PASS. User testing reported the native
+  replacement flows behaving correctly with no remaining issues.
 
-The manual native-dialog matrix below still requires a desktop run; the automated
-matrix in `src/main/project-replacement-flow.test.ts` covers the equivalent
+The manual native-dialog matrix below records the expected desktop behavior. The
+automated matrices in `src/main/project-replacement-flow.test.ts` and
+`src/main/project-replacement-entry-points.test.ts` cover the equivalent
 entry-path x decision-branch outcomes with injected choosers and dialogs.
 
 ## Manual native-dialog validation
@@ -65,6 +70,7 @@ emitted.
 | ORC/SCO cancel | Cancel ORC chooser, SCO chooser, or mode | No replacement prompt; current project unchanged |
 | MIDI cancel | Cancel MIDI chooser or mapping | No replacement prompt; current project unchanged |
 | Replacement cancel | Accept a source, choose Cancel in replacement dialog | Current project unchanged; MIDI mapping remains available |
+| Library cancellation | Accept a source, cancel the library-draft decision | Project save is not attempted; current dirty state and path remain unchanged |
 | Save As cancel | Choose Save with an unsaved current project, cancel Save As | Replacement blocked; current path and project remain recoverable |
 | Save failure | Inject or simulate a write failure | Replacement blocked; no project-loaded transition |
 | Render active | Start a render, invoke each chooser-based action | Render warning appears before chooser; no chooser or replacement |

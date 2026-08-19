@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-18
 
-**Status**: Draft
+**Status**: Closed — implemented and manually accepted (2026-08-19)
 
 **Input**: User description: "Defer project save and related replacement confirmations until the user has committed to opening or importing a file; audit Open Project, example and recent projects, CSD, ORC/SCO, MIDI, and other project replacement paths."
 
@@ -147,6 +147,7 @@ When the user chooses Save, Don't Save, or Cancel before a project replacement, 
 
 - “Committed to opening” means a regular project or example file has been selected, a recent-project item has been clicked, both ORC/SCO files and the import mode have been accepted, a CSD file and import mode have been accepted, or the MIDI user has pressed Import after configuring valid mappings.
 - The project-save and library-draft decisions are considered part of the same replacement boundary; neither is shown for a source or configuration choice that the user has cancelled.
+- Within that accepted-target boundary, the library-draft decision is resolved before the project-save decision. This prevents a later library cancellation from clearing the current project's dirty state through Save or Save As.
 - The existing coarse policy for deciding when a loaded project receives a save prompt remains in scope only as preserved behavior. Dirty-only prompt eligibility may be specified separately.
 - No new persistence format or project metadata is required.
 - Existing active-render safety checks remain authoritative: the guard blocks a replacement entry path before any chooser or import dialog is shown and is re-checked at the replacement commit point.

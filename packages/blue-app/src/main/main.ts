@@ -90,9 +90,14 @@ import { isSameProjectPathIdentity } from './project-path';
 import {
   resolveReplacementSaveDecision,
   runProjectFileReplacement,
-  runReplacementFlow,
   runTransactionalSaveAs,
 } from './project-replacement-flow';
+import {
+  runCsdImportReplacement,
+  runMidiImportReplacement,
+  runNonInteractiveProjectLoad,
+  runOrcScoImportReplacement,
+} from './project-replacement-entry-points';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
@@ -1945,46 +1950,38 @@ async function importCsdFile(): Promise<boolean> {
 
   let selectedPath: string | null = null;
   try {
-    const outcome = await runReplacementFlow<BlueData>({
+    const outcome = await runCsdImportReplacement<BlueData, CSDImportMode>({
       preflight: () => canReplaceProjectWhileRenderActive(),
-      prepare: async () => {
+      showSourceDialog: async () => {
         const result = await dialog.showOpenDialog(win, {
           title: 'Select CSD File',
           defaultPath: getConfiguredWorkDirectory(),
           filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
           properties: ['openFile'],
         });
-
-        if (result.canceled || result.filePaths.length === 0) {
-          return null;
+        if (!result.canceled && result.filePaths.length > 0) {
+          selectedPath = result.filePaths[0];
         }
-
-        selectedPath = result.filePaths[0];
-
-        const modeResult = await dialog.showMessageBox(win, {
-          type: 'question',
-          title: 'CSD Import Method',
-          message: 'How would you like to import the score?',
-          buttons: [
-            'Global Score',
-            'Single Sound Object',
-            'Sound Object per Instrument',
-            'Cancel',
-          ],
-          defaultId: 0,
-          cancelId: 3,
-        });
-
-        if (modeResult.response === 3) {
-          return null;
-        }
-
-        const modeType: CSDImportMode = modeResult.response as CSDImportMode;
-        const csdText = fs.readFileSync(selectedPath, 'utf-8');
-        return convertCSDtoBlue(csdText, modeType);
+        return result;
       },
-      confirmSave: () => confirmSaveBeforeReplace(),
+      showModeDialog: () => dialog.showMessageBox(win, {
+        type: 'question',
+        title: 'CSD Import Method',
+        message: 'How would you like to import the score?',
+        buttons: [
+          'Global Score',
+          'Single Sound Object',
+          'Sound Object per Instrument',
+          'Cancel',
+        ],
+        defaultId: 0,
+        cancelId: 3,
+      }),
+      cancelModeResponse: 3,
+      readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
+      convert: (csdText, modeType) => convertCSDtoBlue(csdText, modeType),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
       commit: (data) => installProjectData(data, null),
     });
 
@@ -2003,56 +2000,38 @@ async function importOrcSco(): Promise<boolean> {
   const win = mainWindow;
 
   try {
-    const outcome = await runReplacementFlow<BlueData>({
+    const outcome = await runOrcScoImportReplacement<BlueData, CSDImportMode>({
       preflight: () => canReplaceProjectWhileRenderActive(),
-      prepare: async () => {
-        const orcResult = await dialog.showOpenDialog(win, {
-          title: 'Select ORC File',
-          defaultPath: getConfiguredWorkDirectory(),
-          filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
-          properties: ['openFile'],
-        });
-
-        if (orcResult.canceled || orcResult.filePaths.length === 0) {
-          return null;
-        }
-
-        const scoResult = await dialog.showOpenDialog(win, {
-          title: 'Select SCO File',
-          defaultPath: getConfiguredWorkDirectory(),
-          filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
-          properties: ['openFile'],
-        });
-
-        if (scoResult.canceled || scoResult.filePaths.length === 0) {
-          return null;
-        }
-
-        const modeResult = await dialog.showMessageBox(win, {
-          type: 'question',
-          title: 'CSD Import Method',
-          message: 'How would you like to import the score?',
-          buttons: [
-            'Global Score',
-            'Single Sound Object',
-            'Sound Object per Instrument',
-            'Cancel',
-          ],
-          defaultId: 0,
-          cancelId: 3,
-        });
-
-        if (modeResult.response === 3) {
-          return null;
-        }
-
-        const modeType: CSDImportMode = modeResult.response as CSDImportMode;
-        const orcText = fs.readFileSync(orcResult.filePaths[0], 'utf-8');
-        const scoText = fs.readFileSync(scoResult.filePaths[0], 'utf-8');
-        return convertOrcScoToBlue(orcText, scoText, modeType);
-      },
-      confirmSave: () => confirmSaveBeforeReplace(),
+      showOrcDialog: () => dialog.showOpenDialog(win, {
+        title: 'Select ORC File',
+        defaultPath: getConfiguredWorkDirectory(),
+        filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
+        properties: ['openFile'],
+      }),
+      showScoDialog: () => dialog.showOpenDialog(win, {
+        title: 'Select SCO File',
+        defaultPath: getConfiguredWorkDirectory(),
+        filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
+        properties: ['openFile'],
+      }),
+      showModeDialog: () => dialog.showMessageBox(win, {
+        type: 'question',
+        title: 'CSD Import Method',
+        message: 'How would you like to import the score?',
+        buttons: [
+          'Global Score',
+          'Single Sound Object',
+          'Sound Object per Instrument',
+          'Cancel',
+        ],
+        defaultId: 0,
+        cancelId: 3,
+      }),
+      cancelModeResponse: 3,
+      readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
+      convert: (orcText, scoText, modeType) => convertOrcScoToBlue(orcText, scoText, modeType),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
       commit: (data) => installProjectData(data, null),
     });
 
@@ -2146,8 +2125,8 @@ async function openProjectFile(filePath: string): Promise<boolean> {
       parseProject: (xml) => BlueData.loadFromString(xml),
       isSameFile: isCurrentProjectFilePath,
       preflight: () => canReplaceProjectWhileRenderActive(),
-      confirmSave: () => confirmSaveBeforeReplace(),
       confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
       commit: (data, sourcePath) => installProjectData(data, sourcePath),
     });
     return outcome.status === 'committed';
@@ -2163,16 +2142,13 @@ async function openProjectFile(filePath: string): Promise<boolean> {
  * non-interactive path; user-driven opens go through {@link openProjectFile}.
  */
 async function loadProjectFromDisk(filePath: string): Promise<boolean> {
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
-  try {
-    const data = await readProjectFromDisk(filePath);
-    await installProjectData(data, filePath);
-    return true;
-  } catch (err: unknown) {
-    await reportProjectLoadError(filePath, err);
-    return false;
-  }
+  return runNonInteractiveProjectLoad<BlueData>({
+    filePath,
+    preflight: () => canReplaceProjectWhileRenderActive(),
+    readProject: readProjectFromDisk,
+    installProject: installProjectData,
+    reportError: reportProjectLoadError,
+  });
 }
 
 async function runPackagedProjectVerificationAndExit(): Promise<never> {
@@ -2297,8 +2273,10 @@ async function closeProject(): Promise<void> {
 
 async function revertProject(): Promise<void> {
   if (!currentFilePath) return;
+  const filePath = currentFilePath;
   if (!(await confirmSaveBeforeReplace())) return;
-  await loadProjectFromDisk(currentFilePath);
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+  await loadProjectFromDisk(filePath);
 }
 
 async function openRecentProject(filePath: string): Promise<void> {
@@ -3462,7 +3440,7 @@ ipcMain.handle(
     }
 
     try {
-      const outcome = await runReplacementFlow<BlueData>({
+      const outcome = await runMidiImportReplacement<BlueData>({
         preflight: () => canReplaceProjectWhileRenderActive(),
         prepare: async () => {
           const { data, warnings } = buildMidiImportProject(
@@ -3479,16 +3457,15 @@ ipcMain.handle(
           }
           return data;
         },
-        confirmSave: () => confirmSaveBeforeReplace(),
         confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
-        commit: async (data) => {
-          // Revalidate the pending session after the replacement decisions;
-          // a cancelled decision must leave the mapping session available, so
-          // only the commit stage clears it through installProjectData.
+        confirmSave: () => confirmSaveBeforeReplace(),
+        revalidate: () => {
           const currentValidation = midiImportService.validateCommit(token, settings);
           if (!currentValidation.ok) {
             throw new Error(currentValidation.message);
           }
+        },
+        commit: async (data) => {
           await installProjectData(data, null);
         },
       });

@@ -26,18 +26,18 @@ export interface ReplacementFlowCallbacks<Target> {
   prepare: () => Promise<Target | null> | Target | null;
   /** Same-file no-op detection for project-file targets. */
   isNoOp?: (target: Target) => boolean;
-  /** Project-save decision for the accepted target. False blocks replacement. */
-  confirmSave: (target: Target) => Promise<boolean> | boolean;
   /** Related library-draft decision. False blocks replacement. */
   confirmLibraryDraft: (target: Target) => Promise<boolean> | boolean;
+  /** Project-save decision for the accepted target. False blocks replacement. */
+  confirmSave: (target: Target) => Promise<boolean> | boolean;
   /** Install the prepared target through the existing lifecycle. */
   commit: (target: Target) => Promise<void> | void;
 }
 
 /**
  * Run one interactive replacement request through the shared stage order:
- * preflight -> prepare -> no-op check -> preflight re-check -> save decision
- * -> library decision -> single commit.
+ * preflight -> prepare -> no-op check -> preflight re-check -> library
+ * decision -> save decision -> single commit.
  */
 export async function runReplacementFlow<Target>(
   flow: ReplacementFlowCallbacks<Target>,
@@ -59,11 +59,11 @@ export async function runReplacementFlow<Target>(
     return { status: 'cancelled' };
   }
 
-  if (!(await flow.confirmSave(target))) {
+  if (!(await flow.confirmLibraryDraft(target))) {
     return { status: 'blocked' };
   }
 
-  if (!(await flow.confirmLibraryDraft(target))) {
+  if (!(await flow.confirmSave(target))) {
     return { status: 'blocked' };
   }
 
@@ -85,8 +85,8 @@ export interface ProjectFileReplacementDependencies<Project> {
   /** Canonical same-file comparison against the current project path. */
   isSameFile: (filePath: string) => boolean;
   preflight: () => Promise<boolean> | boolean;
-  confirmSave: (filePath: string) => Promise<boolean> | boolean;
   confirmLibraryDraft: (filePath: string) => Promise<boolean> | boolean;
+  confirmSave: (filePath: string) => Promise<boolean> | boolean;
   commit: (project: Project, filePath: string) => Promise<void> | void;
 }
 
@@ -110,8 +110,8 @@ export async function runProjectFileReplacement<Project>(
       return { project, filePath };
     },
     isNoOp: (target) => dependencies.isSameFile(target.filePath),
-    confirmSave: (target) => dependencies.confirmSave(target.filePath),
     confirmLibraryDraft: (target) => dependencies.confirmLibraryDraft(target.filePath),
+    confirmSave: (target) => dependencies.confirmSave(target.filePath),
     commit: (target) => dependencies.commit(target.project, target.filePath),
   });
 }

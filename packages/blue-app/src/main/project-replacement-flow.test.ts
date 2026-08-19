@@ -7,6 +7,7 @@ import {
   type ReplacementFlowCallbacks,
   type ReplacementFlowOutcome,
 } from './project-replacement-flow';
+import { runMidiImportReplacement } from './project-replacement-entry-points';
 import { isSameProjectPathIdentity } from './project-path';
 
 interface StubTarget {
@@ -57,8 +58,8 @@ describe('runReplacementFlow', () => {
       'preflight',
       'prepare',
       'preflight',
-      'confirmSave',
       'confirmLibraryDraft',
+      'confirmSave',
       'commit',
     ]);
     expect(flow.commit).toHaveBeenCalledTimes(1);
@@ -134,7 +135,7 @@ describe('runReplacementFlow', () => {
     const outcome = await runReplacementFlow(flow);
 
     expectOutcome(outcome, 'blocked');
-    expect(flow.confirmLibraryDraft).not.toHaveBeenCalled();
+    expect(flow.confirmLibraryDraft).toHaveBeenCalledTimes(1);
     expect(flow.commit).not.toHaveBeenCalled();
   });
 
@@ -242,8 +243,8 @@ describe('runProjectFileReplacement', () => {
       'parse',
       'same-file-check',
       'preflight:2',
-      'confirmSave',
       'confirmLibraryDraft',
+      'confirmSave',
       'commit',
     ]);
   });
@@ -720,7 +721,7 @@ describe('CSD and ORC/SCO import matrix (US2: spec FR-006/FR-007)', () => {
       cancelAt: 'none',
       confirmLibraryDraft: () => false,
       expectedStatus: 'blocked',
-      expectedPrompts: 1,
+      expectedPrompts: 0,
       expectedCommits: 0,
     },
     {
@@ -819,7 +820,7 @@ describe('CSD and ORC/SCO import matrix (US2: spec FR-006/FR-007)', () => {
     });
   }
 
-  it('orders the save decision before the library-draft decision', async () => {
+  it('orders the library-draft decision before the save decision', async () => {
     const calls: string[] = [];
     await runReplacementFlow({
       preflight: () => true,
@@ -837,7 +838,7 @@ describe('CSD and ORC/SCO import matrix (US2: spec FR-006/FR-007)', () => {
       },
     });
 
-    expect(calls.indexOf('confirmSave')).toBeLessThan(calls.indexOf('confirmLibraryDraft'));
+    expect(calls.indexOf('confirmLibraryDraft')).toBeLessThan(calls.indexOf('confirmSave'));
     expect(calls.indexOf('confirmLibraryDraft')).toBeLessThan(calls.indexOf('commit'));
   });
 });
@@ -854,7 +855,7 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
   } = {}) {
     const calls: string[] = [];
     const commitTarget: unknown[] = [];
-    const run = () => runReplacementFlow<{ built: true }>({
+    const run = () => runMidiImportReplacement<{ built: true }>({
       preflight: () => {
         calls.push('preflight');
         return true;
@@ -871,11 +872,13 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
         calls.push('confirmLibraryDraft');
         return options.confirmLibraryDraft ? await options.confirmLibraryDraft() : true;
       },
-      commit: () => {
+      revalidate: () => {
         calls.push('revalidate');
         if (!session.valid) {
           throw new Error('The MIDI import session has expired.');
         }
+      },
+      commit: () => {
         calls.push('commit');
         commitTarget.push(session);
       },
@@ -888,7 +891,7 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const outcome = await run();
 
     expect(outcome).toEqual({ status: 'committed' });
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmSave', 'confirmLibraryDraft', 'revalidate', 'commit']);
+    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'revalidate', 'commit']);
   });
 
   it('leaves the pending mapping session available when the save decision is cancelled', async () => {
@@ -897,7 +900,7 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const outcome = await run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmSave']);
+    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave']);
     expect(session.valid).toBe(true);
   });
 
@@ -907,14 +910,14 @@ describe('MIDI replacement matrix (US3: spec FR-008)', () => {
     const outcome = await run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmSave', 'confirmLibraryDraft']);
+    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft']);
   });
 
   it('rejects a stale token revalidated after the prompts without committing', async () => {
     const { calls, run } = createMidiFlow({ token: 't1', valid: false });
     await expect(run()).rejects.toThrow('The MIDI import session has expired.');
 
-    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmSave', 'confirmLibraryDraft', 'revalidate']);
+    expect(calls).toEqual(['preflight', 'build', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'revalidate']);
   });
 
   it('never commits twice across retries of the same session', async () => {
@@ -937,6 +940,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
   interface TransactionHarness {
     calls: string[];
     currentPath: string | null;
+    currentDirty: boolean;
     run: () => Promise<ReplacementFlowOutcome>;
   }
 
@@ -945,11 +949,13 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     hasCurrentPath: boolean;
     saveDestination?: string | null;
     writeSucceeds?: boolean;
+    confirmLibraryDraft?: () => Promise<boolean> | boolean;
   }): TransactionHarness {
     const calls: string[] = [];
     const harness: TransactionHarness = {
       calls,
       currentPath: options.hasCurrentPath ? '/work/current.blue' : null,
+      currentDirty: true,
       run: () => runReplacementFlow<{ prepared: true }>({
         preflight: () => {
           calls.push('preflight');
@@ -967,7 +973,9 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
             hasCurrentPath: () => options.hasCurrentPath,
             saveCurrent: () => {
               calls.push('saveCurrent');
-              return options.writeSucceeds ?? true;
+              const succeeds = options.writeSucceeds ?? true;
+              if (succeeds) harness.currentDirty = false;
+              return succeeds;
             },
             saveAs: () => {
               calls.push('saveAs');
@@ -983,6 +991,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
                 publishPath: (filePath) => {
                   calls.push(`publish:${filePath}`);
                   harness.currentPath = filePath;
+                  harness.currentDirty = false;
                 },
               });
             },
@@ -991,7 +1000,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
         },
         confirmLibraryDraft: () => {
           calls.push('confirmLibraryDraft');
-          return true;
+          return options.confirmLibraryDraft ? options.confirmLibraryDraft() : true;
         },
         commit: () => {
           calls.push('commit');
@@ -1008,6 +1017,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     expect(outcome).toEqual({ status: 'committed' });
     expect(harness.calls).toContain('saveCurrent');
     expect(harness.currentPath).toBe('/work/current.blue');
+    expect(harness.currentDirty).toBe(false);
   });
 
   it('commits after a successful Save As publishes the new path', async () => {
@@ -1016,11 +1026,11 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
 
     expect(outcome).toEqual({ status: 'committed' });
     expect(harness.calls).toEqual([
-      'preflight', 'prepare', 'preflight', 'confirmSave',
-      'saveAs', 'chooseDestination', 'write', 'publish:/work/new.blue',
-      'confirmLibraryDraft', 'commit',
+      'preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave',
+      'saveAs', 'chooseDestination', 'write', 'publish:/work/new.blue', 'commit',
     ]);
     expect(harness.currentPath).toBe('/work/new.blue');
+    expect(harness.currentDirty).toBe(false);
   });
 
   it('blocks and keeps the current path stable when Save As is cancelled', async () => {
@@ -1029,7 +1039,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
 
     expect(outcome).toEqual({ status: 'blocked' });
     expect(harness.calls).toEqual([
-      'preflight', 'prepare', 'preflight', 'confirmSave', 'saveAs', 'chooseDestination',
+      'preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'saveAs', 'chooseDestination',
     ]);
     expect(harness.currentPath).toBeNull();
   });
@@ -1047,8 +1057,9 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmSave', 'saveCurrent']);
+    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave', 'saveCurrent']);
     expect(harness.currentPath).toBe('/work/current.blue');
+    expect(harness.currentDirty).toBe(true);
   });
 
   it('blocks without writing when the decision is cancelled', async () => {
@@ -1056,7 +1067,7 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     const outcome = await harness.run();
 
     expect(outcome).toEqual({ status: 'blocked' });
-    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmSave']);
+    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmLibraryDraft', 'confirmSave']);
     expect(harness.currentPath).toBe('/work/current.blue');
   });
 
@@ -1068,28 +1079,44 @@ describe('Replacement transaction safety (US4: spec FR-010/FR-011/FR-015)', () =
     expect(harness.calls).not.toContain('saveCurrent');
     expect(harness.calls).not.toContain('saveAs');
   });
+
+  it('does not save or clear dirty state when the library decision is cancelled', async () => {
+    const harness = createTransactionHarness({
+      choice: 'save',
+      hasCurrentPath: true,
+      confirmLibraryDraft: () => false,
+    });
+    const outcome = await harness.run();
+
+    expect(outcome).toEqual({ status: 'blocked' });
+    expect(harness.calls).toEqual(['preflight', 'prepare', 'preflight', 'confirmLibraryDraft']);
+    expect(harness.calls).not.toContain('confirmSave');
+    expect(harness.calls).not.toContain('saveCurrent');
+    expect(harness.currentPath).toBe('/work/current.blue');
+    expect(harness.currentDirty).toBe(true);
+  });
 });
 
 describe('Library-draft timing and state integrity (FR-012/FR-017/FR-019)', () => {
-  it('never reaches the library decision after a cancelled save decision', async () => {
+  it('never reaches the save decision after a cancelled library decision', async () => {
     const calls: string[] = [];
     await runReplacementFlow({
       preflight: () => true,
       prepare: () => ({ prepared: true }),
       confirmSave: () => {
         calls.push('confirmSave');
-        return false;
+        return true;
       },
       confirmLibraryDraft: () => {
         calls.push('confirmLibraryDraft');
-        return true;
+        return false;
       },
       commit: () => {
         calls.push('commit');
       },
     });
 
-    expect(calls).toEqual(['confirmSave']);
+    expect(calls).toEqual(['confirmLibraryDraft']);
   });
 
   it('shows each replacement decision exactly once per accepted target', async () => {

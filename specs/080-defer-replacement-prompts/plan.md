@@ -67,12 +67,12 @@ and the existing no-picker New/Close/Revert/Quit routes.
 - Runtime and engine isolation: PASS. Existing main-process render, Java, filesystem,
   and editor shutdown calls remain in main.ts. Renderer code continues to submit intents
   through preload.
-- Host-path portability: PASS pending design confirmation. Same-file comparison will use
+- Host-path portability: PASS. Same-file comparison uses
   a reusable main-process helper with platform-specific path resolution/normalization and
   Windows case rules. Native paths remain native for fs/path calls.
-- Verification evidence: PASS pending design confirmation. The plan includes focused
-  flow, path, save-failure, MIDI, renderer-routing, and quickstart coverage plus the
-  affected package build/test checks.
+- Verification evidence: PASS. Focused flow, path, save-failure, MIDI, renderer-routing,
+  entry-point, and quickstart coverage pass alongside the affected package build/test
+  checks and the full repository test/lint commands.
 
 ## Research Decisions
 
@@ -113,8 +113,9 @@ Interactive replacement requests follow this sequence:
    A same-file target is a no-op with no replacement prompts or project-loaded event.
 5. Re-check active render/freeze state after preparation and immediately before the
    replacement decisions.
-6. Resolve the project-save decision and related library-draft decision for the accepted
-   target. A failed or cancelled save blocks the flow.
+6. Resolve the related library-draft decision, then the project-save decision, for the
+   accepted target. A failed or cancelled decision blocks the flow before commit; the
+   ordering prevents a library cancellation from following a successful project save.
 7. Commit the prepared target through the existing main-process lifecycle, editor
    shutdown, runtime cleanup, project session increment, recent-project, dependency,
    and project-loaded behavior.
@@ -142,6 +143,9 @@ installation so its ordering and failure semantics can be tested independently.
   Project confirmation wrapper as the native route.
 - loadProjectFromDisk remains a non-interactive read/install path for revert and
   packaged verification. Interactive callers use prepared-target wrappers instead.
+- CSD, ORC/SCO, MIDI, and non-interactive load entry points use the host-owned
+  dependency-injected adapters in `project-replacement-entry-points.ts`; Electron
+  dialogs and lifecycle callbacks remain supplied by `main.ts`.
 
 ### Persistence and state boundaries
 
@@ -160,8 +164,10 @@ successful save/reopen semantics remain unchanged.
 Preparation errors use the existing load/import error dialogs and leave currentData,
 currentFilePath, session identity, editor windows, and pending MIDI configuration
 unchanged. Replacement prompt cancellation leaves the prepared target disposable and
-does not emit a successful project-loaded transition. Active-render rejection is
-recoverable and happens both before chooser presentation and at commit.
+does not emit a successful project-loaded transition. Library-draft cancellation is
+resolved before project Save/Save As, so it cannot clear the current dirty state.
+Active-render rejection is recoverable and happens both before chooser presentation and
+at commit.
 
 ## Project Structure
 
@@ -186,7 +192,9 @@ packages/blue-app/src/main/
 ├── project-path.ts
 ├── project-path.test.ts
 ├── project-replacement-flow.ts
-└── project-replacement-flow.test.ts
+├── project-replacement-flow.test.ts
+├── project-replacement-entry-points.ts
+└── project-replacement-entry-points.test.ts
 
 packages/blue-app/src/main/midi-import-service.ts
 packages/blue-app/src/main/midi-import-service.test.ts
@@ -197,12 +205,13 @@ packages/blue-app/src/renderer/tests/welcome-screen.test.tsx
 packages/blue-app/src/preload/preload.ts
 ~~~
 
-Structure Decision: Keep the feature in @blue/app. Add only two small, host-owned
-main-process seams: project-path.ts for reusable project identity and
-project-replacement-flow.ts for dependency-injected stage ordering. Keep actual
-filesystem, Electron dialog, BlueData installation, runtime shutdown, and IPC wiring
-in main.ts. Update existing renderer/preload files only where route behavior or return
-semantics require verification.
+Structure Decision: Keep the feature in @blue/app. Add small, host-owned main-process
+seams: project-path.ts for reusable project identity, project-replacement-flow.ts for
+dependency-injected stage ordering, and project-replacement-entry-points.ts for
+testable CSD/ORC-SCO/MIDI/load orchestration. Keep actual filesystem, Electron dialog,
+BlueData installation, runtime shutdown, and IPC wiring in main.ts. Update existing
+renderer/preload files only where route behavior or return semantics require
+verification.
 
 ## Constitution Check: Post-Design Gate
 

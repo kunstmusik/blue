@@ -30,8 +30,8 @@ contracts required by every interactive replacement story.
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
 - [X] T003 Implement the reusable platform-aware canonical project identity helper using native path implementations, resolve/normalize behavior, and Windows case rules in packages/blue-app/src/main/project-path.ts
-- [X] T004 Implement the dependency-injected replacement coordinator with preflight, preparation cancellation, no-op, commit re-check, save/library confirmation, and single-commit guarantees in packages/blue-app/src/main/project-replacement-flow.ts
-- [X] T005 Split project read/parse from project installation, add prepared-target and accepted-replacement adapters, and keep loadProjectFromDisk non-interactive for revert and packaged verification in packages/blue-app/src/main/main.ts
+- [X] T004 Implement the dependency-injected replacement coordinator with preflight, preparation cancellation, no-op, commit re-check, library-before-save confirmation, and single-commit guarantees in packages/blue-app/src/main/project-replacement-flow.ts
+- [X] T005 Split project read/parse from project installation, add prepared-target and accepted-replacement adapters, add testable CSD/ORC-SCO/MIDI/load entry seams, and keep loadProjectFromDisk non-interactive for revert and packaged verification in packages/blue-app/src/main/main.ts and packages/blue-app/src/main/project-replacement-entry-points.ts
 - [X] T006 Make the main-process save/write primitives return explicit success, keep Save As path assignment transactional, and expose cancellation/failure as a blocking result for replacement in packages/blue-app/src/main/main.ts
 
 **Checkpoint**: The application has testable replacement sequencing, platform-safe
@@ -76,7 +76,7 @@ valid imports and verify save/library decisions occur once immediately before co
 
 ### Verification for User Story 2
 
-- [X] T011 [US2] Add CSD and ORC/SCO cancellation, conversion failure, accepted-target, library-draft, and single-commit matrix cases in packages/blue-app/src/main/project-replacement-flow.test.ts
+- [X] T011 [US2] Add CSD and ORC/SCO cancellation, conversion failure, accepted-target, library-draft, and single-commit matrix cases in packages/blue-app/src/main/project-replacement-flow.test.ts and packages/blue-app/src/main/project-replacement-entry-points.test.ts
 
 ### Implementation for User Story 2
 
@@ -102,7 +102,7 @@ the mapping dialog remains available after replacement cancellation.
 
 - [X] T014 [P] [US3] Extend MIDI service regression cases for chooser cancellation, pending-session retention, stale-session rejection, and no read/parse before selection in packages/blue-app/src/main/midi-import-service.test.ts
 - [X] T015 [P] [US3] Extend renderer MIDI dialog cases for mapping cancellation and replacement-decision cancellation preserving the mapping session in packages/blue-app/src/renderer/tests/midi-import-dialog.test.tsx
-- [X] T016 [US3] Add the MIDI accepted-target, save/library cancellation, revalidation, and exactly-once commit matrix to packages/blue-app/src/main/project-replacement-flow.test.ts
+- [X] T016 [US3] Add the MIDI accepted-target, save/library cancellation, revalidation, and exactly-once commit matrix to packages/blue-app/src/main/project-replacement-flow.test.ts and packages/blue-app/src/main/project-replacement-entry-points.test.ts
 
 ### Implementation for User Story 3
 
@@ -125,7 +125,7 @@ state, session, editors, and pending MIDI configuration remain recoverable.
 ### Verification for User Story 4
 
 - [X] T018 [US4] Add save/discard/cancel, Save As cancellation, overwrite decline, write failure, current-path stability, and no-project cases to packages/blue-app/src/main/project-replacement-flow.test.ts
-- [X] T019 [US4] Add assertions for library-draft timing, render preflight and commit re-check, no duplicate replacement decisions, unchanged project snapshots, and no prompt state entering .blue data in packages/blue-app/src/main/project-replacement-flow.test.ts
+- [X] T019 [US4] Add assertions for library-before-save timing, render preflight and commit re-check, no duplicate replacement decisions, unchanged project snapshots, library-cancellation dirty-state preservation, and no prompt state entering .blue data in packages/blue-app/src/main/project-replacement-flow.test.ts and packages/blue-app/src/main/project-replacement-entry-points.test.ts
 
 ### Implementation for User Story 4
 

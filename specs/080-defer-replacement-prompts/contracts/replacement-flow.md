@@ -13,7 +13,10 @@ canonical project replacement lifecycle. It is not a new renderer or public IPC 
 - Host wiring: `packages/blue-app/src/main/main.ts` (`openProjectFile` accepted-target
   wrapper, `readProjectFromDisk`/`installProjectData` split, `confirmSaveBeforeReplace`,
   `writeProjectToDisk`/`doSave`, `saveFileAs`, `loadProjectFromDisk` non-interactive path).
-- Regression matrix: `packages/blue-app/src/main/project-replacement-flow.test.ts` and
+- Entry-point adapters: `packages/blue-app/src/main/project-replacement-entry-points.ts`
+  (CSD, ORC/SCO, MIDI, and non-interactive load seams).
+- Regression matrix: `packages/blue-app/src/main/project-replacement-flow.test.ts`,
+  `packages/blue-app/src/main/project-replacement-entry-points.test.ts`, and
   `packages/blue-app/src/main/project-path.test.ts`.
 
 ## Coordinator shape
@@ -43,8 +46,10 @@ Contract:
    no-op and no confirmation or commit callback is called.
 4. Call preflight again after preparation and before confirmation. A false result
    returns cancelled and commit is not called.
-5. Call confirmSave and then confirmLibraryDraft for an accepted target. A false
+5. Call confirmLibraryDraft and then confirmSave for an accepted target. A false
    result from either callback returns blocked/cancelled and commit is not called.
+   Resolving the library decision first ensures a library cancellation cannot occur
+   after a successful project save has already cleared the current dirty state.
 6. Call commit exactly once only after all preceding stages succeed.
 7. A thrown preparation error is handled by the caller's existing load/import error
    dialog and does not enter confirmation or commit.
@@ -60,9 +65,9 @@ sessions, library state, or MIDI pending state.
 | Keyboard/preload Open Project | open-file IPC delegates to the same openFile | main.ts openFile → openProjectFile |
 | Recent project | Use supplied path, read/parse before prompts | main.ts openFilePath → openProjectFile |
 | Open Example Project | Example chooser, read/parse selected .blue | main.ts openExampleProject → openProjectFile |
-| Import CSD | CSD chooser, mode dialog, read/convert | main.ts importCsdFile (runReplacementFlow) |
-| Import ORC/SCO | ORC chooser, SCO chooser, mode dialog, read/convert | main.ts importOrcSco (runReplacementFlow) |
-| Import MIDI | MIDI chooser, mapping dialog, token validation, project build | main.ts commit-midi-import (runReplacementFlow) |
+| Import CSD | CSD chooser, mode dialog, read/convert | main.ts importCsdFile → runCsdImportReplacement |
+| Import ORC/SCO | ORC chooser, SCO chooser, mode dialog, read/convert | main.ts importOrcSco → runOrcScoImportReplacement |
+| Import MIDI | MIDI chooser, mapping dialog, token validation, project build | main.ts commit-midi-import → runMidiImportReplacement |
 | New/Close/Revert/Quit | No source chooser; preserve existing immediate policy | existing main.ts handlers (new-file IPC routes through handleNewFile) |
 
 ## Cancellation and failure contract
@@ -75,7 +80,9 @@ sessions, library state, or MIDI pending state.
   document early.
 - A cancelled MIDI replacement decision leaves the pending mapping session available
   to the renderer, subject to the existing session-token rules.
-- Internal loadProjectFromDisk and packaged verification paths remain non-interactive.
+- Internal loadProjectFromDisk and packaged verification paths remain non-interactive;
+  the dedicated non-interactive load adapter performs only the render gate, read,
+  install, and existing error reporting.
 
 ## Path identity contract
 
