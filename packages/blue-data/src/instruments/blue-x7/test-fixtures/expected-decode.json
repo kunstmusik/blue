@@ -1,0 +1,5383 @@
+{
+  "single": {
+    "name": "TESTVOICE1",
+    "algorithmCommon": {
+      "keyTranspose": 24,
+      "algorithm": 19,
+      "feedback": 5,
+      "operators": [true, true, true, true, true, true]
+    },
+    "lfo": {
+      "speed": 35,
+      "delay": 10,
+      "PMD": 20,
+      "AMD": 15,
+      "wave": 4,
+      "sync": 1
+    },
+    "operators": [
+      {
+        "mode": 0,
+        "sync": 1,
+        "freqCoarse": 1,
+        "freqFine": 0,
+        "detune": -3,
+        "breakpoint": 30,
+        "curveLeft": 0,
+        "curveRight": 1,
+        "depthLeft": 0,
+        "depthRight": 0,
+        "keyboardRateScaling": 0,
+        "outputLevel": 70,
+        "velocitySensitivity": 0,
+        "modulationAmplitude": 0,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 80, "level": 95},
+          {"rate": 20, "level": 80},
+          {"rate": 25, "level": 10},
+          {"rate": 40, "level": 5}
+        ]
+      },
+      {
+        "mode": 1,
+        "sync": 1,
+        "freqCoarse": 2,
+        "freqFine": 10,
+        "detune": -2,
+        "breakpoint": 35,
+        "curveLeft": 1,
+        "curveRight": 2,
+        "depthLeft": 10,
+        "depthRight": 12,
+        "keyboardRateScaling": 1,
+        "outputLevel": 74,
+        "velocitySensitivity": 2,
+        "modulationAmplitude": 1,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 81, "level": 94},
+          {"rate": 21, "level": 79},
+          {"rate": 26, "level": 11},
+          {"rate": 41, "level": 6}
+        ]
+      },
+      {
+        "mode": 0,
+        "sync": 1,
+        "freqCoarse": 3,
+        "freqFine": 20,
+        "detune": -1,
+        "breakpoint": 40,
+        "curveLeft": 2,
+        "curveRight": 3,
+        "depthLeft": 20,
+        "depthRight": 24,
+        "keyboardRateScaling": 2,
+        "outputLevel": 78,
+        "velocitySensitivity": 4,
+        "modulationAmplitude": 2,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 82, "level": 93},
+          {"rate": 22, "level": 78},
+          {"rate": 27, "level": 12},
+          {"rate": 42, "level": 7}
+        ]
+      },
+      {
+        "mode": 1,
+        "sync": 1,
+        "freqCoarse": 4,
+        "freqFine": 30,
+        "detune": 0,
+        "breakpoint": 45,
+        "curveLeft": 3,
+        "curveRight": 0,
+        "depthLeft": 30,
+        "depthRight": 36,
+        "keyboardRateScaling": 3,
+        "outputLevel": 82,
+        "velocitySensitivity": 6,
+        "modulationAmplitude": 3,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 83, "level": 92},
+          {"rate": 23, "level": 77},
+          {"rate": 28, "level": 13},
+          {"rate": 43, "level": 8}
+        ]
+      },
+      {
+        "mode": 0,
+        "sync": 1,
+        "freqCoarse": 5,
+        "freqFine": 40,
+        "detune": 1,
+        "breakpoint": 50,
+        "curveLeft": 0,
+        "curveRight": 1,
+        "depthLeft": 40,
+        "depthRight": 48,
+        "keyboardRateScaling": 4,
+        "outputLevel": 86,
+        "velocitySensitivity": 0,
+        "modulationAmplitude": 0,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 84, "level": 91},
+          {"rate": 24, "level": 76},
+          {"rate": 29, "level": 14},
+          {"rate": 44, "level": 9}
+        ]
+      },
+      {
+        "mode": 1,
+        "sync": 1,
+        "freqCoarse": 6,
+        "freqFine": 50,
+        "detune": 2,
+        "breakpoint": 55,
+        "curveLeft": 1,
+        "curveRight": 2,
+        "depthLeft": 50,
+        "depthRight": 60,
+        "keyboardRateScaling": 5,
+        "outputLevel": 90,
+        "velocitySensitivity": 2,
+        "modulationAmplitude": 1,
+        "modulationPitch": 3,
+        "envelope": [
+          {"rate": 85, "level": 90},
+          {"rate": 25, "level": 75},
+          {"rate": 30, "level": 15},
+          {"rate": 45, "level": 10}
+        ]
+      }
+    ],
+    "pitchEnvelope": [
+      {"rate": 50, "level": 45},
+      {"rate": 51, "level": 46},
+      {"rate": 52, "level": 47},
+      {"rate": 53, "level": 48}
+    ]
+  },
+  "bank": [
+    {
+      "slot": 0,
+      "name": "ACOUSTIC 1",
+      "algorithmCommon": {
+        "keyTranspose": 12,
+        "algorithm": 1,
+        "feedback": 0
+      },
+      "lfo": {
+        "speed": 30,
+        "delay": 10,
+        "PMD": 20,
+        "AMD": 15,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 1,
+          "freqFine": 0,
+          "detune": -3,
+          "breakpoint": 0,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 0,
+          "outputLevel": 60,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 70, "level": 90},
+            {"rate": 20, "level": 80},
+            {"rate": 30, "level": 20},
+            {"rate": 40, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 2,
+          "freqFine": 15,
+          "detune": -3,
+          "breakpoint": 1,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 1,
+          "outputLevel": 65,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 71, "level": 89},
+            {"rate": 21, "level": 79},
+            {"rate": 31, "level": 21},
+            {"rate": 41, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 3,
+          "freqFine": 30,
+          "detune": -1,
+          "breakpoint": 2,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 2,
+          "outputLevel": 70,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 72, "level": 88},
+            {"rate": 22, "level": 78},
+            {"rate": 32, "level": 22},
+            {"rate": 42, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 4,
+          "freqFine": 45,
+          "detune": -1,
+          "breakpoint": 3,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 3,
+          "outputLevel": 75,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 73, "level": 87},
+            {"rate": 23, "level": 77},
+            {"rate": 33, "level": 23},
+            {"rate": 43, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 5,
+          "freqFine": 60,
+          "detune": 1,
+          "breakpoint": 4,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 4,
+          "outputLevel": 80,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 74, "level": 86},
+            {"rate": 24, "level": 76},
+            {"rate": 34, "level": 24},
+            {"rate": 44, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 6,
+          "freqFine": 75,
+          "detune": 1,
+          "breakpoint": 5,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 5,
+          "outputLevel": 85,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 75, "level": 85},
+            {"rate": 25, "level": 75},
+            {"rate": 35, "level": 25},
+            {"rate": 45, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 1,
+      "name": "ACOUSTIC 1",
+      "algorithmCommon": {
+        "keyTranspose": 13,
+        "algorithm": 2,
+        "feedback": 1
+      },
+      "lfo": {
+        "speed": 31,
+        "delay": 11,
+        "PMD": 21,
+        "AMD": 16,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 2,
+          "freqFine": 2,
+          "detune": -3,
+          "breakpoint": 3,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 1,
+          "outputLevel": 61,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 71, "level": 91},
+            {"rate": 21, "level": 81},
+            {"rate": 31, "level": 20},
+            {"rate": 41, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 3,
+          "freqFine": 17,
+          "detune": -1,
+          "breakpoint": 4,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 2,
+          "outputLevel": 66,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 72, "level": 90},
+            {"rate": 22, "level": 80},
+            {"rate": 32, "level": 21},
+            {"rate": 42, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 4,
+          "freqFine": 32,
+          "detune": -1,
+          "breakpoint": 5,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 3,
+          "outputLevel": 71,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 73, "level": 89},
+            {"rate": 23, "level": 79},
+            {"rate": 33, "level": 22},
+            {"rate": 43, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 5,
+          "freqFine": 47,
+          "detune": 1,
+          "breakpoint": 6,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 4,
+          "outputLevel": 76,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 74, "level": 88},
+            {"rate": 24, "level": 78},
+            {"rate": 34, "level": 23},
+            {"rate": 44, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 6,
+          "freqFine": 62,
+          "detune": 1,
+          "breakpoint": 7,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 5,
+          "outputLevel": 81,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 75, "level": 87},
+            {"rate": 25, "level": 77},
+            {"rate": 35, "level": 24},
+            {"rate": 45, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 7,
+          "freqFine": 77,
+          "detune": 3,
+          "breakpoint": 8,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 6,
+          "outputLevel": 86,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 76, "level": 86},
+            {"rate": 26, "level": 76},
+            {"rate": 36, "level": 25},
+            {"rate": 46, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 2,
+      "name": "          ",
+      "algorithmCommon": {
+        "keyTranspose": 14,
+        "algorithm": 3,
+        "feedback": 2
+      },
+      "lfo": {
+        "speed": 32,
+        "delay": 12,
+        "PMD": 22,
+        "AMD": 17,
+        "wave": 2,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 3,
+          "freqFine": 4,
+          "detune": -1,
+          "breakpoint": 6,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 2,
+          "outputLevel": 62,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 72, "level": 92},
+            {"rate": 22, "level": 82},
+            {"rate": 32, "level": 20},
+            {"rate": 42, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 4,
+          "freqFine": 19,
+          "detune": -1,
+          "breakpoint": 7,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 3,
+          "outputLevel": 67,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 73, "level": 91},
+            {"rate": 23, "level": 81},
+            {"rate": 33, "level": 21},
+            {"rate": 43, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 5,
+          "freqFine": 34,
+          "detune": 1,
+          "breakpoint": 8,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 4,
+          "outputLevel": 72,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 74, "level": 90},
+            {"rate": 24, "level": 80},
+            {"rate": 34, "level": 22},
+            {"rate": 44, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 6,
+          "freqFine": 49,
+          "detune": 1,
+          "breakpoint": 9,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 5,
+          "outputLevel": 77,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 75, "level": 89},
+            {"rate": 25, "level": 79},
+            {"rate": 35, "level": 23},
+            {"rate": 45, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 7,
+          "freqFine": 64,
+          "detune": 3,
+          "breakpoint": 10,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 6,
+          "outputLevel": 82,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 76, "level": 88},
+            {"rate": 26, "level": 78},
+            {"rate": 36, "level": 24},
+            {"rate": 46, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 8,
+          "freqFine": 79,
+          "detune": 3,
+          "breakpoint": 11,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 7,
+          "outputLevel": 87,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 77, "level": 87},
+            {"rate": 27, "level": 77},
+            {"rate": 37, "level": 25},
+            {"rate": 47, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 3,
+      "name": "BELLS ~!@#",
+      "algorithmCommon": {
+        "keyTranspose": 15,
+        "algorithm": 4,
+        "feedback": 3
+      },
+      "lfo": {
+        "speed": 33,
+        "delay": 13,
+        "PMD": 23,
+        "AMD": 18,
+        "wave": 3,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 4,
+          "freqFine": 6,
+          "detune": -1,
+          "breakpoint": 9,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 3,
+          "outputLevel": 63,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 73, "level": 93},
+            {"rate": 23, "level": 83},
+            {"rate": 33, "level": 20},
+            {"rate": 43, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 5,
+          "freqFine": 21,
+          "detune": 1,
+          "breakpoint": 10,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 4,
+          "outputLevel": 68,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 74, "level": 92},
+            {"rate": 24, "level": 82},
+            {"rate": 34, "level": 21},
+            {"rate": 44, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 6,
+          "freqFine": 36,
+          "detune": 1,
+          "breakpoint": 11,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 5,
+          "outputLevel": 73,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 75, "level": 91},
+            {"rate": 25, "level": 81},
+            {"rate": 35, "level": 22},
+            {"rate": 45, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 7,
+          "freqFine": 51,
+          "detune": 3,
+          "breakpoint": 12,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 6,
+          "outputLevel": 78,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 76, "level": 90},
+            {"rate": 26, "level": 80},
+            {"rate": 36, "level": 23},
+            {"rate": 46, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 8,
+          "freqFine": 66,
+          "detune": 3,
+          "breakpoint": 13,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 7,
+          "outputLevel": 83,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 77, "level": 89},
+            {"rate": 27, "level": 79},
+            {"rate": 37, "level": 24},
+            {"rate": 47, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 9,
+          "freqFine": 81,
+          "detune": 5,
+          "breakpoint": 14,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 0,
+          "outputLevel": 88,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 78, "level": 88},
+            {"rate": 28, "level": 78},
+            {"rate": 38, "level": 25},
+            {"rate": 48, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 4,
+      "name": "PATCH 05  ",
+      "algorithmCommon": {
+        "keyTranspose": 16,
+        "algorithm": 5,
+        "feedback": 4
+      },
+      "lfo": {
+        "speed": 34,
+        "delay": 14,
+        "PMD": 24,
+        "AMD": 19,
+        "wave": 4,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 5,
+          "freqFine": 8,
+          "detune": 1,
+          "breakpoint": 12,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 4,
+          "outputLevel": 64,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 74, "level": 94},
+            {"rate": 24, "level": 84},
+            {"rate": 34, "level": 20},
+            {"rate": 44, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 6,
+          "freqFine": 23,
+          "detune": 1,
+          "breakpoint": 13,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 5,
+          "outputLevel": 69,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 75, "level": 93},
+            {"rate": 25, "level": 83},
+            {"rate": 35, "level": 21},
+            {"rate": 45, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 7,
+          "freqFine": 38,
+          "detune": 3,
+          "breakpoint": 14,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 6,
+          "outputLevel": 74,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 76, "level": 92},
+            {"rate": 26, "level": 82},
+            {"rate": 36, "level": 22},
+            {"rate": 46, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 8,
+          "freqFine": 53,
+          "detune": 3,
+          "breakpoint": 15,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 7,
+          "outputLevel": 79,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 77, "level": 91},
+            {"rate": 27, "level": 81},
+            {"rate": 37, "level": 23},
+            {"rate": 47, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 9,
+          "freqFine": 68,
+          "detune": 5,
+          "breakpoint": 16,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 0,
+          "outputLevel": 84,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 78, "level": 90},
+            {"rate": 28, "level": 80},
+            {"rate": 38, "level": 24},
+            {"rate": 48, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 10,
+          "freqFine": 83,
+          "detune": 5,
+          "breakpoint": 17,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 1,
+          "outputLevel": 89,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 79, "level": 89},
+            {"rate": 29, "level": 79},
+            {"rate": 39, "level": 25},
+            {"rate": 49, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 5,
+      "name": "PATCH 06  ",
+      "algorithmCommon": {
+        "keyTranspose": 17,
+        "algorithm": 6,
+        "feedback": 5
+      },
+      "lfo": {
+        "speed": 35,
+        "delay": 15,
+        "PMD": 25,
+        "AMD": 20,
+        "wave": 5,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 6,
+          "freqFine": 10,
+          "detune": 1,
+          "breakpoint": 15,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 5,
+          "outputLevel": 65,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 75, "level": 95},
+            {"rate": 25, "level": 85},
+            {"rate": 35, "level": 20},
+            {"rate": 45, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 7,
+          "freqFine": 25,
+          "detune": 3,
+          "breakpoint": 16,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 6,
+          "outputLevel": 70,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 76, "level": 94},
+            {"rate": 26, "level": 84},
+            {"rate": 36, "level": 21},
+            {"rate": 46, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 8,
+          "freqFine": 40,
+          "detune": 3,
+          "breakpoint": 17,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 7,
+          "outputLevel": 75,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 77, "level": 93},
+            {"rate": 27, "level": 83},
+            {"rate": 37, "level": 22},
+            {"rate": 47, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 9,
+          "freqFine": 55,
+          "detune": 5,
+          "breakpoint": 18,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 0,
+          "outputLevel": 80,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 78, "level": 92},
+            {"rate": 28, "level": 82},
+            {"rate": 38, "level": 23},
+            {"rate": 48, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 10,
+          "freqFine": 70,
+          "detune": 5,
+          "breakpoint": 19,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 1,
+          "outputLevel": 85,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 79, "level": 91},
+            {"rate": 29, "level": 81},
+            {"rate": 39, "level": 24},
+            {"rate": 49, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 11,
+          "freqFine": 85,
+          "detune": 7,
+          "breakpoint": 20,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 2,
+          "outputLevel": 90,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 80, "level": 90},
+            {"rate": 30, "level": 80},
+            {"rate": 40, "level": 25},
+            {"rate": 50, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 6,
+      "name": "PATCH 07  ",
+      "algorithmCommon": {
+        "keyTranspose": 18,
+        "algorithm": 7,
+        "feedback": 6
+      },
+      "lfo": {
+        "speed": 36,
+        "delay": 16,
+        "PMD": 26,
+        "AMD": 21,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 7,
+          "freqFine": 12,
+          "detune": 3,
+          "breakpoint": 18,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 6,
+          "outputLevel": 66,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 76, "level": 96},
+            {"rate": 26, "level": 86},
+            {"rate": 36, "level": 20},
+            {"rate": 46, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 8,
+          "freqFine": 27,
+          "detune": 3,
+          "breakpoint": 19,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 7,
+          "outputLevel": 71,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 77, "level": 95},
+            {"rate": 27, "level": 85},
+            {"rate": 37, "level": 21},
+            {"rate": 47, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 9,
+          "freqFine": 42,
+          "detune": 5,
+          "breakpoint": 20,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 0,
+          "outputLevel": 76,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 78, "level": 94},
+            {"rate": 28, "level": 84},
+            {"rate": 38, "level": 22},
+            {"rate": 48, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 10,
+          "freqFine": 57,
+          "detune": 5,
+          "breakpoint": 21,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 1,
+          "outputLevel": 81,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 79, "level": 93},
+            {"rate": 29, "level": 83},
+            {"rate": 39, "level": 23},
+            {"rate": 49, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 11,
+          "freqFine": 72,
+          "detune": 7,
+          "breakpoint": 22,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 2,
+          "outputLevel": 86,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 80, "level": 92},
+            {"rate": 30, "level": 82},
+            {"rate": 40, "level": 24},
+            {"rate": 50, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 12,
+          "freqFine": 87,
+          "detune": -7,
+          "breakpoint": 23,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 3,
+          "outputLevel": 91,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 81, "level": 91},
+            {"rate": 31, "level": 81},
+            {"rate": 41, "level": 25},
+            {"rate": 51, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 7,
+      "name": "PATCH 08  ",
+      "algorithmCommon": {
+        "keyTranspose": 19,
+        "algorithm": 8,
+        "feedback": 7
+      },
+      "lfo": {
+        "speed": 37,
+        "delay": 17,
+        "PMD": 27,
+        "AMD": 22,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 8,
+          "freqFine": 14,
+          "detune": 3,
+          "breakpoint": 21,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 7,
+          "outputLevel": 67,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 77, "level": 97},
+            {"rate": 27, "level": 87},
+            {"rate": 37, "level": 20},
+            {"rate": 47, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 9,
+          "freqFine": 29,
+          "detune": 5,
+          "breakpoint": 22,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 0,
+          "outputLevel": 72,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 78, "level": 96},
+            {"rate": 28, "level": 86},
+            {"rate": 38, "level": 21},
+            {"rate": 48, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 10,
+          "freqFine": 44,
+          "detune": 5,
+          "breakpoint": 23,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 1,
+          "outputLevel": 77,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 79, "level": 95},
+            {"rate": 29, "level": 85},
+            {"rate": 39, "level": 22},
+            {"rate": 49, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 11,
+          "freqFine": 59,
+          "detune": 7,
+          "breakpoint": 24,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 2,
+          "outputLevel": 82,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 80, "level": 94},
+            {"rate": 30, "level": 84},
+            {"rate": 40, "level": 23},
+            {"rate": 50, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 12,
+          "freqFine": 74,
+          "detune": -7,
+          "breakpoint": 25,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 3,
+          "outputLevel": 87,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 81, "level": 93},
+            {"rate": 31, "level": 83},
+            {"rate": 41, "level": 24},
+            {"rate": 51, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 13,
+          "freqFine": 89,
+          "detune": -7,
+          "breakpoint": 26,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 4,
+          "outputLevel": 92,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 82, "level": 92},
+            {"rate": 32, "level": 82},
+            {"rate": 42, "level": 25},
+            {"rate": 52, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 8,
+      "name": "PATCH 09  ",
+      "algorithmCommon": {
+        "keyTranspose": 20,
+        "algorithm": 9,
+        "feedback": 0
+      },
+      "lfo": {
+        "speed": 38,
+        "delay": 18,
+        "PMD": 28,
+        "AMD": 23,
+        "wave": 2,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 9,
+          "freqFine": 16,
+          "detune": 5,
+          "breakpoint": 24,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 0,
+          "outputLevel": 68,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 78, "level": 98},
+            {"rate": 28, "level": 88},
+            {"rate": 38, "level": 20},
+            {"rate": 48, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 10,
+          "freqFine": 31,
+          "detune": 5,
+          "breakpoint": 25,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 1,
+          "outputLevel": 73,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 79, "level": 97},
+            {"rate": 29, "level": 87},
+            {"rate": 39, "level": 21},
+            {"rate": 49, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 11,
+          "freqFine": 46,
+          "detune": 7,
+          "breakpoint": 26,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 2,
+          "outputLevel": 78,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 80, "level": 96},
+            {"rate": 30, "level": 86},
+            {"rate": 40, "level": 22},
+            {"rate": 50, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 12,
+          "freqFine": 61,
+          "detune": -7,
+          "breakpoint": 27,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 3,
+          "outputLevel": 83,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 81, "level": 95},
+            {"rate": 31, "level": 85},
+            {"rate": 41, "level": 23},
+            {"rate": 51, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 13,
+          "freqFine": 76,
+          "detune": -7,
+          "breakpoint": 28,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 4,
+          "outputLevel": 88,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 82, "level": 94},
+            {"rate": 32, "level": 84},
+            {"rate": 42, "level": 24},
+            {"rate": 52, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 14,
+          "freqFine": 91,
+          "detune": -5,
+          "breakpoint": 29,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 5,
+          "outputLevel": 93,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 83, "level": 93},
+            {"rate": 33, "level": 83},
+            {"rate": 43, "level": 25},
+            {"rate": 53, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 9,
+      "name": "PATCH 10  ",
+      "algorithmCommon": {
+        "keyTranspose": 21,
+        "algorithm": 10,
+        "feedback": 1
+      },
+      "lfo": {
+        "speed": 39,
+        "delay": 19,
+        "PMD": 29,
+        "AMD": 24,
+        "wave": 3,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 10,
+          "freqFine": 18,
+          "detune": 5,
+          "breakpoint": 27,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 1,
+          "outputLevel": 69,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 79, "level": 99},
+            {"rate": 29, "level": 89},
+            {"rate": 39, "level": 20},
+            {"rate": 49, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 11,
+          "freqFine": 33,
+          "detune": 7,
+          "breakpoint": 28,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 2,
+          "outputLevel": 74,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 80, "level": 98},
+            {"rate": 30, "level": 88},
+            {"rate": 40, "level": 21},
+            {"rate": 50, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 12,
+          "freqFine": 48,
+          "detune": -7,
+          "breakpoint": 29,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 3,
+          "outputLevel": 79,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 81, "level": 97},
+            {"rate": 31, "level": 87},
+            {"rate": 41, "level": 22},
+            {"rate": 51, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 13,
+          "freqFine": 63,
+          "detune": -7,
+          "breakpoint": 30,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 4,
+          "outputLevel": 84,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 82, "level": 96},
+            {"rate": 32, "level": 86},
+            {"rate": 42, "level": 23},
+            {"rate": 52, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 14,
+          "freqFine": 78,
+          "detune": -5,
+          "breakpoint": 31,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 5,
+          "outputLevel": 89,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 83, "level": 95},
+            {"rate": 33, "level": 85},
+            {"rate": 43, "level": 24},
+            {"rate": 53, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 15,
+          "freqFine": 93,
+          "detune": -5,
+          "breakpoint": 32,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 6,
+          "outputLevel": 94,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 84, "level": 94},
+            {"rate": 34, "level": 84},
+            {"rate": 44, "level": 25},
+            {"rate": 54, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 10,
+      "name": "PATCH 11  ",
+      "algorithmCommon": {
+        "keyTranspose": 22,
+        "algorithm": 11,
+        "feedback": 2
+      },
+      "lfo": {
+        "speed": 40,
+        "delay": 20,
+        "PMD": 30,
+        "AMD": 25,
+        "wave": 4,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 11,
+          "freqFine": 20,
+          "detune": 7,
+          "breakpoint": 30,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 2,
+          "outputLevel": 70,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 80, "level": 0},
+            {"rate": 30, "level": 90},
+            {"rate": 40, "level": 20},
+            {"rate": 50, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 12,
+          "freqFine": 35,
+          "detune": -7,
+          "breakpoint": 31,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 3,
+          "outputLevel": 75,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 81, "level": 99},
+            {"rate": 31, "level": 89},
+            {"rate": 41, "level": 21},
+            {"rate": 51, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 13,
+          "freqFine": 50,
+          "detune": -7,
+          "breakpoint": 32,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 4,
+          "outputLevel": 80,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 82, "level": 98},
+            {"rate": 32, "level": 88},
+            {"rate": 42, "level": 22},
+            {"rate": 52, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 14,
+          "freqFine": 65,
+          "detune": -5,
+          "breakpoint": 33,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 5,
+          "outputLevel": 85,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 83, "level": 97},
+            {"rate": 33, "level": 87},
+            {"rate": 43, "level": 23},
+            {"rate": 53, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 15,
+          "freqFine": 80,
+          "detune": -5,
+          "breakpoint": 34,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 6,
+          "outputLevel": 90,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 84, "level": 96},
+            {"rate": 34, "level": 86},
+            {"rate": 44, "level": 24},
+            {"rate": 54, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 16,
+          "freqFine": 95,
+          "detune": -3,
+          "breakpoint": 35,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 7,
+          "outputLevel": 95,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 85, "level": 95},
+            {"rate": 35, "level": 85},
+            {"rate": 45, "level": 25},
+            {"rate": 55, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 11,
+      "name": "PATCH 12  ",
+      "algorithmCommon": {
+        "keyTranspose": 23,
+        "algorithm": 12,
+        "feedback": 3
+      },
+      "lfo": {
+        "speed": 41,
+        "delay": 21,
+        "PMD": 31,
+        "AMD": 26,
+        "wave": 5,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 12,
+          "freqFine": 22,
+          "detune": -7,
+          "breakpoint": 33,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 3,
+          "outputLevel": 71,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 81, "level": 1},
+            {"rate": 31, "level": 91},
+            {"rate": 41, "level": 20},
+            {"rate": 51, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 13,
+          "freqFine": 37,
+          "detune": -7,
+          "breakpoint": 34,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 4,
+          "outputLevel": 76,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 82, "level": 0},
+            {"rate": 32, "level": 90},
+            {"rate": 42, "level": 21},
+            {"rate": 52, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 14,
+          "freqFine": 52,
+          "detune": -5,
+          "breakpoint": 35,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 5,
+          "outputLevel": 81,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 83, "level": 99},
+            {"rate": 33, "level": 89},
+            {"rate": 43, "level": 22},
+            {"rate": 53, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 15,
+          "freqFine": 67,
+          "detune": -5,
+          "breakpoint": 36,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 6,
+          "outputLevel": 86,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 84, "level": 98},
+            {"rate": 34, "level": 88},
+            {"rate": 44, "level": 23},
+            {"rate": 54, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 16,
+          "freqFine": 82,
+          "detune": -3,
+          "breakpoint": 37,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 7,
+          "outputLevel": 91,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 85, "level": 97},
+            {"rate": 35, "level": 87},
+            {"rate": 45, "level": 24},
+            {"rate": 55, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 17,
+          "freqFine": 97,
+          "detune": -3,
+          "breakpoint": 38,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 0,
+          "outputLevel": 96,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 86, "level": 96},
+            {"rate": 36, "level": 86},
+            {"rate": 46, "level": 25},
+            {"rate": 56, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 12,
+      "name": "PATCH 13  ",
+      "algorithmCommon": {
+        "keyTranspose": 24,
+        "algorithm": 13,
+        "feedback": 4
+      },
+      "lfo": {
+        "speed": 42,
+        "delay": 22,
+        "PMD": 32,
+        "AMD": 27,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 13,
+          "freqFine": 24,
+          "detune": -7,
+          "breakpoint": 36,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 4,
+          "outputLevel": 72,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 82, "level": 2},
+            {"rate": 32, "level": 92},
+            {"rate": 42, "level": 20},
+            {"rate": 52, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 14,
+          "freqFine": 39,
+          "detune": -5,
+          "breakpoint": 37,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 5,
+          "outputLevel": 77,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 83, "level": 1},
+            {"rate": 33, "level": 91},
+            {"rate": 43, "level": 21},
+            {"rate": 53, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 15,
+          "freqFine": 54,
+          "detune": -5,
+          "breakpoint": 38,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 6,
+          "outputLevel": 82,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 84, "level": 0},
+            {"rate": 34, "level": 90},
+            {"rate": 44, "level": 22},
+            {"rate": 54, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 16,
+          "freqFine": 69,
+          "detune": -3,
+          "breakpoint": 39,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 7,
+          "outputLevel": 87,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 85, "level": 99},
+            {"rate": 35, "level": 89},
+            {"rate": 45, "level": 23},
+            {"rate": 55, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 17,
+          "freqFine": 84,
+          "detune": -3,
+          "breakpoint": 40,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 0,
+          "outputLevel": 92,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 86, "level": 98},
+            {"rate": 36, "level": 88},
+            {"rate": 46, "level": 24},
+            {"rate": 56, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 18,
+          "freqFine": 99,
+          "detune": -1,
+          "breakpoint": 41,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 1,
+          "outputLevel": 97,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 87, "level": 97},
+            {"rate": 37, "level": 87},
+            {"rate": 47, "level": 25},
+            {"rate": 57, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 13,
+      "name": "PATCH 14  ",
+      "algorithmCommon": {
+        "keyTranspose": 25,
+        "algorithm": 14,
+        "feedback": 5
+      },
+      "lfo": {
+        "speed": 43,
+        "delay": 23,
+        "PMD": 33,
+        "AMD": 28,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 14,
+          "freqFine": 26,
+          "detune": -5,
+          "breakpoint": 39,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 5,
+          "outputLevel": 73,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 83, "level": 3},
+            {"rate": 33, "level": 93},
+            {"rate": 43, "level": 20},
+            {"rate": 53, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 15,
+          "freqFine": 41,
+          "detune": -5,
+          "breakpoint": 40,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 6,
+          "outputLevel": 78,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 84, "level": 2},
+            {"rate": 34, "level": 92},
+            {"rate": 44, "level": 21},
+            {"rate": 54, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 16,
+          "freqFine": 56,
+          "detune": -3,
+          "breakpoint": 41,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 7,
+          "outputLevel": 83,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 85, "level": 1},
+            {"rate": 35, "level": 91},
+            {"rate": 45, "level": 22},
+            {"rate": 55, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 17,
+          "freqFine": 71,
+          "detune": -3,
+          "breakpoint": 42,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 0,
+          "outputLevel": 88,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 86, "level": 0},
+            {"rate": 36, "level": 90},
+            {"rate": 46, "level": 23},
+            {"rate": 56, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 18,
+          "freqFine": 86,
+          "detune": -1,
+          "breakpoint": 43,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 1,
+          "outputLevel": 93,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 87, "level": 99},
+            {"rate": 37, "level": 89},
+            {"rate": 47, "level": 24},
+            {"rate": 57, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 19,
+          "freqFine": 1,
+          "detune": -1,
+          "breakpoint": 44,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 2,
+          "outputLevel": 98,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 88, "level": 98},
+            {"rate": 38, "level": 88},
+            {"rate": 48, "level": 25},
+            {"rate": 58, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 14,
+      "name": "PATCH 15  ",
+      "algorithmCommon": {
+        "keyTranspose": 26,
+        "algorithm": 15,
+        "feedback": 6
+      },
+      "lfo": {
+        "speed": 44,
+        "delay": 24,
+        "PMD": 34,
+        "AMD": 29,
+        "wave": 2,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 15,
+          "freqFine": 28,
+          "detune": -5,
+          "breakpoint": 42,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 6,
+          "outputLevel": 74,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 84, "level": 4},
+            {"rate": 34, "level": 94},
+            {"rate": 44, "level": 20},
+            {"rate": 54, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 16,
+          "freqFine": 43,
+          "detune": -3,
+          "breakpoint": 43,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 7,
+          "outputLevel": 79,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 85, "level": 3},
+            {"rate": 35, "level": 93},
+            {"rate": 45, "level": 21},
+            {"rate": 55, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 17,
+          "freqFine": 58,
+          "detune": -3,
+          "breakpoint": 44,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 0,
+          "outputLevel": 84,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 86, "level": 2},
+            {"rate": 36, "level": 92},
+            {"rate": 46, "level": 22},
+            {"rate": 56, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 18,
+          "freqFine": 73,
+          "detune": -1,
+          "breakpoint": 45,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 1,
+          "outputLevel": 89,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 87, "level": 1},
+            {"rate": 37, "level": 91},
+            {"rate": 47, "level": 23},
+            {"rate": 57, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 19,
+          "freqFine": 88,
+          "detune": -1,
+          "breakpoint": 46,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 2,
+          "outputLevel": 94,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 88, "level": 0},
+            {"rate": 38, "level": 90},
+            {"rate": 48, "level": 24},
+            {"rate": 58, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 20,
+          "freqFine": 3,
+          "detune": 1,
+          "breakpoint": 47,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 3,
+          "outputLevel": 99,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 89, "level": 99},
+            {"rate": 39, "level": 89},
+            {"rate": 49, "level": 25},
+            {"rate": 59, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 15,
+      "name": "PATCH 16  ",
+      "algorithmCommon": {
+        "keyTranspose": 27,
+        "algorithm": 16,
+        "feedback": 7
+      },
+      "lfo": {
+        "speed": 45,
+        "delay": 25,
+        "PMD": 35,
+        "AMD": 30,
+        "wave": 3,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 16,
+          "freqFine": 30,
+          "detune": -3,
+          "breakpoint": 45,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 7,
+          "outputLevel": 75,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 85, "level": 5},
+            {"rate": 35, "level": 95},
+            {"rate": 45, "level": 20},
+            {"rate": 55, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 17,
+          "freqFine": 45,
+          "detune": -3,
+          "breakpoint": 46,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 0,
+          "outputLevel": 80,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 86, "level": 4},
+            {"rate": 36, "level": 94},
+            {"rate": 46, "level": 21},
+            {"rate": 56, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 18,
+          "freqFine": 60,
+          "detune": -1,
+          "breakpoint": 47,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 1,
+          "outputLevel": 85,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 87, "level": 3},
+            {"rate": 37, "level": 93},
+            {"rate": 47, "level": 22},
+            {"rate": 57, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 19,
+          "freqFine": 75,
+          "detune": -1,
+          "breakpoint": 48,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 2,
+          "outputLevel": 90,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 88, "level": 2},
+            {"rate": 38, "level": 92},
+            {"rate": 48, "level": 23},
+            {"rate": 58, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 20,
+          "freqFine": 90,
+          "detune": 1,
+          "breakpoint": 49,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 3,
+          "outputLevel": 95,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 89, "level": 1},
+            {"rate": 39, "level": 91},
+            {"rate": 49, "level": 24},
+            {"rate": 59, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 21,
+          "freqFine": 5,
+          "detune": 1,
+          "breakpoint": 50,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 4,
+          "outputLevel": 0,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 90, "level": 0},
+            {"rate": 40, "level": 90},
+            {"rate": 50, "level": 25},
+            {"rate": 60, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 16,
+      "name": "PATCH 17  ",
+      "algorithmCommon": {
+        "keyTranspose": 28,
+        "algorithm": 17,
+        "feedback": 0
+      },
+      "lfo": {
+        "speed": 46,
+        "delay": 26,
+        "PMD": 36,
+        "AMD": 31,
+        "wave": 4,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 17,
+          "freqFine": 32,
+          "detune": -3,
+          "breakpoint": 48,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 0,
+          "outputLevel": 76,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 86, "level": 6},
+            {"rate": 36, "level": 96},
+            {"rate": 46, "level": 20},
+            {"rate": 56, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 18,
+          "freqFine": 47,
+          "detune": -1,
+          "breakpoint": 49,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 1,
+          "outputLevel": 81,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 87, "level": 5},
+            {"rate": 37, "level": 95},
+            {"rate": 47, "level": 21},
+            {"rate": 57, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 19,
+          "freqFine": 62,
+          "detune": -1,
+          "breakpoint": 50,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 2,
+          "outputLevel": 86,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 88, "level": 4},
+            {"rate": 38, "level": 94},
+            {"rate": 48, "level": 22},
+            {"rate": 58, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 20,
+          "freqFine": 77,
+          "detune": 1,
+          "breakpoint": 51,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 3,
+          "outputLevel": 91,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 89, "level": 3},
+            {"rate": 39, "level": 93},
+            {"rate": 49, "level": 23},
+            {"rate": 59, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 21,
+          "freqFine": 92,
+          "detune": 1,
+          "breakpoint": 52,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 4,
+          "outputLevel": 96,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 90, "level": 2},
+            {"rate": 40, "level": 92},
+            {"rate": 50, "level": 24},
+            {"rate": 60, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 22,
+          "freqFine": 7,
+          "detune": 3,
+          "breakpoint": 53,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 5,
+          "outputLevel": 1,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 91, "level": 1},
+            {"rate": 41, "level": 91},
+            {"rate": 51, "level": 25},
+            {"rate": 61, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 17,
+      "name": "PATCH 18  ",
+      "algorithmCommon": {
+        "keyTranspose": 29,
+        "algorithm": 18,
+        "feedback": 1
+      },
+      "lfo": {
+        "speed": 47,
+        "delay": 27,
+        "PMD": 37,
+        "AMD": 32,
+        "wave": 5,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 18,
+          "freqFine": 34,
+          "detune": -1,
+          "breakpoint": 51,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 1,
+          "outputLevel": 77,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 87, "level": 7},
+            {"rate": 37, "level": 97},
+            {"rate": 47, "level": 20},
+            {"rate": 57, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 19,
+          "freqFine": 49,
+          "detune": -1,
+          "breakpoint": 52,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 2,
+          "outputLevel": 82,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 88, "level": 6},
+            {"rate": 38, "level": 96},
+            {"rate": 48, "level": 21},
+            {"rate": 58, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 20,
+          "freqFine": 64,
+          "detune": 1,
+          "breakpoint": 53,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 3,
+          "outputLevel": 87,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 89, "level": 5},
+            {"rate": 39, "level": 95},
+            {"rate": 49, "level": 22},
+            {"rate": 59, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 21,
+          "freqFine": 79,
+          "detune": 1,
+          "breakpoint": 54,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 4,
+          "outputLevel": 92,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 90, "level": 4},
+            {"rate": 40, "level": 94},
+            {"rate": 50, "level": 23},
+            {"rate": 60, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 22,
+          "freqFine": 94,
+          "detune": 3,
+          "breakpoint": 55,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 5,
+          "outputLevel": 97,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 91, "level": 3},
+            {"rate": 41, "level": 93},
+            {"rate": 51, "level": 24},
+            {"rate": 61, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 23,
+          "freqFine": 9,
+          "detune": 3,
+          "breakpoint": 56,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 6,
+          "outputLevel": 2,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 92, "level": 2},
+            {"rate": 42, "level": 92},
+            {"rate": 52, "level": 25},
+            {"rate": 62, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 18,
+      "name": "PATCH 19  ",
+      "algorithmCommon": {
+        "keyTranspose": 30,
+        "algorithm": 19,
+        "feedback": 2
+      },
+      "lfo": {
+        "speed": 48,
+        "delay": 28,
+        "PMD": 38,
+        "AMD": 33,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 19,
+          "freqFine": 36,
+          "detune": -1,
+          "breakpoint": 54,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 2,
+          "outputLevel": 78,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 88, "level": 8},
+            {"rate": 38, "level": 98},
+            {"rate": 48, "level": 20},
+            {"rate": 58, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 20,
+          "freqFine": 51,
+          "detune": 1,
+          "breakpoint": 55,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 3,
+          "outputLevel": 83,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 89, "level": 7},
+            {"rate": 39, "level": 97},
+            {"rate": 49, "level": 21},
+            {"rate": 59, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 21,
+          "freqFine": 66,
+          "detune": 1,
+          "breakpoint": 56,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 4,
+          "outputLevel": 88,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 90, "level": 6},
+            {"rate": 40, "level": 96},
+            {"rate": 50, "level": 22},
+            {"rate": 60, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 22,
+          "freqFine": 81,
+          "detune": 3,
+          "breakpoint": 57,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 5,
+          "outputLevel": 93,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 91, "level": 5},
+            {"rate": 41, "level": 95},
+            {"rate": 51, "level": 23},
+            {"rate": 61, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 23,
+          "freqFine": 96,
+          "detune": 3,
+          "breakpoint": 58,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 6,
+          "outputLevel": 98,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 92, "level": 4},
+            {"rate": 42, "level": 94},
+            {"rate": 52, "level": 24},
+            {"rate": 62, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 24,
+          "freqFine": 11,
+          "detune": 5,
+          "breakpoint": 59,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 7,
+          "outputLevel": 3,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 93, "level": 3},
+            {"rate": 43, "level": 93},
+            {"rate": 53, "level": 25},
+            {"rate": 63, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 19,
+      "name": "PATCH 20  ",
+      "algorithmCommon": {
+        "keyTranspose": 31,
+        "algorithm": 20,
+        "feedback": 3
+      },
+      "lfo": {
+        "speed": 49,
+        "delay": 29,
+        "PMD": 39,
+        "AMD": 34,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 20,
+          "freqFine": 38,
+          "detune": 1,
+          "breakpoint": 57,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 3,
+          "outputLevel": 79,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 89, "level": 9},
+            {"rate": 39, "level": 99},
+            {"rate": 49, "level": 20},
+            {"rate": 59, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 21,
+          "freqFine": 53,
+          "detune": 1,
+          "breakpoint": 58,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 4,
+          "outputLevel": 84,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 90, "level": 8},
+            {"rate": 40, "level": 98},
+            {"rate": 50, "level": 21},
+            {"rate": 60, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 22,
+          "freqFine": 68,
+          "detune": 3,
+          "breakpoint": 59,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 5,
+          "outputLevel": 89,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 91, "level": 7},
+            {"rate": 41, "level": 97},
+            {"rate": 51, "level": 22},
+            {"rate": 61, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 23,
+          "freqFine": 83,
+          "detune": 3,
+          "breakpoint": 60,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 6,
+          "outputLevel": 94,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 92, "level": 6},
+            {"rate": 42, "level": 96},
+            {"rate": 52, "level": 23},
+            {"rate": 62, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 24,
+          "freqFine": 98,
+          "detune": 5,
+          "breakpoint": 61,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 7,
+          "outputLevel": 99,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 93, "level": 5},
+            {"rate": 43, "level": 95},
+            {"rate": 53, "level": 24},
+            {"rate": 63, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 25,
+          "freqFine": 13,
+          "detune": 5,
+          "breakpoint": 62,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 0,
+          "outputLevel": 4,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 94, "level": 4},
+            {"rate": 44, "level": 94},
+            {"rate": 54, "level": 25},
+            {"rate": 64, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 20,
+      "name": "PATCH 21  ",
+      "algorithmCommon": {
+        "keyTranspose": 32,
+        "algorithm": 21,
+        "feedback": 4
+      },
+      "lfo": {
+        "speed": 50,
+        "delay": 30,
+        "PMD": 40,
+        "AMD": 35,
+        "wave": 2,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 21,
+          "freqFine": 40,
+          "detune": 1,
+          "breakpoint": 60,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 4,
+          "outputLevel": 80,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 90, "level": 10},
+            {"rate": 40, "level": 0},
+            {"rate": 50, "level": 20},
+            {"rate": 60, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 22,
+          "freqFine": 55,
+          "detune": 3,
+          "breakpoint": 61,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 5,
+          "outputLevel": 85,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 91, "level": 9},
+            {"rate": 41, "level": 99},
+            {"rate": 51, "level": 21},
+            {"rate": 61, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 23,
+          "freqFine": 70,
+          "detune": 3,
+          "breakpoint": 62,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 6,
+          "outputLevel": 90,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 92, "level": 8},
+            {"rate": 42, "level": 98},
+            {"rate": 52, "level": 22},
+            {"rate": 62, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 24,
+          "freqFine": 85,
+          "detune": 5,
+          "breakpoint": 63,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 7,
+          "outputLevel": 95,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 93, "level": 7},
+            {"rate": 43, "level": 97},
+            {"rate": 53, "level": 23},
+            {"rate": 63, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 25,
+          "freqFine": 0,
+          "detune": 5,
+          "breakpoint": 64,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 0,
+          "outputLevel": 0,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 94, "level": 6},
+            {"rate": 44, "level": 96},
+            {"rate": 54, "level": 24},
+            {"rate": 64, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 26,
+          "freqFine": 15,
+          "detune": 7,
+          "breakpoint": 65,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 1,
+          "outputLevel": 5,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 95, "level": 5},
+            {"rate": 45, "level": 95},
+            {"rate": 55, "level": 25},
+            {"rate": 65, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 21,
+      "name": "PATCH 22  ",
+      "algorithmCommon": {
+        "keyTranspose": 33,
+        "algorithm": 22,
+        "feedback": 5
+      },
+      "lfo": {
+        "speed": 51,
+        "delay": 31,
+        "PMD": 41,
+        "AMD": 36,
+        "wave": 3,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 22,
+          "freqFine": 42,
+          "detune": 3,
+          "breakpoint": 63,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 5,
+          "outputLevel": 81,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 91, "level": 11},
+            {"rate": 41, "level": 1},
+            {"rate": 51, "level": 20},
+            {"rate": 61, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 23,
+          "freqFine": 57,
+          "detune": 3,
+          "breakpoint": 64,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 6,
+          "outputLevel": 86,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 92, "level": 10},
+            {"rate": 42, "level": 0},
+            {"rate": 52, "level": 21},
+            {"rate": 62, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 24,
+          "freqFine": 72,
+          "detune": 5,
+          "breakpoint": 65,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 7,
+          "outputLevel": 91,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 93, "level": 9},
+            {"rate": 43, "level": 99},
+            {"rate": 53, "level": 22},
+            {"rate": 63, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 25,
+          "freqFine": 87,
+          "detune": 5,
+          "breakpoint": 66,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 0,
+          "outputLevel": 96,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 94, "level": 8},
+            {"rate": 44, "level": 98},
+            {"rate": 54, "level": 23},
+            {"rate": 64, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 26,
+          "freqFine": 2,
+          "detune": 7,
+          "breakpoint": 67,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 1,
+          "outputLevel": 1,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 95, "level": 7},
+            {"rate": 45, "level": 97},
+            {"rate": 55, "level": 24},
+            {"rate": 65, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 27,
+          "freqFine": 17,
+          "detune": -7,
+          "breakpoint": 68,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 2,
+          "outputLevel": 6,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 96, "level": 6},
+            {"rate": 46, "level": 96},
+            {"rate": 56, "level": 25},
+            {"rate": 66, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 22,
+      "name": "PATCH 23  ",
+      "algorithmCommon": {
+        "keyTranspose": 34,
+        "algorithm": 23,
+        "feedback": 6
+      },
+      "lfo": {
+        "speed": 52,
+        "delay": 32,
+        "PMD": 42,
+        "AMD": 37,
+        "wave": 4,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 23,
+          "freqFine": 44,
+          "detune": 3,
+          "breakpoint": 66,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 6,
+          "outputLevel": 82,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 92, "level": 12},
+            {"rate": 42, "level": 2},
+            {"rate": 52, "level": 20},
+            {"rate": 62, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 24,
+          "freqFine": 59,
+          "detune": 5,
+          "breakpoint": 67,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 7,
+          "outputLevel": 87,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 93, "level": 11},
+            {"rate": 43, "level": 1},
+            {"rate": 53, "level": 21},
+            {"rate": 63, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 25,
+          "freqFine": 74,
+          "detune": 5,
+          "breakpoint": 68,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 0,
+          "outputLevel": 92,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 94, "level": 10},
+            {"rate": 44, "level": 0},
+            {"rate": 54, "level": 22},
+            {"rate": 64, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 26,
+          "freqFine": 89,
+          "detune": 7,
+          "breakpoint": 69,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 1,
+          "outputLevel": 97,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 95, "level": 9},
+            {"rate": 45, "level": 99},
+            {"rate": 55, "level": 23},
+            {"rate": 65, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 27,
+          "freqFine": 4,
+          "detune": -7,
+          "breakpoint": 70,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 2,
+          "outputLevel": 2,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 96, "level": 8},
+            {"rate": 46, "level": 98},
+            {"rate": 56, "level": 24},
+            {"rate": 66, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 28,
+          "freqFine": 19,
+          "detune": -7,
+          "breakpoint": 71,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 3,
+          "outputLevel": 7,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 97, "level": 7},
+            {"rate": 47, "level": 97},
+            {"rate": 57, "level": 25},
+            {"rate": 67, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 23,
+      "name": "PATCH 24  ",
+      "algorithmCommon": {
+        "keyTranspose": 35,
+        "algorithm": 24,
+        "feedback": 7
+      },
+      "lfo": {
+        "speed": 53,
+        "delay": 33,
+        "PMD": 43,
+        "AMD": 38,
+        "wave": 5,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 24,
+          "freqFine": 46,
+          "detune": 5,
+          "breakpoint": 69,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 7,
+          "outputLevel": 83,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 93, "level": 13},
+            {"rate": 43, "level": 3},
+            {"rate": 53, "level": 20},
+            {"rate": 63, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 25,
+          "freqFine": 61,
+          "detune": 5,
+          "breakpoint": 70,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 0,
+          "outputLevel": 88,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 94, "level": 12},
+            {"rate": 44, "level": 2},
+            {"rate": 54, "level": 21},
+            {"rate": 64, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 26,
+          "freqFine": 76,
+          "detune": 7,
+          "breakpoint": 71,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 1,
+          "outputLevel": 93,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 95, "level": 11},
+            {"rate": 45, "level": 1},
+            {"rate": 55, "level": 22},
+            {"rate": 65, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 27,
+          "freqFine": 91,
+          "detune": -7,
+          "breakpoint": 72,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 2,
+          "outputLevel": 98,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 96, "level": 10},
+            {"rate": 46, "level": 0},
+            {"rate": 56, "level": 23},
+            {"rate": 66, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 28,
+          "freqFine": 6,
+          "detune": -7,
+          "breakpoint": 73,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 3,
+          "outputLevel": 3,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 97, "level": 9},
+            {"rate": 47, "level": 99},
+            {"rate": 57, "level": 24},
+            {"rate": 67, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 29,
+          "freqFine": 21,
+          "detune": -5,
+          "breakpoint": 74,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 4,
+          "outputLevel": 8,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 98, "level": 8},
+            {"rate": 48, "level": 98},
+            {"rate": 58, "level": 25},
+            {"rate": 68, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 24,
+      "name": "PATCH 25  ",
+      "algorithmCommon": {
+        "keyTranspose": 36,
+        "algorithm": 25,
+        "feedback": 0
+      },
+      "lfo": {
+        "speed": 54,
+        "delay": 34,
+        "PMD": 44,
+        "AMD": 39,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 25,
+          "freqFine": 48,
+          "detune": 5,
+          "breakpoint": 72,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 0,
+          "outputLevel": 84,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 94, "level": 14},
+            {"rate": 44, "level": 4},
+            {"rate": 54, "level": 20},
+            {"rate": 64, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 26,
+          "freqFine": 63,
+          "detune": 7,
+          "breakpoint": 73,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 1,
+          "outputLevel": 89,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 95, "level": 13},
+            {"rate": 45, "level": 3},
+            {"rate": 55, "level": 21},
+            {"rate": 65, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 27,
+          "freqFine": 78,
+          "detune": -7,
+          "breakpoint": 74,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 2,
+          "outputLevel": 94,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 96, "level": 12},
+            {"rate": 46, "level": 2},
+            {"rate": 56, "level": 22},
+            {"rate": 66, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 28,
+          "freqFine": 93,
+          "detune": -7,
+          "breakpoint": 75,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 3,
+          "outputLevel": 99,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 97, "level": 11},
+            {"rate": 47, "level": 1},
+            {"rate": 57, "level": 23},
+            {"rate": 67, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 29,
+          "freqFine": 8,
+          "detune": -5,
+          "breakpoint": 76,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 4,
+          "outputLevel": 4,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 98, "level": 10},
+            {"rate": 48, "level": 0},
+            {"rate": 58, "level": 24},
+            {"rate": 68, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 30,
+          "freqFine": 23,
+          "detune": -5,
+          "breakpoint": 77,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 5,
+          "outputLevel": 9,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 99, "level": 9},
+            {"rate": 49, "level": 99},
+            {"rate": 59, "level": 25},
+            {"rate": 69, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 25,
+      "name": "PATCH 26  ",
+      "algorithmCommon": {
+        "keyTranspose": 37,
+        "algorithm": 26,
+        "feedback": 1
+      },
+      "lfo": {
+        "speed": 55,
+        "delay": 35,
+        "PMD": 45,
+        "AMD": 40,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 26,
+          "freqFine": 50,
+          "detune": 7,
+          "breakpoint": 75,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 1,
+          "outputLevel": 85,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 95, "level": 15},
+            {"rate": 45, "level": 5},
+            {"rate": 55, "level": 20},
+            {"rate": 65, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 27,
+          "freqFine": 65,
+          "detune": -7,
+          "breakpoint": 76,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 2,
+          "outputLevel": 90,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 96, "level": 14},
+            {"rate": 46, "level": 4},
+            {"rate": 56, "level": 21},
+            {"rate": 66, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 28,
+          "freqFine": 80,
+          "detune": -7,
+          "breakpoint": 77,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 3,
+          "outputLevel": 95,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 97, "level": 13},
+            {"rate": 47, "level": 3},
+            {"rate": 57, "level": 22},
+            {"rate": 67, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 29,
+          "freqFine": 95,
+          "detune": -5,
+          "breakpoint": 78,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 4,
+          "outputLevel": 0,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 98, "level": 12},
+            {"rate": 48, "level": 2},
+            {"rate": 58, "level": 23},
+            {"rate": 68, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 30,
+          "freqFine": 10,
+          "detune": -5,
+          "breakpoint": 79,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 5,
+          "outputLevel": 5,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 99, "level": 11},
+            {"rate": 49, "level": 1},
+            {"rate": 59, "level": 24},
+            {"rate": 69, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 31,
+          "freqFine": 25,
+          "detune": -3,
+          "breakpoint": 80,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 6,
+          "outputLevel": 10,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 0, "level": 10},
+            {"rate": 50, "level": 0},
+            {"rate": 60, "level": 25},
+            {"rate": 70, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 26,
+      "name": "PATCH 27  ",
+      "algorithmCommon": {
+        "keyTranspose": 38,
+        "algorithm": 27,
+        "feedback": 2
+      },
+      "lfo": {
+        "speed": 56,
+        "delay": 36,
+        "PMD": 46,
+        "AMD": 41,
+        "wave": 2,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 27,
+          "freqFine": 52,
+          "detune": -7,
+          "breakpoint": 78,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 2,
+          "outputLevel": 86,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 96, "level": 16},
+            {"rate": 46, "level": 6},
+            {"rate": 56, "level": 20},
+            {"rate": 66, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 28,
+          "freqFine": 67,
+          "detune": -7,
+          "breakpoint": 79,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 3,
+          "outputLevel": 91,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 97, "level": 15},
+            {"rate": 47, "level": 5},
+            {"rate": 57, "level": 21},
+            {"rate": 67, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 29,
+          "freqFine": 82,
+          "detune": -5,
+          "breakpoint": 80,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 4,
+          "outputLevel": 96,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 98, "level": 14},
+            {"rate": 48, "level": 4},
+            {"rate": 58, "level": 22},
+            {"rate": 68, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 30,
+          "freqFine": 97,
+          "detune": -5,
+          "breakpoint": 81,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 5,
+          "outputLevel": 1,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 99, "level": 13},
+            {"rate": 49, "level": 3},
+            {"rate": 59, "level": 23},
+            {"rate": 69, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 31,
+          "freqFine": 12,
+          "detune": -3,
+          "breakpoint": 82,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 6,
+          "outputLevel": 6,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 0, "level": 12},
+            {"rate": 50, "level": 2},
+            {"rate": 60, "level": 24},
+            {"rate": 70, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 0,
+          "freqFine": 27,
+          "detune": -3,
+          "breakpoint": 83,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 7,
+          "outputLevel": 11,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 1, "level": 11},
+            {"rate": 51, "level": 1},
+            {"rate": 61, "level": 25},
+            {"rate": 71, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 27,
+      "name": "PATCH 28  ",
+      "algorithmCommon": {
+        "keyTranspose": 39,
+        "algorithm": 28,
+        "feedback": 3
+      },
+      "lfo": {
+        "speed": 57,
+        "delay": 37,
+        "PMD": 47,
+        "AMD": 42,
+        "wave": 3,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 28,
+          "freqFine": 54,
+          "detune": -7,
+          "breakpoint": 81,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 3,
+          "outputLevel": 87,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 97, "level": 17},
+            {"rate": 47, "level": 7},
+            {"rate": 57, "level": 20},
+            {"rate": 67, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 29,
+          "freqFine": 69,
+          "detune": -5,
+          "breakpoint": 82,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 4,
+          "outputLevel": 92,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 98, "level": 16},
+            {"rate": 48, "level": 6},
+            {"rate": 58, "level": 21},
+            {"rate": 68, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 30,
+          "freqFine": 84,
+          "detune": -5,
+          "breakpoint": 83,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 5,
+          "outputLevel": 97,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 99, "level": 15},
+            {"rate": 49, "level": 5},
+            {"rate": 59, "level": 22},
+            {"rate": 69, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 31,
+          "freqFine": 99,
+          "detune": -3,
+          "breakpoint": 84,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 6,
+          "outputLevel": 2,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 0, "level": 14},
+            {"rate": 50, "level": 4},
+            {"rate": 60, "level": 23},
+            {"rate": 70, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 0,
+          "freqFine": 14,
+          "detune": -3,
+          "breakpoint": 85,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 7,
+          "outputLevel": 7,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 1, "level": 13},
+            {"rate": 51, "level": 3},
+            {"rate": 61, "level": 24},
+            {"rate": 71, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 1,
+          "freqFine": 29,
+          "detune": -1,
+          "breakpoint": 86,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 0,
+          "outputLevel": 12,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 2, "level": 12},
+            {"rate": 52, "level": 2},
+            {"rate": 62, "level": 25},
+            {"rate": 72, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 28,
+      "name": "PATCH 29  ",
+      "algorithmCommon": {
+        "keyTranspose": 40,
+        "algorithm": 29,
+        "feedback": 4
+      },
+      "lfo": {
+        "speed": 58,
+        "delay": 38,
+        "PMD": 48,
+        "AMD": 43,
+        "wave": 4,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 29,
+          "freqFine": 56,
+          "detune": -5,
+          "breakpoint": 84,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 4,
+          "outputLevel": 88,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 98, "level": 18},
+            {"rate": 48, "level": 8},
+            {"rate": 58, "level": 20},
+            {"rate": 68, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 30,
+          "freqFine": 71,
+          "detune": -5,
+          "breakpoint": 85,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 5,
+          "outputLevel": 93,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 99, "level": 17},
+            {"rate": 49, "level": 7},
+            {"rate": 59, "level": 21},
+            {"rate": 69, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 31,
+          "freqFine": 86,
+          "detune": -3,
+          "breakpoint": 86,
+          "curveLeft": 0,
+          "curveRight": 2,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 6,
+          "outputLevel": 98,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 0, "level": 16},
+            {"rate": 50, "level": 6},
+            {"rate": 60, "level": 22},
+            {"rate": 70, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 0,
+          "freqFine": 1,
+          "detune": -3,
+          "breakpoint": 87,
+          "curveLeft": 1,
+          "curveRight": 3,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 7,
+          "outputLevel": 3,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 1, "level": 15},
+            {"rate": 51, "level": 5},
+            {"rate": 61, "level": 23},
+            {"rate": 71, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 1,
+          "freqFine": 16,
+          "detune": -1,
+          "breakpoint": 88,
+          "curveLeft": 2,
+          "curveRight": 0,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 0,
+          "outputLevel": 8,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 2, "level": 14},
+            {"rate": 52, "level": 4},
+            {"rate": 62, "level": 24},
+            {"rate": 72, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 2,
+          "freqFine": 31,
+          "detune": -1,
+          "breakpoint": 89,
+          "curveLeft": 3,
+          "curveRight": 1,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 1,
+          "outputLevel": 13,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 0,
+          "envelope": [
+            {"rate": 3, "level": 13},
+            {"rate": 53, "level": 3},
+            {"rate": 63, "level": 25},
+            {"rate": 73, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 29,
+      "name": "PATCH 30  ",
+      "algorithmCommon": {
+        "keyTranspose": 41,
+        "algorithm": 30,
+        "feedback": 5
+      },
+      "lfo": {
+        "speed": 59,
+        "delay": 39,
+        "PMD": 49,
+        "AMD": 44,
+        "wave": 5,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 30,
+          "freqFine": 58,
+          "detune": -5,
+          "breakpoint": 87,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 5,
+          "outputLevel": 89,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 99, "level": 19},
+            {"rate": 49, "level": 9},
+            {"rate": 59, "level": 20},
+            {"rate": 69, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 31,
+          "freqFine": 73,
+          "detune": -3,
+          "breakpoint": 88,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 6,
+          "outputLevel": 94,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 0, "level": 18},
+            {"rate": 50, "level": 8},
+            {"rate": 60, "level": 21},
+            {"rate": 70, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 0,
+          "freqFine": 88,
+          "detune": -3,
+          "breakpoint": 89,
+          "curveLeft": 0,
+          "curveRight": 3,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 7,
+          "outputLevel": 99,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 2,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 1, "level": 17},
+            {"rate": 51, "level": 7},
+            {"rate": 61, "level": 22},
+            {"rate": 71, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 1,
+          "freqFine": 3,
+          "detune": -1,
+          "breakpoint": 90,
+          "curveLeft": 1,
+          "curveRight": 0,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 0,
+          "outputLevel": 4,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 3,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 2, "level": 16},
+            {"rate": 52, "level": 6},
+            {"rate": 62, "level": 23},
+            {"rate": 72, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 2,
+          "freqFine": 18,
+          "detune": -1,
+          "breakpoint": 91,
+          "curveLeft": 2,
+          "curveRight": 1,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 1,
+          "outputLevel": 9,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 0,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 3, "level": 15},
+            {"rate": 53, "level": 5},
+            {"rate": 63, "level": 24},
+            {"rate": 73, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 3,
+          "freqFine": 33,
+          "detune": 1,
+          "breakpoint": 92,
+          "curveLeft": 3,
+          "curveRight": 2,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 2,
+          "outputLevel": 14,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 1,
+          "modulationPitch": 2,
+          "envelope": [
+            {"rate": 4, "level": 14},
+            {"rate": 54, "level": 4},
+            {"rate": 64, "level": 25},
+            {"rate": 74, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 30,
+      "name": "PATCH 31  ",
+      "algorithmCommon": {
+        "keyTranspose": 42,
+        "algorithm": 31,
+        "feedback": 6
+      },
+      "lfo": {
+        "speed": 60,
+        "delay": 40,
+        "PMD": 50,
+        "AMD": 45,
+        "wave": 0,
+        "sync": 0
+      },
+      "operators": [
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 31,
+          "freqFine": 60,
+          "detune": -3,
+          "breakpoint": 90,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 6,
+          "outputLevel": 90,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 0, "level": 20},
+            {"rate": 50, "level": 10},
+            {"rate": 60, "level": 20},
+            {"rate": 70, "level": 10}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 0,
+          "freqFine": 75,
+          "detune": -3,
+          "breakpoint": 91,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 7,
+          "outputLevel": 95,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 1, "level": 19},
+            {"rate": 51, "level": 9},
+            {"rate": 61, "level": 21},
+            {"rate": 71, "level": 11}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 1,
+          "freqFine": 90,
+          "detune": -1,
+          "breakpoint": 92,
+          "curveLeft": 0,
+          "curveRight": 0,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 0,
+          "outputLevel": 0,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 2, "level": 18},
+            {"rate": 52, "level": 8},
+            {"rate": 62, "level": 22},
+            {"rate": 72, "level": 12}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 2,
+          "freqFine": 5,
+          "detune": -1,
+          "breakpoint": 93,
+          "curveLeft": 1,
+          "curveRight": 1,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 1,
+          "outputLevel": 5,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 3, "level": 17},
+            {"rate": 53, "level": 7},
+            {"rate": 63, "level": 23},
+            {"rate": 73, "level": 13}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 1,
+          "freqCoarse": 3,
+          "freqFine": 20,
+          "detune": 1,
+          "breakpoint": 94,
+          "curveLeft": 2,
+          "curveRight": 2,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 2,
+          "outputLevel": 10,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 4, "level": 16},
+            {"rate": 54, "level": 6},
+            {"rate": 64, "level": 24},
+            {"rate": 74, "level": 14}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 1,
+          "freqCoarse": 4,
+          "freqFine": 35,
+          "detune": 1,
+          "breakpoint": 95,
+          "curveLeft": 3,
+          "curveRight": 3,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 3,
+          "outputLevel": 15,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 4,
+          "envelope": [
+            {"rate": 5, "level": 15},
+            {"rate": 55, "level": 5},
+            {"rate": 65, "level": 25},
+            {"rate": 75, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    },
+    {
+      "slot": 31,
+      "name": "PATCH 32  ",
+      "algorithmCommon": {
+        "keyTranspose": 43,
+        "algorithm": 32,
+        "feedback": 7
+      },
+      "lfo": {
+        "speed": 61,
+        "delay": 41,
+        "PMD": 51,
+        "AMD": 46,
+        "wave": 1,
+        "sync": 1
+      },
+      "operators": [
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 0,
+          "freqFine": 62,
+          "detune": -3,
+          "breakpoint": 93,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 0,
+          "depthRight": 0,
+          "keyboardRateScaling": 7,
+          "outputLevel": 91,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 1, "level": 21},
+            {"rate": 51, "level": 11},
+            {"rate": 61, "level": 20},
+            {"rate": 71, "level": 10}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 1,
+          "freqFine": 77,
+          "detune": -1,
+          "breakpoint": 94,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 15,
+          "depthRight": 12,
+          "keyboardRateScaling": 0,
+          "outputLevel": 96,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 2, "level": 20},
+            {"rate": 52, "level": 10},
+            {"rate": 62, "level": 21},
+            {"rate": 72, "level": 11}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 2,
+          "freqFine": 92,
+          "detune": -1,
+          "breakpoint": 95,
+          "curveLeft": 0,
+          "curveRight": 1,
+          "depthLeft": 30,
+          "depthRight": 24,
+          "keyboardRateScaling": 1,
+          "outputLevel": 1,
+          "velocitySensitivity": 2,
+          "modulationAmplitude": 2,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 3, "level": 19},
+            {"rate": 53, "level": 9},
+            {"rate": 63, "level": 22},
+            {"rate": 73, "level": 12}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 3,
+          "freqFine": 7,
+          "detune": 1,
+          "breakpoint": 96,
+          "curveLeft": 1,
+          "curveRight": 2,
+          "depthLeft": 45,
+          "depthRight": 36,
+          "keyboardRateScaling": 2,
+          "outputLevel": 6,
+          "velocitySensitivity": 4,
+          "modulationAmplitude": 3,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 4, "level": 18},
+            {"rate": 54, "level": 8},
+            {"rate": 64, "level": 23},
+            {"rate": 74, "level": 13}
+          ]
+        },
+        {
+          "mode": 1,
+          "sync": 0,
+          "freqCoarse": 4,
+          "freqFine": 22,
+          "detune": 1,
+          "breakpoint": 97,
+          "curveLeft": 2,
+          "curveRight": 3,
+          "depthLeft": 60,
+          "depthRight": 48,
+          "keyboardRateScaling": 3,
+          "outputLevel": 11,
+          "velocitySensitivity": 6,
+          "modulationAmplitude": 0,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 5, "level": 17},
+            {"rate": 55, "level": 7},
+            {"rate": 65, "level": 24},
+            {"rate": 75, "level": 14}
+          ]
+        },
+        {
+          "mode": 0,
+          "sync": 0,
+          "freqCoarse": 5,
+          "freqFine": 37,
+          "detune": 3,
+          "breakpoint": 98,
+          "curveLeft": 3,
+          "curveRight": 0,
+          "depthLeft": 75,
+          "depthRight": 60,
+          "keyboardRateScaling": 4,
+          "outputLevel": 16,
+          "velocitySensitivity": 0,
+          "modulationAmplitude": 1,
+          "modulationPitch": 6,
+          "envelope": [
+            {"rate": 6, "level": 16},
+            {"rate": 56, "level": 6},
+            {"rate": 66, "level": 25},
+            {"rate": 76, "level": 15}
+          ]
+        }
+      ],
+      "pitchEnvelope": [
+        {"rate": 50, "level": 45},
+        {"rate": 51, "level": 46},
+        {"rate": 52, "level": 47},
+        {"rate": 53, "level": 48}
+      ]
+    }
+  ]
+}

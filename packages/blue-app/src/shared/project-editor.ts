@@ -4,6 +4,7 @@ import {
   ChannelList,
   BlueSynthBuilder,
   BlueX7,
+  cloneBlueX7Voice,
   BSBGroup,
   BSBWidget,
   BSBXYController,
@@ -97,7 +98,7 @@ import {
 import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
-import type { SnapValueName } from '@blue/data';
+import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { MissingAudioAssetsSession } from './missing-audio-assets';
 import type { ScoreInsertionLocation } from './unified-library';
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from './automation-range-math';
@@ -1994,8 +1995,198 @@ export interface PythonInstrumentSnapshot extends InstrumentSnapshotBase {
   udolist: UdoDefinitionSnapshot[];
 }
 
+export type BlueX7Patch =
+  | { type: 'setCommonField'; field: keyof BlueX7Common; value: unknown }
+  | { type: 'setOperatorEnabled'; operatorIndex: number; enabled: boolean }
+  | { type: 'setLfoField'; field: keyof BlueX7Lfo; value: unknown }
+  | { type: 'setOperatorField'; operatorIndex: number; field: keyof BlueX7Operator; value: unknown }
+  | { type: 'setSharedOscillatorSync'; value: number }
+  | { type: 'setSharedPitchModulationSensitivity'; value: number }
+  | { type: 'setOperatorEnvelopePoint'; operatorIndex: number; stageIndex: number; point: BlueX7EnvelopePoint }
+  | { type: 'setPitchEnvelopePoint'; stageIndex: number; point: BlueX7EnvelopePoint }
+  | { type: 'setCsoundPostCode'; text: string }
+  | { type: 'replaceVoice'; voice: BlueX7Voice };
+
+const inRange = (value: unknown, min: number, max: number): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+
+const BLUE_X7_OPERATOR_FIELD_RANGES: Partial<Record<keyof BlueX7Operator, [number, number]>> = {
+  mode: [0, 1],
+  sync: [0, 1],
+  freqCoarse: [0, 31],
+  freqFine: [0, 99],
+  detune: [-7, 7],
+  breakpoint: [0, 99],
+  curveLeft: [0, 3],
+  curveRight: [0, 3],
+  depthLeft: [0, 99],
+  depthRight: [0, 99],
+  keyboardRateScaling: [0, 7],
+  outputLevel: [0, 99],
+  velocitySensitivity: [0, 7],
+  modulationAmplitude: [0, 3],
+  modulationPitch: [0, 7],
+};
+
+const BLUE_X7_LFO_FIELD_RANGES: Partial<Record<keyof BlueX7Lfo, [number, number]>> = {
+  speed: [0, 99],
+  delay: [0, 99],
+  pitchModulationDepth: [0, 99],
+  amplitudeModulationDepth: [0, 99],
+  wave: [0, 5],
+  sync: [0, 1],
+};
+
+const BLUE_X7_COMMON_FIELD_RANGES: Partial<Record<keyof BlueX7Common, [number, number]>> = {
+  keyTranspose: [0, 48],
+  algorithm: [1, 32],
+  feedback: [0, 7],
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isEnvelopePoint = (value: unknown): boolean =>
+  isRecord(value) && inRange(value.rate, 0, 99) && inRange(value.level, 0, 99);
+
+/** Validate every scalar and nested collection before cloneBlueX7Voice runs. */
+export function isValidBlueX7Voice(value: unknown): value is BlueX7Voice {
+  if (!isRecord(value) || !isRecord(value.common) || !isRecord(value.lfo)) {
+    return false;
+  }
+
+  const common = value.common;
+  const operatorEnabled = common.operatorEnabled;
+  if (
+    !Array.isArray(operatorEnabled) ||
+    operatorEnabled.length !== 6 ||
+    !operatorEnabled.every((enabled) => typeof enabled === 'boolean') ||
+    !inRange(common.algorithm, 1, 32) ||
+    !inRange(common.feedback, 0, 7) ||
+    !inRange(common.keyTranspose, 0, 48)
+  ) {
+    return false;
+  }
+
+  const lfo = value.lfo;
+  if (
+    !inRange(lfo.speed, 0, 99) ||
+    !inRange(lfo.delay, 0, 99) ||
+    !inRange(lfo.pitchModulationDepth, 0, 99) ||
+    !inRange(lfo.amplitudeModulationDepth, 0, 99) ||
+    !inRange(lfo.wave, 0, 5) ||
+    !inRange(lfo.sync, 0, 1)
+  ) {
+    return false;
+  }
+
+  if (!Array.isArray(value.operators) || value.operators.length !== 6) {
+    return false;
+  }
+  for (const operatorValue of value.operators) {
+    if (!isRecord(operatorValue) || !Array.isArray(operatorValue.envelope) || operatorValue.envelope.length !== 4) {
+      return false;
+    }
+    if (
+      !inRange(operatorValue.mode, 0, 1) ||
+      !inRange(operatorValue.sync, 0, 1) ||
+      !inRange(operatorValue.freqCoarse, 0, 31) ||
+      !inRange(operatorValue.freqFine, 0, 99) ||
+      !inRange(operatorValue.detune, -7, 7) ||
+      !inRange(operatorValue.breakpoint, 0, 99) ||
+      !inRange(operatorValue.curveLeft, 0, 3) ||
+      !inRange(operatorValue.curveRight, 0, 3) ||
+      !inRange(operatorValue.depthLeft, 0, 99) ||
+      !inRange(operatorValue.depthRight, 0, 99) ||
+      !inRange(operatorValue.keyboardRateScaling, 0, 7) ||
+      !inRange(operatorValue.outputLevel, 0, 99) ||
+      !inRange(operatorValue.velocitySensitivity, 0, 14) ||
+      !inRange(operatorValue.modulationAmplitude, 0, 3) ||
+      !inRange(operatorValue.modulationPitch, 0, 7) ||
+      !operatorValue.envelope.every(isEnvelopePoint)
+    ) {
+      return false;
+    }
+  }
+
+  return (
+    Array.isArray(value.pitchEnvelope) &&
+    value.pitchEnvelope.length === 4 &&
+    value.pitchEnvelope.every(isEnvelopePoint) &&
+    typeof value.csoundPostCode === 'string'
+  );
+}
+
+/**
+ * Validate a semantic BlueX7 patch against the documented parameter domains.
+ * Invalid patches are rejected whole (no partial mutation), satisfying the
+ * spec's "values outside valid domains are reported or safely normalized
+ * without corrupting neighboring data" edge case. Whole-voice replacement
+ * (SysEx import) is checked recursively, while retaining the Java-blue bank
+ * velocity-sensitivity packed-bit range (0..14) for parity.
+ */
+export function isValidBlueX7Patch(patch: BlueX7Patch): boolean {
+  if (!patch || typeof patch !== 'object') {
+    return false;
+  }
+  switch (patch.type) {
+    case 'setCommonField': {
+      if (patch.field === 'operatorEnabled') {
+        return (
+          Array.isArray(patch.value) &&
+          patch.value.length === 6 &&
+          patch.value.every((v: unknown) => typeof v === 'boolean')
+        );
+      }
+      const range = BLUE_X7_COMMON_FIELD_RANGES[patch.field];
+      return range ? inRange(patch.value, range[0], range[1]) : false;
+    }
+    case 'setOperatorEnabled':
+      return inRange(patch.operatorIndex, 0, 5) && typeof patch.enabled === 'boolean';
+    case 'setLfoField': {
+      const range = BLUE_X7_LFO_FIELD_RANGES[patch.field];
+      return range ? inRange(patch.value, range[0], range[1]) : false;
+    }
+    case 'setOperatorField': {
+      if (!inRange(patch.operatorIndex, 0, 5)) {
+        return false;
+      }
+      const range = BLUE_X7_OPERATOR_FIELD_RANGES[patch.field];
+      return range ? inRange(patch.value, range[0], range[1]) : false;
+    }
+    case 'setSharedOscillatorSync':
+      return inRange(patch.value, 0, 1);
+    case 'setSharedPitchModulationSensitivity':
+      return inRange(patch.value, 0, 7);
+    case 'setOperatorEnvelopePoint':
+      return (
+        inRange(patch.operatorIndex, 0, 5) &&
+        inRange(patch.stageIndex, 0, 3) &&
+        isRecord(patch.point) &&
+        inRange(patch.point.rate, 0, 99) &&
+        inRange(patch.point.level, 0, 99)
+      );
+    case 'setPitchEnvelopePoint':
+      return (
+        inRange(patch.stageIndex, 0, 3) &&
+        isRecord(patch.point) &&
+        inRange(patch.point.rate, 0, 99) &&
+        inRange(patch.point.level, 0, 99)
+      );
+    case 'setCsoundPostCode':
+      return typeof patch.text === 'string';
+    case 'replaceVoice':
+      return isValidBlueX7Voice(patch.voice);
+    default:
+      return false;
+  }
+}
+
 export interface BlueX7InstrumentSnapshot extends InstrumentSnapshotBase {
   type: 'blueX7';
+  voice: BlueX7Voice;
+  sharedOscillatorSync?: number | 'mixed';
+  sharedPitchModulationSensitivity?: number | 'mixed';
 }
 
 export interface BlueSynthBuilderInstrumentSnapshot extends InstrumentSnapshotBase {
@@ -2192,6 +2383,7 @@ export type InstrumentPatch = Partial<{
   bsbOpcodeListText: string;
   bsbInterface: BsbInterfacePatch;
   embeddedOpcodeList: EmbeddedOpcodeListPatch;
+  blueX7: BlueX7Patch;
 }>;
 
 /**
@@ -5478,12 +5670,21 @@ export function createInstrumentSnapshot(
   }
 
   if (instrument instanceof BlueX7) {
+    const voice = instrument.getVoice();
+    const syncs = voice.operators.map((op) => op.sync);
+    const pmss = voice.operators.map((op) => op.modulationPitch);
+    const allSameSync = syncs.every((s) => s === syncs[0]);
+    const allSamePms = pmss.every((p) => p === pmss[0]);
+
     return {
       assignmentId,
       type: 'blueX7',
       name: instrument.getName(),
       enabled,
       comment: instrument.getComment(),
+      voice: cloneBlueX7Voice(voice),
+      sharedOscillatorSync: allSameSync ? syncs[0] : 'mixed',
+      sharedPitchModulationSensitivity: allSamePms ? pmss[0] : 'mixed',
     };
   }
 
@@ -5664,6 +5865,10 @@ function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Instrument 
     }
 
     restoreBsbAutomationParameters(bsb, snapshot.automationParameters);
+  } else if (snapshot.type === 'blueX7') {
+    if (snapshot.voice && instrument instanceof BlueX7) {
+      instrument.setVoice(snapshot.voice);
+    }
   }
 
   return instrument;
@@ -6492,6 +6697,52 @@ function applyInstrumentPatch(instrument: Instrument, patch: InstrumentPatch): b
     }
     if (patch.bsbInterface) {
       changed = applyBsbInterfacePatch(instrument, patch.bsbInterface) || changed;
+    }
+  } else if (instrument instanceof BlueX7) {
+    if (patch.blueX7 && isValidBlueX7Patch(patch.blueX7)) {
+      const p = patch.blueX7;
+      switch (p.type) {
+        case 'setCommonField':
+          instrument.setCommonField(p.field, p.value as BlueX7Common[typeof p.field]);
+          changed = true;
+          break;
+        case 'setOperatorEnabled':
+          instrument.setOperatorEnabled(p.operatorIndex, p.enabled);
+          changed = true;
+          break;
+        case 'setLfoField':
+          instrument.setLfoField(p.field, p.value as BlueX7Lfo[typeof p.field]);
+          changed = true;
+          break;
+        case 'setOperatorField':
+          instrument.setOperatorField(p.operatorIndex, p.field, p.value as BlueX7Operator[typeof p.field]);
+          changed = true;
+          break;
+        case 'setSharedOscillatorSync':
+          instrument.setSharedOscillatorSync(p.value);
+          changed = true;
+          break;
+        case 'setSharedPitchModulationSensitivity':
+          instrument.setSharedPitchModulationSensitivity(p.value);
+          changed = true;
+          break;
+        case 'setOperatorEnvelopePoint':
+          instrument.setOperatorEnvelopePoint(p.operatorIndex, p.stageIndex, p.point);
+          changed = true;
+          break;
+        case 'setPitchEnvelopePoint':
+          instrument.setPitchEnvelopePoint(p.stageIndex, p.point);
+          changed = true;
+          break;
+        case 'setCsoundPostCode':
+          instrument.setCsoundPostCode(p.text);
+          changed = true;
+          break;
+        case 'replaceVoice':
+          instrument.replaceVoice(p.voice);
+          changed = true;
+          break;
+      }
     }
   }
 

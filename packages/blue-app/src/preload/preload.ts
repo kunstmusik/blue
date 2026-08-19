@@ -2,6 +2,7 @@
  * Preload script — exposes safe IPC bridges to the renderer process.
  */
 import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron';
+import { validateBlueX7SysexReadResult } from '../shared/blue-x7-sysex';
 import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
@@ -904,4 +905,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler); };
   },
+
+  // BlueX7 Yamaha SysEx Import (SPEC 081)
+  selectBlueX7SysexFile: async () =>
+    validateBlueX7SysexReadResult(await ipcRenderer.invoke('blue-x7:import-sysex')),
 });

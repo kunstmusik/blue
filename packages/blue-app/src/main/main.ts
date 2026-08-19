@@ -60,6 +60,10 @@ import {
   validateFileManagerDirectory,
 } from './file-manager-service';
 import {
+  BLUE_X7_IMPORT_SYSEX_CHANNEL,
+  selectBlueX7SysexFile,
+} from './blue-x7-sysex-import';
+import {
   COMMIT_AUDIO_FILE_DROP_CHANNEL,
   FILE_MANAGER_GET_ROOTS_CHANNEL,
   FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
@@ -3030,6 +3034,10 @@ async function startPlayback(
         extraRealtimeOptions,
       );
       if (!result.ok) {
+        // Invalid orchestra/score is a project-source error. The engine has
+        // already reported it in the Csound output and cleaned up, so do not
+        // present the engine recovery flow for an expected compile failure.
+        if (result.failureKind === 'project') return false;
         throw new EngineRecoveryError(
           result.errorMessage || 'Engine playback initialization failed',
           result.failureCategory || 'unexpected',
@@ -3064,6 +3072,11 @@ async function startPlayback(
           recoveryResult.diagnostics,
         );
       }
+      return false;
+    }
+
+    if (!recoveryResult.result) {
+      activeAuditionPlayback = false;
       return false;
     }
 
@@ -3678,6 +3691,11 @@ ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
   return fs.promises.readFile(result.filePaths[0], 'utf-8');
 });
 
+ipcMain.handle(BLUE_X7_IMPORT_SYSEX_CHANNEL, async (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  return selectBlueX7SysexFile(window, mainWindow);
+});
+
 ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -4119,9 +4137,18 @@ ipcMain.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => 
 
 ipcMain.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
   if (!isTrackInstrumentEditorRequest(request)
-    || !trackInstrumentRequestIsCurrent(request)
-    || !getTrackInstrumentEditorSnapshot(request)) return;
-  openTrackInstrumentEditorWindow(mainWindow, request, {
+    || request.track.projectSessionId !== currentProjectSessionId) {
+    throw new Error('Track instrument editor request is no longer valid.');
+  }
+  // Opening is a read/focus action. A pending renderer patch may have moved
+  // the document revision since the tiny Track control rendered, so resolve
+  // the stable Track identity against the current canonical snapshot and use
+  // its current revision for the editor window fence.
+  const snapshot = getCurrentTrackInstrumentEditorSnapshot(request);
+  if (!snapshot) {
+    throw new Error('Track instrument is not available. Assign it again and retry.');
+  }
+  openTrackInstrumentEditorWindow(mainWindow, { track: snapshot.track }, {
     initialZoomFactor: appZoomController.getCurrentFactor(),
   });
 });

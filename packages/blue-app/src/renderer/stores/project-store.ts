@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   BlueSynthBuilder,
   BlueX7,
+  cloneBlueX7Voice,
   Effect,
   Element,
   GenericInstrument,
@@ -17,6 +18,7 @@ import {
   createMixerEffectEntrySnapshot,
   createDefaultBsbWidgetSnapshot,
   createBsbRealtimeControlUpdate,
+  createInstrumentSnapshot,
   collectBsbReplacementKeysFromSnapshotTree,
   ensureUniqueName,
   reconcileMixerSnapshotWithArrangement,
@@ -24,6 +26,8 @@ import {
   type BlueLivePatch,
   type ClojureProjectSnapshot,
   type BlueSynthBuilderInstrumentSnapshot,
+  type BlueX7InstrumentSnapshot,
+  isValidBlueX7Patch,
   type BsbInterfacePatch,
   type BsbRealtimeControlUpdate,
   type BsbWidgetNodeSnapshot,
@@ -278,6 +282,16 @@ function patchesRequireCanonicalProjectRefresh(
   );
 }
 
+function patchesRequireMutationAcknowledgement(
+  patches: ProjectDocumentPatch[],
+): boolean {
+  return patches.some((patch) => (
+    patch.score?.type === 'createTrackInstrument'
+    || patch.score?.type === 'replaceTrackInstrument'
+    || patch.score?.type === 'clearTrackInstrument'
+  ));
+}
+
 function normalizeMixerPatchIdentifiers(patch: MixerPatch): MixerPatch {
   switch (patch.type) {
     case 'addSubChannel':
@@ -525,6 +539,9 @@ const doFlushAsync = async (): Promise<void> => {
 
   try {
     const receipt = await window.blueAPI.commitProjectDocumentPatches(patches);
+    if (receipt.changed === false && patchesRequireMutationAcknowledgement(patches)) {
+      throw new Error('Track instrument change was not applied; the project may have changed. Please try again.');
+    }
     pendingSequenceChanged = pendingSequenceChanged || receipt.changed !== false;
     if (receipt?.revision !== undefined) {
       if (receipt.sessionId === latestProjectSessionId) {
@@ -2547,6 +2564,13 @@ function cloneSnapshotValue<T>(value: T): T {
 }
 
 function cloneInstrumentSnapshotForMutation<T extends InstrumentSnapshot>(instrument: T): T {
+  if (instrument.type === 'blueX7') {
+    const x7 = instrument as unknown as BlueX7InstrumentSnapshot;
+    return {
+      ...x7,
+      voice: x7.voice ? cloneBlueX7Voice(x7.voice) : x7.voice,
+    } as unknown as T;
+  }
   return { ...instrument };
 }
 
@@ -2607,76 +2631,11 @@ function createDefaultInstrumentSnapshot(
   enabled = true,
 ): InstrumentSnapshot {
   switch (instrumentType) {
-    case 'generic': {
-      const instrument = new GenericInstrument();
-      return {
-        assignmentId,
-        type: 'generic',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        text: instrument.getText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-      };
-    }
-    case 'javascript': {
-      const instrument = new JavaScriptInstrument();
-      return {
-        assignmentId,
-        type: 'javascript',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        text: instrument.getText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-        udolist: [],
-      };
-    }
-    case 'python': {
-      const instrument = new PythonInstrument();
-      return {
-        assignmentId,
-        type: 'python',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        text: instrument.getText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-        udolist: [],
-      };
-    }
-    case 'blueX7': {
-      const instrument = new BlueX7();
-      return {
-        assignmentId,
-        type: 'blueX7',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-      };
-    }
-    case 'blueSynthBuilder': {
-      const instrument = new BlueSynthBuilder();
-      return {
-        assignmentId,
-        type: 'blueSynthBuilder',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        instrumentText: instrument.getInstrumentText(),
-        alwaysOnInstrumentText: instrument.getAlwaysOnInstrumentText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-        objectNames: [],
-        widgets: [],
-        editEnabled: true,
-        gridSettings: { columns: 8, rows: 4, snap: true },
-        widgetTree: { id: 'root', type: 'BSBRootGroup', objectName: '', x: 0, y: 0, width: 0, height: 0, value: 0, minimum: 0, maximum: 1, properties: {}, editable: true, children: [] },
-      };
-    }
+    case 'generic': return createInstrumentSnapshot(assignmentId, new GenericInstrument(), enabled);
+    case 'javascript': return createInstrumentSnapshot(assignmentId, new JavaScriptInstrument(), enabled);
+    case 'python': return createInstrumentSnapshot(assignmentId, new PythonInstrument(), enabled);
+    case 'blueX7': return createInstrumentSnapshot(assignmentId, new BlueX7(), enabled);
+    case 'blueSynthBuilder': return createInstrumentSnapshot(assignmentId, new BlueSynthBuilder(), enabled);
   }
 
   throw new Error(`Unsupported instrument type: ${instrumentType}`);
@@ -2768,6 +2727,66 @@ function updateInstrumentSnapshot(
         instrument.objectNames = previousObjectNames;
         instrument.widgets = previousWidgets;
       }
+    }
+  } else if (instrument.type === 'blueX7') {
+    const x7 = instrument as BlueX7InstrumentSnapshot;
+    if (patch.blueX7 && x7.voice && isValidBlueX7Patch(patch.blueX7)) {
+      const p = patch.blueX7;
+      const v = x7.voice;
+      switch (p.type) {
+        case 'setCommonField':
+          v.common = { ...v.common, [p.field]: p.value };
+          break;
+        case 'setOperatorEnabled':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6) {
+            const nextEnabled = [...v.common.operatorEnabled] as [boolean, boolean, boolean, boolean, boolean, boolean];
+            nextEnabled[p.operatorIndex] = p.enabled;
+            v.common = { ...v.common, operatorEnabled: nextEnabled };
+          }
+          break;
+        case 'setLfoField':
+          v.lfo = { ...v.lfo, [p.field]: p.value };
+          break;
+        case 'setOperatorField':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6) {
+            const nextOps = [...v.operators] as typeof v.operators;
+            nextOps[p.operatorIndex] = { ...nextOps[p.operatorIndex], [p.field]: p.value };
+            v.operators = nextOps;
+          }
+          break;
+        case 'setSharedOscillatorSync':
+          v.operators = v.operators.map((op) => ({ ...op, sync: p.value })) as typeof v.operators;
+          break;
+        case 'setSharedPitchModulationSensitivity':
+          v.operators = v.operators.map((op) => ({ ...op, modulationPitch: p.value })) as typeof v.operators;
+          break;
+        case 'setOperatorEnvelopePoint':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6 && p.stageIndex >= 0 && p.stageIndex < 4) {
+            const nextOps = [...v.operators] as typeof v.operators;
+            const nextEnv = [...nextOps[p.operatorIndex].envelope] as typeof nextOps[0]['envelope'];
+            nextEnv[p.stageIndex] = { ...p.point };
+            nextOps[p.operatorIndex] = { ...nextOps[p.operatorIndex], envelope: nextEnv };
+            v.operators = nextOps;
+          }
+          break;
+        case 'setPitchEnvelopePoint':
+          if (p.stageIndex >= 0 && p.stageIndex < 4) {
+            const nextPeg = [...v.pitchEnvelope] as typeof v.pitchEnvelope;
+            nextPeg[p.stageIndex] = { ...p.point };
+            v.pitchEnvelope = nextPeg;
+          }
+          break;
+        case 'setCsoundPostCode':
+          v.csoundPostCode = p.text;
+          break;
+        case 'replaceVoice':
+          x7.voice = cloneBlueX7Voice(p.voice);
+          break;
+      }
+      const syncs = x7.voice.operators.map((op) => op.sync);
+      const pmss = x7.voice.operators.map((op) => op.modulationPitch);
+      x7.sharedOscillatorSync = syncs.every((s) => s === syncs[0]) ? syncs[0] : 'mixed';
+      x7.sharedPitchModulationSensitivity = pmss.every((s) => s === pmss[0]) ? pmss[0] : 'mixed';
     }
   }
 }

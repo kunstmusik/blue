@@ -4,6 +4,7 @@ import {
   BlueSynthBuilder,
   AutomationCurve,
   BSBKnob,
+  BlueX7,
   GenericInstrument,
   OpcodeDefinition,
   Preset,
@@ -37,6 +38,27 @@ function createInstrumentProject(): { data: BlueData; ref: TrackRef } {
 }
 
 describe('Track instrument project patches', () => {
+  it('creates a BlueX7 Track instrument with a complete editor snapshot', () => {
+    const { data, ref } = createInstrumentProject();
+    const context = { projectSessionId: 4, projectRevision: 2 };
+    const track = data.getScore()[0]![0]!;
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'createTrackInstrument',
+        track: ref,
+        instrumentType: 'blueX7',
+      },
+    }, context)).toBe(true);
+
+    const instrument = track.getInstrument();
+    expect(instrument).toBeInstanceOf(BlueX7);
+    const snapshot = createInstrumentSnapshot(track.getUniqueId(), instrument);
+    expect(snapshot.type).toBe('blueX7');
+    if (snapshot.type !== 'blueX7') throw new Error('expected a BlueX7 snapshot');
+    expect(snapshot.voice.common.algorithm).toBe(19);
+  });
+
   it('creates, replaces, updates, clears, and copies Track instruments independently', () => {
     const { data, ref } = createInstrumentProject();
     const context = { projectSessionId: 4, projectRevision: 2 };

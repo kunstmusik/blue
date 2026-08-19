@@ -58,7 +58,37 @@ export { GenericInstrument } from './instruments/generic-instrument';
 export { loadInstrumentFromXML, registerInstrumentType } from './instruments/instrument-registry';
 export { JavaScriptInstrument } from './instruments/javascript-instrument';
 export { PythonInstrument } from './instruments/python-instrument';
-export { BlueX7 } from './instruments/blue-x7';
+export {
+  BlueX7,
+  createDefaultBlueX7Voice,
+  cloneBlueX7Voice,
+  generateBlueX7Preview,
+  getBlueX7BindingReport,
+  generateBlueX7InstrumentBody,
+  generateFTableForOperator,
+} from './instruments/blue-x7';
+export {
+  getSysexType,
+  getBankVoiceNames,
+  decodeSingleVoice,
+  decodeBankVoice,
+  sanitizeVoiceName,
+  formatBankSlotLabel,
+  validateBlueX7Sysex,
+  BlueX7SysexValidationError,
+  SINGLE_SYSEX_SIZE,
+  BANK_SYSEX_SIZE,
+} from './instruments/blue-x7-sysex';
+export type { BlueX7SysexType, BlueX7SysexValidationCode } from './instruments/blue-x7-sysex';
+export type {
+  EnvelopePoint as BlueX7EnvelopePoint,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7Voice,
+  BlueX7StaticTables,
+  BlueX7PreviewResult,
+} from './instruments/blue-x7';
 export { BlueSynthBuilder } from './instruments/blue-synth-builder';
 export { BSBGroup } from './instruments/blue-synth-builder/bsb-group';
 export { BSBWidget } from './instruments/blue-synth-builder/bsb-widget';

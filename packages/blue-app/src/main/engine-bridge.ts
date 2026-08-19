@@ -111,12 +111,26 @@ function classifyEngineProbeFailure(
   }
 }
 
+function isExpectedCsoundSourceError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    'orchestra compile failed',
+    'failed to compile orchestra',
+    'score read failed',
+    'invalid orchestra',
+    'syntax error',
+    'parser failure',
+  ].some((marker) => normalized.includes(marker));
+}
+
 export type EngineOutputCallback = (text: string, type: 'stdout' | 'stderr') => void;
 export type PlaybackCompleteCallback = (stopReason: string) => void;
 export type PlaybackErrorWarningCallback = (message: string) => void;
 
 export interface EngineOperationResult {
   ok: boolean;
+  /** Distinguishes invalid project source from an engine/runtime failure. */
+  failureKind?: 'engine' | 'project';
   failureCategory?: EngineRecoveryFailureCategory;
   errorMessage?: string;
 }
@@ -220,7 +234,9 @@ export class EngineBridge {
 
   private sendPlaybackError(message: string): void {
     this.sendPlaybackStatus('error', message);
-    this.playbackErrorWarningCallback?.(message);
+    if (!isExpectedCsoundSourceError(message)) {
+      this.playbackErrorWarningCallback?.(message);
+    }
   }
 
   private sendPlaybackClock(snapshot: PlaybackClockSnapshot): void {
@@ -834,6 +850,7 @@ export class EngineBridge {
           const cleaned = await this.killEngine();
           return {
             ok: false,
+            failureKind: cleaned ? 'project' : 'engine',
             failureCategory: cleaned ? classifyProcessError(null, resp.message) : 'cleanup-failed',
             errorMessage: `Orchestra compile failed: ${resp.message}`,
           };
@@ -853,6 +870,7 @@ export class EngineBridge {
           const cleaned = await this.killEngine();
           return {
             ok: false,
+            failureKind: cleaned ? 'project' : 'engine',
             failureCategory: cleaned ? classifyProcessError(null, resp.message) : 'cleanup-failed',
             errorMessage: `Score read failed: ${resp.message}`,
           };

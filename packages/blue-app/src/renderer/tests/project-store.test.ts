@@ -136,6 +136,36 @@ describe('project-store — canonical acknowledgement barrier', () => {
     expect(useProjectStore.getState().isDirty).toBe(false);
   });
 
+  it('rejects a Track instrument create that the main process did not apply', async () => {
+    commitProjectDocumentPatches.mockResolvedValue({
+      revision: 0,
+      sessionId: 1,
+      changed: false,
+    });
+
+    const snapshot = createFocusSnapshot(1);
+    useProjectStore.getState().setProjectInfo({
+      ...snapshot,
+      filePath: '/tmp/track-instrument.blue',
+    });
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'createTrackInstrument',
+        track: {
+          rootGroupId: 'root-group',
+          trackId: 'track-1',
+          projectSessionId: 1,
+          projectRevision: 0,
+        },
+        instrumentType: 'blueX7',
+      },
+    });
+
+    await expect(useProjectStore.getState().flushPendingPatches())
+      .rejects.toThrow('Track instrument change was not applied');
+  });
+
   it('drains edits queued while another commit is in flight', async () => {
     let resolveFirst!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
     const firstCommit = new Promise<{ revision: number; sessionId: number; changed: boolean }>((resolve) => {

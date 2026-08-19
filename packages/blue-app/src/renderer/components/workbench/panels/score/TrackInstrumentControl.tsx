@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, Music2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { SupportedNewInstrumentType, TrackInstrumentSummary } from '../../../../../shared/project-editor';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import { useLibraryDropTarget } from '../../../libraries/use-library-drop-target';
@@ -33,6 +34,7 @@ export default function TrackInstrumentControl({
   displayName,
 }: Props) {
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
+  const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const captureTrackInstrument = useLibraryStore((state) => state.captureTrackInstrument);
   const track = {
     rootGroupId: groupId,
@@ -48,13 +50,43 @@ export default function TrackInstrumentControl({
   };
   const libraryDrop = useLibraryDropTarget(libraryTarget, true);
 
-  const openEditor = useCallback(() => {
-    void window.blueAPI.openTrackInstrumentEditor({ track });
-  }, [track]);
+  const openEditor = useCallback(async () => {
+    try {
+      // A newly assigned Track instrument is optimistic until the pending
+      // project patch reaches the main process. Flush before opening so the
+      // native editor never races that assignment.
+      await flushPendingPatches();
+      await window.blueAPI.openTrackInstrumentEditor({ track });
+    } catch (error) {
+      console.error('[track-instrument-control] Failed to open editor:', error);
+      toast.error(`Failed to open Track instrument editor: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [flushPendingPatches, track]);
 
-  const createInstrument = useCallback((instrumentType: SupportedNewInstrumentType) => {
-    void applyProjectDocumentPatch({ score: { type: 'createTrackInstrument', track, instrumentType } });
-  }, [applyProjectDocumentPatch, track]);
+  const createInstrument = useCallback(async (instrumentType: SupportedNewInstrumentType) => {
+    const instrumentLabel = NEW_INSTRUMENTS.find((option) => option.type === instrumentType)?.label
+      ?? instrumentType;
+    try {
+      // Drain an earlier commit before reading the fence. Otherwise this
+      // action can be queued behind a commit that advances the revision.
+      await flushPendingPatches();
+      const currentTrack = {
+        rootGroupId: groupId,
+        trackId,
+        projectSessionId,
+        // Track mutations are fenced; read the revision when the menu action
+        // is selected instead of relying on the value captured during render.
+        projectRevision: getProjectDocumentRevision(),
+      } as const;
+
+      await applyProjectDocumentPatch({
+        score: { type: 'createTrackInstrument', track: currentTrack, instrumentType },
+      });
+      await flushPendingPatches();
+    } catch (error: unknown) {
+      toast.error(`Failed to add ${instrumentLabel} to Track: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [applyProjectDocumentPatch, flushPendingPatches, groupId, projectSessionId, trackId]);
 
   const copyInstrument = useCallback(() => {
     if (instrument?.snapshot) {
@@ -92,6 +124,9 @@ export default function TrackInstrumentControl({
           className={`flex shrink-0 items-center gap-px pt-0.5 ${libraryDrop.active ? 'rounded-sm bg-app-accent/20 ring-1 ring-app-accent' : ''}`}
           data-track-instrument-control={trackId}
           title={libraryDrop.feedback || undefined}
+          onContextMenu={(event) => {
+            event.stopPropagation();
+          }}
         >
           <button
             type="button"
@@ -111,7 +146,7 @@ export default function TrackInstrumentControl({
             }}
             onDoubleClick={(event) => {
               event.stopPropagation();
-              if (instrument?.snapshot) openEditor();
+              if (instrument) void openEditor();
             }}
           >
             <Music2 size={13} strokeWidth={1.8} aria-hidden="true" />
@@ -119,8 +154,20 @@ export default function TrackInstrumentControl({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu" sideOffset={4}>
+        <ContextMenu.Content
+          className="editor-context-menu"
+          sideOffset={4}
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
           <ContextMenu.Label className="px-3 py-1 text-tiny text-app-text-muted">Track Instrument</ContextMenu.Label>
+          <ContextMenu.Item
+            className="editor-context-menu__item"
+            disabled={!instrument}
+            onSelect={() => void openEditor()}
+          >
+            Edit Instrument
+          </ContextMenu.Item>
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
               <span>Use New Instrument</span>
@@ -131,12 +178,14 @@ export default function TrackInstrumentControl({
                 className="editor-context-menu editor-context-menu--submenu"
                 sideOffset={2}
                 alignOffset={-4}
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
               >
                 {NEW_INSTRUMENTS.map((option) => (
                   <ContextMenu.Item
                     key={option.type}
                     className="editor-context-menu__item"
-                    onSelect={() => createInstrument(option.type)}
+                    onSelect={() => void createInstrument(option.type)}
                   >
                     {option.label}
                   </ContextMenu.Item>

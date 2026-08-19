@@ -3,7 +3,14 @@ import { Element } from '../../src/serialization/xml-reader';
 import { GenericInstrument } from '../../src/instruments/generic-instrument';
 import { JavaScriptInstrument } from '../../src/instruments/javascript-instrument';
 import { PythonInstrument } from '../../src/instruments/python-instrument';
-import { BlueX7 } from '../../src/instruments/blue-x7';
+import {
+  BlueX7,
+  createDefaultBlueX7Voice,
+  generateBlueX7Preview,
+  getBlueX7BindingReport,
+  getSysexType,
+  formatBankSlotLabel,
+} from '../../src/index';
 import { assignParameterNames } from '../../src/automation/parameter-helper';
 import { loadRuntimeBsbFixture } from './runtime-model-fixtures';
 import { normalizeWhitespace } from './runtime-model-comparison';
@@ -86,5 +93,21 @@ describe('runtime instrument parity', () => {
 
     expect(blueX7Saved).toContain('<customData>');
     expect(blueX7Saved).toContain('<nested>alpha</nested>');
+  });
+
+  it('exports BlueX7 preview and SysEx entry points from package index in a host-neutral manner', () => {
+    expect(BlueX7).toBeDefined();
+    expect(createDefaultBlueX7Voice).toBeTypeOf('function');
+    expect(generateBlueX7Preview).toBeTypeOf('function');
+    expect(getBlueX7BindingReport).toBeTypeOf('function');
+    expect(getSysexType).toBeTypeOf('function');
+    expect(formatBankSlotLabel).toBeTypeOf('function');
+
+    const voice = createDefaultBlueX7Voice();
+    const preview = generateBlueX7Preview(voice, 'PackageTest');
+    expect(preview.tables).toContain('; [BLUEX7] - START STATIC TABLES');
+    expect(preview.body).toContain('aout =');
+    expect(preview.bindings.emitted.length).toBeGreaterThan(0);
+    expect(preview.bindings.notEmitted.length).toBeGreaterThan(0);
   });
 });

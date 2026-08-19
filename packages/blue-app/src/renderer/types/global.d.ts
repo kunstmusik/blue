@@ -601,6 +601,9 @@ declare global {
       onMidiInputServiceSnapshot: (
         callback: (snapshot: MidiInputServiceSnapshot) => void,
       ) => () => void;
+
+      // BlueX7 Yamaha SysEx Import (SPEC 081)
+      selectBlueX7SysexFile: () => Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>;
     };
   }
 }

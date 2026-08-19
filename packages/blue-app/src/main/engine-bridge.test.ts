@@ -64,7 +64,7 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     expect(showErrorBox).not.toHaveBeenCalled();
   });
 
-  it('notifies the configured warning callback for terminal Csound errors', async () => {
+  it('does not notify the warning callback for an expected terminal source error', async () => {
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
     const warning = vi.fn();
     bridge.setPlaybackErrorWarningCallback(warning);
@@ -87,10 +87,36 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       lastError: 'invalid orchestra',
     }, 'pubsub');
 
-    expect(warning).toHaveBeenCalledWith('Engine error: invalid orchestra');
+    expect(warning).not.toHaveBeenCalled();
   });
 
-  it('notifies the configured warning callback when orchestra compilation fails', async () => {
+  it('notifies the configured warning callback for an unexpected terminal engine error', async () => {
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const warning = vi.fn();
+    bridge.setPlaybackErrorWarningCallback(warning);
+
+    const internals = bridge as unknown as {
+      awaitingPlaybackTerminalState: boolean;
+      finalizePlaybackFromEngine: (snapshot: EngineStateSnapshot, source: 'pubsub' | 'poll') => Promise<void>;
+    };
+    internals.awaitingPlaybackTerminalState = true;
+
+    await internals.finalizePlaybackFromEngine({
+      state: 'stopped',
+      stopReason: 'error',
+      engineCreated: true,
+      running: false,
+      sampleFrames: 0,
+      sampleRate: 44100,
+      ksmps: 64,
+      sequence: 1,
+      lastError: 'audio device disconnected',
+    }, 'pubsub');
+
+    expect(warning).toHaveBeenCalledWith('Engine error: audio device disconnected');
+  });
+
+  it('classifies orchestra compilation failures as project errors without warning', async () => {
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
     const warning = vi.fn();
     const compileOrc = vi.fn(async () => ({ ok: false, message: 'Failed to compile orchestra' }));
@@ -122,11 +148,12 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       '<CsoundSynthesizer><CsInstruments>asdf</CsInstruments><CsScore>e</CsScore></CsoundSynthesizer>',
     )).resolves.toMatchObject({
       ok: false,
+      failureKind: 'project',
       failureCategory: 'unexpected',
     });
 
     expect(compileOrc).toHaveBeenCalledWith('asdf');
-    expect(warning).toHaveBeenCalledWith('Orchestra compile failed: Failed to compile orchestra');
+    expect(warning).not.toHaveBeenCalled();
   });
 
   it('waits for the stopped engine state before resolving stop', async () => {

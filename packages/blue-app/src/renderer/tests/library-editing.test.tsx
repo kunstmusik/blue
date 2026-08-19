@@ -21,8 +21,10 @@ import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-dro
 import { useLibraryStore } from '../stores/library-store';
 import { createTestDataTransfer, dispatchContextMenuKey, dispatchDragEvent } from './library-interaction-test-helpers';
 import { effectDocument, instrumentDocument, udoDocument } from './library-editor-fixtures';
+import { createDefaultBlueX7Voice } from '@blue/data';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
+  BlueX7InstrumentSnapshot,
   ScoreObjectEditorDocumentSnapshot,
   UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
@@ -609,6 +611,70 @@ describe('library editor UDO isolation (US5, T030)', () => {
     expect(
       container.querySelector('[data-udo-scope="1:0"][aria-label="UDO code editor"]'),
     ).toBeTruthy();
+
+    act(() => root.unmount());
+  });
+
+  it('renders and dispatches patches for BlueX7 library drafts', () => {
+    const onPatch = vi.fn();
+    const voice = createDefaultBlueX7Voice();
+    voice.common.algorithm = 11;
+    const blueX7Snapshot: BlueX7InstrumentSnapshot = {
+      assignmentId: 'library-item',
+      type: 'blueX7',
+      name: 'Library DX7',
+      enabled: true,
+      comment: 'Library FM voice',
+      voice,
+    };
+
+    const blueX7Session: LibraryEditorSessionSnapshot = {
+      sessionId: 'session-x7',
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'node-x7' },
+      displayName: 'Library DX7',
+      objectType: 'BlueX7',
+      breadcrumb: ['Instruments', 'FM', 'Library DX7'],
+      baseRevision: 1,
+      document: {
+        kind: 'instrument',
+        snapshot: blueX7Snapshot,
+      },
+      dirty: false,
+      pinned: false,
+      status: 'ready',
+    };
+
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryControlledEditor session={blueX7Session} onPatch={onPatch} />,
+    ));
+
+    expect(container.querySelector('[data-testid="blue-x7-editor"]')).toBeTruthy();
+    expect(container.textContent).toContain('Common & Algorithms');
+
+    // Edit algorithm
+    const algSelect = container.querySelector('#bluex7-algorithm') as HTMLSelectElement;
+    act(() => {
+      algSelect.value = '7';
+      algSelect.dispatchEvent(new Event('input', { bubbles: true }));
+      algSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'instrument',
+        patch: expect.objectContaining({
+          patch: expect.objectContaining({
+            blueX7: {
+              type: 'setCommonField',
+              field: 'algorithm',
+              value: 7,
+            },
+          }),
+        }),
+      }),
+    );
 
     act(() => root.unmount());
   });

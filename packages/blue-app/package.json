@@ -19,6 +19,7 @@
     "osc:send": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ./scripts/send-osc.mjs",
     "start": "electron .",
     "test": "vitest run --config vitest.config.ts",
+    "test:browser:x7": "vitest --config vitest.browser.x7.config.ts --run",
     "verify:app-zoom": "node scripts/verify-app-zoom.mjs",
     "release:metadata": "node ../../scripts/release-metadata.mjs --out release-metadata.json",
     "verify:package-inputs": "node ../../scripts/verify-package-inputs.mjs",
