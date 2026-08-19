@@ -288,7 +288,7 @@ describe('runProjectFileReplacement', () => {
   it('does not treat a merely similar path as the current project', async () => {
     const { harness, run } = createHarness({
       currentPath: '/work/current.blue',
-      selectedPath: '/work/Current.blue',
+      selectedPath: '/work/current-copy.blue',
     });
     const outcome = await run();
 
