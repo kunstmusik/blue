@@ -86,6 +86,13 @@ import {
 import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
 import { resolveExampleProjectPath } from './example-project-path';
+import { isSameProjectPathIdentity } from './project-path';
+import {
+  resolveReplacementSaveDecision,
+  runProjectFileReplacement,
+  runReplacementFlow,
+  runTransactionalSaveAs,
+} from './project-replacement-flow';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
@@ -1301,33 +1308,41 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
     cancelId: 2,
   });
 
-  if (result.response === 0) {
-    if (options.quitAfterSave) {
+  if (options.quitAfterSave) {
+    // Quit keeps its immediate policy: Save writes then quits, Don't Save
+    // quits without writing, and a cancelled or failed save aborts the quit.
+    if (result.response === 0) {
       pendingQuit = true;
-    }
-
-    if (currentFilePath) {
-      doSave(currentFilePath);
-    } else {
-      await saveFileAs();
-      if (!currentFilePath) {
-        if (options.quitAfterSave) {
+      if (currentFilePath) {
+        doSave(currentFilePath);
+      } else {
+        const saved = await saveFileAs();
+        if (!saved) {
           pendingQuit = false;
+          return false;
         }
-        return false;
       }
+      return true;
     }
-    return true;
-  }
 
-  if (result.response === 1) {
-    if (options.quitAfterSave) {
+    if (result.response === 1) {
       doQuit();
+      return true;
     }
-    return true;
+
+    return false;
   }
 
-  return false;
+  // Replacement consent requires a durable save: a cancelled Save As,
+  // declined overwrite, or failed write blocks the replacement (FR-011).
+  const outcome = await resolveReplacementSaveDecision({
+    choose: () => (result.response === 0 ? 'save' : result.response === 1 ? 'discard' : 'cancel'),
+    hasCurrentProject: () => currentData !== null,
+    hasCurrentPath: () => currentFilePath !== null,
+    saveCurrent: () => currentFilePath !== null && doSave(currentFilePath),
+    saveAs: () => saveFileAs(),
+  });
+  return outcome === 'saved' || outcome === 'discarded';
 }
 
 function rebuildApplicationMenu(): void {
@@ -1812,7 +1827,6 @@ async function doQuit(): Promise<void> {
 // ─── File Operations ───
 
 async function handleOpenFile(): Promise<void> {
-  if (!(await confirmSaveBeforeReplace())) return;
   await openFile();
 }
 
@@ -1888,40 +1902,23 @@ async function openFile(): Promise<boolean> {
 
   if (result.canceled || result.filePaths.length === 0) return false;
 
-  const filePath = result.filePaths[0];
-
-  // FR-018 parity: selecting the already-current project is a no-op (Java Blue
-  // just switches to it without rerunning the dependency check). Revert uses
-  // loadProjectFromDisk directly to bypass this guard.
-  if (filePath === currentFilePath && currentData) {
-    return false;
-  }
-
-  return loadProjectFromDisk(filePath);
+  return openProjectFile(result.filePaths[0]);
 }
 
 async function openFilePath(filePath: string): Promise<boolean> {
   if (!mainWindow) return false;
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-
-  // FR-018 parity: reopening the current project is a no-op. See openFile.
-  if (filePath === currentFilePath && currentData) {
-    return false;
-  }
-
-  return loadProjectFromDisk(filePath);
+  return openProjectFile(filePath);
 }
 
 /**
  * Opens the bundled examples directory in a file picker (Java Blue's "Open
  * Example Project"). The resolved examples directory seeds the dialog; the
- * selected `.blue` file is handed to the normal {@link openFilePath} load
- * path, so it participates in the same render-active guard, recent-projects
- * tracking, and project-loaded lifecycle as a regular open.
+ * selected `.blue` file is handed to the accepted-target replacement flow,
+ * so replacement decisions appear only after a selection is accepted.
  */
 async function openExampleProject(): Promise<boolean> {
   if (!mainWindow) return false;
-  if (!(await confirmSaveBeforeReplace())) return false;
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
 
   const resolution = resolveExampleProjectPath({
     isPackaged: app.isPackaged,
@@ -1938,87 +1935,63 @@ async function openExampleProject(): Promise<boolean> {
 
   if (result.canceled || result.filePaths.length === 0) return false;
 
-  return openFilePath(result.filePaths[0]);
+  return openProjectFile(result.filePaths[0]);
 }
 
 async function importCsdFile(): Promise<boolean> {
   if (!mainWindow) return false;
   if (!hasLoadedProject()) return false;
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!(await confirmSaveBeforeReplace())) return false;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
+  const win = mainWindow;
 
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select CSD File',
-    defaultPath: getConfiguredWorkDirectory(),
-    filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
-    properties: ['openFile'],
-  });
-
-  if (result.canceled || result.filePaths.length === 0) {
-    return false;
-  }
-
-  const filePath = result.filePaths[0];
-
-  const modeResult = await dialog.showMessageBox(mainWindow, {
-    type: 'question',
-    title: 'CSD Import Method',
-    message: 'How would you like to import the score?',
-    buttons: [
-      'Global Score',
-      'Single Sound Object',
-      'Sound Object per Instrument',
-      'Cancel',
-    ],
-    defaultId: 0,
-    cancelId: 3,
-  });
-
-  if (modeResult.response === 3) {
-    return false;
-  }
-
-  const modeType: CSDImportMode = modeResult.response as CSDImportMode;
-
+  let selectedPath: string | null = null;
   try {
-    const csdText = fs.readFileSync(filePath, 'utf-8');
-    const data = convertCSDtoBlue(csdText, modeType);
+    const outcome = await runReplacementFlow<BlueData>({
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      prepare: async () => {
+        const result = await dialog.showOpenDialog(win, {
+          title: 'Select CSD File',
+          defaultPath: getConfiguredWorkDirectory(),
+          filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
+          properties: ['openFile'],
+        });
 
-    await stopActiveBlueLiveBeforeProjectReplacement();
-    await disposeJavaRuntimeSession();
-    closeEffectEditorWindowsForOwner('project');
-    closeTrackInstrumentEditorWindows();
+        if (result.canceled || result.filePaths.length === 0) {
+          return null;
+        }
 
-    currentData = data;
-    canAuditionScoreObjects = false;
-    currentFilePath = null;
-    currentProjectRevision = 0;
-    currentProjectSessionId += 1;
-    midiImportService.clearAll();
-    getBlueLiveTriggerController().openGate();
-    unifiedLibraryService?.publishProjectChanged();
-    setActiveMissingAudioSession(null);
-    rebuildApplicationMenu();
-    updateWindowTitle();
+        selectedPath = result.filePaths[0];
 
-    disposeJavaScriptSession();
-    try {
-      javaScriptSession = await createJavaScriptSession();
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session for imported CSD:', sessionErr);
-    }
+        const modeResult = await dialog.showMessageBox(win, {
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          buttons: [
+            'Global Score',
+            'Single Sound Object',
+            'Sound Object per Instrument',
+            'Cancel',
+          ],
+          defaultId: 0,
+          cancelId: 3,
+        });
 
-    try {
-      await runProjectOnLoad(data);
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to run processOnLoad for imported CSD:', sessionErr);
-    }
+        if (modeResult.response === 3) {
+          return null;
+        }
 
-    buildAndSendProjectLoaded(data, null);
-    return true;
+        const modeType: CSDImportMode = modeResult.response as CSDImportMode;
+        const csdText = fs.readFileSync(selectedPath, 'utf-8');
+        return convertCSDtoBlue(csdText, modeType);
+      },
+      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      commit: (data) => installProjectData(data, null),
+    });
+
+    return outcome.status === 'committed';
   } catch (err: unknown) {
-    const message = `Failed to import ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+    const target = selectedPath ? path.basename(selectedPath) : 'CSD file';
+    const message = `Failed to import ${target}:\n${err instanceof Error ? err.message : String(err)}`;
     await dialog.showErrorBox('Error Importing File', message);
     return false;
   }
@@ -2027,89 +2000,63 @@ async function importCsdFile(): Promise<boolean> {
 async function importOrcSco(): Promise<boolean> {
   if (!mainWindow) return false;
   if (!hasLoadedProject()) return false;
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!(await confirmSaveBeforeReplace())) return false;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
-
-  const orcResult = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select ORC File',
-    defaultPath: getConfiguredWorkDirectory(),
-    filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
-    properties: ['openFile'],
-  });
-
-  if (orcResult.canceled || orcResult.filePaths.length === 0) {
-    return false;
-  }
-
-  const scoResult = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select SCO File',
-    defaultPath: getConfiguredWorkDirectory(),
-    filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
-    properties: ['openFile'],
-  });
-
-  if (scoResult.canceled || scoResult.filePaths.length === 0) {
-    return false;
-  }
-
-  const modeResult = await dialog.showMessageBox(mainWindow, {
-    type: 'question',
-    title: 'CSD Import Method',
-    message: 'How would you like to import the score?',
-    buttons: [
-      'Global Score',
-      'Single Sound Object',
-      'Sound Object per Instrument',
-      'Cancel',
-    ],
-    defaultId: 0,
-    cancelId: 3,
-  });
-
-  if (modeResult.response === 3) {
-    return false;
-  }
-
-  const modeType: CSDImportMode = modeResult.response as CSDImportMode;
+  const win = mainWindow;
 
   try {
-    const orcText = fs.readFileSync(orcResult.filePaths[0], 'utf-8');
-    const scoText = fs.readFileSync(scoResult.filePaths[0], 'utf-8');
-    const data = convertOrcScoToBlue(orcText, scoText, modeType);
+    const outcome = await runReplacementFlow<BlueData>({
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      prepare: async () => {
+        const orcResult = await dialog.showOpenDialog(win, {
+          title: 'Select ORC File',
+          defaultPath: getConfiguredWorkDirectory(),
+          filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
+          properties: ['openFile'],
+        });
 
-    await stopActiveBlueLiveBeforeProjectReplacement();
-    await disposeJavaRuntimeSession();
-    closeEffectEditorWindowsForOwner('project');
-    closeTrackInstrumentEditorWindows();
+        if (orcResult.canceled || orcResult.filePaths.length === 0) {
+          return null;
+        }
 
-    currentData = data;
-    canAuditionScoreObjects = false;
-    currentFilePath = null;
-    currentProjectRevision = 0;
-    currentProjectSessionId += 1;
-    midiImportService.clearAll();
-    getBlueLiveTriggerController().openGate();
-    unifiedLibraryService?.publishProjectChanged();
-    setActiveMissingAudioSession(null);
-    rebuildApplicationMenu();
-    updateWindowTitle();
+        const scoResult = await dialog.showOpenDialog(win, {
+          title: 'Select SCO File',
+          defaultPath: getConfiguredWorkDirectory(),
+          filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
+          properties: ['openFile'],
+        });
 
-    disposeJavaScriptSession();
-    try {
-      javaScriptSession = await createJavaScriptSession();
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session for imported ORC/SCO:', sessionErr);
-    }
+        if (scoResult.canceled || scoResult.filePaths.length === 0) {
+          return null;
+        }
 
-    try {
-      await runProjectOnLoad(data);
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to run processOnLoad for imported ORC/SCO:', sessionErr);
-    }
+        const modeResult = await dialog.showMessageBox(win, {
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          buttons: [
+            'Global Score',
+            'Single Sound Object',
+            'Sound Object per Instrument',
+            'Cancel',
+          ],
+          defaultId: 0,
+          cancelId: 3,
+        });
 
-    buildAndSendProjectLoaded(data, null);
-    return true;
+        if (modeResult.response === 3) {
+          return null;
+        }
+
+        const modeType: CSDImportMode = modeResult.response as CSDImportMode;
+        const orcText = fs.readFileSync(orcResult.filePaths[0], 'utf-8');
+        const scoText = fs.readFileSync(scoResult.filePaths[0], 'utf-8');
+        return convertOrcScoToBlue(orcText, scoText, modeType);
+      },
+      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      commit: (data) => installProjectData(data, null),
+    });
+
+    return outcome.status === 'committed';
   } catch (err: unknown) {
     const message = `Failed to import ORC/SCO:\n${err instanceof Error ? err.message : String(err)}`;
     await dialog.showErrorBox('Error Importing File', message);
@@ -2118,57 +2065,112 @@ async function importOrcSco(): Promise<boolean> {
 }
 
 /**
- * Reads, parses, and installs a project from disk, then emits project-loaded.
- * Shared by openFile/openFilePath (which apply the same-file no-op guard) and
- * revertProject (which intentionally reloads the current path). Returns true on
- * a successful load, false otherwise.
+ * Canonical same-file detection for project-file targets: the selected path
+ * identifies the current project when it matches canonically (resolve,
+ * normalize, platform case rules), not by raw string comparison.
+ */
+function isCurrentProjectFilePath(filePath: string): boolean {
+  return currentData !== null && currentFilePath !== null
+    && isSameProjectPathIdentity(filePath, currentFilePath);
+}
+
+/**
+ * Read and parse a `.blue` file without installing it. Used to prepare a
+ * replacement candidate so invalid files fail before any replacement prompt.
+ */
+async function readProjectFromDisk(filePath: string): Promise<BlueData> {
+  const xml = fs.readFileSync(filePath, 'utf-8');
+  return BlueData.loadFromString(xml);
+}
+
+/**
+ * Install a prepared project as the canonical current project: stop runtimes,
+ * close project-owned editors, roll the project session, and emit
+ * project-loaded. Callers own every decision that leads here.
+ */
+async function installProjectData(data: BlueData, filePath: string | null): Promise<void> {
+  await stopActiveBlueLiveBeforeProjectReplacement();
+  await disposeJavaRuntimeSession();
+  closeEffectEditorWindowsForOwner('project');
+  closeTrackInstrumentEditorWindows();
+
+  currentData = data;
+  canAuditionScoreObjects = false;
+  currentFilePath = filePath;
+  currentProjectRevision = 0;
+  currentProjectSessionId += 1;
+  midiImportService.clearAll();
+  getBlueLiveTriggerController().openGate();
+  unifiedLibraryService?.publishProjectChanged();
+  setActiveMissingAudioSession(null);
+  rebuildApplicationMenu();
+  updateWindowTitle();
+
+  disposeJavaScriptSession();
+  try {
+    javaScriptSession = await createJavaScriptSession();
+  } catch (sessionErr: unknown) {
+    console.warn('[App] Failed to create JavaScript session for installed project:', sessionErr);
+  }
+
+  try {
+    await runProjectOnLoad(data);
+  } catch (sessionErr: unknown) {
+    console.warn('[App] Failed to run processOnLoad for installed project:', sessionErr);
+  }
+
+  buildAndSendProjectLoaded(data, filePath);
+}
+
+async function reportProjectLoadError(filePath: string, err: unknown): Promise<void> {
+  const message = `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+    process.stderr.write(`[FAIL] ${message}\n`);
+  } else {
+    await dialog.showErrorBox('Error Loading File', message);
+  }
+}
+
+/**
+ * Accepted-target replacement for a project file: read and parse the source
+ * before any replacement decision, treat the current project canonically as
+ * a no-op, re-check render safety, resolve save and library decisions, then
+ * install through the shared lifecycle. Errors use the existing load error
+ * dialog and leave the current project unchanged.
+ */
+async function openProjectFile(filePath: string): Promise<boolean> {
+  try {
+    const outcome = await runProjectFileReplacement<BlueData>({
+      selectFile: () => filePath,
+      readFile: (sourcePath) => fs.readFileSync(sourcePath, 'utf-8'),
+      parseProject: (xml) => BlueData.loadFromString(xml),
+      isSameFile: isCurrentProjectFilePath,
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      confirmSave: () => confirmSaveBeforeReplace(),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      commit: (data, sourcePath) => installProjectData(data, sourcePath),
+    });
+    return outcome.status === 'committed';
+  } catch (err: unknown) {
+    await reportProjectLoadError(filePath, err);
+    return false;
+  }
+}
+
+/**
+ * Reads, parses, and installs a project from disk without replacement
+ * decisions. Revert and packaged verification intentionally use this
+ * non-interactive path; user-driven opens go through {@link openProjectFile}.
  */
 async function loadProjectFromDisk(filePath: string): Promise<boolean> {
   if (!(await canReplaceProjectWhileRenderActive())) return false;
   if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
   try {
-    const xml = fs.readFileSync(filePath, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
-
-    await stopActiveBlueLiveBeforeProjectReplacement();
-    await disposeJavaRuntimeSession();
-    closeEffectEditorWindowsForOwner('project');
-    closeTrackInstrumentEditorWindows();
-
-    currentData = data;
-    canAuditionScoreObjects = false;
-    currentFilePath = filePath;
-    currentProjectRevision = 0;
-    currentProjectSessionId += 1;
-    midiImportService.clearAll();
-    getBlueLiveTriggerController().openGate();
-    unifiedLibraryService?.publishProjectChanged();
-    setActiveMissingAudioSession(null);
-    rebuildApplicationMenu();
-    updateWindowTitle();
-
-    disposeJavaScriptSession();
-    try {
-      javaScriptSession = await createJavaScriptSession();
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session:', sessionErr);
-    }
-
-    try {
-      await runProjectOnLoad(data);
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to run processOnLoad:', sessionErr);
-    }
-
-    buildAndSendProjectLoaded(data, filePath);
+    const data = await readProjectFromDisk(filePath);
+    await installProjectData(data, filePath);
     return true;
   } catch (err: unknown) {
-    const message = `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
-    if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
-      process.stderr.write(`[FAIL] ${message}\n`);
-    } else {
-      await dialog.showErrorBox('Error Loading File', message);
-    }
+    await reportProjectLoadError(filePath, err);
     return false;
   }
 }
@@ -2264,40 +2266,10 @@ async function newFile(): Promise<void> {
   if (!(await canReplaceProjectWhileRenderActive())) return;
   if (!(await confirmLibraryDraftTransition('switchProject'))) return;
 
-  await stopActiveBlueLiveBeforeProjectReplacement();
-  await disposeJavaRuntimeSession();
-  closeEffectEditorWindowsForOwner('project');
-  closeTrackInstrumentEditorWindows();
-
   const data = new BlueData();
   const settings = loadProgramSettings();
   applyProgramSettingsToNewProject(data, settings);
-  currentData = data;
-  canAuditionScoreObjects = false;
-  currentFilePath = null;
-  currentProjectRevision = 0;
-  currentProjectSessionId += 1;
-  midiImportService.clearAll();
-  getBlueLiveTriggerController().openGate();
-  unifiedLibraryService?.publishProjectChanged();
-  setActiveMissingAudioSession(null);
-  rebuildApplicationMenu();
-  updateWindowTitle();
-
-  disposeJavaScriptSession();
-  try {
-    javaScriptSession = await createJavaScriptSession();
-  } catch (sessionErr: unknown) {
-    console.warn('[App] Failed to create JavaScript session for new project:', sessionErr);
-  }
-
-  try {
-    await runProjectOnLoad(data);
-  } catch (sessionErr: unknown) {
-    console.warn('[App] Failed to run processOnLoad for new project:', sessionErr);
-  }
-
-  buildAndSendProjectLoaded(data, null);
+  await installProjectData(data, null);
 }
 
 async function closeProject(): Promise<void> {
@@ -2331,37 +2303,55 @@ async function revertProject(): Promise<void> {
 
 async function openRecentProject(filePath: string): Promise<void> {
   if (!mainWindow) return;
-  if (!(await confirmSaveBeforeReplace())) return;
   await openFilePath(filePath);
 }
 
 async function saveFile(): Promise<void> {
   if (!currentData || !currentFilePath) {
-    return saveFileAs();
+    await saveFileAs();
+    return;
   }
   doSave(currentFilePath);
 }
 
-async function saveFileAs(): Promise<void> {
-  if (!mainWindow || !currentData) return;
+async function saveFileAs(): Promise<boolean> {
+  if (!mainWindow || !currentData) return false;
 
   const previousProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
 
-  const result = await dialog.showSaveDialog(mainWindow, {
-    title: 'Save Blue Project',
-    defaultPath: currentFilePath ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
-    filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+  const saved = await runTransactionalSaveAs({
+    chooseDestination: async () => {
+      const result = await dialog.showSaveDialog(mainWindow!, {
+        title: 'Save Blue Project',
+        defaultPath: currentFilePath ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
+        filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+      });
+      if (result.canceled || !result.filePath) return null;
+      return result.filePath;
+    },
+    writeProject: (filePath) => writeProjectToDisk(filePath),
+    publishPath: (filePath) => {
+      currentFilePath = filePath;
+    },
   });
 
-  if (result.canceled || !result.filePath) return;
+  if (!saved) return false;
 
-  currentFilePath = result.filePath;
-  doSave(currentFilePath);
+  updateWindowTitle();
+  rebuildApplicationMenu();
+  mainWindow?.webContents.send('save-complete', { filePath: currentFilePath });
 
-  const nextProjectDir = path.dirname(currentFilePath);
+  const nextProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
   if (previousProjectDir !== nextProjectDir) {
     await disposeJavaRuntimeSession();
   }
+
+  if (pendingQuit) {
+    pendingQuit = false;
+    doQuit();
+  }
+
+  return true;
 }
 
 function normalizeBsbSelectedPath(filePath: string): string {
@@ -2468,21 +2458,17 @@ async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<
   return normalizeBsbSelectedPath(targetFile);
 }
 
-function doSave(filePath: string): void {
-  if (!currentData) return;
+/**
+ * Durable write of the current project. Returns false (and reports the
+ * save error) when the write fails; callers must treat false as a blocked
+ * replacement rather than discard consent.
+ */
+function writeProjectToDisk(filePath: string): boolean {
+  if (!currentData) return false;
   try {
     const xml = currentData.saveToString();
     fs.writeFileSync(filePath, xml, 'utf-8');
-    updateWindowTitle();
-    rebuildApplicationMenu();
-    if (mainWindow) {
-      mainWindow.webContents.send('save-complete', { filePath });
-    }
-    // If we were waiting to quit after save, do it now
-    if (pendingQuit) {
-      pendingQuit = false;
-      doQuit();
-    }
+    return true;
   } catch (err: unknown) {
     if (mainWindow) {
       mainWindow.webContents.send('save-error', err instanceof Error ? err.message : String(err));
@@ -2492,7 +2478,25 @@ function doSave(filePath: string): void {
       pendingQuit = false;
       doQuit();
     }
+    return false;
   }
+}
+
+function doSave(filePath: string): boolean {
+  if (!currentData) return false;
+  if (!writeProjectToDisk(filePath)) return false;
+
+  updateWindowTitle();
+  rebuildApplicationMenu();
+  if (mainWindow) {
+    mainWindow.webContents.send('save-complete', { filePath });
+  }
+  // If we were waiting to quit after save, do it now
+  if (pendingQuit) {
+    pendingQuit = false;
+    doQuit();
+  }
+  return true;
 }
 
 function notifyNoProjectLoaded(channel: 'playback-error' | 'generated-csd-error'): void {
@@ -3458,65 +3462,41 @@ ipcMain.handle(
     }
 
     try {
-      const { data, warnings } = buildMidiImportProject(
-        validation.pending.document,
-        validation.settings,
-        {
-          layerGroupType: normalizeDefaultLayerGroupType(
-            loadProgramSettings().projectDefaults.defaultLayerGroupType,
-          ),
+      const outcome = await runReplacementFlow<BlueData>({
+        preflight: () => canReplaceProjectWhileRenderActive(),
+        prepare: async () => {
+          const { data, warnings } = buildMidiImportProject(
+            validation.pending.document,
+            validation.settings,
+            {
+              layerGroupType: normalizeDefaultLayerGroupType(
+                loadProgramSettings().projectDefaults.defaultLayerGroupType,
+              ),
+            },
+          );
+          if (warnings.length > 0) {
+            console.warn(`[MIDI import] ${warnings.length} note-pairing warning(s)`);
+          }
+          return data;
         },
-      );
-      if (warnings.length > 0) {
-        console.warn(`[MIDI import] ${warnings.length} note-pairing warning(s)`);
-      }
+        confirmSave: () => confirmSaveBeforeReplace(),
+        confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+        commit: async (data) => {
+          // Revalidate the pending session after the replacement decisions;
+          // a cancelled decision must leave the mapping session available, so
+          // only the commit stage clears it through installProjectData.
+          const currentValidation = midiImportService.validateCommit(token, settings);
+          if (!currentValidation.ok) {
+            throw new Error(currentValidation.message);
+          }
+          await installProjectData(data, null);
+        },
+      });
 
-      if (!(await canReplaceProjectWhileRenderActive())) {
+      if (outcome.status !== 'committed') {
         return { status: 'cancelled' };
       }
-      if (!(await confirmLibraryDraftTransition('switchProject'))) {
-        return { status: 'cancelled' };
-      }
-      if (!(await confirmSaveBeforeReplace())) {
-        return { status: 'cancelled' };
-      }
 
-      const currentValidation = midiImportService.validateCommit(token, settings);
-      if (!currentValidation.ok) {
-        return { status: 'error', message: currentValidation.message };
-      }
-
-      await stopActiveBlueLiveBeforeProjectReplacement();
-      await disposeJavaRuntimeSession();
-      closeEffectEditorWindowsForOwner('project');
-      closeTrackInstrumentEditorWindows();
-
-      currentData = data;
-      canAuditionScoreObjects = false;
-      currentFilePath = null;
-      currentProjectRevision = 0;
-      currentProjectSessionId += 1;
-      midiImportService.clearAll();
-      getBlueLiveTriggerController().openGate();
-      unifiedLibraryService?.publishProjectChanged();
-      setActiveMissingAudioSession(null);
-      rebuildApplicationMenu();
-      updateWindowTitle();
-
-      disposeJavaScriptSession();
-      try {
-        javaScriptSession = await createJavaScriptSession();
-      } catch (sessionErr: unknown) {
-        console.warn('[App] Failed to create JavaScript session for imported MIDI:', sessionErr);
-      }
-
-      try {
-        await runProjectOnLoad(data);
-      } catch (sessionErr: unknown) {
-        console.warn('[App] Failed to run processOnLoad for imported MIDI:', sessionErr);
-      }
-
-      buildAndSendProjectLoaded(data, null);
       const project = getCurrentProjectDocument();
       if (!project) {
         return { status: 'error', message: 'MIDI project was installed but could not be read back.' };
@@ -3532,13 +3512,12 @@ ipcMain.handle(
 );
 
 ipcMain.handle('open-file-path', async (_event, filePath: string) => {
-  if (!(await confirmSaveBeforeReplace())) return null;
   const loaded = await openFilePath(filePath);
   return loaded ? currentFilePath : null;
 });
 
 ipcMain.handle('new-file', async () => {
-  await newFile();
+  await handleNewFile();
   return currentFilePath;
 });
 

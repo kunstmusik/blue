@@ -150,6 +150,46 @@ describe('MidiImportDialog', () => {
     expect(document.querySelector('h2')?.textContent).toBe('MIDI Import Settings');
   });
 
+  it('080: preserves the mapping session after replacement cancellation, allowing another Import', async () => {
+    commitMidiImport.mockResolvedValueOnce({ status: 'cancelled' });
+    act(() => root!.render(<MidiImportDialog />));
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
+    });
+    await act(async () => {
+      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      importButton?.click();
+    });
+
+    expect(commitMidiImport).toHaveBeenCalledTimes(1);
+
+    // The mapping dialog remains available with the same pending session;
+    // cancelMidiImport must not have cleared it.
+    expect(cancelMidiImport).not.toHaveBeenCalled();
+    expect(document.querySelector('h2')?.textContent).toBe('MIDI Import Settings');
+
+    commitMidiImport.mockResolvedValueOnce({ status: 'installed', project: {} });
+    await act(async () => {
+      const importButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Import');
+      importButton?.click();
+    });
+
+    expect(commitMidiImport).toHaveBeenCalledTimes(2);
+    expect(commitMidiImport).toHaveBeenLastCalledWith('token-1', [expect.objectContaining({ instrumentId: '1' })]);
+  });
+
+  it('080: closes without committing when the MIDI file chooser is cancelled', async () => {
+    startMidiImport.mockResolvedValueOnce({ status: 'cancelled' });
+    act(() => root!.render(<MidiImportDialog />));
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('blue-open-midi-import'));
+    });
+
+    expect(document.querySelector('h2')).toBeNull();
+    expect(commitMidiImport).not.toHaveBeenCalled();
+    expect(cancelMidiImport).not.toHaveBeenCalled();
+  });
+
   it('shows note-pairing warnings from the preview', async () => {
     startMidiImport.mockResolvedValueOnce({
       status: 'ready',

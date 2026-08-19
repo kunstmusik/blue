@@ -82,6 +82,45 @@ describe('MidiImportService', () => {
     expect(validated.ok).toBe(true);
   });
 
+  it('080: retains the pending mapping session across start and commit within one project session', async () => {
+    const service = createService();
+    const started = await service.start();
+    if (started.status !== 'ready') throw new Error('expected ready result');
+
+    // The pending session survives between the mapping dialog and the
+    // replacement commit; a cancelled replacement decision must not clear it.
+    const validated = service.validateCommit(started.token, [preview.streams[0].defaults]);
+    expect(validated.ok).toBe(true);
+
+    const revalidated = service.validateCommit(started.token, [preview.streams[0].defaults]);
+    expect(revalidated.ok).toBe(true);
+  });
+
+  it('080: replaces the pending session when a new MIDI file is selected', async () => {
+    const service = createService();
+    const first = await service.start();
+    if (first.status !== 'ready') throw new Error('expected ready result');
+
+    const second = await service.start();
+    if (second.status !== 'ready') throw new Error('expected ready result');
+
+    expect(second.token).not.toBe(first.token);
+    expect(service.validateCommit(first.token, [preview.streams[0].defaults]).ok).toBe(false);
+    expect(service.validateCommit(second.token, [preview.streams[0].defaults]).ok).toBe(true);
+  });
+
+  it('080: clears only the matching pending session on cancel', async () => {
+    const service = createService();
+    const started = await service.start();
+    if (started.status !== 'ready') throw new Error('expected ready result');
+
+    service.clear('not-the-token');
+    expect(service.validateCommit(started.token, [preview.streams[0].defaults]).ok).toBe(true);
+
+    service.clear(started.token);
+    expect(service.validateCommit(started.token, [preview.streams[0].defaults]).ok).toBe(false);
+  });
+
   it('rejects stale, malformed, and expired commits', async () => {
     const service = createService();
     const started = await service.start();

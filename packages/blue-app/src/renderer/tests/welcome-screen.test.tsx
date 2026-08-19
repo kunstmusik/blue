@@ -76,6 +76,44 @@ describe('WelcomeScreen', () => {
     expect(openRecentMock).toHaveBeenCalledWith('/Users/test/projects/my-piece.blue');
   });
 
+  it('080: routes every recent entry through openRecentFile, including Windows-style paths', () => {
+    const openRecentMock = vi.fn();
+    useSettingsStore.setState({ openRecentFile: openRecentMock });
+
+    act(() => {
+      root.render(<WelcomeScreen />);
+    });
+
+    const items = container.querySelectorAll('li');
+    act(() => {
+      items[0]?.click();
+      items[1]?.click();
+    });
+
+    expect(openRecentMock).toHaveBeenCalledTimes(2);
+    expect(openRecentMock).toHaveBeenNthCalledWith(1, '/Users/test/projects/my-piece.blue');
+    expect(openRecentMock).toHaveBeenNthCalledWith(2, 'C:\\Music\\demo.blue');
+  });
+
+  it('080: routes the Open button through the settings-store openFile action', () => {
+    const openFileMock = vi.fn();
+    useSettingsStore.setState({ openFile: openFileMock });
+
+    act(() => {
+      root.render(<WelcomeScreen />);
+    });
+
+    const openButton = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent?.includes('Open a .blue Project'));
+    expect(openButton).toBeDefined();
+
+    act(() => {
+      openButton?.click();
+    });
+
+    expect(openFileMock).toHaveBeenCalledOnce();
+  });
+
   it('calls removeRecentFile when clicking the delete button', () => {
     const removeRecentMock = vi.fn();
     useSettingsStore.setState({ removeRecentFile: removeRecentMock });

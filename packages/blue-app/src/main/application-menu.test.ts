@@ -62,6 +62,61 @@ function getLabels(items: any[]): Array<string | undefined> {
 }
 
 describe('application menu template', () => {
+  it('080: keeps File-menu labels, accelerators, gating, and handler routing unchanged around the deferred replacement policy', () => {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isDarwin: true,
+      recentProjects: [],
+      canRevertProject: true,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+
+    const fileMenu = getSubmenu(template[1]);
+    const byLabel = (label: string) => fileMenu.find((item) => item.label === label);
+
+    expect(byLabel('New Project')?.accelerator).toBe('CmdOrCtrl+N');
+    expect(byLabel('Open Project')?.accelerator).toBe('CmdOrCtrl+O');
+    expect(byLabel('Save')?.accelerator).toBe('CmdOrCtrl+S');
+
+    // The replacement-policy change lives behind these handlers; each menu
+    // item still delegates to exactly one main-process callback.
+    byLabel('New Project')?.click?.();
+    byLabel('Open Project')?.click?.();
+    byLabel('Open Example Project...')?.click?.();
+    byLabel('Import CSD File')?.click?.();
+    byLabel('Import from ORC/SCO')?.click?.();
+    byLabel('Import MIDI File')?.click?.();
+
+    expect(handlers.onNewFile).toHaveBeenCalledTimes(1);
+    expect(handlers.onOpenFile).toHaveBeenCalledTimes(1);
+    expect(handlers.onOpenExampleProject).toHaveBeenCalledTimes(1);
+    expect(handlers.onImportCsdFile).toHaveBeenCalledTimes(1);
+    expect(handlers.onImportOrcSco).toHaveBeenCalledTimes(1);
+    expect(handlers.onImportMidiFile).toHaveBeenCalledTimes(1);
+
+    // Import entry points stay gated on a loaded project; opens do not.
+    const noProjectTemplate = buildApplicationMenuTemplate({
+      hasLoadedProject: false,
+      isDarwin: true,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: false,
+      followPlaybackOnStartEnabled: false,
+      ...handlers,
+    });
+    const noProjectFileMenu = getSubmenu(noProjectTemplate[1]);
+    const gatedByLabel = (label: string) => noProjectFileMenu.find((item) => item.label === label);
+
+    expect(gatedByLabel('Import CSD File')?.enabled).toBe(false);
+    expect(gatedByLabel('Import from ORC/SCO')?.enabled).toBe(false);
+    expect(gatedByLabel('Import MIDI File')?.enabled).toBe(false);
+    expect(gatedByLabel('Open Project')?.enabled).not.toBe(false);
+    expect(gatedByLabel('Open Example Project...')?.enabled).not.toBe(false);
+  });
+
   it('disables all native disk-render actions while a render/freeze operation is active', () => {
     const template = buildApplicationMenuTemplate({
       hasLoadedProject: true,
