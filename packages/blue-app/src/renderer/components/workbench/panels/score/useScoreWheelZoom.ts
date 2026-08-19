@@ -17,28 +17,61 @@ export function computePixelsPerBeat(zoomIterations: number): number {
 }
 
 // zoomIterations limits corresponding to the [1, 10000] pixelsPerBeat range
-const MIN_ZOOM = -213;
-const MAX_ZOOM = 213;
+export const MIN_ZOOM = -213;
+export const MAX_ZOOM = 213;
 
-/** Threshold in accumulated deltaY pixels before triggering one zoom step for mouse wheels. */
-const DEFAULT_DELTA_THRESHOLD = 30;
+/** Sensitivity for trackpad pinch gestures (iterations per pixel of deltaY). */
+export const PINCH_ZOOM_SENSITIVITY = 0.5;
+
+/**
+ * Sensitivity for mouse wheel zoom (iterations per pixel of deltaY; ~4 iterations per 100px notch).
+ * Negative deltaY (wheel up) intentionally zooms in to match modern desktop applications.
+ */
+export const WHEEL_ZOOM_SENSITIVITY = 0.04;
 
 /** Java Blue LAYER_HEIGHT constant used to derive heightIndex from pixel height. */
 const LAYER_HEIGHT = 22;
 
 /**
- * Attaches non-passive `wheel` and macOS gesture listeners to the score scroll container and
+ * Normalizes wheel event deltaY to approximate pixels based on deltaMode.
+ */
+export function normalizeWheelDeltaY(e: WheelEvent): number {
+  if (e.deltaMode === 1) {
+    // DOM_DELTA_LINE (typically ~20-25px per line)
+    return e.deltaY * 25;
+  }
+  if (e.deltaMode === 2) {
+    // DOM_DELTA_PAGE
+    return e.deltaY * 400;
+  }
+  return e.deltaY;
+}
+
+/**
+ * Computes the change in zoomIterations for a given wheel event.
+ * Negative deltaY zooms in for both Alt+wheel and Ctrl+pinch, following the
+ * modern desktop convention rather than Java Blue's legacy wheel direction.
+ */
+export function computeZoomDelta(e: WheelEvent): number {
+  const normalizedDelta = normalizeWheelDeltaY(e);
+  const sensitivity =
+    e.ctrlKey && !e.altKey ? PINCH_ZOOM_SENSITIVITY : WHEEL_ZOOM_SENSITIVITY;
+  return -normalizedDelta * sensitivity;
+}
+
+/**
+ * Attaches non-passive `wheel` listeners to the score scroll container and
  * timeline header to handle:
  *
- * 1. **Alt + wheel** → horizontal zoom (Java Blue parity)
- * 2. **Ctrl + wheel / trackpad pinch** → horizontal zoom (cross-platform fallback)
- * 3. **macOS Gesture Events (pinch-to-zoom)** → native trackpad pinch gesture zoom
- * 4. **Shift + wheel** → horizontal scroll
- * 5. **Cmd + wheel (Mac) / Ctrl + wheel (Win/Linux)** → adjust layer height under cursor
+ * 1. **Alt + wheel** → horizontal zoom (wheel up zooms in)
+ * 2. **Ctrl + wheel / trackpad pinch** → horizontal zoom (cross-platform fallback & trackpad pinch)
+ * 3. **Shift + wheel** → horizontal scroll
+ * 4. **Cmd + wheel (Mac) / Ctrl + wheel (Win/Linux)** → adjust layer height under cursor
  *
  * Zoom is cursor-anchored: the timeline point under the pointer stays fixed
  * after the scale change, matching Java Blue's ScoreMouseWheelListener
- * behaviour.
+ * anchoring. Zoom direction intentionally follows the modern desktop
+ * convention: wheel up and pinch out both zoom in.
  */
 /**
  * Scroll-origin provenance for follow playback: cursor-anchored zoom writes
@@ -64,8 +97,14 @@ export function useScoreWheelZoom(
   // Keep mutable refs so the handler always sees the latest values without
   // needing to re-attach the listener on every render.
   const zoomRef = useRef(zoomIterations);
+  const renderedZoomRef = useRef(zoomIterations);
   const ppbRef = useRef(pixelsPerBeat);
-  zoomRef.current = zoomIterations;
+  // Do not overwrite a synchronously accumulated wheel delta with a render
+  // that still carries the previous state value.
+  if (renderedZoomRef.current !== zoomIterations) {
+    zoomRef.current = zoomIterations;
+    renderedZoomRef.current = zoomIterations;
+  }
   ppbRef.current = pixelsPerBeat;
 
   const onScrollOriginRef = useRef(onScrollOrigin);
@@ -74,9 +113,6 @@ export function useScoreWheelZoom(
   // Keep a mutable ref of layer groups to avoid re-attaching listeners
   const layersRef = useRef(effectiveLayerGroups);
   layersRef.current = effectiveLayerGroups;
-
-  // Accumulates sub-threshold trackpad/wheel deltas between zoom steps.
-  const accumulatorRef = useRef(0);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -87,10 +123,11 @@ export function useScoreWheelZoom(
     const handleWheel = (e: WheelEvent) => {
       // Determine platform-specific modifier for layer height adjustment (Cmd on Mac, Ctrl on Win/Linux)
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const isHeightModifier = isMac ? e.metaKey : e.ctrlKey;
+      const isHeightModifier = isMac ? e.metaKey : (e.ctrlKey && !e.altKey);
 
       // ── 1. Layer Height Adjustment (Cmd + Scroll on Mac, Ctrl + Scroll on Win/Linux) ──
-      if (isHeightModifier && !e.altKey && !e.shiftKey) {
+      // Note: On Mac, pinch-to-zoom sets e.ctrlKey = true and e.metaKey = false, so it won't trigger this.
+      if (isHeightModifier && !e.altKey && !e.shiftKey && (isMac || e.deltaMode !== 0 || Math.abs(e.deltaY) >= 50)) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -142,30 +179,24 @@ export function useScoreWheelZoom(
         e.preventDefault();
         e.stopPropagation();
 
-        // Alt+Scroll: positive deltaY -> zoom in, negative deltaY -> zoom out (Java Blue parity)
-        // Ctrl+Scroll (Pinch): negative deltaY -> zoom in, positive deltaY -> zoom out (standard trackpad direction)
-        const directionFactor = e.ctrlKey ? -1 : 1;
-        accumulatorRef.current += e.deltaY * directionFactor;
-
-        // Smaller threshold for trackpad pinch events (small deltaY)
-        const isTrackpadPinch = e.ctrlKey && !e.altKey && Math.abs(e.deltaY) <= 15;
-        const threshold = isTrackpadPinch ? 8 : DEFAULT_DELTA_THRESHOLD;
-
-        const steps = Math.trunc(accumulatorRef.current / threshold);
-        if (steps === 0) return;
-        accumulatorRef.current -= steps * threshold;
-
-        const containerRect = container.getBoundingClientRect();
-        const cursorOffsetInContainer = e.clientX - containerRect.left;
-        const localX = cursorOffsetInContainer + container.scrollLeft;
+        const deltaZoom = computeZoomDelta(e);
+        if (deltaZoom === 0) return;
 
         const currentZoom = Math.max(MIN_ZOOM, Math.min(zoomRef.current, MAX_ZOOM));
         const oldPpb = computePixelsPerBeat(currentZoom);
 
-        const newZoom = Math.max(MIN_ZOOM, Math.min(currentZoom + steps, MAX_ZOOM));
+        const newZoom = Math.max(MIN_ZOOM, Math.min(currentZoom + deltaZoom, MAX_ZOOM));
         const newPpb = computePixelsPerBeat(newZoom);
 
         if (newPpb === oldPpb) return;
+
+        // Native wheel events can arrive before React commits the previous
+        // state update, so compose the next event from this pending value.
+        zoomRef.current = newZoom;
+
+        const containerRect = container.getBoundingClientRect();
+        const cursorOffsetInContainer = e.clientX - containerRect.left;
+        const localX = cursorOffsetInContainer + container.scrollLeft;
 
         const scale = newPpb / oldPpb;
         const newScrollLeft = Math.max(0, scale * localX - cursorOffsetInContainer);
@@ -197,54 +228,7 @@ export function useScoreWheelZoom(
       }
     };
 
-    // ── 4. Native macOS Gesture Listeners (Pinch-to-zoom) ──
-    let gestureStartZoom = zoomRef.current;
-
-    const handleGestureStart = (e: Event) => {
-      e.preventDefault();
-      gestureStartZoom = Math.max(MIN_ZOOM, Math.min(zoomRef.current, MAX_ZOOM));
-    };
-
-    const handleGestureChange = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const ge = e as any;
-
-      const scaleFactor = ge.scale;
-      if (scaleFactor <= 0) return;
-
-      const deltaZoom = 32 * Math.log2(scaleFactor);
-      const newZoom = Math.max(MIN_ZOOM, Math.min(Math.round(gestureStartZoom + deltaZoom), MAX_ZOOM));
-
-      const currentZoom = Math.max(MIN_ZOOM, Math.min(zoomRef.current, MAX_ZOOM));
-      const oldPpb = computePixelsPerBeat(currentZoom);
-      const newPpb = computePixelsPerBeat(newZoom);
-
-      if (newPpb === oldPpb) return;
-
-      const containerRect = container.getBoundingClientRect();
-      const cursorOffsetInContainer = ge.clientX - containerRect.left;
-      const localX = cursorOffsetInContainer + container.scrollLeft;
-
-      const scale = newPpb / oldPpb;
-      const newScrollLeft = Math.max(0, scale * localX - cursorOffsetInContainer);
-      onScrollOriginRef.current?.('view-scale', newScrollLeft);
-      container.scrollLeft = newScrollLeft;
-      if (header) header.scrollLeft = newScrollLeft;
-
-      setTimeState((prev: ScoreTimeStateSnapshot) => ({
-        ...prev,
-        zoomIterations: newZoom,
-      }));
-
-      void useProjectStore.getState().applyProjectDocumentPatch({
-        score: { type: "updateTimeState", patch: { zoomIterations: newZoom } },
-      });
-    };
-
     container.addEventListener("wheel", handleWheel, { passive: false });
-    container.addEventListener("gesturestart", handleGestureStart, { passive: false });
-    container.addEventListener("gesturechange", handleGestureChange, { passive: false });
 
     const headerCleanup = header
       ? (header.addEventListener("wheel", handleWheel, { passive: false }), () => header.removeEventListener("wheel", handleWheel))
@@ -252,8 +236,6 @@ export function useScoreWheelZoom(
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
-      container.removeEventListener("gesturestart", handleGestureStart);
-      container.removeEventListener("gesturechange", handleGestureChange);
       headerCleanup?.();
     };
   }, [scrollContainerRef.current, timelineHeaderRef.current, loaded]);

@@ -135,7 +135,7 @@ export class TimeState {
   saveAsXML(): Element {
     const elem = new Element('timeState');
     elem.setAttribute('version', CURRENT_FORMAT_VERSION.toString());
-    elem.addElement(writeInt('zoomIterations', this.zoomIterations));
+    elem.addElement(writeInt('zoomIterations', Math.round(this.zoomIterations)));
     elem.addElement(writeBoolean('snapEnabled', this.snapEnabled));
     elem.addElement('snapValue').setText(this.snapValue);
     elem.addElement('timeDisplay').setText(this.timeDisplay);
