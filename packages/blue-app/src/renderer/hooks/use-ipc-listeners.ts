@@ -7,6 +7,7 @@ import { useSettingsStore } from '../stores/settings-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 import { useOutputStore } from '../stores/output-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
+import { useRenderToDiskStore } from '../stores/render-to-disk-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
 import { hasAuditionEligibleSelection, useScoreSelectionStore } from '../stores/score-selection-store';
 import {
@@ -215,36 +216,17 @@ export function useIPCListeners(): void {
       resetTab(payload.tabName);
     });
 
-    // Disk-render status: progress indicator + streamed Csound (Disk) output.
-    // A persistent loading toast (keyed by operationId) is updated as progress
-    // arrives and resolved into a success/error/cancelled toast on completion.
-    let activeDiskOperationId: string | null = null;
-    const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
-
     const unsubRenderStatus = window.blueAPI.onRenderOperationStatus((status) => {
-      if (status.kind !== 'diskRender') return;
+      if (status.kind !== 'diskRender' || status.phase !== 'failed') return;
 
-      if (status.phase === 'preparing' || status.phase === 'rendering') {
-        if (activeDiskOperationId !== status.operationId) {
-          activeDiskOperationId = status.operationId;
-          getOrCreateTab(DISK_RENDER_OUTPUT_TAB);
-          selectTab(DISK_RENDER_OUTPUT_TAB);
-        }
-        const pct = status.progress != null ? ` ${Math.round(status.progress)}%` : '';
-        toast.loading(`${status.message}${pct}`, { id: status.operationId });
-        return;
-      }
-
-      activeDiskOperationId = null;
-      if (status.phase === 'completed') {
-        const detail = status.outputPath ? `: ${status.outputPath}` : '';
-        toast.success(`${status.message}${detail}`, { id: status.operationId });
-      } else if (status.phase === 'failed') {
-        toast.error(status.error ?? status.message, { id: status.operationId });
-      } else if (status.phase === 'cancelled') {
-        toast.message(status.message, { id: status.operationId });
-      }
+      const dialogState = useRenderToDiskStore.getState();
+      if (dialogState.open && dialogState.operationId === status.operationId) return;
+      toast.error(status.error ?? status.message, { id: status.operationId });
     });
+
+    // Disk-render progress reporting lives in RenderToDiskDialog (driven by
+    // the render-operation-status broadcasts); main resets and selects the
+    // Csound (Disk) output tab through the engine-output channels above.
 
     const unsubCsd = window.blueAPI.onGeneratedCsd((csdText) => {
       useProjectStore.getState().setGeneratedCsd({ text: csdText, title: 'Generated CSD' });

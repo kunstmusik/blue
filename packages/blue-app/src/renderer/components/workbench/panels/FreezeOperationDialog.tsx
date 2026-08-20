@@ -1,54 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { Check, ChevronDown, ChevronRight, LoaderCircle, X } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 import type {
   FreezeItemStatus,
   RenderOperationStatus,
 } from '../../../../shared/render-freeze-contract';
-import { useFreezeOperationStore, type FreezeRowStatus } from '../../../stores/freeze-operation-store';
+import { useFreezeOperationStore } from '../../../stores/freeze-operation-store';
 import { useDialogFocus } from '../../instruments/blue-x7/use-dialog-focus';
-
-const TERMINAL_PHASES: readonly string[] = ['completed', 'cancelled', 'failed'];
-
-function dialogTitle(verb: string, phase: RenderOperationStatus['phase'] | null): string {
-  const state = phase === 'completed'
-    ? 'Complete'
-    : phase === 'cancelled'
-      ? 'Cancelled'
-      : phase === 'failed'
-        ? 'Failed'
-        : 'Running';
-  return `${verb} - ${state}`;
-}
-
-function StatusCell({ status }: { status: FreezeRowStatus }): React.ReactElement {
-  if (status === 'running') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-app-text">
-        <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />
-        Running
-      </span>
-    );
-  }
-  if (status === 'complete') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-blue-accent">
-        <Check size={14} strokeWidth={2.5} aria-hidden="true" />
-        Complete
-      </span>
-    );
-  }
-  if (status === 'failed') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-red-400">
-        <X size={14} aria-hidden="true" />
-        Failed
-      </span>
-    );
-  }
-  const label = status === 'pending' ? 'Waiting' : status === 'cancelled' ? 'Cancelled' : 'Not applied';
-  return <span className="text-app-text-muted">{label}</span>;
-}
+import {
+  OperationStatusCell,
+  isTerminalOperationPhase,
+  operationDialogTitle,
+} from './operation-dialog-shared';
 
 /**
  * Global modal tracking a freeze/unfreeze operation: one row per ScoreObject
@@ -89,7 +52,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
     };
   }, []);
 
-  const terminal = phase !== null && TERMINAL_PHASES.includes(phase);
+  const terminal = isTerminalOperationPhase(phase);
   const dialogRef = useDialogFocus(open, () => { close(); });
   const okButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -158,11 +121,11 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
           <h2 id="freeze-operation-title" className="text-sm font-medium text-app-text-bright" data-testid="freeze-dialog-title">
-            {dialogTitle(verb, phase)}
+            {operationDialogTitle(verb, phase)}
           </h2>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto bg-black px-4 py-3">
+        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
           <table className="w-full border-collapse text-left text-sm text-app-text" data-testid="freeze-items-table">
             <thead>
               <tr className="text-app-text-muted">
@@ -187,7 +150,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
                     {row.freezeFile ?? <span className="font-sans text-app-text-muted">—</span>}
                   </td>
                   <td className="px-2 py-2 align-middle" title={row.reason ?? undefined}>
-                    <StatusCell status={row.status} />
+                    <OperationStatusCell status={row.status} />
                   </td>
                 </tr>
               ))}
@@ -225,7 +188,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
               ref={outputRef}
               onScroll={handleOutputScroll}
               data-testid="freeze-output-text"
-              className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-app-field px-3 py-2 font-mono text-xs text-app-text"
+              className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-black px-3 py-2 font-mono text-xs text-app-text"
             >
               {selectedOutput}
             </pre>
