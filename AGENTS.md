@@ -73,3 +73,14 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 Use top-level static ES imports in `@blue/data` production source. Keep any host-specific or
 test-only import exceptions outside that package boundary and document them when they affect
 runtime behavior.
+
+## UI and typography guidance
+
+- Before choosing or changing typography in any UI work, consult `docs/typography.md`.
+- Use only the approved seven semantic typography roles (`text-role-*` / `--text-role-*`). Never
+  introduce raw font sizes, default Tailwind numeric text scales, or arbitrary `text-[Npx]` sizes
+  for application-owned UI.
+- Preserve project-authored typography (such as Blue Synth Builder font values and imported
+  project data) as canonical project content without coercion.
+- Keep `docs/typography.md` up to date in the same change whenever typography roles, metrics,
+  ownership boundaries, or exception policies are updated.

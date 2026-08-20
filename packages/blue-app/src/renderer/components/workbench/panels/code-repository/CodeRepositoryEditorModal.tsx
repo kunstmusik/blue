@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import CodeRepositoryDialog from './CodeRepositoryDialog';
 import { useCodeRepositoryStore } from '../../../../stores/code-repository-store';
@@ -118,27 +119,27 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
           }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <h2 id="code-repository-unavailable-title" className="text-sm font-medium text-app-text-bright">
+            <h2 id="code-repository-unavailable-title" className="text-role-headline text-app-text-bright">
               Code Repository Editor
             </h2>
             <button
               type="button"
-              className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
+              className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
               onClick={handleClose}
               aria-label="Close"
               autoFocus
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="break-words text-ui text-app-text-muted" role="status">
+          <p className="break-words text-role-body text-app-text-muted" role="status">
             {loading ? 'Loading the Code Repository…' : (loadError?.message ?? 'The Code Repository is not available.')}
           </p>
           <div className="mt-4 flex justify-end gap-2">
             {!loading && (
               <button
                 type="button"
-                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text hover:bg-app-hover"
+                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
                 onClick={() => void handleImport()}
               >
                 Recover from XML…
@@ -147,7 +148,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             {!loading && (
               <button
                 type="button"
-                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text hover:bg-app-hover"
+                className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
                 onClick={() => void handleRetry()}
               >
                 Retry
@@ -155,7 +156,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
             )}
             <button
               type="button"
-              className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
               onClick={handleClose}
             >
               Close

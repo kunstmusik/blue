@@ -303,7 +303,7 @@ export function LibraryTree({
       }}
     >
       <span className="sr-only" aria-live="polite">{dragMessage}</span>
-      {nodes.length === 0 && <p className="px-3 py-2 text-xs text-app-text-muted">No items</p>}
+      {nodes.length === 0 && <p className="px-3 py-2 text-role-callout text-app-text-muted">No items</p>}
       {visible.map(({ node, level }, index) => {
         const canExpand = node.nodeKind !== 'item';
         const siblings = node.parentId
@@ -341,7 +341,7 @@ export function LibraryTree({
               aria-selected={index === resolvedActiveIndex}
               aria-expanded={canExpand ? expanded.has(node.nodeId) : undefined}
               title={tooltip}
-              className={`flex min-h-7 items-center gap-1 rounded px-1 text-sm [contain-intrinsic-size:auto_28px] [content-visibility:auto] ${dropTargetId === node.nodeId ? 'ring-1 ring-inset ring-app-accent' : index === resolvedActiveIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
+              className={`flex min-h-7 items-center gap-1 rounded px-1 text-role-body [contain-intrinsic-size:auto_28px] [content-visibility:auto] ${dropTargetId === node.nodeId ? 'ring-1 ring-inset ring-app-accent' : index === resolvedActiveIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
               style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}
               onMouseDown={() => markActive(index)}
               onContextMenu={() => markActive(index)}
@@ -404,9 +404,9 @@ export function LibraryTree({
                       if (event.key === 'Enter') submitRename(node);
                       if (event.key === 'Escape') setRenamingId(null);
                     }}
-                    className="w-full rounded border border-app-accent bg-app-input px-1"
+                    className="w-full rounded border border-app-accent bg-app-input px-1 text-role-body"
                   />
-                  {renameError && <span role="alert" className="block text-xs text-red-400">{renameError}</span>}
+                  {renameError && <span role="alert" className="block text-role-callout text-red-400">{renameError}</span>}
                 </span>
               ) : (
                 <button

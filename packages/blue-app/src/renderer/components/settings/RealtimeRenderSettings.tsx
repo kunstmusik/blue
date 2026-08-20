@@ -155,7 +155,7 @@ export default function RealtimeRenderSettings({
     <SettingsSection title="Realtime Render">
       <SettingsSubsectionTitle>Blue Engine</SettingsSubsectionTitle>
 
-      <div className="mb-3 text-content text-app-text-muted">
+      <div className="mb-3 text-role-body text-app-text-muted">
         {usesBundledEngine ? 'Bundled Blue Engine' : 'External Blue Engine override'}
       </div>
       <SettingsField
@@ -175,7 +175,7 @@ export default function RealtimeRenderSettings({
             onEnginePathChange('blue-engine');
             setProbeResult(null);
           }}
-          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60"
+          className="rounded-md border border-app-border px-3 py-1.5 text-role-body text-app-text-muted hover:border-app-accent/60"
         >
           Use Bundled Blue Engine
         </button>
@@ -183,7 +183,7 @@ export default function RealtimeRenderSettings({
           type="button"
           disabled={probing}
           onClick={() => { void checkEngine(); }}
-          className="rounded-md bg-app-accent px-3 py-1.5 text-content text-white disabled:opacity-50"
+          className="rounded-md bg-app-accent px-3 py-1.5 text-role-body text-white disabled:opacity-50"
         >
           {probing ? 'Checking…' : 'Check Engine and Csound'}
         </button>
@@ -191,7 +191,7 @@ export default function RealtimeRenderSettings({
       {probeResult && (
         <div
           role="status"
-          className={`mb-4 rounded-md border px-3 py-2 text-content ${
+          className={`mb-4 rounded-md border px-3 py-2 text-role-body ${
             probeResult.ok
               ? 'border-app-success/40 bg-app-success/10 text-app-text'
               : 'border-app-danger/40 bg-app-danger/10 text-app-danger'
@@ -212,7 +212,7 @@ export default function RealtimeRenderSettings({
         </div>
       )}
 
-      <div className="mb-4 text-ui text-app-text-subtle">
+      <div className="mb-4 text-role-callout text-app-text-subtle">
         Realtime and offline work use the managed Blue Engine Csound runtime; legacy executable settings remain preserved for downgrade compatibility.
       </div>
       <SettingsField
@@ -277,7 +277,7 @@ export default function RealtimeRenderSettings({
           type="button"
           disabled={ioLoading.audio}
           onClick={() => { void queryIo('audio'); }}
-          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
+          className="rounded-md border border-app-border px-3 py-1.5 text-role-body text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
         >
           {ioLoading.audio ? 'Scanning Audio Devices…' : 'Rescan Audio Devices'}
         </button>
@@ -329,7 +329,7 @@ export default function RealtimeRenderSettings({
           type="button"
           disabled={ioLoading.midi}
           onClick={() => { void queryIo('midi'); }}
-          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
+          className="rounded-md border border-app-border px-3 py-1.5 text-role-body text-app-text-muted hover:border-app-accent/60 disabled:cursor-default disabled:opacity-50"
         >
           {ioLoading.midi ? 'Scanning MIDI Devices…' : 'Rescan MIDI Devices'}
         </button>
@@ -359,7 +359,7 @@ export default function RealtimeRenderSettings({
         devices={midiInputs}
       />
 
-      <div role="status" className="mb-3 text-ui text-app-text-muted">
+      <div role="status" className="mb-3 text-role-callout text-app-text-muted">
         {selectedStatus ?? 'Runtime modules and devices load automatically for the selected audio and MIDI modules. Use Rescan when devices are attached or detached.'}
         {savedAudioModuleUnavailable ? ' — saved audio module is currently unavailable' : ''}
         {savedMidiModuleUnavailable ? ' — saved MIDI module is currently unavailable' : ''}

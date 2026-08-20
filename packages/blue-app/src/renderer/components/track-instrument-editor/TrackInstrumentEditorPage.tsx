@@ -205,12 +205,12 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-app-bg px-6 text-sm text-app-text-muted">
+      <div className="flex h-screen items-center justify-center bg-app-bg px-6 text-role-body text-app-text-muted">
         <div className="flex max-w-md flex-col items-center gap-4 rounded border border-app-border bg-app-surface-strong px-6 py-5 text-center shadow-xl">
           <div>{error}</div>
           <button
             type="button"
-            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-body text-app-text-strong hover:border-app-accent"
+            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-role-body text-app-text-strong hover:border-app-accent"
             onClick={closeWindow}
           >
             Close Window
@@ -222,7 +222,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
   if (!snapshot) {
     return (
-      <div className="flex h-screen items-center justify-center bg-app-bg text-sm text-app-text-muted">
+      <div className="flex h-screen items-center justify-center bg-app-bg text-role-body text-app-text-muted">
         Loading Track instrument editor...
       </div>
     );

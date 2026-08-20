@@ -22,7 +22,7 @@ export default function UtilitySettings({
       title="Utility"
       dependencyNote="Freeze and SoundFont inspection use the managed Blue Engine Csound runtime. Freeze flags remain configurable; the legacy executable is retained only for downgrade compatibility."
     >
-      <div className="mb-4 text-ui text-app-text-subtle">
+      <div className="mb-4 text-role-callout text-app-text-subtle">
         SoundFont inspection and freeze rendering use the managed Blue Engine Csound runtime. The legacy executable value is preserved for downgrade compatibility.
       </div>
 

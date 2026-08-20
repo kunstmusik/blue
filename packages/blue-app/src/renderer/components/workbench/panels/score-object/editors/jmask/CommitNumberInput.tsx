@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-const INPUT_CLASS = 'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none';
+const INPUT_CLASS = 'w-20 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none';
 
 export default function CommitNumberInput({
   value,
@@ -92,7 +92,7 @@ export function CommitNumberField({
 }): React.ReactElement {
   return (
     <div className="flex items-center gap-2">
-      <label className="shrink-0 text-ui text-gray-300">{label}</label>
+      <label className="shrink-0 text-role-body text-gray-300">{label}</label>
       <CommitNumberInput value={value} step={step} min={min} max={max} onChange={onChange} />
     </div>
   );

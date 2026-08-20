@@ -95,7 +95,7 @@ export default function UdoEditor({
 
   if (!udo) {
     return (
-      <div className="flex h-full items-center justify-center bg-app-input text-sm text-app-text-muted">
+      <div className="flex h-full items-center justify-center bg-app-input text-role-body text-app-text-muted">
         Select a single UDO to edit its properties.
       </div>
     );
@@ -108,24 +108,24 @@ export default function UdoEditor({
       <div className="border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-tiny uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
               Opcode Name
             </label>
             <input
               type="text"
               value={udo.name}
               onChange={handleNameChange}
-              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
             />
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-tiny uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
               Style
             </label>
             <select
               value={udo.style}
               onChange={handleStyleChange}
-              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
             >
               <option value="CLASSIC">Classic</option>
               <option value="MODERN">Modern</option>
@@ -134,7 +134,7 @@ export default function UdoEditor({
           <button
             type="button"
             onClick={onTestOpcode}
-            className="flex items-center gap-1 rounded bg-app-accent px-3 py-1 text-body font-medium text-app-text-strong hover:bg-app-accent-hover"
+            className="flex items-center gap-1 rounded bg-app-accent px-3 py-1 text-role-body font-medium text-app-text-strong hover:bg-app-accent-hover"
           >
             <Play size={12} />
             Test Opcode
@@ -143,7 +143,7 @@ export default function UdoEditor({
 
         <div className="mt-3 flex gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-tiny uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
               Out Types
             </label>
             <input
@@ -151,12 +151,12 @@ export default function UdoEditor({
               value={udo.outTypes}
               onChange={handleOutTypesChange}
               placeholder="e.g., k, a"
-              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
             />
           </div>
           {isModern ? (
             <div className="flex-1">
-              <label className="mb-1 block text-tiny uppercase tracking-wider text-app-text-subtle">
+              <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
                 Input Arguments
               </label>
               <input
@@ -164,12 +164,12 @@ export default function UdoEditor({
                 value={udo.inputArguments}
                 onChange={handleInputArgumentsChange}
                 placeholder="e.g., kfreq, kamp"
-                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
               />
             </div>
           ) : (
             <div className="flex-1">
-              <label className="mb-1 block text-tiny uppercase tracking-wider text-app-text-subtle">
+              <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
                 In Types
               </label>
               <input
@@ -177,7 +177,7 @@ export default function UdoEditor({
                 value={udo.inTypes}
                 onChange={handleInTypesChange}
                 placeholder="e.g., k, k"
-                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
               />
             </div>
           )}
@@ -190,7 +190,7 @@ export default function UdoEditor({
             type="button"
             onClick={() => setActiveTab('code')}
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'code'
                 ? 'border-app-accent text-app-text-strong'
                 : 'border-transparent text-app-text-muted hover:text-app-text-strong',
@@ -202,7 +202,7 @@ export default function UdoEditor({
             type="button"
             onClick={() => setActiveTab('comments')}
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'comments'
                 ? 'border-app-accent text-app-text-strong'
                 : 'border-transparent text-app-text-muted hover:text-app-text-strong',

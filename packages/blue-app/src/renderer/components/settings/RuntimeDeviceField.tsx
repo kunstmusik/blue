@@ -162,7 +162,7 @@ export default function RuntimeDeviceField({
           role="listbox"
           aria-label={`${label} devices`}
           data-placement={listPosition.placement}
-          className="fixed z-[10000] max-h-64 overflow-y-auto rounded-md border border-app-border bg-app-menu p-1 text-content text-app-text shadow-xl"
+          className="fixed z-[10000] max-h-64 overflow-y-auto rounded-md border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-xl"
           style={{
             left: listPosition.left,
             top: listPosition.top,

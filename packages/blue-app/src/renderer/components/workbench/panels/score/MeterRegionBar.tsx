@@ -101,7 +101,7 @@ export default function MeterRegionBar({
                 title={formatMeterTooltip(region.entry)}
               >
                 {showLabel && (
-                  <span className="absolute left-1 top-0 leading-5 text-micro text-white whitespace-nowrap">
+                  <span className="absolute left-1 top-0 text-role-subheadline text-white whitespace-nowrap">
                     {region.label}
                   </span>
                 )}

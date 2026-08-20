@@ -12,7 +12,7 @@ export default function InstrumentCommentsPanel({
   return (
     <div className="flex h-full flex-col bg-blue-bg p-4">
       <textarea
-        className="h-full w-full resize-none rounded-lg border border-blue-border bg-app-input px-4 py-3 text-sm text-app-text outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
+        className="h-full w-full resize-none rounded-lg border border-blue-border bg-app-input px-4 py-3 text-role-body text-app-text outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
         spellCheck={false}
         value={comment}
         placeholder="Instrument comments"

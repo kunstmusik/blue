@@ -19,14 +19,14 @@ export default function BSBGridSettingsPanel({
 
   return (
     <div className="space-y-2 p-3">
-      <div className="mb-2 border-b border-app-border pb-1 text-tiny uppercase tracking-[0.16em] text-app-text-muted">
+      <div className="mb-2 border-b border-app-border pb-1 text-role-subheadline uppercase tracking-[0.16em] text-app-text-muted">
         Grid Settings
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-ui text-app-text-muted">Grid Style</label>
+        <label className="text-role-subheadline text-app-text-muted">Grid Style</label>
         <select
-          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text outline-none focus:border-app-accent"
+          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           value={gridSettings.gridStyle}
           onChange={(e) => {
             const v = e.target.value as 'NONE' | 'DOT' | 'LINE';
@@ -40,7 +40,7 @@ export default function BSBGridSettingsPanel({
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-ui text-app-text-muted">Snap</label>
+        <label className="text-role-subheadline text-app-text-muted">Snap</label>
         <input
           type="checkbox"
           checked={gridSettings.snapEnabled}
@@ -50,9 +50,9 @@ export default function BSBGridSettingsPanel({
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-ui text-app-text-muted">Width</label>
+        <label className="text-role-subheadline text-app-text-muted">Width</label>
         <input
-          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text outline-none focus:border-app-accent"
+          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           type="number"
           value={gridSettings.width}
           min={1}
@@ -61,9 +61,9 @@ export default function BSBGridSettingsPanel({
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-        <label className="text-ui text-app-text-muted">Height</label>
+        <label className="text-role-subheadline text-app-text-muted">Height</label>
         <input
-          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text outline-none focus:border-app-accent"
+          className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           type="number"
           value={gridSettings.height}
           min={1}

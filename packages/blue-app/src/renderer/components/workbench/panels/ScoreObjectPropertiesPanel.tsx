@@ -12,7 +12,7 @@ import ScoreObjectPropertiesForm from './score-object/ScoreObjectPropertiesForm'
 function EmptyState({ message }: { message: string }): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-4 text-center text-blue-muted">
-      <div className="text-sm">{message}</div>
+      <div className="text-role-body">{message}</div>
     </div>
   );
 }

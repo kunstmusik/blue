@@ -135,7 +135,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
 
   if (!loaded) {
     return (
-      <div className="flex h-full items-center justify-center bg-app-bg px-4 text-sm text-app-text-muted">
+      <div className="flex h-full items-center justify-center bg-app-bg px-4 text-role-body text-app-text-muted">
         No project loaded
       </div>
     );
@@ -143,7 +143,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-black p-1 text-app-text">
-      {error && <p role="alert" className="px-2 py-1 text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="px-2 py-1 text-role-callout text-red-400">{error}</p>}
       <LibraryTree
         label="Project SoundObjects"
         nodes={nodes}

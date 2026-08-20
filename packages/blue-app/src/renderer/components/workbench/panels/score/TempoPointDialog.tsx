@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoMapPatch } from '../../../../../shared/project-editor';
 
 const BEAT_EPSILON = 0.001;
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-ui text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 interface TempoPointDialogProps {
   pointIndex: number;
@@ -67,16 +67,16 @@ export default function TempoPointDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-sm font-medium text-app-text">
+        <h3 className="mb-3 text-role-headline text-app-text">
           {isTimeZero ? 'Edit Initial Tempo' : `Edit Tempo Point ${pointIndex + 1}`}
         </h3>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="w-14 text-ui text-app-text-muted">Beat</label>
+            <label className="w-14 text-role-body text-app-text-muted">Beat</label>
             <input
               type="number"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-ui text-app-text outline-none focus:border-app-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={beat}
               onChange={(e) => setBeat(e.target.value)}
               disabled={isTimeZero}
@@ -86,17 +86,17 @@ export default function TempoPointDialog({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="w-14 text-ui text-app-text-muted">Tempo</label>
+            <label className="w-14 text-role-body text-app-text-muted">Tempo</label>
             <input
               type="number"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-ui text-app-text outline-none focus:border-app-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={tempo}
               onChange={(e) => setTempo(e.target.value)}
               min={1}
               max={999}
               step={1}
             />
-            <span className="text-tiny text-app-text-muted">BPM</span>
+            <span className="text-role-subheadline text-app-text-muted">BPM</span>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default function TempoPointDialog({
             Cancel
           </button>
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-ui text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
             onClick={handleOk}
           >
             OK

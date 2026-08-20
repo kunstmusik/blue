@@ -40,7 +40,7 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
   }, [session?.status]);
 
   if (!session) {
-    return <div className="grid h-full place-items-center p-4 text-sm text-app-text-muted">{loading ? 'Loading Library editor…' : (error ?? 'Library editor session is no longer available.')}</div>;
+    return <div className="grid h-full place-items-center p-4 text-role-body text-app-text-muted">{loading ? 'Loading Library editor…' : (error ?? 'Library editor session is no longer available.')}</div>;
   }
 
   const store = useLibraryEditorStore.getState();

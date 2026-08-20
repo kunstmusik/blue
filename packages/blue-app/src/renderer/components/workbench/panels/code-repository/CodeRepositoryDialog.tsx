@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CodeRepositoryNode } from '@blue/data';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
@@ -11,9 +12,9 @@ function createFreshNodeId(): string {
 }
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-ui font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text transition-colors hover:bg-app-hover disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:opacity-40';
 
 interface CodeRepositoryDialogProps {
   readonly snapshot: {
@@ -314,24 +315,24 @@ export default function CodeRepositoryDialog({
         aria-labelledby="code-repository-editor-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="code-repository-editor-title" className="text-sm font-medium text-app-text-bright">
+          <h2 id="code-repository-editor-title" className="text-role-headline text-app-text-bright">
             Code Repository Editor
           </h2>
           <button
             type="button"
-            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
+            className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
             onClick={handleClose}
             aria-label="Close"
             autoFocus
             disabled={saving}
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {migrationDiagnostic && (
           <div
-            className="mb-3 flex items-center justify-between gap-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-app-text"
+            className="mb-3 flex items-center justify-between gap-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-role-callout text-app-text"
             role="status"
           >
             <span className="min-w-0 break-words">{migrationDiagnostic.message}</span>
@@ -349,7 +350,7 @@ export default function CodeRepositoryDialog({
         )}
         {hasRevisionConflict && (
           <div
-            className="mb-3 flex items-center justify-between gap-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-app-text"
+            className="mb-3 flex items-center justify-between gap-3 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-role-callout text-app-text"
             role="alert"
           >
             <span>Your draft is preserved. Reload replaces it with the latest saved repository.</span>
@@ -387,7 +388,7 @@ export default function CodeRepositoryDialog({
                 onChange={handleSnippetCodeChange}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-xs text-app-text-muted">
+              <div className="flex h-full items-center justify-center text-role-body text-app-text-muted">
                 Select a snippet to edit its code.
               </div>
             )}
@@ -409,7 +410,7 @@ export default function CodeRepositoryDialog({
             </button>
           </div>
           <div className="flex items-center gap-2">
-            {dirty && <span className="text-tiny text-app-text-muted">Unsaved changes</span>}
+            {dirty && <span className="text-role-subheadline text-app-text-muted">Unsaved changes</span>}
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={handleClose} disabled={saving}>
               Cancel
             </button>

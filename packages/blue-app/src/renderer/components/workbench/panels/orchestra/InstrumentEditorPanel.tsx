@@ -88,14 +88,14 @@ const EditorSurface = React.memo(function EditorSurface({
       );
     case 'unknown':
       return (
-        <div className="flex h-full items-center justify-center p-6 text-center text-sm text-blue-muted">
+        <div className="flex h-full items-center justify-center p-6 text-center text-role-body text-blue-muted">
           Unsupported instrument type: {instrument.instrumentType}
         </div>
       );
   }
 
   return (
-    <div className="flex h-full items-center justify-center p-6 text-sm text-blue-muted">
+    <div className="flex h-full items-center justify-center p-6 text-role-body text-blue-muted">
       Unsupported instrument.
     </div>
   );
@@ -127,10 +127,10 @@ function InstrumentEditorPanel({
   if (!instrument) {
     return (
       <section className="flex h-full flex-col bg-blue-bg" aria-label="Instrument editor">
-        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-body font-semibold uppercase tracking-[0.18em] text-blue-muted">
+        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-role-callout font-semibold uppercase tracking-[0.18em] text-blue-muted">
           Instrument Editor
         </div>
-        <div className="flex flex-1 items-center justify-center p-6 text-sm text-blue-muted">
+        <div className="flex flex-1 items-center justify-center p-6 text-role-body text-blue-muted">
           Select an arrangement instrument to edit.
         </div>
       </section>
@@ -143,7 +143,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-body',
+            'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'editor'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -155,7 +155,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-body',
+            'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'comments'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',

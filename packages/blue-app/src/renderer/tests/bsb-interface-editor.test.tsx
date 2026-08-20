@@ -347,7 +347,7 @@ describe('BSB Interface Editor', () => {
 
     expect(editModeHtml).toContain('curveA');
     expect(editModeHtml).toContain('<polyline');
-    expect(editModeHtml).toContain('▶');
+    expect(editModeHtml).toContain('aria-label="Next line"');
     expect(editModeHtml).toContain('cursor:default');
     expect(runtimeHtml).toContain('cursor:crosshair');
   });

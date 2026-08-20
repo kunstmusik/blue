@@ -126,9 +126,9 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
 
   return (
     <div className="flex flex-col gap-1" data-testid="bluex7-envelope-editor">
-      <div className="flex items-center justify-between text-xs text-blue-muted">
+      <div className="flex items-center justify-between text-role-subheadline text-blue-muted">
         <span>{title}</span>
-        <span className="text-[10px] text-gray-400">Drag handles or use Arrow Keys</span>
+        <span className="text-role-subheadline text-gray-400">Drag handles or use Arrow Keys</span>
       </div>
 
       <div className="relative rounded border border-blue-border bg-blue-bg/90 p-1">

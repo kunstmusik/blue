@@ -83,14 +83,14 @@ export default function PythonInstrumentEditor({
     <div ref={containerRef} className="flex h-full min-h-0 flex-col bg-blue-bg" tabIndex={-1}>
       {/* Header toolbar */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-blue-border bg-app-surface-strong px-3 py-1.5">
-        <div className="text-ui font-semibold text-app-text-strong">
+        <div className="text-role-headline text-app-text-strong">
           {instrument.name || 'Python Instrument'}
         </div>
         <div className="flex items-center gap-2">
           <JythonRuntimeStatusIndicator />
           <button
             type="button"
-            className="rounded border border-blue-border px-2.5 py-1 text-ui text-gray-300 transition-colors hover:border-blue-accent hover:text-gray-100 disabled:opacity-50"
+            className="rounded border border-blue-border px-2.5 py-1 text-role-body text-gray-300 transition-colors hover:border-blue-accent hover:text-gray-100 disabled:opacity-50"
             onClick={() => { void handleTest(); }}
             disabled={testing}
             title="Test (Cmd/Ctrl+T)"
@@ -102,11 +102,11 @@ export default function PythonInstrumentEditor({
 
       {/* Error alert */}
       {testError && (
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-red-800 bg-red-900/30 px-3 py-1.5 text-body text-red-200">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-red-800 bg-red-900/30 px-3 py-1.5 text-role-body text-red-200">
           <span>Error: {testError}</span>
           <button
             type="button"
-            className="text-xs text-blue-muted underline hover:text-gray-200"
+            className="text-role-callout text-blue-muted underline hover:text-gray-200"
             onClick={() => setTestError(null)}
           >
             dismiss
@@ -121,7 +121,7 @@ export default function PythonInstrumentEditor({
             key={tab.key}
             type="button"
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
                 : 'border-transparent text-blue-muted hover:text-app-text-strong',

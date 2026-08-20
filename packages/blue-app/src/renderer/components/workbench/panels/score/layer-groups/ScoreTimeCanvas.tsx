@@ -1903,14 +1903,14 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onCut}>
-        Cut<span className="float-right text-blue-muted text-tiny ml-4">⌘X</span>
+        Cut<span className="float-right text-blue-muted text-role-subheadline ml-4">⌘X</span>
       </ContextMenu.Item>
       <ContextMenu.Item className={menuItemClass} onSelect={onCopy}>
-        Copy<span className="float-right text-blue-muted text-tiny ml-4">⌘C</span>
+        Copy<span className="float-right text-blue-muted text-role-subheadline ml-4">⌘C</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onRemove}>
-        Remove<span className="float-right text-blue-muted text-tiny ml-4">Del</span>
+        Remove<span className="float-right text-blue-muted text-role-subheadline ml-4">Del</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onSetColor}>
@@ -2005,7 +2005,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
             disabled={!libraryClipboardAvailable && clipboard.length === 0}
             onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}
           >
-            Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
+            Paste<span className="float-right text-blue-muted text-role-subheadline ml-4">⌘V</span>
           </ContextMenu.Item>
           {clipboard.length > 0 && (
             <ContextMenu.Item

@@ -124,7 +124,7 @@ export default function PatternLayerHeader({
   }, [effectiveVisibleLayers, extendTo, scopeKey, selectSingle, selectSource, selectionKey]);
 
   const buttonClass = (active: boolean, activeBackground: string) => (
-    `h-4 w-5 rounded-sm border border-app-border/30 text-tiny font-bold flex items-center justify-center ${
+    `h-4 w-5 rounded-sm border border-app-border/30 text-role-subheadline font-bold flex items-center justify-center ${
       active
         ? `${activeBackground} text-black`
         : 'bg-transparent text-app-text-muted hover:text-app-text'
@@ -197,7 +197,7 @@ export default function PatternLayerHeader({
             <input
               ref={inputRef}
               data-pattern-layer-name-input
-              className="mx-1 mt-0.5 min-w-0 flex-1 rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-1 text-body text-blue-text outline-none"
+              className="mx-1 mt-0.5 min-w-0 flex-1 rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-1 text-role-body text-blue-text outline-none"
               value={editValue}
               onChange={(event) => setEditValue(event.target.value)}
               onKeyDown={(event) => {
@@ -208,7 +208,7 @@ export default function PatternLayerHeader({
             />
           ) : (
             <span
-              className={`flex-1 min-w-0 truncate px-1.5 text-body leading-4 pointer-events-none mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : 'text-blue-text'}`}
+              className={`flex-1 min-w-0 truncate px-1.5 text-role-body pointer-events-none mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : 'text-blue-text'}`}
               title={layer.name || undefined}
             >
               {layer.name}

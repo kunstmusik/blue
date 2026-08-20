@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
@@ -418,31 +419,31 @@ export default function PatternObjectEditor({
     <div className="pattern-root flex flex-col h-full select-none">
       <div className="flex items-center gap-3 px-3 py-1 border-b border-blue-border shrink-0 bg-blue-bg/30">
         <div className="flex items-center gap-1.5">
-          <label className="text-ui text-app-text">Beats</label>
+          <label className="text-role-body text-app-text">Beats</label>
           <input
             type="number"
             min={1}
             max={64}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             value={beats}
             onChange={handleBeatsChange}
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <label className="text-ui text-app-text">Sub</label>
+          <label className="text-role-body text-app-text">Sub</label>
           <input
             type="number"
             min={1}
             max={64}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             value={subDivisions}
             onChange={handleSubDivisionsChange}
           />
         </div>
-        <span className="text-ui text-app-text">{numSteps} steps</span>
+        <span className="text-role-body text-app-text">{numSteps} steps</span>
         <button
           type="button"
-          className="ml-auto rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent disabled:opacity-50"
+          className="ml-auto rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent disabled:opacity-50"
           disabled={testing}
           onClick={() => { void runTest(); }}
           title="Test generated score"
@@ -451,7 +452,7 @@ export default function PatternObjectEditor({
         </button>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>
@@ -473,12 +474,12 @@ export default function PatternObjectEditor({
               className="flex items-center px-1 border-r border-blue-border/40"
               style={{ width: splitX - 28 }}
             >
-              <span className="text-ui text-blue-muted font-medium">
+              <span className="text-role-subheadline text-blue-muted font-medium">
                 Name
               </span>
             </div>
             <div className="flex items-center justify-center" style={{ width: 28 }}>
-              <span className="text-ui text-blue-muted font-medium">M</span>
+              <span className="text-role-subheadline text-blue-muted font-medium">M</span>
             </div>
           </div>
 
@@ -508,7 +509,7 @@ export default function PatternObjectEditor({
                 >
                   <input
                     type="text"
-                    className="w-full bg-transparent text-ui text-gray-200 focus:outline-none focus:text-white"
+                    className="w-full bg-transparent text-role-body text-gray-200 focus:outline-none focus:text-white"
                     value={pat.patternName}
                     onChange={(e) => {
                       e.stopPropagation();
@@ -520,7 +521,7 @@ export default function PatternObjectEditor({
                 </div>
                 <div className="flex items-center justify-center" style={{ width: 28 }}>
                   <button
-                    className={`w-4 h-4 text-nano rounded border shrink-0 flex items-center justify-center ${
+                    className={`w-4 h-4 text-role-subheadline rounded border shrink-0 flex items-center justify-center ${
                       pat.muted
                         ? 'bg-red-800/70 border-red-600 text-red-200'
                         : 'border-blue-border/40 text-blue-muted/40'
@@ -540,32 +541,36 @@ export default function PatternObjectEditor({
 
           <div className="flex items-center shrink-0 border-t border-blue-border bg-blue-bg/40">
             <button
-              className="flex-1 py-1 text-ui text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
               onClick={handlePushUp}
               title="Push Up"
+              aria-label="Push Up"
             >
-              ↑
+              <ChevronUp className="h-3.5 w-3.5" />
             </button>
             <button
-              className="flex-1 py-1 text-ui text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
               onClick={handlePushDown}
               title="Push Down"
+              aria-label="Push Down"
             >
-              ↓
+              <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <button
-              className="flex-1 py-1 text-ui text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
               onClick={handleAddPattern}
               title="Add Pattern"
+              aria-label="Add Pattern"
             >
-              +
+              <Plus className="h-3.5 w-3.5" />
             </button>
             <button
-              className="flex-1 py-1 text-ui text-blue-muted hover:bg-blue-border/30"
+              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30"
               onClick={handleRemovePattern}
               title="Remove Pattern"
+              aria-label="Remove Pattern"
             >
-              −
+              <Minus className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -583,7 +588,7 @@ export default function PatternObjectEditor({
             {Array.from({ length: beats }, (_, beat) => (
               <div key={beat} className="flex shrink-0">
                 <div
-                  className="flex items-center px-0.5 text-ui text-gray-400 border-r border-blue-border/40"
+                  className="flex items-center px-0.5 text-role-subheadline text-gray-400 border-r border-blue-border/40"
                   style={{
                     width: subDivisions * CELL,
                     height: CELL,
@@ -617,12 +622,12 @@ export default function PatternObjectEditor({
         {selectedPattern ? (
           <>
             <div className="flex items-center gap-2 px-3 py-1 border-b border-blue-border bg-blue-bg/30 shrink-0">
-              <span className="text-ui text-blue-muted font-medium">
+              <span className="text-role-body text-blue-muted font-medium">
                 Pattern Score
               </span>
               <input
                 type="text"
-                className="w-28 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-28 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 value={selectedPattern.patternName}
                 onChange={(e) =>
                   handlePatternNameChange(selectedIdx, e.target.value)
@@ -631,7 +636,7 @@ export default function PatternObjectEditor({
 
             </div>
             <textarea
-              className="flex-1 w-full resize-none bg-app-bg px-3 py-1.5 font-mono text-body text-app-text focus:outline-none"
+              className="flex-1 w-full resize-none bg-app-bg px-3 py-1.5 font-mono text-role-body text-app-text focus:outline-none"
               value={selectedPattern.patternScore}
               onChange={(e) =>
                 handlePatternScoreChange(selectedIdx, e.target.value)
@@ -641,7 +646,7 @@ export default function PatternObjectEditor({
             />
           </>
         ) : (
-          <div className="flex items-center justify-center h-full text-ui text-blue-muted">
+          <div className="flex items-center justify-center h-full text-role-body text-blue-muted">
             {patterns.length === 0
               ? 'No patterns — click + to add one'
               : 'Select a pattern layer to edit its score'}

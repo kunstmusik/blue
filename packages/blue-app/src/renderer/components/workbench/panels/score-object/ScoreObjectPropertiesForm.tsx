@@ -82,7 +82,7 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
           onChange((0xFF000000 | (r << 16) | (g << 8) | b) >>> 0);
         }}
       />
-      <span className="text-body text-app-text">{hex}</span>
+      <span className="text-role-body text-app-text">{hex}</span>
     </div>
   );
 }
@@ -300,7 +300,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
           {target.supportsNoteProcessorChain && shared.noteProcessorChain != null && (
             <div className="px-3 py-2 mt-2 border-t border-blue-border">
-              <div className="text-body font-medium text-gray-300 mb-1">Note Processors</div>
+              <div className="text-role-headline text-gray-300 mb-1">Note Processors</div>
               <NoteProcessorChainEditor
                 key={target.selectionId}
                 chain={shared.noteProcessorChain}
@@ -322,7 +322,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
       {target.displayContext === 'instance' && (
         <div className="px-3 py-2 mt-2 border-t border-blue-border">
-          <div className="flex items-center gap-1.5 text-body text-blue-accent">
+          <div className="flex items-center gap-1.5 text-role-body text-blue-accent">
             <span>&#9432;</span>
             <span>Editing library object via Instance</span>
           </div>

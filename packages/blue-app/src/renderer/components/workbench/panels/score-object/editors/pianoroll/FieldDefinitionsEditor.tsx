@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { X } from 'lucide-react';
 import type { FieldDefSnapshot } from './types';
 
 interface FieldDefinitionsEditorProps {
@@ -21,9 +22,9 @@ export default function FieldDefinitionsEditor({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-tiny font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
+      <div className="text-role-subheadline font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
       <div className="overflow-x-auto rounded border border-blue-border/40 bg-black p-1">
-        <table className="w-full text-tiny">
+        <table className="w-full text-role-subheadline">
           <thead>
             <tr className="text-blue-muted">
               <th className="text-left py-0.5 px-1">Name</th>
@@ -71,14 +72,16 @@ export default function FieldDefinitionsEditor({
                   />
                 </td>
                 <td className="py-0.5 px-1">
-                  <button className="text-red-400 hover:text-red-300" onClick={() => handleRemove(index)}>x</button>
+                  <button className="text-red-400 hover:text-red-300 flex items-center justify-center" onClick={() => handleRemove(index)} title="Remove Field" aria-label="Remove Field">
+                    <X className="h-3 w-3" />
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <button className="text-tiny text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
+      <button className="text-role-subheadline text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
         + Add Field
       </button>
     </div>

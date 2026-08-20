@@ -12,7 +12,7 @@ export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactEleme
     <div className="grid min-w-0 flex-1 grid-cols-[minmax(64px,1fr)_minmax(0,96px)] gap-1 p-1">
       <input
         aria-label="Search libraries"
-        className="min-w-0 rounded border border-app-border bg-app-bg px-2 py-1 text-xs text-app-text outline-none focus:border-app-accent"
+        className="min-w-0 rounded border border-app-border bg-app-bg px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
         type="search"
         value={props.query}
         placeholder="Search reusable objects"
@@ -22,7 +22,7 @@ export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactEleme
           <span className="sr-only">Type</span>
           <select
             aria-label="Library type"
-            className="h-full w-full min-w-0 rounded border border-app-border bg-app-bg px-1 text-xs text-app-text"
+            className="h-full w-full min-w-0 rounded border border-app-border bg-app-bg px-1 text-role-body text-app-text"
             value={props.typeFilter}
             onChange={(event) => props.onTypeFilterChange(event.target.value as LibraryType | 'all')}
           >

@@ -61,11 +61,11 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
 
       <div className="flex-1 overflow-auto bg-black">
         {trackData.length === 0 ? (
-          <div className="flex items-center justify-center h-20 text-body text-blue-muted">
+          <div className="flex items-center justify-center h-20 text-role-body text-blue-muted">
             No tracks
           </div>
         ) : (
-          <table className="w-full border-collapse text-body">
+          <table className="w-full border-collapse text-role-body">
             <thead>
               <tr className="border-b border-blue-border">
                 <th className="px-2 py-1 text-left text-blue-muted font-normal w-16">Track</th>
@@ -79,10 +79,10 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
                 <tr key={ti} className="border-b border-blue-border/50">
                   <td className="px-2 py-0.5 text-gray-400">{ti}</td>
                   {track.map((cell, si) => (
-                    <td key={si} className="px-0.5 py-0.5">
+                     <td key={si} className="px-0.5 py-0.5">
                       <input
                         type="text"
-                        className="w-full min-w-[3rem] rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none text-center"
+                        className="w-full min-w-[3rem] rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none text-center"
                         value={cell}
                         onChange={(e) => handleCellChange(ti, si, e.target.value)}
                       />
@@ -95,7 +95,7 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
         )}
         <div className="px-3 py-2">
           <button
-            className="px-2 py-1 text-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
+            className="px-2 py-1 text-role-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
             onClick={handleAddTrack}
           >+ Add Track</button>
         </div>

@@ -178,7 +178,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
       ref={node.data.kind === 'file' ? dragHandle : undefined}
       style={style}
       className={[
-        'flex items-center gap-1.5 pr-2 text-content select-none cursor-pointer',
+        'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         node.isSelected ? 'bg-app-accent/20 text-app-text-bright' : 'text-app-text hover:bg-app-hover',
       ].join(' ')}
       onClick={handleClick}
@@ -205,12 +205,12 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<FileTreeNod
         <span className="min-w-0 truncate" title={node.data.path}>{node.data.name}</span>
       )}
       {node.data.rootKind === 'favorite' && (
-        <span className="ml-auto flex-none text-ui text-app-text-muted">favorite</span>
+        <span className="ml-auto flex-none text-role-callout text-app-text-muted">favorite</span>
       )}
       {diagnostic !== null && (
         <span
           role="note"
-          className="min-w-0 flex-1 truncate text-ui text-red-400"
+          className="min-w-0 flex-1 truncate text-role-callout text-red-400"
           title={diagnostic}
         >
           {diagnostic}

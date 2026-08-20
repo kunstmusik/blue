@@ -19,7 +19,7 @@ export default function CodeRepositorySnippetEditor({
 }: CodeRepositorySnippetEditorProps): React.ReactElement {
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-2 truncate text-xs text-app-text-muted" title={name}>
+      <div className="mb-2 truncate text-role-callout text-app-text-muted" title={name}>
         {name}
       </div>
       <div className="min-h-0 flex-1">

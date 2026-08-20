@@ -26,7 +26,7 @@ function BlueSynthBuilderEditor({
             type="button"
             data-bsb-editor-tab="interface"
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'interface'
                 ? 'border-blue-accent text-app-text-strong'
                 : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -39,7 +39,7 @@ function BlueSynthBuilderEditor({
             type="button"
             data-bsb-editor-tab="code"
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'code'
                 ? 'border-blue-accent text-gray-100'
                 : 'border-transparent text-blue-muted hover:text-gray-100',
@@ -52,7 +52,7 @@ function BlueSynthBuilderEditor({
             type="button"
             data-bsb-editor-tab="udo"
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === 'udo'
                 ? 'border-blue-accent text-gray-100'
                 : 'border-transparent text-blue-muted hover:text-gray-100',

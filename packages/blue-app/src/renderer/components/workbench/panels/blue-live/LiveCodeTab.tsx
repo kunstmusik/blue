@@ -18,7 +18,7 @@ export default function LiveCodeTab(): React.ReactElement {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '4px' }}>
-      <div style={{ fontSize: 'var(--text-ui)', color: 'var(--color-app-text-muted)' }}>
+      <div style={{ fontSize: 'var(--text-role-callout)', color: 'var(--color-app-text-muted)' }}>
         Live Code — Csound orchestra text evaluated into Blue Live first, then realtime playback
       </div>
       <div style={{ flex: 1, minHeight: '240px' }}>
@@ -38,7 +38,7 @@ export default function LiveCodeTab(): React.ReactElement {
           }}
         />
       </div>
-      <div style={{ fontSize: 'var(--text-ui)', color: 'var(--color-app-text-subtle)' }}>
+      <div style={{ fontSize: 'var(--text-role-callout)', color: 'var(--color-app-text-subtle)' }}>
         Shortcut: Cmd/Ctrl-Enter evaluates the current line or enclosing block.
       </div>
     </div>

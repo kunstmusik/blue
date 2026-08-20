@@ -82,7 +82,7 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-peg-panel">
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Pitch Envelope Generator (PEG)</span>
+        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Pitch Envelope Generator (PEG)</span>
       </div>
 
       {/* SVG Pitch Envelope Graph */}
@@ -109,10 +109,10 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
           const pt = pitchEnvelope[stage] ?? { rate: 0, level: 0 };
           return (
             <div key={stage} className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20">
-              <span className="text-xs font-medium text-gray-400">Stage {stage + 1}</span>
+              <span className="text-role-subheadline font-medium text-gray-400">Stage {stage + 1}</span>
               <div className="flex gap-2">
                 <div className="flex-1 flex flex-col gap-0.5">
-                  <label htmlFor={`bluex7-peg-r${stage + 1}`} className="text-[10px] text-blue-muted">
+                  <label htmlFor={`bluex7-peg-r${stage + 1}`} className="text-role-subheadline text-blue-muted">
                     R{stage + 1}
                   </label>
                   <input
@@ -123,11 +123,11 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
                     max={99}
                     value={pt.rate}
                     onChange={handlePointChange(stage, 'rate', 0, 99)}
-                    className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                    className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   />
                 </div>
                 <div className="flex-1 flex flex-col gap-0.5">
-                  <label htmlFor={`bluex7-peg-l${stage + 1}`} className="text-[10px] text-blue-muted">
+                  <label htmlFor={`bluex7-peg-l${stage + 1}`} className="text-role-subheadline text-blue-muted">
                     L{stage + 1}
                   </label>
                   <input
@@ -138,7 +138,7 @@ export const PitchEnvelopePanel: React.FC<PitchEnvelopePanelProps> = ({
                     max={99}
                     value={pt.level}
                     onChange={handlePointChange(stage, 'level', 0, 99)}
-                    className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                    className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   />
                 </div>
               </div>

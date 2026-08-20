@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import type { CodeRepositoryNode } from '@blue/data';
@@ -6,9 +7,9 @@ import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import { createBasicTextEditorMenuItems } from '../editors/csound-editor-menu';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-ui font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text transition-colors hover:bg-app-hover disabled:opacity-40';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:opacity-40';
 
 interface AddToCodeRepositoryDialogProps {
   /** Canonical snapshot used to choose the destination group. */
@@ -116,24 +117,24 @@ export default function AddToCodeRepositoryDialog({
         aria-labelledby="add-code-repository-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="add-code-repository-title" className="text-sm font-medium text-app-text-bright">
+          <h2 id="add-code-repository-title" className="text-role-headline text-app-text-bright">
             Add to Code Repository
           </h2>
           <button
             type="button"
-            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
+            className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
             onClick={requestClose}
             aria-label="Close"
             autoFocus={!root}
             disabled={submitting}
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {!root ? (
           <>
-            <p className="break-words text-ui text-app-text-muted" role="status">
+            <p className="break-words text-role-body text-app-text-muted" role="status">
               The Code Repository is unavailable. Retry the repository service, then add the selection again.
             </p>
             <div className="mt-4 flex justify-end gap-2">
@@ -149,14 +150,14 @@ export default function AddToCodeRepositoryDialog({
           </>
         ) : (
           <>
-            <label htmlFor="code-repository-snippet-name" className="mb-1 block text-tiny text-app-text-muted">
+            <label htmlFor="code-repository-snippet-name" className="mb-1 block text-role-subheadline text-app-text-muted">
               Name
             </label>
             <input
               id="code-repository-snippet-name"
               name="codeRepositorySnippetName"
               autoComplete="off"
-              className="mb-3 rounded border border-app-border/30 bg-app-field px-2 py-1 text-ui text-app-text outline-none focus:border-app-border/60"
+              className="mb-3 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -167,18 +168,18 @@ export default function AddToCodeRepositoryDialog({
               autoFocus={Boolean(root)}
             />
             {validationError && (
-              <p id="code-repository-name-error" className="-mt-2 mb-3 text-tiny text-red-400" role="alert">
+              <p id="code-repository-name-error" className="-mt-2 mb-3 text-role-subheadline text-red-400" role="alert">
                 {validationError}
               </p>
             )}
 
-            <label htmlFor="code-repository-destination" className="mb-1 block text-tiny text-app-text-muted">
+            <label htmlFor="code-repository-destination" className="mb-1 block text-role-subheadline text-app-text-muted">
               Destination Group
             </label>
             <select
               id="code-repository-destination"
               name="codeRepositoryDestination"
-              className="mb-3 rounded border border-app-border/30 bg-app-field px-2 py-1 text-ui text-app-text outline-none focus:border-app-border/60"
+              className="mb-3 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={parentId}
               onChange={(e) => setParentId(e.target.value)}
             >
@@ -189,7 +190,7 @@ export default function AddToCodeRepositoryDialog({
               ))}
             </select>
 
-            <div className="mb-1 text-tiny text-app-text-muted">ORC Code</div>
+            <div className="mb-1 text-role-subheadline text-app-text-muted">ORC Code</div>
             <div className="min-h-0 flex-1">
               <SelectedCodeEditor
                 value={code}

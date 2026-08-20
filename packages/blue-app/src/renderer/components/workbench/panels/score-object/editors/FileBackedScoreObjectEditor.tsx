@@ -134,7 +134,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
               type="button"
               data-audio-file-tab="audioFile"
               className={[
-                'border-b-2 px-3 py-2 text-body',
+                'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'audioFile'
                   ? 'border-blue-accent text-app-text-strong font-medium'
                   : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -147,7 +147,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
               type="button"
               data-audio-file-tab="csound"
               className={[
-                'border-b-2 px-3 py-2 text-body',
+                'border-b-2 px-3 py-2 text-role-body',
                 activeTab === 'csound'
                   ? 'border-blue-accent text-app-text-strong font-medium'
                   : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -160,7 +160,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         </div>
 
         {actionError && (
-          <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center justify-between">
+          <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center justify-between">
             <span>{actionError}</span>
             <button
               className="underline text-blue-muted hover:text-gray-200 ml-2"
@@ -186,7 +186,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
                 <button
                   type="button"
                   aria-label="Browse Audio File"
-                  className="shrink-0 px-3 py-1 text-body rounded border border-blue-border text-gray-200 hover:bg-blue-border/30"
+                  className="shrink-0 px-3 py-1 text-role-body rounded border border-blue-border text-gray-200 hover:bg-blue-border/30"
                   onClick={handleBrowse}
                 >
                   ...
@@ -195,23 +195,23 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
             </div>
 
             {metadataState.status === 'missing' && (
-              <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-body">
+              <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-role-body">
                 <div className="font-semibold">Audio File Not Found</div>
-                <div className="text-amber-300/80 text-xs mt-0.5">{metadataState.message}</div>
+                <div className="text-amber-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
               </div>
             )}
 
             {metadataState.status === 'unreadable' && (
-              <div className="mx-3 my-2 p-2 rounded bg-red-950/40 border border-red-800/60 text-red-200 text-body">
+              <div className="mx-3 my-2 p-2 rounded bg-red-950/40 border border-red-800/60 text-red-200 text-role-body">
                 <div className="font-semibold">Audio File Unreadable</div>
-                <div className="text-red-300/80 text-xs mt-0.5">{metadataState.message}</div>
+                <div className="text-red-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
               </div>
             )}
 
             {metadataState.status === 'unsupported' && (
-              <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-body">
+              <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-role-body">
                 <div className="font-semibold">Unsupported Audio Format</div>
-                <div className="text-amber-300/80 text-xs mt-0.5">{metadataState.message}</div>
+                <div className="text-amber-300/80 text-role-callout mt-0.5">{metadataState.message}</div>
               </div>
             )}
 
@@ -250,7 +250,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
 
         {activeTab === 'csound' && (
           <div className="flex-1 flex flex-col min-h-0" data-testid="csound-tab-content">
-            <div className="px-3 py-1.5 border-b border-blue-border bg-app-surface-subtle text-body text-gray-300 shrink-0" data-testid="channel-variables-info">
+            <div className="px-3 py-1.5 border-b border-blue-border bg-app-surface-subtle text-role-body text-gray-300 shrink-0" data-testid="channel-variables-info">
               {channelVariablesInfo}
             </div>
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -292,7 +292,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
     return (
       <div className="flex h-full min-h-0 flex-col bg-blue-bg py-2 overflow-y-auto">
         {actionError && (
-          <div className="mx-3 mb-2 px-3 py-1.5 text-body rounded bg-red-900/20 text-red-300 flex items-center justify-between border border-red-800/50">
+          <div className="mx-3 mb-2 px-3 py-1.5 text-role-body rounded bg-red-900/20 text-red-300 flex items-center justify-between border border-red-800/50">
             <span>{actionError}</span>
             <button
               className="underline text-blue-muted hover:text-gray-200 ml-2"
@@ -304,7 +304,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         )}
 
         {saveSuccessMessage && (
-          <div className="mx-3 mb-2 px-3 py-1.5 text-body rounded bg-green-900/20 text-green-300 flex items-center justify-between border border-green-800/50">
+          <div className="mx-3 mb-2 px-3 py-1.5 text-role-body rounded bg-green-900/20 text-green-300 flex items-center justify-between border border-green-800/50">
             <span>{saveSuccessMessage}</span>
             <button
               className="underline text-blue-muted hover:text-gray-200 ml-2"
@@ -336,18 +336,18 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
         )}
 
         {editor.artifactStatus === 'missing' && (
-          <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-body">
+          <div className="mx-3 my-2 p-2 rounded bg-amber-950/40 border border-amber-800/60 text-amber-200 text-role-body">
             <div className="font-semibold">Frozen Audio Artifact Missing</div>
-            <div className="text-amber-300/80 text-xs mt-0.5">
+            <div className="text-amber-300/80 text-role-callout mt-0.5">
               {editor.message || `Could not locate frozen file: ${editor.frozenWaveFileName}`}
             </div>
           </div>
         )}
 
         {editor.artifactStatus === 'unreadable' && (
-          <div className="mx-3 my-2 p-2 rounded bg-red-950/40 border border-red-800/60 text-red-200 text-body">
+          <div className="mx-3 my-2 p-2 rounded bg-red-950/40 border border-red-800/60 text-red-200 text-role-body">
             <div className="font-semibold">Frozen Audio Artifact Unreadable</div>
-            <div className="text-red-300/80 text-xs mt-0.5">
+            <div className="text-red-300/80 text-role-callout mt-0.5">
               {editor.message || `Could not read frozen file: ${editor.frozenWaveFileName}`}
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function FileBackedScoreObjectEditor({ document, onPatch }: Score
             type="button"
             aria-label="Save Copy"
             disabled={!editor.canSaveCopy}
-            className="px-4 py-1.5 text-body font-medium rounded border border-blue-border text-gray-100 hover:bg-blue-border/30 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 text-role-body font-medium rounded border border-blue-border text-gray-100 hover:bg-blue-border/30 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={handleSaveCopy}
           >
             Save Copy

@@ -79,7 +79,7 @@ export default function BSBCodeEditor({
               type="button"
               data-bsb-code-tab={tab.key}
               className={[
-                'border-t-2 px-3 py-2 text-body',
+                'border-t-2 px-3 py-2 text-role-body',
                 activeTab === tab.key
                   ? 'border-blue-accent text-gray-100'
                   : 'border-transparent text-blue-muted hover:text-gray-100',

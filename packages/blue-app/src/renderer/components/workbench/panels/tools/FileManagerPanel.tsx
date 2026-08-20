@@ -178,17 +178,17 @@ export default function FileManagerPanel(): React.ReactElement {
       </div>
       <div className="min-h-0 flex-1 overflow-hidden p-1 bg-black">
         {error !== null && (
-          <p role="alert" className="px-1 py-2 text-ui text-red-400">
+          <p role="alert" className="px-1 py-2 text-role-callout text-red-400">
             Could not load roots: {error}
           </p>
         )}
         {error === null && roots === null && (
-          <p className="px-1 py-2 text-ui text-app-text-muted">
+          <p className="px-1 py-2 text-role-callout text-app-text-muted">
             Loading roots…
           </p>
         )}
         {error === null && roots !== null && roots.length === 0 && (
-          <p className="px-1 py-2 text-ui text-app-text-muted">
+          <p className="px-1 py-2 text-role-callout text-app-text-muted">
             No filesystem roots available.
           </p>
         )}

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
@@ -17,7 +18,7 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
           onChange={e => onTableToggle(e.target.value === '1')}
         >
@@ -41,7 +42,7 @@ export function ConstantEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5">
-      <label className="shrink-0 text-ui text-gray-300 font-medium">Constant</label>
+      <label className="shrink-0 text-role-headline text-gray-300 font-medium">Constant</label>
       <CommitNumberInput value={value} step={0.1} className="w-24" onChange={handleChange} />
     </div>
   );
@@ -57,7 +58,7 @@ export function RandomEditor({ gen, onChange }: { gen: GeneratorSnapshot; onChan
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-ui text-gray-300 font-medium">Random</div>
+      <div className="text-role-headline text-gray-300 font-medium">Random</div>
       <div className="flex items-center gap-2">
         <CommitNumberField label="Min" value={min} onChange={v => update({ min: Math.min(v, max) })} />
         <CommitNumberField label="Max" value={max} onChange={v => update({ max: Math.max(v, min) })} />
@@ -114,9 +115,9 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-ui text-gray-300 font-medium">Item List</span>
+        <span className="text-role-headline text-gray-300 font-medium">Item List</span>
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={listType}
           onChange={e => update({ listType: parseInt(e.target.value, 10) })}
         >
@@ -124,7 +125,7 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
         </select>
       </div>
       <div className="max-h-24 overflow-auto border border-blue-border bg-black">
-        <table className="w-full text-ui">
+        <table className="w-full text-role-body">
           <tbody>
             {listItems.map((item, i) => (
               <tr key={i} className={`cursor-pointer ${selectedIdx === i ? 'bg-blue-accent/30' : 'hover:bg-blue-border/30'}`} onClick={() => setSelectedIdx(i)}>
@@ -132,7 +133,7 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
                   <CommitNumberInput
                     value={item}
                     step={0.1}
-                    className="w-full bg-transparent text-body text-gray-100 focus:outline-none"
+                    className="w-full bg-transparent text-role-body text-gray-100 focus:outline-none"
                     onChange={v => updateItem(i, v)}
                     onClick={e => e.stopPropagation()}
                   />
@@ -146,10 +147,10 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
         </table>
       </div>
       <div className="flex items-center gap-1">
-        <button type="button" className="px-2 py-0.5 text-tiny text-gray-300 border border-blue-border rounded hover:border-blue-accent" onClick={pushUp} disabled={selectedIdx <= 0} title="Push Up">&#9650;</button>
-        <button type="button" className="px-2 py-0.5 text-tiny text-gray-300 border border-blue-border rounded hover:border-blue-accent" onClick={pushDown} disabled={selectedIdx < 0 || selectedIdx >= listItems.length - 1} title="Push Down">&#9660;</button>
-        <button type="button" className="px-2 py-0.5 text-tiny text-gray-300 border border-blue-border rounded hover:border-blue-accent" onClick={removeItem} disabled={selectedIdx < 0} title="Remove">-</button>
-        <button type="button" className="px-2 py-0.5 text-tiny text-gray-300 border border-blue-border rounded hover:border-blue-accent" onClick={addItem} title="Add">+</button>
+        <button type="button" className="px-2 py-0.5 text-role-body text-gray-300 border border-blue-border rounded hover:border-blue-accent flex items-center justify-center" onClick={pushUp} disabled={selectedIdx <= 0} title="Push Up" aria-label="Push Up"><ChevronUp className="h-3 w-3" /></button>
+        <button type="button" className="px-2 py-0.5 text-role-body text-gray-300 border border-blue-border rounded hover:border-blue-accent flex items-center justify-center" onClick={pushDown} disabled={selectedIdx < 0 || selectedIdx >= listItems.length - 1} title="Push Down" aria-label="Push Down"><ChevronDown className="h-3 w-3" /></button>
+        <button type="button" className="px-2 py-0.5 text-role-body text-gray-300 border border-blue-border rounded hover:border-blue-accent flex items-center justify-center" onClick={removeItem} disabled={selectedIdx < 0} title="Remove" aria-label="Remove"><Minus className="h-3 w-3" /></button>
+        <button type="button" className="px-2 py-0.5 text-role-body text-gray-300 border border-blue-border rounded hover:border-blue-accent flex items-center justify-center" onClick={addItem} title="Add" aria-label="Add"><Plus className="h-3 w-3" /></button>
       </div>
     </div>
   );
@@ -163,7 +164,7 @@ export function SegmentEditor({ gen, onChange, duration }: { gen: GeneratorSnaps
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-ui text-gray-300 font-medium">Segment</div>
+      <div className="text-role-headline text-gray-300 font-medium">Segment</div>
       <TableEditor table={table} duration={duration} onChange={update} />
     </div>
   );
@@ -186,9 +187,9 @@ export function OscillatorEditor({ gen, onChange, duration }: { gen: GeneratorSn
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-ui text-gray-300 font-medium">Oscillator</span>
+        <span className="text-role-headline text-gray-300 font-medium">Oscillator</span>
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={oscillatorType}
           onChange={e => update({ oscillatorType: parseInt(e.target.value, 10) })}
         >
@@ -231,9 +232,9 @@ export function ProbabilityEditor({ gen, onChange, duration }: { gen: GeneratorS
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 px-2 py-1">
-        <span className="text-ui text-gray-300 font-medium">Probability</span>
+        <span className="text-role-headline text-gray-300 font-medium">Probability</span>
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={selectedIndex}
           onChange={e => update({ selectedIndex: parseInt(e.target.value, 10) })}
         >
@@ -264,6 +265,6 @@ export function renderGeneratorEditor(
     case 'Segment': return <SegmentEditor gen={gen} onChange={onChange} duration={duration} />;
     case 'Oscillator': return <OscillatorEditor gen={gen} onChange={onChange} duration={duration} />;
     case 'Probability': return <ProbabilityEditor gen={gen} onChange={onChange} duration={duration} />;
-    default: return <div className="px-2 py-1 text-ui text-blue-muted">Unsupported generator: {kind}</div>;
+    default: return <div className="px-2 py-1 text-role-body text-blue-muted">Unsupported generator: {kind}</div>;
   }
 }

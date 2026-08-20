@@ -84,7 +84,7 @@ describe('MidiInputPanel', () => {
 
     const scaleInput = container.querySelector('input[readonly]') as HTMLInputElement | null;
     expect(scaleInput?.value).toBe('Test Scale');
-    expect(container.innerHTML).toContain('w-24 flex-none text-right text-body text-app-text');
+    expect(container.innerHTML).toContain('w-24 flex-none text-right text-role-body text-app-text');
 
     act(() => {
       root.unmount();

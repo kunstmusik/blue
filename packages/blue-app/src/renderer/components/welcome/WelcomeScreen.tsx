@@ -11,22 +11,22 @@ export default function WelcomeScreen(): React.ReactElement {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-8 p-8">
       <div className="text-center">
-        <h1 className="mb-2 text-5xl font-bold text-app-accent">Blue</h1>
-        <p className="text-lg text-app-text-muted">
+        <h1 className="mb-2 text-role-large-title font-bold text-app-accent">Blue</h1>
+        <p className="text-role-title-3 text-app-text-muted">
           An object composition environment for Csound
         </p>
       </div>
 
       <div className="flex gap-4">
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-base font-medium text-white transition-colors hover:bg-app-accent-hover"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover"
           onClick={newProject}
         >
           <FilePlus className="w-5 h-5" />
           New Project
         </button>
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-base font-medium text-white transition-colors hover:bg-app-accent-hover"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-8 py-3 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover"
           onClick={openFile}
         >
           <FolderOpen className="w-5 h-5" />
@@ -36,7 +36,7 @@ export default function WelcomeScreen(): React.ReactElement {
 
       {recentFiles.length > 0 && (
         <div className="w-full max-w-md">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-app-text-muted">
+          <h2 className="mb-3 text-role-headline font-bold uppercase tracking-wider text-app-text-muted">
             Recent Files
           </h2>
           <ul className="space-y-1">
@@ -49,10 +49,10 @@ export default function WelcomeScreen(): React.ReactElement {
                   onClick={() => openRecentFile(filePath)}
                 >
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm font-medium text-app-text-strong truncate" title={filePath}>
+                    <span className="text-role-body font-medium text-app-text-strong truncate" title={filePath}>
                       {fileName}
                     </span>
-                    <span className="text-xs text-app-text-muted truncate" title={filePath}>
+                    <span className="text-role-callout text-app-text-muted truncate" title={filePath}>
                       {filePath}
                     </span>
                   </div>

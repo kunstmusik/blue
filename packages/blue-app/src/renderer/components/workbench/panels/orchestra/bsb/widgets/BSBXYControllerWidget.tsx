@@ -84,7 +84,7 @@ function BSBXYControllerWidget({
           />
         </div>
         {showValue && (
-          <div className="flex shrink-0 items-center justify-center gap-2 border-t border-blue-border/20 px-1 text-micro text-blue-muted" style={{ height: BSB_XY_READOUT_HEIGHT }}>
+          <div className="flex shrink-0 items-center justify-center gap-2 border-t border-blue-border/20 px-1 text-role-subheadline text-blue-muted" style={{ height: BSB_XY_READOUT_HEIGHT }}>
             <span>x: {xValue.toFixed(2)}</span>
             <span>y: {yValue.toFixed(2)}</span>
           </div>

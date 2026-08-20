@@ -374,4 +374,22 @@ describe('EffectEditorPage', () => {
     });
     container.remove();
   });
+
+  it('uses semantic typography roles for tab buttons and controls', async () => {
+    const { container, root } = renderPage();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const buttons = Array.from(container.querySelectorAll('nav button, header button, div.flex > button'));
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const btn of buttons) {
+      expect(btn.className).toContain('text-role-body');
+    }
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });

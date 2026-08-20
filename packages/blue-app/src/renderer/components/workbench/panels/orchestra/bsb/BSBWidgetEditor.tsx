@@ -15,7 +15,7 @@ export default function BSBWidgetEditor({
 }: BSBWidgetEditorProps): React.ReactElement {
   if (widgets.length === 0) {
     return (
-      <div className="rounded border border-blue-border bg-app-input px-4 py-3 text-sm text-blue-muted">
+      <div className="rounded border border-blue-border bg-app-input px-4 py-3 text-role-body text-blue-muted">
         No BSB widget object names are currently available from this instrument.
       </div>
     );
@@ -23,10 +23,10 @@ export default function BSBWidgetEditor({
 
   return (
     <div className="rounded border border-blue-border bg-app-input">
-      <div className="border-b border-blue-border px-3 py-2 text-body uppercase tracking-[0.16em] text-blue-muted">
+      <div className="border-b border-blue-border px-3 py-2 text-role-subheadline uppercase tracking-[0.16em] text-blue-muted">
         Widgets
       </div>
-      <ul className="divide-y divide-blue-border/50 text-sm">
+      <ul className="divide-y divide-blue-border/50 text-role-body">
         {widgets.map((widget) => (
           <li
             key={widget.objectName}
@@ -36,12 +36,12 @@ export default function BSBWidgetEditor({
               <div className="truncate font-mono text-app-text-strong">
                 &lt;{widget.objectName}&gt;
               </div>
-              <div className="text-ui text-blue-muted">
+              <div className="text-role-subheadline text-blue-muted">
                 {widget.widgetType} · {widget.minimum} to {widget.maximum}
               </div>
             </div>
             <input
-              className="w-full rounded border border-blue-border bg-app-field px-2 py-1 text-right font-mono text-body text-app-text outline-none focus:border-blue-accent"
+              className="w-full rounded border border-blue-border bg-app-field px-2 py-1 text-right font-mono text-role-body text-app-text outline-none focus:border-blue-accent"
               type="number"
               value={Number.isFinite(widget.value) ? widget.value : 0}
               min={widget.minimum}

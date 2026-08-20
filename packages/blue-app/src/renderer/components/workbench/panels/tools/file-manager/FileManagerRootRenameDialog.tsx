@@ -47,10 +47,10 @@ export function FileManagerRootRenameDialog({
           }
         }}
       >
-        <h2 id="file-manager-rename-root-title" className="text-content font-semibold text-app-text-bright">
+        <h2 id="file-manager-rename-root-title" className="text-role-headline text-app-text-bright">
           Rename Root
         </h2>
-        <label htmlFor="file-manager-root-name" className="mt-4 block text-ui font-medium text-app-text">
+        <label htmlFor="file-manager-root-name" className="mt-4 block text-role-body font-medium text-app-text">
           Name
         </label>
         <input
@@ -61,22 +61,22 @@ export function FileManagerRootRenameDialog({
           autoComplete="off"
           value={label}
           onChange={(event) => setLabel(event.target.value)}
-          className="mt-1 w-full rounded border border-app-border bg-app-background px-2 py-1.5 text-content text-app-text-bright outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent"
+          className="mt-1 w-full rounded border border-app-border bg-app-background px-2 py-1.5 text-role-body text-app-text-bright outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent"
         />
-        <p id="file-manager-rename-root-path" className="mt-2 break-all text-ui text-app-text-muted" title={path}>
+        <p id="file-manager-rename-root-path" className="mt-2 break-all text-role-callout text-app-text-muted" title={path}>
           {path}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
-            className="rounded border border-app-border px-3 py-1.5 text-ui text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded bg-app-accent px-3 py-1.5 text-ui font-medium text-app-text-bright hover:bg-app-accent/80"
+            className="rounded bg-app-accent px-3 py-1.5 text-role-body font-medium text-app-text-bright hover:bg-app-accent/80"
           >
             OK
           </button>

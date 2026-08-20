@@ -69,7 +69,7 @@ function SectionButton({
       type="button"
       aria-current={active ? 'page' : undefined}
       className={[
-        'block w-full border-l-2 px-4 py-2 text-left text-content transition-colors',
+        'block w-full border-l-2 px-4 py-2 text-left text-role-body transition-colors',
         active
           ? 'border-l-blue-accent bg-blue-accent/[0.08] text-gray-100'
           : 'border-l-transparent text-blue-muted hover:text-gray-100',
@@ -85,8 +85,8 @@ function EmptyProjectPropertiesState(): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-6 text-center text-blue-muted">
       <div className="max-w-md rounded-lg border border-blue-border bg-blue-surface/70 px-6 py-5">
-        <div className="text-sm font-medium text-gray-100">No project loaded</div>
-        <div className="mt-2 text-sm">
+        <div className="text-role-headline text-gray-100">No project loaded</div>
+        <div className="mt-2 text-role-body">
           Open a project to edit project information, render settings, and media paths.
         </div>
       </div>
@@ -170,10 +170,10 @@ export default function ProjectPropertiesPanel(): React.ReactElement {
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-b border-blue-border/80 bg-gradient-to-b from-app-surface-strong to-app-bg px-5 py-4 md:px-6">
-          <h2 className="text-lg font-semibold text-app-text-strong">
+          <h2 className="text-role-title-2 font-semibold text-app-text-strong">
             {activeSection.title}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-app-text-muted">
+          <p className="mt-1 max-w-2xl text-role-body text-app-text-muted">
             {activeSection.description}
           </p>
         </div>

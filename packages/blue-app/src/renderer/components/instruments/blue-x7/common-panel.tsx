@@ -84,7 +84,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-common-panel">
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Common & Algorithms</span>
+        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Common & Algorithms</span>
       </div>
 
       <div className="flex min-w-0 flex-col sm:flex-row gap-4 items-start">
@@ -98,7 +98,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {/* Algorithm selector */}
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-algorithm" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-algorithm" className="text-role-body text-blue-muted">
                 Algorithm (1–32)
               </label>
               <div className="flex items-center gap-1">
@@ -107,7 +107,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   aria-label="Algorithm"
                   value={common.algorithm}
                   onChange={handleAlgorithmChange}
-                  className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                  className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 >
                   {Array.from({ length: 32 }, (_, i) => i + 1).map((alg) => (
                     <option key={alg} value={alg}>
@@ -120,7 +120,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     type="button"
                     aria-label="Algorithm Dialog"
                     onClick={onOpenAlgorithmModal}
-                    className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-xs text-gray-200 hover:bg-blue-accent/20"
+                    className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-200 hover:bg-blue-accent/20"
                     title="View Algorithms"
                   >
                     Diagram
@@ -131,7 +131,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
 
             {/* Key Transpose */}
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-key-transpose" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-key-transpose" className="text-role-body text-blue-muted">
                 Key Transpose ({displayTranspose >= 0 ? `+${displayTranspose}` : displayTranspose} st)
               </label>
               <input
@@ -142,13 +142,13 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 max={24}
                 value={displayTranspose}
                 onChange={handleTransposeChange}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             {/* Feedback */}
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-feedback" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-feedback" className="text-role-body text-blue-muted">
                 Feedback (0–7)
               </label>
               <input
@@ -159,15 +159,15 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 max={7}
                 value={common.feedback}
                 onChange={handleFeedbackChange}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             {/* Shared Controls */}
             <div className="col-span-2 flex min-w-0 flex-col gap-1 sm:col-span-1">
-              <span className="text-xs text-blue-muted">Shared Sync & PMS</span>
+              <span className="text-role-body text-blue-muted">Shared Sync & PMS</span>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-gray-200 cursor-pointer">
+                <label className="flex items-center gap-1 text-role-body text-gray-200 cursor-pointer">
                   <input
                     type="checkbox"
                     aria-label="Shared Oscillator Sync"
@@ -181,7 +181,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   Sync
                 </label>
                 <div className="flex items-center gap-1">
-                  <label htmlFor="bluex7-shared-pms" className="text-xs text-blue-muted">
+                  <label htmlFor="bluex7-shared-pms" className="text-role-body text-blue-muted">
                     PMS
                   </label>
                   <input
@@ -193,7 +193,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     placeholder={sharedPms === 'mixed' ? 'mixed' : undefined}
                     value={typeof sharedPms === 'number' ? sharedPms : ''}
                     onChange={handleSharedPmsChange}
-                    className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                    className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   />
                 </div>
               </div>
@@ -204,7 +204,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
 
       {/* Operator Enable Toggles */}
       <div className="flex flex-col gap-1 border-t border-blue-border/50 pt-2">
-        <span className="text-xs text-blue-muted">Operator Output Enables (1–6)</span>
+        <span className="text-role-body text-blue-muted">Operator Output Enables (1–6)</span>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 6 }, (_, i) => {
             const isEnabled = common.operatorEnabled[i] ?? true;
@@ -215,7 +215,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 aria-label={`Toggle Operator ${i + 1}`}
                 aria-pressed={isEnabled}
                 onClick={() => handleOperatorToggle(i)}
-                className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded px-3 py-1 text-role-body font-medium transition-colors ${
                   isEnabled
                     ? 'bg-blue-accent text-white hover:bg-blue-accent/80'
                     : 'bg-blue-bg text-gray-400 border border-blue-border hover:bg-blue-surface'

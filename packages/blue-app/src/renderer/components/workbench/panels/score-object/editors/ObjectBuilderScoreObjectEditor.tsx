@@ -90,7 +90,7 @@ export default function ObjectBuilderScoreObjectEditor({
               type="button"
               data-object-builder-tab={tab}
               className={[
-                'border-b-2 px-3 py-2 text-body capitalize',
+                'border-b-2 px-3 py-2 text-role-body capitalize',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
                   : 'border-transparent text-app-text-muted hover:text-app-text-strong',
@@ -103,7 +103,7 @@ export default function ObjectBuilderScoreObjectEditor({
         </div>
         <button
           type="button"
-          className="mb-1 rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
+          className="mb-1 rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={testing}
           onClick={handleTest}
           title="Test (Cmd/Ctrl+T)"
@@ -112,7 +112,7 @@ export default function ObjectBuilderScoreObjectEditor({
         </button>
       </div>
       {testError && (
-        <div className="flex shrink-0 items-center gap-2 border-b bg-red-900/20 px-3 py-1.5 text-body text-red-300">
+        <div className="flex shrink-0 items-center gap-2 border-b bg-red-900/20 px-3 py-1.5 text-role-body text-red-300">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>
@@ -129,7 +129,7 @@ export default function ObjectBuilderScoreObjectEditor({
         {activeTab === 'code' && (
           <div className="flex h-full flex-col">
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-blue-border px-3 py-1">
-              <label className="flex items-center gap-1 text-ui text-gray-300">
+              <label className="flex items-center gap-1 text-role-body text-gray-300">
                 Language
                 <select
                   aria-label="ObjectBuilder language"
@@ -143,7 +143,7 @@ export default function ObjectBuilderScoreObjectEditor({
                   <option value="EXTERNAL">External</option>
                 </select>
               </label>
-              <label className="flex min-w-48 flex-1 items-center gap-1 text-ui text-gray-300">
+              <label className="flex min-w-48 flex-1 items-center gap-1 text-role-body text-gray-300">
                 Command Line
                 <input
                   aria-label="ObjectBuilder command line"
@@ -153,7 +153,7 @@ export default function ObjectBuilderScoreObjectEditor({
                   onChange={(event) => { patch({ commandLine: event.target.value }); }}
                 />
               </label>
-              <label className="flex items-center gap-1 text-ui text-gray-300">
+              <label className="flex items-center gap-1 text-role-body text-gray-300">
                 <input
                   type="checkbox"
                   checked={editEnabled}
@@ -178,7 +178,7 @@ export default function ObjectBuilderScoreObjectEditor({
           </div>
         )}
         {activeTab === 'comments' && (
-          <label className="flex h-full flex-col gap-1 px-3 py-2 text-ui text-gray-300">
+          <label className="flex h-full flex-col gap-1 px-3 py-2 text-role-body text-gray-300">
             Comment
             <textarea
               aria-label="ObjectBuilder comment"

@@ -52,7 +52,7 @@ describe('WelcomeScreen', () => {
     expect(container.textContent).toContain('C:\\Music\\demo.blue');
 
     // Muted path class
-    const pathSpans = container.querySelectorAll('span.text-xs.text-app-text-muted');
+    const pathSpans = container.querySelectorAll('span.text-role-callout.text-app-text-muted');
     expect(pathSpans.length).toBe(2);
     expect(pathSpans[0]?.textContent).toBe('/Users/test/projects/my-piece.blue');
     expect(pathSpans[1]?.textContent).toBe('C:\\Music\\demo.blue');

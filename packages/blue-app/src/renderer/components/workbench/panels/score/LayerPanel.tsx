@@ -56,7 +56,7 @@ export default function LayerPanel({
   if (visibleGroups.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-blue-muted text-sm"
+        className="flex items-center justify-center text-blue-muted text-role-body"
         style={{ minHeight: 100 }}
       >
         No score layer groups in this project

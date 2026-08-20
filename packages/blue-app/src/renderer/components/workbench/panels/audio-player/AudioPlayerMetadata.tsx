@@ -52,7 +52,7 @@ export default function AudioPlayerMetadata({
   ];
 
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-3 py-2 text-xs">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-3 py-2 text-role-callout">
       {rows.map((row) => (
         <Fragment key={row.label}>
           <dt className="font-medium text-blue-muted whitespace-nowrap">

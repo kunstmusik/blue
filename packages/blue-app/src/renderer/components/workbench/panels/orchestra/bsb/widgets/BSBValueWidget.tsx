@@ -24,7 +24,7 @@ function BSBValueWidget({
   if (editEnabled) {
     return (
       <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
-        <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden rounded border border-blue-border/40 bg-blue-surface/30 text-tiny text-blue-muted">
+        <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden rounded border border-blue-border/40 bg-blue-surface/30 text-role-subheadline text-blue-muted">
           {node.objectName || 'BSBValue'}
         </div>
       </WidgetWrapper>
@@ -40,7 +40,7 @@ function BSBValueWidget({
   return (
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
       <div className="flex h-full w-full items-center justify-center overflow-hidden rounded border border-blue-border/40 bg-app-bsb-input">
-        <span className="font-mono text-body text-blue-accent">{value.toFixed(4)}</span>
+        <span className="font-mono text-role-body text-blue-accent">{value.toFixed(4)}</span>
       </div>
     </WidgetWrapper>
   );

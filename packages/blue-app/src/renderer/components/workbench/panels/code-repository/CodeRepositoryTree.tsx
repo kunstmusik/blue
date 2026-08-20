@@ -136,7 +136,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
       ref={dragHandle}
       style={style}
       className={[
-        'flex items-center gap-1.5 pr-2 text-body select-none cursor-pointer',
+        'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isSelected ? 'bg-app-accent/20 text-app-text-bright' : 'text-app-text hover:bg-app-hover',
       ].join(' ')}
       onClick={(e) => {
@@ -164,7 +164,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
           autoComplete="off"
           defaultValue={node.data.name}
           aria-label="Rename code repository item"
-          className="min-w-0 flex-1 rounded border border-app-accent bg-app-surface px-1 text-body text-app-text-strong outline-none"
+          className="min-w-0 flex-1 rounded border border-app-accent bg-app-surface px-1 text-role-body text-app-text-strong outline-none"
           onClick={(event) => event.stopPropagation()}
           onBlur={() => node.reset()}
           onKeyDown={(event) => {
@@ -181,7 +181,7 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<RepoTreeNod
       ) : (
         <span className="min-w-0 truncate">{node.data.name}</span>
       )}
-      {isRoot && <span className="ml-auto flex-none text-tiny text-app-text-muted">root</span>}
+      {isRoot && <span className="ml-auto flex-none text-role-subheadline text-app-text-muted">root</span>}
     </div>
   );
 
@@ -227,7 +227,7 @@ export default function CodeRepositoryTree({
 
   return (
     <div className="flex h-full flex-col">
-      <p className="mb-2 text-tiny text-app-text-muted">Right-click an item for actions. Double-click to rename.</p>
+      <p className="mb-2 text-role-subheadline text-app-text-muted">Right-click an item for actions. Double-click to rename.</p>
       <TreeActionsContext.Provider value={actions}>
         <div className="min-h-0 flex-1 overflow-auto rounded bg-black p-1">
           <Tree<RepoTreeNode>

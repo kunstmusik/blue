@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 
 interface NoteProcessorCodeModalProps {
@@ -51,16 +52,16 @@ export default function NoteProcessorCodeModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3">
-          <h2 id="note-processor-code-title" className="text-sm font-medium text-gray-200">
+          <h2 id="note-processor-code-title" className="text-role-headline text-gray-200">
             {title}
           </h2>
           <button
             type="button"
-            className="text-lg leading-none text-gray-400 hover:text-gray-200"
+            className="text-gray-400 hover:text-gray-200"
             onClick={onClose}
             aria-label="Close"
           >
-            &times;
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -79,14 +80,14 @@ export default function NoteProcessorCodeModal({
         <div className="flex justify-end gap-2 border-t border-blue-border px-4 py-3">
           <button
             type="button"
-            className="rounded border border-blue-border px-3 py-1.5 text-body text-gray-300 hover:bg-blue-border/40"
+            className="rounded border border-blue-border px-3 py-1.5 text-role-body text-gray-300 hover:bg-blue-border/40"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded bg-blue-accent px-3 py-1.5 text-body text-white hover:bg-blue-accent/80"
+            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:bg-blue-accent/80"
             onClick={handleSave}
           >
             Save

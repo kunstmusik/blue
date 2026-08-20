@@ -199,7 +199,7 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
   return (
     <div className="flex h-full min-h-0 flex-col bg-app-canvas text-app-text" data-testid={`${language}-repl-console`}>
       <div className="flex shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-3 py-1.5">
-        <span className="text-ui font-medium text-app-text-strong">{config.title}</span>
+        <span className="text-role-callout font-medium text-app-text-strong">{config.title}</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -223,7 +223,7 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
         </div>
       </div>
 
-      <div ref={outputRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-content leading-6">
+      <div ref={outputRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-role-body">
         {lines.map((line) => (
           <div key={line.id} className="group flex whitespace-pre-wrap break-words">
             {line.kind === 'input' ? (
@@ -274,7 +274,7 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
             spellCheck={false}
             aria-label={`${config.title} input`}
             placeholder={busy ? 'Evaluating…' : canRun ? config.placeholder : statusText}
-            className="max-h-32 min-h-6 flex-1 resize-none overflow-y-auto bg-transparent p-0 font-mono text-content leading-6 text-app-text-strong outline-none placeholder:text-app-text-subtle disabled:cursor-not-allowed"
+            className="max-h-32 min-h-6 flex-1 resize-none overflow-y-auto bg-transparent p-0 font-mono text-role-body text-app-text-strong outline-none placeholder:text-app-text-subtle disabled:cursor-not-allowed"
           />
         </div>
       </div>

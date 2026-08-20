@@ -786,7 +786,7 @@ function resolveCurrentChildren(root: BsbWidgetNodeSnapshot, stack: GroupStackEn
 function BreadcrumbItem({ label, onClick, active }: { label: string; onClick: () => void; active: boolean }) {
   return (
     <button
-      className={`rounded px-1.5 py-0.5 text-ui ${
+      className={`rounded px-1.5 py-0.5 text-role-body ${
         active
           ? 'text-gray-300'
           : 'text-blue-muted hover:bg-blue-border hover:text-gray-200'

@@ -1,5 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useProjectStore } from '../../../../stores/project-store';
 import type {
   ScoreDocumentSnapshot,
@@ -178,7 +179,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     setSelectedLayerIndex(index);
   }, [selectedGroup, layers]);
 
-  const btnClass = 'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-ui text-app-text hover:bg-app-hover disabled:opacity-40';
+  const btnClass = 'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-role-body text-app-text hover:bg-app-hover disabled:opacity-40';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -188,8 +189,10 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
-          <span className="text-sm font-medium text-app-text">Score Manager</span>
-          <button className="text-lg leading-none text-app-text-muted hover:text-app-text" onClick={onClose}>&times;</button>
+          <span className="text-role-headline text-app-text">Score Manager</span>
+          <button className="text-app-text-muted hover:text-app-text" onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="flex flex-1 min-h-0">
@@ -210,7 +213,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                     {ADD_LAYER_GROUP_OPTIONS.map((option) => (
                       <DropdownMenu.Item
                         key={option.groupType}
-                        className="cursor-pointer rounded-sm px-3 py-1 text-ui text-app-text outline-none data-[highlighted]:bg-app-highlight"
+                        className="cursor-pointer rounded-sm px-3 py-1 text-role-body text-app-text outline-none data-[highlighted]:bg-app-highlight"
                         onSelect={() => handleAddLayerGroup(option.groupType)}
                       >
                         {option.label}
@@ -248,7 +251,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
               <button className={btnClass} onClick={handleRemoveLayer} disabled={!layerAvailability.canRemove} title="Remove Layer">-</button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto bg-black">
-              <table className="w-full border-collapse text-ui">
+              <table className="w-full border-collapse text-role-body">
                 <thead>
                   <tr className="border-b border-app-border/20 text-left text-app-text-muted">
                     <th className="px-2 py-1 font-normal" style={{ width: 50 }}>#</th>
@@ -311,7 +314,7 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
 
   return (
     <div
-      className={`cursor-pointer truncate border-b border-app-border/10 px-2 py-1 text-ui ${
+      className={`cursor-pointer truncate border-b border-app-border/10 px-2 py-1 text-role-body ${
         selected ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:bg-app-surface/40'
       }`}
       onClick={onSelect}
@@ -320,7 +323,7 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
       {editing ? (
         <input
           ref={inputRef}
-          className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-ui text-app-text outline-none"
+          className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-role-body text-app-text outline-none"
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}
@@ -371,7 +374,7 @@ function LayerRow({ layer, index, selected, editing, editValue, onEditValueChang
         {editing ? (
           <input
             ref={inputRef}
-            className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-ui text-app-text outline-none"
+            className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-role-body text-app-text outline-none"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}

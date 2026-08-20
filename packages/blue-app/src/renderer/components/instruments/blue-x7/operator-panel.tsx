@@ -160,7 +160,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-operator-panel">
       {/* Operator Tabs Header */}
       <div className="flex flex-col gap-2 border-b border-blue-border pb-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Operators</span>
+        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Operators</span>
         <div className="flex min-w-0 flex-wrap gap-1" role="tablist" aria-label="Operator Selector">
           {Array.from({ length: 6 }, (_, i) => {
             const isSelected = selectedOpIndex === i;
@@ -176,7 +176,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                   cancelEnvelopeGesture();
                   setSelectedOpIndex(i);
                 }}
-                className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded px-3 py-1 text-role-body font-medium transition-colors ${
                   isSelected
                     ? 'bg-blue-accent text-white font-semibold'
                     : 'bg-blue-bg text-gray-300 border border-blue-border hover:bg-blue-surface'
@@ -194,7 +194,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
         {/* Frequency & Mode */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-mode" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-mode" className="text-role-body text-blue-muted">
               Mode
             </label>
             <select
@@ -202,7 +202,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               aria-label="Operator Mode"
               value={currentOp.mode}
               onChange={handleSelectFieldChange('mode', 'Mode')}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             >
               <option value={0}>Ratio (Freq)</option>
               <option value={1}>Fixed (Hz)</option>
@@ -210,7 +210,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-coarse" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-coarse" className="text-role-body text-blue-muted">
               Freq Coarse (0–31)
             </label>
             <input
@@ -221,12 +221,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={31}
               value={currentOp.freqCoarse}
               onChange={handleFieldChange('freqCoarse', 'Freq Coarse', 0, 31)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-fine" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-fine" className="text-role-body text-blue-muted">
               Freq Fine (0–99)
             </label>
             <input
@@ -237,12 +237,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={99}
               value={currentOp.freqFine}
               onChange={handleFieldChange('freqFine', 'Freq Fine', 0, 99)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-detune" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-detune" className="text-role-body text-blue-muted">
               Detune (-7..+7)
             </label>
             <input
@@ -253,13 +253,13 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={7}
               value={currentOp.detune}
               onChange={handleFieldChange('detune', 'Detune', -7, 7)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-blue-muted">Oscillator Sync</span>
-            <label className="flex items-center gap-2 pt-1 text-xs text-gray-200 cursor-pointer">
+            <span className="text-role-body text-blue-muted">Oscillator Sync</span>
+            <label className="flex items-center gap-2 pt-1 text-role-body text-gray-200 cursor-pointer">
               <input
                 type="checkbox"
                 aria-label="Operator Oscillator Sync"
@@ -278,7 +278,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
         {/* Output & Sensitivity */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-output-level" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-output-level" className="text-role-body text-blue-muted">
               Output Level (0–99)
             </label>
             <input
@@ -289,12 +289,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={99}
               value={currentOp.outputLevel}
               onChange={handleFieldChange('outputLevel', 'Output Level', 0, 99)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-velocity-sens" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-velocity-sens" className="text-role-body text-blue-muted">
               Velocity Sens (0–7)
             </label>
             <input
@@ -305,12 +305,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={7}
               value={currentOp.velocitySensitivity}
               onChange={handleFieldChange('velocitySensitivity', 'Velocity Sensitivity', 0, 7)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-ams" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-ams" className="text-role-body text-blue-muted">
               AM Sensitivity (0–3)
             </label>
             <input
@@ -321,12 +321,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               max={3}
               value={currentOp.modulationAmplitude}
               onChange={handleFieldChange('modulationAmplitude', 'AM Sensitivity', 0, 3)}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="bluex7-op-pms" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-op-pms" className="text-role-body text-blue-muted">
               PM Sensitivity (0–7)
             </label>
             <input
@@ -338,17 +338,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               value={displayedPms}
               placeholder={sharedPms === 'mixed' ? 'mixed' : undefined}
               onChange={handlePitchModulationChange}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
         </div>
 
         {/* Keyboard Scaling */}
         <div className="rounded border border-blue-border/50 bg-blue-bg/40 p-2 space-y-2">
-          <span className="text-xs font-medium text-gray-300">Keyboard Level & Rate Scaling</span>
+          <span className="text-role-headline text-gray-300">Keyboard Level & Rate Scaling</span>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-breakpoint" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-breakpoint" className="text-role-body text-blue-muted">
                 Breakpoint (0–99)
               </label>
               <input
@@ -359,12 +359,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 max={99}
                 value={currentOp.breakpoint}
                 onChange={handleFieldChange('breakpoint', 'Breakpoint', 0, 99)}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-curve-left" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-curve-left" className="text-role-body text-blue-muted">
                 Curve Left
               </label>
               <select
@@ -372,7 +372,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 aria-label="Curve Left"
                 value={currentOp.curveLeft}
                 onChange={handleSelectFieldChange('curveLeft', 'Curve Left')}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               >
                 {CURVE_TYPES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -383,7 +383,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-depth-left" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-depth-left" className="text-role-body text-blue-muted">
                 Depth Left (0–99)
               </label>
               <input
@@ -394,12 +394,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 max={99}
                 value={currentOp.depthLeft}
                 onChange={handleFieldChange('depthLeft', 'Depth Left', 0, 99)}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-curve-right" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-curve-right" className="text-role-body text-blue-muted">
                 Curve Right
               </label>
               <select
@@ -407,7 +407,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 aria-label="Curve Right"
                 value={currentOp.curveRight}
                 onChange={handleSelectFieldChange('curveRight', 'Curve Right')}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               >
                 {CURVE_TYPES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -418,7 +418,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-depth-right" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-depth-right" className="text-role-body text-blue-muted">
                 Depth Right (0–99)
               </label>
               <input
@@ -429,12 +429,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 max={99}
                 value={currentOp.depthRight}
                 onChange={handleFieldChange('depthRight', 'Depth Right', 0, 99)}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label htmlFor="bluex7-op-krs" className="text-xs text-blue-muted">
+              <label htmlFor="bluex7-op-krs" className="text-role-body text-blue-muted">
                 Rate Scaling (0–7)
               </label>
               <input
@@ -445,7 +445,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 max={7}
                 value={currentOp.keyboardRateScaling}
                 onChange={handleFieldChange('keyboardRateScaling', 'Rate Scaling', 0, 7)}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
           </div>
@@ -470,16 +470,16 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
         {/* 4-Stage Envelope Numeric Editor */}
         <div className="rounded border border-blue-border/50 bg-blue-bg/40 p-2 space-y-2">
-          <span className="text-xs font-medium text-gray-300">Envelope (Rates & Levels 0–99)</span>
+          <span className="text-role-headline text-gray-300">Envelope (Rates & Levels 0–99)</span>
           <div className="grid grid-cols-4 gap-3">
             {[0, 1, 2, 3].map((stage) => {
               const pt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
               return (
                 <div key={stage} className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20">
-                  <span className="text-xs font-medium text-gray-400">Stage {stage + 1}</span>
+                  <span className="text-role-subheadline font-medium text-gray-400">Stage {stage + 1}</span>
                   <div className="flex gap-2">
                     <div className="flex-1 flex flex-col gap-0.5">
-                      <label htmlFor={`bluex7-op-r${stage + 1}`} className="text-[10px] text-blue-muted">
+                      <label htmlFor={`bluex7-op-r${stage + 1}`} className="text-role-subheadline text-blue-muted">
                         R{stage + 1}
                       </label>
                       <input
@@ -490,11 +490,11 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         max={99}
                         value={pt.rate}
                         onChange={handleEnvelopePointChange(stage, 'rate', 0, 99)}
-                        className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                        className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />
                     </div>
                     <div className="flex-1 flex flex-col gap-0.5">
-                      <label htmlFor={`bluex7-op-l${stage + 1}`} className="text-[10px] text-blue-muted">
+                      <label htmlFor={`bluex7-op-l${stage + 1}`} className="text-role-subheadline text-blue-muted">
                         L{stage + 1}
                       </label>
                       <input
@@ -505,7 +505,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         max={99}
                         value={pt.level}
                         onChange={handleEnvelopePointChange(stage, 'level', 0, 99)}
-                        className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                        className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />
                     </div>
                   </div>

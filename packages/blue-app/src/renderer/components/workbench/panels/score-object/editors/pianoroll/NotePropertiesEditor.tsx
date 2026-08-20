@@ -60,7 +60,7 @@ export default function NotePropertiesEditor({
 
   return (
     <div className="flex items-center gap-2 min-w-0 flex-1">
-      <label className="flex items-center gap-1 text-tiny text-app-text cursor-pointer shrink-0">
+      <label className="flex items-center gap-1 text-role-subheadline text-app-text cursor-pointer shrink-0">
         <input
           type="checkbox"
           className="accent-blue-accent"
@@ -72,7 +72,7 @@ export default function NotePropertiesEditor({
       </label>
       <input
         type="text"
-        className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-0.5 text-tiny text-gray-100 font-mono focus:border-blue-accent focus:outline-none disabled:opacity-40"
+        className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-0.5 text-role-subheadline text-gray-100 font-mono focus:border-blue-accent focus:outline-none disabled:opacity-40"
         value={templateText}
         onChange={(e) => setTemplateText(e.target.value)}
         onBlur={handleTemplateBlur}

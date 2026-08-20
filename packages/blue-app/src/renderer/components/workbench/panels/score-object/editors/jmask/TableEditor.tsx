@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TableSnapshot } from './jmask-utils';
 import CommitNumberInput from './CommitNumberInput';
+import { resolveTypographyRoleFont } from '../../../../../../lib/typography';
 
 const TABLE_INTERPOLATION_TYPES = ['Off', 'On', 'Cosine'];
 const CANVAS_H = 100;
@@ -107,7 +108,7 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
       ctx.fill();
 
       ctx.fillStyle = '#fff';
-      ctx.font = '11px monospace';
+      ctx.font = resolveTypographyRoleFont(canvas, 'subheadline', { family: 'monospace' });
       const xText = `x: ${(sp.time * duration).toFixed(3)}`;
       const yText = `y: ${sp.value.toFixed(4)}`;
       let textX = sx + 8;
@@ -248,10 +249,10 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
           onContextMenu={handleContextMenu}
         />
       </div>
-      <div className="flex items-center gap-2 text-ui text-gray-300">
+      <div className="flex items-center gap-2 text-role-body text-gray-300">
         <label className="shrink-0">Interp</label>
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={interpolationType}
           onChange={handleInterpolationTypeChange}
         >
@@ -262,7 +263,7 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
         <CommitNumberInput
           value={interpolation}
           step={0.1}
-          className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           onChange={handleInterpolationCommit}
         />
         {minMaxEnabled && (
@@ -271,14 +272,14 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
             <CommitNumberInput
               value={min}
               step={0.1}
-              className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               onChange={handleMinCommit}
             />
             <label className="shrink-0">Max</label>
             <CommitNumberInput
               value={max}
               step={0.1}
-              className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-ui text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               onChange={handleMaxCommit}
             />
           </>

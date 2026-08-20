@@ -30,7 +30,7 @@ function BSBSubChannelDropdownWidget({
       <button
         type="button"
         aria-disabled="true"
-        className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-ui text-app-text outline-none"
+        className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-role-body text-app-text outline-none"
         style={{ pointerEvents: editEnabled ? 'none' : undefined }}
       >
         <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />

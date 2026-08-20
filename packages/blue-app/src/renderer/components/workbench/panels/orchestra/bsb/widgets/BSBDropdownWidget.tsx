@@ -51,7 +51,7 @@ function BSBDropdownWidget({
         <DropdownMenu.Trigger asChild disabled={items.length === 0}>
           <button
             type="button"
-            className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-body text-app-text-strong outline-none hover:bg-blue-accent/20 disabled:cursor-default disabled:hover:bg-app-bsb-control"
+            className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-blue-accent/20 disabled:cursor-default disabled:hover:bg-app-bsb-control"
             style={{ fontFamily: 'Roboto, sans-serif', fontSize, pointerEvents: editEnabled ? 'none' : undefined }}
           >
             <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
@@ -63,7 +63,7 @@ function BSBDropdownWidget({
             {items.map((item, i) => (
               <DropdownMenu.Item
                 key={i}
-                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-blue-accent/20"
+                className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-blue-accent/20"
                 onClick={() => handleItemSelect(i)}
                 style={{ fontFamily: 'Roboto, sans-serif', fontSize }}
               >

@@ -2,13 +2,13 @@ import React from 'react';
 import { cn } from '../../lib/cn';
 
 const FIELD_CONTAINER_CLASS = 'mb-4';
-const FIELD_LABEL_CLASS = 'mb-1 block text-body font-medium text-app-text-muted';
-const FIELD_DESCRIPTION_CLASS = 'mb-1.5 text-ui leading-4 text-app-text-subtle';
+const FIELD_LABEL_CLASS = 'mb-1 block text-role-body font-medium text-app-text-muted';
+const FIELD_DESCRIPTION_CLASS = 'mb-1.5 text-role-callout text-app-text-subtle';
 const FIELD_INPUT_CLASS =
-  'w-full max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-content text-app-text outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
 const FIELD_SELECT_CLASS =
-  'min-w-[140px] max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-content text-app-text outline-none transition-colors focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
-const FIELD_CHECKBOX_CLASS = 'mb-3 flex cursor-pointer items-start gap-2 text-content text-app-text';
+  'min-w-[140px] max-w-[400px] rounded-md border border-app-border bg-app-canvas px-2.5 py-1.5 text-role-body text-app-text outline-none transition-colors focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-50';
+const FIELD_CHECKBOX_CLASS = 'mb-3 flex cursor-pointer items-start gap-2 text-role-body text-app-text';
 const FIELD_CHECKBOX_INPUT_CLASS =
   'mt-0.5 h-4 w-4 rounded border-app-border bg-app-canvas accent-app-accent disabled:cursor-not-allowed';
 
@@ -140,7 +140,7 @@ export function SettingsSubsectionTitle({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <h3 className="mb-3 mt-5 border-b border-app-border pb-1 text-sm font-semibold text-app-text-strong">
+    <h3 className="mb-3 mt-5 border-b border-app-border pb-1 text-role-title-3 font-semibold text-app-text-strong">
       {children}
     </h3>
   );

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-ui text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 interface ShiftObjectsDialogProps {
   onConfirm: (amountBeats: number) => void;
@@ -62,20 +62,20 @@ export default function ShiftObjectsDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-sm font-medium text-app-text">
+        <h3 className="mb-3 text-role-headline text-app-text">
           Shift Selected Objects
         </h3>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="text-ui text-app-text-muted whitespace-nowrap">
+            <label className="text-role-body text-app-text-muted whitespace-nowrap">
               Shift by beats:
             </label>
             <input
               ref={inputRef}
               type="number"
               step="any"
-              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-ui text-app-text outline-none focus:border-app-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={shiftText}
               onChange={(e) => {
                 setShiftText(e.target.value);
@@ -83,7 +83,7 @@ export default function ShiftObjectsDialog({
               }}
             />
           </div>
-          {error && <p className="text-tiny text-app-danger">{error}</p>}
+          {error && <p className="text-role-subheadline text-app-danger">{error}</p>}
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
@@ -91,7 +91,7 @@ export default function ShiftObjectsDialog({
             Cancel
           </button>
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-ui text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-role-body text-app-text hover:bg-app-hover"
             onClick={handleOk}
           >
             OK

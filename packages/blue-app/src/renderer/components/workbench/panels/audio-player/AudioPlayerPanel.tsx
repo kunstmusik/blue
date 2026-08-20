@@ -161,7 +161,7 @@ export default function AudioPlayerPanel(): React.ReactElement {
       <div className="flex items-center">
         <button
           type="button"
-          className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-xs hover:bg-blue-surface-hover"
+          className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body hover:bg-blue-surface-hover"
           onClick={handleOpen}
         >
           Open
@@ -212,13 +212,13 @@ export default function AudioPlayerPanel(): React.ReactElement {
         >
           <Repeat className="h-4 w-4" aria-hidden="true" />
         </button>
-        <span className="ml-auto font-mono text-xs tabular-nums text-blue-muted">
+        <span className="ml-auto font-mono text-role-callout tabular-nums text-blue-muted">
           {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
         </span>
       </div>
 
       {error && (
-        <div className="rounded border border-red-400 bg-red-50 px-2 py-1 text-xs text-red-700">
+        <div className="rounded border border-red-400 bg-red-50 px-2 py-1 text-role-callout text-red-700">
           {error}
         </div>
       )}

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-ui font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text transition-colors hover:bg-app-hover';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
 
 export default function CsoundRCEditorModal(): React.ReactElement | null {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,9 +71,9 @@ export default function CsoundRCEditorModal(): React.ReactElement | null {
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-app-text-bright">.csound7rc Editor</h2>
+          <h2 className="text-role-headline text-app-text-bright">.csound7rc Editor</h2>
           <button
-            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
+            className="px-2 text-role-title-2 text-app-text-muted hover:text-app-text-bright"
             onClick={handleClose}
             aria-label="Close"
           >
@@ -83,7 +83,7 @@ export default function CsoundRCEditorModal(): React.ReactElement | null {
 
         <div className="flex flex-1 flex-col min-h-0">
           <textarea
-            className="flex-1 rounded border border-app-border/30 bg-app-field p-2 font-mono text-xs text-app-text outline-none focus:border-app-border/60 resize-none"
+            className="flex-1 rounded border border-app-border/30 bg-app-field p-2 font-mono text-role-body text-app-text outline-none focus:border-app-border/60 resize-none"
             placeholder="Csound runtime configuration flags (e.g. -m0 -d)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -92,7 +92,7 @@ export default function CsoundRCEditorModal(): React.ReactElement | null {
 
         <div className="flex items-center justify-between mt-4">
           <span
-            className="text-xs text-app-text-muted truncate max-w-[400px]"
+            className="text-role-callout text-app-text-muted truncate max-w-[400px]"
             title={filePath}
           >
             {filePath}

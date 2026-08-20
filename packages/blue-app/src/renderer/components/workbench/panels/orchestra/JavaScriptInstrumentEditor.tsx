@@ -40,7 +40,7 @@ export default function JavaScriptInstrumentEditor({
             key={tab.key}
             type="button"
             className={[
-              'border-b-2 px-3 py-2 text-body',
+              'border-b-2 px-3 py-2 text-role-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
                 : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -63,7 +63,7 @@ export default function JavaScriptInstrumentEditor({
             >
               {tab.key === 'instrument' ? (
                 <textarea
-                  className="h-full w-full resize-none rounded-lg border border-blue-border bg-app-input px-4 py-3 font-mono text-sm text-app-text outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
+                  className="h-full w-full resize-none rounded-lg border border-blue-border bg-app-input px-4 py-3 font-mono text-role-body text-app-text outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
                   spellCheck={false}
                   value={instrument.text}
                   onChange={(event) => void onInstrumentPatch({ text: event.target.value })}

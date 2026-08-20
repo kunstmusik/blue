@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import type { BlueX7Voice } from '@blue/data';
 import { decodeBankVoice, formatBankSlotLabel } from '@blue/data';
 import { useDialogFocus } from './use-dialog-focus';
@@ -27,7 +28,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
 }) => {
   const dialogRef = useDialogFocus(state.type !== 'closed', onClose);
 
-  if (state.type === 'closed') return null;
+  if (!state || state.type === 'closed') return null;
 
   if (state.type === 'single') {
     return (
@@ -40,7 +41,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       >
         <div ref={dialogRef} className="flex flex-col w-full max-w-md rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
           <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
-            <h2 id="sysex-single-title" className="text-sm font-semibold text-gray-100">
+            <h2 id="sysex-single-title" className="text-role-headline text-gray-100">
               Import Single DX7 Voice
             </h2>
             <button
@@ -49,15 +50,15 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
               onClick={onClose}
               className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="p-4 space-y-3">
-            <p className="text-xs text-gray-200">
+            <p className="text-role-body text-gray-200">
               Detected single DX7 voice: <strong className="text-blue-accent font-semibold">{state.name}</strong>.
             </p>
-            <p className="text-xs text-blue-muted">
+            <p className="text-role-body text-blue-muted">
               Importing will replace the current BlueX7 voice parameters while preserving instrument metadata.
             </p>
           </div>
@@ -67,7 +68,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
               type="button"
               aria-label="Cancel SysEx Import"
               onClick={onClose}
-              className="rounded border border-blue-border bg-blue-surface px-3 py-1.5 text-xs text-gray-200 hover:bg-blue-surface/80"
+              className="rounded border border-blue-border bg-blue-surface px-3 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80"
             >
               Cancel
             </button>
@@ -78,7 +79,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                 onImportVoice(state.voice, state.name);
                 onClose();
               }}
-              className="rounded bg-blue-accent px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-accent/80"
+              className="rounded bg-blue-accent px-4 py-1.5 text-role-body font-semibold text-white hover:bg-blue-accent/80"
             >
               Import Voice
             </button>
@@ -100,10 +101,10 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       <div ref={dialogRef} className="flex flex-col max-h-[90vh] w-full max-w-2xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
           <div>
-            <h2 id="sysex-bank-title" className="text-sm font-semibold text-gray-100">
+            <h2 id="sysex-bank-title" className="text-role-headline text-gray-100">
               Select Voice from 32-Voice Bank
             </h2>
-            <p className="text-xs text-blue-muted">
+            <p className="text-role-subheadline text-blue-muted">
               Choose one voice to import into this BlueX7 instrument:
             </p>
           </div>
@@ -113,7 +114,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
             onClick={onClose}
             className="rounded p-1 text-gray-400 hover:bg-blue-surface hover:text-gray-100"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -144,10 +145,10 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                     onClose();
                   }
                 }}
-                className="flex items-center justify-between rounded border border-blue-border bg-blue-surface/30 p-2.5 text-left text-xs text-gray-200 transition-colors hover:border-blue-accent hover:bg-blue-accent/15 focus:outline-none focus:ring-2 focus:ring-blue-accent"
+                className="flex items-center justify-between rounded border border-blue-border bg-blue-surface/30 p-2.5 text-left text-role-body text-gray-200 transition-colors hover:border-blue-accent hover:bg-blue-accent/15 focus:outline-none focus:ring-2 focus:ring-blue-accent"
               >
                 <span className="font-medium truncate">{label}</span>
-                <span className="text-[10px] text-blue-muted ml-2">Slot {idx + 1}</span>
+                <span className="text-role-subheadline text-blue-muted ml-2">Slot {idx + 1}</span>
               </button>
             );
           })}
@@ -158,7 +159,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
             type="button"
             aria-label="Cancel SysEx Bank Import"
             onClick={onClose}
-            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-xs text-gray-200 hover:bg-blue-surface/80"
+            className="rounded border border-blue-border bg-blue-surface px-4 py-1.5 text-role-body text-gray-200 hover:bg-blue-surface/80"
           >
             Cancel
           </button>

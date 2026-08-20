@@ -85,7 +85,7 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
     <div ref={containerRef} className="flex h-full flex-col" tabIndex={-1}>
       <div className="flex items-center gap-2 border-b border-blue-border px-3 py-1 shrink-0">
         <div className="flex-1" />
-        <label className="flex items-center gap-1 text-ui text-gray-300">
+        <label className="flex items-center gap-1 text-role-body text-gray-300">
           <input
             type="checkbox"
             checked={onLoadProcessable}
@@ -96,7 +96,7 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
         </label>
         <button
           type="button"
-          className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
+          className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={reinitializing}
           onClick={() => { void handleReinitialize(); }}
           title="Reinitialize the project Clojure runtime"
@@ -105,7 +105,7 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
         </button>
         <button
           type="button"
-          className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
+          className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={testing}
           onClick={() => { void handleTest(); }}
           title="Test (Cmd/Ctrl+T)"
@@ -114,7 +114,7 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
         </button>
       </div>
       {(runtimeError || testError) && (
-        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {runtimeError ?? testError}</span>
           <button
             className="underline text-blue-muted hover:text-gray-200"

@@ -16,7 +16,7 @@ export function FileManagerBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex flex-none items-center gap-1 border-b border-app-border/40 bg-app-surface/40 px-2 py-1 text-ui text-app-text-muted overflow-x-auto"
+      className="flex flex-none items-center gap-1 border-b border-app-border/40 bg-app-surface/40 px-2 py-1 text-role-callout text-app-text-muted overflow-x-auto"
     >
       <button
         type="button"

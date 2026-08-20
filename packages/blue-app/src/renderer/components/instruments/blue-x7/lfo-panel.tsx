@@ -52,13 +52,13 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-lfo-panel">
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Low Frequency Oscillator (LFO)</span>
+        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Low Frequency Oscillator (LFO)</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         {/* Speed */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="bluex7-lfo-speed" className="text-xs text-blue-muted">
+          <label htmlFor="bluex7-lfo-speed" className="text-role-body text-blue-muted">
             Speed (0–99)
           </label>
           <input
@@ -69,13 +69,13 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             max={99}
             value={lfo.speed}
             onChange={handleFieldChange('speed', 'Speed', 0, 99)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
 
         {/* Delay */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="bluex7-lfo-delay" className="text-xs text-blue-muted">
+          <label htmlFor="bluex7-lfo-delay" className="text-role-body text-blue-muted">
             Delay (0–99)
           </label>
           <input
@@ -86,13 +86,13 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             max={99}
             value={lfo.delay}
             onChange={handleFieldChange('delay', 'Delay', 0, 99)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
 
         {/* PMD */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="bluex7-lfo-pmd" className="text-xs text-blue-muted">
+          <label htmlFor="bluex7-lfo-pmd" className="text-role-body text-blue-muted">
             PMD (0–99)
           </label>
           <input
@@ -103,13 +103,13 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             max={99}
             value={lfo.pitchModulationDepth}
             onChange={handleFieldChange('pitchModulationDepth', 'PMD', 0, 99)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
 
         {/* AMD */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="bluex7-lfo-amd" className="text-xs text-blue-muted">
+          <label htmlFor="bluex7-lfo-amd" className="text-role-body text-blue-muted">
             AMD (0–99)
           </label>
           <input
@@ -120,13 +120,13 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             max={99}
             value={lfo.amplitudeModulationDepth}
             onChange={handleFieldChange('amplitudeModulationDepth', 'AMD', 0, 99)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
 
         {/* Waveform */}
         <div className="flex flex-col gap-1">
-          <label htmlFor="bluex7-lfo-wave" className="text-xs text-blue-muted">
+          <label htmlFor="bluex7-lfo-wave" className="text-role-body text-blue-muted">
             Waveform
           </label>
           <select
@@ -134,7 +134,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             aria-label="LFO Waveform"
             value={lfo.wave}
             onChange={handleWaveChange}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           >
             {LFO_WAVEFORMS.map((wf) => (
               <option key={wf.value} value={wf.value}>
@@ -146,8 +146,8 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
 
         {/* Key Sync */}
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-blue-muted">Sync</span>
-          <label className="flex items-center gap-2 pt-1 text-xs text-gray-200 cursor-pointer">
+          <span className="text-role-body text-blue-muted">Sync</span>
+          <label className="flex items-center gap-2 pt-1 text-role-body text-gray-200 cursor-pointer">
             <input
               type="checkbox"
               aria-label="LFO Sync"

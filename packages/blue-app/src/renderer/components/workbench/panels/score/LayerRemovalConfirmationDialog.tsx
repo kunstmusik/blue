@@ -38,14 +38,14 @@ export default function LayerRemovalConfirmationDialog({ plan, onCancel, onConfi
         onClick={(event) => event.stopPropagation()}
         tabIndex={-1}
       >
-        <h2 id="layer-removal-title" className="text-sm font-semibold">
+        <h2 id="layer-removal-title" className="text-role-headline">
           Remove Layers
         </h2>
-        <p id="layer-removal-description" className="mt-2 text-ui text-app-text-muted">
+        <p id="layer-removal-description" className="mt-2 text-role-body text-app-text-muted">
           Delete {plan.totalLayerCount} layer{plan.totalLayerCount === 1 ? '' : 's'}?
         </p>
         {plan.emptyGroupIds.length > 0 && (
-          <label className="mt-3 flex items-center gap-2 text-ui text-app-text">
+          <label className="mt-3 flex items-center gap-2 text-role-body text-app-text">
             <input
               type="checkbox"
               data-delete-empty-layer-groups
@@ -59,7 +59,7 @@ export default function LayerRemovalConfirmationDialog({ plan, onCancel, onConfi
           <button
             type="button"
             data-layer-removal-cancel
-            className="rounded border border-app-border/50 px-3 py-1 text-ui text-app-text-muted hover:bg-app-hover"
+            className="rounded border border-app-border/50 px-3 py-1 text-role-body text-app-text-muted hover:bg-app-hover"
             onClick={onCancel}
           >
             Cancel
@@ -67,7 +67,7 @@ export default function LayerRemovalConfirmationDialog({ plan, onCancel, onConfi
           <button
             type="button"
             data-layer-removal-confirm
-            className="rounded border border-app-accent bg-app-accent/20 px-3 py-1 text-ui text-app-text hover:bg-app-accent/30"
+            className="rounded border border-app-accent bg-app-accent/20 px-3 py-1 text-role-body text-app-text hover:bg-app-accent/30"
             onClick={() => onConfirm(deleteEmptyLayerGroups)}
           >
             Remove

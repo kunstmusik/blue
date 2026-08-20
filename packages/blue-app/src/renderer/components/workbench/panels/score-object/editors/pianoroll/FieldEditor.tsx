@@ -243,7 +243,7 @@ export default function FieldEditor({
       <div className="absolute left-0 right-0 border-t border-dashed border-white/10" style={{ top: yMax }} />
       <div className="absolute left-0 right-0 border-t border-dashed border-white/10" style={{ top: yMin }} />
 
-      <div className="absolute bottom-1 right-2 text-micro text-blue-muted/40 select-none">
+      <div className="absolute bottom-1 right-2 text-role-subheadline text-blue-muted/40 select-none">
         {fieldDef.fieldName}: {fieldDef.minValue}..{fieldDef.maxValue}
       </div>
     </div>

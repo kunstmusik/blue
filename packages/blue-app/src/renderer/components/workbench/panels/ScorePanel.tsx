@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import { Check, ChevronRight, ChevronDown } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, ChevronLeft, Plus } from "lucide-react";
 import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
 import type {
   ScoreDocumentSnapshot,
@@ -672,7 +672,7 @@ export default function ScorePanel() {
 
   if (!loaded) {
     return (
-      <div className="h-full flex items-center justify-center text-app-text-muted text-sm">
+      <div className="h-full flex items-center justify-center text-app-text-muted text-role-body">
         No project loaded
       </div>
     );
@@ -939,7 +939,7 @@ function LeftPanel({
         {timeState.tempoRowVisible && (
           <>
             <RowHeader onContextMenu={onRowVisibilityChange} rowVisibility={timeState}>
-              <label className="flex items-center gap-1.5 text-micro text-blue-muted cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-role-subheadline text-blue-muted cursor-pointer select-none">
                 <input type="checkbox" className="w-2.5 h-2.5" checked={tempoMapEnabled} onChange={(e) => onTempoEnabledChange(e.target.checked)} />
                 Use Tempo
               </label>
@@ -958,17 +958,17 @@ function LeftPanel({
         )}
         {timeState.meterRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-micro text-blue-muted">Time Signature</span>
+            <span className="text-role-subheadline text-blue-muted">Time Signature</span>
           </RowHeader>
         )}
         {timeState.markersRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-micro text-blue-muted">Markers</span>
+            <span className="text-role-subheadline text-blue-muted">Markers</span>
           </RowHeader>
         )}
         <RowHeader onContextMenu={onRowVisibilityChange} center rowVisibility={timeState}>
           <button
-            className="text-micro text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
+            className="text-role-subheadline text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
             onClick={onManage}
           >
             Manage
@@ -1192,12 +1192,10 @@ function SpacerPanel({
           style={{ height: GROUP_SPACER }}
           onDoubleClick={() => addLayer(groupId, layerCount - 1)}
         >
-          <span className="text-sm text-blue-muted opacity-0 group-hover:opacity-60 select-none">
-            +
-          </span>
+          <Plus className="h-3.5 w-3.5 text-blue-muted opacity-0 group-hover:opacity-60 select-none" />
           {onNoteProcessorChain && (
             <button
-              className="relative w-4 h-4 text-tiny font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
+              className="relative w-4 h-4 text-role-subheadline font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
               title="Layer Group Note Processors"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1356,7 +1354,7 @@ function SoundLayerHeader({
   );
 
   const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-tiny font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
+    `w-5 h-4 text-role-subheadline font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
 
   const ctxItemClass = 'editor-context-menu__item';
 
@@ -1506,7 +1504,7 @@ function SoundLayerHeader({
           {editing ? (
             <input
               ref={inputRef}
-              className="flex-1 min-w-0 px-1 text-body bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
+              className="flex-1 min-w-0 px-1 text-role-body bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
@@ -1516,7 +1514,7 @@ function SoundLayerHeader({
               onBlur={commitEdit}
             />
           ) : (
-            <span className={`flex-1 min-w-0 px-1.5 text-body text-blue-text truncate pointer-events-none leading-4 mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : ''}`}>
+            <span className={`flex-1 min-w-0 px-1.5 text-role-body text-blue-text truncate pointer-events-none mt-0.5 ${isLayerSelected ? 'text-app-text-strong' : ''}`}>
               {layer.name}
             </span>
           )}
@@ -1545,7 +1543,7 @@ function SoundLayerHeader({
             </button>
             {showNoteProcessorButton && (
               <button
-                className={`relative w-5 h-4 text-tiny font-bold rounded-sm border flex items-center justify-center ${
+                className={`relative w-5 h-4 text-role-subheadline font-bold rounded-sm border flex items-center justify-center ${
                   noteProcessorChain && noteProcessorChain.processors.length > 0
                     ? 'bg-red-600 border-red-500 text-white'
                     : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text'
@@ -1583,7 +1581,7 @@ function SoundLayerHeader({
             )}
           </div>
           {showAutomationFooter && (
-            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
+            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-subheadline text-app-text-muted">
               <ColorPickerButton
                 value={selectedAutomationColor}
                 className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
@@ -1598,24 +1596,24 @@ function SoundLayerHeader({
                 {selectedAutomationParameter.parameterName}
               </span>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-[8px]"
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-subheadline"
                 title="Previous Parameter"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAutomationPrevNext(-1);
                 }}
               >
-                ◀
+                <ChevronLeft className="h-2.5 w-2.5" />
               </button>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-[8px]"
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-subheadline"
                 title="Next Parameter"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAutomationPrevNext(1);
                 }}
               >
-                ▶
+                <ChevronRight className="h-2.5 w-2.5" />
               </button>
             </div>
           )}

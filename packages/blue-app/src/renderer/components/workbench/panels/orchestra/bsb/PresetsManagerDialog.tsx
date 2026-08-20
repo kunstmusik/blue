@@ -18,6 +18,7 @@ import {
   FolderOpen,
   SlidersHorizontal,
   Trash2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
@@ -281,7 +282,7 @@ function PresetNode({
       style={style}
       data-drop-target={isActiveDropTarget ? 'true' : undefined}
       className={[
-        'flex items-center gap-1.5 pr-2 text-body select-none cursor-pointer',
+        'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isActiveDropTarget
           ? 'bg-blue-accent/25 text-gray-100 ring-1 ring-inset ring-blue-accent/80'
           : node.isSelected
@@ -335,7 +336,7 @@ function PresetNode({
           ref={renameInputRef}
           type="text"
           defaultValue={node.data.name}
-          className="min-w-0 flex-1 rounded border border-app-accent bg-app-surface px-1 text-body text-app-text-strong outline-none"
+          className="min-w-0 flex-1 rounded border border-app-accent bg-app-surface px-1 text-role-body text-app-text-strong outline-none"
           onClick={(event) => event.stopPropagation()}
           onBlur={() => node.reset()}
           onKeyDown={(event) => {
@@ -770,26 +771,26 @@ export default function PresetsManagerDialog({
           <div>
             <h2
               id="presets-manager-title"
-              className="text-sm font-medium text-app-text-bright"
+              className="text-role-headline text-app-text-bright"
             >
               Presets Manager
             </h2>
-            <p className="mt-1 text-xs text-app-text-muted">
+            <p className="mt-1 text-role-subheadline text-app-text-muted">
               Drag presets or folders to reorder them or move them into another
               folder.
             </p>
           </div>
           <button
             type="button"
-            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
+            className="rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-bright focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
             onClick={onClose}
             aria-label="Close Presets Manager"
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex items-center justify-between border-b border-app-border/20 px-3 py-1.5 text-xs text-app-text-muted">
+        <div className="flex items-center justify-between border-b border-app-border/20 px-3 py-1.5 text-role-subheadline text-app-text-muted">
           <span className="truncate" aria-live="polite">
             Selected: {selectedLabel}
           </span>
@@ -848,7 +849,7 @@ export default function PresetsManagerDialog({
         <div className="flex justify-end border-t border-app-border/30 px-4 py-3">
           <button
             type="button"
-            className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
+            className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent"
             onClick={onClose}
           >
             Close

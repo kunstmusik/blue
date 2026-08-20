@@ -26,7 +26,7 @@ export default function GlobalScorePanel(): React.ReactElement {
 
   if (!loaded) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-500 text-sm">
+      <div className="flex h-full items-center justify-center text-gray-500 text-role-body">
         No project loaded
       </div>
     );

@@ -157,13 +157,13 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
         aria-labelledby="freeze-operation-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="freeze-operation-title" className="text-sm font-medium text-app-text-bright" data-testid="freeze-dialog-title">
+          <h2 id="freeze-operation-title" className="text-role-headline text-app-text-bright" data-testid="freeze-dialog-title">
             {dialogTitle(verb, phase)}
           </h2>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto bg-black px-4 py-3">
-          <table className="w-full border-collapse text-left text-sm text-app-text" data-testid="freeze-items-table">
+          <table className="w-full border-collapse text-left text-role-body text-app-text" data-testid="freeze-items-table">
             <thead>
               <tr className="text-app-text-muted">
                 <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 font-medium">Object</th>
@@ -183,7 +183,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
                   onClick={() => selectRow(row.selectionId)}
                 >
                   <td className="px-2 py-2 align-middle">{row.name}</td>
-                  <td className="break-all px-2 py-2 align-middle font-mono text-xs">
+                  <td className="break-all px-2 py-2 align-middle font-mono text-role-callout">
                     {row.freezeFile ?? <span className="font-sans text-app-text-muted">—</span>}
                   </td>
                   <td className="px-2 py-2 align-middle" title={row.reason ?? undefined}>
@@ -199,7 +199,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
           <div
             role="alert"
             data-testid="freeze-dialog-error"
-            className="max-h-24 overflow-auto border-t border-app-hover px-4 py-2 text-xs whitespace-pre-wrap text-red-400"
+            className="max-h-24 overflow-auto border-t border-app-hover px-4 py-2 text-role-callout whitespace-pre-wrap text-red-400"
           >
             {error}
           </div>
@@ -209,7 +209,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
           <button
             type="button"
             data-testid="freeze-output-toggle"
-            className="flex w-full items-center gap-1.5 px-4 py-2 text-xs text-app-text-muted hover:text-app-text"
+            className="flex w-full items-center gap-1.5 px-4 py-2 text-role-callout text-app-text-muted hover:text-app-text"
             aria-expanded={outputExpanded}
             aria-controls="freeze-output-console"
             onClick={toggleOutput}
@@ -225,7 +225,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
               ref={outputRef}
               onScroll={handleOutputScroll}
               data-testid="freeze-output-text"
-              className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-app-field px-3 py-2 font-mono text-xs text-app-text"
+              className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-all border-t border-app-border-muted bg-app-field px-3 py-2 font-mono text-role-callout text-app-text"
             >
               {selectedOutput}
             </pre>
@@ -233,14 +233,14 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
         </div>
 
         <div className="flex items-center justify-between gap-4 border-t border-app-hover px-4 py-3">
-          <span className="min-w-0 truncate text-xs text-app-text-muted" data-testid="freeze-dialog-summary">
+          <span className="min-w-0 truncate text-role-callout text-app-text-muted" data-testid="freeze-dialog-summary">
             {summary}
           </span>
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               data-testid="freeze-dialog-cancel"
-              className="rounded border border-app-hover px-3 py-1.5 text-sm text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50"
               onClick={cancel}
               disabled={terminal || cancelRequested}
             >
@@ -250,7 +250,7 @@ export default function FreezeOperationDialog(): React.ReactElement | null {
               ref={okButtonRef}
               type="button"
               data-testid="freeze-dialog-ok"
-              className="rounded bg-blue-accent px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={close}
               disabled={!terminal}
             >

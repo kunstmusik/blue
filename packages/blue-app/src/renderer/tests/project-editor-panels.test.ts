@@ -305,9 +305,9 @@ describe('Project editor panels', () => {
       },
     });
 
-    expect(html).toContain('bg-app-input px-2 py-1 text-body text-app-text shadow-inner');
+    expect(html).toContain('bg-app-input px-2 py-1 text-role-body text-app-text shadow-inner');
     expect(html).not.toContain('bg-app-input px-3 py-2 text-sm text-app-text shadow-inner');
-    expect(html).toContain('text-body text-app-text');
+    expect(html).toContain('text-role-body text-app-text');
     expect(html).not.toContain('text-body font-medium uppercase tracking-[0.18em] text-app-text-muted');
   });
 
@@ -333,7 +333,7 @@ describe('Project editor panels', () => {
     expect(html).toContain('org.clojure/data.json');
     expect(html).toContain('2.5.1');
     expect(html).toContain('Move Up');
-    expect(html).toContain('text-body text-app-text');
+    expect(html).toContain('text-role-body text-app-text');
     expect(html).not.toContain('text-ui font-medium uppercase tracking-[0.18em] text-app-text-muted');
   });
 

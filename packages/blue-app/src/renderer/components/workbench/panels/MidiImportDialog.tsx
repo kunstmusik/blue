@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { isMidiImportInstrumentIdZero } from '@blue/data';
 import type {
   MidiImportPreview,
@@ -7,9 +8,9 @@ import type {
 import MidiImportStreamTable from './MidiImportStreamTable';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-ui font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 const SECONDARY_BUTTON_CLASS =
-  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-ui text-app-text transition-colors hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover disabled:cursor-not-allowed disabled:opacity-50';
 
 function createDefaultRows(preview: MidiImportPreview): MidiImportSettings[] {
   return preview.streams.map((stream) => ({ ...stream.defaults }));
@@ -139,36 +140,36 @@ export default function MidiImportDialog(): React.ReactElement | null {
       <div className="flex max-h-[85vh] w-[960px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-medium text-app-text-bright">MIDI Import Settings</h2>
+            <h2 className="text-role-headline text-app-text-bright">MIDI Import Settings</h2>
             {preview ? (
-              <p className="mt-1 text-xs text-app-text-muted">
+              <p className="mt-1 text-role-callout text-app-text-muted">
                 {preview.fileName} · format {preview.format} · {preview.ticksPerBeat} PPQ
               </p>
             ) : null}
           </div>
           <button
-            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright disabled:opacity-50"
+            className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright disabled:opacity-50"
             onClick={close}
             disabled={isSubmitting}
             aria-label="Close"
           >
-            ×
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {isLoading ? (
-          <div className="flex min-h-[220px] items-center justify-center text-sm text-app-text-muted">
+          <div className="flex min-h-[220px] items-center justify-center text-role-body text-app-text-muted">
             Reading MIDI file…
           </div>
         ) : (
           <>
-            {error ? <div className="mb-3 rounded border border-red-400/40 bg-red-400/10 px-3 py-2 text-xs text-red-200" role="alert">{error}</div> : null}
+            {error ? <div className="mb-3 rounded border border-red-400/40 bg-red-400/10 px-3 py-2 text-role-callout text-red-200" role="alert">{error}</div> : null}
             {preview ? <MidiImportStreamTable preview={preview} rows={rows} onUpdate={updateRow} /> : null}
-            <p className="mt-2 text-xs text-app-text-muted">
+            <p className="mt-2 text-role-callout text-app-text-muted">
               Trim removes leading silence for that stream: its layer starts at the first note, while the first note is written at beat 0.
             </p>
 
-            <details className="mt-3 text-xs text-app-text-muted">
+            <details className="mt-3 text-role-callout text-app-text-muted">
               <summary className="cursor-pointer text-app-text">Template placeholders</summary>
               <p className="mt-1">Use &lt;INSTR_ID&gt;, &lt;START&gt;, &lt;DUR&gt;, &lt;KEY&gt;, &lt;KEY_PCH&gt;, &lt;KEY_OCT&gt;, &lt;KEY_CPS&gt;, &lt;VELOCITY&gt;, or &lt;VELOCITY_AMP&gt;.</p>
             </details>

@@ -132,7 +132,7 @@ function BSBKnobWidget({
               height: valueH,
               width: displaySize.width,
               fontFamily: "'Roboto', sans-serif",
-              fontSize: 11,
+              fontSize: 'var(--text-role-subheadline)',
               color: 'var(--color-app-text-bright)',
               background: 'var(--color-app-bsb-value)',
               borderRadius: 3,

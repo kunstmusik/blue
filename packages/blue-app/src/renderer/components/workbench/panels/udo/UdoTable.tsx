@@ -146,7 +146,7 @@ export default function UdoTable({
         <button
           type="button"
           onClick={onAddUdo}
-          className="flex items-center gap-1 rounded px-2 py-1 text-body text-app-text-strong hover:bg-app-accent/20"
+          className="flex items-center gap-1 rounded px-2 py-1 text-role-body text-app-text-strong hover:bg-app-accent/20"
           title="Add UDO"
         >
           <Plus size={14} />
@@ -156,7 +156,7 @@ export default function UdoTable({
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 rounded px-2 py-1 text-body text-app-text-strong hover:bg-app-accent/20"
+              className="flex items-center gap-1 rounded px-2 py-1 text-role-body text-app-text-strong hover:bg-app-accent/20"
               title="Import UDO"
             >
               <Import size={14} />
@@ -205,7 +205,7 @@ export default function UdoTable({
           }
         }}
       >
-          <table className="w-full shrink-0 text-left text-body">
+          <table className="w-full shrink-0 text-left text-role-body">
             <thead className="sticky top-0 bg-app-surface-strong">
               <tr className="border-b border-app-border">
                 <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
@@ -245,7 +245,7 @@ export default function UdoTable({
                         <td className="px-3 py-2">
                           <span
                             className={[
-                              'rounded px-1.5 py-0.5 text-tiny font-medium',
+                              'rounded px-1.5 py-0.5 text-role-subheadline font-medium',
                               udo.style === 'CLASSIC'
                                 ? 'bg-app-accent/20 text-app-accent'
                                 : 'bg-app-surface-raised text-app-text-strong',

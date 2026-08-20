@@ -274,4 +274,29 @@ describe('Track instrument editor window page', () => {
 
     act(() => root.unmount());
   });
+
+  it('uses semantic typography role text-role-body on loading state', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+    );
+    window.blueAPI = {
+      getTrackInstrumentEditorDocument: vi.fn(() => new Promise(() => {})),
+      updateTrackInstrumentEditorDocument: vi.fn(),
+      onProjectDocumentUpdated: vi.fn(() => () => undefined),
+      sendBsbRealtimeControlUpdate: vi.fn(),
+    } as never;
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<TrackInstrumentEditorPage />);
+    });
+
+    const loadingDiv = container.querySelector('div');
+    expect(loadingDiv?.className).toContain('text-role-body');
+    act(() => root.unmount());
+  });
 });

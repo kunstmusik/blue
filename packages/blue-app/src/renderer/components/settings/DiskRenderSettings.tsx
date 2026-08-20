@@ -28,7 +28,7 @@ export default function DiskRenderSettings({
       title="Disk Render"
       dependencyNote="These settings are used by Render to Disk, Render and Play, and Render and Open. Project settings supply the CSD header and advanced disk options."
     >
-      <div className="mb-4 text-ui text-app-text-subtle">
+      <div className="mb-4 text-role-callout text-app-text-subtle">
         Disk rendering runs through the managed Blue Engine Csound runtime. The legacy executable value remains preserved for downgrade compatibility.
       </div>
 

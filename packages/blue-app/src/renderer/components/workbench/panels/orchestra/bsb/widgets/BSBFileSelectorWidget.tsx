@@ -97,7 +97,7 @@ function BSBFileSelectorWidget({
             onDrop={handleDrop}
           >
             <div
-              className="flex h-full items-center overflow-hidden bg-app-bsb-input px-1.5 text-ui text-app-text"
+              className="flex h-full items-center overflow-hidden bg-app-bsb-input px-1.5 text-role-body text-app-text"
               style={{ width: textFieldWidth }}
               title={fileName || '(none)'}
             >
@@ -105,7 +105,7 @@ function BSBFileSelectorWidget({
             </div>
             <button
               type="button"
-              className="flex shrink-0 items-center justify-center border-l border-blue-border/40 text-micro text-blue-muted hover:text-gray-200"
+              className="flex shrink-0 items-center justify-center border-l border-blue-border/40 text-role-callout text-blue-muted hover:text-gray-200"
               onClick={handleBrowse}
               onMouseDown={(event) => event.stopPropagation()}
               style={{ width: 30 }}

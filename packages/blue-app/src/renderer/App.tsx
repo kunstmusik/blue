@@ -57,7 +57,7 @@ export default function App(): React.ReactElement {
             <div className="absolute inset-0 bg-blue-bg/80 flex items-center justify-center z-50">
               <div className="text-center">
                 <div className="w-10 h-10 border-4 border-blue-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-blue-muted text-sm">Loading project...</p>
+                <p className="text-blue-muted text-role-body">Loading project...</p>
               </div>
             </div>
           )}

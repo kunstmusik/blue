@@ -21,7 +21,7 @@ export default function MidiImportStreamTable({
 }: MidiImportStreamTableProps): React.ReactElement {
   return (
     <div className="min-h-0 flex-1 overflow-auto rounded border border-app-border/30 bg-black">
-      <table className="w-full border-collapse text-xs text-app-text">
+      <table className="w-full border-collapse text-role-callout text-app-text">
         <thead className="sticky top-0 bg-app-surface text-left text-app-text-muted">
           <tr>
             <th className="px-2 py-2 font-medium">Source</th>
@@ -57,7 +57,7 @@ export default function MidiImportStreamTable({
                 </td>
                 <td className="px-2 py-2">
                   <input
-                    className="w-24 rounded border border-app-border/30 bg-app-field px-2 py-1 text-xs text-app-text outline-none focus:border-app-border/60"
+                    className="w-24 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
                     value={row.instrumentId}
                     onChange={(event) => onUpdate(stream.streamKey, { instrumentId: event.target.value })}
                     aria-label={`Instrument ID for ${stream.streamKey}`}
@@ -65,7 +65,7 @@ export default function MidiImportStreamTable({
                 </td>
                 <td className="min-w-[290px] px-2 py-2">
                   <input
-                    className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 font-mono text-xs text-app-text outline-none focus:border-app-border/60"
+                    className="w-full rounded border border-app-border/30 bg-app-field px-2 py-1 font-mono text-role-body text-app-text outline-none focus:border-app-border/60"
                     value={row.noteTemplate}
                     onChange={(event) => onUpdate(stream.streamKey, { noteTemplate: event.target.value })}
                     aria-label={`Note template for ${stream.streamKey}`}

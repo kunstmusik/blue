@@ -167,36 +167,36 @@ export default function EffectEditorPanel({
             type="text"
             value={snapshot.name}
             onChange={(event) => handleNameChange(event.target.value)}
-            className="min-w-0 flex-1 rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong outline-none focus:border-app-accent"
+            className="min-w-0 flex-1 rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
             aria-label="Effect name"
           />
         )}
-        <label className="flex items-center gap-1 text-body text-app-text-muted">
+        <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           In
           <input
             type="number"
             min={0}
             value={snapshot.numIns}
             onChange={(event) => handleNumInsChange(Number.parseInt(event.target.value, 10) || 0)}
-            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-body text-app-text-strong outline-none focus:border-app-accent"
+            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>
-        <label className="flex items-center gap-1 text-body text-app-text-muted">
+        <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Out
           <input
             type="number"
             min={0}
             value={snapshot.numOuts}
             onChange={(event) => handleNumOutsChange(Number.parseInt(event.target.value, 10) || 0)}
-            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-body text-app-text-strong outline-none focus:border-app-accent"
+            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>
-        <label className="flex items-center gap-1 text-body text-app-text-muted">
+        <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Style
           <select
             value={snapshot.style}
             onChange={(event) => handleStyleChange(event.target.value as 'CLASSIC' | 'MODERN')}
-            className="rounded border border-app-border bg-app-input px-1.5 py-1 text-body text-app-text-strong outline-none focus:border-app-accent"
+            className="rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
           >
             <option value="CLASSIC">Classic</option>
             <option value="MODERN">Modern</option>
@@ -216,7 +216,7 @@ export default function EffectEditorPanel({
               key={tab}
               type="button"
               className={[
-                'border-b-2 px-3 py-2 text-body',
+                'border-b-2 px-3 py-2 text-role-body',
                 activeTab === tab
                   ? 'border-app-accent text-app-text-strong'
                   : 'border-transparent text-app-text-muted hover:text-app-text-strong',
@@ -232,7 +232,7 @@ export default function EffectEditorPanel({
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'code' && (
           <div className="flex h-full flex-col">
-            <div className="flex-none border-b border-app-border/40 bg-app-input px-3 py-1 font-mono text-ui italic text-app-text-muted">
+            <div className="flex-none border-b border-app-border/40 bg-app-input px-3 py-1 font-mono text-role-callout italic text-app-text-muted">
               {xinLabel}
             </div>
             <div className="min-h-0 flex-1">
@@ -244,7 +244,7 @@ export default function EffectEditorPanel({
                 javaBlueCompletionOptions={javaBlueCompletionOptions}
               />
             </div>
-            <div className="flex-none border-t border-app-border/40 bg-app-input px-3 py-1 font-mono text-ui font-bold text-app-text-muted">
+            <div className="flex-none border-t border-app-border/40 bg-app-input px-3 py-1 font-mono text-role-callout font-bold text-app-text-muted">
               {xoutLabel}
             </div>
           </div>

@@ -273,12 +273,12 @@ export default function AudioPlayerWaveform({
           }}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-xs text-blue-muted">
+        <div className="absolute inset-0 flex items-center justify-center text-role-body text-blue-muted">
           No File Selected
         </div>
       )}
       {status && (
-        <div className="absolute inset-0 flex items-center justify-center text-xs text-amber-600">
+        <div className="absolute inset-0 flex items-center justify-center text-role-body text-amber-600">
           {status}
         </div>
       )}

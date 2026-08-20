@@ -74,7 +74,7 @@ describe('ReplConsolePanel', () => {
     expect(markup).toContain(title);
     expect(markup).toContain(prompt);
     expect(markup).toContain(`aria-label="${title} input"`);
-    expect(markup).toContain('font-mono text-content leading-6');
+    expect(markup).toContain('font-mono text-role-body');
     expect(markup).not.toContain('Enter run');
     expect(markup).not.toContain('Shift+Enter newline');
   });

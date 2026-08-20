@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import type { BlueX7Voice } from '@blue/data';
 import {
   createDefaultBlueX7Voice,
@@ -121,14 +122,14 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
     <div className="box-border flex h-full min-w-0 w-full flex-col overflow-x-hidden overflow-y-auto bg-blue-bg text-gray-100 p-4 space-y-4" data-testid="blue-x7-editor">
       {/* Error alert if SysEx import failed */}
       {importError && (
-        <div className="flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-xs text-red-200" data-testid="sysex-error-banner">
+        <div className="flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-role-subheadline text-red-200" data-testid="sysex-error-banner">
           <span>{importError}</span>
           <button
             type="button"
             onClick={() => setImportError(null)}
             className="text-red-400 hover:text-red-100 font-bold ml-2"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -137,7 +138,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-border pb-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label htmlFor="bluex7-instrument-name" className="text-xs font-semibold text-blue-muted">
+            <label htmlFor="bluex7-instrument-name" className="text-role-headline text-blue-muted">
               Name:
             </label>
             <input
@@ -146,11 +147,11 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
               type="text"
               value={instrument.name ?? ''}
               onChange={handleNameChange}
-              className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-xs text-gray-100 font-medium focus:border-blue-accent focus:outline-none"
+              className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-100 font-medium focus:border-blue-accent focus:outline-none"
             />
           </div>
 
-          <label className="flex items-center gap-1.5 text-xs text-gray-200 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-role-body text-gray-200 cursor-pointer">
             <input
               id="bluex7-instrument-enabled"
               type="checkbox"
@@ -163,7 +164,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           </label>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="bluex7-instrument-comment" className="text-xs text-blue-muted">
+            <label htmlFor="bluex7-instrument-comment" className="text-role-body text-blue-muted">
               Comment:
             </label>
             <input
@@ -173,7 +174,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
               value={instrument.comment ?? ''}
               onChange={handleCommentChange}
               placeholder="Optional comment..."
-              className="w-48 rounded border border-blue-border bg-blue-surface px-2 py-1 text-xs text-gray-200 placeholder:text-gray-500 focus:border-blue-accent focus:outline-none"
+              className="w-48 rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-200 placeholder:text-gray-500 focus:border-blue-accent focus:outline-none"
             />
           </div>
         </div>
@@ -185,7 +186,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
             type="button"
             aria-label="Import DX7 SysEx File"
             onClick={handleImportSysExClick}
-            className="rounded border border-blue-border bg-blue-surface px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-blue-accent/20 hover:text-white"
+            className="rounded border border-blue-border bg-blue-surface px-2.5 py-1 text-role-body font-medium text-gray-200 hover:bg-blue-accent/20 hover:text-white"
           >
             Import SysEx...
           </button>
@@ -197,7 +198,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
               disabled={!canUndo}
               onClick={undo}
               title={undoDescription ? `Undo: ${undoDescription}` : 'Undo'}
-              className="px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-blue-accent/20 disabled:opacity-40 disabled:hover:bg-transparent"
+              className="px-2.5 py-1 text-role-body font-medium text-gray-200 hover:bg-blue-accent/20 disabled:opacity-40 disabled:hover:bg-transparent"
             >
               Undo
             </button>
@@ -208,7 +209,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
               disabled={!canRedo}
               onClick={redo}
               title={redoDescription ? `Redo: ${redoDescription}` : 'Redo'}
-              className="px-2.5 py-1 text-xs font-medium text-gray-200 hover:bg-blue-accent/20 disabled:opacity-40 disabled:hover:bg-transparent"
+              className="px-2.5 py-1 text-role-body font-medium text-gray-200 hover:bg-blue-accent/20 disabled:opacity-40 disabled:hover:bg-transparent"
             >
               Redo
             </button>

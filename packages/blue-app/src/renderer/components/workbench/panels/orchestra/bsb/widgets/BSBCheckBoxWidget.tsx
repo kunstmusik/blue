@@ -41,7 +41,7 @@ function BSBCheckBoxWidget({
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} autoSize displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
       <div
         className="flex h-full w-full items-center gap-1.5"
-        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 12, cursor: editEnabled ? 'default' : 'pointer', color: 'var(--color-app-text-bright)' }}
+        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 'var(--text-role-callout)', cursor: editEnabled ? 'default' : 'pointer', color: 'var(--color-app-text-bright)' }}
         onClick={handleToggle}
       >
         <svg width={13} height={13} className="shrink-0">
@@ -50,7 +50,7 @@ function BSBCheckBoxWidget({
             <path d="M2 6l3 3 5-5" fill="none" stroke="rgb(240,240,255)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
           )}
         </svg>
-        <BsbTextLabel text={labelText} plainClassName="block text-body" htmlClassName="inline-block max-w-full text-body" />
+        <BsbTextLabel text={labelText} plainClassName="block text-role-callout" htmlClassName="inline-block max-w-full text-role-callout" />
       </div>
     </WidgetWrapper>
   );

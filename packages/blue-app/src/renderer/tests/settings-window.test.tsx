@@ -297,4 +297,25 @@ describe('settings renderer (044)', () => {
     expect(container.textContent).toContain('managed Blue Engine Csound runtime');
     expect(container.textContent).toContain('SoundFont inspection');
   });
+
+  it('uses semantic typography roles across headers, navigation, and controls', async () => {
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+
+    const rootDiv = container.querySelector('div.text-role-body');
+    expect(rootDiv).toBeTruthy();
+
+    const sectionHeadings = Array.from(container.querySelectorAll('h2'));
+    expect(sectionHeadings.length).toBeGreaterThan(0);
+    for (const h2 of sectionHeadings) {
+      expect(h2.className).toContain('text-role-title-2');
+    }
+
+    const footerButtons = Array.from(container.querySelectorAll('div.border-t button'));
+    expect(footerButtons.length).toBeGreaterThan(0);
+    for (const btn of footerButtons) {
+      expect(btn.className).toContain('text-role-body');
+    }
+  });
 });
