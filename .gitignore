@@ -69,3 +69,4 @@ temp*.csd
 .zcode
 
 node_modules
+.tmp-research
