@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { dialog } from 'electron';
 import {
@@ -71,13 +72,21 @@ describe('BlueX7 SysEx Import — Main Process Service', () => {
   });
 
   it('rejects unsupported file sizes before reading file content', async () => {
-    vi.mocked(dialog.showOpenDialog).mockResolvedValueOnce({
-      canceled: false,
-      filePaths: ['/dev/null'],
-    });
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-x7-test-'));
+    const invalidFile = path.join(tempDir, 'invalid-size.syx');
+    fs.writeFileSync(invalidFile, new Uint8Array(10));
 
-    const res = await selectBlueX7SysexFile();
-    expect(res).toMatchObject({ status: 'error', code: 'unsupported-size' });
+    try {
+      vi.mocked(dialog.showOpenDialog).mockResolvedValueOnce({
+        canceled: false,
+        filePaths: [invalidFile],
+      });
+
+      const res = await selectBlueX7SysexFile();
+      expect(res).toMatchObject({ status: 'error', code: 'unsupported-size' });
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('returns error when file does not exist or cannot be read', async () => {

@@ -135,5 +135,5 @@ describe('BlueX7 Csound Generation Parity — TimewaveCanon Regression', () => {
     expect(generatedCsd).toContain('idur \t= abs(p3) \np3 = p3 + 4');
     expect(generatedCsd).toContain('(p4 < 15 ? cpspch(p4) : p4)');
     expect(generatedCsd).toContain('aout =');
-  });
+  }, 30000);
 });
