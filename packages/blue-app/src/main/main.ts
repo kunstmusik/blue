@@ -294,10 +294,12 @@ import type {
   RenderOperationResult,
   RenderOperationStatus,
   FreezeOperationResult,
+  FreezeItemStatus,
   DiskRenderAction,
 } from '../shared/render-freeze-contract';
 import {
   RENDER_OPERATION_STATUS_CHANNEL,
+  FREEZE_ITEM_STATUS_CHANNEL,
   isCancelRenderOperationRequest,
   isFreezeScoreObjectsRequest,
   isRenderToDiskRequest,
@@ -909,13 +911,13 @@ const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
 
 function createCsoundExecutionSeam(
   cancellationSignal?: { cancelled: boolean },
-  onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
+  streamOutput?: (text: string, type: 'stdout' | 'stderr') => void,
   options: { trackRenderProcess?: boolean } = {},
 ): RenderExecutionSeam & FreezeExecutionSeam & SoundFontExecutionSeam {
   const trackRenderProcess = options.trackRenderProcess ?? true;
 
   return {
-    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean }> {
+    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number, onOutput?: (text: string, type: 'stdout' | 'stderr') => void): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean }> {
       const controller = trackRenderProcess && activeRenderAbortController
         ? activeRenderAbortController
         : new AbortController();
@@ -931,6 +933,7 @@ function createCsoundExecutionSeam(
         {
           signal: controller.signal,
           onOutput: (text, source) => {
+            streamOutput?.(text, source);
             onOutput?.(text, source);
             if (source !== 'stderr' || !onProgress) return;
             stderrLineBuffer += text;
@@ -1200,6 +1203,9 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
       operationId,
       broadcastRenderStatus,
       seam,
+      (itemEvent: FreezeItemStatus) => {
+        broadcastToWorkbenchWindows(FREEZE_ITEM_STATUS_CHANNEL, itemEvent);
+      },
     );
 
     // Broadcast updated project if any mutations occurred

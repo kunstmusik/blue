@@ -20,7 +20,7 @@ import type { PolyObjectLayerGroupSnapshot, ScoreRowObjectSnapshot } from '../co
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
-import type { RenderOperationStatus } from '../../shared/render-freeze-contract';
+import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -65,7 +65,6 @@ describe('render/freeze renderer actions', () => {
   let cancelRenderOperation: ReturnType<typeof vi.fn>;
   let captureScoreSoundObjectClipboard: ReturnType<typeof vi.fn>;
   let addScoreSoundObjectToProjectLibrary: ReturnType<typeof vi.fn>;
-  let renderStatusCallback!: (status: RenderOperationStatus) => void;
 
   beforeEach(() => {
     const group = groupWithObject();
@@ -97,10 +96,8 @@ describe('render/freeze renderer actions', () => {
       cancelRenderOperation,
       captureScoreSoundObjectClipboard,
       addScoreSoundObjectToProjectLibrary,
-      onRenderOperationStatus: (callback: (status: RenderOperationStatus) => void) => {
-        renderStatusCallback = callback;
-        return () => {};
-      },
+      onRenderOperationStatus: () => () => {},
+      onFreezeItemStatus: () => () => {},
     } as typeof window.blueAPI;
     useProjectStore.setState({
       score: { ...originalProjectState.score, layerGroups: [group] },
@@ -146,9 +143,24 @@ describe('render/freeze renderer actions', () => {
       score: originalProjectState.score,
       flushPendingPatches: originalProjectState.flushPendingPatches,
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
+    useFreezeOperationStore.getState().close();
+    useFreezeOperationStore.setState({
+      open: false,
+      operationId: null,
+      phase: null,
+      progress: null,
+      message: '',
+      rows: [],
+      selectedSelectionId: null,
+      selectionLocked: false,
+      outputExpanded: false,
+      result: null,
+      error: null,
+      cancelRequested: false,
+    });
   });
 
-  it('sends selected timeline targets through the freeze IPC action', async () => {
+  it('sends selected timeline targets through the freeze IPC action and tracks them in the operation dialog store', async () => {
     const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
     act(() => {
       surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
@@ -160,6 +172,8 @@ describe('render/freeze renderer actions', () => {
     await act(async () => {
       action.click();
       await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(freezeScoreObjects).toHaveBeenCalledWith(expect.objectContaining({
@@ -167,14 +181,25 @@ describe('render/freeze renderer actions', () => {
       targets: [expect.objectContaining({ selectionId: 'score-1', ownerKind: 'timeline' })],
     }));
     const operationId = freezeScoreObjects.mock.calls[0]![0].operationId;
-    expect(toast.success).toHaveBeenCalledWith(
+
+    const state = useFreezeOperationStore.getState();
+    expect(state.open).toBe(true);
+    expect(state.operationId).toBe(operationId);
+    expect(state.phase).toBe('completed');
+    expect(state.rows).toEqual([
+      expect.objectContaining({ selectionId: 'score-1', name: 'Freeze me', action: 'freeze', status: 'complete' }),
+    ]);
+
+    // Freeze/unfreeze no longer surfaces toasts; the dialog owns all reporting.
+    expect(toast.loading).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalledWith(
       'Freeze/unfreeze complete: 1 frozen.',
-      { id: operationId, description: null },
+      expect.anything(),
     );
 
-    const loadingCallCount = vi.mocked(toast.loading).mock.calls.length;
+    // A late status broadcast must not regress the settled dialog state.
     act(() => {
-      renderStatusCallback({
+      useFreezeOperationStore.getState().handleStatus({
         operationId,
         kind: 'freeze',
         phase: 'preparing',
@@ -184,7 +209,7 @@ describe('render/freeze renderer actions', () => {
         error: null,
       });
     });
-    expect(toast.loading).toHaveBeenCalledTimes(loadingCallCount);
+    expect(useFreezeOperationStore.getState().phase).toBe('completed');
   });
 
   it('copies one selected timeline SoundObject into the shared Library clipboard', async () => {
@@ -270,18 +295,16 @@ describe('render/freeze renderer actions', () => {
     await act(async () => {
       startAction.click();
       await Promise.resolve();
+      await Promise.resolve();
     });
 
     const request = freezeScoreObjects.mock.calls[0]![0];
+    expect(useFreezeOperationStore.getState().phase).toBe('preparing');
+
+    // The context menu no longer offers a cancel entry; the progress dialog's
+    // Cancel button drives the store cancel action.
     act(() => {
-      surface.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
-    });
-    const cancelAction = Array.from(document.querySelectorAll('[role="menuitem"]'))
-      .find((item) => item.textContent?.includes('Cancel Freeze/Unfreeze')) as HTMLElement;
-    expect(cancelAction).toBeTruthy();
-    await act(async () => {
-      cancelAction.click();
-      await Promise.resolve();
+      useFreezeOperationStore.getState().cancel();
     });
     expect(cancelRenderOperation).toHaveBeenCalledWith({ operationId: request.operationId });
 
@@ -291,10 +314,12 @@ describe('render/freeze renderer actions', () => {
         deletedFiles: [], rejectedTargets: [], error: null, project: null,
       });
       await Promise.resolve();
+      await Promise.resolve();
     });
-    expect(toast.message).toHaveBeenCalledWith(
-      'Freeze/unfreeze cancelled.',
-      { id: request.operationId, description: null },
-    );
+
+    const state = useFreezeOperationStore.getState();
+    expect(state.phase).toBe('cancelled');
+    expect(state.rows[0]!.status).toBe('cancelled');
+    expect(toast.message).not.toHaveBeenCalled();
   });
 });

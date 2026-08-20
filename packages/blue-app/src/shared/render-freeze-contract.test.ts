@@ -2,21 +2,43 @@ import { describe, expect, it } from 'vitest';
 
 import {
   RENDER_OPERATION_STATUS_CHANNEL,
+  FREEZE_ITEM_STATUS_CHANNEL,
   SINGLE_ACTIVE_OPERATION,
   MAIN_OWNS_EXECUTABLE_AND_PATH,
   createStatus,
   isCancelRenderOperationRequest,
+  isFreezeItemStatus,
   isFreezeScoreObjectsRequest,
   isRenderOperationStatus,
   isRenderToDiskRequest,
+  type FreezeItemStatus,
   type RenderOperationStatus,
   type RenderOperationPhase,
 } from './render-freeze-contract';
+
+function freezeItem(overrides: Partial<FreezeItemStatus> = {}): FreezeItemStatus {
+  return {
+    operationId: 'freeze-1',
+    selectionId: 'score-1',
+    name: 'Pattern 1',
+    action: 'freeze',
+    phase: 'running',
+    freezeFile: null,
+    reason: null,
+    outputAppend: null,
+    outputType: null,
+    ...overrides,
+  };
+}
 
 describe('render-freeze-contract', () => {
   describe('channel constants', () => {
     it('defines a status broadcast channel', () => {
       expect(RENDER_OPERATION_STATUS_CHANNEL).toBe('render-operation-status');
+    });
+
+    it('defines a freeze item status broadcast channel', () => {
+      expect(FREEZE_ITEM_STATUS_CHANNEL).toBe('freeze-item-status');
     });
 
     it('enforces single active operation', () => {
@@ -117,6 +139,29 @@ describe('render-freeze-contract', () => {
       expect(isRenderOperationStatus({ ...base, action: null })).toBe(true);
       expect(isRenderOperationStatus({ ...base, action: undefined })).toBe(true);
       expect(isRenderOperationStatus({ ...base, action: 'delete' })).toBe(false);
+    });
+
+    it('accepts well-formed freeze item statuses in every phase', () => {
+      for (const phase of ['pending', 'running', 'complete', 'failed'] as const) {
+        expect(isFreezeItemStatus(freezeItem({ phase }))).toBe(true);
+      }
+      expect(isFreezeItemStatus(freezeItem({
+        action: 'unfreeze',
+        freezeFile: 'freeze0.aif',
+        outputAppend: 'rendering...\n',
+        outputType: 'stderr',
+      }))).toBe(true);
+      expect(isFreezeItemStatus(freezeItem({ reason: 'Freeze failed: boom' }))).toBe(true);
+    });
+
+    it('rejects malformed freeze item statuses', () => {
+      expect(isFreezeItemStatus(null)).toBe(false);
+      expect(isFreezeItemStatus('running')).toBe(false);
+      expect(isFreezeItemStatus({ ...freezeItem(), operationId: 7 })).toBe(false);
+      expect(isFreezeItemStatus({ ...freezeItem(), phase: 'cancelled' })).toBe(false);
+      expect(isFreezeItemStatus({ ...freezeItem(), action: 'render' })).toBe(false);
+      expect(isFreezeItemStatus({ ...freezeItem(), freezeFile: 42 })).toBe(false);
+      expect(isFreezeItemStatus({ ...freezeItem(), outputType: 'stdin' })).toBe(false);
     });
   });
 });

@@ -54,6 +54,7 @@ import type {
   CancelRenderOperationRequest,
   RenderOperationResult,
   RenderOperationStatus,
+  FreezeItemStatus,
   FreezeOperationResult,
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
@@ -580,6 +581,9 @@ declare global {
       cancelRenderOperation: (request: CancelRenderOperationRequest) => Promise<boolean>;
       onRenderOperationStatus: (
         callback: (status: RenderOperationStatus) => void,
+      ) => () => void;
+      onFreezeItemStatus: (
+        callback: (item: FreezeItemStatus) => void,
       ) => () => void;
 
       // Audio File Player

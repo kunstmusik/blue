@@ -97,9 +97,15 @@ import type {
   CancelRenderOperationRequest,
   RenderOperationResult,
   RenderOperationStatus,
+  FreezeItemStatus,
   FreezeOperationResult,
 } from '../shared/render-freeze-contract';
-import { RENDER_OPERATION_STATUS_CHANNEL, isRenderOperationStatus } from '../shared/render-freeze-contract';
+import {
+  RENDER_OPERATION_STATUS_CHANNEL,
+  FREEZE_ITEM_STATUS_CHANNEL,
+  isRenderOperationStatus,
+  isFreezeItemStatus,
+} from '../shared/render-freeze-contract';
 import type {
   ProgramSettingsSnapshot,
   ProgramSettingsSaveResult,
@@ -872,6 +878,13 @@ contextBridge.exposeInMainWorld('blueAPI', {
     };
     ipcRenderer.on(RENDER_OPERATION_STATUS_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler); };
+  },
+  onFreezeItemStatus: (callback: (item: FreezeItemStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, item: unknown) => {
+      if (isFreezeItemStatus(item)) callback(item);
+    };
+    ipcRenderer.on(FREEZE_ITEM_STATUS_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(FREEZE_ITEM_STATUS_CHANNEL, handler); };
   },
 
   // Audio File Player

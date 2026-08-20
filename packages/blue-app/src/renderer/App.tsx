@@ -14,6 +14,7 @@ import FTableConverterModal from './components/workbench/panels/tools/FTableConv
 import CsoundRCEditorModal from './components/workbench/panels/tools/CsoundRCEditorModal';
 import CodeRepositoryEditorModal from './components/workbench/panels/code-repository/CodeRepositoryEditorModal';
 import MidiImportDialog from './components/workbench/panels/MidiImportDialog';
+import FreezeOperationDialog from './components/workbench/panels/FreezeOperationDialog';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
 import { useLibraryStore } from './stores/library-store';
@@ -68,6 +69,7 @@ export default function App(): React.ReactElement {
         <CsoundRCEditorModal />
         <CodeRepositoryEditorModal />
         <MidiImportDialog />
+        <FreezeOperationDialog />
         {transferPreview && (
           <LibraryTransferDialog
             preview={transferPreview}
