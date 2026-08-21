@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { Element } from '../../serialization/xml-reader';
+import { PythonObject } from '../../sound-objects/python-object';
+import { Score } from '../score';
+import { AudioClip } from '../audio/audio-clip';
 import { TrackLayerGroup } from './track-layer-group';
+
+class RecordingPythonObject extends PythonObject {
+  processOnLoadCalls = 0;
+  override processOnLoad(): void {
+    this.processOnLoadCalls += 1;
+  }
+
+  override async processOnLoadAsync(): Promise<void> {
+    this.processOnLoadCalls += 1;
+  }
+}
 
 describe('TrackLayerGroup', () => {
   it('creates, orders, and deep-copies Track rows', () => {
@@ -30,5 +44,23 @@ describe('TrackLayerGroup', () => {
     expect(loaded.getUniqueId()).toBe('group-roundtrip');
     expect(loaded).toHaveLength(1);
     expect(loaded[0].getName()).toBe('One');
+  });
+
+  it('processes on-load-processable script objects held on Tracks', async () => {
+    const score = new Score();
+    score.length = 0;
+    const group = new TrackLayerGroup();
+    const track = group.newLayerAt(0);
+    const onLoadScript = new RecordingPythonObject();
+    onLoadScript.setOnLoadProcessable?.(true);
+    track.push(new AudioClip());
+    track.push(onLoadScript);
+    score.push(group);
+
+    score.processOnLoad();
+    expect(onLoadScript.processOnLoadCalls).toBe(1);
+
+    await score.processOnLoadAsync();
+    expect(onLoadScript.processOnLoadCalls).toBe(2);
   });
 });

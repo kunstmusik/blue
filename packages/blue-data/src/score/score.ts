@@ -163,6 +163,8 @@ export class Score extends Array<LayerGroup<Layer>> {
     for (const lg of this) {
       if (lg instanceof PolyObject) {
         lg.processOnLoad(context, session);
+      } else if (lg instanceof TrackLayerGroup) {
+        lg.processOnLoad(context, session);
       }
     }
   }
@@ -174,6 +176,8 @@ export class Score extends Array<LayerGroup<Layer>> {
     const context = this.timeContext;
     for (const lg of this) {
       if (lg instanceof PolyObject) {
+        await lg.processOnLoadAsync(context, session, runtimeClient);
+      } else if (lg instanceof TrackLayerGroup) {
         await lg.processOnLoadAsync(context, session, runtimeClient);
       }
     }
