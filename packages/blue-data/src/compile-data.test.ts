@@ -138,6 +138,7 @@ describe('CompileData', () => {
       value: '/tmp/sample.wav',
       channelName: 'gS_blue_str0',
     });
+    compileData.setMixerEnabled(true);
 
     compileData.reset();
 
@@ -148,5 +149,6 @@ describe('CompileData', () => {
     expect(compileData.getInstrSourceId(instrument)).toBeUndefined();
     expect(compileData.getOriginalParameters()).toHaveLength(0);
     expect(compileData.getStringChannels()).toHaveLength(0);
+    expect(compileData.isMixerEnabled()).toBe(false);
   });
 });
