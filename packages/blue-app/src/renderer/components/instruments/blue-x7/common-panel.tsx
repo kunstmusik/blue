@@ -84,7 +84,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-common-panel">
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Common & Algorithms</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Common & Algorithms</span>
       </div>
 
       <div className="flex min-w-0 flex-col sm:flex-row gap-4 items-start">

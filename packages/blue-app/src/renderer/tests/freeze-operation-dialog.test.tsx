@@ -169,12 +169,19 @@ describe('FreezeOperationDialog', () => {
 
     const dialog = dialogElement();
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(container.querySelector('[data-testid="freeze-dialog-title"]')!.textContent)
+    const title = container.querySelector('[data-testid="freeze-dialog-title"]') as HTMLElement;
+    expect(title.textContent)
       .toBe('Freeze/Unfreeze - Running');
+    expect(title.classList).toContain('text-role-title-2');
+    expect(title.classList).toContain('font-bold');
 
     const table = container.querySelector('[data-testid="freeze-items-table"]') as HTMLTableElement;
     const headerText = Array.from(table.querySelectorAll('th')).map((th) => th.textContent);
     expect(headerText).toEqual(['Object', 'Freeze File', 'Status']);
+    for (const header of table.querySelectorAll('th')) {
+      expect(header.classList).toContain('text-role-headline');
+      expect(header.classList).toContain('font-bold');
+    }
 
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     expect(rows).toHaveLength(2);
@@ -182,6 +189,7 @@ describe('FreezeOperationDialog', () => {
     expect(rows[0]!.textContent).toContain('Waiting');
     expect(rows[1]!.textContent).toContain('F: Frozen');
     expect(rows[1]!.textContent).toContain('freeze0.aif');
+    expect(rows[1]!.querySelectorAll('td')[1]?.classList).toContain('text-role-body');
 
     const okButton = container.querySelector('[data-testid="freeze-dialog-ok"]') as HTMLButtonElement;
     const cancelButton = container.querySelector('[data-testid="freeze-dialog-cancel"]') as HTMLButtonElement;

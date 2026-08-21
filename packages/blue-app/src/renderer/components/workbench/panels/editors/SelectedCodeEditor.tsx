@@ -39,6 +39,7 @@ const blueCodeMirrorTheme = EditorView.theme(
       color: 'var(--color-app-text-bright)',
       backgroundColor: 'var(--color-app-overlay)',
       fontSize: 'var(--text-role-body)',
+      lineHeight: 'var(--text-role-body--line-height)',
     },
     '.cm-scroller': {
       fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
@@ -94,7 +95,7 @@ const blueCodeMirrorTheme = EditorView.theme(
     '.cm-tooltip.cm-completionInfo': {
       maxWidth: 'min(640px, 70vw)',
       whiteSpace: 'pre-wrap',
-      lineHeight: '1.45',
+      lineHeight: 'var(--text-role-body--line-height)',
     },
   },
   { dark: true },

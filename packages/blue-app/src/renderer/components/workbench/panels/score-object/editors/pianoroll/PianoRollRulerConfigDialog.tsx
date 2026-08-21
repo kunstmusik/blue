@@ -60,7 +60,7 @@ export default function PianoRollRulerConfigDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
-          <h2 className="text-role-headline border-b border-blue-border/30 pb-2">PianoRoll Ruler Configuration</h2>
+          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">PianoRoll Ruler Configuration</h2>
 
           <label className="flex items-center gap-2 text-role-body text-blue-text cursor-pointer">
             <input
@@ -73,10 +73,10 @@ export default function PianoRollRulerConfigDialog({
           </label>
 
           <fieldset className="space-y-3 rounded border border-blue-border/35 px-3 pb-3 pt-2">
-            <legend className="px-1 text-role-headline text-blue-text">Local Ruler Settings</legend>
+            <legend className="px-1 text-role-headline font-bold text-blue-text">Local Ruler Settings</legend>
 
             <div className="space-y-2">
-              <div className="text-role-headline text-blue-text">Primary Ruler</div>
+              <div className="text-role-headline font-bold text-blue-text">Primary Ruler</div>
               <div className="flex items-center gap-2">
                 <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
                 <select
@@ -93,7 +93,7 @@ export default function PianoRollRulerConfigDialog({
             </div>
 
             <div className="space-y-2">
-              <div className="text-role-headline text-blue-text">Secondary Ruler</div>
+              <div className="text-role-headline font-bold text-blue-text">Secondary Ruler</div>
               <label className="flex items-center gap-2 text-role-body text-blue-text cursor-pointer">
                 <input
                   type="checkbox"

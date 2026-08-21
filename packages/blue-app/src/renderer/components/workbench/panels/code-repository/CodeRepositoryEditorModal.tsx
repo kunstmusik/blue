@@ -119,7 +119,7 @@ export default function CodeRepositoryEditorModal(): React.ReactElement | null {
           }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <h2 id="code-repository-unavailable-title" className="text-role-headline text-app-text-bright">
+            <h2 id="code-repository-unavailable-title" className="text-role-title-2 font-bold text-app-text-bright">
               Code Repository Editor
             </h2>
             <button

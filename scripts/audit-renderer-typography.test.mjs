@@ -141,6 +141,27 @@ test('passes when all files use valid typography catalog and body baseline', asy
   }
 });
 
+test('requires Headline role assignments to opt into bold weight', async () => {
+  const workspace = await createFixtureWorkspace({
+    files: {
+      'packages/blue-app/src/renderer/components/UnweightedHeadline.tsx': `
+        export function UnweightedHeadline() {
+          return <div className="text-role-headline">Group Heading</div>;
+        }
+      `,
+    },
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.passed, false);
+    assert.equal(result.counts.unapprovedHeadlineWeights, 1);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test('rejects retired legacy custom vocabulary (text-nano, text-micro, text-tiny, text-ui, text-body, text-content)', async () => {
   const workspace = await createFixtureWorkspace({
     files: {
@@ -602,5 +623,135 @@ test('normalizes paths to deterministic POSIX format on all platforms', async ()
     }
   } finally {
     await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test('rejects a dynamic or expanded token namespace', async () => {
+  const workspace = await createFixtureWorkspace({
+    indexCss: VALID_INDEX_CSS
+      .replace('@theme static {', '@theme {')
+      .replace('  --text-*: initial;\n\n', '')
+      .replace('  --text-role-body: 13px;', '  --text-role-body: 13px;\n  --text-legacy-extra: 12px;'),
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.passed, false);
+    assert.ok(result.catalogErrors.some((error) => error.includes('@theme static')));
+    assert.ok(result.catalogErrors.some((error) => error.includes('--text-*')));
+    assert.ok(result.catalogErrors.some((error) => error.includes('--text-legacy-extra')));
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test('rejects multiline SVG attributes, JSX fontSize attributes, and inline lineHeight assignments', async () => {
+  const workspace = await createFixtureWorkspace({
+    files: {
+      'packages/blue-app/src/renderer/components/MultilineTypography.tsx': `
+        export function MultilineTypography() {
+          return (
+            <div style={{
+              fontSize: 10,
+              lineHeight: '1.2',
+            }}>
+              <svg>
+                <text
+                  x={0}
+                  fontSize={9}
+                >Small axis</text>
+              </svg>
+            </div>
+          );
+        }
+      `,
+    },
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.counts.unapprovedInlineSizes, 1);
+    assert.equal(result.counts.unapprovedSvgSizes, 1);
+    assert.equal(result.counts.unapprovedLineHeightOverrides, 1);
+    assert.equal(result.counts.applicationTextBelowFloor, 2);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test('rejects raw CSS font shorthands, line heights, and typography custom properties', async () => {
+  const workspace = await createFixtureWorkspace({
+    files: {
+      'packages/blue-app/src/renderer/styles/custom.css': `
+        .invalid-label {
+          font: 10px sans-serif;
+          line-height: 12px;
+          --custom-font-size: 10px;
+        }
+        .valid-label {
+          --component-font-size: var(--text-role-body);
+          font: var(--text-role-body);
+          line-height: var(--text-role-body--line-height);
+        }
+      `,
+    },
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.counts.unapprovedCssSizes, 2);
+    assert.equal(result.counts.unapprovedLineHeightOverrides, 1);
+    assert.equal(result.counts.applicationTextBelowFloor, 2);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test('rejects implicit small, sub, and sup elements without an explicit role', async () => {
+  const workspace = await createFixtureWorkspace({
+    files: {
+      'packages/blue-app/src/renderer/components/ImplicitElements.tsx': `
+        export function ImplicitElements() {
+          return (
+            <div>
+              <small>Small</small>
+              <sub>Subscript</sub>
+              <sup>Superscript</sup>
+              <small className="text-role-subheadline">Approved annotation</small>
+            </div>
+          );
+        }
+      `,
+    },
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.counts.unapprovedImplicitElements, 3);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test('fails fast on malformed and duplicate exception registries', async () => {
+  const malformedWorkspace = await createFixtureWorkspace({
+    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{\"schemaVersion\": 1,\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
+  });
+  const duplicateWorkspace = await createFixtureWorkspace({
+    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{\"schemaVersion\": 1, \"exceptions\": [{\"id\": \"duplicate\", \"path\": \"x\", \"category\": \"project-authored-font\", \"expression\": \"x\", \"expectedOccurrences\": 1, \"ownerSurface\": \"x\", \"reason\": \"x\", \"verification\": \"x\", \"reviewPolicy\": \"x\"}, {\"id\": \"duplicate\", \"path\": \"y\", \"category\": \"project-authored-font\", \"expression\": \"y\", \"expectedOccurrences\": 1, \"ownerSurface\": \"y\", \"reason\": \"y\", \"verification\": \"y\", \"reviewPolicy\": \"y\"}]}\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
+  });
+
+  try {
+    const malformed = await runAudit(malformedWorkspace);
+    assert.equal(malformed.exitCode, 2);
+    const duplicate = await runAudit(duplicateWorkspace);
+    assert.equal(duplicate.exitCode, 2);
+  } finally {
+    await rm(malformedWorkspace, { recursive: true, force: true });
+    await rm(duplicateWorkspace, { recursive: true, force: true });
   }
 });

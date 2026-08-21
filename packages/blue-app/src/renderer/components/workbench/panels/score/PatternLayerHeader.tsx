@@ -124,7 +124,7 @@ export default function PatternLayerHeader({
   }, [effectiveVisibleLayers, extendTo, scopeKey, selectSingle, selectSource, selectionKey]);
 
   const buttonClass = (active: boolean, activeBackground: string) => (
-    `h-4 w-5 rounded-sm border border-app-border/30 text-role-subheadline font-bold flex items-center justify-center ${
+    `h-4 w-5 rounded-sm border border-app-border/30 text-role-callout font-bold flex items-center justify-center ${
       active
         ? `${activeBackground} text-black`
         : 'bg-transparent text-app-text-muted hover:text-app-text'

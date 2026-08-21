@@ -38,7 +38,7 @@ export default function LayerRemovalConfirmationDialog({ plan, onCancel, onConfi
         onClick={(event) => event.stopPropagation()}
         tabIndex={-1}
       >
-        <h2 id="layer-removal-title" className="text-role-headline">
+        <h2 id="layer-removal-title" className="text-role-title-2 font-bold">
           Remove Layers
         </h2>
         <p id="layer-removal-description" className="mt-2 text-role-body text-app-text-muted">

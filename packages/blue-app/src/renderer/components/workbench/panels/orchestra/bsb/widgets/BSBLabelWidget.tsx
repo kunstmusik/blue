@@ -35,6 +35,7 @@ function BSBLabelWidget({
         style={{
           fontFamily: `'${fontName}', Roboto, sans-serif`,
           fontSize: `${fontSize}px`,
+          lineHeight: 'normal',
           fontWeight,
           fontStyle: fontItalic,
           color: 'var(--color-app-text-bright)',

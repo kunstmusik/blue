@@ -245,7 +245,7 @@ function ArrangementPanel({
     >
       <div className="flex items-center justify-between border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div>
-          <div className="text-role-headline uppercase tracking-[0.18em] text-app-text-muted">
+          <div className="text-role-headline font-bold uppercase tracking-[0.18em] text-app-text-muted">
             Arrangement
           </div>
           <div className="text-role-callout text-app-text-muted">

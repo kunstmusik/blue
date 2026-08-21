@@ -112,12 +112,12 @@ function BSBLineObjectWidget({
         />
 
         <div
-          className="flex items-center gap-1 border-t border-blue-border/40 px-1 text-role-subheadline text-blue-muted"
+          className="flex items-center gap-1 border-t border-blue-border/40 px-1 text-role-callout text-blue-muted"
           style={{ height: BSB_LINE_SELECTOR_HEIGHT }}
         >
           <button
             type="button"
-            className="flex h-5 w-7 shrink-0 items-center justify-center rounded border border-blue-border/40 text-role-subheadline text-blue-muted hover:text-gray-200"
+            className="flex h-5 w-7 shrink-0 items-center justify-center rounded border border-blue-border/40 text-role-callout text-blue-muted hover:text-gray-200"
             onClick={(event) => {
               event.stopPropagation();
               cycleSelectedLine(-1);
@@ -127,12 +127,12 @@ function BSBLineObjectWidget({
           >
             <ChevronLeft className="h-3 w-3" />
           </button>
-          <div className="min-w-0 flex-1 truncate px-1 text-center font-mono text-role-subheadline text-gray-200" title={selectorLabel}>
+          <div className="min-w-0 flex-1 truncate px-1 text-center font-mono text-role-callout text-gray-200" title={selectorLabel}>
             {selectorLabel}
           </div>
           <button
             type="button"
-            className="flex h-5 w-7 shrink-0 items-center justify-center rounded border border-blue-border/40 text-role-subheadline text-blue-muted hover:text-gray-200"
+            className="flex h-5 w-7 shrink-0 items-center justify-center rounded border border-blue-border/40 text-role-callout text-blue-muted hover:text-gray-200"
             onClick={(event) => {
               event.stopPropagation();
               cycleSelectedLine(1);

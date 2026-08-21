@@ -108,7 +108,7 @@ export default function UdoEditor({
       <div className="border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
               Opcode Name
             </label>
             <input
@@ -119,7 +119,7 @@ export default function UdoEditor({
             />
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
               Style
             </label>
             <select
@@ -143,7 +143,7 @@ export default function UdoEditor({
 
         <div className="mt-3 flex gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
+            <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
               Out Types
             </label>
             <input
@@ -156,7 +156,7 @@ export default function UdoEditor({
           </div>
           {isModern ? (
             <div className="flex-1">
-              <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
+              <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
                 Input Arguments
               </label>
               <input
@@ -169,7 +169,7 @@ export default function UdoEditor({
             </div>
           ) : (
             <div className="flex-1">
-              <label className="mb-1 block text-role-subheadline uppercase tracking-wider text-app-text-subtle">
+              <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
                 In Types
               </label>
               <input

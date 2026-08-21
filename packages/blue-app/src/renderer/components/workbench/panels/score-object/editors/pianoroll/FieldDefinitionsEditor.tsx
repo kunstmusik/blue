@@ -22,9 +22,9 @@ export default function FieldDefinitionsEditor({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-role-subheadline font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
+      <div className="text-role-headline font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
       <div className="overflow-x-auto rounded border border-blue-border/40 bg-black p-1">
-        <table className="w-full text-role-subheadline">
+        <table className="w-full text-role-body">
           <thead>
             <tr className="text-blue-muted">
               <th className="text-left py-0.5 px-1">Name</th>
@@ -81,7 +81,7 @@ export default function FieldDefinitionsEditor({
           </tbody>
         </table>
       </div>
-      <button className="text-role-subheadline text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
+      <button className="text-role-callout text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
         + Add Field
       </button>
     </div>

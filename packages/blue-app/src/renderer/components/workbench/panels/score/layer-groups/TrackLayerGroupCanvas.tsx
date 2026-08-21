@@ -1517,14 +1517,14 @@ export default function TrackLayerGroupCanvas({
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCut}>
-                Cut<span className="float-right text-blue-muted text-role-subheadline ml-4">⌘X</span>
+                Cut<span className="float-right text-blue-muted text-role-callout ml-4">⌘X</span>
               </ContextMenu.Item>
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCopy}>
-                Copy<span className="float-right text-blue-muted text-role-subheadline ml-4">⌘C</span>
+                Copy<span className="float-right text-blue-muted text-role-callout ml-4">⌘C</span>
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleRemove}>
-                Remove<span className="float-right text-blue-muted text-role-subheadline ml-4">Del</span>
+                Remove<span className="float-right text-blue-muted text-role-callout ml-4">Del</span>
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetColor}>Set Color…</ContextMenu.Item>

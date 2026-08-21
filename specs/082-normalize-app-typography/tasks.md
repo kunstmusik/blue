@@ -222,3 +222,24 @@ Task T039: tracker/SoundFont/virtual-keyboard migration
 ### Final Validation
 
 The implementation is complete only when all tasks are checked, every unapproved audit count is zero, authored project values round-trip exactly, all 20 density/case rows and four zoom levels are recorded as passing, and `pnpm test`, `pnpm lint`, renderer build, browser fixtures, and `git diff --check` pass.
+
+## Phase 8: Convergence
+
+- [X] T058 Finalize `packages/blue-app/src/renderer/styles/index.css` as the single static seven-role typography layer with `@theme static`, `--text-*: initial`, and no legacy/default font-size tokens per FR-031 (contradicts).
+- [X] T059 Extend `scripts/audit-renderer-typography.mjs` and its fixtures to enforce token-layer invariants and detect multiline SVG attributes, JSX `fontSize={...}`, raw CSS/inline `line-height`/`lineHeight`, and other required assignment forms per FR-025, FR-026, and FR-032 (partial).
+- [X] T060 Wire `audit:renderer-typography` into the root `lint` gate and verify that the production audit runs through the repository validation command per FR-032 and the typography-audit contract (partial).
+- [X] T061 Replace the app-owned subfloor SVG labels in `envelope-editor.tsx` and `EditableLineCanvas.tsx` with approved Subheadline delivery paths, adapt dense geometry, and add focused regression coverage per FR-003, FR-009, and FR-014 (contradicts).
+- [X] T062 Replace raw line-height and font-size assignments in the tooltip CSS, `SelectedCodeEditor.tsx`, and `ScoreObjectBar.tsx` with approved role companions/delivery paths, remove numeric label-size defaults, and add coverage per FR-008, FR-009, and FR-032 (contradicts).
+- [X] T063 Audit production heading semantics: use Title 2/Title 3 for major dialog and section titles, make Headline callsites bold, and update the render-to-disk and freeze-operation dialog headings and role assertions per FR-004, FR-007, and US2 acceptance criteria (partial).
+- [X] T064 Execute and record the V01–V10 D1/D2 visual matrix, 50/100/200/300 zoom matrix, and authored-font preservation matrix with DPR, metrics, contrast, geometry, screenshot, interaction, and rerun evidence per SC-003 through SC-010 (missing).
+
+## Phase 9: Convergence
+
+- [X] T065 Normalize ordinary table/list values and column/group headings that still use Callout or Subheadline—including OSC settings, SoundFont, MIDI import, render-to-disk, and freeze-operation surfaces—to Body and bold Headline respectively, with focused role assertions per FR-004, FR-007, FR-009, and FR-014 (contradicts).
+- [X] T066 Replace Subheadline/undersized roles on ordinary form labels, validation/helper text, and application-owned Blue Synth Builder controls—including the code-repository dialog, color picker, font chooser, BSB grid/property sheets, and related compact editors—with Body or Callout according to semantic purpose, preserving project-authored font values per FR-004, FR-009, FR-017, and FR-018 (contradicts).
+- [X] T067 Correct remaining section/group hierarchy assignments—including About section headings, the Libraries group heading, library breadcrumbs, and equivalent compact headings—to Title 3, Body, or bold Headline according to the documented role ledger, and add regression coverage per FR-004, FR-007, FR-012, and T063 (partial).
+- [X] T068 Audit direct React/CSS role-variable delivery outside the corrected Live Space surface and add missing role line-height companions or role utilities where inheritance does not resolve the exact metric, covering Blue Live helper text, secondary-window styles, BSB widgets, and drawn-text callsites per FR-008, FR-020, and FR-032 (partial).
+
+## Phase 10: Convergence
+
+- [X] T069 Execute and record the V01–V10 D1/D2 visual matrix, the 50/100/200/300% zoom matrix, and the authored-font preservation matrix with DPR, rendered metrics, contrast, geometry, screenshots, interaction results, and rerun references in `specs/082-normalize-app-typography/quickstart.md` per T064, FR-024, and SC-003–SC-010 (partial).

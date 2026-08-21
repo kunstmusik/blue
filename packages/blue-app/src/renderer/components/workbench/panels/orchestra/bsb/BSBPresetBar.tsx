@@ -194,7 +194,7 @@ export default function BSBPresetBar({
         </button>
 
         {presetGroup?.currentPresetModified && (
-          <span className="text-role-subheadline text-app-warning">modified</span>
+          <span className="text-role-callout text-app-warning">modified</span>
         )}
       </div>
 

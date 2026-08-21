@@ -46,7 +46,7 @@ export default function FTableConverterModal(): React.ReactElement | null {
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-role-headline text-app-text-bright">FTable Converter</h2>
+          <h2 className="text-role-title-2 font-bold text-app-text-bright">FTable Converter</h2>
           <button
             className="px-2 text-role-title-2 text-app-text-muted hover:text-app-text-bright"
             onClick={handleClose}

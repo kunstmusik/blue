@@ -63,7 +63,13 @@ describe('SoundFont Viewer panel', () => {
     expect(document.body.textContent).toContain('Piano.sf2');
     expect(document.body.textContent).toContain('/SoundFonts/Piano.sf2');
     expect(document.body.textContent).toContain('Grand Piano');
-    expect(document.querySelectorAll('table')).toHaveLength(2);
+    const tables = Array.from(document.querySelectorAll('table'));
+    expect(tables).toHaveLength(2);
+    for (const table of tables) {
+      expect(table.classList).toContain('text-role-body');
+      expect(table.querySelector('thead')?.classList).toContain('text-role-headline');
+      expect(table.querySelector('thead')?.classList).toContain('font-bold');
+    }
   });
 
   it('accepts an operating-system file drop and rejects non-SoundFont paths', async () => {

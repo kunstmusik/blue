@@ -35,7 +35,7 @@ export function ValuePanel({ value, width, height, onCommit }: ValuePanelProps):
       <div className="relative shrink-0" style={{ width, height }}>
         <input
           ref={inputRef}
-          className="h-full w-full rounded border border-blue-accent bg-app-bsb-control px-1 text-center font-mono text-role-subheadline text-app-text outline-none"
+          className="h-full w-full rounded border border-blue-accent bg-app-bsb-control px-1 text-center font-mono text-role-callout text-app-text outline-none"
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
@@ -61,7 +61,7 @@ export function ValuePanel({ value, width, height, onCommit }: ValuePanelProps):
         dominantBaseline="central"
         fill="rgb(240,240,255)"
         fontFamily="Roboto, sans-serif"
-        style={{ fontSize: 'var(--text-role-subheadline)' }}
+        style={{ fontSize: 'var(--text-role-callout)', lineHeight: 'var(--text-role-callout--line-height)' }}
       >
         {value}
       </text>

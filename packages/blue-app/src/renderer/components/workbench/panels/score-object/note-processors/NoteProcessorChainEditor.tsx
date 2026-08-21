@@ -33,7 +33,7 @@ interface NoteProcessorChainEditorProps {
   onSaveNamedChain?: (name: string, chain: NoteProcessorChainSnapshot) => void;
 }
 
-const BTN = 'px-1.5 py-0.5 rounded text-role-subheadline border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
+const BTN = 'px-1.5 py-0.5 rounded text-role-callout border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNames, onImportNamedChain, onSaveNamedChain }: NoteProcessorChainEditorProps): React.ReactElement {
   const [local, setLocal] = useState<NoteProcessorChainSnapshot>(() => cloneChain(chain));
@@ -289,10 +289,10 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
                 {proc.displayName}
               </span>
               {proc.deferred && (
-                <span className="text-orange-500 text-role-subheadline">(deferred)</span>
+                <span className="text-orange-500 text-role-callout">(deferred)</span>
               )}
               {!proc.supported && !proc.deferred && (
-                <span className="text-yellow-500 text-role-subheadline">(unsupported)</span>
+                <span className="text-yellow-500 text-role-callout">(unsupported)</span>
               )}
             </div>
           ))
@@ -325,12 +325,12 @@ function NoteProcessorCodeField({
 
   return (
     <div className="flex flex-1 items-center gap-2">
-      <span className="flex-1 truncate rounded border border-blue-border bg-blue-bg/60 px-1.5 py-0.5 text-role-subheadline font-mono text-gray-400">
+      <span className="flex-1 truncate rounded border border-blue-border bg-blue-bg/60 px-1.5 py-0.5 text-role-callout font-mono text-gray-400">
         {lineCount > 0 ? `${lineCount} line(s) of Python code` : '(empty code)'}
       </span>
       <button
         type="button"
-        className="rounded border border-blue-border px-2 py-0.5 text-role-subheadline text-gray-200 hover:bg-blue-border/40 hover:text-white"
+        className="rounded border border-blue-border px-2 py-0.5 text-role-callout text-gray-200 hover:bg-blue-border/40 hover:text-white"
         onClick={() => setShowModal(true)}
       >
         Edit Code...
@@ -361,13 +361,13 @@ function NoteProcessorParameterEditor({
 
   return (
     <div className="border border-blue-border rounded p-2 space-y-1.5">
-      <div className="text-role-subheadline font-medium text-gray-400">{def.displayName} Properties</div>
+      <div className="text-role-headline font-bold text-gray-400">{def.displayName} Properties</div>
       {def.parameters.map((param) => {
         const value = parameters[param.name];
         const isReadOnly = processorType === 'TuningProcessor' && param.name === 'ratios';
         return (
           <div key={param.name} className="flex items-center gap-2">
-            <label className="w-24 shrink-0 text-role-subheadline text-blue-muted text-right">{param.label}</label>
+            <label className="w-24 shrink-0 text-role-body text-blue-muted text-right">{param.label}</label>
             {param.valueType === 'boolean' ? (
               <input
                 type="checkbox"

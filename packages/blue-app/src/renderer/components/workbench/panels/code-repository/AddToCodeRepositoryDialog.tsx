@@ -117,7 +117,7 @@ export default function AddToCodeRepositoryDialog({
         aria-labelledby="add-code-repository-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="add-code-repository-title" className="text-role-headline text-app-text-bright">
+          <h2 id="add-code-repository-title" className="text-role-title-2 font-bold text-app-text-bright">
             Add to Code Repository
           </h2>
           <button
@@ -150,7 +150,7 @@ export default function AddToCodeRepositoryDialog({
           </>
         ) : (
           <>
-            <label htmlFor="code-repository-snippet-name" className="mb-1 block text-role-subheadline text-app-text-muted">
+            <label htmlFor="code-repository-snippet-name" className="mb-1 block text-role-body text-app-text-muted">
               Name
             </label>
             <input
@@ -168,12 +168,12 @@ export default function AddToCodeRepositoryDialog({
               autoFocus={Boolean(root)}
             />
             {validationError && (
-              <p id="code-repository-name-error" className="-mt-2 mb-3 text-role-subheadline text-red-400" role="alert">
+              <p id="code-repository-name-error" className="-mt-2 mb-3 text-role-callout text-red-400" role="alert">
                 {validationError}
               </p>
             )}
 
-            <label htmlFor="code-repository-destination" className="mb-1 block text-role-subheadline text-app-text-muted">
+            <label htmlFor="code-repository-destination" className="mb-1 block text-role-body text-app-text-muted">
               Destination Group
             </label>
             <select
@@ -190,7 +190,7 @@ export default function AddToCodeRepositoryDialog({
               ))}
             </select>
 
-            <div className="mb-1 text-role-subheadline text-app-text-muted">ORC Code</div>
+            <div className="mb-1 text-role-body text-app-text-muted">ORC Code</div>
             <div className="min-h-0 flex-1">
               <SelectedCodeEditor
                 value={code}

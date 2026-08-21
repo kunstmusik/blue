@@ -90,11 +90,11 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
   return (
     <div ref={testRef} className="flex h-full flex-col bg-blue-bg" tabIndex={-1}>
       <div className="flex shrink-0 items-center gap-2 border-b border-app-border bg-app-surface-strong px-2 py-1">
-        <span className="text-role-headline font-semibold text-app-text">JMask</span>
+        <span className="text-role-headline font-bold text-app-text">JMask</span>
         <div className="relative">
           <button
             type="button"
-            className="flex h-4 w-4 items-center justify-center rounded text-role-subheadline text-app-text-muted hover:bg-blue-border"
+            className="flex h-4 w-4 items-center justify-center rounded text-role-callout text-app-text-muted hover:bg-blue-border"
             onClick={() => setShowVisibilityPopup(p => !p)}
             title="Parameter Visibility"
             aria-label="Parameter Visibility"

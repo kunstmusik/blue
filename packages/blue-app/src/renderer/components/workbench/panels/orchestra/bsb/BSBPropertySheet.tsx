@@ -393,7 +393,7 @@ function EditableBsbPropertySheet({
 
   return (
     <div className="space-y-2 p-3">
-      <div className="mb-2 border-b border-app-border pb-1 text-role-subheadline uppercase tracking-[0.16em] text-app-text-muted">
+      <div className="mb-2 border-b border-app-border pb-1 text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">
         {typeName}
       </div>
 
@@ -473,7 +473,7 @@ function EditableBsbPropertySheet({
         />
       )}
 
-      <div className="mt-2 border-t border-app-border pt-2 text-role-subheadline text-app-text-muted">
+      <div className="mt-2 border-t border-app-border pt-2 text-role-callout text-app-text-muted">
         Type: {widget.type}
       </div>
 
@@ -495,7 +495,7 @@ function validateExactResolutionProperty(proposed: string): string | null {
 function PropertyRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
     <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-      <label className="truncate text-role-subheadline text-app-text">{label}</label>
+      <label className="truncate text-role-body text-app-text">{label}</label>
       {children}
     </div>
   );
@@ -719,9 +719,9 @@ function DropdownItemsEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-role-subheadline uppercase tracking-[0.16em] text-app-text-muted">Dropdown Items</span>
+        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">Dropdown Items</span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-role-subheadline text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedItems, createDropdownItem('New Item', String(normalizedItems.length))])}
         >
           + Add
@@ -730,7 +730,7 @@ function DropdownItemsEditor({
       {normalizedItems.map((item, i) => (
         <div key={item.uniqueId ?? i} className="mb-1 grid grid-cols-[1fr_1fr_auto] items-center gap-1">
           <input
-            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-role-subheadline text-app-text-strong outline-none focus:border-app-accent"
+            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
             value={item.name}
             placeholder="Name"
             onChange={(e) => {
@@ -740,7 +740,7 @@ function DropdownItemsEditor({
             }}
           />
           <input
-            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-role-subheadline text-app-text-strong outline-none focus:border-app-accent"
+            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
             value={item.value}
             placeholder="Value"
             onChange={(e) => {
@@ -751,7 +751,7 @@ function DropdownItemsEditor({
           />
           <span className="flex gap-0.5">
             <button
-              className="p-0.5 text-role-subheadline text-app-text-muted hover:text-app-text-strong"
+              className="p-0.5 text-role-callout text-app-text-muted hover:text-app-text-strong"
               onClick={() => {
                 if (i === 0) return;
                 const next = normalizedItems.map(cloneDropdownItem);
@@ -763,7 +763,7 @@ function DropdownItemsEditor({
               <ChevronUp className="h-3 w-3" />
             </button>
             <button
-              className="p-0.5 text-role-subheadline text-app-text-muted hover:text-app-text-strong"
+              className="p-0.5 text-role-callout text-app-text-muted hover:text-app-text-strong"
               onClick={() => {
                 if (i >= normalizedItems.length - 1) return;
                 const next = normalizedItems.map(cloneDropdownItem);
@@ -775,7 +775,7 @@ function DropdownItemsEditor({
               <ChevronDown className="h-3 w-3" />
             </button>
             <button
-              className="p-0.5 text-role-subheadline text-app-danger hover:opacity-80"
+              className="p-0.5 text-role-callout text-app-danger hover:opacity-80"
               onClick={() => onUpdate(normalizedItems.filter((_, idx) => idx !== i).map(cloneDropdownItem))}
               title="Remove"
             >
@@ -836,16 +836,16 @@ function LineObjectEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-role-subheadline uppercase tracking-[0.16em] text-app-text-muted">Lines</span>
+        <span className="text-role-headline font-bold uppercase tracking-[0.16em] text-app-text-muted">Lines</span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-role-subheadline text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedLines, createLineItem(normalizedLines)])}
         >
           + Add
         </button>
       </div>
       <div className="overflow-x-auto rounded border border-app-border/50 bg-app-bg">
-        <div className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/60 bg-app-menu text-role-subheadline text-app-text-soft">
+        <div className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/60 bg-app-menu text-role-headline font-bold text-app-text-soft">
           <div className="px-1 py-1 text-center">[x]</div>
           <div className="px-1 py-1">Line Name</div>
           <div className="px-1 py-1">Min</div>
@@ -854,7 +854,7 @@ function LineObjectEditor({
           <div className="px-1 py-1" />
         </div>
         {normalizedLines.map((line, i) => (
-          <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-role-subheadline last:border-b-0">
+          <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-role-body last:border-b-0">
             <label className="flex h-full min-h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Color</span>
               <ColorPickerButton
@@ -866,20 +866,20 @@ function LineObjectEditor({
               />
             </label>
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               value={line.varName}
               placeholder={`line${i}`}
               onChange={(event) => updateLine(i, { varName: event.target.value })}
             />
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               type="number"
               step="any"
               value={line.min}
               onChange={(event) => updateLine(i, { min: parseFloatField(event.target.value, line.min) })}
             />
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-subheadline text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               type="number"
               step="any"
               value={line.max}
@@ -896,7 +896,7 @@ function LineObjectEditor({
             </label>
             <div className="flex h-8 items-center justify-center gap-0.5">
               <button
-                className="p-0.5 text-role-subheadline text-app-text-muted hover:text-app-text-strong"
+                className="p-0.5 text-role-callout text-app-text-muted hover:text-app-text-strong"
                 onClick={() => {
                   if (i === 0) return;
                   const next = normalizedLines.map(cloneLineItem);
@@ -908,7 +908,7 @@ function LineObjectEditor({
                 <ChevronUp className="h-3 w-3" />
               </button>
               <button
-                className="p-0.5 text-role-subheadline text-app-text-muted hover:text-app-text-strong"
+                className="p-0.5 text-role-callout text-app-text-muted hover:text-app-text-strong"
                 onClick={() => {
                   if (i >= normalizedLines.length - 1) return;
                   const next = normalizedLines.map(cloneLineItem);
@@ -920,7 +920,7 @@ function LineObjectEditor({
                 <ChevronDown className="h-3 w-3" />
               </button>
               <button
-                className="p-0.5 text-role-subheadline text-app-danger hover:opacity-80"
+                className="p-0.5 text-role-callout text-app-danger hover:opacity-80"
                 onClick={() => onUpdate(normalizedLines.filter((_, idx) => idx !== i).map(cloneLineItem))}
                 title="Remove"
               >

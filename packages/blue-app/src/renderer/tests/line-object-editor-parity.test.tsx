@@ -160,6 +160,13 @@ describe('Line and Zak line score editors', () => {
 
     const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
     expect(svg).not.toBeNull();
+    const axisLabels = Array.from(svg!.querySelectorAll('text'));
+    expect(axisLabels.length).toBeGreaterThan(0);
+    for (const label of axisLabels) {
+      expect(label.classList).toContain('text-role-subheadline');
+      expect(label.hasAttribute('fontSize')).toBe(false);
+      expect(label.hasAttribute('font-size')).toBe(false);
+    }
     act(() => {
       svg!.dispatchEvent(new MouseEvent('contextmenu', {
         bubbles: true,

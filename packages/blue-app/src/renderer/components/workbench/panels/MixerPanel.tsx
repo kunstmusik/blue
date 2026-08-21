@@ -261,7 +261,7 @@ export default function MixerPanel(): React.ReactElement {
             className="w-90 rounded-lg border border-blue-border/50 bg-blue-bg shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="border-b border-blue-border/30 px-4 py-3 text-role-headline text-blue-text">
+            <div className="border-b border-blue-border/30 px-4 py-3 text-role-headline font-bold text-blue-text">
               Edit Track Layer Group Name
             </div>
             <div className="px-4 py-3">

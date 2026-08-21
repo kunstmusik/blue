@@ -7,7 +7,7 @@ import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 type BSBKnobWidgetProps = BSBWidgetPatchComponentProps;
 
-const VALUE_HEIGHT = 14;
+const VALUE_HEIGHT = 16;
 const ARC_START = 225;
 const ARC_LENGTH = 270;
 const TRACK_COLOR = 'rgb(63,102,150)';
@@ -119,7 +119,7 @@ function BSBKnobWidget({
         {showLabel && (
           <div
             className="flex w-full items-center justify-center overflow-hidden"
-            style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, color: 'var(--color-app-text-bright)' }}
+            style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, lineHeight: 'normal', color: 'var(--color-app-text-bright)' }}
           >
             <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full text-center" />
           </div>
@@ -132,7 +132,8 @@ function BSBKnobWidget({
               height: valueH,
               width: displaySize.width,
               fontFamily: "'Roboto', sans-serif",
-              fontSize: 'var(--text-role-subheadline)',
+              fontSize: 'var(--text-role-callout)',
+              lineHeight: 'var(--text-role-callout--line-height)',
               color: 'var(--color-app-text-bright)',
               background: 'var(--color-app-bsb-value)',
               borderRadius: 3,

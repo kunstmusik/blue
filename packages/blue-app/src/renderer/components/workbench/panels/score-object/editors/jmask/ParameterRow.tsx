@@ -198,13 +198,13 @@ export default function ParameterRow({
               />
             ) : (
               <span
-                className="cursor-default text-role-headline font-medium text-app-text-soft"
+                className="cursor-default text-role-headline font-bold text-app-text-soft"
                 onDoubleClick={handleRename}
               >
                 {label}
               </span>
             )}
-            <span className="text-role-subheadline text-app-text-muted">{genKind}</span>
+            <span className="text-role-callout text-app-text-muted">{genKind}</span>
           </div>
           <div className="flex flex-col gap-0.5 p-1">
             <div className="rounded-sm border border-app-border/40 bg-app-bg">
@@ -300,7 +300,7 @@ export default function ParameterRow({
       {generatorPickerMode !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setGeneratorPickerMode(null)}>
           <div className="min-w-[200px] rounded border border-app-border bg-app-hover py-2 shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="px-3 pb-1 text-role-headline font-medium text-app-text">
+            <div className="px-3 pb-1 text-role-headline font-bold text-app-text">
               {generatorPickerMode === 'addBefore' && 'Add Parameter Before'}
               {generatorPickerMode === 'addAfter' && 'Add Parameter After'}
               {generatorPickerMode === 'changeType' && 'Change Generator Type'}

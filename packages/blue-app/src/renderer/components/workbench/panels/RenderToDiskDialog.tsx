@@ -105,7 +105,7 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
         aria-labelledby="render-to-disk-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="render-to-disk-title" className="text-role-headline text-app-text-bright" data-testid="render-dialog-title">
+          <h2 id="render-to-disk-title" className="text-role-title-2 font-bold text-app-text-bright" data-testid="render-dialog-title">
             {operationDialogTitle('Render to Disk', phase)}
           </h2>
         </div>
@@ -114,13 +114,13 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
           <table className="w-full border-collapse text-left text-role-body text-app-text" data-testid="render-items-table">
             <thead>
               <tr className="text-app-text-muted">
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 font-medium">Output</th>
-                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 font-medium">Status</th>
+                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Output</th>
+                <th scope="col" className="sticky top-0 bg-app-surface px-2 py-2 text-role-headline font-bold">Status</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-app-hover/60" data-testid="render-row-output">
-                <td className="break-all px-2 py-2 align-middle font-mono text-role-callout">
+                <td className="break-all px-2 py-2 align-middle font-mono text-role-body">
                   {outputPath ?? <span className="font-sans text-app-text-muted">—</span>}
                 </td>
                 <td className="px-2 py-2 align-middle">

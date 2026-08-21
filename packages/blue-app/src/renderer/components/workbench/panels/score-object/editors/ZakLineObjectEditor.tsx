@@ -168,7 +168,7 @@ export default function ZakLineObjectEditor({
         <div className="space-y-1.5 border-t border-blue-border px-2 py-1.5">
           {selectedLine && (
             <div>
-              <label className="mb-0.5 block text-role-subheadline uppercase tracking-wider text-blue-muted">
+              <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
                 Zak Channel
               </label>
               <input
@@ -182,7 +182,7 @@ export default function ZakLineObjectEditor({
           )}
 
           <div>
-            <label className="mb-0.5 block text-role-subheadline uppercase tracking-wider text-blue-muted">
+              <label className="mb-0.5 block text-role-body uppercase tracking-wider text-blue-muted">
               Zak Space
             </label>
             <input
@@ -212,13 +212,13 @@ export default function ZakLineObjectEditor({
               <span className="font-mono text-role-body text-gray-300">
                 {selectedLineLabel}
               </span>
-              <span className="text-role-subheadline text-blue-muted">
+              <span className="text-role-callout text-blue-muted">
                 channel {selectedLine.channel}
               </span>
-              <span className="text-role-subheadline text-blue-muted">
+              <span className="text-role-callout text-blue-muted">
                 {selectedLine.points.length} points
               </span>
-              <span className="ml-auto text-role-subheadline text-blue-muted">
+              <span className="ml-auto text-role-callout text-blue-muted">
                 Alt-click adds on the line, right-click canvas for options
               </span>
             </div>

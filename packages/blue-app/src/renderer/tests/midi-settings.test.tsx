@@ -71,6 +71,11 @@ describe('MidiSettings', () => {
 
     const { container, root } = renderPanel();
 
+    const table = container.querySelector('table');
+    expect(table?.classList).toContain('text-role-body');
+    expect(table?.querySelector('thead')?.classList).toContain('text-role-headline');
+    expect(table?.querySelector('thead')?.classList).toContain('font-bold');
+
     const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
     expect(checkboxes).toHaveLength(2);
     const enabledValues = checkboxes.map((c) => c.checked).sort();

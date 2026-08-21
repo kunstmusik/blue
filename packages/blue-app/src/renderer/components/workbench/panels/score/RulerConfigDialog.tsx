@@ -84,11 +84,11 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
-          <h2 className="text-role-headline border-b border-blue-border/30 pb-2">Ruler Configuration</h2>
+          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">Ruler Configuration</h2>
 
           {/* Primary Ruler */}
           <fieldset className="space-y-2">
-            <legend className="text-role-headline text-blue-text">Primary Ruler</legend>
+            <legend className="text-role-headline font-bold text-blue-text">Primary Ruler</legend>
             <div className="flex items-center gap-2">
               <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
               <select
@@ -179,7 +179,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Secondary Ruler */}
           <fieldset className="space-y-2">
-            <legend className="text-role-headline text-blue-text">Secondary Ruler</legend>
+            <legend className="text-role-headline font-bold text-blue-text">Secondary Ruler</legend>
             <label className="flex items-center gap-2 text-role-body text-blue-text cursor-pointer">
               <input
                 type="checkbox"
@@ -207,7 +207,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* SMPTE Settings */}
           <fieldset className="space-y-2">
-            <legend className="text-role-headline text-blue-text">SMPTE Settings</legend>
+            <legend className="text-role-headline font-bold text-blue-text">SMPTE Settings</legend>
             <div className="flex items-center gap-2">
               <label className="text-role-body text-blue-muted w-16 shrink-0">Frame Rate:</label>
               <select

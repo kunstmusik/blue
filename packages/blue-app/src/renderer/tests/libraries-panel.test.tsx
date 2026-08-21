@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LibraryBrowseNode } from '../../shared/unified-library';
 import { LibraryTree } from '../components/libraries/LibraryTree';
+import { LibraryBreadcrumbs } from '../components/libraries/LibraryBreadcrumbs';
 import LibrariesPanel from '../components/workbench/panels/LibrariesPanel';
 import { isAuxiliaryInteractionTarget } from '../components/workbench/auxiliary-layout';
 import { useLibraryStore } from '../stores/library-store';
@@ -92,6 +93,19 @@ afterEach(() => {
 });
 
 describe('Libraries panel', () => {
+  it('uses Body for library breadcrumbs and bold Headline for the user-library group heading', async () => {
+    const breadcrumb = render(<LibraryBreadcrumbs parts={['SoundObjects', 'Motifs']} />);
+    expect(breadcrumb.container.querySelector('nav')?.className).toContain('text-role-body');
+    act(() => { breadcrumb.root.unmount(); });
+
+    const { container, root } = render(<LibrariesPanel />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const heading = Array.from(container.querySelectorAll('h2')).find((candidate) => candidate.textContent === 'User Libraries');
+    expect(heading?.className).toContain('text-role-headline');
+    expect(heading?.className).toContain('font-bold');
+    act(() => { root.unmount(); });
+  });
+
   it('renders a user-only hierarchy with collapsed roots and no migration/project chrome', async () => {
     const { container, root } = render(<LibrariesPanel />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });

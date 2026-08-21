@@ -52,7 +52,7 @@ export default function NoteProcessorCodeModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3">
-          <h2 id="note-processor-code-title" className="text-role-headline text-gray-200">
+          <h2 id="note-processor-code-title" className="text-role-title-2 font-bold text-gray-200">
             {title}
           </h2>
           <button

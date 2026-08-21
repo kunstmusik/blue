@@ -49,6 +49,7 @@ describe('ColorPicker', () => {
 
     const hex = document.querySelector<HTMLInputElement>('[aria-label="Hex color"]')!;
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(document.querySelector('[role="dialog"]')?.classList).toContain('text-role-body');
 
     act(() => {
       hex.value = '#654321';

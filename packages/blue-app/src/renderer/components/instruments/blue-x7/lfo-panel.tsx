@@ -52,7 +52,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-lfo-panel">
       <div className="flex items-center justify-between border-b border-blue-border pb-1">
-        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Low Frequency Oscillator (LFO)</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Low Frequency Oscillator (LFO)</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">

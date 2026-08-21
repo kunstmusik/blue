@@ -189,7 +189,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
-          <span className="text-role-headline text-app-text">Score Manager</span>
+          <span className="text-role-title-2 font-bold text-app-text">Score Manager</span>
           <button className="text-app-text-muted hover:text-app-text" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
           </button>

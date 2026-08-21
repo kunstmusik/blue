@@ -245,7 +245,7 @@ export default function UdoTable({
                         <td className="px-3 py-2">
                           <span
                             className={[
-                              'rounded px-1.5 py-0.5 text-role-subheadline font-medium',
+                              'rounded px-1.5 py-0.5 text-role-callout font-medium',
                               udo.style === 'CLASSIC'
                                 ? 'bg-app-accent/20 text-app-accent'
                                 : 'bg-app-surface-raised text-app-text-strong',

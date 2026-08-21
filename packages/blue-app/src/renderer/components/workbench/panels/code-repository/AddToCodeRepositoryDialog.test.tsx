@@ -72,6 +72,10 @@ describe('AddToCodeRepositoryDialog', () => {
     const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.className).toContain('w-[760px]');
     expect(dialog.className).toContain('h-[72vh]');
+    expect(container.querySelector('label[for="code-repository-snippet-name"]')?.className).toContain('text-role-body');
+    expect(container.querySelector('label[for="code-repository-destination"]')?.className).toContain('text-role-body');
+    expect(Array.from(container.querySelectorAll('div')).find((element) => element.textContent === 'ORC Code')?.className)
+      .toContain('text-role-body');
     expect(container.querySelector('[data-editor-language="csound-orc"]')).not.toBeNull();
     expect(container.querySelector('.cm-editor')).not.toBeNull();
     await act(async () => {
@@ -134,6 +138,7 @@ describe('AddToCodeRepositoryDialog', () => {
         .click();
     });
     expect(container.textContent).toContain('Enter a snippet name.');
+    expect(container.querySelector('[role="alert"]')?.className).toContain('text-role-callout');
     expect(onCreate).not.toHaveBeenCalled();
 
     await act(async () => {

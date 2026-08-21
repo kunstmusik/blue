@@ -13,7 +13,7 @@ const MIN_SPLIT_RATIO = 0.25;
 const MAX_SPLIT_RATIO = 0.75;
 
 const SECONDARY_BUTTON_CLASS =
-  'inline-flex shrink-0 items-center justify-center gap-1.5 rounded border border-app-border/40 bg-app-surface px-2.5 py-1.5 text-role-subheadline text-app-text transition-colors hover:bg-app-hover hover:text-app-text-bright disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex shrink-0 items-center justify-center gap-1.5 rounded border border-app-border/40 bg-app-surface px-2.5 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover hover:text-app-text-bright disabled:cursor-not-allowed disabled:opacity-50';
 
 function basename(filePath: string): string {
   const normalized = filePath.replaceAll('\\', '/');
@@ -250,11 +250,11 @@ export default function SoundFontViewerPanel(): React.ReactElement {
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0 flex-1">
-            <div className="text-role-subheadline font-semibold uppercase tracking-[0.14em] text-app-text-muted">SoundFont file</div>
+            <div className="text-role-headline font-bold uppercase tracking-[0.14em] text-app-text-muted">SoundFont file</div>
             <div className="truncate text-role-body text-app-text-bright" title={filePath ?? undefined}>
               {filePath ? basename(filePath) : 'No SoundFont selected'}
             </div>
-            <div className="truncate text-role-subheadline text-app-text-muted" title={filePath ?? undefined}>
+            <div className="truncate text-role-body text-app-text-muted" title={filePath ?? undefined}>
               {filePath ?? 'Choose or drop an .sf2 file to inspect'}
             </div>
           </div>
@@ -283,13 +283,13 @@ export default function SoundFontViewerPanel(): React.ReactElement {
       </section>
 
       {error && (
-        <div className="mx-3 mt-3 shrink-0 rounded border border-red-400/30 bg-red-400/10 px-2.5 py-2 text-role-subheadline text-red-200">
+        <div className="mx-3 mt-3 shrink-0 rounded border border-red-400/30 bg-red-400/10 px-2.5 py-2 text-role-callout text-red-200">
           {error}
         </div>
       )}
 
       {isInspecting && (
-        <div className="mx-3 mt-3 shrink-0 text-role-subheadline text-app-accent">Reading SoundFont metadata…</div>
+        <div className="mx-3 mt-3 shrink-0 text-role-callout text-app-accent">Reading SoundFont metadata…</div>
       )}
 
       <div
@@ -362,18 +362,18 @@ function SoundFontTable({
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded border border-app-border/30 bg-app-field/30">
       <div className="flex shrink-0 items-center justify-between border-b border-app-border/30 px-2.5 py-2">
-        <div className="flex items-center gap-1.5 text-role-headline text-app-text-bright">
+        <div className="flex items-center gap-1.5 text-role-headline font-bold text-app-text-bright">
           <span className="text-app-accent">{icon}</span>
           {title}
         </div>
-        <span className="rounded-full bg-app-accent/10 px-1.5 py-0.5 text-role-subheadline tabular-nums text-app-accent">{count}</span>
+        <span className="rounded-full bg-app-accent/10 px-1.5 py-0.5 text-role-callout tabular-nums text-app-accent">{count}</span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto bg-black">
-        <table className="w-full border-collapse text-left text-role-callout">
-          <thead className="sticky top-0 bg-app-menu text-role-subheadline uppercase tracking-wider text-app-text-muted">
+        <table className="w-full border-collapse text-left text-role-body">
+          <thead className="sticky top-0 bg-app-menu text-role-headline font-bold uppercase tracking-wider text-app-text-muted">
             <tr>
               {headers.map((header) => (
-                <th key={header} className="border-b border-app-border/30 px-2.5 py-2 font-medium">
+                <th key={header} className="border-b border-app-border/30 px-2.5 py-2">
                   {header}
                 </th>
               ))}

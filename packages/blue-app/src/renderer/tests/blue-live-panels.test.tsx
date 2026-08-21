@@ -206,6 +206,39 @@ describe('Blue Live panel tab render tests (T045)', () => {
     expect(container.textContent).toContain('Set B');
   });
 
+  it('LiveSpaceTab uses semantic roles for headings, annotations, and cell values', () => {
+    seedProject(makeBlueLiveSnapshot());
+    act(() => {
+      root.render(<LiveSpaceTab />);
+    });
+
+    const savedSetsHeading = container.querySelector('[data-blue-live-saved-sets-heading]') as HTMLElement;
+    expect(savedSetsHeading.style.fontSize).toBe('var(--text-role-headline)');
+    expect(savedSetsHeading.style.lineHeight).toBe('var(--text-role-headline--line-height)');
+    expect(savedSetsHeading.style.fontWeight).toBe('700');
+
+    const columnHeaders = Array.from(container.querySelectorAll('[data-blue-live-column-header]')) as HTMLElement[];
+    expect(columnHeaders).toHaveLength(3);
+    for (const header of columnHeaders) {
+      expect(header.style.fontSize).toBe('var(--text-role-headline)');
+      expect(header.style.lineHeight).toBe('var(--text-role-headline--line-height)');
+      expect(header.style.fontWeight).toBe('700');
+    }
+
+    const rowLabels = Array.from(container.querySelectorAll('[data-blue-live-row-label]')) as HTMLElement[];
+    expect(rowLabels).toHaveLength(2);
+    for (const label of rowLabels) {
+      expect(label.style.fontSize).toBe('var(--text-role-subheadline)');
+      expect(label.style.lineHeight).toBe('var(--text-role-subheadline--line-height)');
+    }
+
+    const cell = container.querySelector(
+      '[data-blue-live-cell][data-column="0"][data-row="0"]',
+    ) as HTMLElement;
+    expect(cell.style.fontSize).toBe('var(--text-role-body)');
+    expect(cell.style.lineHeight).toBe('var(--text-role-body--line-height)');
+  });
+
   it('publishes a populated Live cell to the shared editor/properties selection and activates the editor', () => {
     const openPanel = vi.fn();
     useWorkbenchStore.setState({ openPanel });

@@ -129,7 +129,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
         aria-labelledby="missing-audio-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="missing-audio-title" className="text-role-headline text-app-text-bright">
+          <h2 id="missing-audio-title" className="text-role-title-2 font-bold text-app-text-bright">
             Locate Missing Audio Files
           </h2>
         </div>

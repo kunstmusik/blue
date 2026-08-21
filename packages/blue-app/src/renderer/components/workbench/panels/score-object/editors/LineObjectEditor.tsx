@@ -174,10 +174,10 @@ export default function LineObjectEditor({
               <span className="font-mono text-role-body text-gray-300">
                 {selectedLine.varName}
               </span>
-              <span className="text-role-subheadline text-blue-muted">
+              <span className="text-role-callout text-blue-muted">
                 {selectedLine.points.length} points
               </span>
-              <span className="ml-auto text-role-subheadline text-blue-muted">
+              <span className="ml-auto text-role-callout text-blue-muted">
                 Alt-click adds on the line, right-click canvas for options
               </span>
             </div>

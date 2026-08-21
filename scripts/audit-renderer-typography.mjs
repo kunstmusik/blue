@@ -24,11 +24,21 @@ const defaultScaleUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-(xs|sm|base|lg|xl|[
 const arbitraryFontSizeUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-\[(?<value>\d+(?:\.\d+)?(?:px|rem|em|pt)|var\(--[^)]+\))\](?:\/\[[^\]]+\])?/g;
 const bracketFontSizeUtilityRegex = /(?:^|[^A-Za-z0-9_-])(?:[A-Za-z0-9_-]+:)*\[(?:font-size|font):(?<value>[^\]]+)\]/g;
 const arbitraryLengthUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-\(length:(?<value>[^)]+)\)/g;
-const rawCssFontSizeRegex = /\bfont-size\s*:\s*(?<value>[^;}\n]+)/g;
+const rawCssFontSizeRegex = /(?<![-\w])font-size\s*:\s*(?<value>[^;}\n]+)/g;
+const rawCssFontRegex = /(?<![-\w])font\s*:\s*(?<value>[^;}\n]+)/g;
+const rawCssLineHeightRegex = /(?<![-\w])line-height\s*:\s*(?<value>[^;}\n]+)/g;
 const inlineFontSizeRegex = /\b(?:fontSize|font-size)\s*:\s*(?:(?<numVal>\d+(?:\.\d+)?)|(?<quote>['"])(?<strVal>[^'"]+)\k<quote>|\{(?<jsxVal>[^}]+)\})/g;
 const svgFontSizeRegex = /<text\b[^>]*\b(?:fontSize|font-size)\s*=\s*(?:\{(?<jsxVal>[^}]+)\}|(?<quote>['"])(?<strVal>[^'"]+)\k<quote>)/g;
+const jsxFontSizeAttributeRegex = /\b(?:fontSize|font-size)\s*=\s*(?:\{(?<jsxVal>[^}]+)\}|(?<quote>['"])(?<strVal>[^'"]+)\k<quote>)/g;
+const inlineLineHeightRegex = /\b(?:lineHeight|line-height)\s*:\s*(?:(?<numVal>\d+(?:\.\d+)?)|(?<quote>['"])(?<strVal>[^'"]+)\k<quote>|\{(?<jsxVal>[^}]+)\})/g;
+const inlineStyleFontRegex = /\bstyle\s*=\s*\{\{[^}\n]*\bfont\s*:\s*(?:(?<quote>['"])(?<strVal>[^'"]+)\k<quote>|\{(?<jsxVal>[^}]+)\})/g;
+const styleAssignmentRegex = /\bstyle\.(?<property>fontSize|font|lineHeight)\s*=\s*(?<value>(?:\d+(?:\.\d+)?(?:px|rem|em|pt)?|['"][^'"]+['"]|var\(--[^)]+\)))/g;
+const styleSetPropertyRegex = /\.setProperty\(\s*['"](?<property>font-size|font|line-height)['"]\s*,\s*(?<value>[^,)]+)[^)]*\)/g;
 const canvasFontLiteralRegex = /\b(?:ctx|context)\.font\s*=\s*(?<quote>['"`])(?<value>[^'"`]+)\k<quote>/g;
 const leadingOverrideUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*(?:leading-(?:none|tight|snug|normal|relaxed|loose|\d+)|leading-\[[^\]]+\])/g;
+const canvasTextCallRegex = /\b(?:ctx|context)\.(?:fillText|strokeText)\s*\(/g;
+const implicitSmallElementRegex = /<(?:small|sub|sup)\b[^>]*>/g;
+const headlineUtilityRegex = /(?:^|[\s"'`])(?:[A-Za-z0-9_-]+:)*text-role-headline(?=$|[\s"'`])/g;
 
 function toPosix(filePath) {
   return filePath.split(path.sep).join('/');
@@ -63,24 +73,57 @@ function listFiles(directory) {
 
 function parseExceptions(guidePath) {
   if (!existsSync(guidePath)) {
-    return [];
+    throw new Error(`Typography guide not found at ${guidePath}`);
   }
   const markdown = readFileSync(guidePath, 'utf8');
   const markerMatch = markdown.match(/<!-- renderer-typography-exceptions:start -->([\s\S]*?)<!-- renderer-typography-exceptions:end -->/);
   if (!markerMatch) {
-    return [];
+    throw new Error('Typography exception registry markers are missing');
   }
 
   const jsonMatch = markerMatch[1].match(/```json\s*([\s\S]*?)\s*```/);
   if (!jsonMatch) {
-    return [];
+    throw new Error('Typography exception registry JSON block is missing');
   }
 
   try {
     const parsed = JSON.parse(jsonMatch[1]);
-    return Array.isArray(parsed?.exceptions) ? parsed.exceptions : [];
-  } catch {
-    return [];
+    if (parsed?.schemaVersion !== 1 || !Array.isArray(parsed.exceptions)) {
+      throw new Error('Typography exception registry must use schemaVersion 1 with an exceptions array');
+    }
+
+    const allowedCategories = new Set(['project-authored-font', 'non-text-glyph', 'single-line-line-height']);
+    const ids = new Set();
+    for (const exception of parsed.exceptions) {
+      if (
+        !exception
+        || typeof exception.id !== 'string'
+        || ids.has(exception.id)
+        || typeof exception.path !== 'string'
+        || exception.path.includes('\\')
+        || exception.path.includes('*')
+        || exception.path.includes('..')
+        || typeof exception.category !== 'string'
+        || !allowedCategories.has(exception.category)
+        || typeof exception.expression !== 'string'
+        || exception.expression.length === 0
+        || !Number.isInteger(exception.expectedOccurrences)
+        || exception.expectedOccurrences < 1
+        || typeof exception.ownerSurface !== 'string'
+        || typeof exception.reason !== 'string'
+        || typeof exception.verification !== 'string'
+        || typeof exception.reviewPolicy !== 'string'
+      ) {
+        throw new Error('Typography exception registry contains a malformed or duplicate record');
+      }
+      ids.add(exception.id);
+    }
+    return parsed.exceptions;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Typography exception registry')) {
+      throw error;
+    }
+    throw new Error(`Typography exception registry JSON is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -107,8 +150,10 @@ function isSubFloor(val) {
 }
 
 function extractThemeBlock(content) {
-  const themeMatch = content.match(/@theme(?:\s+static)?\s*\{([^}]*)\}/s);
-  return themeMatch ? themeMatch[1] : '';
+  const themeMatch = content.match(/@theme(?<modifier>\s+static)?\s*\{(?<body>[^}]*)\}/s);
+  return themeMatch
+    ? { body: themeMatch.groups?.body ?? '', isStatic: Boolean(themeMatch.groups?.modifier) }
+    : null;
 }
 
 export function runTypographyAudit(options = {}) {
@@ -136,6 +181,8 @@ export function runTypographyAudit(options = {}) {
     unapprovedSvgSizes: 0,
     unapprovedCanvasFonts: 0,
     unapprovedLineHeightOverrides: 0,
+    unapprovedImplicitElements: 0,
+    unapprovedHeadlineWeights: 0,
     catalogErrors: 0,
     staleExceptions: 0,
   };
@@ -149,6 +196,28 @@ export function runTypographyAudit(options = {}) {
   // 1. Verify Catalog in themePath
   if (existsSync(themePath)) {
     const themeContent = readFileSync(themePath, 'utf8');
+    const theme = extractThemeBlock(themeContent);
+
+    if (!theme) {
+      catalogErrors.push('Typography theme block is missing');
+    } else {
+      if (!theme.isStatic) {
+        catalogErrors.push('Typography theme block must use @theme static');
+      }
+      if (!/--text-\*:\s*initial\s*;/.test(theme.body)) {
+        catalogErrors.push('Typography theme must reset the --text-* namespace before role definitions');
+      }
+
+      const primaryTextTokens = [...theme.body.matchAll(/^\s*--text-([A-Za-z0-9-]+):/gm)]
+        .map((match) => `--text-${match[1]}`)
+        .filter((name) => !name.endsWith('--line-height'));
+      const approvedTokenNames = new Set(APPROVED_ROLES.map((role) => role.variable));
+      for (const token of primaryTextTokens) {
+        if (!approvedTokenNames.has(token)) {
+          catalogErrors.push(`Unapproved primary typography token: ${token}`);
+        }
+      }
+    }
 
     for (const role of APPROVED_ROLES) {
       const varRegex = new RegExp(`${role.variable}:\\s*${role.sizePx}px;`);
@@ -159,10 +228,14 @@ export function runTypographyAudit(options = {}) {
       if (!lhRegex.test(themeContent)) {
         catalogErrors.push(`Missing role line-height definition: ${role.variable}--line-height: ${role.lineHeightPx}px;`);
       }
+      if (role.sizePx < 11 || role.lineHeightPx < role.sizePx) {
+        catalogErrors.push(`Role ${role.id} violates the minimum size/line-height contract`);
+      }
     }
 
     // Check Body baseline in global body rule
-    if (!/font-size:\s*var\(--text-role-body\)/.test(themeContent)) {
+    if (!/font-size:\s*var\(--text-role-body\)/.test(themeContent)
+      || !/line-height:\s*var\(--text-role-body--line-height\)/.test(themeContent)) {
       catalogErrors.push('Global body rule does not establish font-size: var(--text-role-body)');
     }
   } else {
@@ -249,6 +322,22 @@ export function runTypographyAudit(options = {}) {
             exceptionId: null,
           });
           counts.approvedRoleAssignments += 1;
+        }
+      }
+
+      if (!isThemeFile && !line.includes('font-bold')) {
+        for (const match of line.matchAll(headlineUtilityRegex)) {
+          counts.unapprovedHeadlineWeights += 1;
+          findings.push({
+            path: relPath,
+            line: lineNumber,
+            column: (match.index ?? 0) + 1,
+            category: 'headline-weight',
+            value: 'text-role-headline',
+            suggestedRole: 'headline',
+            classification: 'rejected',
+            exceptionId: null,
+          });
         }
       }
 
@@ -595,6 +684,198 @@ export function runTypographyAudit(options = {}) {
         }
       }
     });
+
+    const lineLocation = (index) => {
+      const line = content.slice(0, index).split('\n').length;
+      const lineStart = content.lastIndexOf('\n', index - 1) + 1;
+      return { line, column: index - lineStart + 1 };
+    };
+
+    const lineExceptionAt = (index) => {
+      const lineStart = content.lastIndexOf('\n', index - 1) + 1;
+      const lineEnd = content.indexOf('\n', index);
+      const lineContent = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd);
+      return hasExceptionMatch(relPath, lineContent);
+    };
+
+    const recordAssignment = ({ match, category, value, countKey, suggestedRole = null, approved, countsFloor = true }) => {
+      if (approved) return;
+      const index = match.index ?? 0;
+      const location = lineLocation(index);
+      const lineEx = lineExceptionAt(index);
+      if (lineEx) {
+        inventory.push({
+          path: relPath,
+          line: location.line,
+          column: location.column,
+          category,
+          value: match[0],
+          suggestedRole,
+          classification: 'approved-exception',
+          exceptionId: lineEx.id,
+        });
+        return;
+      }
+
+      if (countsFloor && isSubFloor(value)) counts.applicationTextBelowFloor += 1;
+      counts[countKey] += 1;
+      findings.push({
+        path: relPath,
+        line: location.line,
+        column: location.column,
+        category,
+        value: match[0],
+        suggestedRole,
+        classification: 'rejected',
+        exceptionId: null,
+      });
+    };
+
+    const isRoleVariable = (value) => String(value).includes('var(--text-role-');
+    const isRoleLineHeightVariable = (value) => /var\(--text-role-(?:large-title|title-2|title-3|headline|body|callout|subheadline)--line-height\)/.test(String(value));
+
+    if (isCssFile) {
+      for (const regex of [rawCssFontRegex, rawCssLineHeightRegex]) {
+        for (const match of content.matchAll(regex)) {
+          const value = match.groups?.value?.trim() ?? '';
+          const isLineHeight = regex === rawCssLineHeightRegex;
+          recordAssignment({
+            match,
+            category: isLineHeight ? 'raw-css-line-height' : 'raw-css-font',
+            value,
+            countKey: isLineHeight ? 'unapprovedLineHeightOverrides' : 'unapprovedCssSizes',
+            approved: isLineHeight ? isRoleLineHeightVariable(value) : isRoleVariable(value),
+            countsFloor: !isLineHeight,
+          });
+        }
+      }
+
+      if (!isThemeFile) {
+        for (const match of content.matchAll(/(?<property>--[A-Za-z0-9_-]*(?:font-size|line-height|font)[A-Za-z0-9_-]*)\s*:\s*(?<value>[^;}\n]+)/g)) {
+          const value = match.groups?.value?.trim() ?? '';
+          recordAssignment({
+            match,
+            category: 'raw-css-custom-property',
+            value,
+            countKey: 'unapprovedCssSizes',
+            approved: isRoleVariable(value) || isRoleLineHeightVariable(value),
+          });
+        }
+      }
+    } else {
+      const svgTextRanges = [];
+      for (const tag of content.matchAll(/<text\b[\s\S]*?>/gi)) {
+        svgTextRanges.push({ start: tag.index ?? 0, end: (tag.index ?? 0) + tag[0].length, multiline: tag[0].includes('\n') });
+      }
+      const isInsideSvgText = (index) => svgTextRanges.some((range) => index >= range.start && index < range.end);
+
+      for (const match of content.matchAll(jsxFontSizeAttributeRegex)) {
+        const index = match.index ?? 0;
+        if (isInsideSvgText(index)) continue;
+        const value = match.groups?.strVal ?? match.groups?.jsxVal ?? '';
+        recordAssignment({
+          match,
+          category: 'inline-font-size',
+          value,
+          countKey: 'unapprovedInlineSizes',
+          approved: isRoleVariable(value),
+        });
+      }
+
+      for (const range of svgTextRanges.filter((candidate) => candidate.multiline)) {
+        const tagContent = content.slice(range.start, range.end);
+        for (const match of tagContent.matchAll(/\b(?:fontSize|font-size)\s*=\s*(?:\{(?<jsxVal>[^}]+)\}|(?<quote>['"])(?<strVal>[^'"]+)\k<quote>)/g)) {
+          const value = match.groups?.strVal ?? match.groups?.jsxVal ?? '';
+          recordAssignment({
+            match: { ...match, index: range.start + (match.index ?? 0) },
+            category: 'svg-font-size',
+            value,
+            countKey: 'unapprovedSvgSizes',
+            approved: isRoleVariable(value),
+          });
+        }
+      }
+
+      for (const match of content.matchAll(inlineLineHeightRegex)) {
+        const value = match.groups?.strVal ?? match.groups?.jsxVal ?? match.groups?.numVal ?? '';
+        recordAssignment({
+          match,
+          category: 'inline-line-height',
+          value,
+          countKey: 'unapprovedLineHeightOverrides',
+          approved: isRoleLineHeightVariable(value),
+          countsFloor: false,
+        });
+      }
+
+      for (const match of content.matchAll(inlineStyleFontRegex)) {
+        const value = match.groups?.strVal ?? match.groups?.jsxVal ?? '';
+        recordAssignment({
+          match,
+          category: 'inline-font',
+          value,
+          countKey: 'unapprovedInlineSizes',
+          approved: isRoleVariable(value),
+        });
+      }
+
+      for (const match of content.matchAll(styleAssignmentRegex)) {
+        const property = match.groups?.property ?? '';
+        const value = match.groups?.value?.trim() ?? '';
+        recordAssignment({
+          match,
+          category: `dom-${property}`,
+          value,
+          countKey: property === 'lineHeight' ? 'unapprovedLineHeightOverrides' : 'unapprovedInlineSizes',
+          approved: property === 'lineHeight' ? isRoleLineHeightVariable(value) : isRoleVariable(value),
+          countsFloor: property !== 'lineHeight',
+        });
+      }
+
+      for (const match of content.matchAll(styleSetPropertyRegex)) {
+        const property = match.groups?.property ?? '';
+        const value = match.groups?.value?.trim() ?? '';
+        recordAssignment({
+          match,
+          category: `set-property-${property}`,
+          value,
+          countKey: property === 'line-height' ? 'unapprovedLineHeightOverrides' : 'unapprovedInlineSizes',
+          approved: property === 'line-height' ? isRoleLineHeightVariable(value) : isRoleVariable(value),
+          countsFloor: property !== 'line-height',
+        });
+      }
+
+      for (const match of content.matchAll(canvasTextCallRegex)) {
+        if (!content.includes('resolveTypographyRoleFont(') && !content.match(canvasFontLiteralRegex)) {
+          recordAssignment({
+            match,
+            category: 'canvas-text-without-role-resolver',
+            value: '',
+            countKey: 'unapprovedCanvasFonts',
+            approved: false,
+            countsFloor: false,
+          });
+        }
+      }
+
+      if (['.tsx', '.jsx', '.html', '.svg'].includes(path.extname(absPath))) {
+        for (const match of content.matchAll(implicitSmallElementRegex)) {
+          const tagStart = match.index ?? 0;
+          const tagEnd = content.indexOf('>', tagStart) + 1;
+          const tagContent = content.slice(tagStart, tagEnd);
+          if (!/text-role-(?:large-title|title-2|title-3|headline|body|callout|subheadline)/.test(tagContent)) {
+            recordAssignment({
+              match,
+              category: 'implicit-subfloor-element',
+              value: '',
+              countKey: 'unapprovedImplicitElements',
+              approved: false,
+              countsFloor: false,
+            });
+          }
+        }
+      }
+    }
   }
 
   // Check stale exceptions
@@ -620,7 +901,9 @@ export function runTypographyAudit(options = {}) {
     && counts.unapprovedInlineSizes === 0
     && counts.unapprovedSvgSizes === 0
     && counts.unapprovedCanvasFonts === 0
-    && counts.unapprovedLineHeightOverrides === 0;
+    && counts.unapprovedLineHeightOverrides === 0
+    && counts.unapprovedImplicitElements === 0
+    && counts.unapprovedHeadlineWeights === 0;
 
   findings.sort((a, b) => a.path.localeCompare(b.path) || a.line - b.line || a.column - b.column);
   inventory.sort((a, b) => a.path.localeCompare(b.path) || a.line - b.line || a.column - b.column);

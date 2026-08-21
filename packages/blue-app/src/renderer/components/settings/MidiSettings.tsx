@@ -178,12 +178,12 @@ export default function MidiSettings(): React.ReactElement {
       ) : (
         <div className="overflow-hidden rounded-md border border-app-border bg-black">
           <table className="w-full text-role-body">
-            <thead className="bg-app-surface text-app-text-muted">
+            <thead className="bg-app-surface text-role-headline font-bold text-app-text-muted">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Enabled</th>
-                <th className="px-3 py-2 text-left font-medium">Device</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-left font-medium">Error</th>
+                <th className="px-3 py-2 text-left">Enabled</th>
+                <th className="px-3 py-2 text-left">Device</th>
+                <th className="px-3 py-2 text-left">Status</th>
+                <th className="px-3 py-2 text-left">Error</th>
               </tr>
             </thead>
             <tbody>

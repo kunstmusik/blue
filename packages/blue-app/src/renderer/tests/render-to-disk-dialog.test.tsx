@@ -82,14 +82,23 @@ describe('RenderToDiskDialog', () => {
     const dialog = container.querySelector('[role="dialog"]') as HTMLElement;
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     expect(useRenderToDiskStore.getState().operationId).toBe('disk-1');
-    expect(container.querySelector('[data-testid="render-dialog-title"]')!.textContent)
+    const title = container.querySelector('[data-testid="render-dialog-title"]') as HTMLElement;
+    expect(title.textContent)
       .toBe('Render to Disk - Running');
+    expect(title.classList).toContain('text-role-title-2');
+    expect(title.classList).toContain('font-bold');
 
     const table = container.querySelector('[data-testid="render-items-table"]') as HTMLTableElement;
-    expect(Array.from(table.querySelectorAll('th')).map((th) => th.textContent)).toEqual(['Output', 'Status']);
+    const headers = Array.from(table.querySelectorAll('th'));
+    expect(headers.map((th) => th.textContent)).toEqual(['Output', 'Status']);
+    for (const header of headers) {
+      expect(header.classList).toContain('text-role-headline');
+      expect(header.classList).toContain('font-bold');
+    }
     const row = table.querySelector('tbody tr') as HTMLElement;
     expect(row.textContent).toContain('/tmp/out.wav');
     expect(row.textContent).toContain('Running');
+    expect(row.querySelector('td')?.classList).toContain('text-role-body');
 
     const okButton = container.querySelector('[data-testid="render-dialog-ok"]') as HTMLButtonElement;
     const cancelButton = container.querySelector('[data-testid="render-dialog-cancel"]') as HTMLButtonElement;

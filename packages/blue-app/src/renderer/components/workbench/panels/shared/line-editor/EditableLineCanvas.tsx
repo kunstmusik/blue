@@ -732,7 +732,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                       y={y}
                       fill="#74829c"
                       fontFamily="monospace"
-                      fontSize={9}
+                      className="text-role-subheadline"
                       textAnchor="end"
                       dominantBaseline="middle"
                     >
@@ -757,10 +757,10 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                     />
                     <text
                       x={x}
-                      y={plotTop + plotHeight + 4}
+                      y={plotTop + plotHeight + 5}
                       fill="#74829c"
                       fontFamily="monospace"
-                      fontSize={9}
+                      className="text-role-subheadline"
                       textAnchor="middle"
                       dominantBaseline="hanging"
                     >
@@ -901,7 +901,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
               style={{ width: 400, maxHeight: 300 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="border-b border-app-border px-4 py-2 text-role-headline text-app-text-strong">
+              <div className="border-b border-app-border px-4 py-2 text-role-headline font-bold text-app-text-strong">
                 Line Point Editor
               </div>
               <div className="overflow-auto bg-black" style={{ maxHeight: 230 }}>

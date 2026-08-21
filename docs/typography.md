@@ -355,9 +355,74 @@ At the start of normalization (Phase 2), the static audit detected the following
       "reason": "Calculates dropdown display bounds based on project-authored fontSize property with fallback to 12",
       "verification": "packages/blue-app/src/renderer/tests/bsb-widget-layout.test.ts",
       "reviewPolicy": "Preserve canonical project-authored font size without coercion"
+    },
+    {
+      "id": "bsb-swing-html-measurement-font",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/utils.ts",
+      "category": "project-authored-font",
+      "expression": "style.font = font;",
+      "expectedOccurrences": 1,
+      "ownerSurface": "BSB imported Swing HTML measurement",
+      "reason": "Measures imported project-authored HTML using its preserved font shorthand",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Preserve imported HTML typography until the authored-data boundary changes"
+    },
+    {
+      "id": "bsb-swing-html-measurement-line-height",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/utils.ts",
+      "category": "single-line-line-height",
+      "expression": "style.lineHeight = 'normal';",
+      "expectedOccurrences": 1,
+      "ownerSurface": "BSB imported Swing HTML measurement",
+      "reason": "Uses browser-normal line height while measuring imported authored HTML",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Remove if imported HTML measurement no longer needs an authored-text boundary"
+    },
+    {
+      "id": "bsb-label-authored-line-height",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/BSBLabelWidget.tsx",
+      "category": "single-line-line-height",
+      "expression": "lineHeight: 'normal'",
+      "expectedOccurrences": 1,
+      "ownerSurface": "BSB authored label rendering",
+      "reason": "Restores a browser-normal line box for a persisted project-authored font size instead of inheriting the application Body line height",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Keep local to authored BSB label text; do not use this exception for application chrome"
+    },
+    {
+      "id": "bsb-group-authored-line-height",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/BSBGroupWidget.tsx",
+      "category": "single-line-line-height",
+      "expression": "lineHeight: 'normal'",
+      "expectedOccurrences": 1,
+      "ownerSurface": "BSB authored group-title rendering",
+      "reason": "Restores a browser-normal line box for a persisted project-authored group-title font size instead of inheriting the application Body line height",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Keep local to authored BSB group titles; do not use this exception for application chrome"
+    },
+    {
+      "id": "bsb-knob-authored-line-height",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget.tsx",
+      "category": "single-line-line-height",
+      "expression": "lineHeight: 'normal'",
+      "expectedOccurrences": 1,
+      "ownerSurface": "BSB authored knob-label rendering",
+      "reason": "Restores a browser-normal line box for a persisted project-authored knob-label font size instead of inheriting the application Body line height",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Keep local to authored BSB knob labels; do not use this exception for application chrome"
+    },
+    {
+      "id": "bsb-dropdown-authored-line-height",
+      "path": "packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/widgets/BSBDropdownWidget.tsx",
+      "category": "single-line-line-height",
+      "expression": "lineHeight: 'normal'",
+      "expectedOccurrences": 2,
+      "ownerSurface": "BSB authored dropdown rendering",
+      "reason": "Restores a browser-normal line box for persisted project-authored dropdown font sizes in the selected value and menu entries",
+      "verification": "packages/blue-app/src/renderer/tests/bsb-swing-html.test.tsx",
+      "reviewPolicy": "Keep local to authored BSB dropdown text; do not use this exception for application chrome"
     }
   ]
 }
 ```
 <!-- renderer-typography-exceptions:end -->
-

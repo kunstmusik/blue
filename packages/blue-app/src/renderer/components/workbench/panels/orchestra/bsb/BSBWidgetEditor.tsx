@@ -23,7 +23,7 @@ export default function BSBWidgetEditor({
 
   return (
     <div className="rounded border border-blue-border bg-app-input">
-      <div className="border-b border-blue-border px-3 py-2 text-role-subheadline uppercase tracking-[0.16em] text-blue-muted">
+      <div className="border-b border-blue-border px-3 py-2 text-role-headline font-bold uppercase tracking-[0.16em] text-blue-muted">
         Widgets
       </div>
       <ul className="divide-y divide-blue-border/50 text-role-body">
@@ -36,7 +36,7 @@ export default function BSBWidgetEditor({
               <div className="truncate font-mono text-app-text-strong">
                 &lt;{widget.objectName}&gt;
               </div>
-              <div className="text-role-subheadline text-blue-muted">
+              <div className="text-role-callout text-blue-muted">
                 {widget.widgetType} · {widget.minimum} to {widget.maximum}
               </div>
             </div>

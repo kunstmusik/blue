@@ -160,7 +160,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-operator-panel">
       {/* Operator Tabs Header */}
       <div className="flex flex-col gap-2 border-b border-blue-border pb-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-role-headline text-gray-200 uppercase tracking-wider">Operators</span>
+        <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Operators</span>
         <div className="flex min-w-0 flex-wrap gap-1" role="tablist" aria-label="Operator Selector">
           {Array.from({ length: 6 }, (_, i) => {
             const isSelected = selectedOpIndex === i;
@@ -345,7 +345,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
         {/* Keyboard Scaling */}
         <div className="rounded border border-blue-border/50 bg-blue-bg/40 p-2 space-y-2">
-          <span className="text-role-headline text-gray-300">Keyboard Level & Rate Scaling</span>
+          <span className="text-role-headline font-bold text-gray-300">Keyboard Level & Rate Scaling</span>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-op-breakpoint" className="text-role-body text-blue-muted">
@@ -470,16 +470,16 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
         {/* 4-Stage Envelope Numeric Editor */}
         <div className="rounded border border-blue-border/50 bg-blue-bg/40 p-2 space-y-2">
-          <span className="text-role-headline text-gray-300">Envelope (Rates & Levels 0–99)</span>
+          <span className="text-role-headline font-bold text-gray-300">Envelope (Rates & Levels 0–99)</span>
           <div className="grid grid-cols-4 gap-3">
             {[0, 1, 2, 3].map((stage) => {
               const pt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
               return (
                 <div key={stage} className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20">
-                  <span className="text-role-subheadline font-medium text-gray-400">Stage {stage + 1}</span>
+                  <span className="text-role-callout font-medium text-gray-400">Stage {stage + 1}</span>
                   <div className="flex gap-2">
                     <div className="flex-1 flex flex-col gap-0.5">
-                      <label htmlFor={`bluex7-op-r${stage + 1}`} className="text-role-subheadline text-blue-muted">
+                      <label htmlFor={`bluex7-op-r${stage + 1}`} className="text-role-callout text-blue-muted">
                         R{stage + 1}
                       </label>
                       <input
@@ -494,7 +494,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                       />
                     </div>
                     <div className="flex-1 flex flex-col gap-0.5">
-                      <label htmlFor={`bluex7-op-l${stage + 1}`} className="text-role-subheadline text-blue-muted">
+                      <label htmlFor={`bluex7-op-l${stage + 1}`} className="text-role-callout text-blue-muted">
                         L{stage + 1}
                       </label>
                       <input

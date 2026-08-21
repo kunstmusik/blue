@@ -39,7 +39,7 @@ function MetadataRow({ label, value, breakValue = false }: {
   return (
     <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-4 border-b border-app-border/60 py-1.5 last:border-b-0">
       <dt className="text-role-body text-app-text-muted">{label}</dt>
-      <dd className={`min-w-0 text-right text-role-body text-app-text-soft ${breakValue ? 'break-all font-mono text-role-subheadline' : ''}`}>
+      <dd className={`min-w-0 text-right text-role-body text-app-text-soft ${breakValue ? 'break-all font-mono' : ''}`}>
         {value}
       </dd>
     </div>
@@ -80,7 +80,7 @@ export default function AboutApp({ iconUrl }: AboutAppProps) {
           <img className="h-full w-full object-contain" src={iconUrl} alt="Blue icon" />
         </div>
         <div className="min-w-0 pt-1">
-          <p className="mb-1 text-role-subheadline font-medium uppercase tracking-[0.3em] text-app-accent">Blue</p>
+          <p className="mb-1 text-role-callout font-medium uppercase tracking-[0.3em] text-app-accent">Blue</p>
           <h1 className="text-role-large-title font-medium text-app-text-strong">About Blue</h1>
           <p className="mt-2 max-w-[18.125rem] text-role-body text-app-text-muted">
             An object composition environment for Csound.
@@ -93,7 +93,7 @@ export default function AboutApp({ iconUrl }: AboutAppProps) {
       <section aria-labelledby="build-details-heading" className="min-h-0 flex-1">
         <div className="mb-2 flex items-center gap-2">
           <Check size={13} strokeWidth={2.25} className="text-app-accent" aria-hidden="true" />
-          <h2 id="build-details-heading" className="text-role-callout font-medium uppercase tracking-[0.18em] text-app-text-muted">
+          <h2 id="build-details-heading" className="text-role-title-3 font-semibold uppercase tracking-[0.18em] text-app-text-muted">
             Build details
           </h2>
         </div>
@@ -106,7 +106,7 @@ export default function AboutApp({ iconUrl }: AboutAppProps) {
       </section>
 
       <section aria-labelledby="runtime-heading" className="mt-5">
-        <h2 id="runtime-heading" className="mb-1 text-role-callout font-medium uppercase tracking-[0.18em] text-app-text-muted">
+        <h2 id="runtime-heading" className="mb-1 text-role-title-3 font-semibold uppercase tracking-[0.18em] text-app-text-muted">
           Runtime
         </h2>
         <dl className="grid grid-cols-3 gap-3">

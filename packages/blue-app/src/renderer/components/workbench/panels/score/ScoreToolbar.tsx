@@ -118,7 +118,7 @@ export default function ScoreToolbar({
                       >
                         Edit Note Processors
                         {hasChain && (
-                          <span className="text-red-400 text-role-subheadline">({npcChain.processors.length})</span>
+                          <span className="text-red-400 text-role-callout">({npcChain.processors.length})</span>
                         )}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>

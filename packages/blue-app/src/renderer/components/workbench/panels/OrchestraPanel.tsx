@@ -8,7 +8,7 @@ function EmptyOrchestraState(): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-6 text-center text-blue-muted">
       <div className="max-w-md rounded-lg border border-blue-border bg-blue-surface/70 px-6 py-5">
-        <div className="text-role-headline text-gray-100">No project loaded</div>
+        <div className="text-role-headline font-bold text-gray-100">No project loaded</div>
         <div className="mt-2 text-role-body">
           Open a project to edit arrangement instruments and orchestra patches.
         </div>

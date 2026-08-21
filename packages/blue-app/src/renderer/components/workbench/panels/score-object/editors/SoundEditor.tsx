@@ -450,7 +450,7 @@ function SoundAutomationPanel({
       {showEditDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowEditDialog(false)}>
           <div className="w-160 max-h-[70vh] overflow-hidden rounded border border-app-border bg-app-hover shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <div className="border-b border-app-border px-4 py-3 text-role-headline text-app-text-strong">
+            <div className="border-b border-app-border px-4 py-3 text-role-headline font-bold text-app-text-strong">
               Choose Parameters to Automate
             </div>
             <div className="max-h-[50vh] overflow-auto bg-black">
@@ -493,7 +493,7 @@ function SoundAutomationPanel({
               </button>
               <button
                 type="button"
-                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-headline text-app-text-strong hover:bg-app-accent-hover"
+                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-headline font-bold text-app-text-strong hover:bg-app-accent-hover"
                 onClick={applyEditDialogChanges}
               >
                 OK

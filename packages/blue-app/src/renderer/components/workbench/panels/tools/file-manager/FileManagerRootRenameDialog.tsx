@@ -47,7 +47,7 @@ export function FileManagerRootRenameDialog({
           }
         }}
       >
-        <h2 id="file-manager-rename-root-title" className="text-role-headline text-app-text-bright">
+        <h2 id="file-manager-rename-root-title" className="text-role-title-2 font-bold text-app-text-bright">
           Rename Root
         </h2>
         <label htmlFor="file-manager-root-name" className="mt-4 block text-role-body font-medium text-app-text">

@@ -105,22 +105,22 @@ export default function OscSettings({
         </p>
         <div className="overflow-hidden rounded-md border border-app-border">
           <table className="w-full border-collapse text-left text-role-body" aria-label="Supported OSC messages">
-            <thead className="bg-app-surface text-role-callout text-app-text-muted">
+            <thead className="bg-app-surface text-role-headline font-bold text-app-text-muted">
               <tr>
-                <th scope="col" className="px-3 py-2 font-medium">Message</th>
-                <th scope="col" className="px-3 py-2 font-medium">Description</th>
+                <th scope="col" className="px-3 py-2">Message</th>
+                <th scope="col" className="px-3 py-2">Description</th>
               </tr>
             </thead>
             {OSC_COMMAND_CATEGORIES.map((category) => (
               <tbody key={category} className="divide-y divide-app-border border-t border-app-border">
                 <tr className="bg-app-surface/60">
-                  <th scope="colgroup" colSpan={2} className="px-3 py-1.5 text-role-callout font-semibold text-app-text-muted">
+                  <th scope="colgroup" colSpan={2} className="px-3 py-1.5 text-role-headline font-bold text-app-text-muted">
                     {category}
                   </th>
                 </tr>
                 {OSC_COMMAND_REGISTRY.filter((command) => command.category === category).map((command) => (
                   <tr key={command.id} data-osc-command={command.id}>
-                    <td className="whitespace-nowrap px-3 py-2 font-mono text-role-callout text-app-text">
+                    <td className="whitespace-nowrap px-3 py-2 font-mono text-role-body text-app-text">
                       {command.addressPrefix}
                     </td>
                     <td className="px-3 py-2 text-app-text-muted">{command.description}</td>

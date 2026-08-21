@@ -233,7 +233,7 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       const labelHeight = labelEnabled
         ? Math.max(16, Math.ceil(labelMetrics.height))
         : 0;
-      const valueHeight = node.properties.valueDisplayEnabled === true ? 14 : 0;
+      const valueHeight = node.properties.valueDisplayEnabled === true ? 16 : 0;
       return {
         width: Math.max(knobWidth, Math.ceil(labelMetrics.width)),
         height: knobWidth + labelHeight + valueHeight,

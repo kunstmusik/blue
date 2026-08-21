@@ -149,7 +149,7 @@ export function ColorPickerPopover({
       role="dialog"
       aria-label="Color picker"
       data-placement={position.placement}
-      className="fixed z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-subheadline text-app-text shadow-xl"
+      className="fixed z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-body text-app-text shadow-xl"
       style={{ left: position.left, top: position.top }}
     >
       <div className="mb-3 h-9 rounded border border-app-border" style={{ backgroundColor: normalizedValue }} />

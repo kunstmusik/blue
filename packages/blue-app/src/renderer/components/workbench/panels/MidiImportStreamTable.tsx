@@ -21,15 +21,15 @@ export default function MidiImportStreamTable({
 }: MidiImportStreamTableProps): React.ReactElement {
   return (
     <div className="min-h-0 flex-1 overflow-auto rounded border border-app-border/30 bg-black">
-      <table className="w-full border-collapse text-role-callout text-app-text">
-        <thead className="sticky top-0 bg-app-surface text-left text-app-text-muted">
+      <table className="w-full border-collapse text-role-body text-app-text">
+        <thead className="sticky top-0 bg-app-surface text-left text-role-headline font-bold text-app-text-muted">
           <tr>
-            <th className="px-2 py-2 font-medium">Source</th>
-            <th className="px-2 py-2 font-medium">Channel</th>
-            <th className="px-2 py-2 font-medium">Notes / range</th>
-            <th className="px-2 py-2 font-medium">Instrument ID</th>
-            <th className="px-2 py-2 font-medium">Note template</th>
-            <th className="px-2 py-2 font-medium">Trim</th>
+            <th className="px-2 py-2">Source</th>
+            <th className="px-2 py-2">Channel</th>
+            <th className="px-2 py-2">Notes / range</th>
+            <th className="px-2 py-2">Instrument ID</th>
+            <th className="px-2 py-2">Note template</th>
+            <th className="px-2 py-2">Trim</th>
           </tr>
         </thead>
         <tbody>

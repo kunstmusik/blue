@@ -315,7 +315,7 @@ export default function CodeRepositoryDialog({
         aria-labelledby="code-repository-editor-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="code-repository-editor-title" className="text-role-headline text-app-text-bright">
+          <h2 id="code-repository-editor-title" className="text-role-title-2 font-bold text-app-text-bright">
             Code Repository Editor
           </h2>
           <button
@@ -410,7 +410,7 @@ export default function CodeRepositoryDialog({
             </button>
           </div>
           <div className="flex items-center gap-2">
-            {dirty && <span className="text-role-subheadline text-app-text-muted">Unsaved changes</span>}
+            {dirty && <span className="text-role-callout text-app-text-muted">Unsaved changes</span>}
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={handleClose} disabled={saving}>
               Cancel
             </button>

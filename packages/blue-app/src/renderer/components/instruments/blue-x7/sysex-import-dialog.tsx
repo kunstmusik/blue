@@ -41,7 +41,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       >
         <div ref={dialogRef} className="flex flex-col w-full max-w-md rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
           <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
-            <h2 id="sysex-single-title" className="text-role-headline text-gray-100">
+            <h2 id="sysex-single-title" className="text-role-title-2 font-bold text-gray-100">
               Import Single DX7 Voice
             </h2>
             <button
@@ -101,10 +101,10 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
       <div ref={dialogRef} className="flex flex-col max-h-[90vh] w-full max-w-2xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
           <div>
-            <h2 id="sysex-bank-title" className="text-role-headline text-gray-100">
+            <h2 id="sysex-bank-title" className="text-role-title-2 font-bold text-gray-100">
               Select Voice from 32-Voice Bank
             </h2>
-            <p className="text-role-subheadline text-blue-muted">
+            <p className="text-role-callout text-blue-muted">
               Choose one voice to import into this BlueX7 instrument:
             </p>
           </div>
@@ -148,7 +148,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                 className="flex items-center justify-between rounded border border-blue-border bg-blue-surface/30 p-2.5 text-left text-role-body text-gray-200 transition-colors hover:border-blue-accent hover:bg-blue-accent/15 focus:outline-none focus:ring-2 focus:ring-blue-accent"
               >
                 <span className="font-medium truncate">{label}</span>
-                <span className="text-role-subheadline text-blue-muted ml-2">Slot {idx + 1}</span>
+                <span className="text-role-callout text-blue-muted ml-2">Slot {idx + 1}</span>
               </button>
             );
           })}

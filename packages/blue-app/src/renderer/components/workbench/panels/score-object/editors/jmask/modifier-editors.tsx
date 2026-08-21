@@ -49,7 +49,7 @@ export function MaskEditor({ mask, duration, onChange }: {
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-role-headline text-gray-300 font-medium">Mask</div>
+      <div className="text-role-headline text-gray-300 font-bold">Mask</div>
       <div className="flex items-center gap-2">
         <CommitNumberField label="Map Value" value={mapValue} step={0.01} onChange={v => update({ mapValue: v })} />
       </div>
@@ -92,7 +92,7 @@ export function QuantizerEditor({ quantizer, duration, onChange }: {
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-role-headline text-gray-300 font-medium">Quantizer</div>
+      <div className="text-role-headline text-gray-300 font-bold">Quantizer</div>
       <ConstantOrTable
         label="Grid Size" constantValue={gridSize} tableEnabled={gridSizeTableEnabled}
         table={gridSizeTable} duration={duration}
@@ -140,7 +140,7 @@ export function AccumulatorEditor({ accumulator, duration, onChange }: {
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-role-headline text-gray-300 font-medium">Accumulator</span>
+        <span className="text-role-headline text-gray-300 font-bold">Accumulator</span>
         <select
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={mode}

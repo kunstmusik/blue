@@ -669,7 +669,7 @@ function MixerEffectEditorDialog({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex flex-none items-center border-b border-blue-border bg-app-surface-strong px-4 py-3">
-          <div className="text-role-headline text-app-text-strong">{title}</div>
+          <div className="text-role-headline font-bold text-app-text-strong">{title}</div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">

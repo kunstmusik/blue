@@ -36,7 +36,7 @@ export default function WelcomeScreen(): React.ReactElement {
 
       {recentFiles.length > 0 && (
         <div className="w-full max-w-md">
-          <h2 className="mb-3 text-role-headline font-bold uppercase tracking-wider text-app-text-muted">
+          <h2 className="mb-3 text-role-title-3 font-semibold uppercase tracking-wider text-app-text-muted">
             Recent Files
           </h2>
           <ul className="space-y-1">

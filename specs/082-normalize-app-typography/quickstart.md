@@ -106,6 +106,17 @@ Root `lint` must include the production typography audit and root `test:scripts`
 must include its fixture tests before handoff. Existing CI then exercises the
 same gates on macOS, Windows, and Linux.
 
+### Convergence implementation evidence (2026-08-20; updated 2026-08-21)
+
+| Check | Result | Evidence |
+|---|---|---|
+| Typography audit fixtures | Pass | `node --test scripts/audit-renderer-typography.test.mjs` — 21/21 tests passed |
+| Production typography audit | Pass | `node scripts/audit-renderer-typography.mjs` — `passed: true`, all unapproved/stale counts zero |
+| Whitespace validation | Pass | `git diff --check` |
+| Root/package validation | Pass | `@blue/app`: 357 files / 3,488 tests passed with 2 skipped; `@blue/data`: 168 files / 1,647 tests passed; elevated `pnpm test` and `pnpm lint` passed |
+| Browser geometry checks | Pass | BSB: 4/4 tests passed; BlueX7: 2 files / 6 tests passed |
+| Visual, zoom, and authored-boundary matrices | Pass | Requester completed the manual walkthrough on 2026-08-21 and reported no defects; detailed per-case screenshots and numeric metric ledger were not archived |
+
 ## 6. Inspect a Rendered Typography Sample
 
 At 100% Actual Size, select a visible element in Electron DevTools and run:
@@ -141,28 +152,32 @@ and screenshot evidence for every case.
 
 ### 100% execution record
 
+Manual acceptance attestation (2026-08-21): the requester completed every row at the
+required D1/D2 display profiles and reported no defects. The records below preserve
+the required coverage without inventing per-case screenshot or metric artifacts.
+
 | Profile | Case | DPR | Result | Evidence / defects / rerun |
 |---|---|---:|---|---|
-| D1 | V01 | — | Pending | — |
-| D1 | V02 | — | Pending | — |
-| D1 | V03 | — | Pending | — |
-| D1 | V04 | — | Pending | — |
-| D1 | V05 | — | Pending | — |
-| D1 | V06 | — | Pending | — |
-| D1 | V07 | — | Pending | — |
-| D1 | V08 | — | Pending | — |
-| D1 | V09 | — | Pending | — |
-| D1 | V10 | — | Pending | — |
-| D2 | V01 | — | Pending | — |
-| D2 | V02 | — | Pending | — |
-| D2 | V03 | — | Pending | — |
-| D2 | V04 | — | Pending | — |
-| D2 | V05 | — | Pending | — |
-| D2 | V06 | — | Pending | — |
-| D2 | V07 | — | Pending | — |
-| D2 | V08 | — | Pending | — |
-| D2 | V09 | — | Pending | — |
-| D2 | V10 | — | Pending | — |
+| D1 | V01 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V02 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V03 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V04 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V05 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V06 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V07 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V08 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V09 | user-verified | Pass | User-attested; no defect reported |
+| D1 | V10 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V01 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V02 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V03 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V04 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V05 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V06 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V07 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V08 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V09 | user-verified | Pass | User-attested; no defect reported |
+| D2 | V10 | user-verified | Pass | User-attested; no defect reported |
 
 ## 8. Execute the Zoom Matrix
 
@@ -173,10 +188,10 @@ the source typography role change to force content into the viewport.
 
 | Zoom | Workbench | Settings | Editor | Evidence / defects / rerun |
 |---:|---|---|---|---|
-| 50% | Pending | Pending | Pending | — |
-| 100% | Pending | Pending | Pending | — |
-| 200% | Pending | Pending | Pending | — |
-| 300% | Pending | Pending | Pending | — |
+| 50% | Pass | Pass | Pass | User-attested; no defect reported |
+| 100% | Pass | Pass | Pass | User-attested; no defect reported |
+| 200% | Pass | Pass | Pass | User-attested; no defect reported |
+| 300% | Pass | Pass | Pass | User-attested; no defect reported |
 
 ## 9. Confirm Authored Project Preservation
 
@@ -186,10 +201,18 @@ show that nearby BSB application chrome uses semantic roles.
 
 | Fixture group | Automated round trip | V06 rendered boundary | Evidence |
 |---|---|---|---|
-| Dropdown 8/12/36 | Pending | Pending | — |
-| Font object 1/12/200 | Pending | Pending | — |
-| Imported Swing HTML | Pending | Pending | — |
-| Unknown/unrelated XML | Pending | N/A | — |
+| Dropdown 8/12/36 | Pass | Pass | Package round-trip suites pass; user-attested V06 pass |
+| Font object 1/12/200 | Pass | Pass | Package round-trip suites pass; user-attested V06 pass |
+| Imported Swing HTML | Pass | Pass | Focused BSB suite passes; user-attested V06 pass |
+| Unknown/unrelated XML | Pass | N/A | Package round-trip suites pass |
+
+## Closure Note (2026-08-21)
+
+The requester completed the manual typography walkthrough covering the two-density
+V01–V10 matrix, the 50/100/200/300% zoom matrix, and authored-font preservation
+boundaries, and reported no defects. This is recorded as user-attested acceptance;
+the repository does not contain separate screenshot files or a per-case numeric
+measurement ledger.
 
 ## Handoff Criteria
 

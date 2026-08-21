@@ -277,7 +277,7 @@ export default function TempoMapEditorDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="px-4 pb-2 pt-3 text-role-headline text-app-text">Edit Tempo Map</h3>
+        <h3 className="px-4 pb-2 pt-3 text-role-title-3 font-semibold text-app-text">Edit Tempo Map</h3>
 
         <div className="px-4 pb-2 max-h-[200px] overflow-y-auto bg-black">
           <table className="w-full text-role-body">
@@ -344,7 +344,7 @@ export default function TempoMapEditorDialog({
                     </td>
                     <td className="py-1 text-center">
                       <button
-                        className={`rounded px-1.5 py-0.5 text-role-subheadline ${canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
+                        className={`rounded px-1.5 py-0.5 text-role-callout ${canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
                         disabled={!canDeleteRow}
                         onClick={() => handleRemove(i)}
                       >
@@ -357,7 +357,7 @@ export default function TempoMapEditorDialog({
             </tbody>
           </table>
           {error && (
-            <p className="mt-2 text-role-subheadline text-app-danger">{error}</p>
+            <p className="mt-2 text-role-callout text-app-danger">{error}</p>
           )}
         </div>
 

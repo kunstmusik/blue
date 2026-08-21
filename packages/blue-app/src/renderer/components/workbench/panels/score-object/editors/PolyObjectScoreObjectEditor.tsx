@@ -99,7 +99,7 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
       </div>
       {editor.generatedScoreText && (
         <div className="border-t border-blue-border shrink-0">
-          <div className="px-3 py-1 text-role-subheadline text-blue-muted">Generated Score Preview</div>
+          <div className="px-3 py-1 text-role-headline font-bold text-blue-muted">Generated Score Preview</div>
           <pre className="px-3 py-1 text-role-body text-gray-400 font-mono max-h-32 overflow-auto whitespace-pre-wrap">
             {editor.generatedScoreText}
           </pre>

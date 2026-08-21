@@ -27,7 +27,7 @@ export default function GeneratedCsdModal(): React.ReactElement | null {
     >
       <div className="flex h-[80vh] w-[80vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl">
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 className="text-role-headline text-app-text-bright">{generatedCsd.title}</h2>
+          <h2 className="text-role-title-2 font-bold text-app-text-bright">{generatedCsd.title}</h2>
           <button
             className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
             onClick={closeModal}

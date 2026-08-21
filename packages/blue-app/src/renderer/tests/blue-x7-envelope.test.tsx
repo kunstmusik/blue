@@ -65,6 +65,14 @@ describe('BlueX7 EnvelopeEditor Component', () => {
     expect(container?.querySelector('[data-testid="envelope-handle-1"]')?.getAttribute('aria-valuenow')).toBe('75');
     expect(container?.querySelector('[data-testid="envelope-handle-2"]')?.getAttribute('aria-valuenow')).toBe('50');
     expect(container?.querySelector('[data-testid="envelope-handle-3"]')?.getAttribute('aria-valuenow')).toBe('0');
+
+    const stageLabels = Array.from(container?.querySelectorAll('svg text') ?? []);
+    expect(stageLabels).toHaveLength(4);
+    for (const label of stageLabels) {
+      expect(label.classList).toContain('text-role-subheadline');
+      expect(label.hasAttribute('fontSize')).toBe(false);
+      expect(label.hasAttribute('font-size')).toBe(false);
+    }
   });
 
   it('supports keyboard navigation (Arrow keys) to adjust rate and level with clamping', () => {

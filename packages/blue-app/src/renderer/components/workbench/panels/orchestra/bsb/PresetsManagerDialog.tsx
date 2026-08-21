@@ -771,11 +771,11 @@ export default function PresetsManagerDialog({
           <div>
             <h2
               id="presets-manager-title"
-              className="text-role-headline text-app-text-bright"
+              className="text-role-title-2 font-bold text-app-text-bright"
             >
               Presets Manager
             </h2>
-            <p className="mt-1 text-role-subheadline text-app-text-muted">
+            <p className="mt-1 text-role-callout text-app-text-muted">
               Drag presets or folders to reorder them or move them into another
               folder.
             </p>
@@ -790,7 +790,7 @@ export default function PresetsManagerDialog({
           </button>
         </div>
 
-        <div className="flex items-center justify-between border-b border-app-border/20 px-3 py-1.5 text-role-subheadline text-app-text-muted">
+        <div className="flex items-center justify-between border-b border-app-border/20 px-3 py-1.5 text-role-callout text-app-text-muted">
           <span className="truncate" aria-live="polite">
             Selected: {selectedLabel}
           </span>

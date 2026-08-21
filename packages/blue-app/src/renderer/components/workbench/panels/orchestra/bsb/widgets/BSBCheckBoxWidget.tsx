@@ -41,7 +41,7 @@ function BSBCheckBoxWidget({
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} autoSize displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
       <div
         className="flex h-full w-full items-center gap-1.5"
-        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 'var(--text-role-callout)', cursor: editEnabled ? 'default' : 'pointer', color: 'var(--color-app-text-bright)' }}
+        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 'var(--text-role-callout)', lineHeight: 'var(--text-role-callout--line-height)', cursor: editEnabled ? 'default' : 'pointer', color: 'var(--color-app-text-bright)' }}
         onClick={handleToggle}
       >
         <svg width={13} height={13} className="shrink-0">

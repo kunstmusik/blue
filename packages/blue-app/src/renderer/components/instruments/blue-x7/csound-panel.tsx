@@ -46,7 +46,7 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
       {/* Header & Tabs */}
       <div className="flex items-center justify-between border-b border-blue-border pb-2">
         <div className="flex items-center gap-2">
-          <span className="text-role-headline text-gray-200 uppercase tracking-wider">Csound & Code</span>
+          <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Csound & Code</span>
           <div className="flex rounded border border-blue-border bg-blue-bg/80 p-0.5 text-role-body">
             <button
               type="button"
@@ -101,25 +101,25 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
       {activeTab === 'preview' && (
         <div className="space-y-2" data-testid="bluex7-preview-tab">
           {previewError ? (
-            <div className="rounded border border-red-500/50 bg-red-900/30 p-2 text-role-subheadline text-red-200" data-testid="csound-preview-error">
+            <div className="rounded border border-red-500/50 bg-red-900/30 p-2 text-role-callout text-red-200" data-testid="csound-preview-error">
               {previewError}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div>
-                <span className="text-role-subheadline font-semibold text-blue-muted block mb-1">Generated F-Tables:</span>
+                <span className="text-role-headline font-bold text-blue-muted block mb-1">Generated F-Tables:</span>
                 <pre
                   data-testid="csound-tables-preview"
-                  className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-subheadline text-gray-200"
+                  className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-body text-gray-200"
                 >
                   {preview?.tables || '; Generating tables...'}
                 </pre>
               </div>
               <div>
-                <span className="text-role-subheadline font-semibold text-blue-muted block mb-1">Generated Instrument Body:</span>
+                <span className="text-role-headline font-bold text-blue-muted block mb-1">Generated Instrument Body:</span>
                 <pre
                   data-testid="csound-body-preview"
-                  className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-subheadline text-gray-200"
+                  className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-body text-gray-200"
                 >
                   {preview?.body || '; Generating body...'}
                 </pre>
@@ -133,10 +133,10 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
       {activeTab === 'bindings' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="bluex7-bindings-tab">
           <div className="rounded border border-blue-border bg-blue-bg/40 p-2.5 space-y-1.5">
-            <span className="text-role-subheadline font-semibold text-emerald-400 block">
+            <span className="text-role-headline font-bold text-emerald-400 block">
               ✓ Emitted Synthesis Parameters
             </span>
-            <ul className="text-role-subheadline text-gray-300 space-y-1 list-disc list-inside">
+            <ul className="text-role-callout text-gray-300 space-y-1 list-disc list-inside">
               {preview?.bindings.emitted.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}
@@ -144,10 +144,10 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
           </div>
 
           <div className="rounded border border-blue-border bg-blue-bg/40 p-2.5 space-y-1.5">
-            <span className="text-role-subheadline font-semibold text-amber-400 block">
+            <span className="text-role-headline font-bold text-amber-400 block">
               ⚠ Preserved But Dormant in Csound Engine
             </span>
-            <ul className="text-role-subheadline text-blue-muted space-y-1 list-disc list-inside">
+            <ul className="text-role-callout text-blue-muted space-y-1 list-disc list-inside">
               {preview?.bindings.notEmitted.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}

@@ -59,7 +59,7 @@ export default function NoteProcessorChainDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-blue-border">
-          <h3 className="text-role-headline text-gray-200">{title}</h3>
+          <h3 className="text-role-title-3 font-semibold text-gray-200">{title}</h3>
           <button
             className="text-gray-400 hover:text-gray-200"
             onClick={onClose}

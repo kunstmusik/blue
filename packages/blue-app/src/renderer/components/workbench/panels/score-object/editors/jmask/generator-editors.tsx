@@ -42,7 +42,7 @@ export function ConstantEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5">
-      <label className="shrink-0 text-role-headline text-gray-300 font-medium">Constant</label>
+      <label className="shrink-0 text-role-headline text-gray-300 font-bold">Constant</label>
       <CommitNumberInput value={value} step={0.1} className="w-24" onChange={handleChange} />
     </div>
   );
@@ -58,7 +58,7 @@ export function RandomEditor({ gen, onChange }: { gen: GeneratorSnapshot; onChan
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-role-headline text-gray-300 font-medium">Random</div>
+      <div className="text-role-headline text-gray-300 font-bold">Random</div>
       <div className="flex items-center gap-2">
         <CommitNumberField label="Min" value={min} onChange={v => update({ min: Math.min(v, max) })} />
         <CommitNumberField label="Max" value={max} onChange={v => update({ max: Math.max(v, min) })} />
@@ -115,7 +115,7 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-role-headline text-gray-300 font-medium">Item List</span>
+        <span className="text-role-headline text-gray-300 font-bold">Item List</span>
         <select
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={listType}
@@ -164,7 +164,7 @@ export function SegmentEditor({ gen, onChange, duration }: { gen: GeneratorSnaps
 
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
-      <div className="text-role-headline text-gray-300 font-medium">Segment</div>
+      <div className="text-role-headline text-gray-300 font-bold">Segment</div>
       <TableEditor table={table} duration={duration} onChange={update} />
     </div>
   );
@@ -187,7 +187,7 @@ export function OscillatorEditor({ gen, onChange, duration }: { gen: GeneratorSn
   return (
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <span className="text-role-headline text-gray-300 font-medium">Oscillator</span>
+        <span className="text-role-headline text-gray-300 font-bold">Oscillator</span>
         <select
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={oscillatorType}
@@ -232,7 +232,7 @@ export function ProbabilityEditor({ gen, onChange, duration }: { gen: GeneratorS
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 px-2 py-1">
-        <span className="text-role-headline text-gray-300 font-medium">Probability</span>
+        <span className="text-role-headline text-gray-300 font-bold">Probability</span>
         <select
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={selectedIndex}

@@ -67,7 +67,7 @@ export default function TempoPointDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-role-headline text-app-text">
+        <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
           {isTimeZero ? 'Edit Initial Tempo' : `Edit Tempo Point ${pointIndex + 1}`}
         </h3>
 
@@ -96,7 +96,7 @@ export default function TempoPointDialog({
               max={999}
               step={1}
             />
-            <span className="text-role-subheadline text-app-text-muted">BPM</span>
+            <span className="text-role-callout text-app-text-muted">BPM</span>
           </div>
         </div>
 

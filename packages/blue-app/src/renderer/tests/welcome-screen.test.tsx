@@ -43,6 +43,10 @@ describe('WelcomeScreen', () => {
     expect(list).not.toBeNull();
     expect(list?.className).not.toContain('bg-black');
 
+    const recentFilesHeading = container.querySelector('h2');
+    expect(recentFilesHeading?.classList).toContain('text-role-title-3');
+    expect(recentFilesHeading?.classList).toContain('font-semibold');
+
     // Filenames
     expect(container.textContent).toContain('my-piece.blue');
     expect(container.textContent).toContain('demo.blue');

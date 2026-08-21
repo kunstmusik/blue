@@ -105,11 +105,11 @@ export default function FontChooserDialog({
         className="flex w-[420px] flex-col gap-4 rounded-lg border border-app-border bg-app-surface p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-role-headline text-app-text-strong">Choose Font</div>
+        <div className="text-role-title-2 font-bold text-app-text-strong">Choose Font</div>
 
         <div className="grid grid-cols-[1fr_80px_100px] gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-role-subheadline uppercase tracking-wider text-app-text-muted">Font</label>
+            <label className="text-role-body uppercase tracking-wider text-app-text-muted">Font</label>
             <div className="relative">
               <button
                 className="flex w-full items-center justify-between rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-left text-role-body text-app-text-strong outline-none hover:border-app-accent focus:border-app-accent"
@@ -166,7 +166,7 @@ export default function FontChooserDialog({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-role-subheadline uppercase tracking-wider text-app-text-muted">Size</label>
+            <label className="text-role-body uppercase tracking-wider text-app-text-muted">Size</label>
             <input
               className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
               type="number"
@@ -182,7 +182,7 @@ export default function FontChooserDialog({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-role-subheadline uppercase tracking-wider text-app-text-muted">Style</label>
+            <label className="text-role-body uppercase tracking-wider text-app-text-muted">Style</label>
             <select
               className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
               value={style}
@@ -196,7 +196,7 @@ export default function FontChooserDialog({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-role-subheadline uppercase tracking-wider text-app-text-muted">Preview</label>
+          <label className="text-role-body uppercase tracking-wider text-app-text-muted">Preview</label>
           <div
             className="flex h-16 items-center justify-center rounded border border-app-border bg-app-surface-raised"
             style={{ fontFamily: `'${name}', sans-serif`, fontSize: `${size}px`, fontWeight, fontStyle: fontStyleStr }}
@@ -206,7 +206,7 @@ export default function FontChooserDialog({
         </div>
 
         <div className="flex items-center justify-between border-t border-app-border pt-3">
-          <span className="text-role-subheadline text-app-text-muted">
+          <span className="text-role-callout text-app-text-muted">
             {name} {size} {displayStyle}
           </span>
           <div className="flex gap-2">

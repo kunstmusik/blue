@@ -300,7 +300,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
           {target.supportsNoteProcessorChain && shared.noteProcessorChain != null && (
             <div className="px-3 py-2 mt-2 border-t border-blue-border">
-              <div className="text-role-headline text-gray-300 mb-1">Note Processors</div>
+              <div className="text-role-headline font-bold text-gray-300 mb-1">Note Processors</div>
               <NoteProcessorChainEditor
                 key={target.selectionId}
                 chain={shared.noteProcessorChain}

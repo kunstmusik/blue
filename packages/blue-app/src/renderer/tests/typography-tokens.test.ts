@@ -71,6 +71,72 @@ describe('Typography Tokens and System Contracts', () => {
     expect(programSettingsContent).not.toMatch(/typographyScale|fontScale|fontSizeRole/);
   });
 
+  it('keeps dense SVG labels, tooltip CSS, and score-bar labels on approved delivery paths', () => {
+    const envelopeSource = readFileSync(resolve(RENDERER_DIR, 'components/instruments/blue-x7/envelope-editor.tsx'), 'utf8');
+    const lineCanvasSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/shared/line-editor/EditableLineCanvas.tsx'), 'utf8');
+    const selectedEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/editors/SelectedCodeEditor.tsx'), 'utf8');
+    const scoreBarSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score/bar-renderers/ScoreObjectBar.tsx'), 'utf8');
+
+    expect(envelopeSource).toContain('text-role-subheadline');
+    expect(envelopeSource).not.toMatch(/fontSize\s*=/);
+    expect(lineCanvasSource).toContain('text-role-subheadline');
+    expect(lineCanvasSource).not.toMatch(/fontSize\s*=/);
+    expect(selectedEditorSource).toContain("lineHeight: 'var(--text-role-body--line-height)'");
+    expect(scoreBarSource).toContain('className="absolute truncate text-role-subheadline"');
+    expect(scoreBarSource).not.toMatch(/fontSize/);
+    expect(scoreBarSource).not.toMatch(/lineHeight:\s*['"]\d/);
+  });
+
+  it('keeps ordinary controls and BSB application chrome on semantic roles', () => {
+    const addToRepositorySource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/code-repository/AddToCodeRepositoryDialog.tsx'), 'utf8');
+    const colorPickerSource = readFileSync(resolve(RENDERER_DIR, 'components/ColorPicker.tsx'), 'utf8');
+    const fontChooserSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/FontChooserDialog.tsx'), 'utf8');
+    const gridSettingsSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBGridSettingsPanel.tsx'), 'utf8');
+    const propertySheetSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBPropertySheet.tsx'), 'utf8');
+    const bsbWidgetEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBWidgetEditor.tsx'), 'utf8');
+    const bsbInterfaceEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/BSBInterfaceEditor.tsx'), 'utf8');
+    const udoEditorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/udo/UdoEditor.tsx'), 'utf8');
+    const noteProcessorSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor.tsx'), 'utf8');
+    const aboutSource = readFileSync(resolve(RENDERER_DIR, 'components/about/AboutApp.tsx'), 'utf8');
+
+    expect(addToRepositorySource).toContain('text-role-body text-app-text-muted');
+    expect(addToRepositorySource).toContain('text-role-callout text-red-400');
+    expect(colorPickerSource).toContain('p-3 text-role-body text-app-text');
+    expect(fontChooserSource).not.toContain('text-role-subheadline');
+    expect(gridSettingsSource).toContain('text-role-headline font-bold');
+    expect(gridSettingsSource).toContain('text-role-body text-app-text-muted');
+    expect(propertySheetSource).toContain('text-role-headline font-bold');
+    expect(propertySheetSource).not.toContain('text-role-subheadline');
+    expect(bsbWidgetEditorSource).toContain('text-role-headline font-bold');
+    expect(bsbWidgetEditorSource).toContain('text-role-callout text-blue-muted');
+    expect(bsbInterfaceEditorSource).not.toContain('text-role-subheadline');
+    expect(udoEditorSource).not.toContain('text-role-subheadline');
+    expect(noteProcessorSource).toContain('text-role-callout border border-blue-border');
+    expect(noteProcessorSource).toContain('text-role-headline font-bold text-gray-400');
+    expect(aboutSource).toContain('text-role-title-3 font-semibold');
+    expect(aboutSource).not.toContain('break-all font-mono text-role-subheadline');
+  });
+
+  it('delivers explicit role line heights for direct React/CSS typography callsites', () => {
+    const blueLivePanelSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/BlueLivePanel.tsx'), 'utf8');
+    const liveCodeSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/LiveCodeTab.tsx'), 'utf8');
+    const optionsSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/blue-live/OptionsTab.tsx'), 'utf8');
+    const checkboxSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/BSBCheckBoxWidget.tsx'), 'utf8');
+    const knobSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget.tsx'), 'utf8');
+    const valuePanelSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/orchestra/bsb/widgets/ValuePanel.tsx'), 'utf8');
+    const automationSource = readFileSync(resolve(RENDERER_DIR, 'components/workbench/panels/score/automation/AutomationLineView.tsx'), 'utf8');
+
+    expect(blueLivePanelSource).toContain("lineHeight: 'var(--text-role-body--line-height)'");
+    expect(liveCodeSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
+    expect(optionsSource).toContain("lineHeight: 'var(--text-role-body--line-height)'");
+    expect(checkboxSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
+    expect(knobSource).toContain("fontSize: 'var(--text-role-callout)'");
+    expect(knobSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
+    expect(knobSource).toContain('const VALUE_HEIGHT = 16;');
+    expect(valuePanelSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
+    expect(automationSource).toContain('className="text-role-subheadline"');
+  });
+
   describe('resolveTypographyRoleFont', () => {
     it('resolves CSS variables from the provided element into a valid Canvas font string', () => {
       const mockElement = document.createElement('div');

@@ -160,7 +160,7 @@ export default function TrackInstrumentControl({
           onPointerDown={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <ContextMenu.Label className="px-3 py-1 text-role-subheadline text-app-text-muted">Track Instrument</ContextMenu.Label>
+          <ContextMenu.Label className="px-3 py-1 text-role-headline font-bold text-app-text-muted">Track Instrument</ContextMenu.Label>
           <ContextMenu.Item
             className="editor-context-menu__item"
             disabled={!instrument}

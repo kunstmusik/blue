@@ -57,12 +57,12 @@ const COL_TYPE_NUM = 4;
 
 const TRACKER_MODAL_PANEL_CLASS = 'flex flex-col rounded-lg border border-app-border bg-app-menu shadow-2xl overflow-hidden';
 const TRACKER_MODAL_HEADER_CLASS = 'flex items-center justify-between border-b border-app-border px-4 py-3 bg-app-bg';
-const TRACKER_MODAL_TITLE_CLASS = 'text-role-headline text-app-text-strong';
+const TRACKER_MODAL_TITLE_CLASS = 'text-role-title-2 font-bold text-app-text-strong';
 const TRACKER_MODAL_CLOSE_BUTTON_CLASS = 'rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-strong';
 const TRACKER_MODAL_FOOTER_CLASS = 'flex justify-end gap-2 border-t border-app-border px-4 py-3 bg-app-bg';
 const TRACKER_PRIMARY_BUTTON_CLASS = 'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
 const TRACKER_SECONDARY_BUTTON_CLASS = 'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
-const TRACKER_SECTION_LABEL_CLASS = 'text-role-subheadline font-bold uppercase tracking-wider text-app-text-muted';
+const TRACKER_SECTION_LABEL_CLASS = 'text-role-headline font-bold uppercase tracking-wider text-app-text-muted';
 const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
 const TRACKER_MONO_FIELD_CLASS = `${TRACKER_FIELD_CLASS} font-mono`;
 const TRACKER_CHECKBOX_CLASS = 'rounded border-app-border bg-app-input accent-app-accent focus:ring-0';
@@ -461,7 +461,7 @@ function ColumnConfigModal({
           <div className={`flex flex-col gap-2 rounded border p-3 ${isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS}`}>
             <div className={TRACKER_SECTION_LABEL_CLASS}>Blue PCH</div>
             <div className="flex items-center gap-2">
-              <span className="w-20 text-role-subheadline text-app-text-muted">Scale</span>
+              <span className="w-20 text-role-body text-app-text-muted">Scale</span>
               <input
                 className={`flex-1 ${TRACKER_FIELD_CLASS}`}
                 value={scale.scaleName}
@@ -477,7 +477,7 @@ function ColumnConfigModal({
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-20 text-role-subheadline text-app-text-muted">Base Freq</span>
+              <span className="w-20 text-role-body text-app-text-muted">Base Freq</span>
               <input
                 className={`flex-1 ${TRACKER_FIELD_CLASS} disabled:opacity-50`}
                 value={baseFreqText}
@@ -534,7 +534,7 @@ function ColumnConfigModal({
               Use Range
             </label>
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1">
-              <span className="text-role-subheadline text-app-text-muted">Min</span>
+              <span className="text-role-body text-app-text-muted">Min</span>
               <input
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
@@ -548,7 +548,7 @@ function ColumnConfigModal({
                   }
                 }}
               />
-              <span className="text-role-subheadline text-app-text-muted">Max</span>
+              <span className="text-role-body text-app-text-muted">Max</span>
               <input
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
@@ -713,7 +713,7 @@ function TrackPropertiesModal({
               <label className={TRACKER_SECTION_LABEL_CLASS}>Columns</label>
               <button
                 onClick={handleAddColumn}
-                className="rounded border border-app-accent/30 bg-app-accent/20 px-2 py-0.5 text-role-subheadline text-app-accent hover:bg-app-accent/30"
+                className="rounded border border-app-accent/30 bg-app-accent/20 px-2 py-0.5 text-role-callout text-app-accent hover:bg-app-accent/30"
               >
                 + Add Column
               </button>
@@ -732,11 +732,11 @@ function TrackPropertiesModal({
                     onChange={(e) => handleColumnNameChange(index, e.target.value)}
                   />
                   <div className="relative">
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap rounded border border-app-border bg-app-input px-2 py-1 pr-14 text-role-subheadline text-app-text-muted">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap rounded border border-app-border bg-app-input px-2 py-1 pr-14 text-role-body text-app-text-muted">
                       {getColumnSummary(column)}
                     </div>
                     <button
-                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded border border-app-border bg-app-overlay px-1.5 py-0.5 text-role-subheadline text-app-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-app-accent"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded border border-app-border bg-app-overlay px-1.5 py-0.5 text-role-callout text-app-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-app-accent"
                       onClick={() => setEditingColumnIndex(index)}
                     >
                       Edit
@@ -1502,7 +1502,7 @@ export default function TrackerScoreObjectEditor({
                   </ContextMenu.Root>
                 ))}
               </tr>
-              <tr className="border-b border-app-border/60 bg-app-bg/40 text-role-subheadline uppercase text-app-text-muted/70">
+              <tr className="border-b border-app-border/60 bg-app-bg/40 text-role-headline font-bold uppercase text-app-text-muted/70">
                 <th className="border-r border-app-border/40 px-1 py-0.5 font-bold">Step</th>
                 {editor.tracks.map((track) => (
                   <React.Fragment key={track.trackId}>
@@ -1533,7 +1533,7 @@ export default function TrackerScoreObjectEditor({
                     }`}
                   >
                     <td
-                      className={`sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-role-subheadline ${
+                      className={`sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-role-body ${
                         isBeatStart ? 'font-bold text-app-text-strong' : 'text-app-text-subtle'
                       }`}
                     >
@@ -1549,7 +1549,7 @@ export default function TrackerScoreObjectEditor({
                               data-track={ti}
                               data-col={-1}
                               data-step={ri}
-                              className={`w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-role-subheadline font-bold focus:bg-app-accent/20 focus:outline-none ${
+                              className={`w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-role-body font-bold focus:bg-app-accent/20 focus:outline-none ${
                                 statusVal === '-'
                                   ? 'text-app-accent'
                                   : statusVal === 'OFF'

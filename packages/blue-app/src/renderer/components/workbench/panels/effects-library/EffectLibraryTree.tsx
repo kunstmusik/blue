@@ -247,10 +247,10 @@ function Node({
       {icon}
       <span className="min-w-0 truncate">{node.data.name}</span>
       {isCategory && childCount > 0 && (
-        <span className="ml-auto flex-none text-role-subheadline text-blue-muted">{childCount}</span>
+        <span className="ml-auto flex-none text-role-callout text-blue-muted">{childCount}</span>
       )}
       {effectMeta && (
-        <span className="ml-auto flex-none text-role-subheadline text-blue-muted">{effectMeta}</span>
+        <span className="ml-auto flex-none text-role-callout text-blue-muted">{effectMeta}</span>
       )}
     </div>
   );

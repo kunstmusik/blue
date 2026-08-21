@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-@theme {
+@theme static {
+  --text-*: initial;
+
   --color-app-bg: #1a1a2e;
   --color-app-surface: #16213e;
   --color-app-surface-strong: #10192a;
@@ -74,18 +76,6 @@
   --text-role-subheadline: 11px;
   --text-role-subheadline--line-height: 14px;
 
-  --text-nano: 0.5rem;
-  --text-nano--line-height: 0.625rem;
-  --text-micro: 0.5625rem;
-  --text-micro--line-height: 0.75rem;
-  --text-tiny: 0.625rem;
-  --text-tiny--line-height: 0.75rem;
-  --text-ui: 0.6875rem;
-  --text-ui--line-height: 0.875rem;
-  --text-body: 0.75rem;
-  --text-body--line-height: 1rem;
-  --text-content: 0.8125rem;
-  --text-content--line-height: 1.125rem;
 }
 
 @layer base {
@@ -340,7 +330,7 @@
     box-shadow: 0 4px 12px var(--color-app-shadow);
     color: var(--color-app-text-strong);
     font-size: var(--text-role-body);
-    line-height: 1.4;
+    line-height: var(--text-role-body--line-height);
     max-width: 240px;
     z-index: 130;
     pointer-events: none;

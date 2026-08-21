@@ -220,7 +220,7 @@ export default function LibrariesPanel(): React.ReactElement {
           ) : (
             <>
               <section aria-label="User Libraries">
-                <h2 className="px-2 py-1 text-role-subheadline font-semibold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
+                <h2 className="px-2 py-1 text-role-headline font-bold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
                 {types.map((type) => {
                   const rootNode = state.userRootsByType[type];
                   const displayRootNode = rootNode && {

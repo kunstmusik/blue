@@ -21,7 +21,7 @@ export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
       data-testid="bluex7-algorithm-topology"
     >
       <div className="flex items-center justify-between w-full">
-        <span className="text-role-headline text-gray-300">
+        <span className="text-role-headline font-bold text-gray-300">
           Algorithm {algorithm}
         </span>
         {onOpenModal && (
@@ -29,7 +29,7 @@ export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
             type="button"
             aria-label="Choose Algorithm Dialog"
             onClick={onOpenModal}
-            className="text-role-subheadline text-blue-accent hover:underline"
+            className="text-role-callout text-blue-accent hover:underline"
           >
             Change...
           </button>
@@ -49,14 +49,14 @@ export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
             data-testid={`algorithm-img-${algorithm}`}
           />
         ) : (
-          <div className="h-24 w-24 flex items-center justify-center text-role-subheadline text-gray-700 font-bold">
+          <div className="h-24 w-24 flex items-center justify-center text-role-callout text-gray-700 font-bold">
             Alg {algorithm}
           </div>
         )}
       </div>
 
       {operatorEnabled && (
-        <div className="flex gap-1 text-role-subheadline">
+        <div className="flex gap-1 text-role-callout">
           {operatorEnabled.map((enabled, i) => (
             <span
               key={i}

@@ -32,7 +32,7 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
       <div ref={dialogRef} className="flex flex-col max-h-[90vh] w-full max-w-4xl rounded-lg border border-blue-border bg-blue-bg shadow-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-border px-4 py-3 bg-blue-surface/40">
-          <h2 id="algorithm-dialog-title" className="text-role-headline text-gray-100">
+          <h2 id="algorithm-dialog-title" className="text-role-title-2 font-bold text-gray-100">
             Select Algorithm (1–32)
           </h2>
           <button
@@ -75,10 +75,10 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
                       className="max-h-full max-w-full object-contain"
                     />
                   ) : (
-                    <span className="text-role-subheadline font-bold text-gray-800">{alg}</span>
+                    <span className="text-role-headline font-bold text-gray-800">{alg}</span>
                   )}
                 </div>
-                <span className="mt-1 text-role-subheadline font-medium text-gray-200">
+                <span className="mt-1 text-role-callout text-gray-200">
                   Alg {alg}
                 </span>
               </button>

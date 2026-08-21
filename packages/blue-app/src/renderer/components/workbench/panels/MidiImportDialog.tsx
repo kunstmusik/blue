@@ -140,7 +140,7 @@ export default function MidiImportDialog(): React.ReactElement | null {
       <div className="flex max-h-[85vh] w-[960px] max-w-[94vw] flex-col rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-role-headline text-app-text-bright">MIDI Import Settings</h2>
+            <h2 className="text-role-title-2 font-bold text-app-text-bright">MIDI Import Settings</h2>
             {preview ? (
               <p className="mt-1 text-role-callout text-app-text-muted">
                 {preview.fileName} · format {preview.format} · {preview.ticksPerBeat} PPQ

@@ -205,14 +205,14 @@ function MarkerRow({
       </td>
       <td className="whitespace-nowrap px-2 py-1.5 text-right">
         <button
-          className="mr-1 rounded border border-blue-border/30 px-1.5 py-0.5 text-role-subheadline text-blue-muted hover:bg-blue-surface hover:text-blue-text"
+          className="mr-1 rounded border border-blue-border/30 px-1.5 py-0.5 text-role-callout text-blue-muted hover:bg-blue-surface hover:text-blue-text"
           onClick={() => onSetRenderStart(marker)}
           title="Set render start to marker time"
         >
           Start
         </button>
         <button
-          className="rounded border border-blue-border/30 px-1.5 py-0.5 text-role-subheadline text-blue-muted hover:bg-blue-surface hover:text-red-400"
+          className="rounded border border-blue-border/30 px-1.5 py-0.5 text-role-callout text-blue-muted hover:bg-blue-surface hover:text-red-400"
           onClick={() => onRemove(marker.sourceIndex)}
           title="Remove marker"
         >

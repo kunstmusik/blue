@@ -348,6 +348,7 @@ export default function LiveSpaceTab(): React.ReactElement {
         {triggerFeedback.status !== 'idle' && (
           <span style={{
             fontSize: 'var(--text-role-callout)',
+            lineHeight: 'var(--text-role-callout--line-height)',
             color: triggerFeedback.status === 'error'
               ? 'var(--color-app-error)'
               : triggerFeedback.status === 'submitted'
@@ -377,16 +378,22 @@ export default function LiveSpaceTab(): React.ReactElement {
         }}>
           <div style={{
             padding: '4px 8px',
-            fontSize: 'var(--text-role-callout)',
+            fontSize: 'var(--text-role-headline)',
+            lineHeight: 'var(--text-role-headline--line-height)',
             color: 'var(--color-app-text-muted)',
             borderBottom: '1px solid var(--color-app-border)',
-            fontWeight: 500,
-          }}>
+            fontWeight: 700,
+          }} data-blue-live-saved-sets-heading>
             Saved Sets
           </div>
           <div style={{ flex: 1, overflow: 'auto', background: '#000000' }}>
             {sets.length === 0 && (
-              <div style={{ padding: '8px', fontSize: 'var(--text-role-callout)', color: 'var(--color-app-text-subtle)' }}>No saved sets</div>
+              <div style={{
+                padding: '8px',
+                fontSize: 'var(--text-role-callout)',
+                lineHeight: 'var(--text-role-callout--line-height)',
+                color: 'var(--color-app-text-subtle)',
+              }}>No saved sets</div>
             )}
             {sets.map((set, i) => (
               <div
@@ -397,6 +404,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                 style={{
                   padding: '4px 8px',
                   fontSize: 'var(--text-role-body)',
+                  lineHeight: 'var(--text-role-body--line-height)',
                   cursor: 'pointer',
                   background: selectedSetIndex === i ? 'var(--color-app-accent-muted)' : undefined,
                   color: selectedSetIndex === i ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
@@ -441,12 +449,13 @@ export default function LiveSpaceTab(): React.ReactElement {
           }}>
             <div style={{ width: '32px' }} />
             {Array.from({ length: bins.columns }, (_, ci) => (
-              <div key={ci} style={{
+              <div key={ci} data-blue-live-column-header style={{
                 textAlign: 'center',
-                fontSize: 'var(--text-role-callout)',
+                fontSize: 'var(--text-role-headline)',
+                lineHeight: 'var(--text-role-headline--line-height)',
                 color: 'var(--color-app-text-subtle)',
                 padding: '2px 0',
-                fontWeight: 500,
+                fontWeight: 700,
               }}>
                 {ci + 1}
               </div>
@@ -464,8 +473,9 @@ export default function LiveSpaceTab(): React.ReactElement {
               {Array.from({ length: bins.rows }, (_, ri) => (
                 <React.Fragment key={ri}>
                   {/* Row label */}
-                  <div style={{
+                  <div data-blue-live-row-label style={{
                     fontSize: 'var(--text-role-subheadline)',
+                    lineHeight: 'var(--text-role-subheadline--line-height)',
                     color: 'var(--color-app-text-subtle)',
                     display: 'flex',
                     alignItems: 'center',
@@ -494,7 +504,8 @@ export default function LiveSpaceTab(): React.ReactElement {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: 'var(--text-role-callout)',
+                              fontSize: 'var(--text-role-body)',
+                              lineHeight: 'var(--text-role-body--line-height)',
                               cursor: 'pointer',
                               borderRadius: '2px',
                               border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
@@ -645,6 +656,7 @@ const toolbarLabelStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '4px',
   fontSize: 'var(--text-role-body)',
+  lineHeight: 'var(--text-role-body--line-height)',
   color: 'var(--color-app-text-muted)',
 };
 
@@ -652,6 +664,7 @@ const spinnerStyle: React.CSSProperties = {
   width: '52px',
   padding: '2px 4px',
   fontSize: 'var(--text-role-body)',
+  lineHeight: 'var(--text-role-body--line-height)',
   background: 'var(--color-app-canvas)',
   color: 'var(--color-app-text)',
   border: '1px solid var(--color-app-border)',
@@ -662,6 +675,7 @@ const spinnerStyle: React.CSSProperties = {
 const toolbarBtnStyle: React.CSSProperties = {
   padding: '3px 10px',
   fontSize: 'var(--text-role-body)',
+  lineHeight: 'var(--text-role-body--line-height)',
   background: 'var(--color-app-surface-strong)',
   color: 'var(--color-app-text-muted)',
   border: '1px solid var(--color-app-border)',
@@ -673,6 +687,7 @@ const setBtnStyle: React.CSSProperties = {
   flex: 1,
   padding: '2px 0',
   fontSize: 'var(--text-role-body)',
+  lineHeight: 'var(--text-role-body--line-height)',
   background: 'var(--color-app-surface-strong)',
   color: 'var(--color-app-text-muted)',
   border: '1px solid var(--color-app-border)',

@@ -83,7 +83,7 @@ export default function PythonInstrumentEditor({
     <div ref={containerRef} className="flex h-full min-h-0 flex-col bg-blue-bg" tabIndex={-1}>
       {/* Header toolbar */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-blue-border bg-app-surface-strong px-3 py-1.5">
-        <div className="text-role-headline text-app-text-strong">
+        <div className="text-role-headline font-bold text-app-text-strong">
           {instrument.name || 'Python Instrument'}
         </div>
         <div className="flex items-center gap-2">

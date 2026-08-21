@@ -122,7 +122,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
     <div className="box-border flex h-full min-w-0 w-full flex-col overflow-x-hidden overflow-y-auto bg-blue-bg text-gray-100 p-4 space-y-4" data-testid="blue-x7-editor">
       {/* Error alert if SysEx import failed */}
       {importError && (
-        <div className="flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-role-subheadline text-red-200" data-testid="sysex-error-banner">
+        <div className="flex items-center justify-between rounded border border-red-500/50 bg-red-900/30 p-2.5 text-role-callout text-red-200" data-testid="sysex-error-banner">
           <span>{importError}</span>
           <button
             type="button"
@@ -138,7 +138,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-border pb-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label htmlFor="bluex7-instrument-name" className="text-role-headline text-blue-muted">
+            <label htmlFor="bluex7-instrument-name" className="text-role-headline font-bold text-blue-muted">
               Name:
             </label>
             <input

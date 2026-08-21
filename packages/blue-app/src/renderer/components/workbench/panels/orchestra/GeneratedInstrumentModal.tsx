@@ -18,7 +18,7 @@ export default function GeneratedInstrumentModal({
     >
       <div className="flex h-[400px] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-app-border bg-app-overlay shadow-2xl">
         <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
-          <h2 className="text-role-headline text-app-text-bright">Generated Instrument</h2>
+          <h2 className="text-role-title-2 font-bold text-app-text-bright">Generated Instrument</h2>
           <button
             className="p-1 text-role-body text-app-text-muted hover:text-app-text-bright"
             onClick={onClose}

@@ -16,7 +16,7 @@ export default function GeneratedScoreModal({
     >
       <div className="flex h-[400px] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-app-border bg-app-overlay shadow-2xl">
         <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
-          <h2 className="text-role-headline text-app-text-bright">Generated Score</h2>
+          <h2 className="text-role-title-2 font-bold text-app-text-bright">Generated Score</h2>
           <button
             className="rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-bright"
             onClick={onClose}

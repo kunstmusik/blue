@@ -86,7 +86,7 @@ export default function MeterEntryDialog({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="mb-3 text-role-headline text-app-text">
+        <h3 className="mb-3 text-role-title-3 font-semibold text-app-text">
           {isFirst ? 'Edit Initial Time Signature' : `Edit Time Signature at Measure ${entry.measure}`}
         </h3>
 
@@ -115,7 +115,7 @@ export default function MeterEntryDialog({
             />
           </div>
           {error && (
-            <p className="text-role-subheadline text-app-danger">{error}</p>
+            <p className="text-role-callout text-app-danger">{error}</p>
           )}
         </div>
 

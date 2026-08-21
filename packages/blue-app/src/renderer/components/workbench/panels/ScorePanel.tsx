@@ -939,7 +939,7 @@ function LeftPanel({
         {timeState.tempoRowVisible && (
           <>
             <RowHeader onContextMenu={onRowVisibilityChange} rowVisibility={timeState}>
-              <label className="flex items-center gap-1.5 text-role-subheadline text-blue-muted cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-role-callout text-blue-muted cursor-pointer select-none">
                 <input type="checkbox" className="w-2.5 h-2.5" checked={tempoMapEnabled} onChange={(e) => onTempoEnabledChange(e.target.checked)} />
                 Use Tempo
               </label>
@@ -958,17 +958,17 @@ function LeftPanel({
         )}
         {timeState.meterRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-role-subheadline text-blue-muted">Time Signature</span>
+            <span className="text-role-callout text-blue-muted">Time Signature</span>
           </RowHeader>
         )}
         {timeState.markersRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-role-subheadline text-blue-muted">Markers</span>
+            <span className="text-role-callout text-blue-muted">Markers</span>
           </RowHeader>
         )}
         <RowHeader onContextMenu={onRowVisibilityChange} center rowVisibility={timeState}>
           <button
-            className="text-role-subheadline text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
+            className="text-role-callout text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
             onClick={onManage}
           >
             Manage
@@ -1195,7 +1195,7 @@ function SpacerPanel({
           <Plus className="h-3.5 w-3.5 text-blue-muted opacity-0 group-hover:opacity-60 select-none" />
           {onNoteProcessorChain && (
             <button
-              className="relative w-4 h-4 text-role-subheadline font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
+              className="relative w-4 h-4 text-role-callout font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
               title="Layer Group Note Processors"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1354,7 +1354,7 @@ function SoundLayerHeader({
   );
 
   const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-role-subheadline font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
+    `w-5 h-4 text-role-callout font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
 
   const ctxItemClass = 'editor-context-menu__item';
 
@@ -1543,7 +1543,7 @@ function SoundLayerHeader({
             </button>
             {showNoteProcessorButton && (
               <button
-                className={`relative w-5 h-4 text-role-subheadline font-bold rounded-sm border flex items-center justify-center ${
+                className={`relative w-5 h-4 text-role-callout font-bold rounded-sm border flex items-center justify-center ${
                   noteProcessorChain && noteProcessorChain.processors.length > 0
                     ? 'bg-red-600 border-red-500 text-white'
                     : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text'
@@ -1581,7 +1581,7 @@ function SoundLayerHeader({
             )}
           </div>
           {showAutomationFooter && (
-            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-subheadline text-app-text-muted">
+            <div className="absolute left-1 right-1 top-5 flex h-4 items-center gap-1 text-role-callout text-app-text-muted">
               <ColorPickerButton
                 value={selectedAutomationColor}
                 className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
@@ -1596,7 +1596,7 @@ function SoundLayerHeader({
                 {selectedAutomationParameter.parameterName}
               </span>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-subheadline"
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
                 title="Previous Parameter"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1606,7 +1606,7 @@ function SoundLayerHeader({
                 <ChevronLeft className="h-2.5 w-2.5" />
               </button>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-subheadline"
+                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
                 title="Next Parameter"
                 onClick={(e) => {
                   e.stopPropagation();

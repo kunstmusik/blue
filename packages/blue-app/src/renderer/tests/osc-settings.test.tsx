@@ -65,6 +65,21 @@ describe('OscSettings', () => {
     expect(container.textContent).toContain('Start a fresh regular-score performance.');
     expect(container.textContent).toContain('/blueLive/allNotesOff');
     expect(container.textContent).toContain('Send all-notes-off to the active Blue Live session.');
+
+    const table = container.querySelector('table') as HTMLTableElement;
+    expect(table.classList).toContain('text-role-body');
+    expect(table.querySelector('thead')?.classList).toContain('text-role-headline');
+    expect(table.querySelector('thead')?.classList).toContain('font-bold');
+    for (const header of table.querySelectorAll('thead th')) {
+      expect(header.classList).not.toContain('font-medium');
+    }
+    for (const groupHeader of table.querySelectorAll('tbody th')) {
+      expect(groupHeader.classList).toContain('text-role-headline');
+      expect(groupHeader.classList).toContain('font-bold');
+    }
+    for (const address of table.querySelectorAll('tbody td:first-child')) {
+      expect(address.classList).toContain('text-role-body');
+    }
   });
 
   it('reports invalid drafted ports through the field state', () => {
