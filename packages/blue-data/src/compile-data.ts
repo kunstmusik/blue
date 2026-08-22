@@ -34,6 +34,9 @@ export class CompileData {
   private stringChannels: StringChannelEntry[] = [];
   private originalParameters: Parameter[] = [];
   private handleParametersAndChannels = false;
+  // A standalone CompileData has no mixer orchestra until a render builder
+  // supplies the project setting, so direct output is the safe default.
+  private mixerEnabled = false;
   private nextParameterIndex = 0;
   private nextStringChannelIndex = 0;
 
@@ -59,6 +62,19 @@ export class CompileData {
 
   getChannelIdAssignments(): Map<Channel, number> {
     return this.channelIdAssignments;
+  }
+
+  /**
+   * Whether the project mixer participates in this render. Channel routing in
+   * generated instruments must fall back to direct output when the mixer is
+   * disabled, because no BlueMixer instrument will read channel variables.
+   */
+  isMixerEnabled(): boolean {
+    return this.mixerEnabled;
+  }
+
+  setMixerEnabled(enabled: boolean): void {
+    this.mixerEnabled = enabled;
   }
 
   addInstrument(instr: Instrument): number {
@@ -239,6 +255,7 @@ export class CompileData {
     this.globalOrc = '';
     this.stringChannels = [];
     this.originalParameters = [];
+    this.mixerEnabled = false;
     this.nextParameterIndex = 0;
     this.nextStringChannelIndex = 0;
   }

@@ -301,6 +301,37 @@ describe('Track layer timeline gestures', () => {
   it.each([
     ['Command', { metaKey: true }],
     ['Control', { ctrlKey: true }],
+  ] as const)('leaves %s+Shift+A available for the native audition accelerator', (_label, modifiers) => {
+    const group = makeTrackGroup([
+      makeItem('selected-object', 1, 2),
+      makeItem('other-object', 5, 2),
+    ]);
+    const { root, surface } = renderTrackCanvas(group);
+
+    act(() => {
+      useScoreSelectionStore.getState().setSelection([{
+        objectId: 'selected-object',
+        editorTarget: group.layers[0]!.items[0]!.editorTarget,
+      }]);
+    });
+
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'a',
+      shiftKey: true,
+      ...modifiers,
+    });
+    act(() => surface.dispatchEvent(event));
+
+    expect(event.defaultPrevented).toBe(false);
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['selected-object']);
+    act(() => root.unmount());
+  });
+
+  it.each([
+    ['Command', { metaKey: true }],
+    ['Control', { ctrlKey: true }],
   ] as const)('pastes the ScoreObject buffer at an empty Track location on %s-click', (_label, modifiers) => {
     useScoreSelectionStore.setState({
       clipboard: [{

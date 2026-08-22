@@ -702,6 +702,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       // Build CsInstruments header (sr/ksmps/nchnls/0dbfs go here, not in CsOptions)
       const orchestraHeader = this.buildOrchestraHeader(profile);
@@ -951,6 +952,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       const orchestraHeader = this.buildOrchestraHeader(profile);
       const nchnls = this.getNchnls(profile);
@@ -1185,6 +1187,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       const orchestraHeader = this.buildOrchestraHeader();
       const nchnls = this.getNchnls();

@@ -134,4 +134,32 @@ describe('createAuditionProjectCopy', () => {
     expect(first.saveToString()).toContain('Changed only in first audition');
     expect(data.saveToString()).not.toContain('Changed only in first audition');
   });
+
+  it('keeps auditions of Track audio clips audible when the mixer is disabled', () => {
+    const { data, selectedClip } = createTrackFixture();
+    data.getMixer().setEnabled(false);
+
+    const audition = createAuditionProjectCopy(data, [selectedClip]);
+    const csd = audition.toRealtimePlaybackCSD().csdText;
+
+    expect(csd).toMatch(/i\d+\s+0(?:\.0)?\s+2\s+"\/fixtures\/audition\.wav"/);
+    expect(csd).toContain('outc a1, a2');
+    expect(csd).not.toContain('ga_bluemix_');
+    expect(csd).not.toContain('ga_bluesub_');
+    expect(csd).not.toContain('BlueMixer');
+  });
+
+  it('routes auditioned Track audio clips to the Master sub-channel when the track has no mixer channel', () => {
+    const { data, selectedClip } = createTrackFixture();
+    data.getMixer().setEnabled(true);
+
+    const audition = createAuditionProjectCopy(data, [selectedClip]);
+    const csd = audition.toRealtimePlaybackCSD().csdText;
+
+    expect(csd).toMatch(/i\d+\s+0(?:\.0)?\s+2\s+"\/fixtures\/audition\.wav"/);
+    expect(csd).toContain('ga_bluesub_Master_0');
+    expect(csd).toContain('ga_bluesub_Master_1');
+    expect(csd).not.toMatch(/ga_bluemix_\d+_\d/);
+    expect(csd).toContain('BlueMixer');
+  });
 });

@@ -4,6 +4,12 @@ import { LayerGroupDataEvent, LayerGroupDataEventType } from '../layers/layer-gr
 import { LayerGroupListener } from '../layers/layer-group-listener';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
+import { PythonObject } from '../../sound-objects/python-object';
+import { ClojureObject } from '../../sound-objects/clojure-object';
+import { JavaScriptObject } from '../../sound-objects/javascript-object';
+import { Instance } from '../../sound-objects/instance';
+import type { JavaScriptSession } from '../../javascript-runtime';
+import type { JavaRuntimeClientContract } from '../../java-runtime';
 import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
 import { Element } from '../../serialization/xml-reader';
@@ -47,6 +53,46 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   setDefaultHeightIndex(index: number): void { this._defaultHeightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index)); }
   getNoteProcessorChain(): NoteProcessorChain { return new NoteProcessorChain(); }
   hasSoloLayers(): boolean { return this.some((track) => track.isSolo()); }
+
+  /**
+   * Runs on-load processing for script SoundObjects placed directly on a
+   * Track, mirroring PolyObject.processOnLoad for layer-held objects.
+   * AudioClips carry no on-load behavior and PolyObjects cannot be placed
+   * on Tracks, so only the script object types are considered.
+   */
+  processOnLoad(context: TimeContext, session?: JavaScriptSession): void {
+    for (const track of this) {
+      for (const item of track) {
+        const target = resolveTrackOnLoadTarget(item);
+        if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+          target.processOnLoad(context, session);
+        } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+          target.processOnLoad(context);
+        } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+          target.processOnLoad(context);
+        }
+      }
+    }
+  }
+
+  async processOnLoadAsync(
+    context: TimeContext,
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    for (const track of this) {
+      for (const item of track) {
+        const target = resolveTrackOnLoadTarget(item);
+        if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+          target.processOnLoad(context, session);
+        } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+          await target.processOnLoadAsync(context, runtimeClient);
+        } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+          await target.processOnLoadAsync(context, runtimeClient);
+        }
+      }
+    }
+  }
 
   generateForCSD(
     context: TimeContext,
@@ -196,6 +242,21 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   private fire(event: LayerGroupDataEvent): void {
     for (const listener of this._listeners) listener.layerGroupChanged(event);
   }
+}
+
+type TrackOnLoadTarget = JavaScriptObject | ClojureObject | PythonObject;
+
+function resolveTrackOnLoadTarget(item: unknown): TrackOnLoadTarget | null {
+  if (!(item instanceof Instance)) {
+    return item instanceof JavaScriptObject || item instanceof ClojureObject || item instanceof PythonObject
+      ? item
+      : null;
+  }
+  const target = item.getSoundObject();
+  if (target instanceof Instance) return resolveTrackOnLoadTarget(target);
+  return target instanceof JavaScriptObject || target instanceof ClojureObject || target instanceof PythonObject
+    ? target
+    : null;
 }
 
 function getTrackInstrumentId(compileData: CompileData, trackId: string): string | undefined {

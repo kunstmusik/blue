@@ -1135,7 +1135,12 @@ export default function TrackLayerGroupCanvas({
     } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v') {
       event.preventDefault();
       handlePaste();
-    } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+    } else if (
+      (event.metaKey || event.ctrlKey)
+      && !event.shiftKey
+      && !event.altKey
+      && event.key.toLowerCase() === 'a'
+    ) {
       event.preventDefault();
       setSelection(group.layers.flatMap(collectTimelineLayerSelection));
     } else if (!event.metaKey && !event.ctrlKey && (event.key === 'Delete' || event.key === 'Backspace')) {

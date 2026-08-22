@@ -31,6 +31,7 @@ function instrumentText(compileData: CompileData, noteInstrumentId: string): str
 describe('Track mixer routing', () => {
   it('resolves Track AudioClip playback by association before channel name', () => {
     const compileData = new CompileData();
+    compileData.setMixerEnabled(true);
     const channel = new Channel();
     channel.setName('Old Track Name');
     channel.setAssociation('stable-track');
@@ -51,19 +52,37 @@ describe('Track mixer routing', () => {
     );
   });
 
-  it('falls back to Master when a Track association is missing, then falls back to direct output', () => {
+  it('falls back to the Master sub-channel when a Track association is missing, then falls back to direct output', () => {
     const withMaster = new CompileData();
+    withMaster.setMixerEnabled(true);
     const master = new Channel();
     master.setName(Mixer.MASTER_CHANNEL);
     withMaster.getChannelIdAssignments().set(master, 3);
     const masterInstrument = ensureTrackAudioPlaybackInstrument('missing-track', new TimeContext(), withMaster);
-    expect(instrumentText(withMaster, String(masterInstrument))).toContain(Mixer.getChannelVar(3, 0));
+    const masterText = instrumentText(withMaster, String(masterInstrument));
+    expect(masterText).toContain(Mixer.getSubChannelVar(Mixer.MASTER_CHANNEL, 0));
+    expect(masterText).not.toContain('ga_bluemix_');
 
     const withoutMixer = new CompileData();
     const directInstrument = ensureTrackAudioPlaybackInstrument('no-mixer', new TimeContext(), withoutMixer);
     const directText = instrumentText(withoutMixer, String(directInstrument));
     expect(directText).toContain('outc a1, a2');
     expect(directText).not.toContain('ga_bluemix_');
+  });
+
+  it('outputs directly when the mixer is disabled even if channel assignments exist', () => {
+    const compileData = new CompileData();
+    const channel = new Channel();
+    channel.setName('Routed Track');
+    channel.setAssociation('routed-track');
+    compileData.getChannelIdAssignments().set(channel, 7);
+    compileData.setMixerEnabled(false);
+
+    const instrumentId = ensureTrackAudioPlaybackInstrument('routed-track', new TimeContext(), compileData);
+    const text = instrumentText(compileData, String(instrumentId));
+    expect(text).toContain('outc a1, a2');
+    expect(text).not.toContain('ga_bluemix_');
+    expect(text).not.toContain('ga_bluesub_');
   });
 
   it('associates self-instrumented Sound and FrozenSoundObject instruments with the Track without replacing p1', () => {
