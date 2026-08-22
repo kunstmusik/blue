@@ -15,6 +15,7 @@ interface FreezeContext {
   utility: UtilitySettingsSnapshot; // now includes freezeMaxJobs (integer 1–32)
   platform: string;
   isCancelled?: () => boolean;
+  abortInFlight?: () => void;            // abort systemic failures without marking user cancellation
   javaScriptSession?: JavaScriptSession;   // used only in the sequential prepare phase
   javaRuntimeClient?: JavaRuntimeClientContract | null;
 }
@@ -59,8 +60,9 @@ interface FreezeExecutionSeam {
 
 | Class | Signals | Effect |
 |-------|---------|--------|
-| Systemic | seam `errorCode` ∈ {`CSOUND_UNAVAILABLE`, `ENGINE_CAPABILITY_MISSING`, `CSOUND_EXECUTION_INVALID_CWD`, `CSOUND_PROCESS_FAILED`} or unavailable runtime service; cancellation signal set | Stop dispatching jobs and abort all in-flight jobs immediately (via the operation's shared abort controller), then clean up |
+| Systemic | seam `errorCode` ∈ {`CSOUND_UNAVAILABLE`, `ENGINE_CAPABILITY_MISSING`, `CSOUND_EXECUTION_INVALID_CWD`, `CSOUND_PROCESS_FAILED`} or unavailable runtime service | Stop dispatching jobs and abort all in-flight jobs immediately via `abortInFlight`, then clean up |
 | Per-object | nonzero render exit with no systemic code; artifact missing/format-mismatch/no-duration; prepare-phase failure (incl. CSD generation) for one target | Stop dispatching new jobs, let in-flight jobs finish, discard their staged artifacts, then clean up |
+| Cancellation | the user cancellation signal is set | Stop dispatching jobs and abort all in-flight jobs via the operation's shared cancellation controller; report `cancelled`, then clean up |
 
 Shared-flag misconfiguration surfaces as per-object failures across every job; the
 operation still fails all-or-nothing — only the early-stop optimization is skipped.

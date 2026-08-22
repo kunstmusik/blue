@@ -34,7 +34,7 @@ cannot omit verification merely because the feature specification does not reque
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T002 [P] Add the `freezeMaxJobs` setting to `packages/blue-app/src/shared/program-settings.ts` per [contracts/freeze-max-jobs-setting.md](contracts/freeze-max-jobs-setting.md): constants `FREEZE_MAX_JOBS_DEFAULT = 4`, `FREEZE_MAX_JOBS_MIN = 1`, `FREEZE_MAX_JOBS_MAX = 32`; field on `UtilitySettingsSnapshot`; default from `createDefaultUtilitySettings`; `normalizeFreezeMaxJobs` wired into `mergeWithDefaults` (missing/invalid → 4, clamp 1–32); `validateProgramSettings` error issue at path `utility.freezeMaxJobs`
+- [x] T002 [P] Add the `freezeMaxJobs` setting to `packages/blue-app/src/shared/program-settings.ts` per [contracts/freeze-max-jobs-setting.md](contracts/freeze-max-jobs-setting.md): constants `FREEZE_MAX_JOBS_DEFAULT = 4`, `FREEZE_MAX_JOBS_MIN = 1`, `FREEZE_MAX_JOBS_MAX = 32`; field on `UtilitySettingsSnapshot`; default from `createDefaultUtilitySettings`; `normalizeFreezeMaxJobs` wired into `mergeWithDefaults` (missing/invalid → 4); `validateProgramSettings` error issue at path `utility.freezeMaxJobs`
 - [x] T003 [P] Add settings regressions in `packages/blue-app/src/shared/program-settings.test.ts`: default is 4 on fresh defaults; load-merge normalization for missing, non-integer, below-1, above-32; validation errors for 0, 33, 1.5; Utility-panel reset restores 4; saved valid values persist through the merge unchanged
 - [x] T004 [P] Extend the Csound seam result in `packages/blue-app/src/main/main.ts` (`createCsoundExecutionSeam`) with an optional pass-through `errorCode` from `EngineRuntimeService.executeCsound` results, and mirror the optional `errorCode?: string | null` on `FreezeExecutionSeam.runCsound` in `packages/blue-app/src/main/freeze-score-objects.ts` per [contracts/freeze-parallel-execution.md](contracts/freeze-parallel-execution.md) — additive only, existing callers unchanged
 
@@ -61,7 +61,7 @@ cannot omit verification merely because the feature specification does not reque
 ### Implementation for User Story 1
 
 - [x] T010 [US1] Restructure `executeFreezeUnfreeze` in `packages/blue-app/src/main/freeze-score-objects.ts` into the two-phase model of [contracts/freeze-parallel-execution.md](contracts/freeze-parallel-execution.md): sequential prepare per freeze target (`buildFreezeRenderData` → `generateDiskCsd` → `allocateFreezeFileName` → `writeTempCsdSnapshot` → `planFreezeCommand`; a prepare failure rejects that target only), then a bounded promise pool (`min(freezeMaxJobs, pending jobs)`, defensively ≥ 1) running render + artifact inspection + `FrozenSoundObject` construction per job; keep the existing staging, source verification, atomic commit, and unfreeze reference-counted cleanup unchanged
-- [x] T011 [US1] Keep per-item `FreezeItemStatus` events correct under parallel dispatch in `packages/blue-app/src/main/freeze-score-objects.ts`: `pending` at resolve, `running` with `freezeFile` at job dispatch, `failed` with reason per failed target, `complete` after commit — keyed by `selectionId`, independent of completion order
+- [x] T011 [US1] Keep per-item `FreezeItemStatus` events correct under parallel dispatch in `packages/blue-app/src/main/freeze-score-objects.ts`: `pending` at resolve, `running` with `freezeFile` at job dispatch, `rendered` after render/staging, `failed` with reason per failed target, and `complete` after commit — keyed by `selectionId`, independent of completion order
 
 **Checkpoint**: Multi-object freeze runs in parallel; `pnpm --filter @blue/app test -- freeze-score-objects` passes; sequential parity at cap 1 verified
 
@@ -79,7 +79,7 @@ cannot omit verification merely because the feature specification does not reque
 
 ### Implementation for User Story 2
 
-- [x] T013 [US2] Add the "Maximum Freeze Jobs" numeric field to `packages/blue-app/src/renderer/components/settings/UtilitySettings.tsx` beside Freeze Flags: min 1, max 32, `parseInt` with fallback to the current valid value (pattern of `directoryTempFileLimit` in `GeneralSettings.tsx`), description stating it caps concurrent freeze renders; use only approved semantic typography roles per `docs/typography.md`
+- [x] T013 [US2] Add the "Maximum Freeze Jobs" numeric field to `packages/blue-app/src/renderer/components/settings/UtilitySettings.tsx` beside Freeze Flags: min 1, max 32, preserve invalid drafts so zero, fractional, out-of-range, and malformed values reach main-process validation instead of silently falling back, description stating it caps concurrent freeze renders; use only approved semantic typography roles per `docs/typography.md`
 - [x] T014 [P] [US2] Record the setting in the parity matrix in `packages/blue-app/src/main/program-settings-usage.ts` and its test `packages/blue-app/src/main/program-settings-usage.test.ts`: `utility.freezeMaxJobs`, default 4, blue-electron extension with no Java counterpart, consumer path `freeze-score-objects.ts`
 
 **Checkpoint**: The setting is configurable, validated, persisted, reset-able, and documented as an intentional divergence
@@ -123,9 +123,9 @@ cannot omit verification merely because the feature specification does not reque
 
 ### Implementation for User Story 4
 
-- [x] T023 [US4] Implement the aggregate progress formula and count-based rendering messages (running/complete/total) in `packages/blue-app/src/main/freeze-score-objects.ts`, keeping `RenderOperationStatus` shape-compatible — no changes to `packages/blue-app/src/shared/render-freeze-contract.ts` or preload
+- [x] T023 [US4] Implement the aggregate progress formula and count-based rendering messages (running/complete/total) in `packages/blue-app/src/main/freeze-score-objects.ts`, keeping the existing IPC channels and event shape compatible while adding the `rendered` item phase and stable renderer focus state; no new channel or preload surface
 
-**Checkpoint**: Progress is trustworthy under parallelism with no renderer protocol change
+**Checkpoint**: Progress is trustworthy under parallelism with compatible renderer channels/event shape, additive item phases, and stable row focus
 
 ---
 
@@ -222,11 +222,11 @@ Task T010: "Two-phase executor restructure in freeze-score-objects.ts" (depends 
 
 ## Phase 8: Convergence
 
-- [X] T026 Preserve invalid Maximum Freeze Jobs drafts through the Utility settings UI so zero, fractional, and malformed values reach validation and block saving with the actionable `utility.freezeMaxJobs` error per FR-003 (partial)
-- [X] T027 Track every generated freeze artifact through post-render inspection and FrozenSoundObject construction failures so FR-007 and FR-012 cleanup removes it on every failure path (partial)
-- [X] T028 Remove completed jobs from the aggregate progress in-flight map before reporting rendering status so FR-009 and SC-001–SC-003 cannot double-count completed work (partial)
-- [X] T029 Execute and record the eight real-render validation scenarios in [quickstart.md](quickstart.md) for T025: setting lifecycle, cap-4 parallelism, cap-2 queueing, cancellation, per-object failure, systemic failure, cap-1 parity, and mixed unfreeze (missing)
+- [X] T026 Preserve invalid Maximum Freeze Jobs drafts through the Utility settings UI so zero, fractional, and malformed values reach validation and block saving with the actionable `utility.freezeMaxJobs` error per FR-003
+- [X] T027 Track every generated freeze artifact through post-render inspection and FrozenSoundObject construction failures so FR-007 and FR-012 cleanup removes it on every failure path
+- [X] T028 Remove completed jobs from the aggregate progress in-flight map before reporting rendering status so FR-009 and SC-001–SC-003 cannot double-count completed work
+- [X] T029 Execute and record the eight real-render validation scenarios in [quickstart.md](quickstart.md) for T025: setting lifecycle, cap-4 parallelism, cap-2 queueing, cancellation, per-object failure, systemic failure, cap-1 parity, and mixed unfreeze
 
 ## Phase 9: Convergence
 
-- [X] T030 [US4] Preserve monotonic aggregate progress across `rendering` and interleaved `inspecting` status events in `packages/blue-app/src/main/freeze-score-objects.ts`; add a regression in `packages/blue-app/src/main/freeze-score-objects.test.ts` that checks the complete status stream never decreases before commit (partial)
+- [X] T030 [US4] Preserve monotonic aggregate progress across `rendering` and interleaved `inspecting` status events in `packages/blue-app/src/main/freeze-score-objects.ts`; add a regression in `packages/blue-app/src/main/freeze-score-objects.test.ts` that checks the complete status stream never decreases before commit

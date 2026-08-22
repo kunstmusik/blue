@@ -6,7 +6,7 @@ exercises real concurrent renders.
 
 ## Prerequisites
 
-- Working tree on branch `085-parallel-freeze`; dependencies installed (`pnpm install`).
+- Working tree on a branch containing the implementation (for the merged feature, `develop`); dependencies installed (`pnpm install`).
 - Blue Engine runtime resolvable (real Csound renders in the manual section).
 - A **saved** project with several freeze-eligible SoundObjects whose renders take a
   observable amount of time (e.g., 4+ dense Pattern or PianoRoll objects of a minute
@@ -79,6 +79,13 @@ configured cap, never exceeds it, and that overlap actually occurs with cap ≥ 
    - Expect: unfreezes restore sources without waiting on render slots; freezes run
      under the cap; shared-artifact reference counting still protects files
      referenced by other frozen objects.
+
+### SC-007 outcome note
+
+SC-007 is a post-launch performance outcome, not a build-time correctness gate. The
+real-render record below establishes overlapping execution and cap enforcement; a
+controlled before/after wall-clock benchmark should be collected separately when
+measuring user-perceived performance.
 
 ## Real-render validation record (2026-08-22)
 

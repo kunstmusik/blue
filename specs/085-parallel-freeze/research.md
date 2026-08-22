@@ -1,6 +1,6 @@
 # Research: Parallel ScoreObject Freezing
 
-Phase 0 findings for spec [085-parallel-freeze](spec.md). Research was performed after merging `develop` into the branch; all file references reflect the merged tree.
+Phase 0 findings for spec [085-parallel-freeze](spec.md). Research was performed after merging `develop` into the feature branch; the architecture bullets below record the pre-implementation baseline, while the decisions record the implemented design.
 
 ## Current architecture (verified against merged code)
 
@@ -58,17 +58,17 @@ Phase 0 findings for spec [085-parallel-freeze](spec.md). Research was performed
 
 ### D6 — Settings: `freezeMaxJobs` on the Utility snapshot
 
-**Decision**: Add `freezeMaxJobs: number` to `UtilitySettingsSnapshot` with constants `FREEZE_MAX_JOBS_DEFAULT = 4`, `FREEZE_MAX_JOBS_MIN = 1`, `FREEZE_MAX_JOBS_MAX = 32`; a `normalizeFreezeMaxJobs` helper used by `mergeWithDefaults` (missing/invalid → 4, non-integers/out-of-range clamped to the range, mirroring the `appZoomPercent` pattern); a `validateProgramSettings` error path `utility.freezeMaxJobs` ("Must be an integer between 1 and 32"); defaults restored by `createDefaultUtilitySettings`; a numeric Utility-panel field (`min`/`max` enforced, `parseInt` fallback like `directoryTempFileLimit`); and a parity-matrix entry marked as a blue-electron extension with no Java counterpart.
+**Decision**: Add `freezeMaxJobs: number` to `UtilitySettingsSnapshot` with constants `FREEZE_MAX_JOBS_DEFAULT = 4`, `FREEZE_MAX_JOBS_MIN = 1`, `FREEZE_MAX_JOBS_MAX = 32`; a `normalizeFreezeMaxJobs` helper used by `mergeWithDefaults` (missing or invalid → 4); a `validateProgramSettings` error path `utility.freezeMaxJobs` ("Must be an integer between 1 and 32"); defaults restored by `createDefaultUtilitySettings`; a numeric Utility-panel field (`min`/`max` enforced) that preserves empty, fractional, out-of-range, and malformed drafts until the main-process validator rejects them; and a parity-matrix entry marked as a blue-electron extension with no Java counterpart.
 
 **Rationale**: Every behavior follows an established settings pattern in `packages/blue-app/src/shared/program-settings.ts` (bounded numeric setting with load-time normalization plus save-time validation). The executor reads `context.utility.freezeMaxJobs` once at operation start — the `utility` snapshot is already in `FreezeContext`.
 
 **Alternatives considered**: Per-project setting — rejected (spec confirms app-wide); unbounded positive integer — rejected (confirmed clarification: 1–32); a separate "Freeze" settings panel — rejected (confirmed clarification: Utility panel).
 
-### D7 — Renderer: verify, don't change
+### D7 — Renderer compatibility and row state
 
-**Decision**: No renderer protocol or component changes are required. The freeze-operation store keys rows by `selectionId` and the dialog renders each row with its own spinner, so multiple simultaneous `running` rows display correctly by construction. Add a store regression test covering concurrent `running` rows and terminal settling; adjust dialog copy only if testing reveals a single-running-row assumption.
+**Decision**: Retain the existing renderer IPC channels and event shape, but add the renderer state needed for interleaved item updates: the `rendered` item phase, terminal settling for rendered-but-uncommitted rows, and a stable `selectedSelectionId` focus row. The freeze-operation store remains keyed by `selectionId`; item events never move focus, and only a user row click changes it. Add regressions covering concurrent rows, independent output, stable focus, and terminal settling.
 
-**Rationale**: The merged per-item dialog was built for per-object tracking; parallelism only changes how many rows are `running` at once. FR-009 explicitly requires shape compatibility rather than UI work.
+**Rationale**: The existing per-item dialog was built for per-object tracking, so its channel and row identity remain reusable. Parallelism requires an additive rendered state and explicit focus ownership because following item events would flash the highlight across rows. FR-009 requires shape compatibility and no new IPC channel, not zero renderer state changes.
 
 **Alternatives considered**: Adding a concurrency summary to the dialog — optional polish, deferred (not required by spec).
 

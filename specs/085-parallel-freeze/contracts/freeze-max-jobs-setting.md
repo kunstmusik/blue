@@ -31,7 +31,7 @@ Applied by `mergeWithDefaults` when loading settings:
 
 ## UI
 
-- Numeric input in `UtilitySettings.tsx`: min 1, max 32, `parseInt` with fallback to the current valid value on empty/garbage input (pattern of `directoryTempFileLimit`).
+- Numeric input in `UtilitySettings.tsx`: min 1, max 32. Valid integer drafts are stored as numbers; empty, fractional, out-of-range, and malformed drafts are preserved as raw UI values until the main-process validator rejects them with the actionable `utility.freezeMaxJobs` error. Invalid drafts must not be silently replaced with the previous valid value.
 - Field description states it caps concurrent freeze renders.
 - Panel reset restores 4 through `createDefaultUtilitySettings` (no special case).
 
