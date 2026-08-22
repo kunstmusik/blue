@@ -176,6 +176,7 @@
 - [x] T070 Run `pnpm --filter @blue/app test` from `/Users/stevenyi/work/blue-electron`
 - [x] T071 Run `pnpm --filter @blue/app build` from `/Users/stevenyi/work/blue-electron`
 - [x] T072 Run `git diff --check` from `/Users/stevenyi/work/blue-electron`
+- [x] T073 [US2] Replace per-editor Note Processor copy state with one application-wide detached buffer and add cross-editor regression coverage in `packages/blue-app/src/renderer/stores/note-processor-clipboard-store.ts`, `packages/blue-app/src/renderer/components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor.tsx`, and `packages/blue-app/src/renderer/tests/note-processor-shared-clipboard.test.tsx`
 
 ---
 

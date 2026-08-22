@@ -122,6 +122,27 @@ describe('BSB Swing HTML labels', () => {
     expect(htmlSize.height).toBeGreaterThanOrEqual(plainSize.height);
   });
 
+  it('keeps authored BSB label glyphs inside their measured line box', () => {
+    const label = createDefaultBsbWidgetSnapshot('BSBLabel')!;
+    label.id = 'label';
+    label.properties.label = 'JNO';
+    label.properties['font.size'] = 36;
+
+    const html = renderToStaticMarkup(
+      createElement(BSBInterfaceCanvas, {
+        instrument: makeInstrument([label]),
+        selectedWidgetIds: new Set<string>(),
+        editEnabled: false,
+        onWidgetSelect: vi.fn(),
+        onBsbInterfacePatch: vi.fn(),
+        onInstrumentPatch: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain('font-size:36px');
+    expect(html).toContain('line-height:normal');
+  });
+
   it('maps legacy Swing font sizes to the same larger bucket Java uses', () => {
     expect(resolveBsbSwingHtmlFontSizePx('+1')).toBe(18);
     expect(resolveBsbSwingHtmlFontSizePx('-1')).toBe(12);

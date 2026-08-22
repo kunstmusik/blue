@@ -25,7 +25,6 @@ function createProgramSettings(layoutOverrides: Partial<ReturnType<typeof create
     general: {
       workDirectory: '',
       newUserDefaultsEnabled: true,
-      drawAlphaBackgroundOnMarquee: false,
       messageColorsEnabled: false,
       csoundErrorWarningEnabled: true,
       directoryTempFileLimit: 3,

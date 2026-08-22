@@ -8,11 +8,13 @@ import {
 } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { IDockviewPanelHeaderProps } from 'dockview';
-import { X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import {
   getAuxiliaryPanelPresentation,
   getGroupInstanceForPanel,
   isAuxiliaryPanelId,
+  type AuxiliaryEdge,
+  type AuxiliaryGroupSizeAction,
 } from './auxiliary-layout';
 import { getPanel } from './panel-registry';
 import {
@@ -92,12 +94,9 @@ function TabContents({
     event.preventDefault();
   }, []);
 
-  const onPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      isMiddleMouseButton.current = event.button === 1;
-    },
-    [],
-  );
+  const onPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    isMiddleMouseButton.current = event.button === 1;
+  }, []);
 
   const onPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -137,41 +136,29 @@ function TabContents({
 
 function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
   const panelId = props.api.id;
-  const closeAuxiliaryPanel = useWorkbenchStore(
-    (state) => state.closeAuxiliaryPanel,
-  );
-  const maximizeAuxiliaryGroup = useWorkbenchStore(
-    (state) => state.maximizeAuxiliaryGroup,
-  );
-  const restoreAuxiliaryGroup = useWorkbenchStore(
-    (state) => state.restoreAuxiliaryGroup,
-  );
-  const minimizeAuxiliaryPanel = useWorkbenchStore(
-    (state) => state.minimizeAuxiliaryPanel,
-  );
-  const minimizeAuxiliaryGroup = useWorkbenchStore(
-    (state) => state.minimizeAuxiliaryGroup,
-  );
+  const closeAuxiliaryPanel = useWorkbenchStore((state) => state.closeAuxiliaryPanel);
+  const maximizeAuxiliaryGroup = useWorkbenchStore((state) => state.maximizeAuxiliaryGroup);
+  const restoreAuxiliaryGroup = useWorkbenchStore((state) => state.restoreAuxiliaryGroup);
+  const minimizeAuxiliaryPanel = useWorkbenchStore((state) => state.minimizeAuxiliaryPanel);
+  const minimizeAuxiliaryGroup = useWorkbenchStore((state) => state.minimizeAuxiliaryGroup);
   const closePanel = useWorkbenchStore((state) => state.closePanel);
   const closeGroup = useWorkbenchStore((state) => state.closeGroup);
   const floatPanel = useWorkbenchStore((state) => state.floatPanel);
   const floatGroup = useWorkbenchStore((state) => state.floatGroup);
   const dockPanel = useWorkbenchStore((state) => state.dockPanel);
   const dockGroup = useWorkbenchStore((state) => state.dockGroup);
-  const newDocumentTabGroup = useWorkbenchStore(
-    (state) => state.newDocumentTabGroup,
-  );
-  const collapseDocumentTabGroup = useWorkbenchStore(
-    (state) => state.collapseDocumentTabGroup,
-  );
+  const movePanelToEdge = useWorkbenchStore((state) => state.movePanelToEdge);
+  const moveGroupToEdge = useWorkbenchStore((state) => state.moveGroupToEdge);
+  const resizeAuxiliaryGroup = useWorkbenchStore((state) => state.resizeAuxiliaryGroup);
+  const newDocumentTabGroup = useWorkbenchStore((state) => state.newDocumentTabGroup);
+  const collapseDocumentTabGroup = useWorkbenchStore((state) => state.collapseDocumentTabGroup);
   const auxiliary = useWorkbenchStore((state) => state.auxiliary);
 
   const isAuxiliaryPanel = isAuxiliaryPanelId(panelId);
   const instance = getGroupInstanceForPanel(auxiliary, panelId);
   const groupPanels = props.api.group.panels;
   const groupPanelIds = groupPanels.map((panel) => panel.id);
-  const activePanelId =
-    (props.api.group.activePanel?.id as string | undefined) ?? panelId;
+  const activePanelId = (props.api.group.activePanel?.id as string | undefined) ?? panelId;
 
   const dockviewLocation = props.api.location.type;
   const auxiliaryPresentation = isAuxiliaryPanel
@@ -182,9 +169,7 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
       ? 'floating'
       : (auxiliaryPresentation ?? 'docked');
   const isMaximized =
-    location === 'maximized' ||
-    instance?.isMaximized === true ||
-    props.api.isMaximized();
+    location === 'maximized' || instance?.isMaximized === true || props.api.isMaximized();
 
   const descriptor = getPanel(panelId);
   const isPanelClosable = (id: string) => getPanel(id)?.isClosable ?? true;
@@ -192,9 +177,7 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
   const dockedEditorGroupCount = props.containerApi.groups.filter(
     (group) =>
       group.api.location.type !== 'popout' &&
-      group.panels.some(
-        (panel) => (getPanel(panel.id)?.mode ?? 'editor') === 'editor',
-      ),
+      group.panels.some((panel) => (getPanel(panel.id)?.mode ?? 'editor') === 'editor'),
   ).length;
   const commandContext: TabCommandContext = {
     panelId,
@@ -277,9 +260,7 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
   const shiftPanel = (delta: -1 | 1) => {
     const panel = props.containerApi.getPanel(panelId);
     const nextIndex =
-      props.api.group.panels.findIndex(
-        (candidate) => candidate.id === panelId,
-      ) + delta;
+      props.api.group.panels.findIndex((candidate) => candidate.id === panelId) + delta;
 
     if (!panel || nextIndex < 0 || nextIndex >= props.api.group.panels.length) {
       return;
@@ -361,15 +342,46 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
       </ContextMenu.Trigger>
 
       <ContextMenu.Portal container={props.api.getWindow().document.body}>
-        <ContextMenu.Content
-          className="workbench-context-menu"
-          sideOffset={6}
-          align="start"
-        >
+        <ContextMenu.Content className="workbench-context-menu" sideOffset={6} align="start">
           {commandState.commands.map((command, index) => {
             const previousKind = commandState.commands[index - 1]?.kind;
-            const showSeparator =
-              index > 0 && groupOf(previousKind) !== groupOf(command.kind);
+            const showSeparator = index > 0 && groupOf(previousKind) !== groupOf(command.kind);
+
+            if (command.kind === 'move' || command.kind === 'move-group') {
+              return (
+                <EdgeCommandSubmenu
+                  key={command.kind}
+                  label={command.label}
+                  enabled={command.enabled}
+                  showSeparator={showSeparator}
+                  currentEdge={instance?.edge}
+                  onSelect={(edge) => {
+                    if (command.kind === 'move') {
+                      movePanelToEdge(panelId, edge);
+                    } else if (instance) {
+                      moveGroupToEdge(instance.groupInstanceId, edge);
+                    }
+                  }}
+                />
+              );
+            }
+
+            if (command.kind === 'size-group') {
+              return (
+                <SizeCommandSubmenu
+                  key={command.kind}
+                  label={command.label}
+                  enabled={command.enabled}
+                  showSeparator={showSeparator}
+                  onSelect={(action) => {
+                    if (instance) {
+                      resizeAuxiliaryGroup(instance.groupInstanceId, action);
+                    }
+                  }}
+                />
+              );
+            }
+
             return (
               <CommandMenuItem
                 key={command.kind}
@@ -383,6 +395,104 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>
+  );
+}
+
+const AUXILIARY_EDGE_OPTIONS: readonly {
+  edge: AuxiliaryEdge;
+  label: string;
+}[] = [
+  { edge: 'left', label: 'Left' },
+  { edge: 'right', label: 'Right' },
+  { edge: 'bottom', label: 'Bottom' },
+];
+
+function EdgeCommandSubmenu({
+  label,
+  enabled,
+  showSeparator,
+  currentEdge,
+  onSelect,
+}: {
+  label: string;
+  enabled: boolean;
+  showSeparator: boolean;
+  currentEdge?: AuxiliaryEdge;
+  onSelect: (edge: AuxiliaryEdge) => void;
+}) {
+  return (
+    <ContextMenu.Sub>
+      {showSeparator ? (
+        <ContextMenu.Separator className="workbench-context-menu__separator" />
+      ) : null}
+      <ContextMenu.SubTrigger
+        className="workbench-context-menu__item workbench-context-menu__subtrigger"
+        disabled={!enabled}
+      >
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden="true" />
+      </ContextMenu.SubTrigger>
+      <ContextMenu.SubContent className="workbench-context-menu" sideOffset={4}>
+        {AUXILIARY_EDGE_OPTIONS.map((option) => (
+          <ContextMenu.Item
+            key={option.edge}
+            className="workbench-context-menu__item"
+            disabled={!enabled || option.edge === currentEdge}
+            onSelect={() => onSelect(option.edge)}
+          >
+            {option.label}
+          </ContextMenu.Item>
+        ))}
+      </ContextMenu.SubContent>
+    </ContextMenu.Sub>
+  );
+}
+
+const AUXILIARY_SIZE_OPTIONS: readonly {
+  action: AuxiliaryGroupSizeAction;
+  label: string;
+}[] = [
+  { action: 'increase', label: 'Larger' },
+  { action: 'decrease', label: 'Smaller' },
+  { action: 'reset', label: 'Reset' },
+];
+
+function SizeCommandSubmenu({
+  label,
+  enabled,
+  showSeparator,
+  onSelect,
+}: {
+  label: string;
+  enabled: boolean;
+  showSeparator: boolean;
+  onSelect: (action: AuxiliaryGroupSizeAction) => void;
+}) {
+  return (
+    <ContextMenu.Sub>
+      {showSeparator ? (
+        <ContextMenu.Separator className="workbench-context-menu__separator" />
+      ) : null}
+      <ContextMenu.SubTrigger
+        className="workbench-context-menu__item workbench-context-menu__subtrigger"
+        disabled={!enabled}
+      >
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden="true" />
+      </ContextMenu.SubTrigger>
+      <ContextMenu.SubContent className="workbench-context-menu" sideOffset={4}>
+        {AUXILIARY_SIZE_OPTIONS.map((option) => (
+          <ContextMenu.Item
+            key={option.action}
+            className="workbench-context-menu__item"
+            disabled={!enabled}
+            onSelect={() => onSelect(option.action)}
+          >
+            {option.label}
+          </ContextMenu.Item>
+        ))}
+      </ContextMenu.SubContent>
+    </ContextMenu.Sub>
   );
 }
 

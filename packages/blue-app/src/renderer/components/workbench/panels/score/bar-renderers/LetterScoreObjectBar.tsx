@@ -51,14 +51,12 @@ export default function LetterScoreObjectBar({
         }}
       />
       <span
+        className="text-role-subheadline font-bold"
         style={{
           position: 'absolute',
           left: 3,
-          top: 4,
-          fontSize: 10,
-          fontWeight: 'bold',
+          top: 2,
           color: letterColor,
-          lineHeight: '10px',
           pointerEvents: 'none',
         }}
       >

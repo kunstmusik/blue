@@ -1,10 +1,22 @@
 /**
  * Parameter — an automation parameter with points and curve type.
- * Mirrors the Java Parameter class.
+ * Mirrors the Java Parameter class: values and points stay binary64 doubles,
+ * while the resolution is an exact Java-compatible decimal (the `bdresolution`
+ * BigDecimal in Java Blue). Linear evaluation reproduces Java
+ * `Line.getValue(double)` bit-for-bit, including early returns, duplicate-time
+ * selection, the descending bias, and exact positive-resolution quantization.
  */
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
 import { generatePrefixedUuid } from '../utilities/uuid';
+import {
+  JavaDecimal,
+  javaDecimalIsQuantizationActive,
+  normalizeLegacyResolution,
+  parseJavaDecimal,
+  quantizeToResolutionJava,
+  snapToResolutionJava,
+} from './java-decimal';
 
 export interface AutomationPoint {
   time: number;
@@ -17,17 +29,28 @@ export enum AutomationCurve {
   EXPONENTIAL = 'EXPONENTIAL',
 }
 
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
+/** Raised when parameter XML carries a resolution that Java would reject. */
+export class ParameterResolutionError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'ParameterResolutionError';
+    this.code = code;
+  }
 }
 
-function snapToResolution(value: number, minimum: number, maximum: number, resolution: number): number {
-  if (!Number.isFinite(resolution) || resolution <= 0) {
-    return clamp(value, minimum, maximum);
+/** The Java default resolution: exact decimal -1 (unquantized). */
+export function defaultResolutionDecimal(): JavaDecimal {
+  const parsed = parseJavaDecimal('-1');
+  if (!parsed.ok) {
+    throw new Error('default resolution failed to parse');
   }
+  return parsed.value;
+}
 
-  const snapped = minimum + (Math.round((value - minimum) / resolution) * resolution);
-  return clamp(snapped, minimum, maximum);
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function rescale(
@@ -36,15 +59,15 @@ function rescale(
   oldMaximum: number,
   newMinimum: number,
   newMaximum: number,
-  resolution: number,
+  resolution: JavaDecimal,
 ): number {
   if (oldMaximum === oldMinimum) {
-    return snapToResolution(newMinimum, newMinimum, newMaximum, resolution);
+    return snapToResolutionJava(newMinimum, newMinimum, newMaximum, resolution);
   }
 
   const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
   const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
-  return snapToResolution(nextValue, newMinimum, newMaximum, resolution);
+  return snapToResolutionJava(nextValue, newMinimum, newMaximum, resolution);
 }
 
 export class Parameter implements BlueDataObject {
@@ -56,9 +79,7 @@ export class Parameter implements BlueDataObject {
   private _curve: AutomationCurve = AutomationCurve.LINEAR;
   private _points: AutomationPoint[] = [];
   private _enabled = false;
-  private _resolution = 0;
-  private _resolutionScale = 1.0;
-  private _highPrecision = false;
+  private _resolution: JavaDecimal = defaultResolutionDecimal();
   private _compilationVarName: string | null = null;
   private _fixedValue = 0;
   private _lineColor = -8355712;
@@ -94,12 +115,12 @@ export class Parameter implements BlueDataObject {
     this._points = this._points.map((point) => ({
       ...point,
       value: truncate
-        ? snapToResolution(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
+        ? snapToResolutionJava(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
         : rescale(point.value, oldMinimum, this._maximum, this._minimum, this._maximum, this._resolution),
     }));
 
     this._fixedValue = truncate
-      ? snapToResolution(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
+      ? snapToResolutionJava(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
       : rescale(this._fixedValue, oldMinimum, this._maximum, this._minimum, this._maximum, this._resolution);
   }
 
@@ -115,12 +136,12 @@ export class Parameter implements BlueDataObject {
     this._points = this._points.map((point) => ({
       ...point,
       value: truncate
-        ? snapToResolution(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
+        ? snapToResolutionJava(clamp(point.value, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
         : rescale(point.value, this._minimum, oldMaximum, this._minimum, this._maximum, this._resolution),
     }));
 
     this._fixedValue = truncate
-      ? snapToResolution(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
+      ? snapToResolutionJava(clamp(this._fixedValue, this._minimum, this._maximum), this._minimum, this._maximum, this._resolution)
       : rescale(this._fixedValue, this._minimum, oldMaximum, this._minimum, this._maximum, this._resolution);
   }
 
@@ -143,19 +164,62 @@ export class Parameter implements BlueDataObject {
    */
   setAutomationEnabled(e: boolean): void { this._enabled = e; }
 
-  getResolution(): number { return this._resolution; }
-  setResolution(r: number): void { this._resolution = r; }
-
-  getResolutionScale(): number { return this._resolutionScale; }
-  setResolutionScale(s: number): void { this._resolutionScale = s; }
-
-  isHighPrecision(): boolean { return this._highPrecision; }
-  setHighPrecision(h: boolean): void { this._highPrecision = h; }
+  /**
+   * The exact resolution as a Java-compatible decimal. This is the sole
+   * quantization selector; `0.1` and `0.10` are distinct resolutions.
+   */
+  getResolutionDecimal(): JavaDecimal { return this._resolution; }
 
   /**
-   * Compilation variable name (e.g., "gk_blue_auto0").
-   * Set during CSD generation by assignParameterNames().
+   * Sets the exact resolution. Mirrors Java Parameter.setResolution: the
+   * nested line receives the resolution and every point snaps to the grid
+   * (clamped to the parameter bounds) exactly as LineUtils.snapToResolution
+   * does in Java Blue.
    */
+  setResolutionDecimal(resolution: JavaDecimal): void {
+    this._resolution = resolution;
+    this._points = this._points.map((point) => ({
+      ...point,
+      value: snapToResolutionJava(point.value, this._minimum, this._maximum, resolution),
+    }));
+  }
+
+  /**
+   * Derived numeric projection of the exact resolution (Java
+   * `BigDecimal.doubleValue()`). Display/preview only; it is never the
+   * authority for evaluation or persistence.
+   */
+  getResolution(): number { return this._resolution.doubleValue; }
+
+  /**
+   * Legacy numeric setter retained for callers that only have a double:
+   * applies Java's legacy normalization (exact construction, scale-5
+   * HALF_UP, strip trailing zeros) so no double-only conversion becomes the
+   * source of truth.
+   */
+  setResolution(r: number): void {
+    const normalized = normalizeLegacyResolution(r);
+    if (normalized.ok) {
+      this.setResolutionDecimal(normalized.value);
+    }
+  }
+
+  /** Canonical Java BigDecimal.toString() text of the exact resolution. */
+  getResolutionText(): string { return this._resolution.canonicalText; }
+
+  /**
+   * Parses canonical decimal text as the exact resolution. Throws
+   * ParameterResolutionError when the text is not accepted by the Java
+   * BigDecimal(String) grammar.
+   */
+  setResolutionText(text: string): void {
+    const parsed = parseJavaDecimal(text);
+    if (!parsed.ok) {
+      throw new ParameterResolutionError(parsed.code, parsed.message);
+    }
+    this.setResolutionDecimal(parsed.value);
+  }
+
   getCompilationVarName(): string | null { return this._compilationVarName; }
   setCompilationVarName(name: string): void { this._compilationVarName = name; }
 
@@ -176,46 +240,151 @@ export class Parameter implements BlueDataObject {
   }
 
   /**
-   * Get the parameter's value at a specific time.
-   * Returns the first point's value if no automation is enabled.
+   * Value at a specific time. Automated parameters evaluate the Java
+   * `Line.getValue(double)` sequence (bit-exact for the LINEAR curve);
+   * non-automated parameters return the fixed value, matching Java
+   * Parameter.getValue(time).
    */
   getValue(time: number): number {
     if (!this.isAutomationEnabled()) {
       return this._fixedValue;
     }
+    if (this._curve === AutomationCurve.LINEAR) {
+      return this.evaluateJavaLinear(time);
+    }
+    return this.evaluateExtensionCurve(time);
+  }
 
-    // Find the value at the given time by interpolating between points
-    if (this._points.length === 0) return this._fixedValue;
-    if (this._points.length === 1) return this._points[0].value;
-
-    // Before first point
-    if (time <= this._points[0].time) return this._points[0].value;
-    // After last point
-    if (time >= this._points[this._points.length - 1].time) {
-      return this._points[this._points.length - 1].value;
+  /**
+   * Java blue.components.lines.Line.getValue(double), reproduced exactly:
+   * early returns for the empty line, single points, and time zero; direct
+   * point hits with last-of-run duplicate selection; last-point behavior
+   * beyond the line; the Java double operation order for interpolation; the
+   * descending bias; and exact positive-resolution quantization.
+   */
+  private evaluateJavaLinear(time: number): number {
+    const points = this._points;
+    const size = points.length;
+    if (size === 0) {
+      return 0.0;
     }
 
-    // Find surrounding points
-    for (let i = 0; i < this._points.length - 1; i++) {
-      const p1 = this._points[i];
-      const p2 = this._points[i + 1];
-      if (time >= p1.time && time <= p2.time) {
-        const t = (time - p1.time) / (p2.time - p1.time);
-        switch (this._curve) {
-          case AutomationCurve.STEP:
-            return p1.value;
-          case AutomationCurve.LINEAR:
-            return p1.value + (p2.value - p1.value) * t;
-          case AutomationCurve.EXPONENTIAL:
-            // Exponential interpolation (avoid log(0))
-            const v1 = Math.max(p1.value, 0.0001);
-            const v2 = Math.max(p2.value, 0.0001);
-            return v1 * Math.pow(v2 / v1, t);
+    const first = points[0];
+    // Java compares `time == 0.0f` widened to double: -0.0 also matches
+    if (size === 1 || time === 0.0) {
+      return first.value;
+    }
+
+    let aIndex = 0;
+    let bIndex = -1;
+    for (let i = 1; i < size; i++) {
+      const candidate = points[i];
+      if (candidate.time === time) {
+        if (i === size - 1) {
+          return candidate.value;
         }
+        // last point of the same-time run wins
+        while (i < size) {
+          const temp = points[i];
+          if (temp.time !== time) {
+            break;
+          }
+          bIndex = i;
+          i++;
+        }
+        return points[bIndex].value;
+      }
+      if (candidate.time < time) {
+        aIndex = i;
+      } else {
+        bIndex = i;
+        break;
       }
     }
+    if (bIndex === -1) {
+      // time is at or beyond the last point (Java: b == a after the loop)
+      return points[size - 1].value;
+    }
+    if (bIndex === aIndex) {
+      return points[bIndex].value;
+    }
 
-    return this._fixedValue;
+    const a = points[aIndex];
+    const b = points[bIndex];
+    const m = (b.value - a.value) / (b.time - a.time);
+    const x = time - a.time;
+    let y = m * x + a.value;
+
+    if (javaDecimalIsQuantizationActive(this._resolution)) {
+      if (b.value < a.value) {
+        y += this._resolution.doubleValue * 0.99;
+      }
+      const quantized = quantizeToResolutionJava(y, this._resolution);
+      if (quantized !== null) {
+        y = quantized;
+      }
+    }
+    return y;
+  }
+
+  /**
+   * STEP and EXPONENTIAL curves are Blue extensions without a Java Line
+   * equivalent: only their quantization stage claims Java parity. The
+   * calculation keeps its pre-feature formula on the Java-selected segment
+   * and then applies the exact quantizer when the resolution is active.
+   */
+  private evaluateExtensionCurve(time: number): number {
+    const points = this._points;
+    const size = points.length;
+    if (size === 0) return 0.0;
+    if (size === 1 || time === 0.0) return points[0].value;
+
+    let aIndex = 0;
+    let bIndex = -1;
+    for (let i = 1; i < size; i++) {
+      const candidate = points[i];
+      if (candidate.time === time) {
+        if (i === size - 1) return candidate.value;
+        while (i < size) {
+          const temp = points[i];
+          if (temp.time !== time) break;
+          bIndex = i;
+          i++;
+        }
+        return points[bIndex].value;
+      }
+      if (candidate.time < time) {
+        aIndex = i;
+      } else {
+        bIndex = i;
+        break;
+      }
+    }
+    if (bIndex === -1) return points[size - 1].value;
+    if (bIndex === aIndex) return points[bIndex].value;
+
+    const a = points[aIndex];
+    const b = points[bIndex];
+    let y: number;
+    if (this._curve === AutomationCurve.STEP) {
+      y = time < b.time ? a.value : b.value;
+    } else {
+      const t = (time - a.time) / (b.time - a.time);
+      const v1 = Math.max(a.value, 0.0001);
+      const v2 = Math.max(b.value, 0.0001);
+      y = v1 * Math.pow(v2 / v1, t);
+    }
+
+    if (javaDecimalIsQuantizationActive(this._resolution)) {
+      if (b.value < a.value) {
+        y += this._resolution.doubleValue * 0.99;
+      }
+      const quantized = quantizeToResolutionJava(y, this._resolution);
+      if (quantized !== null) {
+        y = quantized;
+      }
+    }
+    return y;
   }
 
   saveAsXML(): Element {
@@ -225,7 +394,8 @@ export class Parameter implements BlueDataObject {
     elem.setAttribute('label', this._label);
     elem.setAttribute('min', Parameter.formatDouble(this._minimum));
     elem.setAttribute('max', Parameter.formatDouble(this._maximum));
-    elem.setAttribute('bdresolution', this._resolution.toString());
+    elem.setAttribute('bdresolution', this._resolution.canonicalText);
+    elem.setAttribute('curve', this._curve);
     elem.setAttribute('automationEnabled', this._enabled.toString());
     elem.setAttribute('value', Parameter.formatDouble(this._fixedValue));
 
@@ -234,7 +404,7 @@ export class Parameter implements BlueDataObject {
     lineElem.setAttribute('version', '2');
     lineElem.setAttribute('max', Parameter.formatDouble(this._maximum));
     lineElem.setAttribute('min', Parameter.formatDouble(this._minimum));
-    lineElem.setAttribute('bdresolution', this._resolution.toString());
+    lineElem.setAttribute('bdresolution', this._resolution.canonicalText);
     lineElem.setAttribute('color', this._lineColor.toString());
     lineElem.setAttribute('rightBound', 'false');
     lineElem.setAttribute('endPointsLinked', 'false');
@@ -266,11 +436,28 @@ export class Parameter implements BlueDataObject {
     const max = data.getAttribute('max');
     if (max) param._maximum = parseFloat(max);
 
-    const legacyRes = data.getAttribute('resolution');
-    if (legacyRes) param._resolution = parseFloat(legacyRes);
+    // Java load precedence: the legacy double attribute normalizes through
+    // new BigDecimal(double).setScale(5, HALF_UP).stripTrailingZeros(), then
+    // bdresolution overrides it exactly. Malformed decimals fail the load
+    // without installing a partially parsed resolution.
+    const legacyResolution = data.getAttribute('resolution');
+    if (legacyResolution) {
+      const normalized = normalizeLegacyResolution(parseFloat(legacyResolution));
+      if (normalized.ok) {
+        param._resolution = normalized.value;
+      } else {
+        throw new ParameterResolutionError(normalized.code, normalized.message);
+      }
+    }
 
     const bdResolution = data.getAttribute('bdresolution');
-    if (bdResolution) param._resolution = parseFloat(bdResolution);
+    if (bdResolution) {
+      const parsed = parseJavaDecimal(bdResolution);
+      if (!parsed.ok) {
+        throw new ParameterResolutionError(parsed.code, parsed.message);
+      }
+      param._resolution = parsed.value;
+    }
 
     const automationEnabled = data.getAttribute('automationEnabled');
     if (automationEnabled !== null) {
@@ -284,23 +471,13 @@ export class Parameter implements BlueDataObject {
       param._fixedValue = parseFloat(fixedValue);
     }
 
-    const res = data.getTextString('resolution');
-    if (res) param._resolution = parseFloat(res);
-
-    const scale = data.getTextString('resolutionScale');
-    if (scale) param._resolutionScale = parseFloat(scale);
-
-    const hp = data.getTextString('highPrecision');
-    if (hp) param._highPrecision = hp.toLowerCase() === 'true';
+    // compatibility-only legacy children: read and ignored (no behavior,
+    // not saved, not copied)
+    data.getTextString('resolutionScale');
+    data.getTextString('highPrecision');
 
     const lineNode = data.getElement('line');
     if (lineNode) {
-      const lineResolution = lineNode.getAttribute('bdresolution')
-        ?? lineNode.getAttribute('resolution');
-      if (lineResolution && param._resolution === 0) {
-        param._resolution = parseFloat(lineResolution);
-      }
-
       const lineColor = lineNode.getAttribute('color');
       if (lineColor !== null && lineColor !== undefined) {
         param._lineColor = parseInt(lineColor, 10);
@@ -339,6 +516,18 @@ export class Parameter implements BlueDataObject {
 
     param._points.sort((a, b) => a.time - b.time);
 
+    // Java Parameter.loadFromXML synchronizes the parameter-owned resolution
+    // to the nested line (reference-unequal by construction), which snaps
+    // every point against the line bounds exactly as Line.setResolution does
+    if (lineNode) {
+      const lineMinimum = parseFloat(lineNode.getAttribute('min') ?? '0');
+      const lineMaximum = parseFloat(lineNode.getAttribute('max') ?? '1');
+      param._points = param._points.map((point) => ({
+        ...point,
+        value: snapToResolutionJava(point.value, lineMinimum, lineMaximum, param._resolution),
+      }));
+    }
+
     if (fixedValue === null && param._points.length > 0) {
       param._fixedValue = param._points[0].value;
     }
@@ -356,8 +545,6 @@ export class Parameter implements BlueDataObject {
     copy._points = this._points.map((point) => ({ ...point }));
     copy._enabled = this._enabled;
     copy._resolution = this._resolution;
-    copy._resolutionScale = this._resolutionScale;
-    copy._highPrecision = this._highPrecision;
     copy._compilationVarName = this._compilationVarName;
     copy._fixedValue = this._fixedValue;
     copy._lineColor = this._lineColor;

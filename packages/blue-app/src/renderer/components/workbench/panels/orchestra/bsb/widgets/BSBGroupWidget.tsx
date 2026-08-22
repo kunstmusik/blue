@@ -74,6 +74,7 @@ export default function BSBGroupWidget({
               color: labelTextColor,
               fontFamily: `'${fontName}', Roboto, sans-serif`,
               fontSize,
+              lineHeight: 'normal',
               fontWeight,
               fontStyle: fontItalic,
               minHeight: titleHeight,

@@ -85,6 +85,7 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('instrument');
     elem.setAttribute('type', 'blue.orchestra.GenericInstrument');
+    elem.setAttribute('enabled', this._enabled.toString());
     elem.addElement('name').setText(this._name);
     elem.addElement('comment').setText(this._comment);
     elem.addElement('globalOrc').setText(this._globalOrc);

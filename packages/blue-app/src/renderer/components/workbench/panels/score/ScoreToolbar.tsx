@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data';
 import type { ScorePathSegment } from './types';
@@ -52,13 +52,13 @@ export default function ScoreToolbar({
   const snapDef = getSnapValue(snapValue);
 
   return (
-    <div className="flex items-center h-7 px-2 bg-app-surface border-b border-app-border/40 text-body select-none shrink-0">
+    <div className="flex items-center h-7 px-2 bg-app-surface border-b border-app-border/40 text-role-body select-none shrink-0">
       {/* Mode selection toggle group */}
       <div className="flex items-center mr-2 border border-app-border/40 rounded overflow-hidden">
         {MODE_OPTIONS.map((opt) => (
           <button
             key={opt.value}
-            className={`px-2 py-0.5 text-ui transition-colors cursor-pointer ${
+            className={`px-2 py-0.5 text-role-callout transition-colors cursor-pointer ${
               mode === opt.value
                 ? 'bg-app-accent/20 text-app-text font-medium'
                 : 'bg-transparent text-app-text-muted hover:bg-app-hover hover:text-app-text'
@@ -81,7 +81,7 @@ export default function ScoreToolbar({
             <span key={segment.groupId ?? 'root'} className="flex items-center gap-0 whitespace-nowrap">
               {i > 0 && <span className="mr-1 text-app-text-muted">/</span>}
               <button
-                className={`px-1 py-0.5 rounded text-ui cursor-pointer ${
+                className={`px-1 py-0.5 rounded text-role-callout cursor-pointer ${
                   i === pathSegments.length - 1
                     ? 'font-medium bg-app-surface/80 text-app-text'
                     : 'text-app-text-muted hover:bg-app-hover hover:text-app-text'
@@ -110,7 +110,7 @@ export default function ScoreToolbar({
                       align="start"
                     >
                       <DropdownMenu.Item
-                        className="flex items-center gap-2 rounded-sm px-3 py-1 text-ui text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight"
+                        className="flex items-center gap-2 rounded-sm px-3 py-1 text-role-callout text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight"
                         onSelect={() => {
                           if (i === 0) onOpenNoteProcessorChain('rootScore');
                           else onOpenNoteProcessorChain('layerGroup', segment.groupId ?? undefined);
@@ -118,7 +118,7 @@ export default function ScoreToolbar({
                       >
                         Edit Note Processors
                         {hasChain && (
-                          <span className="text-red-400 text-micro">({npcChain.processors.length})</span>
+                          <span className="text-red-400 text-role-callout">({npcChain.processors.length})</span>
                         )}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
@@ -136,7 +136,7 @@ export default function ScoreToolbar({
       {/* Snap button with dropdown */}
       <div className="flex items-stretch mr-1.5 h-[22px]">
         <button
-          className={`px-1.5 text-ui border rounded-l transition-colors cursor-pointer flex items-center ${
+          className={`px-1.5 text-role-callout border rounded-l transition-colors cursor-pointer flex items-center ${
             snapEnabled
               ? 'bg-app-accent/20 text-app-text border-app-accent/40'
               : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover'
@@ -167,9 +167,9 @@ export default function ScoreToolbar({
             >
               {SNAP_GROUPS.map((group) => (
                 <DropdownMenu.Sub key={group.label}>
-                  <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-ui text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight">
+                  <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-role-callout text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight">
                     {group.label}
-                    <ChevronDown className="w-3 h-3 ml-2 rotate-[-90deg]" />
+                    <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
                   </DropdownMenu.SubTrigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.SubContent
@@ -182,7 +182,7 @@ export default function ScoreToolbar({
                         return (
                           <DropdownMenu.Item
                             key={name}
-                            className={`rounded-sm px-3 py-1 text-ui outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
+                            className={`rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
                               snapValue === name
                                 ? 'bg-app-accent/20 text-app-text font-medium'
                                 : 'text-app-text'
@@ -199,7 +199,7 @@ export default function ScoreToolbar({
               ))}
               <DropdownMenu.Separator className="my-1 h-px bg-app-border/30" />
               <DropdownMenu.Item
-                className={`rounded-sm px-3 py-1 text-ui outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
+                className={`rounded-sm px-3 py-1 text-role-callout outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
                   snapValue === 'AUTO'
                     ? 'bg-app-accent/20 text-app-text font-medium'
                     : 'text-app-text'
@@ -215,7 +215,7 @@ export default function ScoreToolbar({
 
       {/* Ruler config button */}
       <button
-        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-ui text-app-text cursor-pointer transition-colors hover:bg-app-hover"
+        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover"
         onClick={onRulerConfig}
         title="Ruler configuration"
       >

@@ -98,7 +98,7 @@ export default function MixerPanel(): React.ReactElement {
     return (
       <div className="workbench-panel-shell">
         <div className="workbench-panel-shell__content">
-          <div className="flex h-full items-center justify-center text-sm text-blue-muted">
+          <div className="flex h-full items-center justify-center text-role-body text-blue-muted">
             No project loaded
           </div>
         </div>
@@ -157,18 +157,19 @@ export default function MixerPanel(): React.ReactElement {
                       if (!group.association) {
                         return;
                       }
-                      openGroupRenameDialog(group.association, group.listName || 'Audio Layer Group');
+                      openGroupRenameDialog(group.association, group.listName || 'Track Layer Group');
                     }}
                     title={group.association ? 'Double-click to rename group' : undefined}
                   >
-                    {group.listName || 'Audio Layer Group'}
+                    {group.listName || 'Track Layer Group'}
                   </div>
                   <div className="mixer-channel-group__strips">
-                    {group.channels.map((channel) => (
+                    {group.channels.map((channel, channelIndex) => (
                       <ChannelStrip
                         key={channel.id}
                         mixer={mixer}
                         channel={channel}
+                        unnamedDisplayName={`Track ${channelIndex + 1}`}
                         isMaster={false}
                         isSubChannel={false}
                         onPatch={handleMixerPatch}
@@ -260,13 +261,13 @@ export default function MixerPanel(): React.ReactElement {
             className="w-90 rounded-lg border border-blue-border/50 bg-blue-bg shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="border-b border-blue-border/30 px-4 py-3 text-sm font-medium text-blue-text">
-              Edit Audio Layer Group Name
+            <div className="border-b border-blue-border/30 px-4 py-3 text-role-headline font-bold text-blue-text">
+              Edit Track Layer Group Name
             </div>
             <div className="px-4 py-3">
               <input
                 ref={groupRenameInputRef}
-                className="w-full rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-2 py-1 text-body text-blue-text outline-none"
+                className="w-full rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-2 py-1 text-role-body text-blue-text outline-none"
                 value={groupRenameDialog.name}
                 onChange={(event) => {
                   setGroupRenameDialog((prev) => (
@@ -288,14 +289,14 @@ export default function MixerPanel(): React.ReactElement {
             <div className="flex justify-end gap-2 border-t border-blue-border/30 px-4 py-3">
               <button
                 type="button"
-                className="rounded border border-blue-border/50 bg-blue-surface/40 px-3 py-1 text-body text-blue-muted hover:text-blue-text"
+                className="rounded border border-blue-border/50 bg-blue-surface/40 px-3 py-1 text-role-body text-blue-muted hover:text-blue-text"
                 onClick={closeGroupRenameDialog}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded border border-blue-accent/60 bg-blue-accent/30 px-3 py-1 text-body text-blue-text"
+                className="rounded border border-blue-accent/60 bg-blue-accent/30 px-3 py-1 text-role-body text-blue-text"
                 onClick={commitGroupRenameDialog}
               >
                 OK

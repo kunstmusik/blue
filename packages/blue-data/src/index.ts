@@ -4,16 +4,26 @@ export type { BlueDataObject, BlueDataObjectStatic } from './blue-data-object';
 export type { DeepCopyable } from './deep-copyable';
 export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
+export type { CompiledMidiInstrumentTarget } from './compile-data';
 export {
 	getJavaRuntimeClient,
 	setJavaRuntimeClient,
 } from './java-runtime';
 export type {
 	ClojureEvalRequest,
+	ClojureEvalResult,
+	ClojureReinitializeResult,
 	ClojureScoreObjectEvalRequest,
+	ClojureScoreObjectEvalResult,
 	JavaRuntimeClientContract,
+	JavaRuntimeDependencyLoadResult,
+	JavaRuntimeDependencySpec,
 	JavaRuntimeError,
 	JavaRuntimeHealthResult,
+	JavaRuntimeSessionInitRequest,
+	JavaRuntimeSessionInitResult,
+	JythonEvalScriptRequest,
+	JythonEvalScriptResult,
 	JythonImportCheckRequest,
 	JythonImportCheckResult,
 	JythonInstrumentEvalRequest,
@@ -27,7 +37,6 @@ export type {
 	JythonScoreObjectEvalResult,
 	JythonSerializedNote,
 	JavaRuntimeResponse,
-	JavaRuntimeSessionInitRequest,
 	JavaRuntimeStatus,
 } from './java-runtime';
 export {
@@ -49,7 +58,37 @@ export { GenericInstrument } from './instruments/generic-instrument';
 export { loadInstrumentFromXML, registerInstrumentType } from './instruments/instrument-registry';
 export { JavaScriptInstrument } from './instruments/javascript-instrument';
 export { PythonInstrument } from './instruments/python-instrument';
-export { BlueX7 } from './instruments/blue-x7';
+export {
+  BlueX7,
+  createDefaultBlueX7Voice,
+  cloneBlueX7Voice,
+  generateBlueX7Preview,
+  getBlueX7BindingReport,
+  generateBlueX7InstrumentBody,
+  generateFTableForOperator,
+} from './instruments/blue-x7';
+export {
+  getSysexType,
+  getBankVoiceNames,
+  decodeSingleVoice,
+  decodeBankVoice,
+  sanitizeVoiceName,
+  formatBankSlotLabel,
+  validateBlueX7Sysex,
+  BlueX7SysexValidationError,
+  SINGLE_SYSEX_SIZE,
+  BANK_SYSEX_SIZE,
+} from './instruments/blue-x7-sysex';
+export type { BlueX7SysexType, BlueX7SysexValidationCode } from './instruments/blue-x7-sysex';
+export type {
+  EnvelopePoint as BlueX7EnvelopePoint,
+  BlueX7Common,
+  BlueX7Lfo,
+  BlueX7Operator,
+  BlueX7Voice,
+  BlueX7StaticTables,
+  BlueX7PreviewResult,
+} from './instruments/blue-x7';
 export { BlueSynthBuilder } from './instruments/blue-synth-builder';
 export { BSBGroup } from './instruments/blue-synth-builder/bsb-group';
 export { BSBWidget } from './instruments/blue-synth-builder/bsb-widget';
@@ -98,6 +137,35 @@ export type { SnapValueName, SnapCategory, SnapValueDefinition } from './time/sn
 
 // ─── Score ───
 export { Score } from './score/score';
+export {
+  buildMidiImportProject,
+  createMidiImportStreamKey,
+  expandMidiNoteTemplate,
+  isMidiImportInstrumentIdZero,
+  pairMidiImportStream,
+  validateMidiImportSettings,
+  MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE,
+  MIDI_IMPORT_DEFAULT_TEMPO_BPM,
+  MIDI_IMPORT_PLACEHOLDERS,
+} from './midi/midi-file-import';
+export type {
+  MidiImportConversionResult,
+  MidiImportDivision,
+  MidiImportDocument,
+  MidiImportBuildOptions,
+  MidiImportFormat,
+  MidiImportLayerGroupType,
+  MidiImportNote,
+  MidiImportNoteEvent,
+  MidiImportSettings,
+  MidiImportStream,
+  MidiImportTrack,
+  MidiImportTempoChange,
+  MidiImportWarning,
+  MidiImportWarningCode,
+} from './midi/midi-file-import';
+export { replaceTrackInstrumentP1, applyTrackInstrumentOverride } from './score/score-generation-options';
+export type { ScoreGenerationOptions, InstrumentTargetCollector, InstrumentTargetBehavior, ScoreGenerationOptionsOrSolo } from './score/score-generation-options';
 export type { ScoreObject } from './score/score-object';
 export { ScoreObjectEvent, ScoreEventType } from './score/score-object-event';
 export type { ScoreObjectListener } from './score/score-object-event';
@@ -119,10 +187,15 @@ export type { DeepCopyableLG } from './score/layers/deep-copyable-lg';
 
 // ─── Audio Score Layers ───
 export { AudioClip } from './score/audio/audio-clip';
-export { AudioLayer } from './score/audio/audio-layer';
-export { AudioLayerGroup } from './score/audio/audio-layer-group';
-export { AudioLayerGroupProvider } from './score/audio/audio-layer-group-provider';
-export type { AudioLayerListener } from './score/audio/audio-layer-listener';
+// The tracker sound object already owns the public `Track` name. Keep that
+// API stable while exposing the score-layer model under an unambiguous alias.
+export { Track as TrackLayer } from './score/track/track';
+export { Track as ScoreTrack } from './score/track/track';
+export type { TrackItem } from './score/track/track';
+export { TrackLayerGroup } from './score/track/track-layer-group';
+export { createAuditionProjectCopy } from './score/audition-project';
+export { TrackLayerGroupProvider } from './score/track/track-layer-group-provider';
+export { generateTrackAudioPlaybackNotes, ensureTrackAudioPlaybackInstrument } from './score/track/track-audio-playback';
 export { FadeType, fadeTypeFromString, fadeTypeToString, fadeTypeToCsound } from './score/audio/fade-type';
 export { PLAYBACK_INSTRUMENT_ORC } from './score/audio/playback-instrument-orc';
 export { BLUE_FADE_UDO } from './score/audio/blue-fade-udo';
@@ -145,7 +218,7 @@ export { GenericScore } from './sound-objects/generic-score';
 export { PolyObject } from './sound-objects/poly-object';
 export { SoundLayer } from './sound-objects/sound-layer';
 export { PolyObjectLayerGroupProvider } from './sound-objects/poly-object-layer-group-provider';
-export { SoundObjectLibrary } from './sound-objects/sound-object-library';
+export { SoundObjectLibrary, collectInstanceSoundObjects } from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
 export { ObjectBuilder } from './sound-objects/object-builder';
 export type { ObjectBuilderLanguageType } from './sound-objects/object-builder';
@@ -176,9 +249,21 @@ export { TrackList } from './sound-objects/tracker/track-list';
 export { Track } from './sound-objects/tracker/track';
 export { Column } from './sound-objects/tracker/column';
 export { TrackerNote } from './sound-objects/tracker/tracker-note';
-export { NotationObject } from './sound-objects/notation-object';
 export { FrozenSoundObject } from './sound-objects/frozen-sound-object';
-export { loadSoundObjectFromXML, registerSoundObjectType, createSoundObject } from './sound-objects/sound-object-registry';
+export {
+  loadSoundObjectFromXML,
+  registerSoundObjectType,
+  registerSoundObjectFactory,
+  createSoundObject,
+  getSoundObjectTypeDescriptor,
+  getAllSoundObjectTypeDescriptors,
+  getTrackPlacementForSoundObject,
+  getTrackPlacementForSoundObjectType,
+} from './sound-objects/sound-object-registry';
+export type {
+  SoundObjectTypeDescriptor,
+  TrackPlacement,
+} from './sound-objects/sound-object-registry';
 
 // ─── Note Processors ───
 export { NoteProcessorChain } from './note-processors/note-processor-chain';
@@ -229,6 +314,19 @@ export { ParameterIdList } from './automation/parameter-id-list';
 export { ParameterNameManager } from './automation/parameter-name-manager';
 export { ParameterTimeManager } from './automation/parameter-time-manager';
 export { ParameterHelper } from './automation/parameter-helper';
+export {
+  parseJavaDecimal,
+  normalizeLegacyResolution,
+  snapToResolutionJava,
+  quantizeToResolutionJava,
+  javaDecimalEquals,
+} from './automation/java-decimal';
+export type {
+  JavaDecimal,
+  JavaDecimalDiagnostic,
+  JavaDecimalDiagnosticCode,
+  JavaDecimalResult,
+} from './automation/java-decimal';
 export type { Automatable } from './automation/automatable';
 export type { AutomatableCollectionListener } from './automation/automatable-collection-listener';
 export { LineColors } from './automation/line-colors';
@@ -238,6 +336,47 @@ export { LiveObject } from './live/live-object';
 export { LiveObjectSet } from './live/live-object-set';
 export { LiveObjectBins } from './live/live-object-bins';
 export { LiveObjectSetList } from './live/live-object-set-list';
+export {
+	prepareTriggerBatch,
+	resolveTriggerTargets,
+	scaleNotesByTempo,
+	computeTempoScale,
+} from './live/blue-live-trigger';
+export type {
+	TriggerPreparationResult,
+	PreparedScoreBatch,
+	TriggerEmptyResult,
+	TriggerPreparationFailure,
+	TriggerPreparationFailureCode,
+	TriggerRuntimeContext,
+	TriggerMode,
+} from './live/blue-live-trigger';
+// Shared Java-parity trigger fixtures (test oracles; safe for production import).
+export {
+	createModernLiveData,
+	createModernProject,
+	createOldFormatLiveData,
+	createSparseGridLiveData,
+	createMissingSavedSetIdLiveData,
+	createMultiEnabledLiveData,
+	createLibraryInstanceLiveData,
+	createRuntimeBackedLiveData,
+	createGenericScoreSoundObject,
+	attachSavedSet,
+	MODERN_ENABLED_TARGET_ORDER,
+	MODERN_ALL_POPULATED_TARGET_ORDER,
+	OLD_FORMAT_ENABLED_TARGET_ORDER,
+	SPARSE_GRID_ENABLED_TARGET_ORDER,
+	MULTI_ENABLED_TARGET_ORDER,
+	TEMPO_SCALING_CASES,
+	INVALID_TEMPO_VALUES,
+} from './live/blue-live-trigger-fixtures';
+export type {
+	ExpectedLiveObjectTarget,
+	ExpectedScalingCase,
+	LibraryInstanceFixture,
+	RuntimeBackedFixture,
+} from './live/blue-live-trigger-fixtures';
 
 // ─── MIDI ───
 export { MidiInputProcessor } from './midi/midi-input-processor';
@@ -251,6 +390,11 @@ export { OpcodeDefinition } from './opcodes/opcode-definition';
 export { OpcodeList } from './opcodes/opcode-list';
 export { UDOStyle } from './opcodes/udo-style';
 export { convertToModern, convertToClassic, parseUDOText } from './opcodes/udo-utilities';
+export { normalizeUdoCallableSignature } from './opcodes/udo-type-utils';
+export type {
+  UdoCallableSignatureInput,
+  NormalizedUdoCallableSignature,
+} from './opcodes/udo-type-utils';
 
 // ─── Serialization ───
 export { Element, Elements } from './serialization/xml-reader';
@@ -275,7 +419,15 @@ export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 // ─── Utilities ───
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
 export { writeInt, readInt, writeDouble, readDouble, writeBoolean, readBoolean } from './utilities/xml';
-export { applyNoteProcessorChain, setScoreStart, getNotes } from './utilities/score';
+export { applyNoteProcessorChain, setScoreStart, getNotes, getTotalDuration } from './utilities/score';
+export {
+  CSDImportMode,
+  convertCSDtoBlue,
+  convertOrcScoToBlue,
+  getTextBetweenTags,
+  parseCsOrc,
+  parseCsScore,
+} from './utilities/csd-utility';
 export { buildFreezeRenderData } from './utilities/freeze-render-data';
 export type { FreezeRenderDataResult } from './utilities/freeze-render-data';
 

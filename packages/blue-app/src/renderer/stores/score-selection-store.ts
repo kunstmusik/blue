@@ -13,6 +13,8 @@ export interface ScoreObjectClipboardEntry {
   isContainer: boolean;
   layerIndex: number;
   groupId: string;
+  trackId?: string;
+  itemId?: string;
   editorTarget?: ScoreObjectEditorTargetSnapshot;
   serializedXml?: string;
   barRenderer?: ScoreRowObjectSnapshot['barRenderer'];
@@ -23,12 +25,21 @@ export interface ScoreSelectionEntry {
   editorTarget?: ScoreObjectEditorTargetSnapshot;
 }
 
+/** Transient relative shape used by pattern cut/copy/paste; never persisted. */
+export interface PatternClipboardShape {
+  cells: ReadonlyArray<{ rowOffset: number; cellOffset: number }>;
+  width: number;
+  height: number;
+}
+
 interface ScoreSelectionState {
   selectedObjectIds: ReadonlySet<string>;
   selectedObjectTarget: ScoreObjectEditorTargetSnapshot | null;
   selectedObjectTargets: Readonly<Record<string, ScoreObjectEditorTargetSnapshot>>;
   liveSharedProperties: Readonly<Record<string, { startBeats?: number; durationBeats?: number }>>;
   clipboard: ScoreObjectClipboardEntry[];
+  patternClipboard: PatternClipboardShape | null;
+  audioDropGuideBeat: number | null;
   select: (
     objectId: string,
     additive: boolean,
@@ -44,6 +55,24 @@ interface ScoreSelectionState {
   clearLiveSharedProperties: (objectIds?: string[]) => void;
   copySelected: (entries: ScoreObjectClipboardEntry[]) => void;
   clearClipboard: () => void;
+  copyPatternShape: (shape: PatternClipboardShape) => void;
+  clearPatternClipboard: () => void;
+  setAudioDropGuideBeat: (beat: number | null) => void;
+}
+
+/** Only timeline-owned selections identify objects in the canonical Score. */
+export function hasAuditionEligibleSelection(state: {
+  selectedObjectIds: ReadonlySet<string>;
+  selectedObjectTargets: Readonly<Record<string, ScoreObjectEditorTargetSnapshot>>;
+}): boolean {
+  if (state.selectedObjectIds.size === 0) return false;
+  return [...state.selectedObjectIds].every((objectId) => {
+    const target = state.selectedObjectTargets[objectId];
+    // Pattern source selections point to an embedded source object; they are
+    // not independently placed score objects and never resolve for audition.
+    if (target?.patternSource) return false;
+    return target === undefined || target.ownerKind === 'timeline';
+  });
 }
 
 function normalizeSelectionEntries(
@@ -62,6 +91,8 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
   selectedObjectTargets: {},
   liveSharedProperties: {},
   clipboard: [],
+  patternClipboard: null,
+  audioDropGuideBeat: null,
 
   select(objectId, additive, editorTarget) {
     set((state) => {
@@ -251,4 +282,17 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
   clearClipboard() {
     set({ clipboard: [] });
   },
+
+  copyPatternShape(shape) {
+    set({ patternClipboard: shape });
+  },
+
+  clearPatternClipboard() {
+    set({ patternClipboard: null });
+  },
+
+  setAudioDropGuideBeat(beat) {
+    set({ audioDropGuideBeat: beat });
+  },
+
 }));

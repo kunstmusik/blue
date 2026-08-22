@@ -16,13 +16,14 @@ const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(),
     addLayer: vi.fn(),
-    removeLayer: vi.fn(),
+    getProjectDocumentRevision: vi.fn(() => 0),
   },
 }));
 
 vi.mock('../stores/project-store', () => ({
   useProjectStore: (selector: (state: typeof mockProjectState) => unknown) =>
     selector(mockProjectState),
+  getProjectDocumentRevision: () => mockProjectState.getProjectDocumentRevision(),
 }));
 
 function createScoreSnapshot(): ScoreDocumentSnapshot {
@@ -93,7 +94,7 @@ function setTextInputValue(input: HTMLInputElement, value: string): void {
 beforeEach(() => {
   mockProjectState.applyProjectDocumentPatch.mockReset();
   mockProjectState.addLayer.mockReset();
-  mockProjectState.removeLayer.mockReset();
+  mockProjectState.getProjectDocumentRevision.mockReset().mockReturnValue(0);
 });
 
 afterEach(() => {
@@ -112,21 +113,21 @@ describe('ScoreManagerDialog', () => {
     const menuItems = Array.from(document.body.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
     expect(menuItems.map((item) => item.textContent?.trim())).toEqual([
       'Add SoundObject Layer Group',
-      'Add Audio Layer Group',
+      'Add Track Layer Group',
       'Add Patterns Layer Group',
     ]);
 
-    const audioItem = menuItems.find((item) => item.textContent?.includes('Audio'));
-    expect(audioItem).toBeTruthy();
+    const trackItem = menuItems.find((item) => item.textContent?.includes('Track'));
+    expect(trackItem).toBeTruthy();
 
     act(() => {
-      clickMenuItem(audioItem!);
+      clickMenuItem(trackItem!);
     });
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
       score: {
         type: 'addLayerGroup',
-        groupType: 'audio',
+        groupType: 'track',
         insertAtIndex: 1,
       },
     });
@@ -167,6 +168,129 @@ describe('ScoreManagerDialog', () => {
         name: 'Renamed Group',
       },
     });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('confirms removal of the last layer and exposes empty-group cleanup', () => {
+    const { container, root } = renderDialog();
+    const layerRow = container.querySelector('tbody tr') as HTMLTableRowElement;
+    expect(layerRow).toBeTruthy();
+
+    act(() => {
+      layerRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const removeButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer"]')!;
+    expect(removeButton.disabled).toBe(false);
+    act(() => {
+      removeButton.click();
+    });
+
+    const dialog = container.querySelector('[data-layer-removal-dialog]');
+    expect(dialog).toBeTruthy();
+    const cleanupCheckbox = container.querySelector<HTMLInputElement>('[data-delete-empty-layer-groups]');
+    expect(cleanupCheckbox?.checked).toBe(true);
+
+    act(() => {
+      dialog?.querySelector<HTMLButtonElement>('[data-layer-removal-confirm]')?.click();
+    });
+
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'removeLayerRanges',
+        ranges: [{ groupId: 'lg-1', startIndex: 0, endIndex: 0 }],
+        deleteEmptyLayerGroups: true,
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('confirms layer-group removal via ConfirmationDialog and cancels safely', () => {
+    const { container, root } = renderDialog();
+    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+    expect(removeGroupButton).toBeTruthy();
+
+    // Click remove layer group
+    act(() => {
+      removeGroupButton.click();
+    });
+
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Delete Layer Group?');
+    expect(dialog?.textContent).toContain('Deleting Layer Groups cannot be undone.');
+
+    // Cancel first
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+    act(() => {
+      cancelButton.click();
+    });
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
+
+    // Open again and confirm
+    act(() => {
+      removeGroupButton.click();
+    });
+    const confirmDialog = document.body.querySelector('[role="alertdialog"]');
+    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    act(() => {
+      deleteButton.click();
+    });
+
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'removeLayerGroup',
+        groupId: 'lg-1',
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('does not remove a group when the selected group changes while confirmation is open', () => {
+    const score = {
+      ...createScoreSnapshot(),
+      layerGroups: [
+        ...createScoreSnapshot().layerGroups,
+        {
+          groupId: 'lg-2',
+          groupType: 'track' as const,
+          name: 'Second Group',
+          layerCount: 0,
+          isOpenableContainer: true,
+          layers: [],
+        },
+      ],
+    };
+    const { container, root } = renderDialog(score);
+    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+
+    act(() => {
+      removeGroupButton.click();
+    });
+    const secondGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find((node) =>
+      node.textContent?.trim() === 'Second Group',
+    ) as HTMLDivElement;
+    expect(secondGroupRow).toBeTruthy();
+    act(() => {
+      secondGroupRow.click();
+    });
+
+    const deleteButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    act(() => {
+      deleteButton.click();
+    });
+
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
 
     act(() => {
       root.unmount();

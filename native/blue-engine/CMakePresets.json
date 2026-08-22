@@ -1,0 +1,122 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-${presetName}",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_EXAMPLES": "OFF",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
+      }
+    },
+    {
+      "name": "macos-arm64",
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "blue-arm64-osx",
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    },
+    {
+      "name": "macos-arm64-benchmark",
+      "inherits": "macos-arm64",
+      "cacheVariables": {
+        "USE_PERFORMANCE_TRACKING": "ON"
+      }
+    },
+    {
+      "name": "macos-x64",
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "blue-x64-osx",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+      }
+    },
+    {
+      "name": "macos-x64-benchmark",
+      "inherits": "macos-x64",
+      "cacheVariables": {
+        "USE_PERFORMANCE_TRACKING": "ON"
+      }
+    },
+    {
+      "name": "windows-x64",
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "blue-x64-windows"
+      }
+    },
+    {
+      "name": "windows-x64-benchmark",
+      "inherits": "windows-x64",
+      "cacheVariables": {
+        "USE_PERFORMANCE_TRACKING": "ON"
+      }
+    },
+    {
+      "name": "linux-x64",
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "blue-x64-linux"
+      }
+    },
+    {
+      "name": "linux-x64-benchmark",
+      "inherits": "linux-x64",
+      "cacheVariables": {
+        "USE_PERFORMANCE_TRACKING": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "macos-arm64",
+      "configurePreset": "macos-arm64",
+      "targets": ["blue-engine"]
+    },
+    {
+      "name": "macos-arm64-benchmark",
+      "configurePreset": "macos-arm64-benchmark",
+      "targets": ["blue-engine", "benchmark_engine"]
+    },
+    {
+      "name": "macos-x64",
+      "configurePreset": "macos-x64",
+      "targets": ["blue-engine"]
+    },
+    {
+      "name": "macos-x64-benchmark",
+      "configurePreset": "macos-x64-benchmark",
+      "targets": ["blue-engine", "benchmark_engine"]
+    },
+    {
+      "name": "windows-x64",
+      "configurePreset": "windows-x64",
+      "targets": ["blue-engine"]
+    },
+    {
+      "name": "windows-x64-benchmark",
+      "configurePreset": "windows-x64-benchmark",
+      "targets": ["blue-engine", "benchmark_engine"]
+    },
+    {
+      "name": "linux-x64",
+      "configurePreset": "linux-x64",
+      "targets": ["blue-engine"]
+    },
+    {
+      "name": "linux-x64-benchmark",
+      "configurePreset": "linux-x64-benchmark",
+      "targets": ["blue-engine", "benchmark_engine"]
+    }
+  ]
+}

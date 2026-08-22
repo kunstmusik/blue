@@ -19,6 +19,8 @@ import { isTextEditingTarget } from '../hooks/use-keyboard-shortcuts';
 // Mock window.blueAPI
 const mockBlueAPI = {
   openFile: vi.fn(),
+  openFilePath: vi.fn(),
+  newFile: vi.fn(),
   openBsbFileSelector: vi.fn(),
   setBsbFileSelectorPath: vi.fn(),
   copyBsbFileSelectorToMediaFolder: vi.fn(),
@@ -76,6 +78,34 @@ describe('Project Store', () => {
     await useProjectStore.getState().loadProject();
 
     expect(mockBlueAPI.openFile).toHaveBeenCalledOnce();
+  });
+
+  it('080: keyboard/preload open routes through the main-process open policy only', async () => {
+    mockBlueAPI.openFile.mockResolvedValue(null);
+
+    await useProjectStore.getState().loadProject();
+
+    // The renderer never prompts or routes around the main-process
+    // replacement policy; a cancelled chooser is a null result.
+    expect(mockBlueAPI.openFile).toHaveBeenCalledOnce();
+    expect(mockBlueAPI.openFilePath).not.toHaveBeenCalled();
+    expect(useProjectStore.getState().isLoading).toBe(false);
+  });
+
+  it('080: settings-store recent open routes through window.blueAPI.openFilePath and records recents only after a load', async () => {
+    useSettingsStore.setState({ recentFiles: [] });
+    mockBlueAPI.openFilePath.mockResolvedValue('/recent/demo.blue');
+
+    await useSettingsStore.getState().openRecentFile('/recent/demo.blue');
+
+    expect(mockBlueAPI.openFilePath).toHaveBeenCalledWith('/recent/demo.blue');
+    expect(mockBlueAPI.openFile).not.toHaveBeenCalled();
+    expect(useSettingsStore.getState().recentFiles[0]).toBe('/recent/demo.blue');
+
+    useSettingsStore.setState({ recentFiles: [] });
+    mockBlueAPI.openFilePath.mockResolvedValue(null);
+    await useSettingsStore.getState().openRecentFile('/recent/other.blue');
+    expect(useSettingsStore.getState().recentFiles).toEqual([]);
   });
 
   it('T349: setProjectInfo updates all fields', () => {
@@ -177,7 +207,7 @@ describe('Project Store', () => {
     initial.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -263,7 +293,7 @@ describe('Project Store', () => {
     initial.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -318,7 +348,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -387,7 +417,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -457,7 +487,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -707,7 +737,7 @@ describe('Project Store', () => {
     snapshot.score.layerGroups = [
       {
         groupId: 'audio-group',
-        groupType: 'audio',
+        groupType: 'track',
         name: 'Audio Layer Group',
         layerCount: 1,
         isOpenableContainer: false,
@@ -1130,13 +1160,18 @@ describe('Project Store', () => {
     });
     await useProjectStore.getState().updateOrchestra({
       type: 'addInstrument',
+      instrumentType: 'python',
+    });
+    await useProjectStore.getState().updateOrchestra({
+      type: 'addInstrument',
       instrumentType: 'blueSynthBuilder',
     });
 
     const state = useProjectStore.getState();
-    expect(state.orchestra.arrangement.rows).toHaveLength(2);
+    expect(state.orchestra.arrangement.rows).toHaveLength(3);
     expect(state.orchestra.instruments[0]?.type).toBe('generic');
-    expect(state.orchestra.instruments[1]?.type).toBe('blueSynthBuilder');
+    expect(state.orchestra.instruments[1]?.type).toBe('python');
+    expect(state.orchestra.instruments[2]?.type).toBe('blueSynthBuilder');
   });
 
   it('T349: updateOrchestra patches local BSB code immediately', async () => {

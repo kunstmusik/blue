@@ -300,7 +300,8 @@ InstrumentLocator
 
 ProjectUdoLocator
   kind = udo
-  instrumentAssignmentId?     # absent for the top-level list; present for an Instrument-local list
+  instrumentAssignmentId?     # Arrangement-instrument owner
+  track?                       # Track owner: rootGroupId + trackId
   sessionObjectId             # stable while project is loaded
   persistedFingerprint        # canonical content hash + name/type hints
 
@@ -310,7 +311,7 @@ SharedSoundObjectLocator
   persistedFingerprint        # canonical hash + name/type hints
 ```
 
-Project UDO restore never resolves by index alone. The main adapter first resolves the owning list from `instrumentAssignmentId`, when present, and then uses the live session object ID. Embedded UDO session IDs include their owning Instrument assignment identity so equal definitions in different lists cannot alias. After restart it binds only when the fingerprint resolver yields exactly one candidate inside the addressed list; zero or multiple candidates produce a safe missing/ambiguous editor state.
+Project UDO restore never resolves by index alone. The main adapter first resolves the owning list from either `instrumentAssignmentId` or `track`, when present, and then uses the live session object ID. The two owner forms are mutually exclusive; omission means the top-level list. Embedded UDO session IDs include their owning Arrangement assignment or Track identity so equal definitions in different lists cannot alias. After restart it binds only when the fingerprint resolver yields exactly one candidate inside the addressed list; zero or multiple candidates produce a safe missing/ambiguous editor state.
 
 Project Shared SoundObject identity requires a tested `@blue/data` change: retain a loaded `objRefId`, allocate one stable Java-compatible ID for a new shared definition, and seed that ID into `ObjRefSaveMap` so save/reorder does not renumber it. Restore verifies both ID and fingerprint. If an older project lacks/presents a changed ID, exactly one fingerprint match may recover it; zero or multiple matches produce missing/ambiguous. An array index is never a restore identity.
 
@@ -324,7 +325,8 @@ InstrumentTarget
 
 UdoTarget
   destination = projectUdoList
-  instrumentAssignmentId?     # absent for top-level; present for the exact Instrument-local list
+  instrumentAssignmentId?     # exact Arrangement-instrument list
+  track?                       # exact Track-owned instrument list
 
 EffectTarget
   channelId
@@ -355,6 +357,8 @@ Transient renderer/main interaction state; it is not persisted and does not plac
 | `expiresAt` | main-owned timestamp, Cut only | Bounds detached in-memory buffer lifetime |
 
 Copy Paste deep-copies the resolved revision-bound source and allocates a destination-appropriate identity. Cut first materializes a complete detached typed subtree/item snapshot in main-owned memory, then removes the source immediately after dirty-editor, revision, and shared-project consequence checks. The renderer receives only an opaque typed buffer identity. Paste deep-copies that buffer into any compatible destination, never deletes a source, and leaves the buffer reusable. Failed capture, declined confirmation, or failed removal does not replace the previous clipboard and leaves the source intact.
+
+The service snapshot also carries a separate optional BSB widget clipboard. It is validated and deep-cloned at the IPC boundary, exists only to synchronize BSB canvases across renderer processes, and is never compatible with the Library Interaction Clipboard.
 
 ### Entity: `LibraryDragSession`
 

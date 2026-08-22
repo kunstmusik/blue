@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TIME_DISPLAY_OPTIONS } from './types';
 
-const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-ui text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
+const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
 export interface PianoRollRulerConfigChanges {
   useGlobalRuler: boolean;
@@ -60,9 +60,9 @@ export default function PianoRollRulerConfigDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
-          <h2 className="text-sm font-semibold border-b border-blue-border/30 pb-2">PianoRoll Ruler Configuration</h2>
+          <h2 className="text-role-title-2 font-bold border-b border-blue-border/30 pb-2">PianoRoll Ruler Configuration</h2>
 
-          <label className="flex items-center gap-2 text-ui text-blue-text cursor-pointer">
+          <label className="flex items-center gap-2 text-role-body text-blue-text cursor-pointer">
             <input
               type="checkbox"
               className="w-3.5 h-3.5 cursor-pointer"
@@ -73,14 +73,14 @@ export default function PianoRollRulerConfigDialog({
           </label>
 
           <fieldset className="space-y-3 rounded border border-blue-border/35 px-3 pb-3 pt-2">
-            <legend className="px-1 text-body font-bold text-blue-text">Local Ruler Settings</legend>
+            <legend className="px-1 text-role-headline font-bold text-blue-text">Local Ruler Settings</legend>
 
             <div className="space-y-2">
-              <div className="text-body font-bold text-blue-text">Primary Ruler</div>
+              <div className="text-role-headline font-bold text-blue-text">Primary Ruler</div>
               <div className="flex items-center gap-2">
-                <label className="text-ui text-blue-muted w-16 shrink-0">Format:</label>
+                <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
                 <select
-                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-ui text-blue-text cursor-pointer disabled:opacity-50"
+                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer disabled:opacity-50"
                   value={primaryTimeDisplay}
                   onChange={(e) => setPrimaryTimeDisplay(e.target.value)}
                   disabled={useGlobalRuler}
@@ -93,8 +93,8 @@ export default function PianoRollRulerConfigDialog({
             </div>
 
             <div className="space-y-2">
-              <div className="text-body font-bold text-blue-text">Secondary Ruler</div>
-              <label className="flex items-center gap-2 text-ui text-blue-text cursor-pointer">
+              <div className="text-role-headline font-bold text-blue-text">Secondary Ruler</div>
+              <label className="flex items-center gap-2 text-role-body text-blue-text cursor-pointer">
                 <input
                   type="checkbox"
                   className="w-3.5 h-3.5 cursor-pointer disabled:opacity-50"
@@ -105,9 +105,9 @@ export default function PianoRollRulerConfigDialog({
                 Enabled
               </label>
               <div className="flex items-center gap-2">
-                <label className="text-ui text-blue-muted w-16 shrink-0">Format:</label>
+                <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
                 <select
-                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-ui text-blue-text cursor-pointer disabled:opacity-50"
+                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer disabled:opacity-50"
                   value={secondaryTimeDisplay}
                   onChange={(e) => setSecondaryTimeDisplay(e.target.value)}
                   disabled={useGlobalRuler || !secondaryRulerEnabled}
@@ -128,7 +128,7 @@ export default function PianoRollRulerConfigDialog({
               Cancel
             </button>
             <button
-              className="px-3 py-1 text-ui text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer"
+              className="px-3 py-1 text-role-body text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer"
               onClick={handleOk}
             >
               OK

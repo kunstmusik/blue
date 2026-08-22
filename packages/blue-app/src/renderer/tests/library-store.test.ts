@@ -12,6 +12,7 @@ import type {
 import { getLibraryTransferSourceType } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
 import { useLibraryEditorStore } from '../stores/library-editor-store';
+import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 
 const snapshot: LibraryServiceSnapshot = {
   phase: 'ready',
@@ -161,6 +162,8 @@ const deleteProjectLibraryItem = vi.fn(async () => ({
     insertedIdentity: 'udo:501', message: 'Removed.',
   },
 }));
+const setLibraryClipboard = vi.fn(async () => true);
+const setBsbClipboard = vi.fn(async () => true);
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -175,6 +178,8 @@ beforeEach(() => {
   cutLibraryToClipboard.mockClear();
   previewProjectLibraryDelete.mockClear();
   deleteProjectLibraryItem.mockClear();
+  setLibraryClipboard.mockClear();
+  setBsbClipboard.mockClear();
   const applyLibraryMutation = vi.fn(async () => ({
     ok: true as const,
     value: { contentRevision: 4, affectedNodes: [] },
@@ -189,8 +194,12 @@ beforeEach(() => {
     applyLibraryTransfer,
     copyLibraryTransferToUser,
     cutLibraryToClipboard,
+    setLibraryClipboard,
+    setBsbClipboard,
     previewProjectLibraryDelete,
     deleteProjectLibraryItem,
+    showNativeConfirmation: vi.fn(async () => ({ actionId: 'cut', outcome: 'selected' as const })),
+    createFreshLibraryDatabase: vi.fn(async () => ({ ok: true as const, value: snapshot })),
     onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
     applyLibraryMutation,
     prepareLibraryMutation: vi.fn(async (request) => ({
@@ -216,9 +225,57 @@ beforeEach(() => {
   };
   useLibraryStore.getState().reset();
   useLibraryEditorStore.getState().reset();
+  useBsbClipboardStore.getState().receiveClipboard(null);
 });
 
 describe('library store', () => {
+  it('hydrates and follows the main-owned clipboard shared by renderer windows', async () => {
+    const clipboard = {
+      operation: 'copy' as const,
+      source: {
+        kind: 'userNode' as const,
+        libraryType: 'udo' as const,
+        nodeId: 'shared-udo',
+        revision: 1,
+      },
+      capturedAt: 10,
+    };
+    window.blueAPI.getLibraryServiceSnapshot = vi.fn(async () => ({ ...snapshot, clipboard }));
+    await useLibraryStore.getState().initialize();
+    expect(useLibraryStore.getState().clipboard).toEqual(clipboard);
+
+    snapshotListener?.({ ...snapshot, clipboard: null });
+    expect(useLibraryStore.getState().clipboard).toBeNull();
+  });
+
+  it('hydrates, publishes, and follows the separate cross-window BSB buffer', async () => {
+    const bsbClipboard = {
+      originX: 10,
+      originY: 20,
+      widgets: [{
+        id: 'slider-1', type: 'BSBHSlider', objectName: 'amp',
+        x: 10, y: 20, width: 120, height: 24,
+        value: 0.5, minimum: 0, maximum: 1, editable: true,
+        properties: {},
+      }],
+    };
+    window.blueAPI.getLibraryServiceSnapshot = vi.fn(async () => ({
+      ...snapshot,
+      bsbClipboard,
+    }));
+    await useLibraryStore.getState().initialize();
+    expect(useBsbClipboardStore.getState().clipboard).toEqual(bsbClipboard);
+
+    useBsbClipboardStore.getState().setClipboard({
+      ...bsbClipboard,
+      originX: 30,
+    });
+    expect(setBsbClipboard).toHaveBeenCalledWith(expect.objectContaining({ originX: 30 }));
+
+    snapshotListener?.({ ...snapshot, bsbClipboard: null });
+    expect(useBsbClipboardStore.getState().clipboard).toBeNull();
+  });
+
   it('retains pinned or dirty sessions while pruning a replaced clean preview', async () => {
     const cleanPreview = await useLibraryEditorStore.getState().open(item.key!);
     expect(cleanPreview?.sessionId).toBe('session-1');
@@ -364,6 +421,7 @@ describe('library store', () => {
       operation: 'copy',
       source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
       capturedAt: expect.any(Number),
+      objectType: 'GenericInstrument',
     });
     await state.captureClipboard(item, 'cut');
     expect(cutLibraryToClipboard).toHaveBeenCalledWith({
@@ -541,14 +599,117 @@ describe('library store', () => {
       ok: true,
       value: { confirmationToken: 'linked-delete', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
     });
-    const confirm = vi.fn(() => false);
-    window.confirm = confirm;
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cancel', outcome: 'dismissed' as const }));
     expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
-    expect(confirm).toHaveBeenCalledOnce();
+    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'library-cut-linked-sound-object',
+      defaultActionId: 'cancel',
+      cancelActionId: 'cancel',
+    }));
     expect(cutLibraryToClipboard).not.toHaveBeenCalled();
     expect(copyLibraryTransferToUser).not.toHaveBeenCalled();
     expect(deleteProjectLibraryItem).not.toHaveBeenCalled();
     expect(useLibraryStore.getState().clipboard).toBeNull();
+  });
+
+  it('cuts a linked SoundObject when confirmation is accepted', async () => {
+    const projectSoundObject: LibraryBrowseNode = {
+      key: {
+        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        locator: {
+          kind: 'soundObject', libraryId: 'shared-1',
+          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+        },
+      },
+      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
+      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+    };
+    previewProjectLibraryDelete.mockResolvedValueOnce({
+      ok: true,
+      value: { confirmationToken: 'linked-delete-token', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
+    }).mockResolvedValueOnce({
+      ok: true,
+      value: { confirmationToken: 'linked-delete-token-revalidated', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
+    });
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cut', outcome: 'selected' as const }));
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(true);
+    expect(window.blueAPI.showNativeConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'library-cut-linked-sound-object',
+    }));
+    expect(cutLibraryToClipboard).toHaveBeenCalledWith({
+      source: { kind: 'library', key: projectSoundObject.key, revision: 'hash' },
+      confirmationToken: 'linked-delete-token-revalidated',
+    });
+  });
+
+  it('fails closed when the selected library key changes during confirmation', async () => {
+    const projectSoundObject: LibraryBrowseNode = {
+      key: {
+        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        locator: {
+          kind: 'soundObject', libraryId: 'shared-1',
+          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+        },
+      },
+      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
+      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+    };
+    previewProjectLibraryDelete.mockResolvedValue({
+      ok: true,
+      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 1, locations: ['Score'], requiresConfirmation: true },
+    });
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => {
+      useLibraryStore.setState({ selectedKey: projectSoundObject.key });
+      return { actionId: 'cut', outcome: 'selected' as const };
+    });
+
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
+    expect(cutLibraryToClipboard).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when linked SoundObject confirmation IPC rejects', async () => {
+    const projectSoundObject: LibraryBrowseNode = {
+      key: {
+        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        locator: {
+          kind: 'soundObject', libraryId: 'shared-1',
+          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+        },
+      },
+      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
+      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+    };
+    previewProjectLibraryDelete.mockResolvedValueOnce({
+      ok: true,
+      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 1, locations: ['Score'], requiresConfirmation: true },
+    });
+    window.blueAPI.showNativeConfirmation = vi.fn().mockRejectedValue(new Error('IPC unavailable'));
+
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
+    expect(cutLibraryToClipboard).not.toHaveBeenCalled();
+  });
+
+  it('creates fresh database on acceptance and ignores on cancellation', async () => {
+    // Declined
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'cancel', outcome: 'dismissed' as const }));
+    await useLibraryStore.getState().createFreshDatabase();
+    expect(window.blueAPI.createFreshLibraryDatabase).not.toHaveBeenCalled();
+
+    // Accepted
+    window.blueAPI.showNativeConfirmation = vi.fn(async () => ({ actionId: 'create', outcome: 'selected' as const }));
+    await useLibraryStore.getState().createFreshDatabase();
+    expect(window.blueAPI.createFreshLibraryDatabase).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails closed when fresh-database confirmation IPC rejects', async () => {
+    window.blueAPI.showNativeConfirmation = vi.fn().mockRejectedValue(new Error('IPC unavailable'));
+
+    await useLibraryStore.getState().createFreshDatabase();
+
+    expect(window.blueAPI.createFreshLibraryDatabase).not.toHaveBeenCalled();
   });
 
   it('pastes a detached project Effect Cut buffer into another project chain', async () => {

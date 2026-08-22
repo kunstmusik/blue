@@ -2,7 +2,8 @@
  * AudioFile — a SoundObject that plays an audio file via diskin2.
  * Mirrors the Java AudioFile class.
  *
- * Generates a diskin2-based Csound instrument and a single i-statement.
+ * Generates a diskin2-based GenericInstrument added to the arrangement
+ * and a single i-statement note with skip time as p4.
  */
 import { AbstractSoundObject } from './abstract-sound-object';
 import { NoteList } from './note-list';
@@ -14,6 +15,8 @@ import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import { GenericInstrument } from '../instruments/generic-instrument';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export class AudioFile extends AbstractSoundObject {
   private _soundFileName = '';
@@ -50,7 +53,6 @@ export class AudioFile extends AbstractSoundObject {
   getWindowSize(): number { return this._windowSize; }
   setWindowSize(size: number): void { this._windowSize = size; }
 
-
   override getTimeBehavior(): TimeBehavior {
     return TimeBehavior.NOT_SUPPORTED;
   }
@@ -58,34 +60,76 @@ export class AudioFile extends AbstractSoundObject {
   override generateForCSD(
     context: TimeContext,
     compileData: CompileData,
-    _startTime: number,
-    _endTime: number,
+    startTime: number,
+    endTime: number,
+    options?: ScoreGenerationOptions,
   ): NoteList {
     if (!this._soundFileName) {
       return new NoteList();
     }
 
-    // Generate instrument code for diskin2
-    const channelVars = 'aChannel1';
-    const sfName = this._soundFileName.replace(/\\/g, '/');
-    const instrText = `${channelVars}\tdiskin2\t"${sfName}", 1, p4\n${this._csoundPostCode}`;
+    const instr = this.generateInstrument();
+    if (!instr) {
+      return new NoteList();
+    }
 
-    // Create a generic instrument and add to compilation
-    // For Phase 11: generate a simple note with file path as p4
+    const instrumentNumber = compileData.addInstrument(instr);
+    if (options?.trackId) {
+      compileData.addInstrSourceId(instr, options.trackId);
+    }
+
+    return this.generateNotes(context, instrumentNumber, startTime, endTime);
+  }
+
+  generateInstrument(): GenericInstrument | null {
+    const instrText = this.generateInstrumentText();
+    if (!instrText) {
+      return null;
+    }
+    const temp = new GenericInstrument();
+    temp.setName(this.getName());
+    temp.setText(instrText);
+    return temp;
+  }
+
+  private generateInstrumentText(): string {
+    const channelVars = this.getChannelVariables();
+    const sfName = this._soundFileName.replace(/\\/g, '/').replace(/"/g, '\\"');
+    return `${channelVars}\tdiskin2\t"${sfName}", 1, p4\n${this._csoundPostCode}\n`;
+  }
+
+  private getChannelVariables(): string {
+    const matches = [...this._csoundPostCode.matchAll(/aChannel(\d+)/g)];
+    const indices = matches.map((m) => parseInt(m[1], 10)).filter((n) => !isNaN(n) && n > 0);
+    const maxChan = indices.length > 0 ? Math.max(1, ...indices) : 1;
+    return Array.from({ length: maxChan }, (_, i) => `aChannel${i + 1}`).join(', ');
+  }
+
+  private generateNotes(
+    context: TimeContext,
+    instrumentNumber: number,
+    renderStart: number,
+    renderEnd: number,
+  ): NoteList {
     const notes = new NoteList();
-    const subjectiveDur = this._subjectiveDuration.toBeats(context);
-    const startTime = this._startTime.toBeats(context);
+    const subjectiveDuration = this._subjectiveDuration.toBeats(context);
+    let newDur = subjectiveDuration;
+
+    if (renderEnd > 0 && renderEnd < subjectiveDuration) {
+      newDur = renderEnd;
+    }
+    newDur -= renderStart;
+
+    if (!Number.isFinite(newDur) || newDur <= 0) {
+      return notes;
+    }
 
     const note = new Note();
-    note.setPField('FILE_INSTR', 1); // Will be replaced by actual instr ID during compilation
-    note.setStartTime(startTime);
-    note.setSubjectiveDuration(subjectiveDur);
-    note.setPField(`"${sfName}"`, 4);
-
-    notes.push(note);
-
-    // Append instrument text to global orc (simplified — full impl needs GenericInstrument)
-    compileData.appendGlobalOrc(`instr FILE_INSTR\n${instrText}\nendin\n`);
+    note.setPField(String(instrumentNumber), 1);
+    note.setStartTime(this._startTime.toBeats(context) + renderStart);
+    note.setSubjectiveDuration(newDur);
+    note.setPField(String(renderStart), 4);
+    notes.add(note);
 
     return notes;
   }

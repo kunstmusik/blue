@@ -9,9 +9,9 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Verification**: Include the regression, serialization, contract, runtime, UI, and quickstart
-tasks required by the constitution and plan. A behavior or data change cannot omit verification
-merely because the feature specification does not request TDD.
+**Verification**: Include the regression, serialization, contract, runtime, UI, cross-platform
+host-path, and quickstart tasks required by the constitution and plan. A behavior or data change
+cannot omit verification merely because the feature specification does not request TDD.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -27,6 +27,9 @@ merely because the feature specification does not request TDD.
 - **Electron app**: `packages/blue-app/src/main/`, `src/preload/`, and `src/renderer/`
 - **Engine client**: `packages/blue-engine-client/src/`
 - **Java helper**: `packages/blue-java/src/` with Maven/JUnit tests
+- **Host-path portability**: use native `path`/`os` builders, explicit identity/text normalization
+  helpers, synthetic Windows fixtures, and injected OS errors or native runners for OS-specific
+  filesystem behavior
 - Paths below are illustrative; generated tasks MUST use the real paths from plan.md
 
 <!--

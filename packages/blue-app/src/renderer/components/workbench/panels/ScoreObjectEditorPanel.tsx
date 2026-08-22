@@ -22,11 +22,12 @@ import {
   applyPianoRollPatchToPayload,
   type PianoRollPayload,
 } from './score-object/editors/pianoroll/types';
+import { secondsToBeats } from '../../../time/time-unit-logic';
 
 function EmptyState({ message }: { message: string }): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-4 text-center text-blue-muted">
-      <div className="text-sm">{message}</div>
+      <div className="text-role-body">{message}</div>
     </div>
   );
 }
@@ -318,6 +319,24 @@ export function applyPatchToDocument(
   doc: ScoreObjectEditorDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreObjectEditorDocumentSnapshot {
+  if (patch.type === 'replaceAudioFileSource' && doc.editor.kind === 'audioFile') {
+    const editor: TypeSpecificScoreObjectEditorSnapshot = {
+      ...doc.editor,
+      filePath: patch.filePath,
+    };
+    const shared = {
+      ...doc.shared,
+      name: patch.name,
+    };
+    return { ...doc, shared, editor };
+  }
+  if (patch.type === 'updateAudioFilePostCode' && doc.editor.kind === 'audioFile') {
+    const editor: TypeSpecificScoreObjectEditorSnapshot = {
+      ...doc.editor,
+      csoundPostCode: patch.csoundPostCode,
+    };
+    return { ...doc, editor };
+  }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'external') {
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
@@ -328,9 +347,37 @@ export function applyPatchToDocument(
     return { ...doc, editor };
   }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'code') {
+    const auxiliaryFlags = { ...doc.editor.auxiliaryFlags };
+    for (const key of ['commandLine', 'languageType', 'editEnabled', 'comment', 'onLoadProcessable']) {
+      const value = patch.patch[key];
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        auxiliaryFlags[key] = value;
+      }
+    }
+    const languageType = patch.patch.languageType;
+    const syntax = languageType === 'PYTHON'
+      ? 'python'
+      : languageType === 'JAVASCRIPT'
+        ? 'javascript'
+        : languageType === 'CLOJURE'
+          ? 'clojure'
+          : languageType === 'EXTERNAL'
+            ? 'text'
+            : doc.editor.syntax;
+    let bsbInstrument = doc.editor.bsbInstrument;
+    if (patch.patch.bsbInterfacePatch !== undefined && bsbInstrument) {
+      bsbInstrument = structuredClone(bsbInstrument);
+      applyBsbInterfacePatchToSnapshot(
+        bsbInstrument,
+        patch.patch.bsbInterfacePatch as BsbInterfacePatch,
+      );
+    }
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
       ...doc.editor,
-      text: patch.patch.text as string,
+      syntax,
+      text: patch.patch.text !== undefined ? patch.patch.text as string : doc.editor.text,
+      ...(Object.keys(auxiliaryFlags).length > 0 ? { auxiliaryFlags } : {}),
+      ...(bsbInstrument ? { bsbInstrument } : {}),
     };
     return { ...doc, editor };
   }
@@ -1028,7 +1075,24 @@ export function applyPatchToDocument(
       ...(patch.patch.fadeOutType !== undefined && { fadeOutType: patch.patch.fadeOutType as string }),
       ...(patch.patch.looping !== undefined && { looping: patch.patch.looping as boolean }),
     };
-    return { ...doc, editor };
+    let shared = doc.shared;
+    if (patch.patch.looping === false && doc.editor.audioDuration > 0) {
+      const fileStart = patch.patch.fileStartTime !== undefined ? (patch.patch.fileStartTime as number) : doc.editor.fileStartTime;
+      const durLimit = secondsToBeats(
+        Math.max(0, doc.editor.audioDuration - fileStart),
+        doc.timeContext,
+      );
+      if (shared.subjectiveDuration.value > durLimit) {
+        shared = {
+          ...shared,
+          subjectiveDuration: {
+            ...shared.subjectiveDuration,
+            value: durLimit,
+          },
+        };
+      }
+    }
+    return { ...doc, shared, editor };
   }
   if (patch.type === 'updateTypeSpecificEditor' && doc.editor.kind === 'structured' && doc.editor.editorFamily === 'PianoRoll') {
     const editor: TypeSpecificScoreObjectEditorSnapshot = {
@@ -1097,13 +1161,24 @@ export function applyPatchToDocument(
 
     // Sound-specific automation patches (optimistic)
     if (p.automationPatch !== undefined && Array.isArray(payload.automationParameters)) {
-      const autoPatch = p.automationPatch as { parameterId: string; automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string };
+      const autoPatch = p.automationPatch as {
+        parameterId: string;
+        automationEnabled?: boolean;
+        points?: Array<{ x: number; y: number }>;
+        curve?: string;
+        resolutionDecimal?: string;
+      };
       const params = (payload.automationParameters as Array<Record<string, unknown>>).map((param) => {
         if (param.parameterId !== autoPatch.parameterId && param.name !== autoPatch.parameterId) return param;
         const updated = { ...param };
         if (autoPatch.automationEnabled !== undefined) updated.automationEnabled = autoPatch.automationEnabled;
         if (autoPatch.points !== undefined) updated.points = autoPatch.points;
         if (autoPatch.curve !== undefined) updated.curve = autoPatch.curve;
+        if (autoPatch.resolutionDecimal !== undefined) {
+          updated.resolutionDecimal = autoPatch.resolutionDecimal;
+          const numeric = Number(autoPatch.resolutionDecimal);
+          if (Number.isFinite(numeric)) updated.resolution = numeric;
+        }
         return updated;
       });
       payload.automationParameters = params;
@@ -1205,6 +1280,7 @@ export function applyPatchToDocument(
 export default function ScoreObjectEditorPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
   const score = useProjectStore((s) => s.score);
+  const projectUdos = useProjectStore((s) => s.projectUdos);
   const lastScorePatch = useProjectStore((s) => s.lastScorePatch);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
@@ -1355,7 +1431,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     return <EmptyState message="Multiple objects selected" />;
   }
 
-  if (loading) {
+  if (loading && !document) {
     return <EmptyState message="Loading..." />;
   }
 
@@ -1368,7 +1444,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   return (
     <div className="flex flex-col h-full bg-blue-bg">
       <div className="flex-1 overflow-hidden">
-        <EditorComponent document={document} onPatch={handlePatch} />
+        <EditorComponent document={document} projectUdos={projectUdos} onPatch={handlePatch} />
       </div>
     </div>
   );

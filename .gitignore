@@ -1,6 +1,10 @@
 # Build output
 dist/
 build/
+!packages/blue-app/build/
+packages/blue-app/build/*
+!packages/blue-app/build/entitlements.mac.plist
+!packages/blue-app/build/entitlements.blue-engine.mac.plist
 *.tsbuildinfo
 packages/blue-data/tests/integration/*.js
 packages/blue-data/tests/integration/*.js.map
@@ -15,6 +19,10 @@ node_modules/
 .idea/
 *.swp
 *.swo
+
+# Local agent/IDE settings (personal, machine-specific)
+.claude/settings.local.json
+skills-lock.json
 
 # OS
 .DS_Store
@@ -32,8 +40,17 @@ npm-debug.log*
 .pnpm-store
 *.blue~
 packages/blue-java/target
+/tools/java-blue-automation-fixtures/target/
 packages/blue-app/assets/java/blue-java.jar
 packages/blue-app/release/
+packages/blue-app/.engine-stage/
+packages/blue-app/release-metadata.json
+native/blue-engine/build/
+native/blue-engine/build-*/
+native/blue-engine/dist/
+native/blue-engine/.vcpkg/
+native/blue-engine/vcpkg_installed/
+native/blue-engine/downloads/
 temp*.csd
 
 # =========================================================================
@@ -48,3 +65,8 @@ temp*.csd
 
 # Optional: Ignore IDE level command shortcuts if you don't want them tracked
 .cursor/skills/speckit-*
+
+.zcode
+
+node_modules
+.tmp-research

@@ -6,6 +6,8 @@ export interface ApplicationMenuTemplateOptions {
   hasLoadedProject: boolean;
   /** Render/freeze is exclusive, so native render commands must not overlap it. */
   isRenderOperationActive?: boolean;
+  /** Renderer selection is non-empty and can be resolved by the main process. */
+  canAuditionScoreObjects?: boolean;
   isDarwin: boolean;
   recentProjects: string[];
   canRevertProject: boolean;
@@ -13,16 +15,27 @@ export interface ApplicationMenuTemplateOptions {
   followPlaybackOnStartEnabled: boolean;
   onNewFile: () => void;
   onOpenFile: () => void;
+  onOpenExampleProject: () => void;
+  onImportCsdFile: () => void;
+  onImportOrcSco: () => void;
+  onImportMidiFile: () => void;
   onOpenRecentProject: (filePath: string) => void;
   onCloseProject: () => void;
   onRevertProject: () => void;
   onSaveFile: () => void;
   onSaveFileAs: () => void;
   onGenerateCsdToScreen: () => void;
+  onGenerateRealtimeCsdToScreen: () => void;
   onGenerateCsdToDisk: () => void;
   onRequestQuit: () => void;
   onOpenSettings: () => void;
+  onOpenAbout: () => void;
   onOpenEffectsLibrary: () => void;
+  onOpenFTableConverter: () => void;
+  onOpenCsoundRCEditor: () => void;
+  onOpenCodeRepositoryEditor: () => void;
+  onReinitializeJavaScriptRuntime: () => void;
+  onReinitializeJythonRuntime: () => void;
   onFocusPanel: (panelId: string) => void;
   onToggleDevTools: () => void;
   onResetLayout: () => void;
@@ -33,6 +46,8 @@ export interface ApplicationMenuTemplateOptions {
   onNavigateNextMarker: () => void;
   onNavigatePreviousMarker: () => void;
   onRewindToStart: () => void;
+  onRenderStopProject: () => void;
+  onAuditionScoreObjects: () => void;
   onToggleBlueLive: () => void;
   onRecompileBlueLive: () => void;
   onBlueLiveAllNotesOff: () => void;
@@ -44,7 +59,6 @@ export interface ApplicationMenuTemplateOptions {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onActualSize: () => void;
-  onNotYetImplemented: () => void;
 }
 
 function buildWorkbenchMenuItems(
@@ -55,18 +69,6 @@ function buildWorkbenchMenuItems(
     label: panel.title,
     click: () => onFocusPanel(panel.id),
   }));
-}
-
-function buildPlaceholderItem(
-  label: string,
-  options: ApplicationMenuTemplateOptions,
-  overrides: Partial<MenuItemConstructorOptions> = {},
-): MenuItemConstructorOptions {
-  return {
-    label,
-    ...overrides,
-    click: () => options.onNotYetImplemented(),
-  };
 }
 
 function buildRecentProjectsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
@@ -91,11 +93,11 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'New Project', accelerator: 'CmdOrCtrl+N', click: () => options.onNewFile() },
     { type: 'separator' },
     { label: 'Open Project', accelerator: 'CmdOrCtrl+O', click: () => options.onOpenFile() },
-    buildPlaceholderItem('Open Example Project', options),
+    { label: 'Open Example Project...', click: () => options.onOpenExampleProject() },
     { type: 'separator' },
-    buildPlaceholderItem('Import CSD File', options, { enabled: hasProject }),
-    buildPlaceholderItem('Import from ORC/SCO', options, { enabled: hasProject }),
-    buildPlaceholderItem('Import MIDI File', options, { enabled: hasProject }),
+    { label: 'Import CSD File', enabled: hasProject, click: () => options.onImportCsdFile() },
+    { label: 'Import from ORC/SCO', enabled: hasProject, click: () => options.onImportOrcSco() },
+    { label: 'Import MIDI File', enabled: hasProject, click: () => options.onImportMidiFile() },
     { type: 'separator' },
     { label: 'Close Project', accelerator: options.isDarwin ? 'Shift+Cmd+W' : 'Shift+Ctrl+W', enabled: hasProject, click: () => options.onCloseProject() },
     { label: 'Revert', enabled: options.canRevertProject, click: () => options.onRevertProject() },
@@ -106,8 +108,6 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'Render to Disk', accelerator: options.isDarwin ? 'Shift+Cmd+F9' : 'Shift+Ctrl+F9', enabled: canRender, click: () => options.onRenderToDisk() },
     { label: 'Render to Disk and Play', accelerator: 'Shift+F9', enabled: canRender, click: () => options.onRenderToDiskAndPlay() },
     { label: 'Render to Disk and Open', enabled: canRender, click: () => options.onRenderToDiskAndOpen() },
-    { type: 'separator' },
-    buildPlaceholderItem('Save Libraries', options, { enabled: hasProject }),
     { type: 'separator' },
     { label: 'Recent Projects', submenu: buildRecentProjectsMenuTemplate(options) },
     ...(options.isDarwin
@@ -123,13 +123,17 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 
 function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   const hasProject = options.hasLoadedProject;
+  // Realtime playback is exclusive with disk render/freeze so F9 (realtime) and
+  // Shift+F9 (disk render) accelerators never collide on a busy engine.
+  const canRealtimePlay = hasProject && !options.isRenderOperationActive;
+  const canAudition = hasProject && Boolean(options.canAuditionScoreObjects) && !options.isRenderOperationActive;
 
   return [
     { label: 'Generate CSD to Screen', accelerator: 'CmdOrCtrl+Shift+G', enabled: hasProject, click: () => options.onGenerateCsdToScreen() },
-    buildPlaceholderItem('Generate Realtime CSD to Screen', options, { enabled: hasProject }),
+    { label: 'Generate Realtime CSD to Screen', enabled: hasProject, click: () => options.onGenerateRealtimeCsdToScreen() },
     { label: 'Generate CSD to File', accelerator: 'CmdOrCtrl+G', enabled: hasProject, click: () => options.onGenerateCsdToDisk() },
-    buildPlaceholderItem('Render/Stop Project', options, { accelerator: 'F9', enabled: hasProject }),
-    { label: 'Audition ScoreObjects', enabled: false, click: () => options.onNotYetImplemented() },
+    { label: 'Render/Stop Project', accelerator: 'F9', enabled: canRealtimePlay, click: () => options.onRenderStopProject() },
+    { label: 'Audition ScoreObjects', accelerator: 'CmdOrCtrl+Shift+A', enabled: canAudition, click: () => options.onAuditionScoreObjects() },
     { type: 'separator' },
     { label: 'Follow playback by scrolling score', type: 'checkbox', checked: options.followPlaybackEnabled, enabled: hasProject, click: () => options.onToggleFollowPlayback() },
     { label: 'Enable follow playback on render start', type: 'checkbox', checked: options.followPlaybackOnStartEnabled, enabled: hasProject, click: () => options.onToggleFollowPlaybackOnStart() },
@@ -179,13 +183,18 @@ function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 
 function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
-    buildPlaceholderItem('Code Repository Editor', options),
-    buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
+    { label: 'Code Repository Editor', click: () => options.onOpenCodeRepositoryEditor() },
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
-    buildPlaceholderItem('SoundFont Viewer', options),
-    buildPlaceholderItem('Blue Share', options),
-    buildPlaceholderItem('FTable Converter', options),
-    buildPlaceholderItem('.csound6rc Editor', options),
+    { label: 'Blue Share', enabled: false },
+    { label: 'FTable Converter', click: () => options.onOpenFTableConverter() },
+    { label: '.csound7rc Editor', click: () => options.onOpenCsoundRCEditor() },
+  ];
+}
+
+function buildScriptMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+  return [
+    { label: 'Reinitialize JavaScript Interpreter', click: () => options.onReinitializeJavaScriptRuntime() },
+    { label: 'Reinitialize Jython Interpreter', enabled: options.hasLoadedProject, click: () => options.onReinitializeJythonRuntime() },
   ];
 }
 
@@ -217,7 +226,7 @@ export function buildApplicationMenuTemplate(
     template.push({
       label: 'Blue',
       submenu: [
-        { label: 'About Blue', click: () => { /* deferred */ } },
+        { label: 'About Blue', click: () => options.onOpenAbout() },
         { type: 'separator' },
         {
           label: 'Settings...',
@@ -269,9 +278,23 @@ export function buildApplicationMenuTemplate(
   });
 
   template.push({
+    label: 'Script',
+    submenu: buildScriptMenuTemplate(options),
+  });
+
+  template.push({
     label: 'Tools',
     submenu: buildToolsMenuTemplate(options),
   });
+
+  if (!options.isDarwin) {
+    template.push({
+      label: 'Help',
+      submenu: [
+        { label: 'About Blue', click: () => options.onOpenAbout() },
+      ],
+    });
+  }
 
   template.push({
     label: 'Window',

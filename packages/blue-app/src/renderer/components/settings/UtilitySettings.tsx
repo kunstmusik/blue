@@ -20,15 +20,11 @@ export default function UtilitySettings({
   return (
     <SettingsSection
       title="Utility"
-      dependencyNote="The Utility Csound executable and freeze flags are used by SoundObject freeze/unfreeze. SoundFont inspection remains unavailable."
+      dependencyNote="Freeze and SoundFont inspection use the managed Blue Engine Csound runtime. Freeze flags remain configurable; the legacy executable is retained only for downgrade compatibility."
     >
-      <SettingsField
-        label="Csound Executable"
-        value={settings.csoundExecutable}
-        onChange={(value) => set('csoundExecutable', value)}
-        placeholder="/usr/local/bin/csound"
-        description="Path to Csound executable for utility operations."
-      />
+      <div className="mb-4 text-role-callout text-app-text-subtle">
+        SoundFont inspection and freeze rendering use the managed Blue Engine Csound runtime. The legacy executable value is preserved for downgrade compatibility.
+      </div>
 
       <SettingsField
         label="Freeze Flags"

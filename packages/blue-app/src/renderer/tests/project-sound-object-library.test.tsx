@@ -228,4 +228,125 @@ describe('Project SoundObject Library panel', () => {
     expect(container.textContent).toContain('Shared 500');
     expect(window.blueAPI.browseLibraries).toHaveBeenCalledTimes(2);
   });
+
+  it('confirms deletion with linked instance details and mutates only on accept', async () => {
+    vi.mocked(window.blueAPI.previewProjectLibraryDelete).mockResolvedValue({
+      ok: true as const,
+      value: {
+        confirmationToken: 'delete-token-123',
+        linkedInstanceCount: 3,
+        locations: ['Layer 1', 'Layer 2'],
+        requiresConfirmation: true,
+      },
+    });
+    vi.mocked(window.blueAPI.deleteProjectLibraryItem).mockResolvedValueOnce({
+      ok: true as const,
+      value: {
+        contentRevision: 2,
+        closedEditorSessionIds: [],
+      },
+    });
+
+    act(() => root.render(<SoundObjectLibraryPanel />));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+
+    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    expect(deleteMenuItem).toBeTruthy();
+
+    await act(async () => {
+      deleteMenuItem.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // ConfirmationDialog should appear
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Delete “Shared Motif”?');
+    expect(dialog?.textContent).toContain('and 3 linked score instances');
+
+    // Cancel first
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+    act(() => {
+      cancelButton.click();
+    });
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(window.blueAPI.deleteProjectLibraryItem).not.toHaveBeenCalled();
+
+    // Trigger delete again and confirm
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const deleteAgain = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    await act(async () => {
+      deleteAgain.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const confirmDialog = document.body.querySelector('[role="alertdialog"]');
+    const deleteBtn = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="delete"]')!;
+    await act(async () => {
+      deleteBtn.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.blueAPI.deleteProjectLibraryItem).toHaveBeenCalledWith(
+      sharedNode.key,
+      'delete-token-123',
+    );
+    expect(window.blueAPI.previewProjectLibraryDelete).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not delete when the linked-instance preview changes after confirmation', async () => {
+    vi.mocked(window.blueAPI.previewProjectLibraryDelete)
+      .mockResolvedValueOnce({
+        ok: true as const,
+        value: {
+          confirmationToken: 'delete-token-123',
+          linkedInstanceCount: 3,
+          locations: ['Layer 1', 'Layer 2'],
+          requiresConfirmation: true,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true as const,
+        value: {
+          confirmationToken: 'stale-token',
+          linkedInstanceCount: 4,
+          locations: ['Layer 1', 'Layer 2', 'Layer 3'],
+          requiresConfirmation: true,
+        },
+      });
+
+    act(() => root.render(<SoundObjectLibraryPanel />));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const deleteMenuItem = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent?.startsWith('Delete')) as HTMLElement;
+    await act(async () => {
+      deleteMenuItem.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const deleteButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="delete"]');
+    expect(deleteButton).toBeTruthy();
+    await act(async () => {
+      deleteButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.blueAPI.deleteProjectLibraryItem).not.toHaveBeenCalled();
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+  });
 });

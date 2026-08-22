@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  computeTabCommandState,
-  type TabCommandContext,
-} from './tab-command-state';
+import { computeTabCommandState, type TabCommandContext } from './tab-command-state';
 
-function baselineContext(
-  overrides: Partial<TabCommandContext> = {},
-): TabCommandContext {
+function baselineContext(overrides: Partial<TabCommandContext> = {}): TabCommandContext {
   return {
     panelId: 'MixerTopComponent',
     groupId: 'group-1',
@@ -57,7 +52,10 @@ describe('computeTabCommandState — close family', () => {
 
   it('disables Close Other for a single-tab group', () => {
     const state = computeTabCommandState(
-      baselineContext({ groupPanelIds: ['MixerTopComponent'], panelId: 'MixerTopComponent' }),
+      baselineContext({
+        groupPanelIds: ['MixerTopComponent'],
+        panelId: 'MixerTopComponent',
+      }),
     );
     expect(state.canCloseOther).toBe(false);
   });
@@ -83,9 +81,7 @@ describe('computeTabCommandState — shift commands', () => {
     expect(first.canShiftLeft).toBe(false);
     expect(first.canShiftRight).toBe(true);
 
-    const last = computeTabCommandState(
-      baselineContext({ panelId: 'OutputTopComponent' }),
-    );
+    const last = computeTabCommandState(baselineContext({ panelId: 'OutputTopComponent' }));
     expect(last.canShiftLeft).toBe(true);
     expect(last.canShiftRight).toBe(false);
   });
@@ -98,7 +94,10 @@ describe('computeTabCommandState — shift commands', () => {
 
   it('disables both shifts for a single-tab group', () => {
     const state = computeTabCommandState(
-      baselineContext({ groupPanelIds: ['SoloTopComponent'], panelId: 'SoloTopComponent' }),
+      baselineContext({
+        groupPanelIds: ['SoloTopComponent'],
+        panelId: 'SoloTopComponent',
+      }),
     );
     expect(state.canShiftLeft).toBe(false);
     expect(state.canShiftRight).toBe(false);
@@ -130,7 +129,9 @@ describe('computeTabCommandState — NetBeans float / dock visibility', () => {
 
   it('disables Float Group when any panel in the group cannot float', () => {
     const state = computeTabCommandState(
-      baselineContext({ siblingFloatable: (id) => id !== 'OutputTopComponent' }),
+      baselineContext({
+        siblingFloatable: (id) => id !== 'OutputTopComponent',
+      }),
     );
     expect(state.canFloat).toBe(true);
     expect(state.canFloatGroup).toBe(false);
@@ -171,7 +172,9 @@ describe('computeTabCommandState — NetBeans float / dock visibility', () => {
 
 describe('computeTabCommandState — maximize / restore', () => {
   it('shows Maximize (not Restore) for a non-maximized docked group', () => {
-    const state = computeTabCommandState(baselineContext({ location: 'docked', isMaximized: false }));
+    const state = computeTabCommandState(
+      baselineContext({ location: 'docked', isMaximized: false }),
+    );
     expect(kinds(state)).toContain('maximize');
     expect(kinds(state)).not.toContain('restore');
     expect(state.canMaximize).toBe(true);
@@ -185,7 +188,9 @@ describe('computeTabCommandState — maximize / restore', () => {
   });
 
   it('shows Restore for the maximized location', () => {
-    const state = computeTabCommandState(baselineContext({ location: 'maximized', isMaximized: false }));
+    const state = computeTabCommandState(
+      baselineContext({ location: 'maximized', isMaximized: false }),
+    );
     expect(state.canRestore).toBe(true);
     expect(kinds(state)).toContain('restore');
   });
@@ -213,9 +218,7 @@ describe('computeTabCommandState — command ordering and identity', () => {
 
 describe('computeTabCommandState — document and view extras', () => {
   it('shows Clone and document tab-group commands for editor tabs', () => {
-    const state = computeTabCommandState(
-      baselineContext({ dockedEditorGroupCount: 2 }),
-    );
+    const state = computeTabCommandState(baselineContext({ dockedEditorGroupCount: 2 }));
     expect(kinds(state)).toContain('clone');
     expect(kinds(state)).toContain('new-document-tab-group');
     expect(kinds(state)).toContain('collapse-document-tab-group');
@@ -251,5 +254,46 @@ describe('computeTabCommandState — document and view extras', () => {
     expect(kinds(state)).not.toContain('new-document-tab-group');
     expect(enabledKind(state, 'minimize')).toBe(true);
     expect(enabledKind(state, 'minimize-group')).toBe(true);
+    expect(state.canMove).toBe(true);
+    expect(state.canMoveGroup).toBe(true);
+    expect(state.canSizeGroup).toBe(true);
+    expect(enabledKind(state, 'move')).toBe(true);
+    expect(enabledKind(state, 'move-group')).toBe(true);
+    expect(enabledKind(state, 'size-group')).toBe(true);
   });
+
+  it('disables edge movement for a floating auxiliary group', () => {
+    const state = computeTabCommandState(
+      baselineContext({
+        location: 'floating',
+        mode: 'properties',
+        isAuxiliary: true,
+      }),
+    );
+
+    expect(state.canMove).toBe(false);
+    expect(state.canMoveGroup).toBe(false);
+    expect(state.canSizeGroup).toBe(false);
+    expect(enabledKind(state, 'move')).toBe(false);
+    expect(enabledKind(state, 'move-group')).toBe(false);
+    expect(enabledKind(state, 'size-group')).toBe(false);
+  });
+
+  it.each(['minimized', 'slideout', 'maximized'] as const)(
+    'disables edge movement for a %s auxiliary presentation',
+    (location) => {
+      const state = computeTabCommandState(
+        baselineContext({
+          location,
+          mode: 'properties',
+          isAuxiliary: true,
+          isMaximized: location === 'maximized',
+        }),
+      );
+
+      expect(state.canMove).toBe(false);
+      expect(state.canMoveGroup).toBe(false);
+      expect(state.canSizeGroup).toBe(false);
+    },
+  );
 });

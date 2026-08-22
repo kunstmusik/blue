@@ -1,9 +1,14 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import ShiftObjectsDialog from '../ShiftObjectsDialog';
+import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
+import { ChevronRight } from 'lucide-react';
 import type { PolyObjectLayerGroupSnapshot, ScoreLayerGroupSnapshot, ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import { useScoreSelectionStore, type ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
+import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
+import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
@@ -17,6 +22,7 @@ import {
 } from '../../../../../../shared/unified-library';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
+import { useFreezeOperationStore } from '../../../../../stores/freeze-operation-store';
 import { snapValueToBeats } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
 import type { MeterMapSnapshot, ScoreObjectEditorTargetSnapshot } from '../../../../../../shared/project-editor';
@@ -24,7 +30,9 @@ import { deriveSnapLineBeats, snapBeatToGrid } from '../snap-grid-utils';
 import { toast } from 'sonner';
 import {
   collectClipboardEntriesForSelection,
+  createPolyObjectPasteObjectFromClipboard,
   groupPasteObjectsByTargetGroup,
+  layerGroupAcceptsObjectType,
   translateClipboardEntriesForPaste,
   type ScorePasteObject,
 } from './score-clipboard-utils';
@@ -33,6 +41,12 @@ import {
   readLibraryDragDescriptor,
   readLibraryDragSource,
 } from '../../../../libraries/library-drag-drop';
+import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
+import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
+import {
+  collectTimelineBoundarySelection,
+  collectTimelineLayerSelection,
+} from './score-timeline-gesture-utils';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -235,11 +249,16 @@ function sameTarget(
 
 type GestureMode = 'none' | 'marquee' | 'move' | 'resizeLeft' | 'resizeRight';
 
+interface PendingConvertTarget {
+  target: ScoreObjectEditorTargetSnapshot;
+  projectSessionId: number;
+  projectRevision: number;
+}
+
 const RESIZE_EDGE_PX = 5;
 const DEFAULT_SOBJ_BG = 0xFF404040;
 const DEFAULT_SOBJ_DURATION = 4.0;
 const MIN_SCORE_OBJECT_DURATION = 0.25;
-const settledFreezeOperationIds = new Set<string>();
 
 export default function ScoreTimeCanvas({
   group,
@@ -261,6 +280,8 @@ export default function ScoreTimeCanvas({
   const selectedObjectTarget = useScoreSelectionStore((s) => s.selectedObjectTarget);
   const selectedObjectTargets = useScoreSelectionStore((s) => s.selectedObjectTargets);
   const select = useScoreSelectionStore((s) => s.select);
+  const selectedLayerKeys = useLayerSelectionStore((s) => s.selectedKeys);
+  const clearLayerSelection = useLayerSelectionStore((s) => s.clear);
   const clearSelection = useScoreSelectionStore((s) => s.clearSelection);
   const setSelection = useScoreSelectionStore((s) => s.setSelection);
   const addToSelection = useScoreSelectionStore((s) => s.addToSelection);
@@ -272,10 +293,16 @@ export default function ScoreTimeCanvas({
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
   const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
+  const [showShiftDialog, setShowShiftDialog] = useState(false);
+  const [pendingConvertTarget, setPendingConvertTarget] = useState<PendingConvertTarget | null>(null);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const libraryClipboard = useLibraryStore((s) => s.clipboard);
   const librarySoundObjectAvailable = libraryClipboard
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject'
+    : false;
+  const libraryBsbAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'instrument'
+      && libraryClipboard.objectType?.split('.').pop() === 'BlueSynthBuilder'
     : false;
   const transferLibraryItem = useLibraryStore((s) => s.transferToProject);
   const captureScoreSoundObject = useLibraryStore((s) => s.captureScoreSoundObject);
@@ -283,6 +310,9 @@ export default function ScoreTimeCanvas({
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
   const currentScore = useProjectStore((s) => s.score);
   const containerRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<ScoreObjectColorPickerHandle>(null);
+  const colorPickerAnchorRef = useRef<ColorPickerAnchorRect | null>(null);
+  const pendingColorTargetsRef = useRef<ScoreObjectEditorTargetSnapshot[]>([]);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
   const [contextMenuOnObject, setContextMenuOnObject] = useState(false);
   const [contextMenuObjectType, setContextMenuObjectType] = useState<string | null>(null);
@@ -324,9 +354,6 @@ export default function ScoreTimeCanvas({
   const [cursorOverride, setCursorOverride] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<string | null>(null);
   const [previewByObjectId, setPreviewByObjectId] = useState<Record<string, { startBeats: number; durationBeats: number }>>({});
-  const [freezeBusy, setFreezeBusy] = useState(false);
-  const freezeOperationIdRef = useRef<string | null>(null);
-  const [freezeProgress, setFreezeProgress] = useState<number | null>(null);
 
   // Merge multi-line object preview from the automation store (set during
   // multi-line move/scale drags) with the local score-mode drag preview.
@@ -340,9 +367,7 @@ export default function ScoreTimeCanvas({
     && selectedObjectTarget.selectedObjectType !== 'Instance'
     && selectedObjectTarget.location !== undefined;
 
-  const isNestedView = useMemo(() =>
-    group.layers.some((layer) =>
-      layer.items.some((item) => (item.editorTarget?.location?.containerPath.length ?? 0) > 0)), [group]);
+  const isNestedView = scoreContainerPath.length > 0;
   const interactionLayerGroups = useMemo<ScoreLayerGroupSnapshot[]>(
     () => (isNestedView ? [group] : currentScore.layerGroups),
     [isNestedView, group, currentScore.layerGroups],
@@ -474,6 +499,17 @@ export default function ScoreTimeCanvas({
     void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
   }, [buildLibraryTarget, contextMenuPos, libraryClipboard, librarySoundObjectAvailable, transferLibraryItem]);
 
+  const pasteBsbAtContext = useCallback(() => {
+    if (!libraryClipboard || !libraryBsbAvailable || !contextMenuPos) return;
+    const scoreTarget = buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats);
+    if (!scoreTarget) return;
+    const target: Extract<LibraryExactTransferTarget, { kind: 'scoreBsbSound' }> = {
+      ...scoreTarget,
+      kind: 'scoreBsbSound',
+    };
+    void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
+  }, [buildLibraryTarget, contextMenuPos, libraryBsbAvailable, libraryClipboard, transferLibraryItem]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 2) return;
 
@@ -510,6 +546,7 @@ export default function ScoreTimeCanvas({
     if (!item) {
       if (!e.shiftKey) {
         clearSelection();
+        clearLayerSelection();
       }
       gestureRef.current = {
         mode: 'marquee', startClientX: e.clientX, startClientY: e.clientY,
@@ -641,7 +678,7 @@ export default function ScoreTimeCanvas({
         originalPositions: origPositions,
       };
     }
-  }, [toLocalXY, pixelsPerBeat, group.layers, group.groupId, select, clearSelection, selectedObjectIds, selectedObjectTarget, clipboard, snapBeatValueStart, addScoreObjects, interactionLayerGroups, previewByObjectId]);
+  }, [toLocalXY, pixelsPerBeat, group.layers, group.groupId, select, clearSelection, clearLayerSelection, selectedObjectIds, selectedObjectTarget, clipboard, snapBeatValueStart, addScoreObjects, interactionLayerGroups, previewByObjectId]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!gestureRef.current) {
@@ -1015,97 +1052,11 @@ export default function ScoreTimeCanvas({
     });
   }, [interactionLayerGroups, selectedObjectIds, previewByObjectId]);
 
-  useEffect(() => {
-    // Isolated renderer tests and early startup can intentionally expose only
-    // a partial preload bridge; freeze actions still require the full bridge.
-    const subscribe = window.blueAPI?.onRenderOperationStatus;
-    if (!subscribe) return undefined;
-    return subscribe((status) => {
-      if (settledFreezeOperationIds.has(status.operationId)) return;
-      if (status.kind !== 'freeze' || status.operationId !== freezeOperationIdRef.current) return;
-      setFreezeProgress(status.progress);
-      const progressLabel = status.progress === null
-        ? 'Csound is rendering…'
-        : `${Math.round(status.progress)}%`;
-      if (status.phase === 'completed') {
-        toast.success(status.message, { id: status.operationId, description: null });
-      } else if (status.phase === 'cancelled') {
-        toast.message(status.message, { id: status.operationId, description: null });
-      } else if (status.phase === 'failed') {
-        toast.error(status.error ?? status.message, { id: status.operationId, description: null });
-      } else {
-        toast.loading(status.message, { id: status.operationId, description: progressLabel });
-      }
-      if (status.phase === 'completed' || status.phase === 'cancelled' || status.phase === 'failed') {
-        setFreezeBusy(false);
-        freezeOperationIdRef.current = null;
-        setFreezeProgress(null);
-      }
-    });
-  }, []);
-
   const handleFreezeUnfreeze = useCallback(() => {
-    if (freezeBusy) return;
-    const targets = getSelectedEntries()
-      .map((entry) => entry.editorTarget)
-      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
-    if (targets.length === 0) {
-      toast.error('Select one or more timeline ScoreObjects to freeze or unfreeze.');
-      return;
-    }
-
-    void (async () => {
-      await flushPendingPatches();
-      const operationId = `freeze-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      freezeOperationIdRef.current = operationId;
-      setFreezeBusy(true);
-      setFreezeProgress(0);
-      toast.loading(`Preparing to freeze/unfreeze ${targets.length} object${targets.length === 1 ? '' : 's'}...`, {
-        id: operationId,
-        description: '0%',
-      });
-      const result = await window.blueAPI.freezeScoreObjects({ targets, operationId });
-      // IPC replies and status broadcasts use separate Electron queues. Mark
-      // this result settled before updating the toast so a late preparing or
-      // rendering event cannot turn the completed toast back into a spinner.
-      settledFreezeOperationIds.add(operationId);
-      setFreezeBusy(false);
-      freezeOperationIdRef.current = null;
-      setFreezeProgress(null);
-      if (result.ok) {
-        const changes = [
-          result.frozenCount > 0 ? `${result.frozenCount} frozen` : null,
-          result.unfrozenCount > 0 ? `${result.unfrozenCount} unfrozen` : null,
-        ].filter((message): message is string => message !== null);
-        toast.success(
-          `Freeze/unfreeze complete${changes.length > 0 ? `: ${changes.join(', ')}` : ''}.`,
-          { id: operationId, description: null },
-        );
-      } else if (result.cancelled) {
-        toast.message('Freeze/unfreeze cancelled.', { id: operationId, description: null });
-      } else {
-        const rejectedReasons = result.rejectedTargets.map(({ reason }) => reason).join('\n');
-        toast.error(rejectedReasons || result.error || 'Freeze/unfreeze failed.', {
-          id: operationId,
-          description: null,
-        });
-      }
-    })().catch((error: unknown) => {
-      const operationId = freezeOperationIdRef.current ?? undefined;
-      setFreezeBusy(false);
-      freezeOperationIdRef.current = null;
-      setFreezeProgress(null);
-      toast.error(error instanceof Error ? error.message : String(error), {
-        id: operationId,
-      });
-    });
-  }, [freezeBusy, getSelectedEntries, flushPendingPatches]);
-
-  const handleCancelFreeze = useCallback(() => {
-    const operationId = freezeOperationIdRef.current;
-    if (!operationId) return;
-    void window.blueAPI.cancelRenderOperation({ operationId });
-  }, []);
+    const entries = getSelectedEntries();
+    if (entries.length === 0) return;
+    void useFreezeOperationStore.getState().start(entries);
+  }, [getSelectedEntries]);
 
   const handleCopy = useCallback(() => {
     const entries = getSelectedEntries();
@@ -1192,25 +1143,203 @@ export default function ScoreTimeCanvas({
     }
   }, [getSelectedEntries, applyProjectDocumentPatch, clearSelection]);
 
+  const handleSetSubjectiveToObjective = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0 || entries.some((entry) => entry.objectType === 'AudioClip')) return;
+    const targets = entries
+      .map((entry) => entry.editorTarget)
+      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
+    if (targets.length > 0) {
+      void applyProjectDocumentPatch({ score: { type: 'setSubjectiveDurationToObjective', targets } });
+    }
+  }, [applyProjectDocumentPatch, getSelectedEntries]);
+
+  const handleReplaceWithBuffer = useCallback(() => {
+    const selected = getSelectedEntries();
+    if (selected.length === 0 || clipboard.length !== 1) {
+      toast.error('Copy one SoundObject or AudioClip before replacing selected objects.');
+      return;
+    }
+    const replacement = clipboard[0]!;
+    const invalid = selected.find((entry) => {
+      const targetGroup = interactionLayerGroups.find((candidate) => candidate.groupId === entry.groupId);
+      return !targetGroup || !layerGroupAcceptsObjectType(targetGroup.groupType, replacement.objectType);
+    });
+    if (invalid) {
+      toast.error(`${replacement.objectType} is not compatible with the selected destination layer.`);
+      return;
+    }
+    const removeTargets = selected
+      .map((entry) => entry.editorTarget)
+      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
+    void (async () => {
+      if (removeTargets.length > 0) {
+        await applyProjectDocumentPatch({ score: { type: 'removeScoreObjects', targets: removeTargets } });
+      }
+      for (const entry of selected) {
+        await applyProjectDocumentPatch({ score: {
+          type: 'addScoreObjects',
+          groupId: entry.groupId,
+          objects: [{
+            layerIndex: entry.layerIndex,
+            objectType: replacement.objectType,
+            name: replacement.name,
+            startBeats: entry.startBeats,
+            durationBeats: entry.durationBeats,
+            startTimeBase: entry.startTimeBase,
+            durationTimeBase: entry.durationTimeBase,
+            backgroundColor: replacement.backgroundColor,
+            serializedXml: replacement.serializedXml,
+          }],
+        } });
+      }
+      clearSelection();
+    })();
+  }, [applyProjectDocumentPatch, clearSelection, clipboard, getSelectedEntries, interactionLayerGroups]);
+
+  const handleColorSelected = useCallback((backgroundColor: number) => {
+    const targets = pendingColorTargetsRef.current;
+    void Promise.all(targets.map((target) => applyProjectDocumentPatch({
+      score: {
+        type: 'updateSharedProperties',
+        target,
+        patch: { backgroundColor },
+      },
+    })));
+  }, [applyProjectDocumentPatch]);
+
   const handleSetColor = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0) return;
     const targets = entries
       .map((entry) => entry.editorTarget)
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
-    if (targets.length === 0) return;
-    void (async () => {
-      for (const target of targets) {
-        await applyProjectDocumentPatch({
-          score: {
-            type: 'updateSharedProperties',
-            target,
-            patch: { backgroundColor: 0x336699 },
-          },
-        });
+    const anchor = colorPickerAnchorRef.current;
+    if (targets.length === 0 || !anchor) return;
+    pendingColorTargetsRef.current = targets;
+    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor);
+  }, [getSelectedEntries]);
+
+  const handleExport = useCallback(async () => {
+    const entries = getSelectedEntries();
+    if (
+      entries.length !== 1 ||
+      entries[0]!.objectType === 'AudioClip' ||
+      entries[0]!.objectType === 'Instance' ||
+      !entries[0]!.serializedXml
+    ) {
+      return;
+    }
+    try {
+      const result = await window.blueAPI.exportScoreObject(entries[0]!.serializedXml, entries[0]!.name);
+      if (result.status === 'error') toast.error(result.error);
+    } catch (error) {
+      toast.error('Error: Could not export Sound Object.');
+      console.error('Error exporting Sound Object', error);
+    }
+  }, [getSelectedEntries]);
+
+  const handleConvertToObjectBuilder = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (
+      entries.length !== 1 ||
+      (entries[0]!.objectType !== 'PythonObject' && entries[0]!.objectType !== 'External') ||
+      !entries[0]!.editorTarget
+    ) {
+      return;
+    }
+    setPendingConvertTarget({
+      target: entries[0]!.editorTarget,
+      projectSessionId,
+      projectRevision,
+    });
+  }, [getSelectedEntries, projectRevision, projectSessionId]);
+
+  const handleImport = useCallback(async () => {
+    if (!window.blueAPI?.importScoreObject || !contextMenuPos) return;
+    try {
+      const result = await window.blueAPI.importScoreObject();
+      if (!result) return;
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
+
+      const imported = result.object;
+      const startBeats = snapBeatValueStart(contextMenuPos.xBeats);
+
+      addScoreObjects([{
+        groupId: group.groupId,
+        layerIndex: contextMenuPos.layerIndex,
+        name: imported.name,
+        startBeats,
+        durationBeats: imported.durationBeats,
+        startTimeBase: imported.destinationTimeBase,
+        durationTimeBase: imported.destinationTimeBase,
+        backgroundColor: imported.backgroundColor,
+        objectType: imported.objectType,
+        isContainer: imported.isContainer,
+        serializedXml: imported.serializedXml,
+      }]);
+    } catch (error) {
+      toast.error('Error: Could not read Sound Object from file');
+      console.error('Error importing Sound Object', error);
+    }
+  }, [contextMenuPos, snapBeatValueStart, group.groupId, addScoreObjects]);
+
+  const selectedEntries = getSelectedEntries();
+  const canSetObjectiveDuration = selectedEntries.length > 0
+    && selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
+  const canExport = selectedEntries.length === 1 &&
+    selectedEntries[0]!.objectType !== 'AudioClip' &&
+    selectedEntries[0]!.objectType !== 'Instance' &&
+    Boolean(selectedEntries[0]!.serializedXml);
+  // Mirrors Java ConvertToObjectBuilderAction: enabled for exactly one
+  // selected PythonObject or External.
+  const canConvertToObjectBuilder = selectedEntries.length === 1 &&
+    (selectedEntries[0]!.objectType === 'PythonObject' ||
+      selectedEntries[0]!.objectType === 'External');
+  const canConvertToPolyObject = selectedEntries.length > 0 &&
+    selectedEntries.every((entry) => entry.objectType !== 'AudioClip' && Boolean(entry.editorTarget));
+
+  const handleConvertToPolyObject = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0 || !contextMenuPos) return;
+    const targets = entries.flatMap((entry) => (entry.editorTarget ? [entry.editorTarget] : []));
+    if (targets.length === 0) return;
+
+    const selectionId = `poly_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    void (async () => {
+      await applyProjectDocumentPatch({
+        score: {
+          type: 'convertToPolyObject',
+          targets,
+          targetGroupId: group.groupId,
+          targetLayerIndex: contextMenuPos.layerIndex,
+          selectionId,
+        },
+      });
+      await flushPendingPatches();
+      select(selectionId, false);
     })();
-  }, [getSelectedEntries, applyProjectDocumentPatch]);
+  }, [getSelectedEntries, contextMenuPos, applyProjectDocumentPatch, flushPendingPatches, group.groupId, select]);
+
+  const handlePasteAsPolyObject = useCallback(() => {
+    if (clipboard.length === 0 || !contextMenuPos) return;
+    const paste = createPolyObjectPasteObjectFromClipboard({
+      clipboard,
+      layerGroups: interactionLayerGroups,
+      targetGroupId: group.groupId,
+      targetLayerIndex: contextMenuPos.layerIndex,
+      targetXBeats: contextMenuPos.xBeats,
+      snapBeatValue: snapBeatValueStart,
+    });
+    if (!paste.ok) {
+      toast.error(paste.message);
+      return;
+    }
+    addScoreObjects([paste.pasteObject]);
+  }, [clipboard, contextMenuPos, interactionLayerGroups, group.groupId, snapBeatValueStart, addScoreObjects]);
 
   const handleContextMenuPaste = useCallback(() => {
     if (clipboard.length === 0 || !contextMenuPos) return;
@@ -1231,64 +1360,136 @@ export default function ScoreTimeCanvas({
     }
   }, [clipboard, contextMenuPos, snapBeatValueStart, addScoreObjects, interactionLayerGroups, group.groupId]);
 
+  const handleSelectLayer = useCallback(() => {
+    if (!contextMenuPos) return;
+    const layer = group.layers[contextMenuPos.layerIndex];
+    if (layer) setSelection(collectTimelineLayerSelection(layer));
+  }, [contextMenuPos, group.layers, setSelection]);
+
+  const handleSelectAllBefore = useCallback(() => {
+    if (contextMenuPos) {
+      setSelection(collectTimelineBoundarySelection(interactionLayerGroups, contextMenuPos.xBeats, 'before'));
+    }
+  }, [contextMenuPos, interactionLayerGroups, setSelection]);
+
+  const handleSelectAllAfter = useCallback(() => {
+    if (contextMenuPos) {
+      setSelection(collectTimelineBoundarySelection(interactionLayerGroups, contextMenuPos.xBeats, 'after'));
+    }
+  }, [contextMenuPos, interactionLayerGroups, setSelection]);
+
+  const commitMoves = useCallback(
+    (moves: Array<{ entry: ScoreObjectClipboardEntry; targetStartBeats: number }>) => {
+      if (moves.length === 0) return;
+      const optimisticMoves = moves.map(({ entry, targetStartBeats }) => ({
+        objectId: entry.objectId,
+        targetStartBeats,
+        targetLayerIndex: entry.layerIndex,
+        targetGroupId: entry.groupId,
+      }));
+      moveScoreObjects(optimisticMoves);
+      const canonicalMoves = moves.flatMap(({ entry, targetStartBeats }) =>
+        entry.editorTarget
+          ? [
+              {
+                target: entry.editorTarget,
+                targetStartBeats,
+                targetLayerIndex: entry.layerIndex,
+                targetGroupId: entry.groupId,
+              },
+            ]
+          : [],
+      );
+      if (canonicalMoves.length > 0) {
+        void applyProjectDocumentPatch({ score: { type: 'moveScoreObjects', moves: canonicalMoves } });
+      }
+    },
+    [applyProjectDocumentPatch, moveScoreObjects],
+  );
+
   const handleAlignLeft = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const minStart = Math.min(...entries.map((e) => e.startBeats));
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: minStart,
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(entries.map((entry) => ({ entry, targetStartBeats: minStart })));
+  }, [commitMoves, getSelectedEntries]);
 
   const handleAlignCenter = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const centers = entries.map((e) => e.startBeats + e.durationBeats / 2);
     const mid = (Math.min(...centers) + Math.max(...centers)) / 2;
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: Math.max(0, mid - e.durationBeats / 2),
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      entries.map((entry) => ({
+        entry,
+        targetStartBeats: Math.max(0, mid - entry.durationBeats / 2),
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleAlignRight = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const maxEnd = Math.max(...entries.map((e) => e.startBeats + e.durationBeats));
-    const moves = entries.map((e) => ({
-      objectId: e.objectId,
-      targetStartBeats: Math.max(0, maxEnd - e.durationBeats),
-    }));
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      entries.map((entry) => ({
+        entry,
+        targetStartBeats: Math.max(0, maxEnd - entry.durationBeats),
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleFollowTheLeader = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const sorted = [...entries].sort((a, b) => a.startBeats - b.startBeats);
     let cursor = sorted[0].startBeats;
-    const moves = sorted.map((e) => {
-      const target = cursor;
-      cursor += e.durationBeats;
-      return { objectId: e.objectId, targetStartBeats: target };
-    });
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      sorted.map((entry) => {
+        const targetStartBeats = cursor;
+        cursor += entry.durationBeats;
+        return { entry, targetStartBeats };
+      }),
+    );
+  }, [commitMoves, getSelectedEntries]);
 
   const handleReverse = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length < 2) return;
     const sorted = [...entries].sort((a, b) => a.startBeats - b.startBeats);
     const reversed = [...sorted].reverse();
-    const moves = sorted.map((orig, i) => {
-      const rev = reversed[i];
-      return { objectId: orig.objectId, targetStartBeats: rev.startBeats };
-    });
-    moveScoreObjects(moves);
-  }, [getSelectedEntries, moveScoreObjects]);
+    commitMoves(
+      sorted.map((entry, i) => ({
+        entry,
+        targetStartBeats: reversed[i].startBeats,
+      })),
+    );
+  }, [commitMoves, getSelectedEntries]);
+
+  const handleShift = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0) return;
+    setShowShiftDialog(true);
+  }, [getSelectedEntries]);
+
+  const handleConfirmShift = useCallback(
+    (amount: number) => {
+      const entries = getSelectedEntries();
+      if (entries.length === 0) return;
+      commitMoves(
+        entries.map((entry) => ({
+          entry,
+          targetStartBeats: entry.startBeats + amount,
+        })),
+      );
+    },
+    [commitMoves, getSelectedEntries],
+  );
+
+  const minStartBeats = useMemo(() => {
+    const entries = getSelectedEntries();
+    return entries.length > 0 ? Math.min(...entries.map((e) => e.startBeats)) : 0;
+  }, [getSelectedEntries]);
 
   const handleSelectAll = useCallback(() => {
     setSelection(collectAllItemSelectionEntries(group));
@@ -1443,18 +1644,41 @@ export default function ScoreTimeCanvas({
             setContextMenuOnObject(!!item);
             setContextMenuObjectType(item?.editorTarget?.selectedObjectType ?? item?.objectType ?? null);
             lastLibraryTargetRef.current = hit ? buildLibraryTarget(hit.index, xBeats) : null;
+            if (item && hit) {
+              const bounds = e.currentTarget.getBoundingClientRect();
+              const rowHeight = hit.layer.height || DEFAULT_ROW_HEIGHT;
+              colorPickerAnchorRef.current = {
+                left: e.clientX,
+                right: e.clientX,
+                top: bounds.top + hit.yOffset,
+                bottom: bounds.top + hit.yOffset + rowHeight,
+              };
+            } else {
+              colorPickerAnchorRef.current = null;
+            }
+            if (item && !selectedObjectIds.has(item.objectId)) {
+              select(item.objectId, false, item.editorTarget);
+            }
           }}
         >
-          {group.layers.map((layer: ScoreLayerSnapshot) => (
-            <div
-              key={layer.layerId}
-              className="relative"
-              style={{
-                height: layer.height || DEFAULT_ROW_HEIGHT,
-                backgroundColor: 'var(--color-app-canvas)',
-                borderBottom: '1px solid #2a2a2a',
-              }}
-            >
+          <ScoreObjectColorPicker ref={colorPickerRef} onSelect={handleColorSelected} />
+          {group.layers.map((layer: ScoreLayerSnapshot) => {
+            const isLayerSelected = selectedLayerKeys.has(
+              buildSelectionKey(group.groupId, getLayerSelectionId(layer)),
+            );
+            return (
+              <div
+                key={layer.layerId}
+                data-timeline-layer-row
+                aria-selected={isLayerSelected ? 'true' : 'false'}
+                data-selected-layer={isLayerSelected ? 'true' : undefined}
+                className="relative"
+                style={{
+                  height: layer.height || DEFAULT_ROW_HEIGHT,
+                  backgroundColor: 'var(--color-app-canvas)',
+                  borderBottom: '1px solid var(--color-app-timeline-divider)',
+                }}
+              >
               <SnapLinesLayer
                 layerId={layer.layerId}
                 contentWidth={contentWidth}
@@ -1498,7 +1722,8 @@ export default function ScoreTimeCanvas({
                 />
               )}
             </div>
-          ))}
+            );
+          })}
 
           {marqueeStyle && (
             <div
@@ -1551,11 +1776,19 @@ export default function ScoreTimeCanvas({
               onRemove={handleRemove}
               onFollowTheLeader={handleFollowTheLeader}
               onReverse={handleReverse}
+              onShift={handleShift}
               onSetColor={handleSetColor}
+              onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
+              canSetObjectiveDuration={canSetObjectiveDuration}
+              onReplaceWithBuffer={handleReplaceWithBuffer}
+              canReplaceWithBuffer={clipboard.length === 1}
               onFreezeUnfreeze={handleFreezeUnfreeze}
-              onCancelFreeze={handleCancelFreeze}
-              freezeBusy={freezeBusy}
-              freezeProgress={freezeProgress}
+              onExport={handleExport}
+              canExport={canExport}
+              onConvertToObjectBuilder={handleConvertToObjectBuilder}
+              canConvertToObjectBuilder={canConvertToObjectBuilder}
+              onConvertToPolyObject={handleConvertToPolyObject}
+              canConvertToPolyObject={canConvertToPolyObject}
             />
           ) : (
             <EmptyAreaContextMenu
@@ -1563,21 +1796,63 @@ export default function ScoreTimeCanvas({
               sepClass={sepClass}
               clipboard={clipboard}
               libraryClipboardAvailable={librarySoundObjectAvailable}
+              libraryBsbAvailable={libraryBsbAvailable}
               contextMenuPos={contextMenuPos}
               group={group}
               onPaste={handleContextMenuPaste}
+              onPasteAsPolyObject={handlePasteAsPolyObject}
               onLibraryPaste={pasteLibraryAtContext}
+              onPasteBsb={pasteBsbAtContext}
               snapBeatValue={snapBeatValueStart}
               addScoreObjects={addScoreObjects}
+              onSelectLayer={handleSelectLayer}
+              onSelectAllBefore={handleSelectAllBefore}
+              onSelectAllAfter={handleSelectAllAfter}
+              onImport={handleImport}
             />
           )}
         </ContextMenu.Content>
       </ContextMenu.Portal>
+      {showShiftDialog && (
+        <ShiftObjectsDialog
+          onConfirm={handleConfirmShift}
+          onClose={() => setShowShiftDialog(false)}
+          minStartBeats={minStartBeats}
+        />
+      )}
+      {pendingConvertTarget && (
+        <ConfirmationDialog
+          open={true}
+          title="Convert to ObjectBuilder?"
+          description="This operation can not be undone. Are you sure?"
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            { id: 'convert', label: 'Convert', intent: 'destructive' },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'convert' && pendingConvertTarget) {
+              const currentTarget = findEditorTarget(pendingConvertTarget.target.selectionId);
+              if (
+                pendingConvertTarget.projectSessionId === projectSessionId
+                && pendingConvertTarget.projectRevision === projectRevision
+                && currentTarget?.selectionId === pendingConvertTarget.target.selectionId
+                && sameTarget(currentTarget, pendingConvertTarget.target)
+              ) {
+                void applyProjectDocumentPatch({
+                  score: { type: 'convertScoreObjectToObjectBuilder', target: currentTarget },
+                });
+              }
+            }
+            setPendingConvertTarget(null);
+          }}
+        />
+      )}
     </ContextMenu.Root>
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder, onConvertToPolyObject, canConvertToPolyObject }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1591,13 +1866,20 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onRemove: () => void;
   onFollowTheLeader: () => void;
   onReverse: () => void;
+  onShift: () => void;
   onSetColor: () => void;
+  onSetSubjectiveToObjective: () => void;
+  canSetObjectiveDuration: boolean;
+  onReplaceWithBuffer: () => void;
+  canReplaceWithBuffer: boolean;
   onFreezeUnfreeze: () => void;
-  onCancelFreeze: () => void;
-  freezeBusy: boolean;
-  freezeProgress: number | null;
+  onExport: () => void;
+  canExport: boolean;
+  onConvertToObjectBuilder: () => void;
+  canConvertToObjectBuilder: boolean;
+  onConvertToPolyObject: () => void;
+  canConvertToPolyObject: boolean;
 }) {
-  const ni = () => alert('Not yet implemented');
   return (
     <>
       <ContextMenu.Item
@@ -1608,19 +1890,25 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
         Add to Project SoundObjects
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={freezeBusy ? onCancelFreeze : onFreezeUnfreeze}>
-        {freezeBusy
-          ? `Cancel Freeze/Unfreeze${freezeProgress === null ? '' : ` (${Math.round(freezeProgress)}%)`}`
-          : 'Freeze/Unfreeze ScoreObjects'}
+      <ContextMenu.Item className={menuItemClass} onSelect={onFreezeUnfreeze}>
+        Freeze/Unfreeze ScoreObjects
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item
+        className={menuItemClass}
+        disabled={!canConvertToPolyObject}
+        onSelect={onConvertToPolyObject}
+      >
         Convert to PolyObject
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item
+        className={menuItemClass}
+        disabled={!canConvertToObjectBuilder}
+        onSelect={onConvertToObjectBuilder}
+      >
         Convert to ObjectBuilder
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canReplaceWithBuffer} onSelect={onReplaceWithBuffer}>
         Replace with SoundObject in Buffer
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
@@ -1632,7 +1920,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       </ContextMenu.Item>
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
-          Align
+          <span>Align</span>
+          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className={subMenuClass}>
@@ -1642,49 +1931,54 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} onSelect={onShift}>
         Shift…
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canSetObjectiveDuration} onSelect={onSetSubjectiveToObjective}>
         Set Subjective Time to Objective Time
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onCut}>
-        Cut<span className="float-right text-blue-muted text-tiny ml-4">⌘X</span>
+        Cut<span className="float-right text-blue-muted text-role-callout ml-4">⌘X</span>
       </ContextMenu.Item>
       <ContextMenu.Item className={menuItemClass} onSelect={onCopy}>
-        Copy<span className="float-right text-blue-muted text-tiny ml-4">⌘C</span>
+        Copy<span className="float-right text-blue-muted text-role-callout ml-4">⌘C</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onRemove}>
-        Remove<span className="float-right text-blue-muted text-tiny ml-4">Del</span>
+        Remove<span className="float-right text-blue-muted text-role-callout ml-4">Del</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onSetColor}>
         Set Color…
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
+      <ContextMenu.Item className={menuItemClass} disabled={!canExport} onSelect={onExport}>
         Export…
       </ContextMenu.Item>
     </>
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, contextMenuPos, group, onPaste, onLibraryPaste, snapBeatValue, addScoreObjects }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, libraryBsbAvailable, contextMenuPos, group, onPaste, onPasteAsPolyObject, onLibraryPaste, onPasteBsb, snapBeatValue, addScoreObjects, onSelectLayer, onSelectAllBefore, onSelectAllAfter, onImport }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
   libraryClipboardAvailable: boolean;
+  libraryBsbAvailable: boolean;
   contextMenuPos: { xBeats: number; layerIndex: number } | null;
   group: PolyObjectLayerGroupSnapshot;
   onPaste: () => void;
+  onPasteAsPolyObject: () => void;
   onLibraryPaste: () => void;
+  onPasteBsb: () => void;
   snapBeatValue: (b: number) => number;
   addScoreObjects: (objects: ScorePasteObject[]) => void;
+  onSelectLayer: () => void;
+  onSelectAllBefore: () => void;
+  onSelectAllAfter: () => void;
+  onImport: () => void;
 }) {
-  const ni = () => alert('Not yet implemented');
-
   const handleAddSobj = (typeName: string) => {
     if (contextMenuPos == null) return;
     const isContainer = typeName === 'PolyObject';
@@ -1722,7 +2016,8 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
     <>
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
-          Add SoundObject
+          <span>Add SoundObject</span>
+          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="editor-context-menu">
@@ -1739,33 +2034,45 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
         </ContextMenu.Portal>
       </ContextMenu.Sub>
       <ContextMenu.Separator className={sepClass} />
-      {(libraryClipboardAvailable || clipboard.length > 0) && (
+      {(libraryClipboardAvailable || libraryBsbAvailable || clipboard.length > 0) && (
         <>
-          <ContextMenu.Item className={menuItemClass} onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}>
-            Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
+          <ContextMenu.Item
+            className={menuItemClass}
+            disabled={!libraryClipboardAvailable && clipboard.length === 0}
+            onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}
+          >
+            Paste<span className="float-right text-blue-muted text-role-callout ml-4">⌘V</span>
           </ContextMenu.Item>
           {clipboard.length > 0 && (
-            <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+            <ContextMenu.Item
+              className={menuItemClass}
+              disabled={clipboard.some((entry) => entry.objectType === 'AudioClip')}
+              onSelect={onPasteAsPolyObject}
+            >
               Paste as PolyObject
             </ContextMenu.Item>
           )}
-          <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
-            Paste BSB as Sound
+          <ContextMenu.Item
+            className={menuItemClass}
+            disabled={!libraryBsbAvailable}
+            onSelect={onPasteBsb}
+          >
+            Paste BSB As Sound
           </ContextMenu.Item>
           <ContextMenu.Separator className={sepClass} />
         </>
       )}
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectLayer}>
         Select Layer
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectAllBefore}>
         Select All Before
       </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} disabled={!contextMenuPos} onSelect={onSelectAllAfter}>
         Select All After
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+      <ContextMenu.Item className={menuItemClass} onSelect={onImport}>
         Import…
       </ContextMenu.Item>
     </>
@@ -1803,7 +2110,7 @@ function SnapLinesLayer({ layerId, contentWidth, lineXPositions, height }: {
         d={pathData}
         fill="none"
         shapeRendering="crispEdges"
-        stroke="rgba(64, 64, 64, 1)"
+        stroke="var(--color-app-timeline-grid)"
         strokeWidth="1"
         vectorEffect="non-scaling-stroke"
       />

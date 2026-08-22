@@ -13,12 +13,15 @@
  *   1. Java helper outputs (blue-java.jar, pythonLib) produced by @blue/java-runtime.
  *   2. Externalized workspace runtime packages (@blue/data, @blue/engine-client,
  *      @blue/java-runtime) that the Vite main bundle leaves un-bundled.
- *   3. Built Electron entries (dist/main, dist/preload, dist/renderer) that
- *      electron-builder consumes from packages/blue-app.
+ *   3. Built Electron entries (dist/main, dist/preload, dist/renderer,
+ *      dist/shared) that electron-builder consumes from packages/blue-app.
  *   4. The Electron version declared in packages/blue-app/package.json matches
  *      the pinned runtime constraint (35.7.5) used for native-module rebuilds.
  *   5. Native ZeroMQ (.node) availability for the host runtime so packaging
  *      does not silently ship an app that cannot load `zeromq`.
+ *   6. The macOS nested-engine entitlement required for future signed builds.
+ *   7. Generated release metadata with a matching app version, build channel,
+ *      build date, full source revision, and release fields.
  *
  * Exit codes:
  *   0 - all inputs are present and consistent.
@@ -26,7 +29,16 @@
  *       are written to stderr; no secret material is ever logged.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { constants } from 'node:fs';
+import {
+  accessSync,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +48,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '..');
 const appRoot = join(repoRoot, 'packages', 'blue-app');
+const engineStageRoot = join(appRoot, '.engine-stage');
+const releaseMetadataPath = join(appRoot, 'release-metadata.json');
+const engineProtocolVersion = 2;
 
 /** @typedef {{ ok: boolean, code: string, message: string, detail?: string[] }} Diagnostic */
 
@@ -73,6 +88,133 @@ function checkPath(label, filePath, kind = 'file') {
       message: `${label}: missing or inaccessible at ${filePath}`,
     };
   }
+}
+
+export function resolvePackageTarget(
+  argv = process.argv.slice(2),
+  platform = process.platform,
+  arch = process.arch,
+) {
+  const index = argv.indexOf('--target');
+  const key = index === -1 ? `${platform}-${arch}` : argv[index + 1];
+  const supported = new Set(['darwin-arm64', 'darwin-x64', 'win32-x64', 'linux-x64']);
+  if (!key || !supported.has(key)) {
+    throw new Error(`BLUE_ENGINE_UNSUPPORTED_TARGET: ${key ?? '(missing)'}`);
+  }
+  const separator = key.lastIndexOf('-');
+  return {
+    key,
+    platform: key.slice(0, separator),
+    arch: key.slice(separator + 1),
+    executableName: key.startsWith('win32-') ? 'blue-engine.exe' : 'blue-engine',
+  };
+}
+
+export function checkStagedBlueEngine({
+  stageRoot = engineStageRoot,
+  target = resolvePackageTarget(),
+  expectedRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  }).trim(),
+  ci = process.env.CI === 'true',
+} = {}) {
+  let entries;
+  try {
+    entries = readdirSync(stageRoot).sort();
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_STAGE_MISSING',
+      message: `Bundled Blue Engine stage is missing at ${stageRoot}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  const expectedEntries = ['artifact.json', target.executableName].sort();
+  if (entries.length !== expectedEntries.length ||
+      entries.some((entry, index) => entry !== expectedEntries[index])) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_STAGE_CONTENTS',
+      message: `Blue Engine stage must contain exactly ${expectedEntries.join(', ')}`,
+      detail: entries,
+    };
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(join(stageRoot, 'artifact.json'), 'utf8'));
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_MANIFEST_INVALID',
+      message: 'Bundled Blue Engine manifest is missing or invalid',
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (manifest.schemaVersion !== 1 ||
+      manifest.protocolVersion !== engineProtocolVersion ||
+      manifest.platform !== target.platform ||
+      manifest.arch !== target.arch ||
+      manifest.executableName !== target.executableName) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_MANIFEST_MISMATCH',
+      message: `Bundled Blue Engine manifest does not match ${target.key} protocol ${engineProtocolVersion}`,
+    };
+  }
+  if (typeof manifest.sourceRevision !== 'string') {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_SOURCE_REVISION_INVALID',
+      message: 'Bundled Blue Engine manifest has no source revision',
+    };
+  }
+  const dirtyRevision = manifest.sourceRevision.startsWith('dirty:');
+  const revision = dirtyRevision ? manifest.sourceRevision.slice('dirty:'.length) : manifest.sourceRevision;
+  if (revision !== expectedRevision || (ci && dirtyRevision)) {
+    return {
+      ok: false,
+      code: dirtyRevision && ci
+        ? 'BLUE_ENGINE_DIRTY_CI_REVISION'
+        : 'BLUE_ENGINE_SOURCE_REVISION_MISMATCH',
+      message: `Bundled Blue Engine revision ${manifest.sourceRevision} does not match ${expectedRevision}`,
+    };
+  }
+
+  const executablePath = join(stageRoot, target.executableName);
+  let stats;
+  try {
+    stats = statSync(executablePath);
+    accessSync(executablePath, target.platform === 'win32' ? constants.R_OK : constants.X_OK);
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_NOT_EXECUTABLE',
+      message: `Bundled Blue Engine is missing or non-executable at ${executablePath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (!stats.isFile()) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_NOT_EXECUTABLE',
+      message: `Bundled Blue Engine is not a file at ${executablePath}`,
+    };
+  }
+  const hash = createHash('sha256').update(readFileSync(executablePath)).digest('hex');
+  if (hash !== manifest.sha256) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_HASH_MISMATCH',
+      message: 'Bundled Blue Engine hash does not match artifact.json',
+    };
+  }
+  return {
+    ok: true,
+    code: 'OK',
+    message: `Bundled Blue Engine: ${executablePath} (${target.key}, protocol ${engineProtocolVersion})`,
+  };
 }
 
 /**
@@ -132,7 +274,115 @@ function checkBuiltElectronEntries() {
     checkPath('Electron main bundle', join(appRoot, 'dist', 'main', 'main.js'), 'file'),
     checkPath('Electron preload bundle', join(appRoot, 'dist', 'preload', 'preload.js'), 'file'),
     checkPath('Electron renderer output', join(appRoot, 'dist', 'renderer', 'index.html'), 'file'),
+    checkPath(
+      'Electron shared runtime output',
+      join(appRoot, 'dist', 'shared', 'window-layout-settings.js'),
+      'file',
+    ),
+    checkPath(
+      'macOS Blue Engine entitlements',
+      join(appRoot, 'build', 'entitlements.blue-engine.mac.plist'),
+      'file',
+    ),
   ];
+}
+
+/**
+ * Verifies the generated metadata that the About dialog reads from packaged
+ * application resources. The source revision is deliberately required to be
+ * a full Git hash so packaged builds never present an abbreviated identity.
+ *
+ * @param {{ metadataPath?: string, packagePath?: string, expectedChannel?: string }} [options]
+ * @returns {Diagnostic}
+ */
+export function checkReleaseMetadata({
+  metadataPath = releaseMetadataPath,
+  packagePath = join(appRoot, 'package.json'),
+  expectedChannel = process.env.BLUE_RELEASE_CHANNEL,
+} = {}) {
+  let metadata;
+  try {
+    metadata = JSON.parse(readFileSync(metadataPath, 'utf8'));
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_MISSING',
+      message: `Release metadata is missing or invalid at ${metadataPath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+
+  if (metadata === null || typeof metadata !== 'object') {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_INVALID',
+      message: `Release metadata must be an object at ${metadataPath}`,
+    };
+  }
+
+  const channel = metadata.channel;
+  if (channel !== 'development' && channel !== 'stable') {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_CHANNEL_INVALID',
+      message: `Release metadata channel must be development or stable at ${metadataPath}`,
+    };
+  }
+  if (expectedChannel !== undefined && expectedChannel !== channel) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_CHANNEL_MISMATCH',
+      message: `Release metadata channel ${channel} does not match BLUE_RELEASE_CHANNEL=${expectedChannel}`,
+    };
+  }
+
+  let packageVersion;
+  try {
+    packageVersion = JSON.parse(readFileSync(packagePath, 'utf8')).version;
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'PACKAGE_JSON_INVALID',
+      message: `Could not read app version from ${packagePath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (typeof packageVersion !== 'string' || metadata.appVersion !== packageVersion) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_VERSION_MISMATCH',
+      message: `Release metadata appVersion ${String(metadata.appVersion)} does not match ${packageVersion}`,
+    };
+  }
+  if (typeof metadata.sourceRevision !== 'string' || !/^[0-9a-f]{40}$/i.test(metadata.sourceRevision)) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_REVISION_INVALID',
+      message: 'Release metadata sourceRevision must be a full 40-character Git hash',
+    };
+  }
+  if (typeof metadata.generatedAt !== 'string' || Number.isNaN(Date.parse(metadata.generatedAt))) {
+    return {
+      ok: false,
+      code: 'RELEASE_METADATA_DATE_INVALID',
+      message: 'Release metadata generatedAt must be a valid date string',
+    };
+  }
+  for (const field of ['releaseVersion', 'releaseName', 'releaseNotes']) {
+    if (typeof metadata[field] !== 'string' || metadata[field].trim().length === 0) {
+      return {
+        ok: false,
+        code: 'RELEASE_METADATA_FIELD_MISSING',
+        message: `Release metadata field ${field} must be a non-empty string`,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    code: 'OK',
+    message: `Release metadata: ${metadataPath} (${channel}, ${metadata.sourceRevision})`,
+  };
 }
 
 /**
@@ -335,16 +585,24 @@ function checkViteExternalizationContract() {
   };
 }
 
-function main() {
+export function collectPackageInputDiagnostics({
+  target = resolvePackageTarget(),
+} = {}) {
   /** @type {Diagnostic[]} */
-  const diagnostics = [
+  return [
     ...checkJavaHelperOutputs(),
     ...checkExternalizedWorkspacePackages(),
     ...checkBuiltElectronEntries(),
+    checkReleaseMetadata(),
+    checkStagedBlueEngine({ target }),
     checkElectronVersion(),
     checkNativeZeroMQ(),
     checkViteExternalizationContract(),
   ];
+}
+
+function main() {
+  const diagnostics = collectPackageInputDiagnostics();
 
   for (const diagnostic of diagnostics) {
     const prefix = diagnostic.ok ? '[ok]' : '[FAIL]';
@@ -367,4 +625,6 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}

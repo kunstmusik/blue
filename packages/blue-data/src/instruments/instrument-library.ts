@@ -98,4 +98,15 @@ export class InstrumentLibrary {
 
     return lib;
   }
+
+  /**
+   * Deep-copy the instrument library so the copy shares no mutable
+   * references with the original. Delegates to
+   * {@link InstrumentCategory.deepCopy} for the recursive tree copy.
+   */
+  deepCopy(): InstrumentLibrary {
+    const copy = new InstrumentLibrary();
+    copy._rootCategory = this._rootCategory.deepCopy();
+    return copy;
+  }
 }

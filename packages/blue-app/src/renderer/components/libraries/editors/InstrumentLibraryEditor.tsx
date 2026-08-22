@@ -12,5 +12,13 @@ export function InstrumentLibraryEditor({ snapshot, onPatch }: InstrumentLibrary
   const handlePatch = useCallback((patch: OrchestraPatch) => {
     onPatch({ kind: 'instrument', patch });
   }, [onPatch]);
-  return <InstrumentEditorPanel instrument={snapshot} onOrchestraPatch={handlePatch} />;
+  return (
+    <InstrumentEditorPanel
+      instrument={snapshot}
+      // Library assets are edited independently of any open project; force an
+      // empty project UDO scope so an unrelated project's UDOs never leak in.
+      projectUdos={[]}
+      onOrchestraPatch={handlePatch}
+    />
+  );
 }

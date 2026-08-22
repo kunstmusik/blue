@@ -116,9 +116,9 @@ describe('Processor serialization parity', () => {
 });
 
 describe('Catalog completeness', () => {
-  it('catalog contains all 16 in-scope processor types', () => {
+  it('catalog contains all 17 in-scope processor types', () => {
     const catalog = getNoteProcessorCatalog();
-    expect(catalog).toHaveLength(16);
+    expect(catalog).toHaveLength(17);
     const types = catalog.map((d) => d.type);
     expect(types).toContain('AddProcessor');
     expect(types).toContain('MultiplyProcessor');
@@ -136,13 +136,13 @@ describe('Catalog completeness', () => {
     expect(types).toContain('LineAddProcessor');
     expect(types).toContain('LineMultiplyProcessor');
     expect(types).toContain('TuningProcessor');
+    expect(types).toContain('PythonProcessor');
   });
 
-  it('catalog does not include Code or PythonProcessor', () => {
+  it('catalog does not include legacy Code', () => {
     const catalog = getNoteProcessorCatalog();
     const types = catalog.map((d) => d.type);
     expect(types).not.toContain('Code');
-    expect(types).not.toContain('PythonProcessor');
   });
 
   it('catalog is sorted by Java plugin position', () => {

@@ -73,6 +73,9 @@ export class Channel implements BlueDataObject {
   }
   setLevel(v: number): void {
     this._level = v;
+    if (!this._levelParameter.isAutomationEnabled()) {
+      this._levelParameter.setFixedValue(v);
+    }
   }
 
   getVolume(): number {

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Agent-context synchronization is intentionally disabled in this repository.
+# AGENTS.md is manually curated; do not regenerate it from historical plans.
+echo "Agent context updates are disabled; edit AGENTS.md manually." >&2
+exit 0
+
 # Update agent context files with information from plan.md
 #
 # This script maintains AI agent context files by parsing feature specifications 

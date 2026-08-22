@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useProjectStore } from '../stores/project-store';
 import { useMidiInputStore } from '../stores/midi-input-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
 import { MidiInputService } from '../services/midi-input-service';
 import {
   MidiNoteRouter,
@@ -48,7 +49,16 @@ export function useMidiInputService(): void {
     const allNotesOff: BlueLiveAllNotesOffFn = () =>
       blueAPI.sendBlueLiveAllNotesOff() as Promise<{ ok: boolean; message?: string }>;
 
-    const router = new MidiNoteRouter({ trigger, allNotesOff, isLiveActive });
+    // Spec 067: resolve the routing target and current Blue Live session id at
+    // note-on from the shared focus authority. Returns null to fail closed.
+    const resolveTarget = (channel: number) => {
+      const liveSessionId = useBlueLiveStore.getState().sessionId;
+      const target = useMidiRoutingStore.getState().resolveTargetForNote(channel);
+      if (!target) return null;
+      return { target, liveSessionId };
+    };
+
+    const router = new MidiNoteRouter({ trigger, allNotesOff, isLiveActive, resolveTarget });
     _installVirtualKeyboardRouter(router);
 
     const routeNote = (event: MidiNoteEvent): Promise<MidiNoteRouteResult> =>
@@ -110,6 +120,9 @@ export function useMidiInputService(): void {
         || (previous.loaded && !state.loaded)
       ) {
         releaseAtSessionBoundary();
+        // Spec 067: project replacement clears focus before the new session can
+        // route notes. Blue Live restart does not clear focus.
+        useMidiRoutingStore.getState().clearFocusForProjectSession(previous.sessionId);
       }
     });
 
@@ -202,19 +215,8 @@ export async function routeVirtualKeyboardNote(
 ): Promise<MidiNoteRouteResult> {
   const router = globalVirtualKeyboardRouter;
   if (!router) {
-    // Fallback: direct Blue Live trigger when the router is not yet mounted.
-    if (window.blueAPI?.triggerBlueLiveNote) {
-      const result = await window.blueAPI.triggerBlueLiveNote({
-        type: event.type,
-        midiNote: event.midiNote,
-        velocity: event.velocity,
-        channel: event.channel,
-        source: event.source,
-        sourceId: `${PRIMARY_VIRTUAL_SOURCE}:${event.source}`,
-        timestamp: event.timestamp,
-      });
-      return { accepted: result.ok, message: result.message };
-    }
+    // Spec 067: no direct-trigger fallback that bypasses shared routing. Fail
+    // closed until the host hook mounts the router.
     return { accepted: false, message: 'No router available' };
   }
   return router.routeNote({

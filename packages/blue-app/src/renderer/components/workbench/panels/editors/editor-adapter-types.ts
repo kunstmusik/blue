@@ -1,4 +1,5 @@
 import type { Completion } from '@codemirror/autocomplete';
+import type { CodeRepositoryNode } from '@blue/data';
 
 export type SelectedEditorKind = 'codemirror';
 
@@ -14,7 +15,12 @@ export type DynamicCsoundCompletionProvider = (
   context: CsoundCompletionContext,
 ) => Completion[] | Promise<Completion[]>;
 
-export type CsoundEditorCommand = 'cut' | 'copy' | 'paste' | 'evaluate-code';
+export type CsoundEditorCommand =
+  | 'cut'
+  | 'copy'
+  | 'paste'
+  | 'evaluate-code'
+  | 'add-to-code-repository';
 
 export interface CsoundEditorSeparatorItem {
   kind: 'separator';
@@ -69,9 +75,27 @@ export interface JavaBlueBsbReplacementKey {
   objectType?: string;
 }
 
+/**
+ * Lightweight, signature-bearing UDO definition accepted by the reusable
+ * Csound completion adapter. Code and comments are deliberately excluded;
+ * completion consumes only the authored name and callable-signature fields.
+ */
+export interface JavaBlueUdoCompletionDefinition {
+  name: string;
+  style: 'CLASSIC' | 'MODERN';
+  outTypes: string;
+  /** Classic-style input declaration; empty for modern style. */
+  inTypes: string;
+  /** Modern-style input declaration; empty for classic style. */
+  inputArguments: string;
+}
+
 export interface JavaBlueCsoundCompletionOptions {
   bsbReplacementKeys?: JavaBlueBsbReplacementKey[];
-  projectOpcodeNames?: string[];
+  /** UDO definitions owned by the active instrument, Sound, or effect context. */
+  contextUdos?: readonly JavaBlueUdoCompletionDefinition[];
+  /** Project-global UDO definitions shown in the Global UDO panel. */
+  projectUdos?: readonly JavaBlueUdoCompletionDefinition[];
 }
 
 export interface SelectedCodeEditorProps {
@@ -86,6 +110,10 @@ export interface SelectedCodeEditorProps {
   contextMenuItems?: CsoundEditorMenuItem[];
   evaluateCodeEnabled?: boolean;
   onEvaluateCode?: (text: string) => void;
+  /** Repository root for the Custom submenu; null disables it. */
+  codeRepositoryRoot?: CodeRepositoryNode | null;
+  /** Callback invoked when the user adds the current selection to the repository. */
+  onAddToCodeRepository?: (selectedText: string) => void;
   onChange: (value: string) => void | Promise<void>;
 }
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { X, ArrowUp, ArrowDown, HelpCircle } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { TrackerColumnSnapshot } from '../../../../../../shared/project-editor';
 import GeneratedScoreModal from './GeneratedScoreModal';
@@ -56,13 +57,13 @@ const COL_TYPE_NUM = 4;
 
 const TRACKER_MODAL_PANEL_CLASS = 'flex flex-col rounded-lg border border-app-border bg-app-menu shadow-2xl overflow-hidden';
 const TRACKER_MODAL_HEADER_CLASS = 'flex items-center justify-between border-b border-app-border px-4 py-3 bg-app-bg';
-const TRACKER_MODAL_TITLE_CLASS = 'text-sm font-medium text-app-text-strong';
-const TRACKER_MODAL_CLOSE_BUTTON_CLASS = 'px-2 text-lg leading-none text-app-text-muted hover:text-app-text-strong';
+const TRACKER_MODAL_TITLE_CLASS = 'text-role-title-2 font-bold text-app-text-strong';
+const TRACKER_MODAL_CLOSE_BUTTON_CLASS = 'rounded p-1 text-app-text-muted hover:bg-app-hover hover:text-app-text-strong';
 const TRACKER_MODAL_FOOTER_CLASS = 'flex justify-end gap-2 border-t border-app-border px-4 py-3 bg-app-bg';
-const TRACKER_PRIMARY_BUTTON_CLASS = 'rounded bg-app-accent px-4 py-1.5 text-body text-app-text-strong hover:bg-app-accent-hover';
-const TRACKER_SECONDARY_BUTTON_CLASS = 'rounded border border-app-border bg-app-surface px-4 py-1.5 text-body text-app-text transition-colors hover:bg-app-hover';
-const TRACKER_SECTION_LABEL_CLASS = 'text-tiny font-bold uppercase tracking-wider text-app-text-muted';
-const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none';
+const TRACKER_PRIMARY_BUTTON_CLASS = 'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
+const TRACKER_SECONDARY_BUTTON_CLASS = 'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
+const TRACKER_SECTION_LABEL_CLASS = 'text-role-headline font-bold uppercase tracking-wider text-app-text-muted';
+const TRACKER_FIELD_CLASS = 'rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none';
 const TRACKER_MONO_FIELD_CLASS = `${TRACKER_FIELD_CLASS} font-mono`;
 const TRACKER_CHECKBOX_CLASS = 'rounded border-app-border bg-app-input accent-app-accent focus:ring-0';
 const TRACKER_PANEL_ACTIVE_CLASS = 'border-app-border bg-app-canvas';
@@ -199,12 +200,13 @@ function ShortcutHelpModal({ onClose }: { onClose: () => void }): React.ReactEle
           <button
             className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
             onClick={onClose}
+            aria-label="Close"
           >
-            x
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="p-4 max-h-[70vh] overflow-y-auto">
-          <table className="w-full text-body">
+          <table className="w-full text-role-body">
             <tbody>
               {SHORTCUT_HELP.map(([key, desc], i) => (
                 <tr key={i} className={desc ? '' : 'h-2'}>
@@ -424,8 +426,9 @@ function ColumnConfigModal({
           <button
             className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
             onClick={onClose}
+            aria-label="Close"
           >
-            x
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="flex flex-col gap-4 p-5 max-h-[70vh] overflow-y-auto">
@@ -435,7 +438,7 @@ function ColumnConfigModal({
               {COLUMN_TYPES.map((typeOption) => (
                 <label
                   key={typeOption.value}
-                  className={`flex items-center gap-2 rounded border px-2 py-1.5 text-body ${
+                  className={`flex items-center gap-2 rounded border px-2 py-1.5 text-role-body ${
                     draft.type === typeOption.value
                       ? 'border-app-accent bg-app-accent/10 text-app-text-strong'
                       : 'border-app-border bg-app-overlay text-app-text-muted'
@@ -458,7 +461,7 @@ function ColumnConfigModal({
           <div className={`flex flex-col gap-2 rounded border p-3 ${isBluePch ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS}`}>
             <div className={TRACKER_SECTION_LABEL_CLASS}>Blue PCH</div>
             <div className="flex items-center gap-2">
-              <span className="w-20 text-ui text-app-text-muted">Scale</span>
+              <span className="w-20 text-role-body text-app-text-muted">Scale</span>
               <input
                 className={`flex-1 ${TRACKER_FIELD_CLASS}`}
                 value={scale.scaleName}
@@ -466,7 +469,7 @@ function ColumnConfigModal({
                 disabled={!isBluePch}
               />
               <button
-                className="rounded border border-app-border bg-app-input px-2 py-1 text-body text-app-text hover:border-app-accent disabled:opacity-50"
+                className="rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text hover:border-app-accent disabled:opacity-50"
                 onClick={handleChooseScale}
                 disabled={!isBluePch}
               >
@@ -474,7 +477,7 @@ function ColumnConfigModal({
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-20 text-ui text-app-text-muted">Base Freq</span>
+              <span className="w-20 text-role-body text-app-text-muted">Base Freq</span>
               <input
                 className={`flex-1 ${TRACKER_FIELD_CLASS} disabled:opacity-50`}
                 value={baseFreqText}
@@ -488,7 +491,7 @@ function ColumnConfigModal({
                 }}
               />
             </div>
-            <label className="flex items-center gap-2 text-body text-app-text">
+            <label className="flex items-center gap-2 text-role-body text-app-text">
               <input
                 type="checkbox"
                 className="accent-app-accent"
@@ -502,7 +505,7 @@ function ColumnConfigModal({
 
           <div className={`flex flex-col gap-2 rounded border p-3 ${isNumber ? TRACKER_PANEL_ACTIVE_CLASS : TRACKER_PANEL_INACTIVE_CLASS}`}>
             <div className={TRACKER_SECTION_LABEL_CLASS}>Number</div>
-            <label className="flex items-center gap-2 text-body text-app-text">
+            <label className="flex items-center gap-2 text-role-body text-app-text">
               <input
                 type="checkbox"
                 className="accent-app-accent"
@@ -520,7 +523,7 @@ function ColumnConfigModal({
               />
               Restrict to Integer
             </label>
-            <label className="flex items-center gap-2 text-body text-app-text">
+            <label className="flex items-center gap-2 text-role-body text-app-text">
               <input
                 type="checkbox"
                 className="accent-app-accent"
@@ -531,7 +534,7 @@ function ColumnConfigModal({
               Use Range
             </label>
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1">
-              <span className="text-ui text-app-text-muted">Min</span>
+              <span className="text-role-body text-app-text-muted">Min</span>
               <input
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
@@ -545,7 +548,7 @@ function ColumnConfigModal({
                   }
                 }}
               />
-              <span className="text-ui text-app-text-muted">Max</span>
+              <span className="text-role-body text-app-text-muted">Max</span>
               <input
                 type="number"
                 step={draft.restrictedToInteger ? 1 : 'any'}
@@ -668,8 +671,9 @@ function TrackPropertiesModal({
           <button
             className={TRACKER_MODAL_CLOSE_BUTTON_CLASS}
             onClick={onClose}
+            aria-label="Close"
           >
-            x
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="flex flex-col gap-6 p-6 max-h-[70vh] overflow-y-auto">
@@ -709,30 +713,30 @@ function TrackPropertiesModal({
               <label className={TRACKER_SECTION_LABEL_CLASS}>Columns</label>
               <button
                 onClick={handleAddColumn}
-                className="rounded border border-app-accent/30 bg-app-accent/20 px-2 py-0.5 text-tiny text-app-accent hover:bg-app-accent/30"
+                className="rounded border border-app-accent/30 bg-app-accent/20 px-2 py-0.5 text-role-callout text-app-accent hover:bg-app-accent/30"
               >
                 + Add Column
               </button>
             </div>
-            <div className="flex flex-col gap-2 rounded border border-app-border/40 bg-app-overlay p-2">
+            <div className="flex flex-col gap-2 rounded border border-app-border/40 bg-black p-2">
               {columns.length === 0 && (
-                <div className="py-2 text-center text-ui text-app-text-muted">No data columns</div>
+                <div className="py-2 text-center text-role-body text-app-text-muted">No data columns</div>
               )}
               {columns.map((column, index) => (
                 <div key={index} className="group grid grid-cols-[minmax(0,1fr)_280px_auto] items-center gap-2 rounded border border-app-border/20 bg-app-canvas px-2 py-1.5">
                   <input
                     type="text"
                     placeholder="Name"
-                    className="min-w-0 rounded border border-app-border bg-app-input px-2 py-1 text-ui text-app-text-strong focus:border-app-accent focus:outline-none"
+                    className="min-w-0 rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
                     value={column.name}
                     onChange={(e) => handleColumnNameChange(index, e.target.value)}
                   />
                   <div className="relative">
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap rounded border border-app-border bg-app-input px-2 py-1 pr-14 text-ui text-app-text-muted">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap rounded border border-app-border bg-app-input px-2 py-1 pr-14 text-role-body text-app-text-muted">
                       {getColumnSummary(column)}
                     </div>
                     <button
-                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded border border-app-border bg-app-overlay px-1.5 py-0.5 text-tiny text-app-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-app-accent"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded border border-app-border bg-app-overlay px-1.5 py-0.5 text-role-callout text-app-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-app-accent"
                       onClick={() => setEditingColumnIndex(index)}
                     >
                       Edit
@@ -740,27 +744,27 @@ function TrackPropertiesModal({
                   </div>
                   <div className="flex items-center gap-1">
                     <button
-                      className="w-6 rounded border border-app-border text-body text-app-text hover:border-app-accent disabled:opacity-40"
+                      className="flex h-6 w-6 items-center justify-center rounded border border-app-border text-role-body text-app-text hover:border-app-accent disabled:opacity-40"
                       onClick={() => moveColumn(index, -1)}
                       disabled={index === 0}
                       title="Move up"
                     >
-                      ↑
+                      <ArrowUp className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      className="w-6 rounded border border-app-border text-body text-app-text hover:border-app-accent disabled:opacity-40"
+                      className="flex h-6 w-6 items-center justify-center rounded border border-app-border text-role-body text-app-text hover:border-app-accent disabled:opacity-40"
                       onClick={() => moveColumn(index, 1)}
                       disabled={index === columns.length - 1}
                       title="Move down"
                     >
-                      ↓
+                      <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      className="w-6 rounded border border-app-border text-body text-app-danger hover:border-app-danger/60 hover:text-app-danger"
+                      className="flex h-6 w-6 items-center justify-center rounded border border-app-border text-role-body text-app-danger hover:border-app-danger/60 hover:text-app-danger"
                       onClick={() => handleRemoveColumn(index)}
                       title="Remove column"
                     >
-                      x
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1359,20 +1363,20 @@ export default function TrackerScoreObjectEditor({
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-app-border bg-app-bg px-3 py-1.5">
 
         <button
-          className="rounded border border-app-border px-2 py-0.5 text-ui font-medium text-app-text-muted hover:bg-app-outline-strong"
+          className="rounded border border-app-border px-2 py-0.5 text-role-body font-medium text-app-text-muted hover:bg-app-outline-strong"
           onClick={handleAddTrack}
           title="Add a new track"
         >
           + TRACK
         </button>
         <div className="h-4 w-px bg-app-border" />
-        <label className="flex items-center gap-1.5 text-ui font-medium text-app-text-muted">
+        <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>STEPS</span>
           <input
             type="number"
             min={1}
             max={2048}
-            className="w-16 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
+            className="w-16 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
             value={localSteps}
             onChange={handleStepsChange}
             onBlur={handleStepsBlur}
@@ -1380,20 +1384,20 @@ export default function TrackerScoreObjectEditor({
           />
         </label>
         <div className="h-4 w-px bg-app-border" />
-        <label className="flex items-center gap-1.5 text-ui font-medium text-app-text-muted">
+        <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>Steps per beat</span>
           <input
             type="number"
             min={1}
             max={64}
-            className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
+            className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
             value={spb}
             onChange={handleStepsPerBeatChange}
             title="STEPS PER BEAT"
           />
         </label>
         <div className="h-4 w-px bg-app-border" />
-        <label className="flex cursor-pointer items-center gap-1.5 text-ui font-medium text-app-text-muted">
+        <label className="flex cursor-pointer items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <input
             type="checkbox"
             className={TRACKER_CHECKBOX_CLASS}
@@ -1405,20 +1409,20 @@ export default function TrackerScoreObjectEditor({
           />
           <span>USE KEYBOARD NOTES</span>
         </label>
-        <label className="flex items-center gap-1.5 text-ui font-medium text-app-text-muted">
+        <label className="flex items-center gap-1.5 text-role-body font-medium text-app-text-muted">
           <span>OCTAVE</span>
           <input
             type="number"
             min={-8}
             max={8}
-            className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
+            className="w-12 rounded border border-app-border bg-app-input px-1.5 py-0.5 text-role-body font-mono text-app-text-strong focus:border-app-accent focus:outline-none"
             value={editor.octave}
             onChange={handleOctaveChange}
           />
         </label>
         <div className="h-4 w-px bg-app-border" />
         <button
-          className="ml-auto rounded border border-app-accent/40 bg-app-accent/20 px-3 py-0.5 text-ui font-bold text-app-accent hover:bg-app-accent/30 disabled:opacity-40"
+          className="ml-auto rounded border border-app-accent/40 bg-app-accent/20 px-3 py-0.5 text-role-body font-bold text-app-accent hover:bg-app-accent/30 disabled:opacity-40"
           disabled={!editor.canTest || testing}
           onClick={() => { void runTest(); }}
           title="Generate score from tracker and show results"
@@ -1429,20 +1433,21 @@ export default function TrackerScoreObjectEditor({
           className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-app-border text-app-text-muted transition-colors hover:border-app-accent/60 hover:bg-app-accent/10 hover:text-app-accent"
           title="Keyboard Shortcuts"
           onClick={() => setShowShortcutHelp(true)}
+          aria-label="Keyboard Shortcuts"
         >
-          <span className="text-ui font-bold leading-none">?</span>
+          <HelpCircle className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto bg-app-overlay">
+      <div className="flex-1 overflow-auto bg-black">
         {editor.tracks.length === 0 ? (
-          <div className="flex h-40 items-center justify-center text-body text-app-text-muted">
+          <div className="flex h-40 items-center justify-center text-role-body text-app-text-muted">
             No tracks -- click "+ TRACK" to add one
           </div>
         ) : (
           <table
             ref={gridRef}
-            className="border-collapse text-ui w-auto"
+            className="border-collapse text-role-body w-auto"
             style={{ tableLayout: 'fixed' }}
           >
             <colgroup><col style={{ width: 44 }} />{editor.tracks.map((t) => [<col key={`${t.trackId}-status`} style={{ width: 24 }} />, ...(t.columns ?? []).map((_, ci) => <col key={`${t.trackId}-col-${ci}`} style={{ width: 64 }} />)])}</colgroup>
@@ -1497,7 +1502,7 @@ export default function TrackerScoreObjectEditor({
                   </ContextMenu.Root>
                 ))}
               </tr>
-              <tr className="border-b border-app-border/60 bg-app-bg/40 text-micro uppercase text-app-text-muted/70">
+              <tr className="border-b border-app-border/60 bg-app-bg/40 text-role-headline font-bold uppercase text-app-text-muted/70">
                 <th className="border-r border-app-border/40 px-1 py-0.5 font-bold">Step</th>
                 {editor.tracks.map((track) => (
                   <React.Fragment key={track.trackId}>
@@ -1528,7 +1533,7 @@ export default function TrackerScoreObjectEditor({
                     }`}
                   >
                     <td
-                      className={`sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-tiny ${
+                      className={`sticky left-0 z-10 border-r border-app-border/40 bg-app-input px-1 py-0.5 text-center font-mono text-role-body ${
                         isBeatStart ? 'font-bold text-app-text-strong' : 'text-app-text-subtle'
                       }`}
                     >
@@ -1544,7 +1549,7 @@ export default function TrackerScoreObjectEditor({
                               data-track={ti}
                               data-col={-1}
                               data-step={ri}
-                              className={`w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-tiny font-bold focus:bg-app-accent/20 focus:outline-none ${
+                              className={`w-full border-0 bg-transparent px-0 py-0.5 text-center font-mono text-role-body font-bold focus:bg-app-accent/20 focus:outline-none ${
                                 statusVal === '-'
                                   ? 'text-app-accent'
                                   : statusVal === 'OFF'
@@ -1573,7 +1578,7 @@ export default function TrackerScoreObjectEditor({
                                   data-track={ti}
                                   data-col={ci}
                                   data-step={ri}
-                                  className={`w-full border-0 bg-transparent px-1 py-0.5 text-center font-mono text-body text-app-text focus:bg-app-accent/20 focus:outline-none ${isInvalid ? 'outline-1 outline-app-danger' : ''}`}
+                                  className={`w-full border-0 bg-transparent px-1 py-0.5 text-center font-mono text-role-body text-app-text focus:bg-app-accent/20 focus:outline-none ${isInvalid ? 'outline-1 outline-app-danger' : ''}`}
                                   value={shownValue}
                                   placeholder={ci === 0 ? '...' : '---'}
                                   readOnly={statusVal === 'OFF'}
@@ -1602,7 +1607,7 @@ export default function TrackerScoreObjectEditor({
         )}
       </div>
       {testError && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/15 px-3 py-1.5 text-body text-app-danger">
+        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/15 px-3 py-1.5 text-role-body text-app-danger">
           <span>Error: {testError}</span>
           <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
         </div>

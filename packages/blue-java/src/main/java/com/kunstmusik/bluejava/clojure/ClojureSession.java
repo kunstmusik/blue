@@ -61,10 +61,22 @@ public final class ClojureSession {
     }
 
     public ClojureEvaluationResult evaluateScoreObjectWithOutput(String code, double blueDuration, String projectDir) {
+        return evaluateScoreObjectWithOutput(code, blueDuration, projectDir, null);
+    }
+
+    public ClojureEvaluationResult evaluateScoreObjectWithOutput(
+            String code,
+            double blueDuration,
+            String projectDir,
+            String commandline
+    ) {
         Map<String, Object> bindings = new HashMap<>();
         bindings.put("score", "");
         bindings.put("blueDuration", blueDuration);
         bindings.put("blueProjectDir", projectDir != null ? new File(projectDir) : null);
+        if (commandline != null) {
+            bindings.put("commandline", commandline);
+        }
         return evalWithOutput(code, bindings, "score");
     }
 

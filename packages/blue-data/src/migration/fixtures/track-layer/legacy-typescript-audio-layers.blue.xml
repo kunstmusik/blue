@@ -1,0 +1,59 @@
+<blueData version="3.0.0">
+  <mixer>
+    <enabled>true</enabled>
+    <channelListGroups>
+      <channelList association="ts-group-1" listName="TypeScript Audio Group">
+        <channel association="ts-track-1">
+          <name>Clip A</name>
+          <outChannel>Master</outChannel>
+          <level>-6.0</level>
+          <muted>false</muted>
+          <solo>false</solo>
+          <effectsChain bin="pre" />
+          <effectsChain bin="post" />
+        </channel>
+        <channel association="ts-track-2">
+          <name>Empty</name>
+          <outChannel>Master</outChannel>
+          <level>0.0</level>
+          <muted>true</muted>
+          <solo>false</solo>
+          <effectsChain bin="pre" />
+          <effectsChain bin="post" />
+        </channel>
+      </channelList>
+    </channelListGroups>
+    <channelList list="channels" />
+    <channelList list="subChannels" />
+    <channel><name>Master</name><outChannel>Master</outChannel><level>0.0</level><muted>false</muted><solo>false</solo></channel>
+  </mixer>
+  <score>
+    <timeContext />
+    <timeState />
+    <noteProcessorChain />
+    <audioLayerGroup name="TypeScript Audio Group" uniqueId="ts-group-1">
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <audioLayers>
+        <audioLayer name="Clip A" uniqueId="ts-track-1" muted="false" solo="false" heightIndex="0" automationSelectedIndex="1">
+          <audioClip>
+            <name>clip-a</name>
+            <audioFile>fixtures/a.wav</audioFile>
+            <numChannels>1</numChannels>
+            <audioDuration>2.5</audioDuration>
+            <fileStart>0.25</fileStart>
+            <startTime type="beats">1</startTime>
+            <subjectiveDuration type="beats">2</subjectiveDuration>
+            <fadeIn>0</fadeIn>
+            <fadeInType>LINEAR</fadeInType>
+            <fadeOut>0</fadeOut>
+            <fadeOutType>LINEAR</fadeOutType>
+            <looping>false</looping>
+          </audioClip>
+          <parameterId>ts-param-1</parameterId>
+          <parameterId>ts-param-2</parameterId>
+        </audioLayer>
+        <audioLayer name="Empty" uniqueId="ts-track-2" muted="true" solo="false" heightIndex="1" automationSelectedIndex="0" />
+      </audioLayers>
+    </audioLayerGroup>
+  </score>
+</blueData>

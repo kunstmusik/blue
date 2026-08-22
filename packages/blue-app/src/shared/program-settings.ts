@@ -20,6 +20,10 @@ import {
   isSupportedAppZoomPercent,
   normalizeAppZoomPercent,
 } from './app-zoom';
+import {
+  normalizeFileManagerFavorites,
+  normalizeFileManagerRootLabels,
+} from './file-manager';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -34,15 +38,17 @@ export type ProgramSettingsPanelId =
 export interface GeneralSettingsSnapshot {
   workDirectory: string;
   newUserDefaultsEnabled: boolean;
-  drawAlphaBackgroundOnMarquee: boolean;
   messageColorsEnabled: boolean;
   csoundErrorWarningEnabled: boolean;
   directoryTempFileLimit: number;
 }
 
+export type DefaultLayerGroupType = 'TRACK' | 'SOUND_OBJECT';
+
 export interface ProjectDefaultsSettingsSnapshot {
   defaultAuthor: string;
   mixerEnabled: boolean;
+  defaultLayerGroupType: DefaultLayerGroupType;
   layerHeightDefault: number;
   defaultUdoStyle: 'CLASSIC' | 'MODERN';
   defaultPrimaryTimeBase: string;
@@ -125,6 +131,8 @@ export interface DiskRenderSettingsSnapshot {
 
 export interface CurrentAppSettingsSnapshot {
   enginePath: string;
+  /** Empty selects the Csound library discovered by Blue Engine. */
+  csoundLibraryPath: string;
   recentFiles: string[];
   windowBounds: { x: number; y: number; width: number; height: number } | null;
   midiInputDevice: string;
@@ -139,6 +147,18 @@ export interface CurrentAppSettingsSnapshot {
    * Owned by the main-process app zoom controller, not the Settings renderer.
    */
   appZoomPercent: number;
+  /**
+   * File Manager favorite root paths (SPEC 076). Absolute host paths stored as
+   * application preferences; never `.blue` project data. Host validation of
+   * each path (existence, directory, dedupe against static roots) is owned by
+   * the main-process File Manager service.
+   */
+  fileManagerFavorites: string[];
+  /**
+   * File Manager custom root labels (SPEC 076). Keyed by root path identity;
+   * unrenamed roots omit their entry or map to empty string to keep defaults.
+   */
+  fileManagerRootLabels: Record<string, string>;
 }
 
 export interface ProgramSettingsSnapshot {
@@ -178,6 +198,34 @@ export interface ProgramSettingsSaveResult {
   validationIssues?: SettingsValidationIssue[];
 }
 
+/**
+ * Narrow playback-preference update request. At least one field must be
+ * present. Main merges only the provided boolean fields into the current
+ * snapshot, validates the result, and writes atomically. Invalid payloads
+ * are rejected without changing the settings file.
+ */
+export interface PlaybackPreferencePatch {
+  followPlayback?: boolean;
+  followPlaybackOnStart?: boolean;
+}
+
+/**
+ * Validate a PlaybackPreferencePatch payload. Returns true when the patch
+ * contains at least one boolean field and no non-boolean values.
+ */
+export function isValidPlaybackPreferencePatch(
+  patch: unknown,
+): patch is PlaybackPreferencePatch {
+  if (patch == null || typeof patch !== 'object') return false;
+  const p = patch as Record<string, unknown>;
+  const hasFollow = 'followPlayback' in p;
+  const hasOnStart = 'followPlaybackOnStart' in p;
+  if (!hasFollow && !hasOnStart) return false;
+  if (hasFollow && typeof p.followPlayback !== 'boolean') return false;
+  if (hasOnStart && typeof p.followPlaybackOnStart !== 'boolean') return false;
+  return true;
+}
+
 export type UsageStatus =
   | 'used-by-workflow'
   | 'used-as-new-project-default'
@@ -196,7 +244,7 @@ export interface UsageParityMatrixEntry {
   missingFeature?: string;
 }
 
-export const PROGRAM_SETTINGS_VERSION = 2;
+export const PROGRAM_SETTINGS_VERSION = 3;
 
 export const TIME_BASE_CHOICES: readonly string[] = [
   'BEATS', 'BBT', 'BBST', 'BBF', 'TIME', 'SECONDS', 'SMPTE', 'FRAME',
@@ -216,6 +264,15 @@ export const SMPTE_FRAME_RATES: readonly number[] = [
 export const LAYER_HEIGHT_CHOICES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const UDO_STYLE_CHOICES: readonly ('CLASSIC' | 'MODERN')[] = ['CLASSIC', 'MODERN'];
+
+export const DEFAULT_LAYER_GROUP_TYPE_CHOICES: readonly DefaultLayerGroupType[] = [
+  'TRACK',
+  'SOUND_OBJECT',
+];
+
+export function normalizeDefaultLayerGroupType(value: unknown): DefaultLayerGroupType {
+  return value === 'SOUND_OBJECT' ? 'SOUND_OBJECT' : 'TRACK';
+}
 
 export const FILE_FORMAT_CHOICES: readonly string[] = [
   'WAV', 'AIFF', 'AU', 'RAW', 'IRCAM', 'W64', 'WAVEX', 'SD2', 'FLAC',
@@ -256,7 +313,44 @@ export function getDefaultFreezeFlags(platform: string): string {
 }
 
 export function getDefaultAudioDriver(platform: string): string {
-  return platform === 'darwin' ? 'pa_bl' : 'PortAudio';
+  switch (platform) {
+    case 'darwin':
+      // Csound initializes _RTAUDIO to auhal on macOS.
+      return 'auhal';
+    case 'linux':
+      // Csound initializes _RTAUDIO to alsa on Linux.
+      return 'alsa';
+    default:
+      // Csound initializes _RTAUDIO to PortAudio on Windows and other desktop
+      // platforms. Keep this exact identifier; discovery may also expose the
+      // pa_bl/pa_cb implementation choices alongside it.
+      return 'PortAudio';
+  }
+}
+
+export function getDefaultMidiDriver(platform: string): string {
+  // Csound defaults to its PortMIDI module except on Linux, where it uses
+  // ALSA. These are the exact identifiers reported by module discovery.
+  return platform === 'linux' ? 'alsa' : 'portmidi';
+}
+
+export function isAbsoluteEnginePath(value: string): boolean {
+  return value.startsWith('/') ||
+    /^[A-Za-z]:[\\/]/.test(value) ||
+    value.startsWith('\\\\');
+}
+
+export function normalizeEnginePathSetting(value: unknown): string {
+  if (typeof value !== 'string') return 'blue-engine';
+  const normalized = value.trim();
+  return normalized === '' || normalized === 'blue-engine'
+    ? 'blue-engine'
+    : normalized;
+}
+
+export function normalizeCsoundLibraryPath(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.trim();
 }
 
 export function getDefaultSoftwareBufferSize(platform: string): number {
@@ -279,7 +373,6 @@ export function createDefaultGeneralSettings(): GeneralSettingsSnapshot {
   return {
     workDirectory: '',
     newUserDefaultsEnabled: true,
-    drawAlphaBackgroundOnMarquee: false,
     messageColorsEnabled: false,
     csoundErrorWarningEnabled: true,
     directoryTempFileLimit: 3,
@@ -290,6 +383,7 @@ export function createDefaultProjectDefaultsSettings(): ProjectDefaultsSettingsS
   return {
     defaultAuthor: '',
     mixerEnabled: true,
+    defaultLayerGroupType: 'TRACK',
     layerHeightDefault: 0,
     defaultUdoStyle: 'MODERN',
     defaultPrimaryTimeBase: 'BEATS',
@@ -321,7 +415,7 @@ export function createDefaultRealtimeRenderSettings(platform: string): RealtimeR
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     defaultSr: '44100',
-    defaultKsmps: '1',
+    defaultKsmps: '64',
     defaultNchnls: '2',
     useZeroDbfs: true,
     zeroDbfs: '1',
@@ -332,7 +426,7 @@ export function createDefaultRealtimeRenderSettings(platform: string): RealtimeR
     audioInEnabled: false,
     audioInText: 'adc',
     midiDriverEnabled: true,
-    midiDriver: 'PortMidi',
+    midiDriver: getDefaultMidiDriver(platform),
     midiOutEnabled: false,
     midiOutText: '',
     midiInEnabled: false,
@@ -355,7 +449,7 @@ export function createDefaultDiskRenderSettings(platform: string): DiskRenderSet
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     defaultSr: '44100',
-    defaultKsmps: '1',
+    defaultKsmps: '64',
     defaultNchnls: '2',
     useZeroDbfs: true,
     zeroDbfs: '1',
@@ -382,6 +476,7 @@ export function createDefaultDiskRenderSettings(platform: string): DiskRenderSet
 export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
   return {
     enginePath: 'blue-engine',
+    csoundLibraryPath: '',
     recentFiles: [],
     windowBounds: null,
     midiInputDevice: '',
@@ -391,6 +486,8 @@ export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
     oscOutputPort: 0,
     windowLayout: createDefaultWindowLayoutSettings(),
     appZoomPercent: APP_ZOOM_DEFAULT_PERCENT,
+    fileManagerFavorites: [],
+    fileManagerRootLabels: {},
   };
 }
 
@@ -414,6 +511,24 @@ export function validateProgramSettings(
 ): SettingsValidationIssue[] {
   const issues: SettingsValidationIssue[] = [];
 
+  const enginePath = normalizeEnginePathSetting(snapshot.appSpecific.enginePath);
+  if (enginePath !== 'blue-engine' && !isAbsoluteEnginePath(enginePath)) {
+    issues.push({
+      path: 'appSpecific.enginePath',
+      message: 'Blue Engine override must be an absolute path or the bundled default',
+      severity: 'error',
+    });
+  }
+
+  const csoundLibraryPath = normalizeCsoundLibraryPath(snapshot.appSpecific.csoundLibraryPath);
+  if (csoundLibraryPath !== '' && !isAbsoluteEnginePath(csoundLibraryPath)) {
+    issues.push({
+      path: 'appSpecific.csoundLibraryPath',
+      message: 'Csound library override must be empty or an absolute path',
+      severity: 'error',
+    });
+  }
+
   if (snapshot.general.directoryTempFileLimit < 1) {
     issues.push({
       path: 'general.directoryTempFileLimit',
@@ -426,6 +541,14 @@ export function validateProgramSettings(
     issues.push({
       path: 'projectDefaults.layerHeightDefault',
       message: 'Must be between 0 and 8',
+      severity: 'error',
+    });
+  }
+
+  if (!DEFAULT_LAYER_GROUP_TYPE_CHOICES.includes(snapshot.projectDefaults.defaultLayerGroupType)) {
+    issues.push({
+      path: 'projectDefaults.defaultLayerGroupType',
+      message: 'Must be TRACK or SOUND_OBJECT',
       severity: 'error',
     });
   }
@@ -612,6 +735,10 @@ export function mergeWithDefaults(
     // SPEC 061: normalize the app-wide zoom percent defensively. Older files
     // without the field, and any malformed/off-step value, default to 100.
     appZoomPercent: normalizeAppZoomPercent(savedAppSpecific.appZoomPercent),
+    enginePath: normalizeEnginePathSetting(savedAppSpecific.enginePath),
+    csoundLibraryPath: normalizeCsoundLibraryPath(savedAppSpecific.csoundLibraryPath),
+    fileManagerFavorites: normalizeFileManagerFavorites(savedAppSpecific.fileManagerFavorites),
+    fileManagerRootLabels: normalizeFileManagerRootLabels(savedAppSpecific.fileManagerRootLabels),
   };
 
   // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder
@@ -630,8 +757,22 @@ export function mergeWithDefaults(
 
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
-    general: { ...defaults.general, ...saved.general },
-    projectDefaults: { ...defaults.projectDefaults, ...saved.projectDefaults },
+    // Pick known fields so removed compatibility settings do not survive in
+    // the in-memory snapshot or get written back to program-settings.json.
+    general: {
+      workDirectory: saved.general?.workDirectory ?? defaults.general.workDirectory,
+      newUserDefaultsEnabled: saved.general?.newUserDefaultsEnabled ?? defaults.general.newUserDefaultsEnabled,
+      messageColorsEnabled: saved.general?.messageColorsEnabled ?? defaults.general.messageColorsEnabled,
+      csoundErrorWarningEnabled: saved.general?.csoundErrorWarningEnabled ?? defaults.general.csoundErrorWarningEnabled,
+      directoryTempFileLimit: saved.general?.directoryTempFileLimit ?? defaults.general.directoryTempFileLimit,
+    },
+    projectDefaults: {
+      ...defaults.projectDefaults,
+      ...saved.projectDefaults,
+      defaultLayerGroupType: normalizeDefaultLayerGroupType(
+        saved.projectDefaults?.defaultLayerGroupType,
+      ),
+    },
     playback: { ...defaults.playback, ...saved.playback },
     utility: { ...defaults.utility, ...saved.utility },
     realtimeRender: { ...defaults.realtimeRender, ...saved.realtimeRender },

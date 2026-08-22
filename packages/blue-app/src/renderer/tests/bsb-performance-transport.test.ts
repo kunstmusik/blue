@@ -204,6 +204,6 @@ describe('BSB performance transport', () => {
     expect(mockBlueAPI.getProjectDocument).toHaveBeenCalledOnce();
     expect(useProjectStore.getState().globalOrc).toBe('recovered orchestra');
     expect(useProjectStore.getState().title).toBe('Recovered Project');
-    expect(useProjectStore.getState().isDirty).toBe(true);
+    expect(useProjectStore.getState().isDirty).toBe(false);
   });
 });

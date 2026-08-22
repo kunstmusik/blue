@@ -80,7 +80,7 @@ interface TabCommandState {
 - `Clone` is visible for editor contexts and enabled only when the panel is cloneable.
 - `New Document Tab Group` is visible for editor contexts and enabled when the selected docked editor group has at least one sibling tab.
 - `Collapse Document Tab Group` is visible for editor contexts and enabled when another docked editor group exists.
-- `Move`, `Move Group`, and `Size Group` are visible for view/auxiliary contexts but disabled until equivalent submenu/dialog flows are implemented.
+- `Move` and `Move Group` are visible and enabled for docked auxiliary contexts with `Left`, `Right`, and `Bottom` targets. They transfer the selected panel or all panels in the current auxiliary group into the target edge group without changing the seeded default mode for later reveals. `Size Group` is visible and enabled for docked auxiliary contexts with `Larger`, `Smaller`, and `Reset` actions.
 - Command state must use the tab that opened the menu, even if another group is focused.
 
 ## Deferred Java/NetBeans Commands Classification
@@ -96,5 +96,5 @@ Before acceptance, parity review must classify these Java/NetBeans-adjacent comm
 | Collapse Document Tab Group | Implemented for docked editor groups when another editor group exists |
 | Close Group | Implemented for view/auxiliary groups |
 | Minimize / Minimize Group | Implemented for auxiliary groups where the current presentation supports it |
-| Move / Move Group / Size Group | Visible but disabled; existing drag/resize behavior covers the core workflow, submenu parity remains deferred |
+| Move / Move Group / Size Group | Implemented for auxiliary contexts through edge-target and group-size submenus; panel transfers preserve seeded default modes |
 | New Window / duplicate | Omitted; distinct from Float and not part of the NetBeans popup evidence for this slice |

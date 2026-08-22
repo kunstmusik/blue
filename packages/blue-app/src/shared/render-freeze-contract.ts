@@ -12,6 +12,7 @@ import type { ProjectEditorSnapshot, ScoreObjectEditorTargetSnapshot } from './p
 // ─── Channels ───
 
 export const RENDER_OPERATION_STATUS_CHANNEL = 'render-operation-status';
+export const FREEZE_ITEM_STATUS_CHANNEL = 'freeze-item-status';
 
 // ─── Renderer → Main requests ───
 
@@ -100,6 +101,47 @@ export function isRenderOperationStatus(value: unknown): value is RenderOperatio
     && (value.action === undefined || value.action === null
       || (typeof value.action === 'string'
         && DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)));
+}
+
+// ─── Main → Renderer freeze item status ───
+
+export type FreezeItemPhase = 'pending' | 'running' | 'complete' | 'failed';
+
+export type FreezeItemAction = 'freeze' | 'unfreeze';
+
+/**
+ * Per-object progress for a freeze/unfreeze operation. Emitted on
+ * FREEZE_ITEM_STATUS_CHANNEL alongside the overall RenderOperationStatus
+ * stream so the renderer can drive a per-object progress dialog. Rows are
+ * keyed by selectionId (target.selectionId). Csound subprocess output for the
+ * item streams incrementally via outputAppend chunks.
+ */
+export interface FreezeItemStatus {
+  operationId: string;
+  selectionId: string;
+  name: string;
+  action: FreezeItemAction;
+  phase: FreezeItemPhase;
+  freezeFile: string | null;
+  reason: string | null;
+  outputAppend: string | null;
+  outputType: 'stdout' | 'stderr' | null;
+}
+
+const FREEZE_ITEM_PHASES: readonly FreezeItemPhase[] = ['pending', 'running', 'complete', 'failed'];
+const FREEZE_ITEM_ACTIONS: readonly FreezeItemAction[] = ['freeze', 'unfreeze'];
+
+export function isFreezeItemStatus(value: unknown): value is FreezeItemStatus {
+  return isRecord(value)
+    && typeof value.operationId === 'string'
+    && typeof value.selectionId === 'string'
+    && typeof value.name === 'string'
+    && FREEZE_ITEM_ACTIONS.includes(value.action as FreezeItemAction)
+    && FREEZE_ITEM_PHASES.includes(value.phase as FreezeItemPhase)
+    && (value.freezeFile === null || typeof value.freezeFile === 'string')
+    && (value.reason === null || typeof value.reason === 'string')
+    && (value.outputAppend === null || typeof value.outputAppend === 'string')
+    && (value.outputType === null || value.outputType === 'stdout' || value.outputType === 'stderr');
 }
 
 // ─── Results ───

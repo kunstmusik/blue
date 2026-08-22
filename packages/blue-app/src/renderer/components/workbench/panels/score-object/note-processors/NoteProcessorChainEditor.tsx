@@ -7,6 +7,8 @@ import {
   getNoteProcessorCatalog,
 } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
+import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
+import NoteProcessorCodeModal from './NoteProcessorCodeModal';
 
 const CATALOG = getNoteProcessorCatalog();
 
@@ -31,12 +33,13 @@ interface NoteProcessorChainEditorProps {
   onSaveNamedChain?: (name: string, chain: NoteProcessorChainSnapshot) => void;
 }
 
-const BTN = 'px-1.5 py-0.5 rounded text-tiny border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
+const BTN = 'px-1.5 py-0.5 rounded text-role-callout border border-blue-border hover:bg-blue-border/40 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNames, onImportNamedChain, onSaveNamedChain }: NoteProcessorChainEditorProps): React.ReactElement {
   const [local, setLocal] = useState<NoteProcessorChainSnapshot>(() => cloneChain(chain));
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
-  const [clipboard, setClipboard] = useState<NoteProcessorEntrySnapshot | null>(null);
+  const clipboard = useNoteProcessorClipboardStore((state) => state.clipboard);
+  const setClipboard = useNoteProcessorClipboardStore((state) => state.setClipboard);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showImportMenu, setShowImportMenu] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -122,14 +125,14 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
     if (selectedIdx >= 0 && selectedIdx < local.processors.length) {
       setClipboard({ ...local.processors[selectedIdx] });
     }
-  }, [local, selectedIdx]);
+  }, [local, selectedIdx, setClipboard]);
 
   const handleCut = useCallback(() => {
     if (selectedIdx >= 0 && selectedIdx < local.processors.length) {
       setClipboard({ ...local.processors[selectedIdx] });
       handleRemove();
     }
-  }, [local, selectedIdx, handleRemove]);
+  }, [handleRemove, local, selectedIdx, setClipboard]);
 
   const handlePaste = useCallback(() => {
     if (!clipboard) return;
@@ -155,8 +158,12 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
     const procs = [...local.processors];
     const entry = { ...procs[selectedIdx], parameters: { ...procs[selectedIdx].parameters, [paramName]: value } };
     const def = CATALOG.find((d) => d.type === entry.processorType);
-    const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
-    entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
+    if (entry.processorType === 'PythonProcessor') {
+      entry.summary = def?.displayName ?? entry.processorType;
+    } else {
+      const paramParts = Object.entries(entry.parameters).map(([k, v]) => `${k}=${v}`);
+      entry.summary = def ? `${def.displayName} (${paramParts.join(', ')})` : entry.processorType;
+    }
     procs[selectedIdx] = entry;
     commit({ ...local, processors: procs });
   }, [local, selectedIdx, commit]);
@@ -200,7 +207,7 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
               {CATALOG.map((def) => (
                 <button
                   key={def.type}
-                  className="block w-full text-left px-2 py-1 text-body text-gray-200 hover:bg-blue-border/40"
+                  className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
                   onClick={() => handleAdd(def)}
                 >
                   {def.displayName}
@@ -229,7 +236,7 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
                 {namedChainNames.map((name) => (
                   <button
                     key={name}
-                    className="block w-full text-left px-2 py-1 text-body text-gray-200 hover:bg-blue-border/40"
+                    className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
                     onClick={() => handleImport(name)}
                   >
                     {name}
@@ -252,7 +259,7 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
               <div className="flex items-center gap-1">
                 <input
                   type="text"
-                  className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none w-24"
+                  className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none w-24"
                   placeholder="Chain name"
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
@@ -266,14 +273,14 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
         )}
       </div>
 
-      <div className="border border-blue-border rounded max-h-36 overflow-y-auto">
+      <div className="border border-blue-border rounded max-h-36 overflow-y-auto bg-black">
         {local.processors.length === 0 ? (
-          <div className="px-2 py-2 text-body text-blue-muted">No processors</div>
+          <div className="px-2 py-2 text-role-body text-blue-muted">No processors</div>
         ) : (
           local.processors.map((proc, idx) => (
             <div
               key={proc.id}
-              className={`flex items-center gap-2 px-2 py-1 text-body cursor-pointer ${
+              className={`flex items-center gap-2 px-2 py-1 text-role-body cursor-pointer ${
                 idx === selectedIdx ? 'bg-blue-accent/20 text-white' : 'hover:bg-blue-border/20'
               }`}
               onClick={() => setSelectedIdx(idx)}
@@ -282,10 +289,10 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
                 {proc.displayName}
               </span>
               {proc.deferred && (
-                <span className="text-orange-500 text-tiny">(deferred)</span>
+                <span className="text-orange-500 text-role-callout">(deferred)</span>
               )}
               {!proc.supported && !proc.deferred && (
-                <span className="text-yellow-500 text-tiny">(unsupported)</span>
+                <span className="text-yellow-500 text-role-callout">(unsupported)</span>
               )}
             </div>
           ))
@@ -297,6 +304,43 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
           processorType={selected.processorType}
           parameters={selected.parameters}
           onChange={handleParamChange}
+        />
+      )}
+    </div>
+  );
+}
+
+function NoteProcessorCodeField({
+  value,
+  processorDisplayName,
+  onChange,
+}: {
+  value: string | number | boolean | undefined;
+  processorDisplayName: string;
+  onChange: (value: string) => void;
+}): React.ReactElement {
+  const [showModal, setShowModal] = useState(false);
+  const codeStr = String(value ?? '');
+  const lineCount = codeStr.trim().length > 0 ? codeStr.trim().split('\n').length : 0;
+
+  return (
+    <div className="flex flex-1 items-center gap-2">
+      <span className="flex-1 truncate rounded border border-blue-border bg-blue-bg/60 px-1.5 py-0.5 text-role-callout font-mono text-gray-400">
+        {lineCount > 0 ? `${lineCount} line(s) of Python code` : '(empty code)'}
+      </span>
+      <button
+        type="button"
+        className="rounded border border-blue-border px-2 py-0.5 text-role-callout text-gray-200 hover:bg-blue-border/40 hover:text-white"
+        onClick={() => setShowModal(true)}
+      >
+        Edit Code...
+      </button>
+      {showModal && (
+        <NoteProcessorCodeModal
+          title={`${processorDisplayName} - Edit Code`}
+          code={codeStr}
+          onClose={() => setShowModal(false)}
+          onSave={onChange}
         />
       )}
     </div>
@@ -317,13 +361,13 @@ function NoteProcessorParameterEditor({
 
   return (
     <div className="border border-blue-border rounded p-2 space-y-1.5">
-      <div className="text-tiny font-medium text-gray-400">{def.displayName} Properties</div>
+      <div className="text-role-headline font-bold text-gray-400">{def.displayName} Properties</div>
       {def.parameters.map((param) => {
         const value = parameters[param.name];
         const isReadOnly = processorType === 'TuningProcessor' && param.name === 'ratios';
         return (
           <div key={param.name} className="flex items-center gap-2">
-            <label className="w-24 shrink-0 text-tiny text-blue-muted text-right">{param.label}</label>
+            <label className="w-24 shrink-0 text-role-body text-blue-muted text-right">{param.label}</label>
             {param.valueType === 'boolean' ? (
               <input
                 type="checkbox"
@@ -333,15 +377,22 @@ function NoteProcessorParameterEditor({
               />
             ) : param.valueType === 'multilineText' ? (
               <textarea
-                className={`flex-1 min-h-16 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0 resize-y ${isReadOnly ? 'opacity-60 cursor-default' : ''}`}
+                className={`flex-1 min-h-16 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0 resize-y ${isReadOnly ? 'opacity-60 cursor-default' : ''}`}
                 value={String(value ?? param.defaultValue)}
                 onChange={(e) => onChange(param.name, e.target.value)}
                 readOnly={isReadOnly}
               />
+            ) : param.valueType === 'code' ? (
+              <NoteProcessorCodeField
+                key={param.name}
+                value={value}
+                processorDisplayName={def.displayName}
+                onChange={(newCode) => onChange(param.name, newCode)}
+              />
             ) : (
               <input
                 type="text"
-                className="flex-1 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0"
+                className="flex-1 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none min-w-0"
                 value={String(value ?? param.defaultValue)}
                 onChange={(e) => onChange(param.name, e.target.value)}
               />

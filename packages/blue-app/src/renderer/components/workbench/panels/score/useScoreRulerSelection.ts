@@ -20,6 +20,12 @@ interface UseScoreRulerSelectionOptions {
   tempo: number;
   smpteFrameRate: number;
   sampleRate: number;
+  /**
+   * Invoked for explicit user horizontal navigation (ruler press/drag and the
+   * drag auto-scroll) so active follow playback can be suspended without
+   * changing transport semantics.
+   */
+  onUserNavigation?: () => void;
 }
 
 export function useScoreRulerSelection({
@@ -32,8 +38,12 @@ export function useScoreRulerSelection({
   tempo,
   smpteFrameRate,
   sampleRate,
+  onUserNavigation,
 }: UseScoreRulerSelectionOptions) {
   const applyPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
+
+  const onUserNavigationRef = useRef(onUserNavigation);
+  onUserNavigationRef.current = onUserNavigation;
 
   const [dragging, setDragging] = useState(false);
   const dragStartX = useRef(-1);
@@ -82,6 +92,7 @@ export function useScoreRulerSelection({
 
     const nextScrollLeft = Math.max(0, container.scrollLeft + step);
     if (nextScrollLeft !== container.scrollLeft) {
+      onUserNavigationRef.current?.();
       container.scrollLeft = nextScrollLeft;
     }
   }, [scrollContainerRef]);
@@ -140,6 +151,10 @@ export function useScoreRulerSelection({
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!rootTimelineOnly || e.button !== 0) return;
+
+    // Pressing the ruler is explicit horizontal navigation on the root
+    // timeline; suspend active follow before any drag or auto-scroll runs.
+    onUserNavigationRef.current?.();
 
     dragElementRef.current = e.currentTarget;
     const beats = snapBeats(xToBeats(e.clientX, e.currentTarget), e.shiftKey);

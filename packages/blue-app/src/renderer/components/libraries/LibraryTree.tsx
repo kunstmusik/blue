@@ -18,6 +18,8 @@ interface LibraryTreeProps {
   onCut?: (node: LibraryBrowseNode) => void;
   onCopy?: (node: LibraryBrowseNode) => void;
   onPaste?: (node: LibraryBrowseNode) => void;
+  onImportInstrument?: (node: LibraryBrowseNode) => void;
+  onExportInstrument?: (node: LibraryBrowseNode) => void;
   onTransferToUser?: (descriptor: LibraryDragDescriptor, destination: LibraryBrowseNode) => void;
   onMoveToUser?: (source: LibraryBrowseNode, destination: LibraryBrowseNode) => void;
   dropRoot?: LibraryBrowseNode | null;
@@ -43,6 +45,14 @@ export function validateLibraryNodeName(name: string): string | null {
   return null;
 }
 
+/**
+ * Native HTML drag/drop tree for Libraries (SPEC 084).
+ *
+ * Explicit non-participant in the per-`Document` React DnD ownership domain:
+ * this tree uses `draggable`/`DataTransfer` events only and must never create
+ * a React DnD HTML5 backend. It coexists with `BlueTree` surfaces in the same
+ * document; see docs/tree-drag-and-drop.md before changing its drag behavior.
+ */
 export function LibraryTree({
   label,
   nodes,
@@ -57,6 +67,8 @@ export function LibraryTree({
   onCut,
   onCopy,
   onPaste,
+  onImportInstrument,
+  onExportInstrument,
   onTransferToUser,
   onMoveToUser,
   dropRoot = null,
@@ -299,7 +311,7 @@ export function LibraryTree({
       }}
     >
       <span className="sr-only" aria-live="polite">{dragMessage}</span>
-      {nodes.length === 0 && <p className="px-3 py-2 text-xs text-app-text-muted">No items</p>}
+      {nodes.length === 0 && <p className="px-3 py-2 text-role-callout text-app-text-muted">No items</p>}
       {visible.map(({ node, level }, index) => {
         const canExpand = node.nodeKind !== 'item';
         const siblings = node.parentId
@@ -319,6 +331,8 @@ export function LibraryTree({
             onCut={onCut}
             onCopy={onCopy}
             onPaste={onPaste}
+            onImportInstrument={onImportInstrument}
+            onExportInstrument={onExportInstrument}
             onDelete={onDelete}
             onMoveUp={onReorder && siblingIndex > 0
               ? (candidate) => onReorder(candidate, siblingIndex - 1)
@@ -335,7 +349,7 @@ export function LibraryTree({
               aria-selected={index === resolvedActiveIndex}
               aria-expanded={canExpand ? expanded.has(node.nodeId) : undefined}
               title={tooltip}
-              className={`flex min-h-7 items-center gap-1 rounded px-1 text-sm [contain-intrinsic-size:auto_28px] [content-visibility:auto] ${dropTargetId === node.nodeId ? 'ring-1 ring-inset ring-app-accent' : index === resolvedActiveIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
+              className={`flex min-h-7 items-center gap-1 rounded px-1 text-role-body [contain-intrinsic-size:auto_28px] [content-visibility:auto] ${dropTargetId === node.nodeId ? 'ring-1 ring-inset ring-app-accent' : index === resolvedActiveIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
               style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}
               onMouseDown={() => markActive(index)}
               onContextMenu={() => markActive(index)}
@@ -344,6 +358,10 @@ export function LibraryTree({
               draggable={(node.nodeKind === 'item' && node.supportStatus !== 'unsupported')
                 || (node.scope === 'user' && node.nodeKind === 'folder')}
               onDragStart={(event) => {
+                // This is a browser-native library drag, not a React DnD
+                // Arborist source. Keep the shared tree manager from starting
+                // an empty drag for the same DOM event.
+                event.stopPropagation();
                 const descriptor = dragDescriptors.current[node.nodeId];
                 if (!descriptor) {
                   event.preventDefault();
@@ -398,9 +416,9 @@ export function LibraryTree({
                       if (event.key === 'Enter') submitRename(node);
                       if (event.key === 'Escape') setRenamingId(null);
                     }}
-                    className="w-full rounded border border-app-accent bg-app-input px-1"
+                    className="w-full rounded border border-app-accent bg-app-input px-1 text-role-body"
                   />
-                  {renameError && <span role="alert" className="block text-xs text-red-400">{renameError}</span>}
+                  {renameError && <span role="alert" className="block text-role-callout text-red-400">{renameError}</span>}
                 </span>
               ) : (
                 <button

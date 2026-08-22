@@ -174,6 +174,14 @@ function applyPatchToInstrument(
     case 'updatePreset':
     case 'addPreset':
     case 'addPresetGroup':
+    case 'addPresetFromSnapshot':
+    case 'addPresetGroupFromSnapshot':
+    case 'renamePreset':
+    case 'renamePresetGroup':
+    case 'removePreset':
+    case 'removePresetGroup':
+    case 'movePreset':
+    case 'movePresetGroup':
     case 'synchronizePresets':
     case 'updateEmbeddedOpcodeList':
     case 'addUdo':

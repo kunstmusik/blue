@@ -1,5 +1,6 @@
 import React from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ChevronRight } from 'lucide-react';
 import type {
   ArrangementRowSnapshot,
   SupportedNewInstrumentType,
@@ -12,6 +13,8 @@ interface ArrangementContextMenuProps extends OrchestraMutationProps {
   onCopy: (assignmentId: string) => void;
   onCut: (assignmentId: string) => void;
   onPaste: () => void;
+  onImport: () => void | Promise<void>;
+  onExport: () => void | Promise<void>;
   children: React.ReactNode;
 }
 
@@ -43,7 +46,8 @@ function AddInstrumentSubmenu({
   return (
     <ContextMenu.Sub>
       <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger">
-        Add Instrument
+        <span>Add Instrument</span>
+        <ChevronRight className="w-3.5 h-3.5 opacity-60" />
       </ContextMenu.SubTrigger>
       <ContextMenu.Portal>
         <ContextMenu.SubContent
@@ -70,6 +74,8 @@ export default function ArrangementContextMenu({
   onCopy,
   onCut,
   onPaste,
+  onImport,
+  onExport,
   onOrchestraPatch,
   children,
 }: ArrangementContextMenuProps): React.ReactElement {
@@ -105,11 +111,11 @@ export default function ArrangementContextMenu({
             Paste
           </MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
-          <MenuItem disabled onSelect={() => {}}>
-            Import .binstr (deferred)
+          <MenuItem onSelect={() => void onImport()}>
+            Import…
           </MenuItem>
-          <MenuItem disabled onSelect={() => {}}>
-            Export .binstr (deferred)
+          <MenuItem onSelect={() => void onExport()}>
+            Export…
           </MenuItem>
           <ContextMenu.Separator className="editor-context-menu__separator" />
           <MenuItem

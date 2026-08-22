@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import '../sound-objects/register-sound-object-types';
 import { Score } from './score';
 import { PolyObject } from '../sound-objects/poly-object';
 import { SoundLayer } from '../sound-objects/sound-layer';
 import { GenericScore } from '../sound-objects/generic-score';
+import { PatternObject } from '../sound-objects/pattern-object';
+import { TrackerObject } from '../sound-objects/tracker-object';
 import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
@@ -137,6 +140,41 @@ i1 2 1 440</scoreText>
       const elem = Element.parse(xml);
       const score = Score.loadFromXML(elem);
       expect(score.length).toBe(1);
+    });
+
+    it('loads Java-qualified nested sound objects through PolyObject dispatch', () => {
+      const xml = `<soundObject type="blue.soundObject.PolyObject" name="Test">
+        <soundLayer name="Layer 1">
+          <soundObject type="blue.soundObject.PatternObject">
+            <name>Pattern</name>
+            <beats>8</beats>
+            <subDivisions>2</subDivisions>
+            <patterns/>
+          </soundObject>
+          <soundObject type="blue.soundObject.TrackerObject">
+            <name>Tracker</name>
+            <stepsPerBeat>2</stepsPerBeat>
+            <trackList>
+              <steps>4</steps>
+              <track>
+                <name>Track 1</name>
+                <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt;</noteTemplate>
+                <instrumentId>7</instrumentId>
+                <columns/>
+                <trackerNotes/>
+              </track>
+            </trackList>
+          </soundObject>
+        </soundLayer>
+      </soundObject>`;
+      const poly = PolyObject.loadFromXML(Element.parse(xml));
+
+      expect(poly.length).toBe(1);
+      expect(poly[0].length).toBe(2);
+      expect(poly[0][0]).toBeInstanceOf(PatternObject);
+      expect((poly[0][0] as PatternObject).getBeats()).toBe(8);
+      expect(poly[0][1]).toBeInstanceOf(TrackerObject);
+      expect((poly[0][1] as TrackerObject).getTracks().getTrack(0)?.getInstrumentId()).toBe('7');
     });
 
     it('loads patternsLayerGroup', () => {

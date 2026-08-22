@@ -14,12 +14,21 @@ const originalProjectState = useProjectStore.getState();
 vi.mock('../components/workbench/panels/udo/UdoWorkspacePanel', () => ({
   default: (props: {
     udos: Array<{ name: string }>;
+    completionContextUdos?: Array<{ name: string }>;
+    projectUdos?: Array<{ name: string }>;
     libraryDropTarget?: { projectSessionId: number; projectRevision: number };
   }) => (
     <div
       data-testid="reusable-udo-workspace"
       data-project-session={props.libraryDropTarget?.projectSessionId}
       data-project-revision={props.libraryDropTarget?.projectRevision}
+      data-context-udo-count={props.completionContextUdos?.length ?? props.udos.length}
+      data-project-udo-count={props.projectUdos?.length ?? 0}
+      data-completion-source={
+        (props.completionContextUdos?.length ?? props.udos.length) === 0
+          ? 'project UDO'
+          : 'context UDO'
+      }
     >
       {props.udos.map((udo) => udo.name).join(',')}
     </div>
@@ -57,6 +66,49 @@ describe('UserDefinedOpcodeTopComponent', () => {
     expect(workspace?.textContent).toBe('tone');
     expect(workspace?.getAttribute('data-project-session')).toBe('17');
     expect(workspace?.hasAttribute('data-project-revision')).toBe(true);
+
+    act(() => root.unmount());
+  });
+
+  it('threads project-global UDOs into the UDO body editor so recursion and siblings resolve (US2)', () => {
+    useProjectStore.setState({
+      loaded: true,
+      sessionId: 17,
+      filePath: '/tmp/project.blue',
+      projectUdos: [
+        {
+          name: 'tone',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'a',
+          inputArguments: '',
+          code: 'aout = ain',
+          comments: '',
+        },
+        {
+          name: 'sibling',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'k',
+          inputArguments: '',
+          code: 'aout = ain',
+          comments: '',
+        },
+      ],
+      applyProjectUdoPatch: vi.fn(async () => true),
+    });
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => root.render(<UserDefinedOpcodePanel />));
+
+    const workspace = container.querySelector('[data-testid="reusable-udo-workspace"]');
+    // The project-global UDO panel passes its project UDOs as completion scope
+    // without reclassifying them as context-owned, so the active UDO body
+    // editor can complete every sibling (including self) with project detail.
+    expect(workspace?.getAttribute('data-context-udo-count')).toBe('0');
+    expect(workspace?.getAttribute('data-project-udo-count')).toBe('2');
+    expect(workspace?.getAttribute('data-completion-source')).toBe('project UDO');
 
     act(() => root.unmount());
   });

@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'native/*'
 confirmModulesPurge: false
 allowBuilds:
   electron: true

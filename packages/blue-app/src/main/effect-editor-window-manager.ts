@@ -4,6 +4,10 @@ import { pathToFileURL } from 'url';
 
 import type { EffectEditorRequest } from '../shared/project-editor';
 import {
+  PROJECT_DOCUMENT_UPDATED_CHANNEL,
+  type ProjectDocumentUpdatedEvent,
+} from '../shared/workbench-window-contract';
+import {
   attachWindowStateHandlers,
   restoreWindowState,
 } from './window-state-manager';
@@ -238,3 +242,19 @@ export function closeStaleEffectEditorWindows(
   }
 }
 
+/**
+ * Route the canonical project document update to every open project-owned
+ * effect window. Library effect windows are excluded from project state.
+ */
+export function broadcastProjectDocumentUpdateToEffectWindows(
+  event: ProjectDocumentUpdatedEvent,
+): void {
+  for (const [key, state] of effectEditorWindows.entries()) {
+    if (!key.includes(':project:')) continue;
+    if (state.window.isDestroyed()) continue;
+    state.window.webContents.send(
+      PROJECT_DOCUMENT_UPDATED_CHANNEL,
+      event,
+    );
+  }
+}

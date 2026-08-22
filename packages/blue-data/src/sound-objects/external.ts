@@ -6,7 +6,13 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
-import { getNotes, applyNoteProcessorChain, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  getNotes,
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  setScoreStart,
+} from '../utilities/score';
 
 export interface ExternalCommandExecutor {
   execute(commandLine: string, textBody: string, projectDir: string | null): string;
@@ -85,6 +91,42 @@ export class External extends AbstractSoundObject {
 
     applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
     setScoreStart(processed, startTime);
+
+    return processed;
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    if (this._commandLine.trim().length === 0 && this._text.trim().length === 0) {
+      return new NoteList();
+    }
+
+    const executor = _executor;
+    if (!executor) {
+      return new NoteList();
+    }
+
+    let rawScore: string;
+    try {
+      rawScore = executor.execute(this._commandLine, this._text, null);
+    } catch (ex) {
+      console.warn('External.generateForCSDAsync: command execution failed:', ex instanceof Error ? ex.message : String(ex));
+      return new NoteList();
+    }
+
+    const noteList = getNotes(rawScore);
+    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    const startTimeOffset = this.getStartTime().toBeats(context);
+    const repeatPoint = this.getRepeatPoint();
+    const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
+
+    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
+    setScoreStart(processed, startTimeOffset);
 
     return processed;
   }

@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import TimeUnitEditor from '../TimeUnitEditor';
-import { formatTime, totalSecondsToTime } from '../../../../../time/time-unit-logic';
+import {
+  beatsToSeconds,
+  formatTime,
+  secondsToBeats,
+  totalSecondsToTime,
+} from '../../../../../time/time-unit-logic';
 import {
   BLUE_INSPECTOR_FIELD_LABEL_CLASS,
   BLUE_INSPECTOR_INPUT_CLASS,
   BLUE_INSPECTOR_ROW_CLASS,
-  BLUE_INSPECTOR_VALUE_TEXT_CLASS,
 } from '../../shared/compactFieldStyles';
 
 const INPUT_CLASS = BLUE_INSPECTOR_INPUT_CLASS;
@@ -40,8 +44,11 @@ function parseSecondsText(value: string): number | null {
   }
 
   if (!trimmed.includes(':')) {
-    const parsed = Number.parseFloat(trimmed);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(trimmed)) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   const colonParts = trimmed.split(':');
@@ -49,24 +56,33 @@ function parseSecondsText(value: string): number | null {
     return null;
   }
 
-  const lastPart = colonParts[colonParts.length - 1] ?? '0';
+  const lastPart = (colonParts[colonParts.length - 1] ?? '0').trim();
   const secondParts = lastPart.split('.');
   if (secondParts.length > 2) {
     return null;
   }
 
-  const hours = colonParts.length === 3 ? Number.parseInt(colonParts[0] ?? '0', 10) : 0;
-  const minutes = Number.parseInt(colonParts[colonParts.length - 2] ?? '0', 10);
-  const seconds = Number.parseInt(secondParts[0] ?? '0', 10);
+  const parseInteger = (part: string): number | null => {
+    const normalized = part.trim();
+    if (!/^\d+$/.test(normalized)) {
+      return null;
+    }
+    const parsed = Number(normalized);
+    return Number.isSafeInteger(parsed) ? parsed : null;
+  };
+
+  const hours = colonParts.length === 3 ? parseInteger(colonParts[0] ?? '0') : 0;
+  const minutes = parseInteger(colonParts[colonParts.length - 2] ?? '0');
+  const seconds = parseInteger(secondParts[0] ?? '0');
   const milliseconds = secondParts.length === 2
-    ? Number.parseInt((secondParts[1] ?? '0').padEnd(3, '0').slice(0, 3), 10)
+    ? parseInteger((secondParts[1] ?? '').padEnd(3, '0').slice(0, 3))
     : 0;
 
-  if ([hours, minutes, seconds, milliseconds].some((part) => !Number.isFinite(part) || part < 0)) {
+  if ([hours, minutes, seconds, milliseconds].some((part) => part === null || part < 0)) {
     return null;
   }
 
-  return (hours * 3600) + (minutes * 60) + seconds + (milliseconds / 1000);
+  return (hours! * 3600) + (minutes! * 60) + seconds! + (milliseconds! / 1000);
 }
 
 export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
@@ -74,10 +90,20 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
   if (editor.kind !== 'audioClip') return <></>;
 
   const [fileStartDraft, setFileStartDraft] = useState(() => formatSecondsAsTime(editor.fileStartTime));
+  const [fadeInDraft, setFadeInDraft] = useState(() => formatSecondsAsTime(editor.fadeIn));
+  const [fadeOutDraft, setFadeOutDraft] = useState(() => formatSecondsAsTime(editor.fadeOut));
 
   useEffect(() => {
     setFileStartDraft(formatSecondsAsTime(editor.fileStartTime));
   }, [editor.fileStartTime]);
+
+  useEffect(() => {
+    setFadeInDraft(formatSecondsAsTime(editor.fadeIn));
+  }, [editor.fadeIn]);
+
+  useEffect(() => {
+    setFadeOutDraft(formatSecondsAsTime(editor.fadeOut));
+  }, [editor.fadeOut]);
 
   const handleStartTimeCommit = useCallback((value: number, timeBase: string) => {
     onPatch({
@@ -88,12 +114,19 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
   }, [document.target, onPatch]);
 
   const handleDurationCommit = useCallback((value: number, timeBase: string) => {
+    const availableDurationBeats = secondsToBeats(
+      Math.max(0, editor.audioDuration - editor.fileStartTime),
+      document.timeContext,
+    );
+    const clampedValue = editor.looping || editor.audioDuration <= 0
+      ? Math.max(0.0001, value)
+      : Math.max(0.0001, Math.min(value, availableDurationBeats));
     onPatch({
       type: 'updateSharedProperties',
       target: document.target,
-      patch: { subjectiveDuration: { value, timeBase } },
+      patch: { subjectiveDuration: { value: clampedValue, timeBase } },
     });
-  }, [document.target, onPatch]);
+  }, [document.target, document.timeContext, editor.audioDuration, editor.fileStartTime, editor.looping, onPatch]);
 
   const handleFileChange = useCallback((audioFile: string) => {
     onPatch({
@@ -104,12 +137,15 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
   }, [document.target, onPatch]);
 
   const handleFileStartTimeChange = useCallback((fileStartTime: number) => {
+    const clamped = editor.audioDuration > 0
+      ? Math.max(0, Math.min(fileStartTime, editor.audioDuration))
+      : Math.max(0, fileStartTime);
     onPatch({
       type: 'updateTypeSpecificEditor',
       target: document.target,
-      patch: { fileStartTime },
+      patch: { fileStartTime: clamped },
     });
-  }, [document.target, onPatch]);
+  }, [document.target, editor.audioDuration, onPatch]);
 
   const commitFileStartDraft = useCallback(() => {
     const parsed = parseSecondsText(fileStartDraft);
@@ -118,9 +154,12 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
       return;
     }
 
-    handleFileStartTimeChange(parsed);
-    setFileStartDraft(formatSecondsAsTime(parsed));
-  }, [editor.fileStartTime, fileStartDraft, handleFileStartTimeChange]);
+    const clamped = editor.audioDuration > 0
+      ? Math.max(0, Math.min(parsed, editor.audioDuration))
+      : Math.max(0, parsed);
+    handleFileStartTimeChange(clamped);
+    setFileStartDraft(formatSecondsAsTime(clamped));
+  }, [editor.audioDuration, editor.fileStartTime, fileStartDraft, handleFileStartTimeChange]);
 
   const handleFileStartKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -136,20 +175,92 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
   }, [commitFileStartDraft, editor.fileStartTime]);
 
   const handleFadeInChange = useCallback((fadeIn: number) => {
+    const durationSeconds = Math.max(
+      0,
+      beatsToSeconds(document.shared.subjectiveDuration.value, document.timeContext),
+    );
+    const maxFadeIn = Math.max(0, durationSeconds - editor.fadeOut);
+    const clamped = Math.max(0, Math.min(fadeIn, maxFadeIn));
     onPatch({
       type: 'updateTypeSpecificEditor',
       target: document.target,
-      patch: { fadeIn },
+      patch: { fadeIn: clamped },
     });
-  }, [document.target, onPatch]);
+  }, [document.shared.subjectiveDuration.value, document.target, document.timeContext, editor.fadeOut, onPatch]);
+
+  const commitFadeInDraft = useCallback(() => {
+    const parsed = parseSecondsText(fadeInDraft);
+    if (parsed === null) {
+      setFadeInDraft(formatSecondsAsTime(editor.fadeIn));
+      return;
+    }
+
+    const durationSeconds = Math.max(
+      0,
+      beatsToSeconds(document.shared.subjectiveDuration.value, document.timeContext),
+    );
+    const maxFadeIn = Math.max(0, durationSeconds - editor.fadeOut);
+    const clamped = Math.max(0, Math.min(parsed, maxFadeIn));
+    handleFadeInChange(clamped);
+    setFadeInDraft(formatSecondsAsTime(clamped));
+  }, [document.shared.subjectiveDuration.value, document.timeContext, editor.fadeIn, editor.fadeOut, fadeInDraft, handleFadeInChange]);
+
+  const handleFadeInKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitFadeInDraft();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setFadeInDraft(formatSecondsAsTime(editor.fadeIn));
+    }
+  }, [commitFadeInDraft, editor.fadeIn]);
 
   const handleFadeOutChange = useCallback((fadeOut: number) => {
+    const durationSeconds = Math.max(
+      0,
+      beatsToSeconds(document.shared.subjectiveDuration.value, document.timeContext),
+    );
+    const maxFadeOut = Math.max(0, durationSeconds - editor.fadeIn);
+    const clamped = Math.max(0, Math.min(fadeOut, maxFadeOut));
     onPatch({
       type: 'updateTypeSpecificEditor',
       target: document.target,
-      patch: { fadeOut },
+      patch: { fadeOut: clamped },
     });
-  }, [document.target, onPatch]);
+  }, [document.shared.subjectiveDuration.value, document.target, document.timeContext, editor.fadeIn, onPatch]);
+
+  const commitFadeOutDraft = useCallback(() => {
+    const parsed = parseSecondsText(fadeOutDraft);
+    if (parsed === null) {
+      setFadeOutDraft(formatSecondsAsTime(editor.fadeOut));
+      return;
+    }
+
+    const durationSeconds = Math.max(
+      0,
+      beatsToSeconds(document.shared.subjectiveDuration.value, document.timeContext),
+    );
+    const maxFadeOut = Math.max(0, durationSeconds - editor.fadeIn);
+    const clamped = Math.max(0, Math.min(parsed, maxFadeOut));
+    handleFadeOutChange(clamped);
+    setFadeOutDraft(formatSecondsAsTime(clamped));
+  }, [document.shared.subjectiveDuration.value, document.timeContext, editor.fadeIn, editor.fadeOut, fadeOutDraft, handleFadeOutChange]);
+
+  const handleFadeOutKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitFadeOutDraft();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setFadeOutDraft(formatSecondsAsTime(editor.fadeOut));
+    }
+  }, [commitFadeOutDraft, editor.fadeOut]);
 
   const handleFadeInTypeChange = useCallback((fadeInType: string) => {
     onPatch({
@@ -213,13 +324,14 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
       </FieldRow>
 
       <div className="mx-3 mt-2 rounded border border-blue-border/60 p-2">
-        <div className="mb-1 text-ui text-blue-muted">File Properties</div>
+        <div className="mb-1 text-role-headline font-bold text-app-text">File Properties</div>
 
         <FieldRow label="File Start">
           <input
             type="text"
             className={INPUT_CLASS}
             value={fileStartDraft}
+            title="File start offset (H:MM:SS.mmm)"
             onChange={(e) => setFileStartDraft(e.target.value)}
             onBlur={commitFileStartDraft}
             onKeyDown={handleFileStartKeyDown}
@@ -231,6 +343,7 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
             type="text"
             className={INPUT_CLASS}
             value={formattedAudioDuration}
+            title="Total audio file duration"
             disabled
             readOnly
           />
@@ -238,11 +351,13 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
 
         <FieldRow label="Fade In (s)">
           <input
-            type="number"
+            type="text"
             className={INPUT_CLASS}
-            value={editor.fadeIn}
-            step={0.001}
-            onChange={(e) => handleFadeInChange(parseFloat(e.target.value) || 0)}
+            value={fadeInDraft}
+            title="Fade in time in seconds"
+            onChange={(e) => setFadeInDraft(e.target.value)}
+            onBlur={commitFadeInDraft}
+            onKeyDown={handleFadeInKeyDown}
           />
         </FieldRow>
 
@@ -260,11 +375,13 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
 
         <FieldRow label="Fade Out (s)">
           <input
-            type="number"
+            type="text"
             className={INPUT_CLASS}
-            value={editor.fadeOut}
-            step={0.001}
-            onChange={(e) => handleFadeOutChange(parseFloat(e.target.value) || 0)}
+            value={fadeOutDraft}
+            title="Fade out time in seconds"
+            onChange={(e) => setFadeOutDraft(e.target.value)}
+            onBlur={commitFadeOutDraft}
+            onKeyDown={handleFadeOutKeyDown}
           />
         </FieldRow>
 
@@ -289,14 +406,6 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
           />
         </FieldRow>
       </div>
-
-      <FieldRow label="Channels">
-        <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.numChannels}</span>
-      </FieldRow>
-
-      <FieldRow label="Audio Duration">
-        <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{formattedAudioDuration}</span>
-      </FieldRow>
     </div>
   );
 }

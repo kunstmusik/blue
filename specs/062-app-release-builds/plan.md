@@ -6,7 +6,7 @@
 
 ## Summary
 
-Package the existing Blue Electron application as a downloadable desktop app, make local unsigned packaging repeatable, validate build and package output on native macOS arm64, Windows x64, and Linux x64 runners, and promote only complete unsigned ZIP bundles into stable GitHub releases. Use `electron-builder` for native installer generation and GitHub Actions matrices plus a final publisher job for atomic promotion. Signing and notarization are reserved until the required signing programs and keys are funded. Develop builds run on pushes to `develop`, remain available only as Actions artifacts, and stable releases are triggered by matching `vX.Y.Z` tags.
+Package the existing Blue Electron application as a downloadable desktop app, make local unsigned packaging repeatable, validate build and package output on native macOS arm64, Windows x64, and Linux x64 runners, and promote only complete unsigned native package sets into stable GitHub releases. Use `electron-builder` for native installer generation and GitHub Actions matrices plus a final publisher job for atomic promotion. Signing and notarization are reserved until the required signing programs and keys are funded. Develop builds run on pushes to `develop`, remain available only as Actions artifacts, and stable releases are triggered by matching `vX.Y.Z` tags.
 
 ## Technical Context
 
@@ -14,7 +14,7 @@ Package the existing Blue Electron application as a downloadable desktop app, ma
 
 **Primary Dependencies**: React 19, Vite 7, `vite-plugin-electron`, pnpm 10 workspaces, `electron-builder`, `@electron/rebuild`, existing `zeromq` native dependency, GitHub Actions
 
-**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, verified checksum manifests, and GitHub Release metadata; protected GitHub Environment approval; no new project XML or application-settings persistence
+**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, verified checksum manifests, and GitHub Release metadata; tag-restricted GitHub `release` Environment; no new project XML or application-settings persistence
 
 **Testing**: Vitest 4 existing suites; existing Java runtime packaged-resource tests; focused package-input and packaged-app smoke checks; unsigned artifact manifest verification; `pnpm test`; `pnpm lint`
 
@@ -72,7 +72,7 @@ packages/blue-app/
 ├── build/
 │   └── entitlements.mac.plist                # Hardened-runtime entitlements
 ├── scripts/
-│   ├── verify-packaged-app.mjs               # Installed-resource and native-module smoke check
+│   ├── verify-packaged-app.mjs               # Installed-resource and representative-project smoke checks
 │   └── verify-release-version.mjs            # Tag/package version agreement
 └── src/main/
     ├── packaged-runtime-verification.ts      # No-audio installed-runtime verification seam
@@ -85,7 +85,7 @@ scripts/
 ├── release-credential-preflight.mjs          # Advisory signing credential availability check
 ├── release-credential-preflight.test.mjs     # Sanitized preflight test suite
 ├── release-metadata.mjs                      # Dev/stable release metadata derivation
-├── validate-release-workflows.mjs            # Workflow contract validator (35 checks)
+├── validate-release-workflows.mjs            # Workflow contract validator (57 checks)
 ├── verify.mjs                                # Top-level repository verifier
 └── clean.mjs                                 # Build artifact cleaner
 ```
@@ -99,8 +99,8 @@ scripts/
 3. **Create local release ergonomics**: Add unsigned `package:dir`, `package:current`, and host/target package commands. Add tag-version validation and checksum generation. Document a single clean-machine unsigned package procedure plus explicit diagnostic messages for missing build inputs, user runtime prerequisites, and future signing variables if they are accidentally present.
 4. **Create reusable CI preparation**: Add a repository-local setup action that pins pnpm, Node, and Java; restores the pnpm cache; installs with the lockfile; and builds the Java helper before package consumers. Keep all third-party Actions pinned to reviewed revisions or maintained major releases under repository policy.
 5. **Expand CI validation**: Replace the macOS-only workflow with a native target matrix. Each matrix entry runs install, the full build, focused package-input checks, affected tests, repository tests, lint, an unsigned directory package, and packaged-app smoke verification. Upload logs and package evidence even when a validation stage fails.
-6. **Distribute develop Actions artifacts**: On each push to `develop`, build the full unsigned hosted matrix, append the short source SHA to the version information, and upload `blue-{os}-{cputype}-{versionInfo}.zip` artifacts only after their checks pass. Do not create a GitHub Release or grant `contents: write`.
-7. **Publish protected stable releases**: Add a tag-triggered workflow that first validates tag/package version agreement, then runs the unsigned platform packaging matrix. Each platform job wraps its native output in exactly one `blue-{os}-{cputype}-{version}.zip`; the Linux ZIP contains both the AppImage and Debian package. The final protected publisher job downloads exactly the three expected bundles, recomputes their checksums, validates a verified manifest, and publishes those same filenames as GitHub Release assets. It must never publish after a failed, skipped, missing, duplicate, unexpected, or altered bundle.
+6. **Distribute develop Actions artifacts**: On each push to `develop`, build the full unsigned hosted matrix, append the short source SHA to the version information, and directly upload `blue-{os}-{cputype}-{versionInfo}.{ext}` native package artifacts only after their checks pass. Upload the Linux AppImage and Debian package separately. Do not create a GitHub Release or grant `contents: write`.
+7. **Publish protected stable releases**: Add a tag-triggered workflow that first validates tag/package version agreement, then runs the unsigned platform packaging matrix. Each platform job directly uploads its standardized native package output, with separate AppImage and Debian package assets for Linux. The final protected publisher job downloads exactly the four expected packages, recomputes their checksums, validates a verified manifest, and publishes those same filenames as GitHub Release assets. It must never publish after a failed, skipped, missing, duplicate, unexpected, or altered package.
 8. **Document operations and recovery**: Add `docs/release-guide.md` covering pull-request and develop Actions artifacts, stable releases, GitHub Environment publication protection, future signing inputs, external user runtime prerequisites, release rollback, and incident response. Link the guide from the README release section.
 
 ## Validation Strategy
@@ -108,7 +108,7 @@ scripts/
 - Unit-test package input validation and Java resource-path contracts.
 - Run local unsigned package and packaged-app smoke checks on a supported macOS machine.
 - Require the multi-platform package matrix for pull requests and pushes to `develop`.
-- Verify a develop push produces exactly three primary `.zip` Actions artifacts whose filenames include the source SHA, with no GitHub Release and no production-secret access.
+- Verify a develop push produces exactly four primary native-package Actions artifacts whose filenames include the source SHA, with the Linux AppImage and Debian package separate, no GitHub Release, and no production-secret access.
 - Use a protected test tag/release to verify unsigned stable publication before the first production release. Validate macOS signing/notarization and Windows cloud signing later in a dedicated future signed-release slice.
 - Verify published release assets from a clean macOS, Windows, and Linux environment using [quickstart.md](./quickstart.md).
 

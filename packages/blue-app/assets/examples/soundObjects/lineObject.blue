@@ -1,0 +1,158 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>LineObject Example</title>
+    <author>steven yi</author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement/>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'/>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324082' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>gkfreq	init 0</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Comment</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>The lineObject here generates two different control signals, one for the frequency of the vco2 in the sound soundObject and on for cutoff frequency of the butterlp.</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.LineObject'>
+        <subjectiveDuration>8.71875</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>lineObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <line name='freq' version='2' max='2000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='20.0'/>
+          <linePoint x='0.23867595' y='413.92664'/>
+          <linePoint x='0.49825785' y='222.14658'/>
+          <linePoint x='0.7456446' y='476.1256'/>
+          <linePoint x='1.0' y='185.86385'/>
+        </line>
+        <line name='cutoff' version='2' max='8.0' min='2.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='3.3350785'/>
+          <linePoint x='0.18292683' y='7.7958117'/>
+          <linePoint x='0.42682928' y='2.5340314'/>
+          <linePoint x='0.70034844' y='3.837696'/>
+          <linePoint x='0.815331' y='2.4554973'/>
+          <linePoint x='1.0' y='2.0'/>
+        </line>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Sound'>
+        <subjectiveDuration>8.734375</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>sound</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <instrumentText>iamp	= ampdb(85)
+;kenv	linseg	0, p3 * .5, 1, p3 * .5, 0
+kenv	adsr 0.1, 0.1, .9, .1
+
+aout	vco2	iamp, gkfreq
+
+aout	butterlp	aout, gkfreq + (gkfreq * gkcutoff)
+
+aout	= aout * kenv
+
+	outs aout, aout</instrumentText>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

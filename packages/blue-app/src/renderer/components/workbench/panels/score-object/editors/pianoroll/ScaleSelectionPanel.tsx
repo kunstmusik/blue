@@ -100,7 +100,7 @@ export default function ScaleSelectionPanel({
         readOnly
       />
       <button
-        className="px-2 py-1 text-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
+        className="px-2 py-1 text-role-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
         onClick={handleChooseFile}
         title="Load .scl scale file"
       >

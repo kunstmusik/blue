@@ -3,19 +3,31 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { LibraryEditorSessionSnapshot } from '../../shared/unified-library';
 import { LibraryBreadcrumbs } from '../components/libraries/LibraryBreadcrumbs';
 import { LibraryEditorToolbar } from '../components/libraries/LibraryEditorToolbar';
 import { LibrarySessionDialog } from '../components/libraries/LibrarySessionDialog';
 import { LibraryControlledEditor } from '../components/libraries/editor-registry';
+import { EffectLibraryEditor } from '../components/libraries/editors/EffectLibraryEditor';
+import { InstrumentLibraryEditor } from '../components/libraries/editors/InstrumentLibraryEditor';
+import { SoundObjectLibraryEditor } from '../components/libraries/editors/SoundObjectLibraryEditor';
+import { UdoLibraryEditor } from '../components/libraries/editors/UdoLibraryEditor';
 import { validateLibraryNodeName } from '../components/libraries/LibraryTree';
 import { LibraryTree } from '../components/libraries/LibraryTree';
 import { LibraryBlockDropMarker } from '../components/libraries/LibraryDropMarker';
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { useLibraryStore } from '../stores/library-store';
 import { createTestDataTransfer, dispatchContextMenuKey, dispatchDragEvent } from './library-interaction-test-helpers';
-import { instrumentDocument } from './library-editor-fixtures';
+import { effectDocument, instrumentDocument, udoDocument } from './library-editor-fixtures';
+import { createDefaultBlueX7Voice } from '@blue/data';
+import type {
+  BlueSynthBuilderInstrumentSnapshot,
+  BlueX7InstrumentSnapshot,
+  ScoreObjectEditorDocumentSnapshot,
+  UdoDefinitionSnapshot,
+} from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -71,24 +83,66 @@ describe('library editing UI', () => {
     const onCancel = vi.fn();
     const container = document.createElement('div');
     const root = createRoot(container);
+
+    for (const [label, callback] of [
+      ['Reload latest', onReload],
+      ['Overwrite latest', onOverwrite],
+      ['Cancel', onCancel],
+    ] as const) {
+      act(() => root.render(
+        <LibrarySessionDialog
+          key={label}
+          title="Library item changed"
+          message="Choose a conflict resolution."
+          primaryLabel="Reload latest"
+          secondaryLabel="Overwrite latest"
+          onPrimary={onReload}
+          onSecondary={onOverwrite}
+          onCancel={onCancel}
+        />,
+      ));
+      act(() => [...container.querySelectorAll('button')].find((button) => button.textContent === label)?.click());
+      expect(callback).toHaveBeenCalledOnce();
+    }
+    act(() => root.unmount());
+  });
+
+  it('always exposes a safe cancel path when a session has no cancel callback', () => {
+    const onPrimary = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
     act(() => root.render(
       <LibrarySessionDialog
-        title="Library item changed"
-        message="Choose a conflict resolution."
-        primaryLabel="Reload latest"
-        secondaryLabel="Overwrite latest"
-        onPrimary={onReload}
-        onSecondary={onOverwrite}
-        onCancel={onCancel}
+        title="Library item missing"
+        message="Choose how to continue."
+        onPrimary={onPrimary}
       />,
     ));
-    for (const label of ['Reload latest', 'Overwrite latest', 'Cancel']) {
-      act(() => [...container.querySelectorAll('button')].find((button) => button.textContent === label)?.click());
-    }
-    expect(onReload).toHaveBeenCalledOnce();
-    expect(onOverwrite).toHaveBeenCalledOnce();
-    expect(onCancel).toHaveBeenCalledOnce();
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog.querySelector('[data-action-id="cancel"]')).toBeTruthy();
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onPrimary).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+    act(() => root.render(
+      <LibrarySessionDialog
+        key="backdrop"
+        title="Library item missing"
+        message="Choose how to continue."
+        onPrimary={onPrimary}
+      />,
+    ));
+    const backdrop = container.querySelector('[role="presentation"]') as HTMLElement;
+    act(() => backdrop.click());
+    expect(onPrimary).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
     act(() => root.unmount());
+    container.remove();
   });
 
   it('uses name-only inline rename and mouse/keyboard contextual commands without row buttons', async () => {
@@ -166,6 +220,8 @@ describe('library editing UI', () => {
     const onCut = vi.fn();
     const onCopy = vi.fn();
     const onPaste = vi.fn();
+    const onImportInstrument = vi.fn();
+    const onExportInstrument = vi.fn();
     const onReorder = vi.fn();
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -186,6 +242,8 @@ describe('library editing UI', () => {
         onCut={onCut}
         onCopy={onCopy}
         onPaste={onPaste}
+        onImportInstrument={onImportInstrument}
+        onExportInstrument={onExportInstrument}
         onReorder={onReorder}
       />,
     ));
@@ -202,8 +260,25 @@ describe('library editing UI', () => {
     await act(async () => { await Promise.resolve(); });
     expect(document.body.textContent).toContain('Cut');
     expect(document.body.textContent).toContain('Copy');
+    expect(document.body.textContent).toContain('Import…');
+    expect(document.body.querySelector('[data-auxiliary-portal="true"]')).toBeTruthy();
+    act(() => {
+      [...document.body.querySelectorAll('[role="menuitem"]')]
+        .find((entry) => entry.textContent === 'Import…')
+        ?.dispatchEvent(new Event('click', { bubbles: true }));
+    });
+    expect(onImportInstrument).toHaveBeenCalledWith(folder);
 
     const itemRow = container.querySelector('#library-node-child')!;
+    act(() => itemRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(document.body.textContent).toContain('Export…');
+    act(() => {
+      [...document.body.querySelectorAll('[role="menuitem"]')]
+        .find((entry) => entry.textContent === 'Export…')
+        ?.dispatchEvent(new Event('click', { bubbles: true }));
+    });
+    expect(onExportInstrument).toHaveBeenCalledWith(child);
     act(() => itemRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
     await act(async () => { await Promise.resolve(); });
     const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
@@ -401,6 +476,248 @@ describe('library editing UI', () => {
     });
     dispatchDragEvent(destinationRow, 'drop', transfer);
     expect(onMoveToUser).toHaveBeenCalledWith(sourceFolder, destinationFolder);
+    act(() => root.unmount());
+  });
+});
+
+describe('library editor UDO isolation (US5, T030)', () => {
+  it('standalone library instrument orchestra fields receive no project UDOs', () => {
+    const html = renderToStaticMarkup(
+      <InstrumentLibraryEditor
+        snapshot={instrumentDocument.snapshot as any}
+        onPatch={vi.fn()}
+      />,
+    );
+    // Every Csound orchestra field receives the asset-owned UDO and no project UDO.
+    const scopes = [...html.matchAll(/data-udo-scope="([^"]+)"/g)].map((m) => m[1]);
+    expect(scopes.filter((scope) => scope === '1:0')).toHaveLength(2);
+    for (const scope of scopes) {
+      expect(scope.endsWith(':0')).toBe(true);
+    }
+  });
+
+  it('standalone library effect Code and UDO body receive only effect-owned UDOs', async () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <EffectLibraryEditor snapshot={effectDocument.snapshot as any} onPatch={vi.fn()} />,
+    ));
+
+    const codeTab = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Code');
+    act(() => codeTab?.click());
+    expect(
+      container.querySelector('[data-udo-scope="1:0"][aria-label="Effect code editor"]'),
+    ).toBeTruthy();
+
+    const udoTab = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent === 'UDO');
+    act(() => udoTab?.click());
+    const udoRow = [...container.querySelectorAll('tr')]
+      .find((row) => row.textContent?.includes('LibraryEffectUDO'));
+    act(() => udoRow?.click());
+    expect(
+      container.querySelector('[data-udo-scope="1:0"][aria-label="UDO code editor"]'),
+    ).toBeTruthy();
+
+    act(() => root.unmount());
+  });
+
+  it('standalone library UDO body offers only self, never project UDOs', () => {
+    const html = renderToStaticMarkup(
+      <UdoLibraryEditor snapshot={udoDocument.snapshot as any} onPatch={vi.fn()} />,
+    );
+    // The library UDO editor exposes itself (context:1) but no project UDOs (0).
+    const scope = html.match(/data-udo-scope="([^"]+)"/)?.[1];
+    expect(scope).toBe('1:0');
+  });
+
+  it('standalone library Sound Code and UDO body receive only Sound-owned UDOs', () => {
+    const ownerUdo: UdoDefinitionSnapshot = {
+      name: 'LibrarySoundUDO',
+      style: 'CLASSIC',
+      outTypes: 'a',
+      inTypes: 'a',
+      inputArguments: '',
+      code: '',
+      comments: '',
+    };
+    const bsbInstrument: BlueSynthBuilderInstrumentSnapshot = {
+      assignmentId: 'library-sound-bsb',
+      type: 'blueSynthBuilder',
+      name: 'Library Sound',
+      enabled: true,
+      comment: '',
+      instrumentText: 'aout oscili 0.2, 440',
+      alwaysOnInstrumentText: '',
+      globalOrc: '',
+      globalSco: '',
+      objectNames: [],
+      widgets: [],
+      editEnabled: true,
+      gridSettings: { enabled: false, snapEnabled: false, width: 10, height: 10 },
+      widgetTree: {
+        id: 'root',
+        type: 'BSBRootGroup',
+        objectName: '',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        value: 0,
+        minimum: 0,
+        maximum: 0,
+        editable: true,
+        properties: {},
+        children: [],
+      },
+      udolist: [ownerUdo],
+    };
+    const soundDocument = {
+      target: {
+        selectionId: 'library-sound',
+        selectedObjectType: 'Sound',
+        editorObjectType: 'Sound',
+        ownerKind: 'library',
+        displayContext: 'library',
+        supportsTimeBehavior: false,
+        supportsRepeatPoint: false,
+        supportsNoteProcessorChain: true,
+      },
+      object: {
+        id: 'library-sound',
+        name: 'Library Sound',
+        objectType: 'Sound',
+        startTime: { unit: 'csoundBeats', value: 0 },
+        subjectiveDuration: { unit: 'csoundBeats', value: 4 },
+        endTime: { unit: 'csoundBeats', value: 4 },
+        color: '#000000',
+        timeBehavior: 'notSupported',
+        repeatPointEnabled: false,
+        repeatPoint: null,
+        noteProcessorChainEnabled: false,
+        librarySource: null,
+      },
+      owner: {
+        kind: 'library',
+        groupPath: [],
+        layerId: '',
+        laneLabel: 'Library',
+        startLabel: '0.00',
+        durationLabel: '4.00',
+      },
+      shared: {
+        name: 'Library Sound',
+        startTime: { unit: 'csoundBeats', value: 0, availableUnits: ['csoundBeats'] },
+        subjectiveDuration: { unit: 'csoundBeats', value: 4, availableUnits: ['csoundBeats'] },
+        endTimeLabel: '4.00',
+        color: '#000000',
+        timeBehavior: { value: 'notSupported', editable: false, options: [] },
+        repeatPoint: {
+          enabled: false,
+          value: { unit: 'csoundBeats', value: 0, availableUnits: ['csoundBeats'] },
+        },
+        noteProcessorChain: { enabled: false, summary: 'None' },
+      },
+      editor: {
+        kind: 'structured',
+        editorFamily: 'Sound',
+        payload: {
+          comment: '',
+          bsbInstrument,
+          automationParameters: [],
+          availableTabs: ['code', 'udo'],
+          testAvailable: false,
+          deferredCapabilities: [],
+        },
+      },
+    } as unknown as ScoreObjectEditorDocumentSnapshot;
+
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <SoundObjectLibraryEditor snapshot={soundDocument} onPatch={vi.fn()} />,
+    ));
+
+    const codeScopes = [...container.querySelectorAll('[data-udo-scope]')]
+      .map((element) => element.getAttribute('data-udo-scope'));
+    expect(codeScopes.filter((scope) => scope === '1:0')).toHaveLength(3);
+    expect(codeScopes.every((scope) => scope?.endsWith(':0'))).toBe(true);
+
+    const udoTab = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent === 'UDO');
+    act(() => udoTab?.click());
+    const udoRow = [...container.querySelectorAll('tr')]
+      .find((row) => row.textContent?.includes('LibrarySoundUDO'));
+    act(() => udoRow?.click());
+    expect(
+      container.querySelector('[data-udo-scope="1:0"][aria-label="UDO code editor"]'),
+    ).toBeTruthy();
+
+    act(() => root.unmount());
+  });
+
+  it('renders and dispatches patches for BlueX7 library drafts', () => {
+    const onPatch = vi.fn();
+    const voice = createDefaultBlueX7Voice();
+    voice.common.algorithm = 11;
+    const blueX7Snapshot: BlueX7InstrumentSnapshot = {
+      assignmentId: 'library-item',
+      type: 'blueX7',
+      name: 'Library DX7',
+      enabled: true,
+      comment: 'Library FM voice',
+      voice,
+    };
+
+    const blueX7Session: LibraryEditorSessionSnapshot = {
+      sessionId: 'session-x7',
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'node-x7' },
+      displayName: 'Library DX7',
+      objectType: 'BlueX7',
+      breadcrumb: ['Instruments', 'FM', 'Library DX7'],
+      baseRevision: 1,
+      document: {
+        kind: 'instrument',
+        snapshot: blueX7Snapshot,
+      },
+      dirty: false,
+      pinned: false,
+      status: 'ready',
+    };
+
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryControlledEditor session={blueX7Session} onPatch={onPatch} />,
+    ));
+
+    expect(container.querySelector('[data-testid="blue-x7-editor"]')).toBeTruthy();
+    expect(container.textContent).toContain('Common & Algorithms');
+
+    // Edit algorithm
+    const algSelect = container.querySelector('#bluex7-algorithm') as HTMLSelectElement;
+    act(() => {
+      algSelect.value = '7';
+      algSelect.dispatchEvent(new Event('input', { bubbles: true }));
+      algSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'instrument',
+        patch: expect.objectContaining({
+          patch: expect.objectContaining({
+            blueX7: {
+              type: 'setCommonField',
+              field: 'algorithm',
+              value: 7,
+            },
+          }),
+        }),
+      }),
+    );
+
     act(() => root.unmount());
   });
 });

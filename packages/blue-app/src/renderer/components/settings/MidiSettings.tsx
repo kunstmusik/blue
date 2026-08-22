@@ -153,17 +153,17 @@ export default function MidiSettings(): React.ReactElement {
     <SettingsSection title="MIDI">
       <div className="mb-3 flex items-center gap-3">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-body ${phaseBadgeClass(phase)}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-role-callout ${phaseBadgeClass(phase)}`}
         >
           {phase}
         </span>
         {(aggregateMessage || phaseHelp) && (
-          <span className="text-body text-app-text-muted">{aggregateMessage ?? phaseHelp}</span>
+          <span className="text-role-body text-app-text-muted">{aggregateMessage ?? phaseHelp}</span>
         )}
         <button
           type="button"
           onClick={onRescan}
-          className="ml-auto inline-flex items-center rounded-md border border-app-border bg-transparent px-3 py-1 text-body text-app-text transition-colors hover:border-app-accent/60 hover:text-app-text-strong"
+          className="ml-auto inline-flex items-center rounded-md border border-app-border bg-transparent px-3 py-1 text-role-body text-app-text transition-colors hover:border-app-accent/60 hover:text-app-text-strong"
           title="Refresh the available MIDI input device list without changing preferences"
         >
           Rescan
@@ -171,19 +171,19 @@ export default function MidiSettings(): React.ReactElement {
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-md border border-dashed border-app-border px-4 py-3 text-body text-app-text-muted">
+        <div className="rounded-md border border-dashed border-app-border px-4 py-3 text-role-body text-app-text-muted">
           No MIDI input devices found. Connect a controller and press Rescan, or check that the OS
           has granted MIDI access to Blue.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-app-border">
-          <table className="w-full text-body">
-            <thead className="bg-app-surface text-app-text-muted">
+        <div className="overflow-hidden rounded-md border border-app-border bg-black">
+          <table className="w-full text-role-body">
+            <thead className="bg-app-surface text-role-headline font-bold text-app-text-muted">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Enabled</th>
-                <th className="px-3 py-2 text-left font-medium">Device</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-left font-medium">Error</th>
+                <th className="px-3 py-2 text-left">Enabled</th>
+                <th className="px-3 py-2 text-left">Device</th>
+                <th className="px-3 py-2 text-left">Status</th>
+                <th className="px-3 py-2 text-left">Error</th>
               </tr>
             </thead>
             <tbody>
@@ -209,7 +209,7 @@ export default function MidiSettings(): React.ReactElement {
                   </td>
                   <td className="px-3 py-2">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-body ${connectionBadgeClass(row.connection, row.availability)}`}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-role-callout ${connectionBadgeClass(row.connection, row.availability)}`}
                     >
                       {row.availability === 'unavailable' ? 'unavailable' : row.connection}
                     </span>

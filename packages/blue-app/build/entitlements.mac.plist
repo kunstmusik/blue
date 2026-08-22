@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!--
+      Hardened-runtime entitlements for Developer ID distribution of Blue.
+
+      Grant only the capabilities the application actually requires:
+        * JIT-free renderer; no com.apple.security.cs.allow-jit.
+        * No unsigned kernel extensions, no all-filesystem access.
+        * Audio/MIDI/OSC networking uses the standard network entitlement.
+        * File access stays user-driven through dialog-authorized paths and
+          the application's own userData/Documents directories.
+    -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <false/>
+
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <false/>
+
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <false/>
+
+    <key>com.apple.security.cs.allow-jit</key>
+    <false/>
+
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+
+    <key>com.apple.security.device.midi</key>
+    <true/>
+
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <key>com.apple.security.network.server</key>
+    <true/>
+  </dict>
+</plist>

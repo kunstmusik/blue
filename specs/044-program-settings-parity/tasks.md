@@ -133,7 +133,7 @@
 - [x] T053 [US3] Sync toolbar/native follow-playback changes with the saved Playback settings or a documented runtime preference field in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/application-menu.ts`
 - [x] T054 [US3] Apply available Disk Render settings to CSD export or disk-render helper boundaries and mark missing full execution behavior in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/csd-export.ts`
 - [x] T055 [US3] Mark Utility Csound executable, freeze flags, SoundObject freeze, and SoundFont inspection consumers as used or blocked by named dependencies in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
-- [x] T056 [US3] Apply General message color, work-directory, temp-file limit, alpha marquee, new-user-defaults, and Csound error warning consumers where workflows exist and classify unavailable consumers in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
+- [x] T056 [US3] Apply General message color, work-directory, temp-file limit, new-user-defaults, and Csound error warning consumers where workflows exist and classify unavailable consumers in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
 
 **Checkpoint**: User Story 3 is complete when each runtime-affecting setting either changes a current workflow in tests or appears in the usage matrix with a named missing-feature dependency.
 
@@ -179,7 +179,7 @@
 
 - [x] T068 [US5] Complete usage matrix entries for every General, Project Defaults, Playback, Utility, Realtime Render, and Disk Render setting in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
 - [x] T069 [US5] Add stale Text Settings matrix entries with `resource-only-stale` status in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
-- [x] T070 [US5] Add named missing-feature dependencies for Disk Render Execution, Utility Freeze/Unfreeze, SoundFont Utility, Device Discovery/Render Method Selection, General Work Directory Consumers, New User Defaults, and Alpha Marquee/Csound Error Warning in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
+- [x] T070 [US5] Add named missing-feature dependencies for Disk Render Execution, Utility Freeze/Unfreeze, SoundFont Utility, Device Discovery/Render Method Selection, General Work Directory Consumers, New User Defaults, and Csound Error Warning in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/program-settings-usage.ts`
 - [x] T071 [US5] Surface missing-feature dependency notes from the matrix in each affected settings panel in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/components/settings/SettingsSection.tsx`
 - [x] T072 [US5] Produce the implementation missing-feature report from the final matrix in `/Users/stevenyi/work/blue-electron/specs/044-program-settings-parity/missing-feature-report.md`
 
@@ -298,4 +298,4 @@ Task: "T047 [US3] Add render command integration tests in /Users/stevenyi/work/b
 
 - Text Settings resource strings are not an active Java panel and must remain classified as `resource-only-stale`.
 - MIDI and OSC placeholder settings from the current app are retained as app-specific preferences, not promoted into active Java `blue-settings` panels.
-- Disk render execution, utility freeze/unfreeze, SoundFont utility, device discovery/render-method selection, work-directory consumers, new-user defaults, alpha marquee, and Csound error warnings must be implemented where current workflows exist or named in the missing-feature report.
+- Disk render execution, utility freeze/unfreeze, SoundFont utility, device discovery/render-method selection, work-directory consumers, new-user defaults, and Csound error warnings must be implemented where current workflows exist or named in the missing-feature report. Alpha marquee is intentionally excluded as a legacy Swing-only presentation option.

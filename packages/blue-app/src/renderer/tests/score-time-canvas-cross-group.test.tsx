@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
 import type {
-  AudioLayerGroupSnapshot,
+  TrackLayerGroupSnapshot,
   PolyObjectLayerGroupSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreRowObjectSnapshot,
@@ -17,6 +17,7 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
+const originalBlueAPI = window.blueAPI;
 
 function createSoundItem(
   objectId: string,
@@ -25,10 +26,11 @@ function createSoundItem(
   objectIndex: number,
   startBeats: number,
   durationBeats: number,
+  objectType = 'GenericScore',
 ): ScoreRowObjectSnapshot {
   return {
     objectId,
-    objectType: 'GenericScore',
+    objectType,
     name,
     startBeats,
     durationBeats,
@@ -38,8 +40,8 @@ function createSoundItem(
     isContainer: false,
     editorTarget: {
       selectionId: objectId,
-      selectedObjectType: 'GenericScore',
-      editorObjectType: 'GenericScore',
+      selectedObjectType: objectType,
+      editorObjectType: objectType,
       ownerKind: 'timeline',
       displayContext: 'timeline',
       location: {
@@ -129,20 +131,23 @@ function createSoundGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): PolyObjectL
   };
 }
 
-function createAudioGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): AudioLayerGroupSnapshot {
+function createTrackGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): TrackLayerGroupSnapshot {
   return {
-    groupId: 'audio-group',
-    groupType: 'audio',
-    name: 'Audio Layer Group',
+    groupId: 'track-group',
+    groupType: 'track',
+    name: 'Track Layer Group',
+    defaultHeightIndex: 0,
     layerCount: itemsByLayer.length,
     isOpenableContainer: false,
     layers: itemsByLayer.map((items, index) => ({
-      layerId: `audio-group-layer-${index}`,
+      layerId: `track-group-layer-${index}`,
       name: `Layer ${index + 1}`,
       height: 44,
       muted: false,
       solo: false,
       items,
+      layerKind: 'track',
+      instrument: null,
     })),
   };
 }
@@ -150,7 +155,11 @@ function createAudioGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): AudioLayerG
 function renderCanvas(
   group: PolyObjectLayerGroupSnapshot,
   allLayerGroups: ScoreLayerGroupSnapshot[],
-  options?: { pixelsPerBeat?: number; totalBeats?: number },
+  options?: {
+    pixelsPerBeat?: number;
+    totalBeats?: number;
+    scoreContainerPath?: Array<{ layerId: string; objectIdentity: string }>;
+  },
 ): {
   root: Root;
   surface: HTMLDivElement;
@@ -175,7 +184,7 @@ function renderCanvas(
         projectSessionId={1}
         projectRevision={1}
         scoreRootGroupId="group-1"
-        scoreContainerPath={[]}
+        scoreContainerPath={options?.scoreContainerPath ?? []}
         group={group}
         totalBeats={totalBeats}
         pixelsPerBeat={pixelsPerBeat}
@@ -221,12 +230,26 @@ function dispatchMouseEvent(
   }));
 }
 
+function clickContextMenuItem(label: string): void {
+  const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    .find((item) => item.textContent?.trim() === label);
+  expect(menuItem).toBeTruthy();
+  act(() => {
+    menuItem?.click();
+  });
+}
+
 beforeEach(() => {
   useProjectStore.setState({
     applyProjectDocumentPatch: vi.fn().mockResolvedValue(undefined),
     moveScoreObjects: vi.fn(),
     resizeScoreObjects: vi.fn(),
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
+  window.blueAPI = {
+    ...window.blueAPI,
+    exportScoreObject: vi.fn().mockResolvedValue({ status: 'saved' }),
+    importScoreObject: vi.fn().mockResolvedValue(null),
+  } as typeof window.blueAPI;
   useScoreSelectionStore.getState().clearSelection();
 });
 
@@ -238,15 +261,352 @@ afterEach(() => {
     resizeScoreObjects: originalProjectState.resizeScoreObjects,
   } as Partial<ReturnType<typeof useProjectStore.getState>>);
   useScoreSelectionStore.getState().clearSelection();
+  window.blueAPI = originalBlueAPI;
   document.body.innerHTML = '';
 });
 
 describe('ScoreTimeCanvas cross-group gestures', () => {
+  it('selects SoundObject layers and timeline boundaries from the empty-area menu', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-before', 'Sound Before', 0, 0, 0, 1),
+      createSoundItem('sound-after', 'Sound After', 0, 1, 6, 1),
+    ]]);
+    const trackGroup = createTrackGroup([[
+      createSoundItem('track-before', 'Track Before', 0, 0, 1, 1),
+      createSoundItem('track-after', 'Track After', 0, 1, 5, 1),
+    ]]);
+
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup, trackGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 200, 10);
+    });
+    clickContextMenuItem('Select Layer');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-before',
+      'sound-after',
+    ]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All Before');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-before',
+      'track-before',
+    ]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All After');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([
+      'sound-after',
+      'track-after',
+    ]);
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('keeps boundary selection scoped to an empty nested score view', () => {
+    const rootGroup = createSoundGroup([[
+      createSoundItem('root-before', 'Root Before', 0, 0, 0, 1),
+      createSoundItem('root-after', 'Root After', 0, 1, 6, 1),
+    ]]);
+    const nestedGroup = createSoundGroup([[]]);
+    const { root, surface } = renderCanvas(nestedGroup, [rootGroup], {
+      scoreContainerPath: [{ layerId: 'root-layer', objectIdentity: 'nested-poly-object' }],
+    });
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All Before');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Select All After');
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([]);
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('sets selected SoundObject subjective time to objective time', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Sound Object', 0, 0, 1, 2),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Set Subjective Time to Objective Time');
+
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'setSubjectiveDurationToObjective',
+        targets: [item.editorTarget],
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('confirms and dispatches Java-compatible ObjectBuilder conversion', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Convert to ObjectBuilder');
+
+    // Dialog is shown
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Convert to ObjectBuilder?');
+    expect(dialog?.textContent).toContain('This operation can not be undone. Are you sure?');
+
+    // Confirm conversion
+    const convertBtn = dialog?.querySelector<HTMLButtonElement>('[data-action-id="convert"]')!;
+    act(() => {
+      convertBtn.click();
+    });
+
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'convertScoreObjectToObjectBuilder',
+        target: item.editorTarget,
+      },
+    });
+
+    act(() => { root.unmount(); });
+  });
+
+  it('fails closed when the ObjectBuilder conversion target changes while confirmation is open', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Convert to ObjectBuilder');
+
+    act(() => {
+      useScoreSelectionStore.getState().setSelection([{
+        objectId: item.objectId,
+        editorTarget: {
+          ...item.editorTarget!,
+          location: { ...item.editorTarget!.location!, objectIndex: 1 },
+        },
+      }]);
+    });
+
+    const convertButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="convert"]');
+    act(() => {
+      convertButton?.click();
+    });
+
+    expect(applyPatch).not.toHaveBeenCalled();
+    act(() => { root.unmount(); });
+  });
+
+  it('disables ObjectBuilder conversion for unsupported score object types', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('generic-object', 'Generic', 0, 0, 1, 2),
+    ]]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      .find((candidate) => candidate.textContent?.trim() === 'Convert to ObjectBuilder');
+    expect(menuItem?.getAttribute('data-disabled')).toBe('');
+    act(() => { menuItem?.click(); });
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    act(() => { root.unmount(); });
+  });
+
+  it('disables subjective time conversion for selected AudioClips', () => {
+    const audioGroup = createSoundGroup([[
+      createAudioItem('audio-clip', 'Audio Clip', 0, 0, 1, 2),
+    ]]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(audioGroup, [audioGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+
+    const menuItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      .find((item) => item.textContent?.trim() === 'Set Subjective Time to Objective Time');
+    expect(menuItem?.getAttribute('data-disabled')).toBe('');
+    act(() => {
+      menuItem?.click();
+    });
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('exports the single selected SoundObject XML', async () => {
+    const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
+    const item = {
+      ...createSoundItem('sound-object', 'Export Me', 0, 0, 1, 2),
+      serializedXml,
+    };
+    const soundGroup = createSoundGroup([[item]]);
+    const exportScoreObject = vi.fn().mockResolvedValue({ status: 'saved' });
+    window.blueAPI = { ...window.blueAPI, exportScoreObject } as typeof window.blueAPI;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Export…');
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(exportScoreObject).toHaveBeenCalledWith(serializedXml, 'Export Me');
+    act(() => root.unmount());
+  });
+
+  it('replaces selected SoundObjects with the single SoundObject in the buffer', async () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Original', 0, 0, 1, 2),
+    ]]);
+    const replacement = createSoundItem('buffer-object', 'Replacement', 0, 0, 0, 7);
+    useScoreSelectionStore.getState().copySelected([{
+      ...replacement,
+      objectId: 'buffer-object',
+      groupId: 'buffer-group',
+      layerIndex: 0,
+      serializedXml: '<soundObject />',
+    }]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    await act(async () => {
+      clickContextMenuItem('Replace with SoundObject in Buffer');
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(applyPatch).toHaveBeenNthCalledWith(1, {
+      score: {
+        type: 'removeScoreObjects',
+        targets: [item.editorTarget],
+      },
+    });
+    expect(applyPatch).toHaveBeenNthCalledWith(2, {
+      score: {
+        type: 'addScoreObjects',
+        groupId: 'sound-group',
+        objects: [{
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          name: 'Replacement',
+          startBeats: 1,
+          durationBeats: 2,
+          startTimeBase: 'BEATS',
+          durationTimeBase: 'BEATS',
+          backgroundColor: replacement.backgroundColor,
+          serializedXml: '<soundObject />',
+        }],
+      },
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds).toEqual(new Set());
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('shifts selected sound objects by the prompted beat amount', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('sound-object', 'Item', 0, 0, 2, 4),
+    ]]);
+    const moveScoreObjects = useProjectStore.getState().moveScoreObjects as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 60, 10);
+    });
+    clickContextMenuItem('Shift…');
+
+    const input = document.querySelector('input[type="number"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+
+    act(() => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      nativeSetter?.call(input, '3.5');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const okButton = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent === 'OK');
+    expect(okButton).not.toBeUndefined();
+
+    act(() => {
+      okButton!.click();
+    });
+
+    const item = soundGroup.layers[0]!.items[0]!;
+    expect(moveScoreObjects).toHaveBeenCalledWith([
+      { objectId: 'sound-object', targetStartBeats: 5.5, targetLayerIndex: 0, targetGroupId: 'sound-group' },
+    ]);
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'moveScoreObjects',
+        moves: [
+          {
+            target: item.editorTarget,
+            targetStartBeats: 5.5,
+            targetLayerIndex: 0,
+            targetGroupId: 'sound-group',
+          },
+        ],
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
   it('resizes selected soundObject and audio objects from a soundObject edge drag', async () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],
     ]);
-    const audioGroup = createAudioGroup([
+    const audioGroup = createTrackGroup([
       [createAudioItem('audio-1', 'Kick', 0, 0, 1, 2)],
     ]);
 
@@ -287,7 +647,7 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     const soundGroup = createSoundGroup([
       [createSoundItem('sound-1', 'Sine', 0, 0, 1, 2)],
     ]);
-    const audioGroup = createAudioGroup([
+    const audioGroup = createTrackGroup([
       [createAudioItem('audio-1', 'Kick', 0, 0, 3, 2)],
     ]);
 
@@ -343,5 +703,56 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('imports a context-normalized SoundObject at the requested score position', async () => {
+    const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
+    window.blueAPI = {
+      ...window.blueAPI,
+      importScoreObject: vi.fn().mockResolvedValue({
+        ok: true,
+        object: {
+          serializedXml,
+          objectType: 'GenericScore',
+          name: 'Imported BBF',
+          backgroundColor: 0x336699,
+          durationBeats: 9,
+          destinationTimeBase: 'BBF',
+          isContainer: false,
+        },
+      }),
+    } as typeof window.blueAPI;
+    const soundGroup = createSoundGroup([[]]);
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 100, 10);
+    });
+    clickContextMenuItem('Import…');
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    expect(applyPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'addScoreObjects',
+        groupId: 'sound-group',
+        objects: [expect.objectContaining({
+          layerIndex: 0,
+          objectType: 'GenericScore',
+          name: 'Imported BBF',
+          startBeats: 4,
+          durationBeats: 9,
+          startTimeBase: 'BBF',
+          durationTimeBase: 'BBF',
+          backgroundColor: 0x336699,
+          serializedXml,
+        })],
+      },
+    });
+
+    act(() => root.unmount());
   });
 });

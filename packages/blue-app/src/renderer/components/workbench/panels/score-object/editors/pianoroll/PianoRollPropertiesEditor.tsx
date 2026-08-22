@@ -54,7 +54,7 @@ export default function PianoRollPropertiesEditor({
         <FieldRow label="Pitch Generation">
           <div className="flex gap-2">
             {PCH_LABELS.map((label, i) => (
-              <label key={i} className="flex items-center gap-1 text-body text-gray-200">
+              <label key={i} className="flex items-center gap-1 text-role-body text-gray-200">
                 <input
                   type="radio"
                   className="accent-blue-accent"

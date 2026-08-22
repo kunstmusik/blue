@@ -22,6 +22,7 @@ export class Note {
   private _pFields = new Map<number, string>();
   private _startTime = 0;
   private _subjectiveDuration = 0;
+  private _trackInstrumentTarget: 'assignable' | 'preserve' | undefined;
   isTied = false;
 
   static createNote(numPFields: number): Note {
@@ -40,6 +41,7 @@ export class Note {
     const note = new Note();
     note._startTime = other._startTime;
     note._subjectiveDuration = other._subjectiveDuration;
+    note._trackInstrumentTarget = other._trackInstrumentTarget;
     note.isTied = other.isTied;
     for (const [k, v] of other._pFields) {
       note._pFields.set(k, v);
@@ -155,6 +157,18 @@ export class Note {
     if (index === 3) {
       this.setSubjectiveDuration(parseFloat(value));
     }
+  }
+
+  /**
+   * Transient render metadata. It intentionally never participates in score
+   * text/XML serialization and is copied only while a render Note is copied.
+   */
+  getTrackInstrumentTarget(): 'assignable' | 'preserve' | undefined {
+    return this._trackInstrumentTarget;
+  }
+
+  setTrackInstrumentTarget(target: 'assignable' | 'preserve' | undefined): void {
+    this._trackInstrumentTarget = target;
   }
 
   getPFields(): Map<number, string> {

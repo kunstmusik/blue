@@ -18,6 +18,12 @@ describe('Unified Libraries workbench integration', () => {
       auxiliaryGroupId: 'properties-main',
       openAtStartup: false,
     });
+    expect(PANEL_MAP.get('SoundFontViewerTopComponent')).toMatchObject({
+      title: 'SoundFont Viewer',
+      mode: 'properties',
+      auxiliaryGroupId: 'properties-main',
+      openAtStartup: false,
+    });
     expect(getDefaultEditorPanels().map((panel) => panel.id)).not.toContain('WelcomeTopComponent');
   });
 

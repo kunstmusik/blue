@@ -54,7 +54,7 @@ function BSBTextFieldWidget({
       <div className="flex h-full w-full items-center overflow-hidden rounded border border-blue-border/40 bg-blue-surface/30">
         <input
           ref={inputRef}
-          className="h-full w-full overflow-hidden bg-app-bsb-input px-2 text-ui leading-6 text-app-text outline-none"
+          className="h-full w-full overflow-hidden bg-app-bsb-input px-2 text-role-body text-app-text outline-none"
           value={localValue}
           readOnly={editEnabled}
           onChange={(event) => setLocalValue(event.target.value)}

@@ -21,12 +21,17 @@ import {
   type ManualLibraryImportPreview,
   type ManualLibraryImportResult,
   type ScoreTimelineSoundObjectRequest,
+  type TrackInstrumentClipboardRequest,
+  type BlueLiveSoundObjectClipboardRequest,
+  type CapturableLibraryTransferSource,
 } from '../../shared/unified-library';
 import {
   libraryEditorPanelId,
   useLibraryEditorStore,
 } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
+import { useBsbClipboardStore } from './bsb-clipboard-store';
+import { getProjectDocumentRevision } from './project-store';
 import { toast } from 'sonner';
 
 const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
@@ -35,6 +40,12 @@ const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
   soundObject: [],
   effect: [],
 };
+
+function receiveSharedCopyBuffers(snapshot: LibraryServiceSnapshot): void {
+  if (snapshot.bsbClipboard !== undefined) {
+    useBsbClipboardStore.getState().receiveClipboard(snapshot.bsbClipboard);
+  }
+}
 
 interface LibraryState {
   snapshot: LibraryServiceSnapshot | null;
@@ -68,6 +79,8 @@ interface LibraryState {
   selectItem: (key: LibraryItemKey) => Promise<void>;
   captureClipboard: (node: LibraryBrowseNode, operation: 'copy' | 'cut') => Promise<boolean>;
   captureScoreSoundObject: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
+  captureTrackInstrument: (request: TrackInstrumentClipboardRequest) => Promise<boolean>;
+  captureBlueLiveSoundObject: (request: BlueLiveSoundObjectClipboardRequest) => Promise<boolean>;
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
   cancelClipboard: () => void;
   pasteInto: (parent: LibraryBrowseNode) => Promise<boolean>;
@@ -85,6 +98,8 @@ interface LibraryState {
   selectImportDirectory: () => Promise<void>;
   executeImport: (folderSelections?: Readonly<Record<string, string>>) => Promise<void>;
   cancelImport: () => void;
+  importInstrumentToFolder: (parent: LibraryBrowseNode) => Promise<boolean>;
+  exportInstrument: (node: LibraryBrowseNode) => Promise<boolean>;
   exportCurrent: () => Promise<void>;
   exportAll: () => Promise<void>;
   retryRecovery: () => Promise<void>;
@@ -199,16 +214,20 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const snapshot = await window.blueAPI.getLibraryServiceSnapshot();
+      receiveSharedCopyBuffers(snapshot);
       set({
         snapshot,
         initialized: true,
+        ...(snapshot.clipboard !== undefined ? { clipboard: snapshot.clipboard } : {}),
       });
       unsubscribeSnapshot?.();
       unsubscribeChanged?.();
       unsubscribeSnapshot = window.blueAPI.onLibraryServiceSnapshot((next) => {
+        receiveSharedCopyBuffers(next);
         const projectChanged = get().snapshot?.projectSessionId !== next.projectSessionId;
         set({
           snapshot: next,
+          ...(next.clipboard !== undefined ? { clipboard: next.clipboard } : {}),
           ...(projectChanged ? { selectedKey: null } : {}),
         });
         if (projectChanged) void get().refresh();
@@ -392,12 +411,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (node.revision === undefined || node.nodeKind === 'root') return false;
     if (node.scope === 'user' && typeof node.revision !== 'number') return false;
     if (node.scope !== 'user' && (node.nodeKind !== 'item' || !node.key)) return false;
-    const source = node.scope === 'user'
+    const source: CapturableLibraryTransferSource = node.scope === 'user'
       ? {
           kind: 'userNode' as const,
           libraryType: node.libraryType,
           nodeId: node.nodeId,
-          revision: node.revision,
+          revision: node.revision as number,
         }
       : {
           kind: 'library' as const,
@@ -405,7 +424,29 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
           revision: node.revision,
         };
     if (operation === 'copy') {
-      set({ clipboard: { operation, source, capturedAt: Date.now() }, error: null });
+      const clipboard: LibraryInteractionClipboard = {
+        operation,
+        source,
+        capturedAt: Date.now(),
+        objectType: node.objectType,
+      };
+      const previousClipboard = get().clipboard;
+      set({
+        clipboard,
+        error: null,
+      });
+      const publishClipboard = window.blueAPI.setLibraryClipboard;
+      if (typeof publishClipboard === 'function') {
+        try {
+          if (!await publishClipboard(clipboard)) {
+            if (get().clipboard === clipboard) set({ clipboard: previousClipboard });
+            return false;
+          }
+        } catch {
+          if (get().clipboard === clipboard) set({ clipboard: previousClipboard });
+          return false;
+        }
+      }
       return true;
     }
 
@@ -429,6 +470,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       }
       confirmationToken = preview.value.confirmationToken;
     } else {
+      const selectedKeyAtRequest = get().selectedKey;
+      const projectRevisionAtRequest = getProjectDocumentRevision();
       const preview = await window.blueAPI.previewProjectLibraryDelete(source.key);
       if (!preview.ok) {
         set({ error: preview.error.message });
@@ -438,11 +481,52 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       if (
         source.key.libraryType === 'soundObject'
         && preview.value.linkedInstanceCount > 0
-        && !window.confirm(
-          `Cut this SoundObject and remove its project definition plus ${preview.value.linkedInstanceCount} linked score instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}?`,
-        )
-      ) return false;
-      confirmationToken = preview.value.confirmationToken;
+      ) {
+        const targetKey = source.key;
+        let decision: Awaited<ReturnType<typeof window.blueAPI.showNativeConfirmation>>;
+        try {
+          decision = await window.blueAPI.showNativeConfirmation({
+            id: 'library-cut-linked-sound-object',
+            type: 'warning',
+            title: 'Cut SoundObject',
+            message: `Cut this SoundObject and remove its project definition plus ${preview.value.linkedInstanceCount} linked score instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}?`,
+            actions: [
+              { id: 'cut', label: 'Cut', role: 'destructive' },
+              { id: 'cancel', label: 'Cancel', role: 'cancel' },
+            ],
+            defaultActionId: 'cancel',
+            cancelActionId: 'cancel',
+          });
+        } catch {
+          return false;
+        }
+        if (decision.actionId !== 'cut' || decision.outcome !== 'selected') return false;
+
+        let revalidatedPreview: Awaited<ReturnType<typeof window.blueAPI.previewProjectLibraryDelete>>;
+        try {
+          revalidatedPreview = await window.blueAPI.previewProjectLibraryDelete(targetKey);
+        } catch {
+          return false;
+        }
+        if (!revalidatedPreview.ok) {
+          set({ error: revalidatedPreview.error.message });
+          toast.error(revalidatedPreview.error.message);
+          return false;
+        }
+        if (
+          JSON.stringify(get().selectedKey) !== JSON.stringify(selectedKeyAtRequest)
+          || getProjectDocumentRevision() !== projectRevisionAtRequest
+          || revalidatedPreview.value.linkedInstanceCount !== preview.value.linkedInstanceCount
+          || JSON.stringify(revalidatedPreview.value.locations) !== JSON.stringify(preview.value.locations)
+          || revalidatedPreview.value.requiresConfirmation !== preview.value.requiresConfirmation
+          || revalidatedPreview.value.confirmationToken.length === 0
+        ) {
+          return false;
+        }
+        confirmationToken = revalidatedPreview.value.confirmationToken;
+      } else {
+        confirmationToken = preview.value.confirmationToken;
+      }
     }
 
     const result = await window.blueAPI.cutLibraryToClipboard({ source, confirmationToken });
@@ -482,6 +566,28 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     return true;
   },
 
+  captureTrackInstrument: async (request) => {
+    const result = await window.blueAPI.captureTrackInstrumentClipboard(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ clipboard: result.value, error: null });
+    return true;
+  },
+
+  captureBlueLiveSoundObject: async (request) => {
+    const result = await window.blueAPI.captureBlueLiveSoundObjectClipboard(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ clipboard: result.value, error: null });
+    return true;
+  },
+
   addScoreSoundObjectToProjectLibrary: async (request) => {
     const result = await window.blueAPI.addScoreSoundObjectToProjectLibrary(request);
     if (!result.ok) {
@@ -494,7 +600,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     return true;
   },
 
-  cancelClipboard: () => set({ clipboard: null }),
+  cancelClipboard: () => {
+    set({ clipboard: null });
+    void window.blueAPI.setLibraryClipboard(null);
+  },
 
   pasteInto: async (destination) => {
     const clipboard = get().clipboard;
@@ -755,10 +864,14 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   selectImportFiles: async () => {
-    const result = await window.blueAPI.selectLibraryImportFiles();
-    if (!result) return;
-    if (!result.ok) return set({ error: result.error.message });
-    set({ importPreview: result.value, importResult: null, error: null });
+    try {
+      const result = await window.blueAPI.selectLibraryImportFiles();
+      if (!result) return;
+      if (!result.ok) return set({ error: result.error.message });
+      set({ importPreview: result.value, importResult: null, error: null });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unable to import Java Blue library XML.' });
+    }
   },
 
   selectImportDirectory: async () => {
@@ -785,6 +898,46 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   cancelImport: () => set({ importPreview: null }),
+
+  importInstrumentToFolder: async (parent) => {
+    if (
+      parent.scope !== 'user'
+      || parent.libraryType !== 'instrument'
+      || (parent.nodeKind !== 'root' && parent.nodeKind !== 'folder')
+    ) return false;
+    const result = await window.blueAPI.importLibraryInstrument(parent.nodeId);
+    if (!result) return false;
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    await get().refresh();
+    const imported = result.value.affectedNodes[0];
+    toast.success(imported ? `Imported ${imported.displayName}.` : 'Instrument imported.');
+    return true;
+  },
+
+  exportInstrument: async (node) => {
+    if (
+      node.scope !== 'user'
+      || node.libraryType !== 'instrument'
+      || node.nodeKind !== 'item'
+      || !node.key
+      || node.key.scope !== 'user'
+    ) return false;
+    const result = await window.blueAPI.exportLibraryInstrument(node.key);
+    if (!result) return false;
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    toast.success(`Exported ${node.displayName}.`);
+    return true;
+  },
 
   exportCurrent: async () => {
     const type = get().typeFilter;
@@ -814,7 +967,25 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   createFreshDatabase: async () => {
-    if (!window.confirm('Create a fresh Libraries database? The failed database will be preserved for recovery.')) return;
+    let decision: Awaited<ReturnType<typeof window.blueAPI.showNativeConfirmation>>;
+    try {
+      decision = await window.blueAPI.showNativeConfirmation({
+        id: 'library-create-fresh-database',
+        type: 'warning',
+        title: 'Create Fresh Database',
+        message: 'Create a fresh Libraries database?',
+        detail: 'The failed database will be preserved for recovery.',
+        actions: [
+          { id: 'create', label: 'Create Fresh Database', role: 'destructive' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      });
+    } catch {
+      return;
+    }
+    if (decision.actionId !== 'create' || decision.outcome !== 'selected') return;
     const result = await window.blueAPI.createFreshLibraryDatabase();
     if (!result.ok) return set({ error: result.error.message });
     set({ snapshot: result.value, error: null });

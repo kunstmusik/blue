@@ -6,6 +6,7 @@ import { LibraryTree, validateLibraryNodeName } from '../../libraries/LibraryTre
 import { LibraryActionsMenu } from '../../libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../../libraries/LibraryImportDialog';
 import { LibraryRecoveryPanel } from '../../libraries/LibraryRecoveryPanel';
+import { ConfirmationDialog } from '../../dialogs/ConfirmationDialog';
 import { useLibraryStore } from '../../../stores/library-store';
 
 const TYPE_LABELS: Record<LibraryType, string> = {
@@ -50,6 +51,8 @@ export default function LibrariesPanel(): React.ReactElement {
     selectImportDirectory: current.selectImportDirectory,
     executeImport: current.executeImport,
     cancelImport: current.cancelImport,
+    importInstrumentToFolder: current.importInstrumentToFolder,
+    exportInstrument: current.exportInstrument,
     exportCurrent: current.exportCurrent,
     exportAll: current.exportAll,
     cancelDelete: current.cancelDelete,
@@ -188,10 +191,10 @@ export default function LibrariesPanel(): React.ReactElement {
       <div
         ref={scrollRef}
         data-library-scroll
-        className="min-h-0 flex-1 overflow-auto p-1"
+        className="min-h-0 flex-1 overflow-auto p-1 bg-black"
         onScroll={(event) => { scrollTopRef.current = event.currentTarget.scrollTop; }}
       >
-          {state.error && <p role="alert" className="px-2 py-1 text-xs text-red-400">{state.error}</p>}
+          {state.error && <p role="alert" className="px-2 py-1 text-role-callout text-red-400">{state.error}</p>}
           {state.query.trim() ? (
             <>
               <LibraryTree
@@ -210,7 +213,7 @@ export default function LibrariesPanel(): React.ReactElement {
                 onSelectedNodeChange={setSelectedNodeId}
               />
               {state.nextSearchCursor && (
-                <button type="button" className="m-2 rounded border border-app-border px-2 py-1 text-xs" onClick={state.loadMoreSearchResults}>
+                <button type="button" className="m-2 rounded border border-app-border px-2 py-1 text-role-callout" onClick={state.loadMoreSearchResults}>
                   Load more
                 </button>
               )}
@@ -218,7 +221,7 @@ export default function LibrariesPanel(): React.ReactElement {
           ) : (
             <>
               <section aria-label="User Libraries">
-                <h2 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
+                <h2 className="px-2 py-1 text-role-headline font-bold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
                 {types.map((type) => {
                   const rootNode = state.userRootsByType[type];
                   const displayRootNode = rootNode && {
@@ -245,6 +248,8 @@ export default function LibrariesPanel(): React.ReactElement {
                       onCut={(node) => { void state.captureClipboard(node, 'cut'); }}
                       onCopy={(node) => { void state.captureClipboard(node, 'copy'); }}
                       onPaste={(node) => { void state.pasteInto(node); }}
+                      onImportInstrument={(node) => { void state.importInstrumentToFolder(node); }}
+                      onExportInstrument={(node) => { void state.exportInstrument(node); }}
                       onTransferToUser={(descriptor, node) => {
                         void state.transferToUser({ kind: 'drag', dragSessionId: descriptor.dragSessionId }, node);
                       }}
@@ -287,8 +292,8 @@ export default function LibrariesPanel(): React.ReactElement {
               }
             }}
           >
-            <h2 id="library-create-folder-title" className="font-semibold">Create Folder</h2>
-            <label className="mt-3 block text-xs text-app-text-muted">
+            <h2 id="library-create-folder-title" className="text-role-title-3 font-semibold">Create Folder</h2>
+            <label className="mt-3 block text-role-callout text-app-text-muted">
               Folder name
               <input
                 autoFocus
@@ -301,10 +306,10 @@ export default function LibrariesPanel(): React.ReactElement {
                 }}
               />
             </label>
-            {folderNameError && <p role="alert" className="mt-2 text-xs text-red-400">{folderNameError}</p>}
+            {folderNameError && <p role="alert" className="mt-2 text-role-callout text-red-400">{folderNameError}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className="rounded border border-app-border px-3 py-1 text-xs" disabled={folderCreating} onClick={() => { cancelCreateFolder(); restoreTreeFocus(); }}>Cancel</button>
-              <button type="submit" className="rounded bg-app-accent px-3 py-1 text-xs text-white disabled:opacity-50" disabled={folderCreating}>
+              <button type="button" className="rounded border border-app-border px-3 py-1 text-role-callout" disabled={folderCreating} onClick={() => { cancelCreateFolder(); restoreTreeFocus(); }}>Cancel</button>
+              <button type="submit" className="rounded bg-app-accent px-3 py-1 text-role-callout text-white disabled:opacity-50" disabled={folderCreating}>
                 {folderCreating ? 'Creating…' : 'Create'}
               </button>
             </div>
@@ -312,28 +317,39 @@ export default function LibrariesPanel(): React.ReactElement {
         </div>
       )}
       {state.deletePreview && (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-labelledby="library-delete-title">
-          <div className="w-full max-w-sm rounded border border-app-border bg-app-overlay p-4 text-app-text shadow-2xl" data-library-dialog-surface>
-            <h2 id="library-delete-title" className="font-semibold">Delete “{state.deletePreview.displayName}”?</h2>
-            <p className="mt-2 text-xs text-app-text-muted">
-              This removes {state.deletePreview.affectedCount} Library {state.deletePreview.affectedCount === 1 ? 'node' : 'nodes'} and cannot be undone.
+        <ConfirmationDialog
+          open={true}
+          title={`Delete “${state.deletePreview.displayName}”?`}
+          description={`This removes ${state.deletePreview.affectedCount} Library ${state.deletePreview.affectedCount === 1 ? 'node' : 'nodes'} and cannot be undone.`}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            ...(state.deletePreview.dirtyEditorSessionIds.length > 0
+              ? [{ id: 'discard', label: 'Discard & Delete', intent: 'destructive' as const }]
+              : []),
+            {
+              id: 'delete',
+              label: state.deletePreview.dirtyEditorSessionIds.length > 0 ? 'Save & Delete' : 'Delete',
+              intent: 'destructive' as const,
+            },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'cancel') {
+              state.cancelDelete();
+              restoreTreeFocus();
+            } else if (actionId === 'discard') {
+              void confirmDelete('discard');
+            } else if (actionId === 'delete') {
+              void confirmDelete(state.deletePreview!.dirtyEditorSessionIds.length > 0 ? 'save' : 'discard');
+            }
+          }}
+        >
+          {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
+            <p className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-role-callout text-amber-200">
+              {state.deletePreview.dirtyEditorSessionIds.length} affected Library Item {state.deletePreview.dirtyEditorSessionIds.length === 1 ? 'editor has' : 'editors have'} unsaved changes.
             </p>
-            {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
-              <p className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-200">
-                {state.deletePreview.dirtyEditorSessionIds.length} affected Library Item {state.deletePreview.dirtyEditorSessionIds.length === 1 ? 'editor has' : 'editors have'} unsaved changes.
-              </p>
-            )}
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <button type="button" className="rounded border border-app-border px-3 py-1 text-xs" onClick={() => { state.cancelDelete(); restoreTreeFocus(); }}>Cancel</button>
-              {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
-                <button type="button" className="rounded border border-red-500/60 px-3 py-1 text-xs text-red-300" onClick={() => { void confirmDelete('discard'); }}>Discard &amp; Delete</button>
-              )}
-              <button type="button" className="rounded bg-red-600 px-3 py-1 text-xs text-white" onClick={() => { void confirmDelete(state.deletePreview!.dirtyEditorSessionIds.length > 0 ? 'save' : 'discard'); }}>
-                {state.deletePreview.dirtyEditorSessionIds.length > 0 ? 'Save & Delete' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </ConfirmationDialog>
       )}
     </div>
   );

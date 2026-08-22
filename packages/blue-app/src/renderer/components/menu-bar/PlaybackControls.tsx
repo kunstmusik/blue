@@ -34,7 +34,7 @@ function ToolbarIconButton({
 }
 
 export default function PlaybackControls(): React.ReactElement {
-  const hasProject = useProjectStore((s) => s.filePath !== null);
+  const hasProject = useProjectStore((s) => s.loaded);
   const isLoading = useProjectStore((s) => s.isLoading);
   const loopRendering = useProjectStore((s) => s.transport.loopRendering);
   const setLoopRendering = useProjectStore((s) => s.setLoopRendering);
@@ -106,7 +106,7 @@ export default function PlaybackControls(): React.ReactElement {
         disabled={!hasProject}
         onClick={toggleFollowPlayback}
       >
-        <span className="font-mono text-body font-semibold leading-none">F</span>
+        <span className="font-mono text-role-body font-semibold">F</span>
       </ToolbarIconButton>
       <ToolbarIconButton
         title={loopRendering ? 'Loop rendering on' : 'Loop rendering off'}

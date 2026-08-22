@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { parseJavaDecimal } from '@blue/data';
 import type {
   InstrumentPatch,
   SoundEditorPayload,
@@ -28,7 +29,7 @@ const SOUND_TABS: Array<{ key: SoundTabId; label: string }> = [
   { key: 'comments', label: 'Comments' },
 ];
 
-export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'structured' || editor.editorFamily !== 'Sound') return <></>;
 
@@ -80,7 +81,12 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
     });
   }, [document.target, onPatch]);
 
-  const handleAutomationPatch = useCallback((parameterId: string, updates: { automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string }) => {
+  const handleAutomationPatch = useCallback((parameterId: string, updates: {
+    automationEnabled?: boolean;
+    points?: Array<{ x: number; y: number }>;
+    curve?: string;
+    resolutionDecimal?: string;
+  }) => {
     onPatch({
       type: 'updateTypeSpecificEditor',
       target: document.target,
@@ -101,7 +107,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
                 type="button"
                 data-sound-editor-tab={tab.key}
                 className={[
-                  'border-b-2 px-3 py-2 text-body',
+                  'border-b-2 px-3 py-2 text-role-body',
                   activeTab === tab.key
                     ? 'border-app-accent text-app-text-strong'
                     : 'border-transparent text-app-text-muted hover:text-app-text-strong',
@@ -114,7 +120,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
           </div>
           <button
             type="button"
-            className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-ui text-app-text hover:border-app-accent disabled:opacity-50"
+            className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-role-body text-app-text hover:border-app-accent disabled:opacity-50"
             disabled={testing}
             onClick={() => { void runTest(); }}
             title="Test generated score"
@@ -124,7 +130,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         </div>
       </div>
       {testError && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-body text-app-danger">
+        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-role-body text-app-danger">
           <span>Error: {testError}</span>
           <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
         </div>
@@ -152,6 +158,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
           <div className={activeTab === 'code' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'code'}>
             <BSBCodeEditor
               instrument={bsbInstrument}
+              projectUdos={projectUdos}
               onInstrumentPatch={handleInstrumentPatch}
               onOrchestraPatch={handleOrchestraPatch}
             />
@@ -159,17 +166,18 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         )}
         {activeTab === 'udo' && bsbInstrument && (
           <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
-            <BSBUDOPanel
-              instrument={bsbInstrument}
-              onInstrumentPatch={handleInstrumentPatch}
-            />
+          <BSBUDOPanel
+            instrument={bsbInstrument}
+            projectUdos={projectUdos}
+            onInstrumentPatch={handleInstrumentPatch}
+          />
           </div>
         )}
         {activeTab === 'comments' && (
           <div className="flex flex-col h-full p-3">
-            <label className="mb-1 text-body text-app-text-muted">Comment</label>
+            <label className="mb-1 text-role-body text-app-text-muted">Comment</label>
             <textarea
-              className="flex-1 resize-none rounded border border-app-border bg-app-canvas px-2 py-1 font-mono text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+              className="flex-1 resize-none rounded border border-app-border bg-app-canvas px-2 py-1 font-mono text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
               value={comment}
               onChange={(e) => handleCommentChange(e.target.value)}
               placeholder="Instrument comment..."
@@ -188,7 +196,12 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
 
 interface SoundAutomationPanelProps {
   parameters: SoundAutomationParameterSnapshot[];
-  onAutomationPatch: (parameterId: string, updates: { automationEnabled?: boolean; points?: Array<{ x: number; y: number }>; curve?: string }) => void;
+  onAutomationPatch: (parameterId: string, updates: {
+    automationEnabled?: boolean;
+    points?: Array<{ x: number; y: number }>;
+    curve?: string;
+    resolutionDecimal?: string;
+  }) => void;
   startTimeBeats: number;
   durationBeats: number;
 }
@@ -274,6 +287,14 @@ function SoundAutomationPanel({
     [sortedParameters],
   );
   const [selectedParamId, setSelectedParamId] = useState<string | null>(lines[0]?.parameterId ?? null);
+  const selectedParameter = useMemo(
+    () => sortedParameters.find((parameter) => parameter.parameterId === selectedParamId) ?? null,
+    [selectedParamId, sortedParameters],
+  );
+  const selectedResolutionText = selectedParameter?.resolutionDecimal
+    ?? String(selectedParameter?.resolution ?? '-1');
+  const [resolutionDraft, setResolutionDraft] = useState(selectedResolutionText);
+  const [resolutionError, setResolutionError] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [draftEnabledMap, setDraftEnabledMap] = useState<Record<string, boolean>>({});
   const selectedLineIndex = useMemo(() => {
@@ -293,6 +314,26 @@ function SoundAutomationPanel({
       setSelectedParamId(lines[0]?.parameterId ?? null);
     }
   }, [lines, selectedParamId]);
+
+  useEffect(() => {
+    setResolutionDraft(selectedResolutionText);
+    setResolutionError(false);
+  }, [selectedParamId, selectedResolutionText]);
+
+  const commitResolution = useCallback(() => {
+    if (!selectedParamId) return;
+    const parsed = parseJavaDecimal(resolutionDraft);
+    if (!parsed.ok) {
+      setResolutionError(true);
+      return;
+    }
+    const canonicalText = parsed.value.canonicalText;
+    setResolutionDraft(canonicalText);
+    setResolutionError(false);
+    if (canonicalText !== selectedResolutionText) {
+      onAutomationPatch(selectedParamId, { resolutionDecimal: canonicalText });
+    }
+  }, [onAutomationPatch, resolutionDraft, selectedParamId, selectedResolutionText]);
 
   const handleLinesChange = useCallback((nextLines: AutomationLineView[]) => {
     nextLines.forEach((nextLine, index) => {
@@ -336,7 +377,7 @@ function SoundAutomationPanel({
 
   if (parameters.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-app-text-muted">
+      <div className="flex h-full items-center justify-center text-role-body text-app-text-muted">
         No automatable parameters available.
       </div>
     );
@@ -353,10 +394,10 @@ function SoundAutomationPanel({
           onLinesChange={handleLinesChange}
         />
       </div>
-      <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-body text-app-text">
+      <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-role-body text-app-text">
         <span className="text-app-text-soft">Automations</span>
         <select
-          className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
           value={selectedParamId ?? ''}
           onChange={(event) => setSelectedParamId(event.target.value)}
           disabled={lines.length === 0}
@@ -371,9 +412,35 @@ function SoundAutomationPanel({
             ))
           )}
         </select>
+        {selectedParameter && (
+          <label className="flex items-center gap-1 text-app-text-soft" title="Exact Java decimal resolution">
+            <span>Resolution</span>
+            <input
+              aria-label="Exact automation resolution"
+              className={`w-24 rounded border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none ${resolutionError ? 'border-app-danger' : 'border-app-border'}`}
+              value={resolutionDraft}
+              onChange={(event) => {
+                setResolutionDraft(event.target.value);
+                setResolutionError(false);
+              }}
+              onBlur={commitResolution}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commitResolution();
+                  event.currentTarget.blur();
+                } else if (event.key === 'Escape') {
+                  setResolutionDraft(selectedResolutionText);
+                  setResolutionError(false);
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+          </label>
+        )}
         <button
           type="button"
-          className="rounded border border-app-border bg-app-surface px-3 py-1 text-body text-app-text-strong hover:border-app-accent"
+          className="rounded border border-app-border bg-app-surface px-3 py-1 text-role-body text-app-text-strong hover:border-app-accent"
           onClick={openEditDialog}
         >
           Edit
@@ -383,11 +450,11 @@ function SoundAutomationPanel({
       {showEditDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowEditDialog(false)}>
           <div className="w-160 max-h-[70vh] overflow-hidden rounded border border-app-border bg-app-hover shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <div className="border-b border-app-border px-4 py-3 text-lg font-semibold text-app-text-strong">
+            <div className="border-b border-app-border px-4 py-3 text-role-headline font-bold text-app-text-strong">
               Choose Parameters to Automate
             </div>
-            <div className="max-h-[50vh] overflow-auto">
-              <table className="w-full border-collapse text-sm text-app-text">
+            <div className="max-h-[50vh] overflow-auto bg-black">
+              <table className="w-full border-collapse text-role-body text-app-text">
                 <thead>
                   <tr className="border-b border-app-border bg-app-menu">
                     <th className="px-3 py-2 text-left font-medium">Enabled</th>
@@ -419,14 +486,14 @@ function SoundAutomationPanel({
             <div className="flex justify-end gap-2 border-t border-app-border px-4 py-3">
               <button
                 type="button"
-                className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-sm text-app-text-soft hover:border-app-accent"
+                className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text-soft hover:border-app-accent"
                 onClick={() => setShowEditDialog(false)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-sm font-semibold text-app-text-strong hover:bg-app-accent-hover"
+                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-headline font-bold text-app-text-strong hover:bg-app-accent-hover"
                 onClick={applyEditDialogChanges}
               >
                 OK
@@ -469,7 +536,7 @@ function SoundAutomationCanvas({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-app-canvas">
-      <div className="relative h-6 border-b border-app-border bg-app-menu text-tiny text-app-text-soft">
+      <div className="relative h-6 border-b border-app-border bg-app-menu text-role-subheadline text-app-text-soft">
         {Array.from({ length: 7 }, (_, index) => {
           const ratio = index / 6;
           const time = startTimeBeats + (ratio * effectiveDuration);

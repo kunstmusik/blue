@@ -118,7 +118,7 @@ export default function TempoRegionBar({
               >
                 {showLabel && (
                   <span
-                    className={`absolute left-1 top-0 leading-5 text-micro whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
+                    className={`absolute left-1 top-0 text-role-subheadline whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
                   >
                     {'\u2669'} {Math.round(region.tempo)}
                   </span>

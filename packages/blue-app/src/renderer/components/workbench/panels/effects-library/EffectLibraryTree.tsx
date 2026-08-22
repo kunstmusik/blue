@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Tree, type NodeRendererProps, type NodeApi } from 'react-arborist';
+import type { NodeRendererProps, NodeApi } from 'react-arborist';
+import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, FolderOpen, Folder, FileAudio } from 'lucide-react';
 
@@ -221,7 +222,7 @@ function Node({
       ref={dragHandle}
       style={style}
       className={[
-        'flex items-center gap-1.5 pr-2 text-body select-none cursor-pointer',
+        'flex items-center gap-1.5 pr-2 text-role-body select-none cursor-pointer',
         isSelected ? 'bg-blue-accent/20 text-gray-100' : 'text-gray-300 hover:bg-white/5',
       ].join(' ')}
       onClick={(e) => {
@@ -247,10 +248,10 @@ function Node({
       {icon}
       <span className="min-w-0 truncate">{node.data.name}</span>
       {isCategory && childCount > 0 && (
-        <span className="ml-auto flex-none text-tiny text-blue-muted">{childCount}</span>
+        <span className="ml-auto flex-none text-role-callout text-blue-muted">{childCount}</span>
       )}
       {effectMeta && (
-        <span className="ml-auto flex-none text-tiny text-blue-muted">{effectMeta}</span>
+        <span className="ml-auto flex-none text-role-callout text-blue-muted">{effectMeta}</span>
       )}
     </div>
   );
@@ -348,9 +349,9 @@ export default function EffectLibraryTree({
   );
 
   return (
-    <div ref={containerRef} className="h-full w-full">
+    <div ref={containerRef} className="h-full w-full bg-black">
       <TreeActionsContext.Provider value={contextActions}>
-        <Tree<LibraryTreeNode>
+        <BlueTree<LibraryTreeNode>
           ref={treeRef}
           data={data}
           openByDefault
@@ -372,7 +373,7 @@ export default function EffectLibraryTree({
           className="effects-library-tree"
         >
           {Node}
-        </Tree>
+        </BlueTree>
       </TreeActionsContext.Provider>
     </div>
   );

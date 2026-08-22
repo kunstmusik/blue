@@ -19,6 +19,7 @@ interface MockProjectState {
   title: string;
   globalOrc: string;
   globalSco: string;
+  projectUdos: import('../../shared/project-editor').UdoDefinitionSnapshot[];
   projectProperties: ProjectPropertiesSnapshot;
   clojureProject: ClojureProjectSnapshot;
   updateGlobalOrc: (value: string) => void | Promise<void>;
@@ -81,6 +82,7 @@ const { BASE_PROJECT_PROPERTIES, BASE_CLOJURE_PROJECT, mockProjectState } = vi.h
       title: '',
       globalOrc: '',
       globalSco: '',
+      projectUdos: [],
       projectProperties: { ...BASE_PROJECT_PROPERTIES },
       clojureProject: { ...BASE_CLOJURE_PROJECT },
       updateGlobalOrc: vi.fn(),
@@ -96,6 +98,7 @@ interface ProjectEditorPanelFixture {
   title?: string;
   globalOrc?: string;
   globalSco?: string;
+  projectUdos?: import('../../shared/project-editor').UdoDefinitionSnapshot[];
   projectProperties?: Partial<ProjectPropertiesSnapshot>;
   clojureProject?: ClojureProjectSnapshot;
 }
@@ -115,6 +118,7 @@ function applyProjectFixture(fixture: ProjectEditorPanelFixture = {}): void {
   mockProjectState.title = fixture.title ?? '';
   mockProjectState.globalOrc = fixture.globalOrc ?? '';
   mockProjectState.globalSco = fixture.globalSco ?? '';
+  mockProjectState.projectUdos = fixture.projectUdos ?? [];
   mockProjectState.projectProperties = projectProperties;
   mockProjectState.clojureProject = {
     libraryEntries: clojureProject.libraryEntries.map((entry) => ({ ...entry })),
@@ -201,6 +205,36 @@ describe('Project editor panels', () => {
     expect(reopenedHtml).toContain('data-editor-kind="codemirror"');
   });
 
+  it('supplies project-global UDOs to the Global Orchestra editor', () => {
+    const html = renderProjectPanelMarkup(GlobalOrchestraPanel, {
+      title: 'Loaded Project',
+      globalOrc: 'instr 1\n  out 0\nendin',
+      projectUdos: [
+        {
+          name: 'GlobalUDO',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'a',
+          inputArguments: '',
+          code: '',
+          comments: '',
+        },
+      ],
+    });
+
+    // Global Orchestra receives project UDOs only; no separate context-owned scope.
+    expect(html).toContain('data-udo-scope="0:1"');
+  });
+
+  it('does not supply instrument-owned UDOs to the Global Orchestra editor', () => {
+    const html = renderProjectPanelMarkup(GlobalOrchestraPanel, {
+      title: 'Loaded Project',
+      projectUdos: [],
+    });
+
+    expect(html).toContain('data-udo-scope="0:0"');
+  });
+
   it('adapts dynamic Csound completions for the selected editor', async () => {
     const source = createDynamicCsoundCompletionSource([
       (context) => [
@@ -271,9 +305,9 @@ describe('Project editor panels', () => {
       },
     });
 
-    expect(html).toContain('bg-app-input px-2 py-1 text-body text-app-text shadow-inner');
+    expect(html).toContain('bg-app-input px-2 py-1 text-role-body text-app-text shadow-inner');
     expect(html).not.toContain('bg-app-input px-3 py-2 text-sm text-app-text shadow-inner');
-    expect(html).toContain('text-body text-app-text-muted');
+    expect(html).toContain('text-role-body text-app-text');
     expect(html).not.toContain('text-body font-medium uppercase tracking-[0.18em] text-app-text-muted');
   });
 
@@ -299,7 +333,7 @@ describe('Project editor panels', () => {
     expect(html).toContain('org.clojure/data.json');
     expect(html).toContain('2.5.1');
     expect(html).toContain('Move Up');
-    expect(html).toContain('text-body text-app-text-muted');
+    expect(html).toContain('text-role-body text-app-text');
     expect(html).not.toContain('text-ui font-medium uppercase tracking-[0.18em] text-app-text-muted');
   });
 

@@ -60,7 +60,9 @@ function createMockClient(overrides: Partial<MockEngineClient> = {}): MockEngine
 
 function createBridge(client: MockEngineClient): EngineBridge {
   const bridge = new EngineBridge({ webContents: { send: vi.fn() } } as never);
-  (bridge as unknown as { client: MockEngineClient }).client = client;
+  (bridge as unknown as { activeSession: { getClient: () => MockEngineClient } }).activeSession = {
+    getClient: () => client,
+  };
   return bridge;
 }
 
@@ -133,7 +135,7 @@ function assignToLayer(project: RuntimeProject, paramIndex = 0): void {
 }
 
 function lastPoints(call: unknown[]): Array<{ time: number; value: number }> {
-  return call[6] as Array<{ time: number; value: number }>;
+  return call[4] as Array<{ time: number; value: number }>;
 }
 
 describe('EngineBridge automation sync', () => {
@@ -154,12 +156,30 @@ describe('EngineBridge automation sync', () => {
       'gk_blue_auto0',
       AutomationCurveCode.LINEAR,
       true,
-      param.getResolution(),
-      param.getResolutionScale(),
-      param.isHighPrecision(),
+      param.getResolutionText(),
       [
         { time: 0, value: 0.2 },
         { time: 6, value: 0.5 },
+      ],
+    );
+  });
+
+  it('publishes the authoritative decimal resolution text without numeric conversion', async () => {
+    const project = createRuntimeProject();
+    const param = project.params[0]!;
+    param.setResolutionText('0.10');
+    enableAutomation(param);
+
+    await project.bridge.syncAutomationParameter(param, timing, { coalesce: false });
+
+    expect(project.client.updateAutomation).toHaveBeenCalledWith(
+      'gk_blue_auto0',
+      AutomationCurveCode.LINEAR,
+      true,
+      '0.10',
+      [
+        { time: 0, value: 0.2 },
+        { time: 4, value: 0.8 },
       ],
     );
   });

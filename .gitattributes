@@ -1,0 +1,26 @@
+# Keep repository text files deterministic across checkout platforms.
+* text=auto eol=lf
+
+# Binary assets must never receive text normalization.
+*.a binary
+*.dmg binary
+*.dll binary
+*.exe binary
+*.gif binary
+*.icns binary
+*.ico binary
+*.jar binary
+*.jpeg binary
+*.jpg binary
+*.lib binary
+*.mp3 binary
+*.node binary
+*.ogg binary
+*.pdf binary
+*.png binary
+*.so binary
+*.wav binary
+*.webm binary
+*.woff binary
+*.woff2 binary
+*.zip binary

@@ -10,7 +10,7 @@ describe('Parameter compatibility', () => {
     parameter.setLabel('Gain');
     parameter.setMinimum(0);
     parameter.setMaximum(1);
-    parameter.setCurve(AutomationCurve.LINEAR);
+    parameter.setCurve(AutomationCurve.STEP);
     parameter.setAutomationEnabled(true);
     parameter.setFixedValue(0.5);
     parameter.addPoint(0, 0.25);
@@ -23,6 +23,7 @@ describe('Parameter compatibility', () => {
     expect(reloaded.getLabel()).toBe('Gain');
     expect(reloaded.getMinimum()).toBeCloseTo(0, 6);
     expect(reloaded.getMaximum()).toBeCloseTo(1, 6);
+    expect(reloaded.getCurve()).toBe(AutomationCurve.STEP);
     expect(reloaded.isAutomationEnabled()).toBe(true);
     expect(reloaded.getPoints()).toHaveLength(2);
   });
@@ -124,5 +125,39 @@ describe('Parameter point sorting', () => {
     const pts = reloaded.getPoints();
     expect(pts.map(p => p.time)).toEqual([1, 3, 5]);
     expect(pts.map(p => p.value)).toEqual([0.1, 0.3, 0.5]);
+  });
+});
+
+describe('Parameter exact resolution ownership', () => {
+  it('gives top-level bdresolution precedence and preserves it through copy/save', () => {
+    const xml = `<parameter uniqueId="p1" name="gain" label="Gain" min="0" max="1"
+        resolution="0.1" bdresolution="0.10" automationEnabled="true" value="0.5">
+      <line min="0" max="1" bdresolution="0.01">
+        <linePoint x="0" y="0.14"/>
+        <linePoint x="1" y="0.26"/>
+      </line>
+    </parameter>`;
+
+    const parameter = Parameter.loadFromXML(Element.parse(xml));
+    expect(parameter.getResolutionText()).toBe('0.10');
+    expect(parameter.getPoints().map((point) => point.value)).toEqual([0.1, 0.2]);
+
+    const copy = parameter.deepCopy() as Parameter;
+    expect(copy.getResolutionText()).toBe('0.10');
+    expect(copy.getPoints()).toEqual(parameter.getPoints());
+
+    const saved = parameter.saveAsXML();
+    expect(saved.getAttribute('bdresolution')).toBe('0.10');
+    expect(saved.getElement('line')?.getAttribute('bdresolution')).toBe('0.10');
+    expect(saved.getAttribute('resolution')).toBeNull();
+  });
+
+  it('normalizes a legacy numeric resolution only when exact bdresolution is absent', () => {
+    const xml = `<parameter name="gain" min="0" max="1" resolution="0.123456789">
+      <line min="0" max="1"><linePoint x="0" y="0.2"/></line>
+    </parameter>`;
+
+    const parameter = Parameter.loadFromXML(Element.parse(xml));
+    expect(parameter.getResolutionText()).toBe('0.12346');
   });
 });

@@ -1,6 +1,9 @@
 import type { BlueData } from '@blue/data';
-import { TimeBase } from '@blue/data';
-import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import { TimeBase, TrackLayerGroup } from '@blue/data';
+import {
+  normalizeDefaultLayerGroupType,
+  type ProgramSettingsSnapshot,
+} from '../shared/program-settings';
 import { PolyObject } from '@blue/data';
 
 function parseTimeBase(value: string): TimeBase {
@@ -31,9 +34,15 @@ export function applyProgramSettingsToNewProject(
   data.getMixer().setEnabled(pd.mixerEnabled);
 
   const score = data.getScore();
-  const rootPoly = score[0];
-  if (rootPoly instanceof PolyObject) {
-    rootPoly.setDefaultHeightIndex(pd.layerHeightDefault);
+  const root = score[0];
+  const defaultLayerGroupType = normalizeDefaultLayerGroupType(pd.defaultLayerGroupType);
+  if (defaultLayerGroupType === 'TRACK') {
+    const trackGroup = new TrackLayerGroup();
+    trackGroup.setDefaultHeightIndex(pd.layerHeightDefault);
+    trackGroup.newLayerAt(0);
+    score.splice(0, 1, trackGroup);
+  } else if (root instanceof PolyObject) {
+    root.setDefaultHeightIndex(pd.layerHeightDefault);
   }
 
   const timeState = data.getScore().getTimeState();

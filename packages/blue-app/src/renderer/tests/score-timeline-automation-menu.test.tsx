@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import AutomationTargetMenu from '../components/workbench/panels/score/automation/AutomationTargetMenu';
 import type {
   AutomationTargetSnapshot,
@@ -13,6 +13,16 @@ import type {
 } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+// Radix DropdownMenu relies on pointer-capture APIs that jsdom does not implement.
+beforeAll(() => {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = () => false;
+  }
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = () => {};
+  }
+});
 
 function buildAutomation(): ScoreLayerAutomationSnapshot {
   const targets: AutomationTargetSnapshot[] = [
@@ -42,7 +52,54 @@ const layerRef: ScoreAutomationLayerRef = {
   layerKind: 'soundObject',
 };
 
-function renderMenu() {
+function buildTrackAutomation(): ScoreLayerAutomationSnapshot {
+  const buildTarget = (parameterId: string, label: string): AutomationTargetSnapshot => ({
+    parameterId,
+    label,
+    sourceKind: 'mixer',
+    automationEnabled: false,
+    assignmentState: 'available',
+  });
+
+  return {
+    layerId: 'track-1',
+    layerKind: 'track',
+    parameterIds: [],
+    parameters: [],
+    targetGroups: [{
+      groupId: 'track-channel',
+      label: 'Track Channel',
+      subGroups: [
+        {
+          groupId: 'track-channel-pre',
+          label: 'Pre-Effects',
+          subGroups: [{
+            groupId: 'pre-filter',
+            label: 'Filter',
+            subGroups: [],
+            targets: [buildTarget('pre-cutoff', 'Cutoff')],
+          }],
+          targets: [],
+        },
+        {
+          groupId: 'track-channel-post',
+          label: 'Post-Effects',
+          subGroups: [{
+            groupId: 'post-reverb',
+            label: 'Reverb',
+            subGroups: [],
+            targets: [buildTarget('post-room', 'Room Size')],
+          }],
+          targets: [],
+        },
+      ],
+      targets: [buildTarget('track-db', 'dB')],
+    }],
+    missingParameterIds: [],
+  };
+}
+
+function renderMenu(automation = buildAutomation()) {
   const onPatch = vi.fn();
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -50,7 +107,8 @@ function renderMenu() {
   void act(() => {
     root.render(
       <AutomationTargetMenu
-        automation={buildAutomation()}
+        trigger={<button type="button">A</button>}
+        automation={automation}
         layerRef={layerRef}
         onPatch={(patch: ScoreAutomationPatch) => onPatch(patch)}
       />,
@@ -59,22 +117,53 @@ function renderMenu() {
   return { onPatch, container, root };
 }
 
-function clickTarget(container: HTMLElement, label: string) {
-  const spans = Array.from(container.querySelectorAll('span')) as HTMLElement[];
-  const span = spans.find((s) => s.textContent === label && s.className.includes('flex-1'));
-  span?.parentElement?.click();
+/** Opens the Radix DropdownMenu by activating the trigger button. */
+async function openMenu(container: HTMLElement) {
+  const trigger = container.querySelector('button')!;
+  await act(async () => {
+    trigger.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    await Promise.resolve();
+  });
 }
 
-function clickByText(container: HTMLElement, text: string) {
-  const els = Array.from(container.querySelectorAll('div')) as HTMLElement[];
-  els.find((el) => el.textContent?.trim() === text)?.click();
+function getMenuText(): string {
+  return document.querySelector('[role="menu"]')?.textContent ?? '';
+}
+
+async function clickMenuItem(label: string) {
+  const items = Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+  const item = items.find((el) => el.textContent?.includes(label));
+  await act(async () => {
+    item?.click();
+    await Promise.resolve();
+  });
 }
 
 describe('AutomationTargetMenu', () => {
-  it('groups instrument and mixer targets and offers Clear All / Cleanup Missing', () => {
+  it('shows Track channel targets directly in Pre-Effects, dB, Post-Effects order', async () => {
+    const { container, root } = renderMenu(buildTrackAutomation());
+    try {
+      await openMenu(container);
+      const text = getMenuText();
+      const preIdx = text.indexOf('Pre-Effects');
+      const dbIdx = text.indexOf('dB');
+      const postIdx = text.indexOf('Post-Effects');
+      expect(preIdx).toBeGreaterThanOrEqual(0);
+      expect(dbIdx).toBeGreaterThan(preIdx);
+      expect(postIdx).toBeGreaterThan(dbIdx);
+    } finally {
+      void act(() => {
+        root.unmount();
+      });
+    }
+  });
+
+  it('groups instrument and mixer targets and offers Clear All / Cleanup Missing', async () => {
     const { container, root } = renderMenu();
     try {
-      const text = container.textContent ?? '';
+      await openMenu(container);
+      const text = getMenuText();
       expect(text).toContain('Instrument');
       expect(text).toContain('Mixer');
       expect(text).toContain('Freq');
@@ -89,10 +178,11 @@ describe('AutomationTargetMenu', () => {
     }
   });
 
-  it('removes the parameter when an assigned-to-current target is selected', () => {
+  it('removes the parameter when an assigned-to-current target is selected', async () => {
     const { container, onPatch, root } = renderMenu();
     try {
-      clickTarget(container, 'Amp');
+      await openMenu(container);
+      await clickMenuItem('Amp');
       expect(onPatch).toHaveBeenCalledWith({
         type: 'removeAutomationFromLayer',
         layer: layerRef,
@@ -105,10 +195,11 @@ describe('AutomationTargetMenu', () => {
     }
   });
 
-  it('claims a parameter assigned elsewhere onto the current layer', () => {
+  it('claims a parameter assigned elsewhere onto the current layer', async () => {
     const { container, onPatch, root } = renderMenu();
     try {
-      clickTarget(container, 'Ch1 Level');
+      await openMenu(container);
+      await clickMenuItem('Ch1 Level');
       expect(onPatch).toHaveBeenCalledWith({
         type: 'assignAutomationToLayer',
         layer: layerRef,
@@ -121,10 +212,11 @@ describe('AutomationTargetMenu', () => {
     }
   });
 
-  it('enables automation when assigning an available target', () => {
+  it('enables automation when assigning an available target', async () => {
     const { container, onPatch, root } = renderMenu();
     try {
-      clickTarget(container, 'Freq');
+      await openMenu(container);
+      await clickMenuItem('Freq');
       expect(onPatch).toHaveBeenCalledWith({
         type: 'assignAutomationToLayer',
         layer: layerRef,
@@ -138,10 +230,11 @@ describe('AutomationTargetMenu', () => {
     }
   });
 
-  it('dispatches Clear All for the current layer', () => {
+  it('dispatches Clear All for the current layer', async () => {
     const { container, onPatch, root } = renderMenu();
     try {
-      clickByText(container, 'Clear All');
+      await openMenu(container);
+      await clickMenuItem('Clear All');
       expect(onPatch).toHaveBeenCalledWith({ type: 'clearLayerAutomations', layer: layerRef });
     } finally {
       void act(() => {

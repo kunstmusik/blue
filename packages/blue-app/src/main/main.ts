@@ -13,13 +13,29 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { BlueData, Effect, Send, BSBGroup, BSBWidget, setExternalCommandExecutor } from '@blue/data';
-import { openSettingsWindow } from './settings-window';
+import {
+  BlueData,
+  Effect,
+  PolyObject,
+  Send,
+  BSBGroup,
+  BSBWidget,
+  TrackLayerGroup,
+  setExternalCommandExecutor,
+  convertCSDtoBlue,
+  convertOrcScoToBlue,
+  CSDImportMode,
+  buildMidiImportProject,
+} from '@blue/data';
+import { openSettingsWindow, resolveSettingsWindowClose } from './settings-window';
+import { closeAboutWindow, openAboutWindow, syncAboutWindowZoom } from './about-window';
+import { resolveAppMetadata } from './app-metadata';
 import {
   loadProgramSettings,
   saveProgramSettings,
   resetPanel,
   syncLegacyRendererSettings,
+  updatePlaybackPreferences,
   clearSettingsCache,
 } from './program-settings-store';
 import {
@@ -37,23 +53,91 @@ import {
 } from './window-state-manager';
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
+import {
+  commitAudioFileDrop,
+  getFileManagerRoots,
+  listFileManagerDirectory,
+  validateFileManagerDirectory,
+} from './file-manager-service';
+import {
+  NATIVE_CONFIRMATION_CHANNEL,
+  type NativeConfirmationResult,
+} from '../shared/confirmation-dialog';
+import { showNativeConfirmation } from './native-confirmation';
+import {
+  BLUE_X7_IMPORT_SYSEX_CHANNEL,
+  selectBlueX7SysexFile,
+} from './blue-x7-sysex-import';
+import {
+  COMMIT_AUDIO_FILE_DROP_CHANNEL,
+  FILE_MANAGER_GET_ROOTS_CHANNEL,
+  FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
+  FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL,
+  type CommitAudioFileDropRequest,
+} from '../shared/file-manager';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
+import {
+  isTrackInstrumentEditorPatchRequest,
+  isTrackInstrumentEditorRequest,
+} from '../shared/track-instrument-editor-contract';
+import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
+import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
-import { BlueLiveEngineSession } from './blue-live-engine';
+import { BlueLiveEngineSession, type BlueLiveStatusSnapshot } from './blue-live-engine';
+import {
+  BlueLiveTriggerController,
+  stopBlueLiveForProjectReplacement,
+  type BlueLiveTriggerControllerAccessors,
+} from './blue-live-trigger-controller';
+import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
+import { resolveExampleProjectPath } from './example-project-path';
+import { isSameProjectPathIdentity } from './project-path';
+import {
+  resolveReplacementSaveDecision,
+  runProjectFileReplacement,
+  runTransactionalSaveAs,
+} from './project-replacement-flow';
+import {
+  runCsdImportReplacement,
+  runMidiImportReplacement,
+  runNonInteractiveProjectLoad,
+  runOrcScoImportReplacement,
+} from './project-replacement-entry-points';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
+  classifyEngineFailure,
+  EngineRecoveryCoordinator,
+  EngineRecoveryError,
+} from './engine-recovery';
+import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
+import type { EngineRecoverySessionKind } from '../shared/engine-recovery';
+import {
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
+  broadcastProjectDocumentUpdateToEffectWindows,
   focusEffectEditorWindow,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
+import {
+  broadcastProjectDocumentUpdateToTrackInstrumentWindows,
+  closeTrackInstrumentEditorWindows,
+  closeTrackInstrumentEditorWindowsForGroup,
+  closeTrackInstrumentEditorWindowsForTrack,
+  focusTrackInstrumentEditorWindow,
+  openTrackInstrumentEditorWindow,
+} from './track-instrument-editor-window-manager';
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
+import {
+  normalizeWorkDirectory,
+  resolveWorkDirectoryDefaultPath,
+} from './work-directory';
 import {
   authorizeAudioFilePath,
   readAuthorizedAudioFileBytes,
@@ -64,15 +148,26 @@ import {
 import { executeExternalTest } from './external-executor';
 import { createMainExternalExecutor } from './external-command-executor';
 import {
+  inspectSoundFont,
+  type SoundFontExecutionSeam,
+} from './soundfont-viewer';
+import {
   buildAutomationRuntimeTimingContext,
   collectAffectedProjectScoreAutomationParameterIds,
   syncScoreAutomationParametersToEngine,
 } from './score-automation-runtime-sync';
 import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
+import { evaluateJavaScriptConsole } from './repl-console-runtime';
 import { testScoreObject } from './score-object-test';
+import { testPythonInstrument, type PythonInstrumentTestRequest, type PythonInstrumentTestResult } from './python-instrument-test';
+import { auditionSelectedScoreObjects } from './audition-score-objects';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { syncRuntimeChannel } from './runtime-channel-sync';
+import {
+  syncBsbInstrumentRuntimeChannels,
+  syncBsbRealtimeControlUpdate,
+} from './bsb-instrument-runtime-sync';
 import {
   broadcastToWorkbenchWindows,
   getWorkbenchWindowManager,
@@ -82,14 +177,58 @@ import {
   routeFocusPanel,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
-import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
+import {
+  PROJECT_DOCUMENT_UPDATED_CHANNEL,
+  type ProjectDocumentUpdatedEvent,
+} from '../shared/workbench-window-contract';
+import {
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  REPL_CONSOLE_OPEN_CHANNEL,
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  isReplConsoleLanguage,
+  type ReplConsoleCloseRequest,
+  type ReplConsoleCloseResult,
+  type ReplConsoleEvaluateRequest,
+  type ReplConsoleEvaluateResult,
+  type ReplConsoleLanguage,
+  type ReplConsoleOpenRequest,
+  type ReplConsoleOpenResult,
+  type ReplConsoleProjectContext,
+  type ReplConsoleReinitializeRequest,
+  type ReplConsoleReinitializeResult,
+} from '../shared/repl-console';
+import {
+  SOUND_FONT_FILE_SELECT_CHANNEL,
+  SOUND_FONT_INSPECT_CHANNEL,
+} from '../shared/soundfont-viewer';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
+import {
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  type ScriptRuntimeReinitializeResult,
+} from '../shared/script-runtime';
+import {
+  ABOUT_WINDOW_CLOSE_CHANNEL,
+  APP_METADATA_GET_CHANNEL,
+} from '../shared/app-metadata';
 import { MidiInputCoordinator } from './midi-input-coordinator';
+import { parseMidiImportBytes } from './midi-import-parser';
+import { MidiImportService } from './midi-import-service';
+import type {
+  MidiImportCommitResult,
+  MidiImportStartResult,
+} from '../shared/midi-import';
 import {
   decideMidiPermission,
   isSameApplicationLocation,
 } from './midi-permission';
 import { OscControlService } from './osc-control-service';
+import {
+  SETTINGS_CLOSE_RESPONSE_CHANNEL,
+  SETTINGS_CONFIRM_CLOSE_CHANNEL,
+  type SettingsClosePromptResponse,
+  type SettingsCloseResolution,
+} from '../shared/settings-window';
 import {
   OSC_CONTROL_COMMAND_CHANNEL,
   OSC_CONTROL_GET_SNAPSHOT_CHANNEL,
@@ -101,20 +240,31 @@ import {
 import {
   applyEffectEditablePatchToEffect,
   applyProjectDocumentPatch,
+  createBsbRealtimeControlUpdate,
   createProjectEditorSnapshot,
   createEffectEditorSnapshot,
+  createTrackInstrumentEditorSnapshot,
+  createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
+  resolveTimelineScoreObjects,
   createNoteProcessorChainSnapshot,
+  findMixerChannelById,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   isEmptyProjectDocumentPatch,
+  isBsbRealtimeControlUpdate,
   resolveTimelineTarget,
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
   type EffectEditablePatch,
+  type TrackInstrumentEditorPatchRequest,
+  type TrackInstrumentEditorRequest,
+  type TrackInstrumentEditorPatchResult,
   type BlueLiveNoteTriggerRequest,
   type BlueLiveNoteTriggerResult,
+  type LegacyBlueLiveTriggerRequest,
+  type LegacyBlueLiveTriggerResult,
   type BsbRealtimeControlUpdate,
   type ProjectDocumentCommitReceipt,
   type ProjectDocumentPatch,
@@ -127,7 +277,21 @@ import {
   type ScoreObjectLocationRef,
   type ScoreObjectEditorTargetSnapshot,
   type PolyObjectLayerGroupSnapshot,
+  type AudioFileSelectionResult,
+  type FrozenSoundObjectSaveCopyResult,
 } from '../shared/project-editor';
+import {
+  inspectAudioFileMetadata,
+  inspectFrozenArtifact,
+  selectScoreObjectAudioFile,
+  saveFrozenSoundObjectCopy,
+} from './score-object-file-operations';
+import {
+  prepareScoreObjectImport,
+  validateScoreObjectExport,
+  type ScoreObjectExportResult,
+  type ScoreObjectImportResult,
+} from '../shared/score-object-file';
 import type {
   RenderToDiskRequest,
   FreezeScoreObjectsRequest,
@@ -135,21 +299,24 @@ import type {
   RenderOperationResult,
   RenderOperationStatus,
   FreezeOperationResult,
+  FreezeItemStatus,
   DiskRenderAction,
 } from '../shared/render-freeze-contract';
 import {
   RENDER_OPERATION_STATUS_CHANNEL,
+  FREEZE_ITEM_STATUS_CHANNEL,
   isCancelRenderOperationRequest,
   isFreezeScoreObjectsRequest,
   isRenderToDiskRequest,
 } from '../shared/render-freeze-contract';
 import { executeRenderToDisk, parseCsoundProgressLine, resolveOutputFilePath, resolveRenderWorkingDirectory, type RenderExecutionSeam } from './render-to-disk';
+import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
 import { tokenizeCommand } from './disk-render-command';
 import {
   executeFreezeUnfreeze,
   type FreezeExecutionSeam,
 } from './freeze-score-objects';
-import { spawn, type ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import { BlueSynthBuilder } from '@blue/data';
 import {
   collectMissingAudioFiles,
@@ -169,42 +336,134 @@ import type {
 import { UnifiedLibraryService } from './unified-library/service';
 import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
-import { runPackagedRuntimeVerificationAndExit } from './packaged-runtime-verification';
+import { CodeRepositoryService } from './code-repository/service';
+import { registerCodeRepositoryIpc } from './code-repository/ipc';
+import {
+  runPackagedMetadataVerificationAndExit,
+  runPackagedRuntimeVerificationAndExit,
+  verifyPackagedProject,
+} from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
 let currentFilePath: string | null = null;
 let currentProjectRevision = 0;
+let canAuditionScoreObjects = false;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
 let unregisterUnifiedLibraryIpc: (() => void) | null = null;
+let codeRepositoryService: CodeRepositoryService | null = null;
+let unregisterCodeRepositoryIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
 let activeRenderOperationId: string | null = null;
-let activeRenderProcess: ChildProcess | null = null;
+let activeRenderAbortController: AbortController | null = null;
 let activeRenderOperationKind: RenderOperationStatus['kind'] | null = null;
 let activeRenderAction: DiskRenderAction | null = null;
 let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
+let blueLiveTriggerController: BlueLiveTriggerController | null = null;
+
+/**
+ * Lazily build (or return the cached) Blue Live trigger controller wired to
+ * the current canonical-state accessors. The controller reads module-level
+ * state through callbacks so main retains ownership.
+ */
+function getBlueLiveTriggerController(): BlueLiveTriggerController {
+  if (blueLiveTriggerController) return blueLiveTriggerController;
+  const accessors: BlueLiveTriggerControllerAccessors = {
+    getCanonicalProject: () => currentData,
+    getProjectSessionId: () => currentProjectSessionId,
+    getDocumentRevision: () => currentProjectRevision,
+    getBlueLiveSession: () => blueLiveSession,
+    getJavaScriptSession: () => javaScriptSession,
+    getJavaRuntimeSessionManager: () => javaRuntimeSessionManager,
+    getCurrentFilePath: () => currentFilePath,
+  };
+  blueLiveTriggerController = new BlueLiveTriggerController(accessors);
+  return blueLiveTriggerController;
+}
+let engineRuntimeService: EngineRuntimeService | null = null;
 let isQuitting = false;
 let pendingQuit = false;
 let shutdownPromise: Promise<void> | null = null;
 let playbackStartPromise: Promise<boolean> | null = null;
+const engineRecoveryCoordinator = new EngineRecoveryCoordinator();
+let activeAuditionPlayback = false;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
+let replRuntimeQueue: Promise<unknown> = Promise.resolve();
 let midiInputCoordinator: MidiInputCoordinator | null = null;
 let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
+let currentSavedFollowPlayback = true;
 let currentFollowPlaybackOnStartEnabled = true;
 let lastProjectOnLoadState: ProjectOnLoadState | null = null;
+
+function getConfiguredWorkDirectory(): string | undefined {
+  return normalizeWorkDirectory(loadProgramSettings().general.workDirectory);
+}
+
+async function showCsoundErrorWarning(message: string): Promise<void> {
+  const settings = loadProgramSettings();
+  if (!settings.general.csoundErrorWarningEnabled || !mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'csound-error-warning',
+    type: 'error',
+    title: 'Csound Error',
+    message: 'There was an error in running Csound.',
+    detail: `Please view the Csound Output panel for more information.\n\n${message}`,
+    actions: [{ id: 'ok', label: 'OK', role: 'accept' }],
+    defaultActionId: 'ok',
+    cancelActionId: 'ok',
+    checkbox: {
+      label: 'Disable Error Message Dialog',
+      checked: false,
+    },
+  });
+
+  if (result.checkboxChecked) {
+    const current = loadProgramSettings();
+    saveProgramSettings({
+      ...current,
+      general: {
+        ...current.general,
+        csoundErrorWarningEnabled: false,
+      },
+    });
+  }
+}
+
+function getConfiguredWorkDirectoryDefaultPath(fileName?: string): string | undefined {
+  return resolveWorkDirectoryDefaultPath(getConfiguredWorkDirectory(), fileName);
+}
 
 const appZoomController = createAppZoomController({
   loadSnapshot: () => loadProgramSettings(),
   saveSnapshot: (snapshot) => saveProgramSettings(snapshot),
   getAllWindows: () => BrowserWindow.getAllWindows(),
+});
+
+const midiImportService = new MidiImportService({
+  chooseFile: async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select MIDI File',
+      defaultPath: getConfiguredWorkDirectory(),
+      filters: [{ name: 'MIDI File (*.mid, *.midi)', extensions: ['mid', 'midi'] }],
+      properties: ['openFile'],
+    });
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0];
+  },
+  readFile: (filePath) => fs.readFileSync(filePath),
+  parseFile: parseMidiImportBytes,
+  getProjectSessionId: () => currentProjectSessionId,
 });
 
 interface ProjectOnLoadState {
@@ -219,7 +478,29 @@ interface ProjectOnLoadState {
 // restart (Ctrl+C then `pnpm run dev` again) is required for this to take
 // effect because it is read once at process startup.
 app.setName('Blue');
-console.log('[main] App name set to:', app.getName());
+
+if (process.env.BLUE_VERIFY_USER_DATA_PATH) {
+  app.setPath('userData', path.resolve(process.env.BLUE_VERIFY_USER_DATA_PATH));
+}
+
+// Deterministic packaged metadata smoke mode. It verifies the release
+// metadata consumed by the About dialog before creating windows or starting
+// runtime services. The smoke driver and CI matrix rely on this exit-code
+// contract.
+if (process.env.BLUE_VERIFY_MODE === 'packaged-metadata') {
+  runPackagedMetadataVerificationAndExit({
+    isPackaged: app.isPackaged,
+    appVersion: app.getVersion(),
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+    releaseChannel: process.env.BLUE_RELEASE_CHANNEL,
+    processVersions: {
+      electron: process.versions.electron,
+      chromium: process.versions.chrome,
+      node: process.versions.node,
+    },
+  });
+}
 
 // Deterministic no-audio packaged-resource smoke mode.
 // When BLUE_VERIFY_MODE=packaged-resources the main process verifies
@@ -288,12 +569,15 @@ function initializeOscControlService(): void {
 function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
   const snapshot = getCurrentProjectDocument();
   if (!snapshot) return;
-  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, {
+  const event: ProjectDocumentUpdatedEvent = {
     sessionId: currentProjectSessionId,
     revision: currentProjectRevision,
     snapshot,
     ...(sourceWindowId ? { sourceWindowId } : {}),
-  });
+  };
+  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
+  broadcastProjectDocumentUpdateToEffectWindows(event);
+  broadcastProjectDocumentUpdateToTrackInstrumentWindows(event);
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
@@ -301,27 +585,7 @@ function getProjectMixerChannelBySnapshotId(channelId: string) {
     return null;
   }
 
-  const mixer = currentData.getMixer();
-
-  if (channelId === 'master') {
-    return mixer.getMaster();
-  }
-
-  const sourceChannel = mixer.getChannels().find(
-    (ch) => ch.getAssociation() === channelId || getMixerChannelSnapshotId(ch) === channelId,
-  );
-  if (sourceChannel) {
-    return sourceChannel;
-  }
-
-  const subChannel = mixer.getSubChannels().find(
-    (ch) => getMixerChannelSnapshotId(ch) === channelId,
-  );
-  if (subChannel) {
-    return subChannel;
-  }
-
-  return null;
+  return findMixerChannelById(currentData.getMixer(), channelId);
 }
 
 function getProjectEffectEntryByRequest(request: EffectEditorRequest) {
@@ -361,7 +625,97 @@ function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
 
   return createEffectEditorSnapshot(result.entry, result.effectId, 'project', {
     projectRef: request.projectRef,
+    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
   });
+}
+
+function trackInstrumentRequestIsCurrent(request: TrackInstrumentEditorRequest): boolean {
+  const { projectSessionId, projectRevision } = request.track;
+  return projectSessionId === currentProjectSessionId
+    && projectRevision === currentProjectRevision;
+}
+
+function getTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
+  if (!currentData || !trackInstrumentRequestIsCurrent(request)) return null;
+
+  return getCurrentTrackInstrumentEditorSnapshot(request);
+}
+
+function getCurrentTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
+  if (!currentData || request.track.projectSessionId !== currentProjectSessionId) return null;
+
+  return createTrackInstrumentEditorSnapshot(currentData, {
+    track: {
+      ...request.track,
+      projectSessionId: currentProjectSessionId,
+      projectRevision: currentProjectRevision,
+    },
+  });
+}
+
+async function applyTrackInstrumentEditorPatch(
+  request: TrackInstrumentEditorPatchRequest,
+): Promise<TrackInstrumentEditorPatchResult> {
+  const data = currentData;
+  if (!data) {
+    return { status: 'unavailable', snapshot: null };
+  }
+  const currentSnapshot = getCurrentTrackInstrumentEditorSnapshot(request);
+  if (!currentSnapshot) {
+    return { status: 'unavailable', snapshot: null };
+  }
+  if (!trackInstrumentRequestIsCurrent(request)) {
+    return { status: 'stale', snapshot: currentSnapshot };
+  }
+
+  const patch: ProjectDocumentPatch = {
+    score: {
+      type: 'updateTrackInstrument',
+      track: currentSnapshot.track,
+      patch: request.patch,
+    },
+  };
+  const changed = applyProjectDocumentPatch(data, patch, {
+    projectSessionId: currentProjectSessionId,
+    projectRevision: currentProjectRevision,
+    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+  });
+  if (!changed) {
+    return { status: 'unchanged', snapshot: currentSnapshot };
+  }
+
+  currentProjectRevision += 1;
+  broadcastProjectDocumentUpdate();
+  const directRealtimeUpdate = request.patch.bsbInterface
+    ? createBsbRealtimeControlUpdate(
+        {
+          track: {
+            projectSessionId: currentProjectSessionId,
+            rootGroupId: request.track.rootGroupId,
+            trackId: request.track.trackId,
+          },
+        },
+        request.patch.bsbInterface,
+      )
+    : undefined;
+  if (!directRealtimeUpdate
+    && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
+    try {
+      await syncEngineWithProjectPatch(data, patch);
+    } catch (error) {
+      console.error('[main] Failed to sync Track instrument editor patch:', error);
+    }
+  }
+  return {
+    status: 'applied',
+    snapshot: getTrackInstrumentEditorSnapshot({
+      track: {
+        ...request.track,
+        projectSessionId: currentProjectSessionId,
+        projectRevision: currentProjectRevision,
+      },
+    }),
+  };
 }
 
 function computeInterfaceBounds(effect: Effect): { maxW: number; maxH: number } {
@@ -446,6 +800,7 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
 
   return createEffectEditorSnapshot(effectEntry.entry, effectEntry.effectId, 'project', {
     projectRef: request.projectRef,
+    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
   });
 }
 
@@ -481,6 +836,78 @@ function maybeCloseRemovedProjectEffectEditors(patch: ProjectDocumentPatch): voi
   });
 }
 
+function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): void {
+  const scorePatch = patch.score;
+  if (!scorePatch || !currentData) return;
+
+  if (scorePatch.type === 'removeLayerGroup') {
+    closeTrackInstrumentEditorWindowsForGroup(scorePatch.groupId);
+    return;
+  }
+
+  if (scorePatch.type === 'clearTrackInstrument'
+    || scorePatch.type === 'replaceTrackInstrument') {
+    closeTrackInstrumentEditorWindowsForTrack(
+      scorePatch.track.rootGroupId,
+      scorePatch.track.trackId,
+    );
+    return;
+  }
+
+  if (scorePatch.type === 'removeLayerRanges') {
+    const removedCountByGroup = new Map<string, number>();
+    for (const r of scorePatch.ranges) {
+      const group = findTrackLayerGroupById(currentData.getScore(), r.groupId);
+      if (group) {
+        const startIndex = Math.max(0, r.startIndex);
+        const endIndex = Math.min(group.length - 1, r.endIndex);
+        for (let i = startIndex; i <= endIndex; i++) {
+          const track = group[i];
+          if (track) {
+            closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
+          }
+        }
+        if (endIndex >= startIndex) {
+          removedCountByGroup.set(
+            r.groupId,
+            (removedCountByGroup.get(r.groupId) ?? 0) + endIndex - startIndex + 1,
+          );
+        }
+      }
+    }
+    if (scorePatch.deleteEmptyLayerGroups) {
+      for (const [groupId, removedCount] of removedCountByGroup) {
+        const group = findTrackLayerGroupById(currentData.getScore(), groupId);
+        if (group && group.length > 0 && removedCount >= group.length) {
+          closeTrackInstrumentEditorWindowsForGroup(groupId);
+        }
+      }
+    }
+    return;
+  }
+
+  if (scorePatch.type !== 'removeLayer') return;
+  const group = findTrackLayerGroupById(currentData.getScore(), scorePatch.groupId);
+  const track = group?.[scorePatch.layerIndex];
+  if (track) {
+    closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
+  }
+}
+
+function findTrackLayerGroupById(groups: readonly unknown[], groupId: string): TrackLayerGroup | null {
+  for (const candidate of groups) {
+    if (candidate instanceof TrackLayerGroup) {
+      const trackGroup = candidate as TrackLayerGroup;
+      if (trackGroup.getUniqueId() === groupId) return trackGroup;
+    }
+    if (candidate instanceof PolyObject) {
+      const nested = findTrackLayerGroupById(candidate as readonly unknown[], groupId);
+      if (nested) return nested;
+    }
+  }
+  return null;
+}
+
 function updateWindowTitle(): void {
   if (mainWindow) {
     mainWindow.setTitle(getWindowTitle(currentFilePath));
@@ -494,48 +921,50 @@ const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
 
 function createCsoundExecutionSeam(
   cancellationSignal?: { cancelled: boolean },
-  onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
-): RenderExecutionSeam & FreezeExecutionSeam {
+  streamOutput?: (text: string, type: 'stdout' | 'stderr') => void,
+  options: { trackRenderProcess?: boolean } = {},
+): RenderExecutionSeam & FreezeExecutionSeam & SoundFontExecutionSeam {
+  const trackRenderProcess = options.trackRenderProcess ?? true;
+
   return {
-    async runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string }> {
-      return new Promise((resolve, reject) => {
-        const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
-        activeRenderProcess = child;
-
-        let stderr = '';
-        let stderrLineBuffer = '';
-        child.stdout?.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          onOutput?.(text, 'stdout');
-        });
-        child.stderr?.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          stderr += text;
-          onOutput?.(text, 'stderr');
-          stderrLineBuffer += text;
-          const lines = stderrLineBuffer.split('\n');
-          stderrLineBuffer = lines.pop() ?? '';
-          for (const line of lines) {
-            if (!onProgress) continue;
-            const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
-            if (progress !== null) onProgress(progress);
-          }
-        });
-
-        child.on('error', (err) => {
-          activeRenderProcess = null;
-          reject(err);
-        });
-
-        child.on('close', (code) => {
-          activeRenderProcess = null;
-          if (cancellationSignal?.cancelled) {
-            resolve({ exitCode: -1, stderr: 'Operation cancelled.' });
-          } else {
-            resolve({ exitCode: code ?? -1, stderr });
-          }
-        });
-      });
+    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number, onOutput?: (text: string, type: 'stdout' | 'stderr') => void): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean }> {
+      const controller = trackRenderProcess && activeRenderAbortController
+        ? activeRenderAbortController
+        : new AbortController();
+      if (cancellationSignal?.cancelled) controller.abort();
+      let stderrLineBuffer = '';
+      const result = await engineRuntimeService?.executeCsound(
+        {
+          kind: 'performance',
+          operationId: activeRenderOperationId ?? `csound-${Date.now()}`,
+          args,
+          cwd,
+        },
+        {
+          signal: controller.signal,
+          onOutput: (text, source) => {
+            streamOutput?.(text, source);
+            onOutput?.(text, source);
+            if (source !== 'stderr' || !onProgress) return;
+            stderrLineBuffer += text;
+            const lines = stderrLineBuffer.split('\n');
+            stderrLineBuffer = lines.pop() ?? '';
+            for (const line of lines) {
+              const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
+              if (progress !== null) onProgress(progress);
+            }
+          },
+        },
+      );
+      if (!result) {
+        return { exitCode: -1, stderr: 'Blue Engine runtime service is unavailable.', stdout: '' };
+      }
+      return {
+        exitCode: result.exitCode ?? -1,
+        stderr: result.stderr || (result.state === 'failed' ? result.message : ''),
+        stdout: result.stdout,
+        cancelled: result.state === 'cancelled',
+      };
     },
   };
 }
@@ -546,7 +975,7 @@ function finishRenderOperation(operationId: string): void {
   activeRenderOperationKind = null;
   activeRenderAction = null;
   activeRenderCancellationSignal = null;
-  activeRenderProcess = null;
+  activeRenderAbortController = null;
   rebuildApplicationMenu();
 }
 
@@ -636,6 +1065,9 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
     return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Another render/freeze operation is already running.' };
   }
 
+  // One-shot Blue Engine children are isolated from the realtime ZMQ session;
+  // leave active playback/Blue Live untouched while an offline operation runs.
+
   const projectDirectory = resolveRenderWorkingDirectory(currentFilePath, app.getPath('temp'));
 
   const operationId = requestedOperationId ?? `disk-${Date.now()}`;
@@ -644,6 +1076,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
   activeRenderAction = action;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
+  activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
   try {
@@ -658,9 +1091,12 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 
     if (!props.diskCompleteOverride && !outputFile) {
       const defaultName = props.fileName?.trim() || `${currentFilePath ? path.basename(currentFilePath, '.blue') : 'untitled'}.wav`;
+      const dialogDirectory = currentFilePath
+        ? projectDirectory
+        : (getConfiguredWorkDirectory() ?? projectDirectory);
       const result = await dialog.showSaveDialog(mainWindow!, {
         title: 'Render to Disk',
-        defaultPath: path.join(projectDirectory, defaultName),
+        defaultPath: path.join(dialogDirectory, defaultName),
         filters: [
           { name: 'WAV', extensions: ['wav'] },
           { name: 'AIFF', extensions: ['aif', 'aiff'] },
@@ -755,6 +1191,7 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
   activeRenderAction = null;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
+  activeRenderAbortController = new AbortController();
   rebuildApplicationMenu();
 
   try {
@@ -776,6 +1213,9 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
       operationId,
       broadcastRenderStatus,
       seam,
+      (itemEvent: FreezeItemStatus) => {
+        broadcastToWorkbenchWindows(FREEZE_ITEM_STATUS_CHANNEL, itemEvent);
+      },
     );
 
     // Broadcast updated project if any mutations occurred
@@ -799,13 +1239,7 @@ async function handleCancelRenderOperation(request: CancelRenderOperationRequest
 
   activeRenderCancellationSignal!.cancelled = true;
 
-  if (activeRenderProcess) {
-    try {
-      activeRenderProcess.kill('SIGTERM');
-    } catch {
-      // Process may have already exited
-    }
-  }
+  activeRenderAbortController?.abort();
 
   return true;
 }
@@ -823,15 +1257,28 @@ function getCurrentProjectDirectory(): string | null {
   return currentFilePath ? path.dirname(currentFilePath) : null;
 }
 
-function getRealtimeSfDirOption(projectDirectory: string | null): string | null {
-  if (!currentData || !projectDirectory) {
-    return null;
-  }
+function getProjectMediaDirectory(data: BlueData, projectDirectory: string | null): string | null {
+  if (!projectDirectory) return null;
 
-  const mediaFolder = currentData.getProjectProperties().mediaFolder?.trim() ?? '';
-  const sfDir = path.isAbsolute(mediaFolder)
+  const mediaFolder = data.getProjectProperties().mediaFolder?.trim() ?? '';
+  return path.isAbsolute(mediaFolder)
     ? mediaFolder
     : path.resolve(projectDirectory, mediaFolder.length > 0 ? mediaFolder : 'media');
+}
+
+function getScoreObjectFileResolutionContext(data: BlueData): {
+  projectDirectory: string | null;
+  sfDir: string | null;
+} {
+  const projectDirectory = getCurrentProjectDirectory();
+  const sfDir = getProjectMediaDirectory(data, projectDirectory)
+    ?? (process.env.SFDIR && process.env.SFDIR.length > 0 ? process.env.SFDIR : null);
+  return { projectDirectory, sfDir };
+}
+
+function getRealtimeSfDirOption(data: BlueData, projectDirectory: string | null): string | null {
+  const sfDir = getProjectMediaDirectory(data, projectDirectory);
+  if (!sfDir) return null;
 
   fs.mkdirSync(sfDir, { recursive: true });
   return `--env:SFDIR=${sfDir}`;
@@ -841,7 +1288,7 @@ function buildRealtimeEngineOptions(data: BlueData, projectDirectory: string | n
   const settings = loadProgramSettings();
   const options = buildRealtimeEngineOptionsFromSettings(data, projectDirectory, settings);
 
-  const sfDirOption = getRealtimeSfDirOption(projectDirectory);
+  const sfDirOption = getRealtimeSfDirOption(data, projectDirectory);
   if (sfDirOption) {
     options.push(sfDirOption);
   }
@@ -853,65 +1300,93 @@ function hasLoadedProject(): boolean {
   return Boolean(currentData);
 }
 
+function setAuditionScoreObjectAvailability(enabled: boolean): void {
+  const next = Boolean(enabled && currentData);
+  if (canAuditionScoreObjects === next) return;
+  canAuditionScoreObjects = next;
+  rebuildApplicationMenu();
+}
+
 async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
   if (!activeRenderOperationId) return true;
-  await dialog.showMessageBox(mainWindow!, {
-    type: 'info',
-    title: 'Render in Progress',
-    message: 'Wait for the active render/freeze operation to finish or cancel it before changing projects.',
-  });
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    await showNativeConfirmation(mainWindow, {
+      id: 'render-in-progress-notice',
+      type: 'info',
+      title: 'Render in Progress',
+      message: 'Wait for the active render/freeze operation to finish or cancel it before changing projects.',
+      actions: [{ id: 'ok', label: 'OK', role: 'accept' }],
+      defaultActionId: 'ok',
+      cancelActionId: 'ok',
+    });
+  }
   return false;
 }
 
 async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {}): Promise<boolean> {
   if (!(await canReplaceProjectWhileRenderActive())) return false;
   if (!currentData) return true;
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
 
-  const result = await dialog.showMessageBox(mainWindow!, {
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'confirm-save-before-replace',
     type: 'question',
     title: 'Save Changes?',
     message: 'Save changes before proceeding?',
     detail: currentFilePath
       ? `File: ${path.basename(currentFilePath)}`
       : 'This project has not been saved yet.',
-    buttons: ['Save', "Don't Save", 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
+    actions: [
+      { id: 'save', label: 'Save', role: 'accept' },
+      { id: 'discard', label: "Don't Save", role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'save',
+    cancelActionId: 'cancel',
   });
 
-  if (result.response === 0) {
-    if (options.quitAfterSave) {
+  if (options.quitAfterSave) {
+    // Quit keeps its immediate policy: Save writes then quits, Don't Save
+    // quits without writing, and a cancelled or failed save aborts the quit.
+    if (result.actionId === 'save' && result.outcome === 'selected') {
       pendingQuit = true;
-    }
-
-    if (currentFilePath) {
-      doSave(currentFilePath);
-    } else {
-      await saveFileAs();
-      if (!currentFilePath) {
-        if (options.quitAfterSave) {
+      if (currentFilePath) {
+        doSave(currentFilePath);
+      } else {
+        const saved = await saveFileAs();
+        if (!saved) {
           pendingQuit = false;
+          return false;
         }
-        return false;
       }
+      return true;
     }
-    return true;
-  }
 
-  if (result.response === 1) {
-    if (options.quitAfterSave) {
+    if (result.actionId === 'discard' && result.outcome === 'selected') {
       doQuit();
+      return true;
     }
-    return true;
+
+    return false;
   }
 
-  return false;
+  // Replacement consent requires a durable save: a cancelled Save As,
+  // declined overwrite, or failed write blocks the replacement (FR-011).
+  const outcome = await resolveReplacementSaveDecision({
+    choose: () => (result.actionId === 'save' && result.outcome === 'selected' ? 'save' : result.actionId === 'discard' && result.outcome === 'selected' ? 'discard' : 'cancel'),
+    hasCurrentProject: () => currentData !== null,
+    hasCurrentPath: () => currentFilePath !== null,
+    saveCurrent: () => currentFilePath !== null && doSave(currentFilePath),
+    saveAs: () => saveFileAs(),
+  });
+  return outcome === 'saved' || outcome === 'discarded';
 }
 
 function rebuildApplicationMenu(): void {
   const menu = Menu.buildFromTemplate(buildApplicationMenuTemplate({
     hasLoadedProject: hasLoadedProject(),
     isRenderOperationActive: activeRenderOperationId !== null,
+    canAuditionScoreObjects,
     isDarwin: process.platform === 'darwin',
     recentProjects: getRecentProjectFilesSnapshot(),
     canRevertProject: Boolean(currentFilePath),
@@ -919,12 +1394,19 @@ function rebuildApplicationMenu(): void {
     followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
     onNewFile: () => { void handleNewFile(); },
     onOpenFile: () => { void handleOpenFile(); },
+    onOpenExampleProject: () => { void openExampleProject(); },
+    onImportCsdFile: () => { void importCsdFile(); },
+    onImportOrcSco: () => { void importOrcSco(); },
+    onImportMidiFile: () => {
+      mainWindow?.webContents.send('native-menu-command', { type: 'open-midi-import' });
+    },
     onOpenRecentProject: (filePath) => { void openRecentProject(filePath); },
     onCloseProject: () => { void closeProject(); },
     onRevertProject: () => { void revertProject(); },
     onSaveFile: () => { void saveFile(); },
     onSaveFileAs: () => { void saveFileAs(); },
     onGenerateCsdToScreen: () => { void generateCsdToScreen(); },
+    onGenerateRealtimeCsdToScreen: () => { void generateRealtimeCsdToScreen(); },
     onGenerateCsdToDisk: () => { void generateCsdToDisk(); },
     onRequestQuit: () => { void requestQuit(); },
     onOpenSettings: () => {
@@ -934,12 +1416,35 @@ function rebuildApplicationMenu(): void {
         });
       }
     },
+    onOpenAbout: () => {
+      openAboutWindow(mainWindow, {
+        icon: getAppIcon(),
+        initialZoomFactor: appZoomController.getCurrentFactor(),
+      });
+    },
     onOpenEffectsLibrary: () => {
       if (mainWindow) {
         routeFocusPanel('LibrariesTopComponent');
         mainWindow.webContents.send('native-menu-command', { type: 'open-effects-library' });
       }
     },
+    onOpenFTableConverter: () => {
+      if (mainWindow) {
+        mainWindow.webContents.send('native-menu-command', { type: 'open-ftable-converter' });
+      }
+    },
+    onOpenCsoundRCEditor: () => {
+      if (mainWindow) {
+        mainWindow.webContents.send('native-menu-command', { type: 'open-csoundrc-editor' });
+      }
+    },
+    onOpenCodeRepositoryEditor: () => {
+      mainWindow?.webContents.send('native-menu-command', {
+        type: 'open-code-repository-editor',
+      });
+    },
+    onReinitializeJavaScriptRuntime: () => { void reinitializeJavaScriptRuntime(); },
+    onReinitializeJythonRuntime: () => { void reinitializeJythonRuntime(); },
     onFocusPanel: (panelId) => {
       // Route through the workbench window registry so an already-floating panel
       // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).
@@ -960,13 +1465,32 @@ function rebuildApplicationMenu(): void {
         mainWindow.webContents.send('native-menu-command', { type: 'reset-windows' });
       }
     },
-    onToggleFollowPlayback: () => { currentFollowPlaybackEnabled = !currentFollowPlaybackEnabled; mainWindow?.webContents.send('native-menu-command', { type: 'toggle-follow-playback' }); rebuildApplicationMenu(); },
-    onToggleFollowPlaybackOnStart: () => { currentFollowPlaybackOnStartEnabled = !currentFollowPlaybackOnStartEnabled; mainWindow?.webContents.send('native-menu-command', { type: 'toggle-follow-playback-on-render-start' }); rebuildApplicationMenu(); },
+    onToggleFollowPlayback: () => {
+      const next = !currentFollowPlaybackEnabled;
+      const result = updatePlaybackPreferences({ followPlayback: next });
+      if (result.ok) {
+        currentFollowPlaybackEnabled = next;
+        currentSavedFollowPlayback = next;
+        mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback', enabled: next });
+        rebuildApplicationMenu();
+      }
+    },
+    onToggleFollowPlaybackOnStart: () => {
+      const next = !currentFollowPlaybackOnStartEnabled;
+      const result = updatePlaybackPreferences({ followPlaybackOnStart: next });
+      if (result.ok) {
+        currentFollowPlaybackOnStartEnabled = next;
+        mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback-on-render-start', enabled: next });
+        rebuildApplicationMenu();
+      }
+    },
     onToggleLoopRendering: () => { mainWindow?.webContents.send('native-menu-command', { type: 'toggle-loop-rendering' }); },
     onAddMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'add-marker' }); },
     onNavigateNextMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-next-marker' }); },
     onNavigatePreviousMarker: () => { mainWindow?.webContents.send('native-menu-command', { type: 'navigate-previous-marker' }); },
     onRewindToStart: () => { mainWindow?.webContents.send('native-menu-command', { type: 'rewind-to-start' }); },
+    onRenderStopProject: () => { mainWindow?.webContents.send('native-menu-command', { type: 'render-stop-project' }); },
+    onAuditionScoreObjects: () => { mainWindow?.webContents.send('native-menu-command', { type: 'audition-score-objects' }); },
     onToggleBlueLive: () => { void blueLiveToggle(); },
     onRecompileBlueLive: () => { void blueLiveRecompile(); },
     onBlueLiveAllNotesOff: () => { void blueLiveAllNotesOff(); },
@@ -975,10 +1499,9 @@ function rebuildApplicationMenu(): void {
     onRenderToDisk: () => { void handleRenderToDisk('render'); },
     onRenderToDiskAndPlay: () => { void handleRenderToDisk('play'); },
     onRenderToDiskAndOpen: () => { void handleRenderToDisk('open'); },
-    onZoomIn: () => { appZoomController.execute('zoom-in'); },
-    onZoomOut: () => { appZoomController.execute('zoom-out'); },
-    onActualSize: () => { appZoomController.execute('actual-size'); },
-    onNotYetImplemented: () => { mainWindow?.webContents.send('native-menu-command', { type: 'show-not-yet-implemented' }); },
+    onZoomIn: () => { appZoomController.execute('zoom-in'); syncAboutWindowZoom(); },
+    onZoomOut: () => { appZoomController.execute('zoom-out'); syncAboutWindowZoom(); },
+    onActualSize: () => { appZoomController.execute('actual-size'); syncAboutWindowZoom(); },
   }));
 
   Menu.setApplicationMenu(menu);
@@ -1003,7 +1526,6 @@ function getAppIcon(): Electron.NativeImage | undefined {
 
   for (const p of candidates) {
     if (fs.existsSync(p)) {
-      console.log('[main] Using app icon:', p);
       return nativeImage.createFromPath(p);
     }
   }
@@ -1036,6 +1558,9 @@ function createWindow(): void {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+  });
+  mainWindow.webContents.on('did-start-loading', () => {
+    midiImportService.clearAll();
   });
 
   // MIDI Input coordinator (SPEC 058). Main owns permission policy, cached
@@ -1119,10 +1644,34 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   }
 
+  // Resolve the workspace artifact in development and the installed resource
+  // in packaged builds. Neither path consults the system executable search path.
+  engineRuntimeService = new EngineRuntimeService({
+    isPackaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    repoRoot: path.resolve(app.getAppPath(), '..', '..'),
+    getSettingsEnginePath: () => loadProgramSettings().appSpecific.enginePath,
+    getCsoundLibraryPath: () => loadProgramSettings().appSpecific.csoundLibraryPath,
+  });
+
   // Initialize engine bridge
-  engineBridge = new EngineBridge(mainWindow);
+  engineBridge = new EngineBridge(
+    mainWindow,
+    undefined,
+    undefined,
+    undefined,
+    'realtime',
+    engineRuntimeService,
+  );
+  engineBridge.setPlaybackErrorWarningCallback((message) => {
+    void showCsoundErrorWarning(message);
+  });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
+    if (activeAuditionPlayback) {
+      activeAuditionPlayback = false;
+      return;
+    }
     if (stopReason !== 'completed') return;
     if (!currentData || !currentData.isLoopRendering()) return;
     void startPlayback();
@@ -1153,7 +1702,13 @@ function createWindow(): void {
   });
 
   // Initialize Blue Live engine session on separate port
-  blueLiveSession = new BlueLiveEngineSession(mainWindow, undefined, 5560, 5561);
+  blueLiveSession = new BlueLiveEngineSession(
+    mainWindow,
+    undefined,
+    5560,
+    5561,
+    engineRuntimeService,
+  );
   javaRuntimeSessionManager = new JavaRuntimeSessionManager({
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
@@ -1193,18 +1748,27 @@ async function confirmLibraryDraftTransition(
 ): Promise<boolean> {
   const preview = unifiedLibraryService?.prepareLibraryDraftShutdown(reason);
   if (!preview || preview.mayContinue) return true;
-  if (!mainWindow) return false;
-  const result = await dialog.showMessageBox(mainWindow, {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'unsaved-library-editors',
     type: 'warning',
     title: 'Unsaved Library Editors',
     message: `${preview.dirtySessionIds.length} Library editor${preview.dirtySessionIds.length === 1 ? ' has' : 's have'} unsaved changes.`,
     detail: 'Save all drafts, discard them, or cancel this operation.',
-    buttons: ['Save All', 'Discard', 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
+    actions: [
+      { id: 'save', label: 'Save All', role: 'accept' },
+      { id: 'discard', label: 'Discard', role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'save',
+    cancelActionId: 'cancel',
     noLink: true,
   });
-  const decision = result.response === 0 ? 'save' : result.response === 1 ? 'discard' : 'cancel';
+  const decision = (result.actionId === 'save' && result.outcome === 'selected')
+    ? 'save'
+    : (result.actionId === 'discard' && result.outcome === 'selected')
+    ? 'discard'
+    : 'cancel';
   const resolved = await unifiedLibraryService?.resolveLibraryDraftShutdown(decision);
   return resolved?.mayContinue ?? false;
 }
@@ -1255,6 +1819,11 @@ async function doQuit(): Promise<void> {
     await unifiedLibraryService?.stop();
     unifiedLibraryService = null;
 
+    unregisterCodeRepositoryIpc?.();
+    unregisterCodeRepositoryIpc = null;
+    await codeRepositoryService?.stop();
+    codeRepositoryService = null;
+
     await midiInputCoordinator?.requestShutdown();
 
     if (blueLiveSession) {
@@ -1282,7 +1851,9 @@ async function doQuit(): Promise<void> {
 
     closeEffectEditorWindowsForOwner('project');
     closeEffectEditorWindowsForOwner('library');
+    closeTrackInstrumentEditorWindows();
     currentData = null;
+    canAuditionScoreObjects = false;
     currentFilePath = null;
     currentProjectRevision = 0;
     setActiveMissingAudioSession(null);
@@ -1301,7 +1872,6 @@ async function doQuit(): Promise<void> {
 // ─── File Operations ───
 
 async function handleOpenFile(): Promise<void> {
-  if (!(await confirmSaveBeforeReplace())) return;
   await openFile();
 }
 
@@ -1370,107 +1940,208 @@ async function openFile(): Promise<boolean> {
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Blue Project',
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue Project', extensions: ['blue'] }],
     properties: ['openFile'],
   });
 
   if (result.canceled || result.filePaths.length === 0) return false;
 
-  const filePath = result.filePaths[0];
-
-  // FR-018 parity: selecting the already-current project is a no-op (Java Blue
-  // just switches to it without rerunning the dependency check). Revert uses
-  // loadProjectFromDisk directly to bypass this guard.
-  if (filePath === currentFilePath && currentData) {
-    return false;
-  }
-
-  return loadProjectFromDisk(filePath);
+  return openProjectFile(result.filePaths[0]);
 }
 
 async function openFilePath(filePath: string): Promise<boolean> {
   if (!mainWindow) return false;
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
-
-  // FR-018 parity: reopening the current project is a no-op. See openFile.
-  if (filePath === currentFilePath && currentData) {
-    return false;
-  }
-
-  return loadProjectFromDisk(filePath);
+  return openProjectFile(filePath);
 }
 
 /**
- * Reads, parses, and installs a project from disk, then emits project-loaded.
- * Shared by openFile/openFilePath (which apply the same-file no-op guard) and
- * revertProject (which intentionally reloads the current path). Returns true on
- * a successful load, false otherwise.
+ * Opens the bundled examples directory in a file picker (Java Blue's "Open
+ * Example Project"). The resolved examples directory seeds the dialog; the
+ * selected `.blue` file is handed to the accepted-target replacement flow,
+ * so replacement decisions appear only after a selection is accepted.
  */
-async function loadProjectFromDisk(filePath: string): Promise<boolean> {
+async function openExampleProject(): Promise<boolean> {
+  if (!mainWindow) return false;
   if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
+
+  const resolution = resolveExampleProjectPath({
+    isPackaged: app.isPackaged,
+    mainModuleDir: __dirname,
+    resourcesPath: process.resourcesPath,
+  });
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Example Project',
+    defaultPath: resolution.exists ? resolution.examplesPath : getConfiguredWorkDirectory(),
+    filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+    properties: ['openFile'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return false;
+
+  return openProjectFile(result.filePaths[0]);
+}
+
+async function importCsdFile(): Promise<boolean> {
+  if (!mainWindow) return false;
+  if (!hasLoadedProject()) return false;
+  const win = mainWindow;
+
+  let selectedPath: string | null = null;
   try {
-    const xml = fs.readFileSync(filePath, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
+    const outcome = await runCsdImportReplacement<BlueData, CSDImportMode>({
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      showSourceDialog: async () => {
+        const result = await dialog.showOpenDialog(win, {
+          title: 'Select CSD File',
+          defaultPath: getConfiguredWorkDirectory(),
+          filters: [{ name: 'CSD File (*.csd)', extensions: ['csd', 'CSD'] }],
+          properties: ['openFile'],
+        });
+        if (!result.canceled && result.filePaths.length > 0) {
+          selectedPath = result.filePaths[0];
+        }
+        return result;
+      },
+      showModeDialog: async () => {
+        const res = await showNativeConfirmation(win, {
+          id: 'csd-import-method',
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          actions: [
+            { id: 'global-score', label: 'Global Score' },
+            { id: 'single-sound-object', label: 'Single Sound Object' },
+            { id: 'sound-object-per-instrument', label: 'Sound Object per Instrument' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'global-score',
+          cancelActionId: 'cancel',
+        });
+        const actionToIndex: Record<string, number> = {
+          'global-score': 0,
+          'single-sound-object': 1,
+          'sound-object-per-instrument': 2,
+          'cancel': 3,
+        };
+        const responseIndex = res.outcome === 'selected' && res.actionId in actionToIndex ? actionToIndex[res.actionId] : 3;
+        return { response: responseIndex, checkboxChecked: false };
+      },
+      cancelModeResponse: 3,
+      readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
+      convert: (csdText, modeType) => convertCSDtoBlue(csdText, modeType),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
+      commit: (data) => installProjectData(data, null),
+    });
 
-    // Stop Blue Live when switching projects
-    if (blueLiveSession && blueLiveSession.isRunning()) {
-      await blueLiveSession.stop();
-    }
-    await disposeJavaRuntimeSession();
-    closeEffectEditorWindowsForOwner('project');
-
-    currentData = data;
-    currentFilePath = filePath;
-    currentProjectRevision = 0;
-    currentProjectSessionId += 1;
-    unifiedLibraryService?.publishProjectChanged();
-    setActiveMissingAudioSession(null);
-    rebuildApplicationMenu();
-    updateWindowTitle();
-
-    disposeJavaScriptSession();
-    try {
-      javaScriptSession = await createJavaScriptSession();
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session:', sessionErr);
-    }
-
-    try {
-      await runProjectOnLoad(data);
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to run processOnLoad:', sessionErr);
-    }
-
-    buildAndSendProjectLoaded(data, filePath);
-    return true;
+    return outcome.status === 'committed';
   } catch (err: unknown) {
-    await dialog.showErrorBox(
-      'Error Loading File',
-      `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`,
-    );
+    const target = selectedPath ? path.basename(selectedPath) : 'CSD file';
+    const message = `Failed to import ${target}:\n${err instanceof Error ? err.message : String(err)}`;
+    await dialog.showErrorBox('Error Importing File', message);
     return false;
   }
 }
 
-async function newFile(): Promise<void> {
-  if (!mainWindow) return;
-  if (!(await canReplaceProjectWhileRenderActive())) return;
-  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+async function importOrcSco(): Promise<boolean> {
+  if (!mainWindow) return false;
+  if (!hasLoadedProject()) return false;
+  const win = mainWindow;
 
-  if (blueLiveSession && blueLiveSession.isRunning()) {
-    await blueLiveSession.stop();
+  try {
+    const outcome = await runOrcScoImportReplacement<BlueData, CSDImportMode>({
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      showOrcDialog: () => dialog.showOpenDialog(win, {
+        title: 'Select ORC File',
+        defaultPath: getConfiguredWorkDirectory(),
+        filters: [{ name: 'Csound ORC File (*.orc)', extensions: ['orc', 'ORC'] }],
+        properties: ['openFile'],
+      }),
+      showScoDialog: () => dialog.showOpenDialog(win, {
+        title: 'Select SCO File',
+        defaultPath: getConfiguredWorkDirectory(),
+        filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
+        properties: ['openFile'],
+      }),
+      showModeDialog: async () => {
+        const res = await showNativeConfirmation(win, {
+          id: 'csd-import-method',
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          actions: [
+            { id: 'global-score', label: 'Global Score' },
+            { id: 'single-sound-object', label: 'Single Sound Object' },
+            { id: 'sound-object-per-instrument', label: 'Sound Object per Instrument' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'global-score',
+          cancelActionId: 'cancel',
+        });
+        const actionToIndex: Record<string, number> = {
+          'global-score': 0,
+          'single-sound-object': 1,
+          'sound-object-per-instrument': 2,
+          'cancel': 3,
+        };
+        const responseIndex = res.outcome === 'selected' && res.actionId in actionToIndex ? actionToIndex[res.actionId] : 3;
+        return { response: responseIndex, checkboxChecked: false };
+      },
+      cancelModeResponse: 3,
+      readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
+      convert: (orcText, scoText, modeType) => convertOrcScoToBlue(orcText, scoText, modeType),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
+      commit: (data) => installProjectData(data, null),
+    });
+
+    return outcome.status === 'committed';
+  } catch (err: unknown) {
+    const message = `Failed to import ORC/SCO:\n${err instanceof Error ? err.message : String(err)}`;
+    await dialog.showErrorBox('Error Importing File', message);
+    return false;
   }
+}
+
+/**
+ * Canonical same-file detection for project-file targets: the selected path
+ * identifies the current project when it matches canonically (resolve,
+ * normalize, platform case rules), not by raw string comparison.
+ */
+function isCurrentProjectFilePath(filePath: string): boolean {
+  return currentData !== null && currentFilePath !== null
+    && isSameProjectPathIdentity(filePath, currentFilePath);
+}
+
+/**
+ * Read and parse a `.blue` file without installing it. Used to prepare a
+ * replacement candidate so invalid files fail before any replacement prompt.
+ */
+async function readProjectFromDisk(filePath: string): Promise<BlueData> {
+  const xml = fs.readFileSync(filePath, 'utf-8');
+  return BlueData.loadFromString(xml);
+}
+
+/**
+ * Install a prepared project as the canonical current project: stop runtimes,
+ * close project-owned editors, roll the project session, and emit
+ * project-loaded. Callers own every decision that leads here.
+ */
+async function installProjectData(data: BlueData, filePath: string | null): Promise<void> {
+  await stopActiveBlueLiveBeforeProjectReplacement();
   await disposeJavaRuntimeSession();
   closeEffectEditorWindowsForOwner('project');
+  closeTrackInstrumentEditorWindows();
 
-  const data = new BlueData();
-  const settings = loadProgramSettings();
-  applyProgramSettingsToNewProject(data, settings);
   currentData = data;
-  currentFilePath = null;
+  canAuditionScoreObjects = false;
+  currentFilePath = filePath;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  midiImportService.clearAll();
+  getBlueLiveTriggerController().openGate();
   unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
@@ -1480,16 +2151,163 @@ async function newFile(): Promise<void> {
   try {
     javaScriptSession = await createJavaScriptSession();
   } catch (sessionErr: unknown) {
-    console.warn('[App] Failed to create JavaScript session for new project:', sessionErr);
+    console.warn('[App] Failed to create JavaScript session for installed project:', sessionErr);
   }
 
   try {
     await runProjectOnLoad(data);
   } catch (sessionErr: unknown) {
-    console.warn('[App] Failed to run processOnLoad for new project:', sessionErr);
+    console.warn('[App] Failed to run processOnLoad for installed project:', sessionErr);
   }
 
-  buildAndSendProjectLoaded(data, null);
+  buildAndSendProjectLoaded(data, filePath);
+}
+
+async function reportProjectLoadError(filePath: string, err: unknown): Promise<void> {
+  const message = `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+    process.stderr.write(`[FAIL] ${message}\n`);
+  } else {
+    await dialog.showErrorBox('Error Loading File', message);
+  }
+}
+
+/**
+ * Accepted-target replacement for a project file: read and parse the source
+ * before any replacement decision, treat the current project canonically as
+ * a no-op, re-check render safety, resolve save and library decisions, then
+ * install through the shared lifecycle. Errors use the existing load error
+ * dialog and leave the current project unchanged.
+ */
+async function openProjectFile(filePath: string): Promise<boolean> {
+  try {
+    const outcome = await runProjectFileReplacement<BlueData>({
+      selectFile: () => filePath,
+      readFile: (sourcePath) => fs.readFileSync(sourcePath, 'utf-8'),
+      parseProject: (xml) => BlueData.loadFromString(xml),
+      isSameFile: isCurrentProjectFilePath,
+      preflight: () => canReplaceProjectWhileRenderActive(),
+      confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+      confirmSave: () => confirmSaveBeforeReplace(),
+      commit: (data, sourcePath) => installProjectData(data, sourcePath),
+    });
+    return outcome.status === 'committed';
+  } catch (err: unknown) {
+    await reportProjectLoadError(filePath, err);
+    return false;
+  }
+}
+
+/**
+ * Reads, parses, and installs a project from disk without replacement
+ * decisions. Revert and packaged verification intentionally use this
+ * non-interactive path; user-driven opens go through {@link openProjectFile}.
+ */
+async function loadProjectFromDisk(filePath: string): Promise<boolean> {
+  return runNonInteractiveProjectLoad<BlueData>({
+    filePath,
+    preflight: () => canReplaceProjectWhileRenderActive(),
+    readProject: readProjectFromDisk,
+    installProject: installProjectData,
+    reportError: reportProjectLoadError,
+  });
+}
+
+async function runPackagedProjectVerificationAndExit(): Promise<never> {
+  const projectPath = process.env.BLUE_VERIFY_PROJECT_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_PROJECT_PATH)
+    : null;
+  const projectSavePath = process.env.BLUE_VERIFY_SAVE_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_SAVE_PATH)
+    : null;
+  const result = await verifyPackagedProject({
+    isPackaged: app.isPackaged,
+    projectPath,
+    projectSavePath,
+    loadProject: loadProjectFromDisk,
+    getLoadedProject: () => currentData
+      ? {
+          filePath: currentFilePath,
+          title: currentData.getProjectProperties().title,
+        }
+      : null,
+    saveProjectCopy: async (savePath) => {
+      if (!currentData) return false;
+      try {
+        fs.writeFileSync(savePath, currentData.saveToString(), 'utf8');
+        await BlueData.loadFromString(fs.readFileSync(savePath, 'utf8'));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  process.stderr.write(`${result.ok ? '[ok]' : '[FAIL]'} ${result.message}\n`);
+  process.stderr.write(
+    `\nPackaged project verification ${result.ok ? 'passed' : 'failed'}.\n`,
+  );
+  process.exit(result.ok ? 0 : 1);
+}
+
+async function runPackagedEngineMismatchVerificationAndExit(): Promise<never> {
+  const projectPath = process.env.BLUE_VERIFY_PROJECT_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_PROJECT_PATH)
+    : null;
+  const fixturePath = process.env.BLUE_VERIFY_ENGINE_REPORT_FIXTURE
+    ? path.resolve(process.env.BLUE_VERIFY_ENGINE_REPORT_FIXTURE)
+    : null;
+  if (!projectPath || !fixturePath || !(await loadProjectFromDisk(projectPath))) {
+    process.stderr.write('[FAIL] Packaged mismatch verification could not open its project or fixture.\n');
+    process.exit(1);
+  }
+  const executableName = process.platform === 'win32' ? 'blue-engine.exe' : 'blue-engine';
+  const bundledEnginePath = path.join(
+    process.resourcesPath,
+    'assets',
+    'engine',
+    executableName,
+  );
+  const fixtureReport = fs.readFileSync(fixturePath, 'utf8');
+  const runtime = new EngineRuntimeService({
+    isPackaged: true,
+    resourcesPath: process.resourcesPath,
+    repoRoot: '',
+    getSettingsEnginePath: () => 'blue-engine',
+    runProbeProcess: async () => ({
+      exitCode: 0,
+      stdout: fixtureReport,
+      stderr: '',
+      timedOut: false,
+    }),
+  });
+  const result = await runtime.probe(
+    { enginePathOverride: bundledEnginePath },
+    { retry: true },
+  );
+  const passed = result.errorCode === 'ENGINE_PROTOCOL_MISMATCH' &&
+    result.selection?.source === 'settings-override' &&
+    currentData !== null &&
+    currentFilePath === projectPath;
+  process.stderr.write(
+    `${passed ? '[ok]' : '[FAIL]'} Incompatible engine was ` +
+      `${passed ? 'rejected before playback while the project remained open' : 'not rejected safely'}.\n`,
+  );
+  if (passed) {
+    process.stderr.write('Packaged engine mismatch verification passed.\n');
+  }
+  process.exit(passed ? 0 : 1);
+}
+
+async function newFile(): Promise<void> {
+  if (!mainWindow) return;
+  if (!(await canReplaceProjectWhileRenderActive())) return;
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+
+  const data = new BlueData();
+  const settings = loadProgramSettings();
+  applyProgramSettingsToNewProject(data, settings);
+  await installProjectData(data, null);
 }
 
 async function closeProject(): Promise<void> {
@@ -1498,12 +2316,16 @@ async function closeProject(): Promise<void> {
   if (!(await confirmSaveBeforeReplace())) return;
   if (!(await confirmLibraryDraftTransition('closeProject'))) return;
 
+  // Stop any non-idle Blue Live session before clearing the canonical project.
+  await stopActiveBlueLiveBeforeProjectReplacement();
   disposeJavaScriptSession();
   await disposeJavaRuntimeSession();
   currentData = null;
+  canAuditionScoreObjects = false;
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  midiImportService.clearAll();
   unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
@@ -1513,43 +2335,63 @@ async function closeProject(): Promise<void> {
 
 async function revertProject(): Promise<void> {
   if (!currentFilePath) return;
+  const filePath = currentFilePath;
   if (!(await confirmSaveBeforeReplace())) return;
-  await loadProjectFromDisk(currentFilePath);
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
+  await loadProjectFromDisk(filePath);
 }
 
 async function openRecentProject(filePath: string): Promise<void> {
   if (!mainWindow) return;
-  if (!(await confirmSaveBeforeReplace())) return;
   await openFilePath(filePath);
 }
 
 async function saveFile(): Promise<void> {
   if (!currentData || !currentFilePath) {
-    return saveFileAs();
+    await saveFileAs();
+    return;
   }
   doSave(currentFilePath);
 }
 
-async function saveFileAs(): Promise<void> {
-  if (!mainWindow || !currentData) return;
+async function saveFileAs(): Promise<boolean> {
+  if (!mainWindow || !currentData) return false;
 
   const previousProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
 
-  const result = await dialog.showSaveDialog(mainWindow, {
-    title: 'Save Blue Project',
-    defaultPath: currentFilePath ?? 'project.blue',
-    filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+  const saved = await runTransactionalSaveAs({
+    chooseDestination: async () => {
+      const result = await dialog.showSaveDialog(mainWindow!, {
+        title: 'Save Blue Project',
+        defaultPath: currentFilePath ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
+        filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+      });
+      if (result.canceled || !result.filePath) return null;
+      return result.filePath;
+    },
+    writeProject: (filePath) => writeProjectToDisk(filePath),
+    publishPath: (filePath) => {
+      currentFilePath = filePath;
+    },
   });
 
-  if (result.canceled || !result.filePath) return;
+  if (!saved) return false;
 
-  currentFilePath = result.filePath;
-  doSave(currentFilePath);
+  updateWindowTitle();
+  rebuildApplicationMenu();
+  mainWindow?.webContents.send('save-complete', { filePath: currentFilePath });
 
-  const nextProjectDir = path.dirname(currentFilePath);
+  const nextProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
   if (previousProjectDir !== nextProjectDir) {
     await disposeJavaRuntimeSession();
   }
+
+  if (pendingQuit) {
+    pendingQuit = false;
+    doQuit();
+  }
+
+  return true;
 }
 
 function normalizeBsbSelectedPath(filePath: string): string {
@@ -1569,7 +2411,7 @@ function normalizeBsbSelectedPath(filePath: string): string {
 
 function resolveBsbDefaultPath(currentValue?: string): string | undefined {
   if (!currentValue || currentValue.trim().length === 0) {
-    return currentFilePath ? path.dirname(currentFilePath) : undefined;
+    return currentFilePath ? path.dirname(currentFilePath) : getConfiguredWorkDirectoryDefaultPath();
   }
 
   if (path.isAbsolute(currentValue)) {
@@ -1577,7 +2419,7 @@ function resolveBsbDefaultPath(currentValue?: string): string | undefined {
   }
 
   if (!currentFilePath) {
-    return currentValue;
+    return getConfiguredWorkDirectoryDefaultPath(currentValue);
   }
 
   return path.resolve(path.dirname(currentFilePath), currentValue);
@@ -1656,21 +2498,17 @@ async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<
   return normalizeBsbSelectedPath(targetFile);
 }
 
-function doSave(filePath: string): void {
-  if (!currentData) return;
+/**
+ * Durable write of the current project. Returns false (and reports the
+ * save error) when the write fails; callers must treat false as a blocked
+ * replacement rather than discard consent.
+ */
+function writeProjectToDisk(filePath: string): boolean {
+  if (!currentData) return false;
   try {
     const xml = currentData.saveToString();
     fs.writeFileSync(filePath, xml, 'utf-8');
-    updateWindowTitle();
-    rebuildApplicationMenu();
-    if (mainWindow) {
-      mainWindow.webContents.send('save-complete', { filePath });
-    }
-    // If we were waiting to quit after save, do it now
-    if (pendingQuit) {
-      pendingQuit = false;
-      doQuit();
-    }
+    return true;
   } catch (err: unknown) {
     if (mainWindow) {
       mainWindow.webContents.send('save-error', err instanceof Error ? err.message : String(err));
@@ -1680,7 +2518,25 @@ function doSave(filePath: string): void {
       pendingQuit = false;
       doQuit();
     }
+    return false;
   }
+}
+
+function doSave(filePath: string): boolean {
+  if (!currentData) return false;
+  if (!writeProjectToDisk(filePath)) return false;
+
+  updateWindowTitle();
+  rebuildApplicationMenu();
+  if (mainWindow) {
+    mainWindow.webContents.send('save-complete', { filePath });
+  }
+  // If we were waiting to quit after save, do it now
+  if (pendingQuit) {
+    pendingQuit = false;
+    doQuit();
+  }
+  return true;
 }
 
 function notifyNoProjectLoaded(channel: 'playback-error' | 'generated-csd-error'): void {
@@ -1709,6 +2565,342 @@ function disposeJavaScriptSession(): void {
     javaScriptSession = null;
   }
   lastProjectOnLoadState = null;
+}
+
+const REPL_CONSOLE_PROMPTS: Record<ReplConsoleLanguage, string> = {
+  javascript: 'js> ',
+  python: '>>> ',
+  clojure: 'user=> ',
+};
+
+// Interactive JVM evaluations can legitimately spend longer than the short
+// transport deadline used by score-object/runtime requests, especially while
+// a project dependency or a user expression is being compiled.
+const REPL_CONSOLE_EVALUATION_TIMEOUT_MS = 30_000;
+
+function getReplProjectLabel(data: BlueData | null, filePath: string | null): string {
+  if (data) {
+    const title = data.getProjectProperties().title?.trim();
+    if (title) return title;
+  }
+
+  return filePath ? path.basename(filePath) : data ? 'Untitled' : 'No Project';
+}
+
+function createReplProjectContext(): ReplConsoleProjectContext {
+  return {
+    loaded: currentData !== null,
+    sessionId: currentProjectSessionId,
+    label: getReplProjectLabel(currentData, currentFilePath),
+    filePath: currentFilePath,
+    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+  };
+}
+
+function createReplProjectDataSnapshot(): Record<string, unknown> | null {
+  if (!currentData) return null;
+
+  const properties = currentData.getProjectProperties();
+  const globalOrcSco = currentData.getGlobalOrcSco();
+  return {
+    sessionId: currentProjectSessionId,
+    filePath: currentFilePath,
+    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+    projectProperties: {
+      title: properties.title,
+      author: properties.author,
+      notes: properties.notes,
+      sampleRate: properties.sampleRate,
+      ksmps: properties.ksmps,
+      nchnls: properties.nchnls,
+      useZeroDbFS: properties.useZeroDbFS,
+      zeroDbFS: properties.zeroDbFS,
+      diskSampleRate: properties.diskSampleRate,
+      diskKsmps: properties.diskKsmps,
+    },
+    globalOrc: globalOrcSco.getGlobalOrc(),
+    globalSco: globalOrcSco.getGlobalSco(),
+    tablesText: currentData.getTableSet().getTables(),
+    scratchPad: {
+      text: currentData.getScratchPadData().getScratchText(),
+      wordWrapEnabled: currentData.getScratchPadData().isWordWrapEnabled(),
+    },
+  };
+}
+
+function createReplRuntimeContext(): {
+  project: ReplConsoleProjectContext;
+  projectDir: string;
+  data: Record<string, unknown> | null;
+} {
+  const project = createReplProjectContext();
+  return {
+    project,
+    projectDir: project.projectDir ? `${project.projectDir}${path.sep}` : '',
+    data: createReplProjectDataSnapshot(),
+  };
+}
+
+function createReplOpenResult(
+  language: ReplConsoleLanguage,
+  runtime: ReplConsoleOpenResult['runtime'],
+  error?: string,
+): ReplConsoleOpenResult {
+  return {
+    ok: runtime === 'ready',
+    language,
+    prompt: REPL_CONSOLE_PROMPTS[language],
+    project: createReplProjectContext(),
+    runtime,
+    ...(error ? { error } : {}),
+  };
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function ensureJavaScriptConsoleSession(): Promise<JavaScriptSession> {
+  if (!javaScriptSession) {
+    javaScriptSession = await createJavaScriptSession();
+  }
+  return javaScriptSession;
+}
+
+async function reinitializeJavaScriptRuntimeNow(): Promise<void> {
+  const session = await ensureJavaScriptConsoleSession();
+  session.reinitialize();
+}
+
+async function reinitializeJavaScriptRuntime(): Promise<ScriptRuntimeReinitializeResult> {
+  return enqueueReplRuntime(async () => {
+    try {
+      await reinitializeJavaScriptRuntimeNow();
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+      return { ok: true };
+    } catch (error: unknown) {
+      return { ok: false, error: getErrorMessage(error) };
+    }
+  });
+}
+
+async function reinitializeJythonRuntimeNow(): Promise<void> {
+  if (!currentData) {
+    throw new Error('No project loaded.');
+  }
+  if (!currentData.usesJavaRuntime()) {
+    throw new Error('Active project does not use the Java runtime.');
+  }
+  if (!javaRuntimeSessionManager) {
+    throw new Error('Java runtime manager is unavailable.');
+  }
+
+  await javaRuntimeSessionManager.reinitializeJython(
+    currentData,
+    currentProjectSessionId,
+    currentFilePath,
+  );
+}
+
+async function reinitializeJythonRuntime(): Promise<ScriptRuntimeReinitializeResult> {
+  return enqueueReplRuntime(async () => {
+    try {
+      await reinitializeJythonRuntimeNow();
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+      return { ok: true };
+    } catch (error: unknown) {
+      return { ok: false, error: getErrorMessage(error) };
+    }
+  });
+}
+
+async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
+  if (!currentData) {
+    throw new Error('No project loaded.');
+  }
+  if (!javaRuntimeSessionManager) {
+    throw new Error('Java runtime is unavailable.');
+  }
+
+  return javaRuntimeSessionManager.ensureReady(
+    currentData,
+    currentProjectSessionId,
+    currentFilePath,
+  );
+}
+
+async function openReplConsoleNow(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
+  try {
+    if (language === 'javascript') {
+      await ensureJavaScriptConsoleSession();
+    } else {
+      await ensureJavaRuntimeConsoleSession();
+    }
+    return createReplOpenResult(language, 'ready');
+  } catch (error: unknown) {
+    return createReplOpenResult(language, currentData ? 'error' : 'unavailable', getErrorMessage(error));
+  }
+}
+
+function enqueueReplRuntime<T>(operation: () => Promise<T>): Promise<T> {
+  const next = replRuntimeQueue.then(operation, operation);
+  replRuntimeQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
+
+function openReplConsole(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
+  return enqueueReplRuntime(() => openReplConsoleNow(language));
+}
+
+function createReplEvaluationFailure(
+  language: ReplConsoleLanguage,
+  message: string,
+  projectSessionId = currentProjectSessionId,
+): ReplConsoleEvaluateResult {
+  return {
+    ok: false,
+    language,
+    projectSessionId,
+    value: '',
+    stdout: '',
+    stderr: '',
+    elapsedMs: 0,
+    error: { message },
+  };
+}
+
+async function evaluateReplConsoleNow(
+  language: ReplConsoleLanguage,
+  code: string,
+): Promise<ReplConsoleEvaluateResult> {
+  const runtimeContext = createReplRuntimeContext();
+  if (language === 'javascript') {
+    const session = await ensureJavaScriptConsoleSession();
+    return evaluateJavaScriptConsole(
+      session,
+      { code, projectSessionId: runtimeContext.project.sessionId },
+      {
+        projectDir: runtimeContext.projectDir,
+        data: runtimeContext.data,
+        project: runtimeContext.project,
+      },
+    );
+  }
+
+  if (!runtimeContext.project.loaded) {
+    return createReplEvaluationFailure(language, 'No project loaded.', runtimeContext.project.sessionId);
+  }
+
+  const startedAt = Date.now();
+  const client = await ensureJavaRuntimeConsoleSession();
+  const bindings = {
+    blueData: runtimeContext.data,
+    blueProjectDir: runtimeContext.projectDir,
+    blueProject: runtimeContext.project,
+  };
+  const response = language === 'python'
+    ? await client.evaluateJythonScript(
+      { code, bindings },
+      { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
+    )
+    : await client.evaluateClojure(
+      { code, bindings, returnVariableName: null },
+      { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
+    );
+
+  if (response.ok) {
+    return {
+      ok: true,
+      language,
+      projectSessionId: runtimeContext.project.sessionId,
+      value: response.result.value,
+      stdout: response.stdout,
+      stderr: response.stderr,
+      elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
+    };
+  }
+
+  return {
+    ok: false,
+    language,
+    projectSessionId: runtimeContext.project.sessionId,
+    value: '',
+    stdout: response.stdout,
+    stderr: response.stderr,
+    elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
+    error: {
+      code: response.error.code,
+      message: response.error.message,
+      ...(response.error.stack ? { stack: response.error.stack } : {}),
+      ...(response.error.line !== undefined ? { line: response.error.line } : {}),
+      ...(response.error.column !== undefined ? { column: response.error.column } : {}),
+    },
+  };
+}
+
+async function evaluateReplConsole(request: ReplConsoleEvaluateRequest): Promise<ReplConsoleEvaluateResult> {
+  if (!isReplConsoleLanguage(request?.language)) {
+    return createReplEvaluationFailure('javascript', 'Invalid console language.');
+  }
+  if (typeof request.code !== 'string' || request.code.trim().length === 0) {
+    return createReplEvaluationFailure(request.language, 'Enter code before evaluating.');
+  }
+
+  try {
+    return await enqueueReplRuntime(() => evaluateReplConsoleNow(request.language, request.code));
+  } catch (error: unknown) {
+    return createReplEvaluationFailure(request.language, getErrorMessage(error));
+  }
+}
+
+async function reinitializeReplConsole(
+  request: ReplConsoleReinitializeRequest,
+): Promise<ReplConsoleReinitializeResult> {
+  if (!isReplConsoleLanguage(request?.language)) {
+    return {
+      ...createReplOpenResult('javascript', 'error', 'Invalid console language.'),
+      message: 'Invalid console language.',
+    };
+  }
+
+  return enqueueReplRuntime(async () => {
+    try {
+      if (request.language === 'javascript') {
+        await reinitializeJavaScriptRuntimeNow();
+      } else if (request.language === 'python') {
+        await reinitializeJythonRuntimeNow();
+      } else {
+        if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
+        await javaRuntimeSessionManager.reinitializeClojure(
+          currentData,
+          currentProjectSessionId,
+          currentFilePath,
+        );
+      }
+
+      if (currentData) {
+        lastProjectOnLoadState = null;
+        await runProjectOnLoad(currentData);
+      }
+
+      return {
+        ...createReplOpenResult(request.language, 'ready'),
+        message: `${request.language} interpreter reinitialized.`,
+      };
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      return {
+        ...createReplOpenResult(request.language, currentData ? 'error' : 'unavailable', message),
+        message,
+      };
+    }
+  });
 }
 
 async function disposeJavaRuntimeSession(): Promise<void> {
@@ -1770,13 +2962,13 @@ function projectOnLoadStateMatches(
     && current.jythonStateRevision === next.jythonStateRevision;
 }
 
-async function runProjectOnLoad(data: BlueData): Promise<JavaRuntimeClient | null> {
+async function runProjectOnLoad(data: BlueData, force = false): Promise<JavaRuntimeClient | null> {
   const javaRuntimeClient = await ensureJavaRuntimeSession(data);
   const nextState = getProjectOnLoadState(data, javaRuntimeClient);
 
-  if (!projectOnLoadStateMatches(lastProjectOnLoadState, nextState)) {
+  if (force || !projectOnLoadStateMatches(lastProjectOnLoadState, nextState)) {
     await data.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient ?? undefined);
-    lastProjectOnLoadState = nextState;
+    if (!force) lastProjectOnLoadState = nextState;
   }
 
   return javaRuntimeClient;
@@ -1832,13 +3024,21 @@ async function restartPlayback(): Promise<boolean> {
   return playbackStartPromise;
 }
 
-async function startPlayback(): Promise<boolean> {
-  if (!engineBridge || !currentData || !mainWindow) return false;
+async function startPlayback(
+  data: BlueData | null = currentData,
+  forceProcessOnLoad = false,
+): Promise<boolean> {
+  if (!engineBridge || !data || !mainWindow) return false;
+  const canonicalDataAtStart = currentData;
+  const projectSessionAtStart = currentProjectSessionId;
+  activeAuditionPlayback = data !== currentData;
 
   try {
     broadcastToWorkbenchWindows('playback-status', {
       status: 'starting',
       message: 'Preparing playback...',
+      renderStartTime: data.getRenderStartTime(),
+      auditioning: data !== currentData,
     });
 
     mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
@@ -1846,16 +3046,17 @@ async function startPlayback(): Promise<boolean> {
 
     await ensureJavaScriptEngine();
 
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(data, forceProcessOnLoad);
     const render = javaRuntimeClient
-      ? await currentData.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
-      : currentData.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
+      ? await data.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
+      : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
     const csd = render.csdText;
     const parameters = render.parameters;
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
-      currentData.getArrangement(),
-      currentData.getMixer(),
+      data.getArrangement(),
+      data.getMixer(),
       parameters,
+      data.getScore(),
     );
     if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
       console.warn(
@@ -1865,35 +3066,196 @@ async function startPlayback(): Promise<boolean> {
       );
     }
 
-    const automationTiming = buildAutomationRuntimeTimingContext(currentData);
+    const automationTiming = buildAutomationRuntimeTimingContext(data);
 
     const projectDirectory = getCurrentProjectDirectory();
-    const extraRealtimeOptions = buildRealtimeEngineOptions(currentData, projectDirectory);
+    const extraRealtimeOptions = buildRealtimeEngineOptions(data, projectDirectory);
 
-    const success = await engineBridge.playCSD(
-      csd,
-      parameters,
-      automationTiming,
-      projectDirectory,
-      extraRealtimeOptions,
+    // Project replacement/close may complete while CSD generation or runtime
+    // setup is awaiting. Never submit an old canonical session or its audition
+    // copy to the engine after that fence has advanced.
+    if (
+      currentProjectSessionId !== projectSessionAtStart
+      || currentData !== canonicalDataAtStart
+      || (data !== currentData && !activeAuditionPlayback)
+    ) {
+      activeAuditionPlayback = false;
+      return false;
+    }
+
+    const playAttempt = async (): Promise<boolean> => {
+      const result = await engineBridge!.playCSD(
+        csd,
+        parameters,
+        automationTiming,
+        projectDirectory,
+        extraRealtimeOptions,
+      );
+      if (!result.ok) {
+        // Invalid orchestra/score is a project-source error. The engine has
+        // already reported it in the Csound output and cleaned up, so do not
+        // present the engine recovery flow for an expected compile failure.
+        if (result.failureKind === 'project') return false;
+        throw new EngineRecoveryError(
+          result.errorMessage || 'Engine playback initialization failed',
+          result.failureCategory || 'unexpected',
+        );
+      }
+      return true;
+    };
+
+    const recoveryResult = await engineRecoveryCoordinator.runWithRecovery(
+      'realtime',
+      playAttempt,
+      async () => {
+        await engineBridge?.killAndWait();
+        // FR-017: recovery cleanup also removes obsolete records and
+        // terminates only provably orphaned managed engines (dead owner plus
+        // verified process identity); live-owner sessions are never touched.
+        await sweepStaleBlueEngineProcesses();
+      },
     );
 
-    if (!success) {
+    if (!recoveryResult.ok) {
+      activeAuditionPlayback = false;
       broadcastToWorkbenchWindows('playback-status', {
         status: 'error',
-        message: 'Failed to start playback',
+        message: recoveryResult.errorMessage || 'Failed to start playback',
       });
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        void presentEngineRecoveryFailure(
+          'realtime',
+          recoveryResult.errorMessage || 'Failed to start playback',
+          recoveryResult.diagnostics,
+        );
+      }
+      return false;
+    }
+
+    if (!recoveryResult.result) {
+      activeAuditionPlayback = false;
       return false;
     }
 
     return true;
   } catch (err: unknown) {
+    activeAuditionPlayback = false;
+    broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+
+/**
+ * Builds the FR-018 diagnostic text: the failed operation, the sanitized
+ * failure detail, and the structured lifecycle report (session kind, owner,
+ * communication readiness, actions performed, outcome) recorded by the
+ * engine bridge for the failed session.
+ */
+function collectEngineDiagnostics(
+  kind: EngineRecoverySessionKind,
+  base: string | undefined,
+): string {
+  const sections: string[] = [
+    `Failed operation: start ${kind === 'blue-live' ? 'Blue Live' : 'realtime playback'}`,
+  ];
+  if (base && base.trim()) {
+    sections.push(base.trim());
+  }
+  const lifecycleReport =
+    kind === 'blue-live'
+      ? blueLiveSession?.getLastDiagnosticReport()
+      : engineBridge?.getLastDiagnosticReport();
+  if (lifecycleReport) {
+    sections.push(lifecycleReport);
+  }
+  return sections.join('\n\n');
+}
+
+/**
+ * FR-017 restart: clean up current-owner sessions, remove obsolete records,
+ * terminate only provably orphaned managed engines, then make one fresh
+ * attempt at the requested engine activity.
+ */
+async function restartEngineActivityAfterRecovery(
+  kind: EngineRecoverySessionKind,
+): Promise<void> {
+  try {
+    if (kind === 'blue-live') {
+      await blueLiveSession?.stop();
+    } else {
+      await engineBridge?.killAndWait();
+    }
+    await sweepStaleBlueEngineProcesses();
+  } catch (error: unknown) {
+    console.warn(
+      `[EngineRecovery] pre-restart cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  if (kind === 'blue-live') {
+    await blueLiveToggle();
+  } else {
+    await restartPlayback();
+  }
+}
+
+async function presentEngineRecoveryFailure(
+  kind: EngineRecoverySessionKind,
+  errorMessage: string,
+  baseDiagnostics: string | undefined,
+): Promise<void> {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  await showEngineRecoveryFailureDialog(
+    mainWindow,
+    errorMessage,
+    collectEngineDiagnostics(kind, baseDiagnostics),
+    {
+      onRestart: () => restartEngineActivityAfterRecovery(kind),
+    },
+  );
+}
+
+async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
+  const data = currentData;
+  const projectSessionAtStart = currentProjectSessionId;
+  if (!data || !engineBridge || !mainWindow || activeRenderOperationId) return false;
+  if (!Array.isArray(objectIds) || objectIds.length === 0 || objectIds.some((id) => typeof id !== 'string')) {
+    setAuditionScoreObjectAvailability(false);
+    return false;
+  }
+
+  const selected = resolveTimelineScoreObjects(data, objectIds);
+  if (!selected) {
+    setAuditionScoreObjectAvailability(false);
+    return false;
+  }
+
+  try {
+    if (playbackStartPromise) await playbackStartPromise;
+    if (currentData !== data || currentProjectSessionId !== projectSessionAtStart) return false;
+
+    return await auditionSelectedScoreObjects(data, selected, {
+      isRenderOperationActive: activeRenderOperationId !== null,
+      isRealtimePlaying: () => engineBridge?.isCurrentlyPlaying() ?? false,
+      stopRealtime: stopPlayback,
+      startRealtime: async (auditionData) => {
+        playbackStartPromise = startPlayback(auditionData, true).finally(() => {
+          playbackStartPromise = null;
+        });
+        return playbackStartPromise;
+      },
+    });
+  } catch (err: unknown) {
+    activeAuditionPlayback = false;
     broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
     return false;
   }
 }
 
 async function stopPlayback(): Promise<void> {
+  activeAuditionPlayback = false;
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
 }
@@ -1907,15 +3269,62 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
     return blueLiveSession.stop();
   }
 
-  currentProjectRevision++;
+  // Start/recompile is a runtime lifecycle change, not a project edit: do not
+  // advance the document revision. The Blue Live engine session generation
+  // (sessionId) is the independent runtime fence key.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+
+  const liveProjectData = currentData;
+  let startSnapshot: BlueLiveStatusSnapshot | null = null;
+  const liveStart = async (): Promise<boolean> => {
+    startSnapshot = await blueLiveSession!.start(
+      liveProjectData,
+      currentProjectRevision,
+      getCurrentProjectDirectory(),
+      javaScriptSession ?? undefined,
+    );
+    if (startSnapshot.status === 'error') {
+      const message = startSnapshot.message || 'Blue Live engine start failed';
+      throw new EngineRecoveryError(message, classifyEngineFailure(message));
+    }
+    return true;
+  };
+
+  const liveRecovery = await engineRecoveryCoordinator.runWithRecovery(
+    'blue-live',
+    liveStart,
+    async () => {
+      await blueLiveSession?.stop();
+      await sweepStaleBlueEngineProcesses();
+    },
+  );
+
+  if (!liveRecovery.ok) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      void presentEngineRecoveryFailure(
+        'blue-live',
+        liveRecovery.errorMessage || 'Failed to start Blue Live',
+        liveRecovery.diagnostics,
+      );
+    }
+    if (!startSnapshot) {
+      return {
+        status: 'error',
+        running: false,
+        sessionId: 0,
+        message: liveRecovery.errorMessage || 'Failed to start Blue Live',
+      };
+    }
+  }
+
+  return startSnapshot!;
 }
 
 async function blueLiveRecompile(): Promise<void> {
   if (!blueLiveSession || !currentData) return;
-  currentProjectRevision++;
+  // Start/recompile is a runtime lifecycle change, not a project edit: do not
+  // advance the document revision.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -1924,6 +3333,19 @@ async function blueLiveRecompile(): Promise<void> {
 async function blueLiveAllNotesOff(): Promise<void> {
   if (!blueLiveSession) return;
   await blueLiveSession.sendAllNotesOff();
+}
+
+/**
+ * Stop any non-idle Blue Live session (starting/running/stopping) before a
+ * project replacement (close/new/open/revert). A session still starting can
+ * retain the old BlueData reference and complete after replacement, so the
+ * full active lifecycle must be awaited — not just `isRunning()`.
+ */
+async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
+  await stopBlueLiveForProjectReplacement(
+    getBlueLiveTriggerController(),
+    blueLiveSession,
+  );
 }
 
 async function generateCsdToScreen(): Promise<void> {
@@ -1935,9 +3357,36 @@ async function generateCsdToScreen(): Promise<void> {
   try {
     await ensureJavaScriptEngine();
     const javaRuntimeClient = await runProjectOnLoad(currentData);
-    const csdText = javaRuntimeClient
-      ? await currentData.toCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
-      : currentData.toCSD(javaScriptSession ?? undefined);
+    // "Generate CSD to Screen" mirrors Java's GenerateCsdToScreenAction, which
+    // generates a disk-profile CSD (isRealTime=false).
+    const csdText = await generateDiskCsdForScreen(
+      currentData,
+      javaScriptSession ?? undefined,
+      javaRuntimeClient,
+    );
+    mainWindow.webContents.send('generated-csd', csdText);
+  } catch (err) {
+    mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
+  }
+}
+
+async function generateRealtimeCsdToScreen(): Promise<void> {
+  if (!mainWindow) return;
+  if (!currentData) {
+    notifyNoProjectLoaded('generated-csd-error');
+    return;
+  }
+  try {
+    await ensureJavaScriptEngine();
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    // "Generate Realtime CSD to Screen" mirrors Java's
+    // GenerateRealtimeCsdToScreenAction, which generates a realtime-profile
+    // CSD (isRealTime=true).
+    const csdText = await generateRealtimeCsdForScreen(
+      currentData,
+      javaScriptSession ?? undefined,
+      javaRuntimeClient,
+    );
     mainWindow.webContents.send('generated-csd', csdText);
   } catch (err) {
     mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
@@ -1956,6 +3405,7 @@ async function generateCsdToDisk(): Promise<void> {
     await saveGeneratedCsdToDisk({
       currentData,
       currentFilePath,
+      workDirectory: getConfiguredWorkDirectory(),
       mainWindow,
       session: javaScriptSession ?? undefined,
       runtimeClient: javaRuntimeClient ?? undefined,
@@ -1978,7 +3428,7 @@ async function chooseMissingAudioReplacement(
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Choose Replacement File',
-    defaultPath: request.currentReplacementPath || undefined,
+    defaultPath: request.currentReplacementPath || getConfiguredWorkDirectoryDefaultPath(),
     properties: ['openFile'],
   });
 
@@ -2038,14 +3488,84 @@ ipcMain.handle('open-file', async () => {
   return loaded ? currentFilePath : null;
 });
 
+ipcMain.handle('start-midi-import', async (): Promise<MidiImportStartResult> => {
+  if (!mainWindow || !hasLoadedProject()) {
+    return { status: 'error', message: 'No project is loaded.' };
+  }
+  if (!(await canReplaceProjectWhileRenderActive())) {
+    return { status: 'cancelled' };
+  }
+  return midiImportService.start();
+});
+
+ipcMain.handle('cancel-midi-import', (_event, token: string): void => {
+  midiImportService.clear(token);
+});
+
+ipcMain.handle(
+  'commit-midi-import',
+  async (_event, token: string, settings: unknown): Promise<MidiImportCommitResult> => {
+    const validation = midiImportService.validateCommit(token, settings);
+    if (!validation.ok) {
+      return { status: 'error', message: validation.message };
+    }
+
+    try {
+      const outcome = await runMidiImportReplacement<BlueData>({
+        preflight: () => canReplaceProjectWhileRenderActive(),
+        prepare: async () => {
+          const { data, warnings } = buildMidiImportProject(
+            validation.pending.document,
+            validation.settings,
+            {
+              layerGroupType: normalizeDefaultLayerGroupType(
+                loadProgramSettings().projectDefaults.defaultLayerGroupType,
+              ),
+            },
+          );
+          if (warnings.length > 0) {
+            console.warn(`[MIDI import] ${warnings.length} note-pairing warning(s)`);
+          }
+          return data;
+        },
+        confirmLibraryDraft: () => confirmLibraryDraftTransition('switchProject'),
+        confirmSave: () => confirmSaveBeforeReplace(),
+        revalidate: () => {
+          const currentValidation = midiImportService.validateCommit(token, settings);
+          if (!currentValidation.ok) {
+            throw new Error(currentValidation.message);
+          }
+        },
+        commit: async (data) => {
+          await installProjectData(data, null);
+        },
+      });
+
+      if (outcome.status !== 'committed') {
+        return { status: 'cancelled' };
+      }
+
+      const project = getCurrentProjectDocument();
+      if (!project) {
+        return { status: 'error', message: 'MIDI project was installed but could not be read back.' };
+      }
+      return { status: 'installed', project };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: `Failed to import MIDI file: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  },
+);
+
 ipcMain.handle('open-file-path', async (_event, filePath: string) => {
-  if (!(await confirmSaveBeforeReplace())) return null;
   const loaded = await openFilePath(filePath);
   return loaded ? currentFilePath : null;
 });
 
 ipcMain.handle('new-file', async () => {
-  await newFile();
+  await handleNewFile();
   return currentFilePath;
 });
 
@@ -2096,7 +3616,17 @@ ipcMain.handle('stop-playback', async () => {
   await stopPlayback();
 });
 
-ipcMain.on('sync-follow-playback-state', (_event, enabled: boolean) => {
+ipcMain.handle('audition-score-objects', async (_event, objectIds: unknown) => {
+  return auditionScoreObjects(objectIds);
+});
+
+ipcMain.on('sync-audition-score-object-availability', (event, enabled: unknown) => {
+  if (event.sender !== mainWindow?.webContents) return;
+  setAuditionScoreObjectAvailability(enabled === true);
+});
+
+ipcMain.on('sync-follow-playback-state', (event, enabled: boolean) => {
+  if (event.sender !== mainWindow?.webContents) return;
   if (currentFollowPlaybackEnabled !== enabled) {
     currentFollowPlaybackEnabled = enabled;
     rebuildApplicationMenu();
@@ -2105,6 +3635,10 @@ ipcMain.on('sync-follow-playback-state', (_event, enabled: boolean) => {
 
 ipcMain.handle('generate-csd-to-screen', async () => {
   await generateCsdToScreen();
+});
+
+ipcMain.handle('generate-realtime-csd-to-screen', async () => {
+  await generateRealtimeCsdToScreen();
 });
 
 ipcMain.handle('generate-csd-to-disk', async () => {
@@ -2123,6 +3657,37 @@ ipcMain.handle('get-project-info', () => {
   };
 });
 
+ipcMain.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose SoundFont File',
+    defaultPath: getConfiguredWorkDirectory(),
+    properties: ['openFile'],
+    filters: [
+      { name: 'SoundFont Files', extensions: ['sf2'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+  return result.canceled || result.filePaths.length === 0
+    ? null
+    : result.filePaths[0] ?? null;
+});
+
+ipcMain.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => {
+  if (typeof filePath !== 'string' || filePath.trim().length === 0) {
+    throw new Error('SoundFont file path is required.');
+  }
+
+  const seam = createCsoundExecutionSeam(undefined, undefined, {
+    trackRenderProcess: false,
+  });
+  return inspectSoundFont(
+    filePath,
+    seam,
+    app.getPath('temp'),
+  );
+});
+
 ipcMain.handle('set-recent-files', (_event, files: string[]) => {
   if (!Array.isArray(files)) {
     return getRecentProjectFilesSnapshot();
@@ -2139,6 +3704,7 @@ ipcMain.handle('get-recent-files', () => {
 ipcMain.handle('import-blue-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue UDO File', extensions: ['blueUDO'] }],
     properties: ['openFile'],
   });
@@ -2147,9 +3713,22 @@ ipcMain.handle('import-blue-udo', async () => {
   return xml;
 });
 
+ipcMain.handle('import-arrangement-instrument', async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Instrument',
+    defaultPath: getConfiguredWorkDirectory(),
+    filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return fs.promises.readFile(result.filePaths[0]!, 'utf-8');
+});
+
 ipcMain.handle('import-csound-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Csound File', extensions: ['udo', 'orc', 'csd'] }],
     properties: ['openFile'],
   });
@@ -2158,9 +3737,67 @@ ipcMain.handle('import-csound-udo', async () => {
   return text;
 });
 
+ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Import Presets',
+    defaultPath: getConfiguredWorkDirectory(),
+    filters: [{ name: 'Preset file', extensions: ['preset'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return fs.promises.readFile(result.filePaths[0], 'utf-8');
+});
+
+ipcMain.handle(BLUE_X7_IMPORT_SYSEX_CHANNEL, async (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  return selectBlueX7SysexFile(window, mainWindow);
+});
+
+ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
+    filters: [{ name: 'Blue Sound Object File', extensions: ['blueObject', 'xml'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  const xml = await fs.promises.readFile(result.filePaths[0], 'utf-8');
+  const data = currentData;
+  if (!data) return { ok: false, error: 'No project is loaded.' };
+  const score = data.getScore();
+  return prepareScoreObjectImport(
+    xml,
+    score.getTimeContext(),
+    String(score.getTimeState().getTimeDisplay()),
+  );
+});
+
+ipcMain.handle('read-csoundrc', () => {
+  const csoundRcEnv = process.env.CSOUNDRC;
+  const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
+  let content = '';
+  try {
+    if (fs.existsSync(filePath)) {
+      content = fs.readFileSync(filePath, 'utf-8');
+    }
+  } catch {
+    // Ignore read failure
+  }
+  return { filePath, content };
+});
+
+ipcMain.handle('write-csoundrc', (_event, text: string) => {
+  const csoundRcEnv = process.env.CSOUNDRC;
+  const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
+  fs.writeFileSync(filePath, text ?? '', 'utf-8');
+  return { success: true, filePath };
+});
+
 ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectory(),
     filters: [{ name: 'Blue UDO File', extensions: ['blueUDO'] }],
   });
   if (result.canceled || !result.filePath) return;
@@ -2169,29 +3806,73 @@ ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
   await fs.promises.writeFile(filePath, xmlText, 'utf-8');
 });
 
+ipcMain.handle('export-arrangement-instrument', async (_event, assignmentId: unknown): Promise<void> => {
+  if (!mainWindow || !currentData || typeof assignmentId !== 'string') return;
+  const instrument = currentData.getArrangement().getInstrumentById(assignmentId);
+  if (!instrument) return;
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Instrument',
+    defaultPath: getConfiguredWorkDirectoryDefaultPath('default.binstr'),
+    filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+    properties: ['showOverwriteConfirmation'],
+  });
+  if (result.canceled || !result.filePath) return;
+  let filePath = result.filePath;
+  if (!filePath.toLowerCase().endsWith('.binstr')) filePath += '.binstr';
+  await fs.promises.writeFile(filePath, instrument.saveAsXML().toXml(), 'utf-8');
+});
+
 ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: `${udoName}.udo`,
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${udoName}.udo`),
     filters: [{ name: 'Csound UDO File', extensions: ['udo', 'inc'] }],
   });
   if (result.canceled || !result.filePath) return;
   await fs.promises.writeFile(result.filePath, codeText, 'utf-8');
 });
 
+ipcMain.handle('export-preset-file', async (_event, xmlText: string, presetName: string) => {
+  if (!mainWindow || typeof xmlText !== 'string') return;
+  const safeName = typeof presetName === 'string'
+    ? presetName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'presets'
+    : 'presets';
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Presets',
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${safeName}.preset`),
+    filters: [{ name: 'Preset file', extensions: ['preset'] }],
+    properties: ['showOverwriteConfirmation'],
+  });
+  if (result.canceled || !result.filePath) return;
+  let filePath = result.filePath;
+  if (!filePath.toLowerCase().endsWith('.preset')) filePath += '.preset';
+  await fs.promises.writeFile(filePath, xmlText, 'utf-8');
+});
+
+ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string): Promise<ScoreObjectExportResult> => {
+  if (!mainWindow) return { status: 'error', error: 'The main window is not available.' };
+  if (typeof xmlText !== 'string' || xmlText.trim().length === 0) {
+    return { status: 'error', error: 'The selected Sound Object has no XML to export.' };
+  }
+  const validation = validateScoreObjectExport(xmlText);
+  if (!validation.ok) return { status: 'error', error: validation.error };
+
+  const safeName = typeof objectName === 'string'
+    ? objectName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'SoundObject'
+    : 'SoundObject';
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: getConfiguredWorkDirectoryDefaultPath(`${safeName}.xml`),
+    filters: [{ name: 'Blue SoundObject XML', extensions: ['xml'] }],
+  });
+  if (result.canceled || !result.filePath) return { status: 'cancelled' };
+  await fs.promises.writeFile(result.filePath, xmlText, 'utf-8');
+  return { status: 'saved' };
+});
+
 // ─── Blue Live IPC Handlers ───
 
 ipcMain.handle('blue-live:toggle', async () => {
-  if (!blueLiveSession || !currentData) {
-    return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
-  }
-  if (blueLiveSession.isRunning()) {
-    return blueLiveSession.stop();
-  }
-  currentProjectRevision++;
-  mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
-  mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.start(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+  return blueLiveToggle();
 });
 
 ipcMain.handle('blue-live:stop', async () => {
@@ -2205,7 +3886,7 @@ ipcMain.handle('blue-live:recompile', async () => {
   if (!blueLiveSession || !currentData) {
     return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
   }
-  currentProjectRevision++;
+  // Recompile is a runtime lifecycle change, not a project edit.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   return blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
@@ -2226,6 +3907,11 @@ ipcMain.handle('blue-live:trigger-note', async (_event, request: BlueLiveNoteTri
   return blueLiveSession.triggerNote(request);
 });
 
+ipcMain.handle('blue-live:trigger-objects', async (_event, request: LegacyBlueLiveTriggerRequest): Promise<LegacyBlueLiveTriggerResult> => {
+  const controller = getBlueLiveTriggerController();
+  return controller.trigger(request);
+});
+
 ipcMain.handle('blue-live:get-status', async () => {
   if (!blueLiveSession) {
     return { status: 'idle', running: false, sessionId: 0 };
@@ -2233,7 +3919,39 @@ ipcMain.handle('blue-live:get-status', async () => {
   return blueLiveSession.getStatus();
 });
 
-// ─── Settings IPC Handler ───
+// ─── Confirmation and Settings IPC Handlers ───
+
+ipcMain.handle(NATIVE_CONFIRMATION_CHANNEL, async (event, request: unknown): Promise<NativeConfirmationResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  return showNativeConfirmation(owner, request);
+});
+
+ipcMain.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsClosePromptResponse> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  const result = await showNativeConfirmation(owner, {
+    id: 'settings-confirm-close',
+    type: 'question',
+    title: 'Unsaved Settings',
+    message: 'You have unsaved settings.',
+    detail: 'Do you want to apply them before closing Settings?',
+    actions: [
+      { id: 'yes', label: 'Yes', role: 'accept' },
+      { id: 'no', label: 'No', role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'yes',
+    cancelActionId: 'cancel',
+    noLink: true,
+  });
+  if (result.outcome !== 'selected') return 'cancel';
+  return result.actionId === 'yes' ? 'yes' : result.actionId === 'no' ? 'no' : 'cancel';
+});
+
+ipcMain.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown) => {
+  if (resolution === 'allow' || resolution === 'cancel') {
+    resolveSettingsWindowClose(resolution as SettingsCloseResolution);
+  }
+});
 
 ipcMain.handle('settings:open', async () => {
   if (!mainWindow) return;
@@ -2242,7 +3960,47 @@ ipcMain.handle('settings:open', async () => {
   });
 });
 
+ipcMain.handle(APP_METADATA_GET_CHANNEL, () => resolveAppMetadata({
+  appVersion: app.getVersion(),
+  appPath: app.getAppPath(),
+  resourcesPath: process.resourcesPath,
+  isPackaged: app.isPackaged,
+  releaseChannel: process.env.BLUE_RELEASE_CHANNEL,
+  processVersions: {
+    electron: process.versions.electron,
+    chromium: process.versions.chrome,
+    node: process.versions.node,
+  },
+}));
+
+ipcMain.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(event.sender));
+
 // ─── Program Settings IPC Handlers ───
+
+/**
+ * Refresh the native follow menu cache from an authoritative settings
+ * snapshot (Settings-window save or playback-panel reset) and broadcast
+ * explicit resolved follow values to the workbench renderer when either
+ * follow field changed.
+ */
+function syncFollowPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): void {
+  // The active menu mirror can be false during a session-only suspension, so
+  // compare full-settings saves against the durable preference separately.
+  const followChanged = snapshot.playback.followPlayback !== currentSavedFollowPlayback;
+  const onStartChanged = snapshot.playback.followPlaybackOnStart !== currentFollowPlaybackOnStartEnabled;
+  currentSavedFollowPlayback = snapshot.playback.followPlayback;
+  currentFollowPlaybackOnStartEnabled = snapshot.playback.followPlaybackOnStart;
+  if (followChanged) {
+    currentFollowPlaybackEnabled = snapshot.playback.followPlayback;
+    mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback', enabled: currentFollowPlaybackEnabled });
+  }
+  if (onStartChanged) {
+    mainWindow?.webContents.send('native-menu-command', { type: 'set-follow-playback-on-render-start', enabled: currentFollowPlaybackOnStartEnabled });
+  }
+  if (followChanged || onStartChanged) {
+    rebuildApplicationMenu();
+  }
+}
 
 ipcMain.handle('program-settings:get', () => {
   return loadProgramSettings();
@@ -2255,6 +4013,9 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
   // expose app zoom, so the controller's current value always wins.
   const preserved = appZoomController.preserveCurrentZoom(snapshot);
   const result = saveProgramSettings(preserved);
+  if (result.ok) {
+    engineRuntimeService?.invalidate();
+  }
   if (result.ok && result.snapshot && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(result.snapshot);
   }
@@ -2266,8 +4027,47 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
   ) {
     void oscControlService.restart(result.snapshot.osc);
   }
+  // Refresh follow menu cache and broadcast explicit state when follow
+  // fields changed via the full Settings window save.
+  if (result.ok && result.snapshot) {
+    syncFollowPreferencesFromSnapshot(result.snapshot);
+  }
   return result;
 });
+
+ipcMain.handle(
+  'engine-runtime:probe',
+  async (_event, request?: EngineProbeRequest): Promise<EngineProbeResult> => {
+    if (!engineRuntimeService) {
+      return {
+        ok: false,
+        selection: null,
+        report: null,
+        errorCode: 'ENGINE_NOT_FOUND',
+        message: 'Blue Engine runtime service is not initialized',
+        durationMs: 0,
+      };
+    }
+    return engineRuntimeService.probe(request, { retry: true });
+  },
+);
+
+ipcMain.handle(
+  'engine-runtime:query-csound-io',
+  async (_event, request?: CsoundIoQueryRequest): Promise<CsoundIoQueryResult> => {
+    if (!engineRuntimeService) {
+      return {
+        ok: false,
+        selection: null,
+        report: null,
+        errorCode: 'ENGINE_NOT_FOUND',
+        message: 'Blue Engine runtime service is not initialized',
+        durationMs: 0,
+      };
+    }
+    return engineRuntimeService.queryCsoundIo(request, { retry: true });
+  },
+);
 
 ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   const snapshot = resetPanel(panel as any);
@@ -2276,6 +4076,9 @@ ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   }
   if (panel === 'osc' && oscControlService) {
     void oscControlService.restart(snapshot.osc);
+  }
+  if (panel === 'playback') {
+    syncFollowPreferencesFromSnapshot(snapshot);
   }
   return snapshot;
 });
@@ -2291,6 +4094,51 @@ ipcMain.handle('program-settings:usage-matrix', () => {
 
 ipcMain.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy: any) => {
   return syncLegacyRendererSettings(legacy);
+});
+
+ipcMain.handle('program-settings:update-playback-preferences', (_event, patch: unknown) => {
+  const result = updatePlaybackPreferences(patch as any);
+  if (result.ok && result.snapshot) {
+    // Refresh main menu cache from the updated settings
+    currentFollowPlaybackEnabled = result.snapshot.playback.followPlayback;
+    currentSavedFollowPlayback = result.snapshot.playback.followPlayback;
+    currentFollowPlaybackOnStartEnabled = result.snapshot.playback.followPlaybackOnStart;
+    rebuildApplicationMenu();
+  }
+  return result;
+});
+
+// ─── File Manager IPC Handlers (SPEC 076) ───
+
+ipcMain.handle(FILE_MANAGER_GET_ROOTS_CHANNEL, () => {
+  const settings = loadProgramSettings();
+  return getFileManagerRoots({
+    loadFavoritePaths: () => settings.appSpecific.fileManagerFavorites,
+    loadRootLabels: () => settings.appSpecific.fileManagerRootLabels,
+  });
+});
+
+ipcMain.handle(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+  return listFileManagerDirectory(request);
+});
+
+ipcMain.handle(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+  return validateFileManagerDirectory(request);
+});
+
+ipcMain.handle(COMMIT_AUDIO_FILE_DROP_CHANNEL, (_event, request: CommitAudioFileDropRequest) => {
+  return commitAudioFileDrop(request, {
+    getCurrentProject: () => (currentData
+      ? {
+          sessionId: currentProjectSessionId,
+          revision: currentProjectRevision,
+          projectDirectory: getCurrentProjectDirectory(),
+          copyToMediaFileOnImport: currentData.getProjectProperties().copyToMediaFileOnImport,
+          mediaFolder: currentData.getProjectProperties().mediaFolder,
+        }
+      : null),
+    commitProjectDocumentPatch: (patch) => commitProjectDocumentPatchBatch([patch]),
+  });
 });
 
 // ─── Window Layout IPC Handlers ───
@@ -2351,6 +4199,42 @@ ipcMain.handle('update-effect-editor-document', (_event, request: EffectEditorPa
 
 ipcMain.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => {
   return focusEffectEditorWindow(request);
+});
+
+ipcMain.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)
+    || request.track.projectSessionId !== currentProjectSessionId) {
+    throw new Error('Track instrument editor request is no longer valid.');
+  }
+  // Opening is a read/focus action. A pending renderer patch may have moved
+  // the document revision since the tiny Track control rendered, so resolve
+  // the stable Track identity against the current canonical snapshot and use
+  // its current revision for the editor window fence.
+  const snapshot = getCurrentTrackInstrumentEditorSnapshot(request);
+  if (!snapshot) {
+    throw new Error('Track instrument is not available. Assign it again and retry.');
+  }
+  openTrackInstrumentEditorWindow(mainWindow, { track: snapshot.track }, {
+    initialZoomFactor: appZoomController.getCurrentFactor(),
+  });
+});
+
+ipcMain.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)
+    || !trackInstrumentRequestIsCurrent(request)) return false;
+  return focusTrackInstrumentEditorWindow(request);
+});
+
+ipcMain.handle('get-track-instrument-editor-document', (_event, request: TrackInstrumentEditorRequest) => {
+  if (!isTrackInstrumentEditorRequest(request)) return null;
+  return getTrackInstrumentEditorSnapshot(request);
+});
+
+ipcMain.handle('update-track-instrument-editor-document', (_event, request: TrackInstrumentEditorPatchRequest) => {
+  if (!isTrackInstrumentEditorPatchRequest(request)) {
+    return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
+  }
+  return applyTrackInstrumentEditorPatch(request);
 });
 
 // ─── Evaluate Code IPC Handler ───
@@ -2433,150 +4317,32 @@ async function syncEngineWithProjectPatch(
     if (orchestraPatch.type === 'updateInstrument') {
       const instrument = arrangement.getInstrumentById(orchestraPatch.assignmentId);
       if (instrument instanceof BlueSynthBuilder) {
-        // 1. Individual widget updates
-        if (orchestraPatch.patch.bsbWidgetValues) {
-          const params = instrument.getParameters();
-          for (const [objectName, value] of Object.entries(orchestraPatch.patch.bsbWidgetValues)) {
-            const param = params.find((p) => p.getName() === objectName);
-            if (param && param.getCompilationVarName()) {
-              await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-            }
-          }
-        }
-
-        // 2. BSB Interface patches (like presets)
-        if (orchestraPatch.patch.bsbInterface) {
-          const bsbPatch = orchestraPatch.patch.bsbInterface;
-          if (bsbPatch.type === 'applyPreset') {
-            // Preset applied: sync ALL parameters for this instrument to the engine
-            const params = instrument.getParameters();
-            for (const param of params) {
-              const varName = param.getCompilationVarName();
-              if (varName) {
-                await syncActiveRuntimeChannel(varName, param.getFixedValue());
-              }
-            }
-          } else if (bsbPatch.type === 'updateWidgetProperties') {
-            const widget = instrument.getGraphicInterface().findWidgetById(bsbPatch.widgetId);
-            if (widget && widget.objectName) {
-              const props = bsbPatch.properties;
-              if (typeof props.value === 'number') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.value);
-                }
-              }
-              if (typeof props.selected === 'boolean') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selected ? 1 : 0);
-                }
-              }
-              if (typeof props.selectedIndex === 'number') {
-                const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
-                if (param && param.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selectedIndex);
-                }
-              }
-              if (typeof props.xValue === 'number') {
-                const px = instrument.getParameters().find(p => p.getName() === widget.objectName + 'X');
-                if (px && px.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(px.getCompilationVarName()!, props.xValue);
-                }
-              }
-              if (typeof props.yValue === 'number') {
-                const py = instrument.getParameters().find(p => p.getName() === widget.objectName + 'Y');
-                if (py && py.getCompilationVarName()) {
-                  await syncActiveRuntimeChannel(py.getCompilationVarName()!, props.yValue);
-                }
-              }
-            }
-          } else if (bsbPatch.type === 'updateSliderBankValue') {
-            const widget = instrument.getGraphicInterface().findWidgetById(bsbPatch.widgetId);
-            if (widget?.objectName) {
-              const param = instrument.getParameters().find(
-                (candidate) => candidate.getName() === `${widget.objectName}_${bsbPatch.sliderIndex}`,
-              );
-              if (param?.getCompilationVarName()) {
-                await syncActiveRuntimeChannel(param.getCompilationVarName()!, bsbPatch.value);
-              }
-            }
-          }
-        }
+        await syncBsbInstrumentRuntimeChannels(
+          instrument,
+          orchestraPatch.patch,
+          syncActiveRuntimeChannel,
+        );
       }
     }
   }
-}
 
-async function syncEngineWithRealtimeControlUpdate(
-  data: BlueData,
-  update: BsbRealtimeControlUpdate,
-) {
-  const arrangement = data.getArrangement();
-  const instrument = arrangement.getInstrumentById(update.assignmentId);
-  if (!(instrument instanceof BlueSynthBuilder)) return;
-
-  const widget = instrument.getGraphicInterface().findWidgetById(update.widgetId);
-  if (!widget?.objectName) return;
-
-  const findParameter = (name: string) => {
-    return instrument.getParameters().find((candidate) => candidate.getName() === name);
-  };
-
-  switch (update.kind) {
-    case 'value': {
-      const value = typeof update.payload.value === 'number' ? update.payload.value : null;
-      if (value === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-      }
-      break;
-    }
-    case 'selected': {
-      const selected = typeof update.payload.selected === 'boolean' ? update.payload.selected : null;
-      if (selected === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selected ? 1 : 0);
-      }
-      break;
-    }
-    case 'selectedIndex': {
-      const selectedIndex = typeof update.payload.selectedIndex === 'number' ? update.payload.selectedIndex : null;
-      if (selectedIndex === null) break;
-      const param = findParameter(widget.objectName);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selectedIndex);
-      }
-      break;
-    }
-    case 'xy': {
-      const nextX = typeof update.payload.xValue === 'number' ? update.payload.xValue : null;
-      const nextY = typeof update.payload.yValue === 'number' ? update.payload.yValue : null;
-      if (nextX !== null) {
-        const px = findParameter(`${widget.objectName}X`);
-        if (px?.getCompilationVarName()) {
-          await syncActiveRuntimeChannel(px.getCompilationVarName()!, nextX);
-        }
-      }
-      if (nextY !== null) {
-        const py = findParameter(`${widget.objectName}Y`);
-        if (py?.getCompilationVarName()) {
-          await syncActiveRuntimeChannel(py.getCompilationVarName()!, nextY);
-        }
-      }
-      break;
-    }
-    case 'sliderBank': {
-      const sliderIndex = typeof update.payload.sliderIndex === 'number' ? update.payload.sliderIndex : null;
-      const value = typeof update.payload.value === 'number' ? update.payload.value : null;
-      if (sliderIndex === null || value === null) break;
-      const param = findParameter(`${widget.objectName}_${sliderIndex}`);
-      if (param?.getCompilationVarName()) {
-        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
-      }
-      break;
+  const scorePatch = patch.score;
+  if (scorePatch?.type === 'updateTrackInstrument') {
+    const group = data.getScore().find(
+      (candidate): candidate is TrackLayerGroup => (
+        candidate instanceof TrackLayerGroup
+        && candidate.getUniqueId() === scorePatch.track.rootGroupId
+      ),
+    );
+    const instrument = group
+      ?.find((track) => track.getUniqueId() === scorePatch.track.trackId)
+      ?.getInstrument();
+    if (instrument instanceof BlueSynthBuilder) {
+      await syncBsbInstrumentRuntimeChannels(
+        instrument,
+        scorePatch.patch,
+        syncActiveRuntimeChannel,
+      );
     }
   }
 }
@@ -2585,7 +4351,9 @@ ipcMain.handle('get-project-document', () => {
   return getCurrentProjectDocument();
 });
 
-ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
+async function commitProjectDocumentPatchBatch(
+  patches: ProjectDocumentPatch[],
+): Promise<ProjectDocumentCommitReceipt> {
   if (!currentData) {
     throw new Error('No project loaded');
   }
@@ -2595,6 +4363,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
   }
 
   let javaRuntimeDependenciesChanged = false;
+  let anyCanonicalMutation = false;
 
   for (const patch of patches) {
     const clojureDependenciesChanged = patch.clojureProject
@@ -2602,8 +4371,14 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
       : false;
     const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
     maybeCloseRemovedProjectEffectEditors(patch);
-    const changed = applyProjectDocumentPatch(currentData, patch);
+    maybeCloseRemovedTrackInstrumentEditors(patch);
+    const changed = applyProjectDocumentPatch(currentData, patch, {
+      projectSessionId: currentProjectSessionId,
+      projectRevision: currentProjectRevision,
+      defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+    });
     if (changed) {
+      anyCanonicalMutation = true;
       for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
         scoreAutomationParameterIds.add(id);
       }
@@ -2611,22 +4386,35 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
       scoreAutomationParameterIds.clear();
     }
     javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
-    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
+    if (changed && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
       void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
       });
     }
   }
 
-  currentProjectRevision += 1;
+  if (anyCanonicalMutation) {
+    currentProjectRevision += 1;
+  }
   if (javaRuntimeDependenciesChanged) {
     currentProjectSessionId += 1;
+    midiImportService.clearAll();
     await disposeJavaRuntimeSession();
   }
-  broadcastProjectDocumentUpdate();
-  unifiedLibraryService?.publishProjectChanged();
-  const receipt: ProjectDocumentCommitReceipt = { revision: currentProjectRevision, sessionId: currentProjectSessionId };
+  if (anyCanonicalMutation) {
+    broadcastProjectDocumentUpdate();
+    unifiedLibraryService?.publishProjectChanged();
+  }
+  const receipt: ProjectDocumentCommitReceipt = {
+    revision: currentProjectRevision,
+    sessionId: currentProjectSessionId,
+    changed: anyCanonicalMutation,
+  };
   return receipt;
+}
+
+ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
+  return commitProjectDocumentPatchBatch(patches);
 });
 
 ipcMain.handle('read-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
@@ -2652,6 +4440,7 @@ ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Audio File',
+    defaultPath: getConfiguredWorkDirectory(),
     properties: ['openFile'],
     filters: [
       {
@@ -2667,6 +4456,14 @@ ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
   if (result.canceled || result.filePaths.length === 0) return null;
   const filePath = result.filePaths[0];
   return filePath && authorizeAudioFilePath(filePath) ? filePath : null;
+});
+
+// SPEC 076: authorize a File Manager double-clicked file for the audio
+// stream protocol (same policy as dialog-selected and play-render outputs).
+ipcMain.handle('authorize-audio-file', (_event, filePath: string): boolean => {
+  return typeof filePath === 'string' && filePath.length > 0
+    ? authorizeAudioFilePath(filePath)
+    : false;
 });
 
 ipcMain.handle('get-audio-file-stat', async (
@@ -2688,7 +4485,126 @@ ipcMain.handle('get-audio-file-stat', async (
 
 ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObjectEditorRequest): ScoreObjectEditorDocumentSnapshot | null => {
   if (!currentData) return null;
-  return createScoreObjectEditorDocument(currentData, request);
+  const doc = createScoreObjectEditorDocument(currentData, request);
+  if (!doc) return null;
+
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  if (doc.editor.kind === 'audioFile') {
+    doc.editor.metadata = inspectAudioFileMetadata(doc.editor.filePath, context);
+  } else if (doc.editor.kind === 'frozenSoundObject') {
+    const inspection = inspectFrozenArtifact(doc.editor.frozenWaveFileName, context);
+    doc.editor.artifactStatus = inspection.artifactStatus;
+    doc.editor.canSaveCopy = inspection.canSaveCopy;
+    if (inspection.message) {
+      doc.editor.message = inspection.message;
+    }
+  }
+
+  return doc;
+});
+
+ipcMain.handle('select-score-object-audio-file', async (event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  if (!owner || owner.isDestroyed()) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No active owner window.',
+    };
+  }
+
+  if (!currentData) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No project open.',
+    };
+  }
+
+  const projectProps = currentData.getProjectProperties();
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  return selectScoreObjectAudioFile(
+    {
+      currentPath: request?.currentPath,
+      context,
+      projectProps: {
+        copyToMediaFileOnImport: projectProps.copyToMediaFileOnImport,
+        mediaFolder: projectProps.mediaFolder,
+      },
+    },
+    {
+      showOpenDialog: async (defaultPath) => {
+        const result = await dialog.showOpenDialog(owner, {
+          title: 'Select Audio File',
+          defaultPath,
+          properties: ['openFile'],
+          filters: [
+            { name: 'Audio Files (*.wav, *.aif, *.aiff, *.aifc)', extensions: ['wav', 'aif', 'aiff', 'aifc', 'WAV', 'AIF', 'AIFF', 'AIFC'] },
+            { name: 'All Files (*.*)', extensions: ['*'] },
+          ],
+        });
+        return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]!;
+      },
+    },
+  );
+});
+
+ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  if (!owner || owner.isDestroyed()) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No active owner window.',
+    };
+  }
+
+  if (!currentData || !currentFilePath) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No saved project open.',
+    };
+  }
+
+  const context = getScoreObjectFileResolutionContext(currentData);
+
+  return saveFrozenSoundObjectCopy(
+    {
+      frozenWaveFileName: request.frozenWaveFileName,
+      context,
+    },
+    {
+      showSaveDialog: async (defaultPath, defaultFileName) => {
+        const result = await dialog.showSaveDialog(owner, {
+          title: 'Save Copy of Frozen Audio',
+          defaultPath: defaultPath && defaultFileName ? path.join(defaultPath, defaultFileName) : defaultPath,
+          filters: [
+            { name: 'Audio Files (*.wav, *.aif, *.aiff)', extensions: ['wav', 'aif', 'aiff'] },
+            { name: 'All Files (*.*)', extensions: ['*'] },
+          ],
+        });
+        return result.canceled || !result.filePath ? null : result.filePath;
+      },
+      confirmOverwrite: async (fileName) => {
+        const res = await showNativeConfirmation(owner, {
+          id: 'overwrite-frozen-audio',
+          type: 'question',
+          title: 'Overwrite File?',
+          message: `File already exists: ${fileName}\n\nDo you want to overwrite it?`,
+          actions: [
+            { id: 'overwrite', label: 'Overwrite', role: 'destructive' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'cancel',
+          cancelActionId: 'cancel',
+        });
+        return res.actionId === 'overwrite' && res.outcome === 'selected';
+      },
+    },
+  );
 });
 
 ipcMain.handle('get-named-chain-names', (): string[] => {
@@ -2742,6 +4658,64 @@ for (const channel of [
   ));
 }
 
+async function runPythonInstrumentTestRequest(
+  request: PythonInstrumentTestRequest,
+): Promise<PythonInstrumentTestResult> {
+  let javaRuntimeClient: JavaRuntimeClient | null = null;
+
+  try {
+    if (currentData) {
+      javaRuntimeClient = await runProjectOnLoad(currentData);
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      output: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return testPythonInstrument(request, {
+    javaRuntimeClient,
+  });
+}
+
+ipcMain.handle('test-python-instrument', (_event, request: PythonInstrumentTestRequest) => (
+  runPythonInstrumentTestRequest(request)
+));
+
+ipcMain.handle(
+  REPL_CONSOLE_OPEN_CHANNEL,
+  async (_event, request: ReplConsoleOpenRequest): Promise<ReplConsoleOpenResult> => {
+    if (!isReplConsoleLanguage(request?.language)) {
+      return createReplOpenResult('javascript', 'error', 'Invalid console language.');
+    }
+    return openReplConsole(request.language);
+  },
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  async (_event, request: ReplConsoleEvaluateRequest): Promise<ReplConsoleEvaluateResult> =>
+    evaluateReplConsole(request),
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  async (_event, request: ReplConsoleReinitializeRequest): Promise<ReplConsoleReinitializeResult> =>
+    reinitializeReplConsole(request),
+);
+
+ipcMain.handle(
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  (_event, _request: ReplConsoleCloseRequest): ReplConsoleCloseResult => ({ ok: true }),
+);
+
+ipcMain.handle(
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  async (): Promise<ScriptRuntimeReinitializeResult> => reinitializeJavaScriptRuntime(),
+);
+
 ipcMain.handle('java-runtime:reinitialize', async () => {
   if (!currentData) {
     return { ok: false, error: 'No project loaded.' };
@@ -2769,38 +4743,19 @@ ipcMain.handle('java-runtime:reinitialize', async () => {
   }
 });
 
-ipcMain.handle('java-runtime:reinitialize-jython', async () => {
-  if (!currentData) {
-    return { ok: false, error: 'No project loaded.' };
-  }
-
-  if (!currentData.usesJavaRuntime()) {
-    return { ok: false, error: 'Active project does not use the Java runtime.' };
-  }
-
-  if (!javaRuntimeSessionManager) {
-    return { ok: false, error: 'Java runtime manager is unavailable.' };
-  }
-
-  try {
-    await javaRuntimeSessionManager.reinitializeJython(
-      currentData,
-      currentProjectSessionId,
-      currentFilePath,
-    );
-    await runProjectOnLoad(currentData);
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
-  }
-});
+ipcMain.handle('java-runtime:reinitialize-jython', async () => reinitializeJythonRuntime());
 
 ipcMain.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {
-  if (!currentData) {
+  if (!currentData || !isBsbRealtimeControlUpdate(update)) {
     return;
   }
 
-  void syncEngineWithRealtimeControlUpdate(currentData, update).catch((error) => {
+  void syncBsbRealtimeControlUpdate(
+    currentData,
+    update,
+    currentProjectSessionId,
+    syncActiveRuntimeChannel,
+  ).catch((error) => {
     console.error('[main] Failed to sync realtime BSB control update:', error);
   });
 });
@@ -2850,8 +4805,13 @@ ipcMain.handle('update-project-document', (_event, patch) => {
   }
 
   maybeCloseRemovedProjectEffectEditors(patch);
+  maybeCloseRemovedTrackInstrumentEditors(patch);
   const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
-  const changed = applyProjectDocumentPatch(currentData, patch);
+  const changed = applyProjectDocumentPatch(currentData, patch, {
+    projectSessionId: currentProjectSessionId,
+    projectRevision: currentProjectRevision,
+    defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
+  });
   if (changed) {
     for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
       scoreAutomationParameterIds.add(id);
@@ -2907,12 +4867,20 @@ registerBlueAudioScheme();
 app.whenReady().then(async () => {
   registerBlueAudioProtocolHandler();
   setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));
+
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+    await runPackagedProjectVerificationAndExit();
+  }
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch') {
+    await runPackagedEngineMismatchVerificationAndExit();
+  }
+
   initWorkbenchWindowHost();
   try {
     const report = await sweepStaleBlueEngineProcesses();
-    if (report.inspected > 0 || report.removed > 0 || report.terminated > 0) {
+    if (report.inspected > 0 || report.removed > 0 || report.terminated > 0 || report.retained > 0) {
       console.log(
-        `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}`,
+        `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}, retained=${report.retained}`,
       );
     }
   } catch (error: unknown) {
@@ -2942,6 +4910,15 @@ app.whenReady().then(async () => {
     window.webContents.on('did-navigate', applyCurrentZoom);
   });
 
+  // Hydrate follow playback menu state from settings before the first menu
+  // build so the native checkmarks reflect saved preferences, not hard-coded
+  // defaults. loadProgramSettings() is cached, so this does not add a second
+  // disk read.
+  const initialSettings = loadProgramSettings();
+  currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
+  currentSavedFollowPlayback = initialSettings.playback.followPlayback;
+  currentFollowPlaybackOnStartEnabled = initialSettings.playback.followPlaybackOnStart;
+
   createWindow();
   unifiedLibraryService = new UnifiedLibraryService(
     path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
@@ -2967,8 +4944,23 @@ app.whenReady().then(async () => {
     ipcMain,
     service: unifiedLibraryService,
     getWindows: () => BrowserWindow.getAllWindows(),
+    getWorkDirectory: getConfiguredWorkDirectory,
   });
   await unifiedLibraryService.start();
+  codeRepositoryService = new CodeRepositoryService(
+    path.join(app.getPath('userData'), 'blue_code_repository.sqlite'),
+    {
+      legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
+      migrationStatePath: path.join(app.getPath('userData'), 'blue-code-repository-state.json'),
+    },
+  );
+  unregisterCodeRepositoryIpc = registerCodeRepositoryIpc({
+    ipcMain,
+    service: codeRepositoryService,
+    getWindows: () => BrowserWindow.getAllWindows(),
+    getWorkDirectory: getConfiguredWorkDirectory,
+  });
+  await codeRepositoryService.start();
   initializeOscControlService();
 
   // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench

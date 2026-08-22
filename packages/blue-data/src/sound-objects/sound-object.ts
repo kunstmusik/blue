@@ -22,6 +22,7 @@ import { TimeDuration } from '../time/time-duration';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { DeepCopyable } from '../deep-copyable';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
 
 export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
   /** Generate notes for CSD output. */
@@ -30,6 +31,7 @@ export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): NoteList;
 
   /** Generate notes for CSD output when an environment-backed runtime is required. */
@@ -38,6 +40,7 @@ export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): Promise<NoteList>;
 
   /** Get the note processor chain for this sound object. */

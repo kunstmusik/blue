@@ -43,6 +43,8 @@ files:
   - dist/main/**/*
   - dist/preload/**/*
   - dist/renderer/**/*
+  - dist/shared/**/*
+  - release-metadata.json
   - package.json
   - '!**/.DS_Store'
   - '!**/.gitkeep'
@@ -50,10 +52,21 @@ files:
 # Java helper JAR + Python library land at installed
 # resources/assets/java/* so the existing resolver in
 # java-runtime-path.ts finds them at its preferred candidate.
+# Bundled example projects (assets/examples) are copied alongside so the
+# resolver in example-project-path.ts finds them at its preferred candidate.
 extraResources:
   - from: assets/java
     to: assets/java
     filter: ['**/*']
+  - from: assets/examples
+    to: assets/examples
+    filter: ['**/*']
+  - from: .engine-stage
+    to: assets/engine
+    filter:
+      - blue-engine
+      - blue-engine.exe
+      - artifact.json
 
 # Native node modules must be discoverable by Electron's require. Allow the
 # whole node_modules tree to flow through; ASAR unpacking keeps .node files
@@ -117,6 +130,8 @@ linux:
     - application/x-blue-project
 appImage:
   artifactName: ${productName}-${version}.${ext}
+toolsets:
+  appimage: "1.0.3"
 deb:
   artifactName: ${productName}_${version}_amd64.${ext}
   depends:
@@ -128,6 +143,7 @@ deb:
 # uploads so the stable publisher can verify the complete asset set first.
 publish: null
 
-# After-pack hooks (currently none). Native module rebuild is performed by
-# @electron/rebuild before packaging through the verify:package-inputs script.
-afterPack: null
+# The hook verifies the nested executable on unsigned builds and applies the
+# engine-only runtime-loading entitlement before outer-app signing when
+# BLUE_MAC_SIGN_IDENTITY is configured.
+afterPack: scripts/sign-blue-engine.mjs

@@ -1,14 +1,21 @@
 /**
  * Preload script — exposes safe IPC bridges to the renderer process.
  */
-import { clipboard, contextBridge, ipcRenderer } from 'electron';
+import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron';
+import { validateBlueX7SysexReadResult } from '../shared/blue-x7-sysex';
 import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
   EffectEditorSnapshot,
+  TrackInstrumentEditorPatchRequest,
+  TrackInstrumentEditorPatchResult,
+  TrackInstrumentEditorRequest,
+  TrackInstrumentEditorSnapshot,
   BsbRealtimeControlUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
+  LegacyBlueLiveTriggerRequest,
+  LegacyBlueLiveTriggerResult,
   PolyObjectLayerGroupSnapshot,
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
@@ -20,9 +27,69 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
+  AudioFileSelectionResult,
+  FrozenSoundObjectSaveCopyResult,
 } from '../shared/project-editor';
+import type {
+  ScoreObjectExportResult,
+  ScoreObjectImportResult,
+} from '../shared/score-object-file';
 import type { NativeMenuCommand } from '../shared/workbench-menu';
+import {
+  JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
+  type ScriptRuntimeReinitializeResult,
+} from '../shared/script-runtime';
+import {
+  ENGINE_RECOVERY_STATUS_CHANNEL,
+  decodeEngineRecoveryStatus,
+  type EngineRecoveryStatus,
+} from '../shared/engine-recovery';
+import {
+  NATIVE_CONFIRMATION_CHANNEL,
+  type NativeConfirmationRequest,
+  type NativeConfirmationResult,
+} from '../shared/confirmation-dialog';
+import {
+  SOUND_FONT_FILE_SELECT_CHANNEL,
+  SOUND_FONT_INSPECT_CHANNEL,
+  type SoundFontInfo,
+} from '../shared/soundfont-viewer';
+import {
+  COMMIT_AUDIO_FILE_DROP_CHANNEL,
+  FILE_MANAGER_GET_ROOTS_CHANNEL,
+  FILE_MANAGER_LIST_DIRECTORY_CHANNEL,
+  FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL,
+  type CommitAudioFileDropRequest,
+  type CommitAudioFileDropResult,
+  type FileManagerDirectoryResult,
+  type FileManagerRootSnapshot,
+  type FileManagerValidateDirectoryResult,
+} from '../shared/file-manager';
+import type {
+  MidiImportCommitResult,
+  MidiImportSettings,
+  MidiImportStartResult,
+} from '../shared/midi-import';
+import {
+  ABOUT_WINDOW_CLOSE_CHANNEL,
+  APP_METADATA_GET_CHANNEL,
+  type AppMetadata,
+} from '../shared/app-metadata';
 import type { EngineOutputPayload } from '../shared/io-provider';
+import {
+  REPL_CONSOLE_CLOSE_CHANNEL,
+  REPL_CONSOLE_EVALUATE_CHANNEL,
+  REPL_CONSOLE_OPEN_CHANNEL,
+  REPL_CONSOLE_REINITIALIZE_CHANNEL,
+  type ReplConsoleCloseRequest,
+  type ReplConsoleCloseResult,
+  type ReplConsoleEvaluateRequest,
+  type ReplConsoleEvaluateResult,
+  type ReplConsoleOpenRequest,
+  type ReplConsoleOpenResult,
+  type ReplConsoleReinitializeRequest,
+  type ReplConsoleReinitializeResult,
+} from '../shared/repl-console';
 import type {
   MissingAudioAssetsChooseRequest,
   MissingAudioAssetsDismissRequest,
@@ -35,16 +102,38 @@ import type {
   CancelRenderOperationRequest,
   RenderOperationResult,
   RenderOperationStatus,
+  FreezeItemStatus,
   FreezeOperationResult,
 } from '../shared/render-freeze-contract';
-import { RENDER_OPERATION_STATUS_CHANNEL, isRenderOperationStatus } from '../shared/render-freeze-contract';
+import {
+  RENDER_OPERATION_STATUS_CHANNEL,
+  FREEZE_ITEM_STATUS_CHANNEL,
+  isRenderOperationStatus,
+  isFreezeItemStatus,
+} from '../shared/render-freeze-contract';
 import type {
   ProgramSettingsSnapshot,
   ProgramSettingsSaveResult,
   ProgramSettingsPanelId,
+  PlaybackPreferencePatch,
   CurrentAppSettingsSnapshot,
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
+import type {
+  EngineProbeRequest,
+  EngineProbeResult,
+} from '../shared/engine-runtime';
+import type {
+  CsoundIoQueryRequest,
+  CsoundIoQueryResult,
+} from '../shared/csound-runtime';
+import {
+  SETTINGS_CLOSE_REQUEST_CHANNEL,
+  SETTINGS_CLOSE_RESPONSE_CHANNEL,
+  SETTINGS_CONFIRM_CLOSE_CHANNEL,
+  type SettingsClosePromptResponse,
+  type SettingsCloseResolution,
+} from '../shared/settings-window';
 import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
@@ -110,7 +199,11 @@ import {
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
   UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
   UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL,
   UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
   UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
@@ -123,8 +216,10 @@ import {
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
@@ -161,7 +256,10 @@ import {
   type CutLibraryToClipboardRequest,
   type CutLibraryToClipboardResult,
   type LibraryInteractionClipboard,
+  type BsbCanvasClipboard,
   type ScoreTimelineSoundObjectRequest,
+  type TrackInstrumentClipboardRequest,
+  type BlueLiveSoundObjectClipboardRequest,
   type UserLibraryMutation,
   type OpenLibraryEditorRequest,
   type LibraryEditorPatchRequest,
@@ -180,6 +278,84 @@ import {
   type SearchLibrariesRequest,
   type SearchLibrariesResult,
 } from '../shared/unified-library';
+import {
+  CODE_REPOSITORY_CHANGED_CHANNEL,
+  CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL,
+  CODE_REPOSITORY_CREATE_GROUP_CHANNEL,
+  CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL,
+  CODE_REPOSITORY_DELETE_NODE_CHANNEL,
+  CODE_REPOSITORY_EXPORT_XML_CHANNEL,
+  CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL,
+  CODE_REPOSITORY_GET_STATUS_CHANNEL,
+  CODE_REPOSITORY_IMPORT_FILE_CHANNEL,
+  CODE_REPOSITORY_MOVE_NODE_CHANNEL,
+  CODE_REPOSITORY_RETRY_CHANNEL,
+  CODE_REPOSITORY_UPDATE_NODE_CHANNEL,
+  createCodeRepositoryError,
+  isCodeRepositoryChangedEvent,
+  isCodeRepositoryExportFileResult,
+  isCodeRepositoryImportResult,
+  isCodeRepositoryResult,
+  isCodeRepositorySnapshot,
+  isCodeRepositoryStatus,
+  type CodeRepositoryChangedEvent,
+  type CodeRepositoryCommitDraftRequest,
+  type CodeRepositoryCreateGroupRequest,
+  type CodeRepositoryCreateSnippetRequest,
+  type CodeRepositoryDeleteNodeRequest,
+  type CodeRepositoryExportFileResult,
+  type CodeRepositoryImportFileRequest,
+  type CodeRepositoryImportResult,
+  type CodeRepositoryMoveNodeRequest,
+  type CodeRepositoryResult,
+  type CodeRepositoryStatus,
+  type CodeRepositoryUpdateNodeRequest,
+} from '../shared/code-repository';
+
+function invalidCodeRepositoryResponse<T>(message: string): CodeRepositoryResult<T> {
+  return {
+    ok: false,
+    error: createCodeRepositoryError('storage-unavailable', message, true),
+  };
+}
+
+function invokeCodeRepository<T>(
+  channel: string,
+  isSuccessValue: (value: unknown) => value is T,
+  ...args: readonly unknown[]
+): Promise<CodeRepositoryResult<T>> {
+  return ipcRenderer.invoke(channel, ...args).then(
+    (value: unknown) =>
+      isCodeRepositoryResult(value, isSuccessValue)
+        ? value
+        : invalidCodeRepositoryResponse<T>('Invalid response from the Code Repository service.'),
+    () => invalidCodeRepositoryResponse<T>('Unable to reach the Code Repository service.'),
+  );
+}
+
+function invokeCodeRepositoryStatus(): Promise<CodeRepositoryStatus> {
+  return ipcRenderer.invoke(CODE_REPOSITORY_GET_STATUS_CHANNEL).then(
+    (value: unknown) =>
+      isCodeRepositoryStatus(value)
+        ? value
+        : {
+            available: false,
+            migrationStatus: 'failed',
+            diagnostic: {
+              code: 'storage-unavailable',
+              message: 'Invalid response from the Code Repository service.',
+            },
+          },
+    () => ({
+      available: false,
+      migrationStatus: 'failed',
+      diagnostic: {
+        code: 'storage-unavailable',
+        message: 'Unable to reach the Code Repository service.',
+      },
+    }),
+  );
+}
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // Unified Libraries
@@ -213,10 +389,20 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<LibraryResult<LibraryMutationPreview>>,
   cutLibraryToClipboard: (request: CutLibraryToClipboardRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, request) as Promise<LibraryResult<CutLibraryToClipboardResult>>,
+  setLibraryClipboard: (clipboard: LibraryInteractionClipboard | null) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
+  setBsbClipboard: (clipboard: BsbCanvasClipboard | null) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, clipboard) as Promise<boolean>,
   captureScoreSoundObjectClipboard: (request: ScoreTimelineSoundObjectRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+  captureTrackInstrumentClipboard: (request: TrackInstrumentClipboardRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+  captureBlueLiveSoundObjectClipboard: (request: BlueLiveSoundObjectClipboardRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<ProjectMutationReceipt>>,
+  showNativeConfirmation: (request: NativeConfirmationRequest) =>
+    ipcRenderer.invoke(NATIVE_CONFIRMATION_CHANNEL, request) as Promise<NativeConfirmationResult>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
   getLibraryEditorSession: (sessionId: string) =>
@@ -243,6 +429,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
   copyLibraryTransferToUser: (source: LibraryTransferSourceReference, parentId: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, { source, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  importLibraryInstrument: (parentId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, parentId) as Promise<LibraryResult<LibraryMutationReceipt> | null>,
+  exportLibraryInstrument: (key: LibraryItemKey) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, key) as Promise<LibraryResult<true> | null>,
   selectLibraryImportFiles: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
   selectLibraryImportDirectory: () =>
@@ -286,6 +476,62 @@ contextBridge.exposeInMainWorld('blueAPI', {
     return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler); };
   },
 
+  // Code Repository
+  getCodeRepositorySnapshot: () =>
+    invokeCodeRepository(CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL, isCodeRepositorySnapshot),
+  getCodeRepositoryStatus: () => invokeCodeRepositoryStatus(),
+  commitCodeRepositoryDraft: (request: CodeRepositoryCommitDraftRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL, isCodeRepositorySnapshot, request),
+  createCodeRepositoryGroup: (request: CodeRepositoryCreateGroupRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_CREATE_GROUP_CHANNEL, isCodeRepositorySnapshot, request),
+  createCodeRepositorySnippet: (request: CodeRepositoryCreateSnippetRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL, isCodeRepositorySnapshot, request),
+  moveCodeRepositoryNode: (request: CodeRepositoryMoveNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_MOVE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  updateCodeRepositoryNode: (request: CodeRepositoryUpdateNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_UPDATE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  deleteCodeRepositoryNode: (request: CodeRepositoryDeleteNodeRequest) =>
+    invokeCodeRepository(CODE_REPOSITORY_DELETE_NODE_CHANNEL, isCodeRepositorySnapshot, request),
+  importCodeRepositoryFile: (request: CodeRepositoryImportFileRequest) =>
+    ipcRenderer.invoke(CODE_REPOSITORY_IMPORT_FILE_CHANNEL, request).then(
+      (value: unknown) => {
+        if (value === null) return null;
+        return isCodeRepositoryResult(value, isCodeRepositoryImportResult)
+          ? value
+          : invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
+              'Invalid response from the Code Repository service.',
+            );
+      },
+      () => invalidCodeRepositoryResponse<CodeRepositoryImportResult>(
+        'Unable to reach the Code Repository service.',
+      ),
+    ),
+  exportCodeRepositoryXml: () =>
+    ipcRenderer.invoke(CODE_REPOSITORY_EXPORT_XML_CHANNEL).then(
+      (value: unknown) => {
+        if (value === null) return null;
+        return isCodeRepositoryResult(value, isCodeRepositoryExportFileResult)
+          ? value
+          : invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
+              'Invalid response from the Code Repository service.',
+            );
+      },
+      () => invalidCodeRepositoryResponse<CodeRepositoryExportFileResult>(
+        'Unable to reach the Code Repository service.',
+      ),
+    ),
+  retryCodeRepository: () =>
+    invokeCodeRepository(CODE_REPOSITORY_RETRY_CHANNEL, isCodeRepositoryStatus),
+  onCodeRepositoryChanged: (callback: (event: CodeRepositoryChangedEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, value: unknown) => {
+      if (isCodeRepositoryChangedEvent(value)) callback(value);
+    };
+    ipcRenderer.on(CODE_REPOSITORY_CHANGED_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(CODE_REPOSITORY_CHANGED_CHANNEL, handler);
+    };
+  },
+
   // File operations
   openFile: () => ipcRenderer.invoke('open-file'),
   openFilePath: (filePath: string) => ipcRenderer.invoke('open-file-path', filePath),
@@ -296,6 +542,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
   setRecentFiles: (files: string[]) => ipcRenderer.invoke('set-recent-files', files) as Promise<string[]>,
   saveFile: () => ipcRenderer.invoke('save-file'),
   saveFileAs: () => ipcRenderer.invoke('save-file-as'),
+  startMidiImport: () => ipcRenderer.invoke('start-midi-import') as Promise<MidiImportStartResult>,
+  commitMidiImport: (token: string, settings: MidiImportSettings[]) =>
+    ipcRenderer.invoke('commit-midi-import', token, settings) as Promise<MidiImportCommitResult>,
+  cancelMidiImport: (token: string) => ipcRenderer.invoke('cancel-midi-import', token) as Promise<void>,
 
   // Project document
   getProjectDocument: () =>
@@ -308,6 +558,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('open-effect-editor', request) as Promise<void>,
   openEffectInterface: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('open-effect-interface', request) as Promise<void>,
+  openTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('open-track-instrument-editor', request) as Promise<void>,
+  focusTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('focus-track-instrument-editor', request) as Promise<boolean>,
+  getTrackInstrumentEditorDocument: (request: TrackInstrumentEditorRequest) =>
+    ipcRenderer.invoke('get-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorSnapshot | null>,
+  updateTrackInstrumentEditorDocument: (request: TrackInstrumentEditorPatchRequest) =>
+    ipcRenderer.invoke('update-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorPatchResult>,
   getEffectEditorDocument: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('get-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
   updateEffectEditorDocument: (request: EffectEditorPatchRequest) =>
@@ -320,6 +578,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('read-authorized-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   getScoreObjectEditorDocument: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('get-score-object-editor-document', request) as Promise<ScoreObjectEditorDocumentSnapshot | null>,
+  selectScoreObjectAudioFile: (request?: { currentPath?: string }) =>
+    ipcRenderer.invoke('select-score-object-audio-file', request) as Promise<AudioFileSelectionResult>,
+  saveFrozenSoundObjectCopy: (request: { frozenWaveFileName: string }) =>
+    ipcRenderer.invoke('save-frozen-sound-object-copy', request) as Promise<FrozenSoundObjectSaveCopyResult>,
   getNamedChainNames: () =>
     ipcRenderer.invoke('get-named-chain-names') as Promise<string[]>,
   getNamedChain: (name: string) =>
@@ -330,10 +592,22 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('test-external-sound-object', request) as Promise<ScoreObjectTestResult>,
   testJavascriptSoundObject: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('test-javascript-sound-object', request) as Promise<ScoreObjectTestResult>,
+  testPythonInstrument: (request: { code: string; assignmentId?: string }) =>
+    ipcRenderer.invoke('test-python-instrument', request) as Promise<{ ok: boolean; output: string; error?: string }>,
+  openReplConsole: (request: ReplConsoleOpenRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_OPEN_CHANNEL, request) as Promise<ReplConsoleOpenResult>,
+  evaluateReplConsole: (request: ReplConsoleEvaluateRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_EVALUATE_CHANNEL, request) as Promise<ReplConsoleEvaluateResult>,
+  reinitializeReplConsole: (request: ReplConsoleReinitializeRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_REINITIALIZE_CHANNEL, request) as Promise<ReplConsoleReinitializeResult>,
+  closeReplConsole: (request: ReplConsoleCloseRequest) =>
+    ipcRenderer.invoke(REPL_CONSOLE_CLOSE_CHANNEL, request) as Promise<ReplConsoleCloseResult>,
   reinitializeClojureRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize') as Promise<{ ok: boolean; error?: string }>,
   reinitializeJythonRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize-jython') as Promise<{ ok: boolean; error?: string }>,
+  reinitializeJavaScriptRuntime: () =>
+    ipcRenderer.invoke(JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL) as Promise<ScriptRuntimeReinitializeResult>,
   getNestedPolyObjectSnapshot: (location: ScoreObjectLocationRef) =>
     ipcRenderer.invoke('get-nested-poly-object-snapshot', location) as Promise<PolyObjectLayerGroupSnapshot | null>,
   sendBsbRealtimeControlUpdate: (update: BsbRealtimeControlUpdate) =>
@@ -356,12 +630,38 @@ contextBridge.exposeInMainWorld('blueAPI', {
   restartPlayback: () => ipcRenderer.invoke('restart-playback') as Promise<boolean>,
   stopPlayback: () => ipcRenderer.invoke('stop-playback'),
   syncFollowPlaybackState: (enabled: boolean) => ipcRenderer.send('sync-follow-playback-state', enabled),
+  syncAuditionScoreObjectAvailability: (canAudition: boolean) =>
+    ipcRenderer.send('sync-audition-score-object-availability', canAudition),
+  auditionScoreObjects: (objectIds: string[]) =>
+    ipcRenderer.invoke('audition-score-objects', objectIds) as Promise<boolean>,
 
   // Project info
   getProjectInfo: () => ipcRenderer.invoke('get-project-info'),
 
+  // SoundFont Viewer
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  selectSoundFontFile: () =>
+    ipcRenderer.invoke(SOUND_FONT_FILE_SELECT_CHANNEL) as Promise<string | null>,
+  inspectSoundFont: (filePath: string) =>
+    ipcRenderer.invoke(SOUND_FONT_INSPECT_CHANNEL, filePath) as Promise<SoundFontInfo>,
+
+  // File Manager (SPEC 076)
+  getFileManagerRoots: () =>
+    ipcRenderer.invoke(FILE_MANAGER_GET_ROOTS_CHANNEL) as Promise<FileManagerRootSnapshot[]>,
+  listFileManagerDirectory: (request: { path: string }) =>
+    ipcRenderer.invoke(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, request) as Promise<FileManagerDirectoryResult>,
+  validateFileManagerDirectory: (request: { path: string }) =>
+    ipcRenderer.invoke(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, request) as Promise<FileManagerValidateDirectoryResult>,
+  commitAudioFileDrop: (request: CommitAudioFileDropRequest) =>
+    ipcRenderer.invoke(COMMIT_AUDIO_FILE_DROP_CHANNEL, request) as Promise<CommitAudioFileDropResult>,
+
+  // About
+  getAppMetadata: () => ipcRenderer.invoke(APP_METADATA_GET_CHANNEL) as Promise<AppMetadata>,
+  closeAboutWindow: () => ipcRenderer.invoke(ABOUT_WINDOW_CLOSE_CHANNEL) as Promise<boolean>,
+
   // CSD generation
   generateCsdToScreen: () => ipcRenderer.invoke('generate-csd-to-screen'),
+  generateRealtimeCsdToScreen: () => ipcRenderer.invoke('generate-realtime-csd-to-screen'),
   generateCsdToDisk: () => ipcRenderer.invoke('generate-csd-to-disk'),
 
   // UDO import/export
@@ -369,6 +669,23 @@ contextBridge.exposeInMainWorld('blueAPI', {
   importCsoundUdo: () => ipcRenderer.invoke('import-csound-udo'),
   exportBlueUdo: (xmlText: string) => ipcRenderer.invoke('export-blue-udo', xmlText),
   exportCsoundUdo: (codeText: string, udoName: string) => ipcRenderer.invoke('export-csound-udo', codeText, udoName),
+  importArrangementInstrument: () =>
+    ipcRenderer.invoke('import-arrangement-instrument') as Promise<string | null>,
+  exportArrangementInstrument: (assignmentId: string) =>
+    ipcRenderer.invoke('export-arrangement-instrument', assignmentId) as Promise<void>,
+  importPresetFile: () => ipcRenderer.invoke('import-preset-file') as Promise<string | null>,
+  exportPresetFile: (xmlText: string, presetName: string) =>
+    ipcRenderer.invoke('export-preset-file', xmlText, presetName) as Promise<void>,
+  exportScoreObject: (xmlText: string, objectName: string) =>
+    ipcRenderer.invoke('export-score-object', xmlText, objectName) as Promise<ScoreObjectExportResult>,
+  importScoreObject: () =>
+    ipcRenderer.invoke('import-score-object') as Promise<ScoreObjectImportResult | null>,
+
+  // Csound RC
+  readCsoundRC: () =>
+    ipcRenderer.invoke('read-csoundrc') as Promise<{ filePath: string; content: string }>,
+  writeCsoundRC: (text: string) =>
+    ipcRenderer.invoke('write-csoundrc', text) as Promise<{ success: boolean; filePath: string }>,
 
   // Event listeners
   onProjectLoaded: (callback: (info: ProjectLoadedPayload) => void) => {
@@ -437,6 +754,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on('generated-csd-error', handler);
     return () => { ipcRenderer.removeListener('generated-csd-error', handler); };
   },
+  onEngineRecoveryStatus: (callback: (status: EngineRecoveryStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, raw: unknown) => {
+      const decoded = decodeEngineRecoveryStatus(raw);
+      if (decoded) {
+        callback(decoded);
+      }
+    };
+    ipcRenderer.on(ENGINE_RECOVERY_STATUS_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(ENGINE_RECOVERY_STATUS_CHANNEL, handler); };
+  },
 
   // Blue Live
   toggleBlueLive: () => ipcRenderer.invoke('blue-live:toggle'),
@@ -445,6 +772,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
   sendBlueLiveAllNotesOff: () => ipcRenderer.invoke('blue-live:all-notes-off'),
   triggerBlueLiveNote: (request: BlueLiveNoteTriggerRequest) =>
     ipcRenderer.invoke('blue-live:trigger-note', request) as Promise<BlueLiveNoteTriggerResult>,
+  triggerBlueLiveObjects: (request: LegacyBlueLiveTriggerRequest) =>
+    ipcRenderer.invoke('blue-live:trigger-objects', request) as Promise<LegacyBlueLiveTriggerResult>,
   getBlueLiveStatus: () => ipcRenderer.invoke('blue-live:get-status'),
   onBlueLiveStatus: (callback: (snapshot: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => callback(snapshot);
@@ -454,6 +783,16 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Settings
   openSettingsWindow: () => ipcRenderer.invoke('settings:open'),
+  onSettingsCloseRequest: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on(SETTINGS_CLOSE_REQUEST_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(SETTINGS_CLOSE_REQUEST_CHANNEL, handler); };
+  },
+  confirmSettingsClose: () =>
+    ipcRenderer.invoke(SETTINGS_CONFIRM_CLOSE_CHANNEL) as Promise<SettingsClosePromptResponse>,
+  resolveSettingsClose: (resolution: SettingsCloseResolution) => {
+    ipcRenderer.send(SETTINGS_CLOSE_RESPONSE_CHANNEL, resolution);
+  },
   getProgramSettings: () =>
     ipcRenderer.invoke('program-settings:get') as Promise<ProgramSettingsSnapshot>,
   saveProgramSettings: (snapshot: ProgramSettingsSnapshot) =>
@@ -464,6 +803,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+  updatePlaybackPreferences: (patch: PlaybackPreferencePatch) =>
+    ipcRenderer.invoke('program-settings:update-playback-preferences', patch) as Promise<ProgramSettingsSaveResult>,
+  probeEngineRuntime: (request?: EngineProbeRequest) =>
+    ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
+  queryCsoundIo: (request?: CsoundIoQueryRequest) =>
+    ipcRenderer.invoke('engine-runtime:query-csound-io', request) as Promise<CsoundIoQueryResult>,
 
   // OSC Control
   getOscServerSnapshot: () =>
@@ -515,7 +860,6 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler); };
   },
-
   // Evaluate Code
   evaluateCode: (request: { editorKind: string; text: string; sourcePanelId: string }) =>
     ipcRenderer.invoke('engine:evaluate-code', request),
@@ -542,10 +886,19 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(RENDER_OPERATION_STATUS_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler); };
   },
+  onFreezeItemStatus: (callback: (item: FreezeItemStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, item: unknown) => {
+      if (isFreezeItemStatus(item)) callback(item);
+    };
+    ipcRenderer.on(FREEZE_ITEM_STATUS_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(FREEZE_ITEM_STATUS_CHANNEL, handler); };
+  },
 
   // Audio File Player
   openAudioFile: () =>
     ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
+  authorizeAudioFile: (filePath: string) =>
+    ipcRenderer.invoke('authorize-audio-file', filePath) as Promise<boolean>,
   getAudioFileStat: (filePath: string) =>
     ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{ size: number; mtime: number } | null>,
 
@@ -572,4 +925,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler); };
   },
+
+  // BlueX7 Yamaha SysEx Import (SPEC 081)
+  selectBlueX7SysexFile: async () =>
+    validateBlueX7SysexReadResult(await ipcRenderer.invoke('blue-x7:import-sysex')),
 });

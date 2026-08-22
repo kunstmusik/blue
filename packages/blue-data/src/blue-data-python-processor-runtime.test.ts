@@ -4,6 +4,11 @@ import type { JythonSerializedNote, JavaRuntimeClientContract } from './java-run
 import { PythonProcessor } from './note-processors/python-processor';
 import { GenericScore } from './sound-objects/generic-score';
 import { SoundLayer } from './sound-objects/sound-layer';
+import { PythonObject } from './sound-objects/python-object';
+import { PolyObject } from './sound-objects/poly-object';
+import { Instance } from './sound-objects/instance';
+import { LiveObject } from './live/live-object';
+import { LiveObjectBins } from './live/live-object-bins';
 
 function createRuntimeClient(): JavaRuntimeClientContract {
   return {
@@ -47,5 +52,54 @@ describe('BlueData PythonProcessor runtime integration', () => {
 
     expect(csd).toContain('880');
     expect(csd).not.toContain('\t440');
+  });
+
+  it('applies PythonProcessor on a SoundObject note processor chain', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0];
+    const layer = root[0] as SoundLayer;
+    const score = new GenericScore();
+    score.setScoreText('i1 0 1 440');
+
+    const processor = new PythonProcessor();
+    processor.setCode("for note in noteList:\n    note.setPField('880', 4)");
+    score.getNoteProcessorChain().addProcessor(processor);
+    layer.push(score);
+
+    const csd = await data.toCSDAsync(undefined, createRuntimeClient());
+
+    expect(csd).toContain('880');
+    expect(csd).not.toContain('\t440');
+  });
+
+  it('processes nested and library-instance Live Space on-load objects', async () => {
+    const data = new BlueData();
+    const runtime = createRuntimeClient();
+    const nestedPython = new PythonObject();
+    nestedPython.setOnLoadProcessable(true);
+    nestedPython.setPythonCode('nested_state = 1');
+    const libraryPython = new PythonObject();
+    libraryPython.setOnLoadProcessable(true);
+    libraryPython.setPythonCode('library_state = 1');
+    data.getSoundObjectLibrary().addObject(libraryPython);
+
+    const poly = new PolyObject();
+    poly.newLayerAt(0);
+    (poly[0] as SoundLayer).push(nestedPython);
+    const instance = new Instance();
+    instance.setSoundObject(libraryPython);
+
+    const bins = new LiveObjectBins(1, 2);
+    const nestedLiveObject = new LiveObject();
+    nestedLiveObject.setSoundObject(poly);
+    bins.setLiveObject(0, 0, nestedLiveObject);
+    const instanceLiveObject = new LiveObject();
+    instanceLiveObject.setSoundObject(instance);
+    bins.setLiveObject(0, 1, instanceLiveObject);
+    data.getLiveData().setLiveObjectBins(bins);
+
+    await data.processOnLoadAsync(undefined, runtime);
+
+    expect(runtime.evaluateJythonScoreObject).toHaveBeenCalledTimes(2);
   });
 });

@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
+import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
 import {
   getMidiNoteFromComputerKey,
 } from './virtual-keyboard/keyboard-mapping';
@@ -27,6 +28,10 @@ function clampMidiNote(note: number): number {
 export default function VirtualKeyboardPanel(): ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const running = useBlueLiveStore((state) => state.running);
+  // Spec 067: shared routing mode + focus authority for hardware and Virtual Keyboard.
+  const routingMode = useMidiRoutingStore((state) => state.mode);
+  const focusedTarget = useMidiRoutingStore((state) => state.focusedTarget);
+  const setRoutingMode = useMidiRoutingStore((state) => state.setMode);
   const {
     channel,
     octave,
@@ -181,20 +186,52 @@ export default function VirtualKeyboardPanel(): ReactElement {
 
   const displayChannel = channel + 1;
 
+  // Spec 067: focus target status text, never conveyed by color alone. Rejected
+  // notes add no routing error message here.
+  const focusedTargetLabel = focusedTarget
+    ? focusedTarget.kind === 'track'
+      ? `Track: ${focusedTarget.displayName}`
+      : `Orchestra: ${focusedTarget.assignmentId} — ${focusedTarget.displayName}`
+    : 'No focused instrument';
+
   return (
     <div className="flex h-full flex-col bg-blue-bg text-app-text">
-      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-body">
-        <label className="flex items-center gap-1.5 text-app-text">
-          <span className="text-body text-blue-muted">Channel</span>
-          <input
-            type="number"
-            min={1}
-            max={16}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body text-app-text outline-none focus:border-blue-accent"
-            value={displayChannel}
-            onChange={(e) => setChannel(Number.parseInt(e.target.value, 10) - 1)}
-          />
+      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-role-body">
+        <label className="flex items-center gap-1.5 text-app-text" title="Routing mode applies to hardware MIDI and the Virtual Keyboard">
+          <span className="text-role-body text-blue-muted">Routing</span>
+          <select
+            className="rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-role-body text-app-text outline-none focus:border-blue-accent"
+            value={routingMode}
+            onChange={(e) => setRoutingMode(e.target.value === 'channel' ? 'channel' : 'focus')}
+            aria-label="MIDI routing mode"
+          >
+            <option value="focus">Focused Target</option>
+            <option value="channel">Direct Channel</option>
+          </select>
         </label>
+
+        {routingMode === 'focus' ? (
+          <span
+            className="text-role-body text-blue-muted"
+            role="status"
+            aria-live="polite"
+            aria-label={`Focused target: ${focusedTargetLabel}`}
+          >
+            {focusedTargetLabel}
+          </span>
+        ) : (
+          <label className="flex items-center gap-1.5 text-app-text">
+            <span className="text-role-body text-blue-muted">Channel</span>
+            <input
+              type="number"
+              min={1}
+              max={16}
+              className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body text-app-text outline-none focus:border-blue-accent"
+              value={displayChannel}
+              onChange={(e) => setChannel(Number.parseInt(e.target.value, 10) - 1)}
+            />
+          </label>
+        )}
 
         <label className="flex items-center gap-1.5 text-gray-100">
           <input
@@ -203,14 +240,14 @@ export default function VirtualKeyboardPanel(): ReactElement {
             onChange={(e) => setVelocityOverride(e.target.checked)}
             title="Enable Velocity Override"
           />
-          <span className="text-body text-blue-muted">Velocity</span>
+          <span className="text-role-body text-blue-muted">Velocity</span>
           <input
             type="number"
             min={0}
             max={127}
             disabled={!velocityOverride}
             className={[
-              'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body outline-none focus:border-blue-accent',
+              'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body outline-none focus:border-blue-accent',
               velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50',
             ].join(' ')}
             value={velocity}
@@ -219,12 +256,12 @@ export default function VirtualKeyboardPanel(): ReactElement {
         </label>
 
         <label className="flex items-center gap-1.5 text-gray-100">
-          <span className="text-body text-blue-muted">Octave</span>
+          <span className="text-role-body text-blue-muted">Octave</span>
           <input
             type="number"
             min={0}
             max={7}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body text-gray-100 outline-none focus:border-blue-accent"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-role-body text-gray-100 outline-none focus:border-blue-accent"
             value={octave}
             onChange={(e) => setOctave(Number.parseInt(e.target.value, 10))}
           />
@@ -232,7 +269,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
 
         <button
           type="button"
-          className="ml-auto rounded border border-blue-border bg-blue-surface px-3 py-1 text-body text-gray-100 transition hover:border-blue-accent disabled:opacity-50"
+          className="ml-auto rounded border border-blue-border bg-blue-surface px-3 py-1 text-role-body text-gray-100 transition hover:border-blue-accent disabled:opacity-50"
           onClick={() => void releaseAllPressedNotes()}
           disabled={!loaded}
         >

@@ -37,6 +37,7 @@ export default function ToolbarBlueLive(): React.ReactElement {
   const status = useBlueLiveStore((s) => s.status);
   const running = useBlueLiveStore((s) => s.running);
   const loaded = useProjectStore((s) => s.loaded);
+  const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
 
   const isStarting = status === 'starting';
   const isStopping = status === 'stopping';
@@ -44,13 +45,28 @@ export default function ToolbarBlueLive(): React.ReactElement {
   const isBusy = isStarting || isStopping;
   const canToggle = loaded && !isBusy;
 
-  const handleToggle = () => {
+  // Start and Recompile await the pending-patch acknowledgement barrier so
+  // they use the latest acknowledged canonical state. A failed flush rejects
+  // and the live command is not attempted.
+  const handleToggle = async () => {
     if (!canToggle) return;
+    if (!isActive) {
+      try {
+        await flushPendingPatches();
+      } catch {
+        return;
+      }
+    }
     window.blueAPI?.toggleBlueLive();
   };
 
-  const handleRecompile = () => {
+  const handleRecompile = async () => {
     if (!loaded || isBusy) return;
+    try {
+      await flushPendingPatches();
+    } catch {
+      return;
+    }
     window.blueAPI?.recompileBlueLive();
   };
 

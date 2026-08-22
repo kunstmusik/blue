@@ -53,7 +53,15 @@ function getCompletionResult(doc: string, explicit = true): CompletionResult | n
         objectType: 'BSBKnob',
       },
     ],
-    projectOpcodeNames: ['ProjectUDO'],
+    projectUdos: [
+      {
+        name: 'ProjectUDO',
+        style: 'CLASSIC',
+        outTypes: 'a',
+        inTypes: 'a',
+        inputArguments: '',
+      },
+    ],
   });
   const state = EditorState.create({ doc });
   const context = new CompletionContext(state, state.doc.length, explicit);
@@ -135,23 +143,66 @@ describe('Csound editor parity completions', () => {
     });
   });
 
-  it('adds document and project UDO names without duplicating opcode labels', () => {
+  it('adds document and project UDOs with signature and source metadata', () => {
     const result = getCompletionResult('opcode LocalUDO, a, a\nendop\nLocal');
     const projectResult = getCompletionResult('Proj');
 
-    expect(result?.options).toContainEqual({
+    const localUdo = result?.options.find((completion) => completion.label === 'LocalUDO');
+    expect(localUdo).toMatchObject({
       label: 'LocalUDO',
       type: 'function',
-      detail: 'UDO',
-      boost: 22,
+      detail: 'document UDO',
+      apply: 'LocalUDO',
+      boost: 21,
     });
+    expect(localUdo?.displayLabel).toBe('LocalUDO (a) → a');
+    // A same-name native opcode remains distinguishable from a document UDO.
     expect(result?.options.filter((completion) => completion.label === 'LocalUDO')).toHaveLength(1);
-    expect(projectResult?.options).toContainEqual({
+
+    const projectUdo = projectResult?.options.find((completion) => completion.label === 'ProjectUDO');
+    expect(projectUdo).toMatchObject({
       label: 'ProjectUDO',
       type: 'function',
       detail: 'project UDO',
-      boost: 21,
+      apply: 'ProjectUDO',
+      boost: 22,
     });
+    expect(projectUdo?.displayLabel).toBe('ProjectUDO (a) → a');
+  });
+
+  it('preserves existing completion categories when UDO context is supplied (US5)', () => {
+    // Native opcode, Blue opcode, Blue variable, BSB replacement key, and
+    // document-local variable completions all remain available alongside UDOs.
+    const opcodeResult = getCompletionResult('oscil');
+    expect(opcodeResult?.options.some((c) => c.label === 'oscil' && c.detail === 'opcode')).toBe(true);
+
+    const blueResult = getCompletionResult('blueMixer');
+    expect(blueResult?.options.some((c) => c.label === 'blueMixerOut')).toBe(true);
+
+    const variableResult = getCompletionResult('asig = oscil\nas');
+    expect(variableResult?.options.some((c) => c.label === 'asig' && c.detail === 'variable')).toBe(true);
+
+    const bsbResult = getCompletionResult('<fr');
+    expect(bsbResult?.options.some((c) => c.label === '<freq>')).toBe(true);
+
+    const blueVarResult = getCompletionResult('<RENDER');
+    expect(blueVarResult?.options.some((c) => c.label === '<RENDER_START>')).toBe(true);
+  });
+
+  it('does not insert UDO completions when no UDO context is supplied (US5 gating)', () => {
+    // A source built with no UDO options offers only native/Blue/document rows;
+    // it never invents UDO candidates. This locks the exclusion of contexts
+    // (Global Sco, JavaScript source, text/comments) that pass no UDO scope.
+    const source = createJavaBlueCsoundCompletionSource({});
+    const state = EditorState.create({ doc: 'oscil' });
+    const context = new CompletionContext(state, state.doc.length, true);
+    const result = source(context);
+    if (result instanceof Promise) {
+      throw new Error('Java Blue completion source should be synchronous');
+    }
+    expect(result?.options.some((c) => c.detail === 'context UDO')).toBe(false);
+    expect(result?.options.some((c) => c.detail === 'project UDO')).toBe(false);
+    expect(result?.options.some((c) => c.label === 'oscil' && c.detail === 'opcode')).toBe(true);
   });
 });
 
@@ -195,16 +246,19 @@ describe('Csound editor parity menu and clipboard helpers', () => {
     ]);
 
     expect(menuItems[1]).toMatchObject({
-      kind: 'disabled',
+      kind: 'submenu',
       label: 'Opcodes',
     });
+    // Custom is disabled when no repository root is provided; Add to Code
+    // Repository is now a command item (disabled without a selection).
     expect(menuItems[4]).toMatchObject({
       kind: 'disabled',
       label: 'Custom',
     });
     expect(menuItems[5]).toMatchObject({
-      kind: 'disabled',
+      kind: 'command',
       label: 'Add to Code Repository',
+      command: 'add-to-code-repository',
     });
   });
 

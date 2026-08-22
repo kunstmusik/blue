@@ -6,6 +6,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
+import { usePlaybackStore } from '../stores/playback-store';
+import { useMidiRoutingStore } from '../stores/midi-routing-store';
+import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -67,7 +70,7 @@ function seedProjectWithAudioAndPolyHeaders(): void {
   snapshot.score.layerGroups = [
     {
       groupId: 'audio-group',
-      groupType: 'audio',
+      groupType: 'track',
       name: 'Audio Layer Group',
       layerCount: 1,
       isOpenableContainer: false,
@@ -81,7 +84,7 @@ function seedProjectWithAudioAndPolyHeaders(): void {
           items: [],
           automation: {
             layerId: 'audio-layer-0',
-            layerKind: 'audio',
+            layerKind: 'track',
             parameterIds: [],
             parameters: [],
             targetGroups: [],
@@ -148,6 +151,7 @@ function renderPanel(): { container: HTMLDivElement; root: Root } {
 
 beforeEach(() => {
   useProjectStore.getState().clearProject();
+  useLayerSelectionStore.getState().clear();
   mockResetSession.mockClear();
   mockScorePathState.session = {
     activeGroupId: null,
@@ -163,10 +167,79 @@ beforeEach(() => {
 afterEach(() => {
   __testClearPendingPatches();
   useProjectStore.getState().clearProject();
+  useLayerSelectionStore.getState().clear();
+  usePlaybackStore.getState().reset();
   delete (window as any).blueAPI;
 });
 
 describe('ScorePanel session resets', () => {
+  it('stops an active audition on a score-timeline press', () => {
+    seedLoadedProject();
+    const stopAuditioning = vi.fn().mockResolvedValue(undefined);
+    usePlaybackStore.setState({
+      isAuditioning: true,
+      stopAuditioning,
+    } as Partial<ReturnType<typeof usePlaybackStore.getState>>);
+
+    const { container, root } = renderPanel();
+    const timeline = container.querySelector('.score-timeline-scroll') as HTMLDivElement;
+
+    act(() => {
+      timeline.dispatchEvent(new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        clientX: 20,
+        clientY: 20,
+      }));
+    });
+
+    expect(stopAuditioning).toHaveBeenCalledOnce();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps header, timeline, and overlay horizontal offsets synchronized', () => {
+    seedLoadedProject();
+
+    const { container, root } = renderPanel();
+    const header = container.querySelector('[data-score-timeline-header]') as HTMLDivElement;
+    const timeline = container.querySelector('.score-timeline-scroll') as HTMLDivElement;
+    const overlay = container.querySelector('[data-score-overlay-content]') as HTMLDivElement;
+
+    act(() => {
+      header.scrollLeft = 320;
+      header.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(timeline.scrollLeft).toBe(320);
+    expect(overlay.style.transform).toBe('translateX(-320px)');
+
+    act(() => {
+      timeline.scrollLeft = 120;
+      timeline.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(header.scrollLeft).toBe(120);
+    expect(overlay.style.transform).toBe('translateX(-120px)');
+
+    act(() => {
+      useProjectStore.getState().setScrollToBeatTarget(10);
+    });
+
+    expect(timeline.scrollLeft).toBeGreaterThan(0);
+    expect(header.scrollLeft).toBe(timeline.scrollLeft);
+    expect(overlay.style.transform).toBe(`translateX(-${timeline.scrollLeft}px)`);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('keeps the navigation session when the score time state changes', async () => {
     seedLoadedProject();
 
@@ -270,20 +343,104 @@ describe('ScorePanel session resets', () => {
     container.remove();
   });
 
-  it('does not render a note processor button for audio layer headers', () => {
+  it('renders the Track and SoundObject note processor buttons', () => {
     seedProjectWithAudioAndPolyHeaders();
 
     const { container, root } = renderPanel();
 
     const noteProcessorButtons = container.querySelectorAll('button[title="Note Processors"]');
     const automationButtons = container.querySelectorAll('button[title="Automation"]');
+    const trackInstrumentControl = container.querySelector('[data-track-instrument-control="audio-layer-0"]');
 
-    expect(noteProcessorButtons).toHaveLength(1);
+    expect(noteProcessorButtons).toHaveLength(2);
     expect(automationButtons).toHaveLength(2);
+    expect(trackInstrumentControl?.parentElement?.firstElementChild).toBe(trackInstrumentControl);
 
     act(() => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('marks the focused Track header independently from editor state', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    useMidiRoutingStore.getState().focusTrack({
+      projectSessionId: 1,
+      rootGroupId: 'audio-group',
+      trackId: 'audio-layer-0',
+      displayName: 'Audio 1',
+    });
+
+    const { container, root } = renderPanel();
+    const focusedHeader = container.querySelector('[data-midi-focused="true"]');
+
+    expect(focusedHeader).toBeTruthy();
+    expect(focusedHeader?.textContent).toContain('Audio 1');
+    expect(focusedHeader?.className).toContain('ring-app-accent');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('focuses a Track from its header without letting row controls steal focus', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    const { container, root } = renderPanel();
+    const instrumentControl = container.querySelector(
+      '[data-track-instrument-control="audio-layer-0"]',
+    ) as HTMLElement;
+    const trackHeader = instrumentControl.parentElement as HTMLElement;
+
+    act(() => {
+      trackHeader.dispatchEvent(new MouseEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+      }));
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toMatchObject({
+      kind: 'track',
+      projectSessionId: 1,
+      rootGroupId: 'audio-group',
+      trackId: 'audio-layer-0',
+      displayName: 'Audio 1',
+    });
+
+    act(() => {
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
+      const muteButton = trackHeader.querySelector('button[title="Mute"]') as HTMLButtonElement;
+      muteButton.dispatchEvent(new MouseEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+      }));
+    });
+    expect(useMidiRoutingStore.getState().focusedTarget).toBeNull();
+
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('does not trigger project document patch or dirty state on layer selection (US4)', () => {
+    seedProjectWithAudioAndPolyHeaders();
+    const { container, root } = renderPanel();
+    const commitPatchesSpy = (window as any).blueAPI.commitProjectDocumentPatches;
+    const isDirtyBefore = useProjectStore.getState().isDirty;
+
+    const audioHeader = container.querySelector('[data-layer-id="audio-layer-0"]') as HTMLElement;
+    const polyHeader = container.querySelector('[data-layer-id="poly-layer-0"]') as HTMLElement;
+
+    act(() => {
+      audioHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    });
+    act(() => {
+      polyHeader.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, shiftKey: true }));
+    });
+
+    expect(useLayerSelectionStore.getState().selectedKeys.size).toBe(2);
+    expect(commitPatchesSpy).not.toHaveBeenCalled();
+    expect(useProjectStore.getState().isDirty).toBe(isDirtyBefore);
+
+    act(() => root.unmount());
     container.remove();
   });
 });

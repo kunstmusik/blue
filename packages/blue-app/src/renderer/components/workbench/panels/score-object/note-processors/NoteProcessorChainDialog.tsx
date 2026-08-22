@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import type { NoteProcessorChainSnapshot } from '../../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../../stores/project-store';
 import NoteProcessorChainEditor from './NoteProcessorChainEditor';
@@ -58,12 +59,13 @@ export default function NoteProcessorChainDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-blue-border">
-          <h3 className="text-sm font-medium text-gray-200">{title}</h3>
+          <h3 className="text-role-title-3 font-semibold text-gray-200">{title}</h3>
           <button
-            className="text-gray-400 hover:text-gray-200 text-lg leading-none"
+            className="text-gray-400 hover:text-gray-200"
             onClick={onClose}
+            aria-label="Close"
           >
-            &times;
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="p-4 overflow-y-auto flex-1">
@@ -77,13 +79,13 @@ export default function NoteProcessorChainDialog({
         </div>
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-blue-border">
           <button
-            className="px-3 py-1.5 text-body rounded border border-blue-border text-gray-300 hover:bg-blue-border/40"
+            className="px-3 py-1.5 text-role-body rounded border border-blue-border text-gray-300 hover:bg-blue-border/40"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="px-3 py-1.5 text-body rounded bg-blue-accent text-white hover:bg-blue-accent/80"
+            className="px-3 py-1.5 text-role-body rounded bg-blue-accent text-white hover:bg-blue-accent/80"
             onClick={handleSave}
           >
             Save

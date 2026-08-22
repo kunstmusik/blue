@@ -1,0 +1,154 @@
+<instrument type='blue.orchestra.BlueX7'>
+  <name>untitled</name>
+  <comment></comment>
+  <algorithmCommonData>
+    <keyTranspose>24</keyTranspose>
+    <algorithm>19</algorithm>
+    <feedback>6</feedback>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+  </algorithmCommonData>
+  <lfoData>
+    <speed>35</speed>
+    <delay>0</delay>
+    <PMD>0</PMD>
+    <AMD>0</AMD>
+    <wave>0</wave>
+    <sync>0</sync>
+  </lfoData>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>0</freqCoarse>
+    <freqFine>1</freqFine>
+    <detune>-3</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>3</curveRight>
+    <depthLeft>85</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>4</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>2</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='81' y='99'/>
+    <envelopePoint x='25' y='82'/>
+    <envelopePoint x='20' y='0'/>
+    <envelopePoint x='48' y='0'/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>1</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>13</depthRight>
+    <keyboardRateScaling>5</keyboardRateScaling>
+    <outputLevel>87</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='99' y='99'/>
+    <envelopePoint x='0' y='75'/>
+    <envelopePoint x='25' y='0'/>
+    <envelopePoint x='0' y='0'/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>3</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>-1</detune>
+    <breakpoint>47</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>3</curveRight>
+    <depthLeft>28</depthLeft>
+    <depthRight>74</depthRight>
+    <keyboardRateScaling>5</keyboardRateScaling>
+    <outputLevel>57</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='81' y='99'/>
+    <envelopePoint x='25' y='99'/>
+    <envelopePoint x='25' y='99'/>
+    <envelopePoint x='14' y='0'/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>1</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>5</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>2</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='81' y='99'/>
+    <envelopePoint x='23' y='78'/>
+    <envelopePoint x='22' y='0'/>
+    <envelopePoint x='45' y='0'/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>58</freqFine>
+    <detune>-1</detune>
+    <breakpoint>48</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>65</depthRight>
+    <keyboardRateScaling>5</keyboardRateScaling>
+    <outputLevel>93</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='81' y='99'/>
+    <envelopePoint x='58' y='14'/>
+    <envelopePoint x='36' y='0'/>
+    <envelopePoint x='39' y='0'/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>-1</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>10</depthRight>
+    <keyboardRateScaling>5</keyboardRateScaling>
+    <outputLevel>82</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x='99' y='99'/>
+    <envelopePoint x='67' y='50'/>
+    <envelopePoint x='95' y='50'/>
+    <envelopePoint x='60' y='50'/>
+  </operator>
+  <envelopePoint x='50' y='50'/>
+  <envelopePoint x='50' y='50'/>
+  <envelopePoint x='50' y='50'/>
+  <envelopePoint x='50' y='50'/>
+  <csoundPostCode>blueMixerOut aout, aout</csoundPostCode>
+</instrument>

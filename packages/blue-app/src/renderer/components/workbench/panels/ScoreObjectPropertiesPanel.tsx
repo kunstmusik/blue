@@ -12,7 +12,7 @@ import ScoreObjectPropertiesForm from './score-object/ScoreObjectPropertiesForm'
 function EmptyState({ message }: { message: string }): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-4 text-center text-blue-muted">
-      <div className="text-sm">{message}</div>
+      <div className="text-role-body">{message}</div>
     </div>
   );
 }
@@ -78,6 +78,9 @@ function sameTarget(
   if (!a || !b) return false;
   if (a.ownerKind !== b.ownerKind) return false;
   if (a.displayContext !== b.displayContext) return false;
+  if (a.blueLive || b.blueLive) {
+    return a.blueLive?.liveObjectId === b.blueLive?.liveObjectId;
+  }
   if (sameLocation(a.location, b.location)) return true;
   if (sameLocation(a.sourceInstanceLocation, b.sourceInstanceLocation)) return true;
   if (a.library && b.library) {

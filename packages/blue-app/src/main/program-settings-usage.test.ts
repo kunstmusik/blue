@@ -3,7 +3,7 @@ import { BlueData } from '@blue/data';
 import {
   buildUsageMatrix,
   buildRealtimeEngineOptions,
-  MISSING_FEATURES,
+  FEATURE_PARITY_NOTES,
 } from './program-settings-usage';
 import { createDefaultProgramSettings, type ProgramSettingsSnapshot } from '../shared/program-settings';
 
@@ -31,11 +31,11 @@ describe('program-settings-usage matrix', () => {
     const keys = new Set(matrix.map((e) => e.settingKey));
     expect(keys.has('general.workDirectory')).toBe(true);
     expect(keys.has('general.newUserDefaultsEnabled')).toBe(true);
-    expect(keys.has('general.drawAlphaBackgroundOnMarquee')).toBe(true);
     expect(keys.has('general.messageColorsEnabled')).toBe(true);
     expect(keys.has('general.csoundErrorWarningEnabled')).toBe(true);
     expect(keys.has('general.directoryTempFileLimit')).toBe(true);
     expect(keys.has('projectDefaults.defaultAuthor')).toBe(true);
+    expect(keys.has('projectDefaults.defaultLayerGroupType')).toBe(true);
     expect(keys.has('playback.playbackFps')).toBe(true);
     expect(keys.has('utility.csoundExecutable')).toBe(true);
     expect(keys.has('realtimeRender.csoundExecutable')).toBe(true);
@@ -44,13 +44,18 @@ describe('program-settings-usage matrix', () => {
     expect(keys.has('diskRender.externalOpenCommand')).toBe(true);
   });
 
-  it('has missing feature dependencies', () => {
-    expect(MISSING_FEATURES.length).toBeGreaterThan(0);
-    const ids = MISSING_FEATURES.map((f) => f.id);
+  it('has feature parity notes', () => {
+    expect(FEATURE_PARITY_NOTES.length).toBeGreaterThan(0);
+    const ids = FEATURE_PARITY_NOTES.map((f) => f.id);
     expect(ids).toContain('disk-render-execution');
     expect(ids).toContain('utility-freeze-unfreeze');
     expect(ids).toContain('soundfont-utility');
+    expect(ids).toContain('csound-error-warning');
+    expect(ids).not.toContain('alpha-marquee-csound-error-warning');
     expect(ids).not.toContain('udo-effect-creation-runtime');
+
+    const soundfont = FEATURE_PARITY_NOTES.find((feature) => feature.id === 'soundfont-utility');
+    expect(soundfont?.currentAppStatus).toContain('Implemented');
   });
 
   it('marks defaultUdoStyle as used by active creation workflows', () => {
@@ -62,8 +67,36 @@ describe('program-settings-usage matrix', () => {
     expect(entry!.consumerPath).toContain('UdoWorkspacePanel');
   });
 
+  it('marks new-user defaults as consumed by the Code Repository workflow', () => {
+    const matrix = buildUsageMatrix();
+    const entry = matrix.find((item) => item.settingKey === 'general.newUserDefaultsEnabled');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('CodeRepositoryEditorModal'),
+    });
+  });
+
+  it('marks work directory as consumed by file chooser workflows', () => {
+    const entry = buildUsageMatrix().find((item) => item.settingKey === 'general.workDirectory');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('file chooser'),
+    });
+  });
+
+  it('marks Csound error warnings as consumed by terminal playback errors', () => {
+    const entry = buildUsageMatrix().find((item) => item.settingKey === 'general.csoundErrorWarningEnabled');
+
+    expect(entry).toMatchObject({
+      currentStatus: 'used-by-workflow',
+      consumerPath: expect.stringContaining('EngineBridge'),
+    });
+  });
+
   it('keeps used realtime driver settings out of the device discovery dependency', () => {
-    const feature = MISSING_FEATURES.find(
+    const feature = FEATURE_PARITY_NOTES.find(
       (entry) => entry.id === 'device-discovery-render-method',
     );
 
@@ -85,8 +118,8 @@ describe('program-settings-usage matrix', () => {
     }
   });
 
-  it('blocked entries reference valid missing features', () => {
-    const featureIds = new Set(MISSING_FEATURES.map((f) => f.id));
+  it('blocked entries reference valid feature parity notes', () => {
+    const featureIds = new Set(FEATURE_PARITY_NOTES.map((f) => f.id));
     const matrix = buildUsageMatrix();
     const blocked = matrix.filter((e) => e.currentStatus === 'blocked-by-missing-feature');
     for (const entry of blocked) {

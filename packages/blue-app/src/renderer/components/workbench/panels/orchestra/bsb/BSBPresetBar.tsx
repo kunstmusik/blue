@@ -1,15 +1,23 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
   BsbInterfacePatch,
   PresetGroupSnapshot,
 } from '../../../../../../shared/project-editor';
+import PresetsManagerDialog from './PresetsManagerDialog';
+import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
 
 interface BSBPresetBarProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
   onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
+}
+
+interface PromptState {
+  kind: 'preset' | 'folder';
+  title: string;
+  label: string;
 }
 
 export default function BSBPresetBar({
@@ -18,6 +26,9 @@ export default function BSBPresetBar({
 }: BSBPresetBarProps): React.ReactElement {
   const presetGroup = instrument.presetGroup;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [promptState, setPromptState] = useState<PromptState | null>(null);
+  const [promptValue, setPromptValue] = useState('');
 
   const handleUpdatePreset = useCallback(() => {
     if (!presetGroup?.currentPresetUniqueId) return;
@@ -25,23 +36,29 @@ export default function BSBPresetBar({
   }, [presetGroup, onBsbInterfacePatch]);
 
   const handleAddPreset = useCallback(() => {
-    const presetName = window.prompt('Enter Preset Name');
-    if (!presetName || presetName.trim().length === 0) return;
-    onBsbInterfacePatch({ type: 'addPreset', presetName: presetName.trim() });
-  }, [onBsbInterfacePatch]);
+    setPromptState({ kind: 'preset', title: 'Add Preset', label: 'Preset Name' });
+    setPromptValue('');
+    setMenuOpen(false);
+  }, []);
 
   const handleAddFolder = useCallback(() => {
-    const folderName = window.prompt('Enter Folder Name');
-    if (!folderName || folderName.trim().length === 0) return;
-    onBsbInterfacePatch({ type: 'addPresetGroup', groupName: folderName.trim() });
-  }, [onBsbInterfacePatch]);
+    setPromptState({ kind: 'folder', title: 'Add Folder', label: 'Folder Name' });
+    setPromptValue('');
+    setMenuOpen(false);
+  }, []);
 
   const handleSynchronizePresets = useCallback(() => {
     onBsbInterfacePatch({ type: 'synchronizePresets' });
   }, [onBsbInterfacePatch]);
 
   const handleManagePresets = useCallback(() => {
-    alert('Manage Presets - opens dialog for full preset management (to be implemented)');
+    if (!presetGroup) return;
+    setMenuOpen(false);
+    setManagerOpen(true);
+  }, [presetGroup]);
+
+  const handleCloseManager = useCallback(() => {
+    setManagerOpen(false);
   }, []);
 
   const getCurrentPresetPath = useCallback((): string => {
@@ -82,9 +99,9 @@ export default function BSBPresetBar({
         <>
           {group.subGroups.map((subGroup) => (
             <DropdownMenu.Sub key={subGroup.name}>
-              <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20">
+              <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20">
                 <span>{subGroup.name}</span>
-                <ChevronDown size={12} className="ml-2" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
               </DropdownMenu.SubTrigger>
               <DropdownMenu.SubContent className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
                 {renderPresetMenu(subGroup, depth + 1)}
@@ -95,7 +112,7 @@ export default function BSBPresetBar({
           {group.presets.map((preset) => (
             <DropdownMenu.Item
               key={preset.uniqueId}
-              className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+              className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
               onClick={() => {
                 onBsbInterfacePatch({ type: 'applyPreset', presetUniqueId: preset.uniqueId });
                 setMenuOpen(false);
@@ -112,26 +129,26 @@ export default function BSBPresetBar({
           {depth === 0 && (
             <>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleAddFolder}
               >
                 Add Folder
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleAddPreset}
               >
                 Add Preset
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="my-1 h-px bg-app-border" />
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleSynchronizePresets}
               >
                 Synchronize Presets
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleManagePresets}
               >
                 Manage Presets
@@ -141,7 +158,7 @@ export default function BSBPresetBar({
         </>
       );
     },
-    [onBsbInterfacePatch, handleAddFolder, handleAddPreset, handleSynchronizePresets, handleManagePresets],
+    [handleAddFolder, handleAddPreset, handleManagePresets, handleSynchronizePresets, onBsbInterfacePatch],
   );
 
   const currentPresetPath = getCurrentPresetPath();
@@ -149,44 +166,108 @@ export default function BSBPresetBar({
   const canUpdate = hasCurrentPreset && presetGroup?.currentPresetModified;
 
   return (
-    <div className="flex items-center gap-2 w-full pr-2">
-      <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenu.Trigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
-          >
-            Presets
-            <ChevronDown size={12} />
-          </button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
-            {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-body text-app-text-muted">No presets</div>}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+    <>
+      <div className="flex items-center gap-2 w-full pr-2">
+        <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20"
+            >
+              Presets
+              <ChevronDown size={12} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
+              {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-role-body text-app-text-muted">No presets</div>}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
 
-      <input
-        type="text"
-        readOnly
-        value={currentPresetPath}
-        className="min-w-0 flex-1 border-none bg-transparent text-body text-app-text-strong outline-none"
-        style={{ textOverflow: 'ellipsis' }}
-      />
+        <input
+          type="text"
+          readOnly
+          value={currentPresetPath}
+          className="min-w-0 flex-1 border-none bg-transparent text-role-body text-app-text-strong outline-none"
+          style={{ textOverflow: 'ellipsis' }}
+        />
 
-      <button
-        type="button"
-        disabled={!canUpdate}
-        onClick={handleUpdatePreset}
-        className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Update
-      </button>
+        <button
+          type="button"
+          disabled={!canUpdate}
+          onClick={handleUpdatePreset}
+          className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-role-body text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Update
+        </button>
 
-      {presetGroup?.currentPresetModified && (
-        <span className="text-tiny text-app-warning">modified</span>
+        {presetGroup?.currentPresetModified && (
+          <span className="text-role-callout text-app-warning">modified</span>
+        )}
+      </div>
+
+      {managerOpen && presetGroup && (
+        <PresetsManagerDialog
+          presetGroup={presetGroup}
+          onBsbInterfacePatch={onBsbInterfacePatch}
+          onClose={handleCloseManager}
+        />
       )}
-    </div>
+
+      {promptState && (
+        <ConfirmationDialog
+          open={true}
+          title={promptState.title}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            {
+              id: 'confirm',
+              label: 'Add',
+              intent: 'primary',
+              disabled: promptValue.trim().length === 0,
+            },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'confirm' && promptValue.trim().length > 0) {
+              if (promptState.kind === 'preset') {
+                onBsbInterfacePatch({ type: 'addPreset', presetName: promptValue.trim() });
+              } else {
+                onBsbInterfacePatch({ type: 'addPresetGroup', groupName: promptValue.trim() });
+              }
+            }
+            setPromptState(null);
+            setPromptValue('');
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (promptValue.trim().length > 0) {
+                if (promptState.kind === 'preset') {
+                  onBsbInterfacePatch({ type: 'addPreset', presetName: promptValue.trim() });
+                } else {
+                  onBsbInterfacePatch({ type: 'addPresetGroup', groupName: promptValue.trim() });
+                }
+                setPromptState(null);
+                setPromptValue('');
+              }
+            }}
+          >
+            <label className="block text-role-body text-app-text-muted mb-1">
+              {promptState.label}
+            </label>
+            <input
+              type="text"
+              autoFocus
+              value={promptValue}
+              onChange={(e) => setPromptValue(e.target.value)}
+              className="w-full rounded border border-app-border bg-app-surface px-2 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
+            />
+          </form>
+        </ConfirmationDialog>
+      )}
+    </>
   );
 }

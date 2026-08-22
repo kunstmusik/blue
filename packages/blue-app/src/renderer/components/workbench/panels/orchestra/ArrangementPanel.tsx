@@ -4,7 +4,12 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import type { SupportedNewInstrumentType } from '../../../../../shared/project-editor';
+import { Element, loadInstrumentFromXML } from '@blue/data';
+import { toast } from 'sonner';
+import {
+  createInstrumentSnapshot,
+  type SupportedNewInstrumentType,
+} from '../../../../../shared/project-editor';
 import {
   getAvailableNumericArrangementId,
   getLibraryTransferSourceType,
@@ -12,6 +17,7 @@ import {
 import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { useLibraryStore } from '../../../../stores/library-store';
+import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import ArrangementContextMenu from './ArrangementContextMenu';
 import { createArrangementColumns } from './arrangement-table/arrangement-columns';
 import type { ArrangementPanelProps } from './types';
@@ -38,6 +44,12 @@ function ArrangementPanel({
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
   const captureClipboard = useLibraryStore((state) => state.captureClipboard);
+  const focusedAssignmentId = useMidiRoutingStore((state) => (
+    state.focusedTarget?.kind === 'orchestra'
+    && state.focusedTarget.projectSessionId === projectSessionId
+      ? state.focusedTarget.assignmentId
+      : null
+  ));
   const projectNodes = useProjectLibraryNodes(
     'projectOwned', 'instrument', projectSessionId, projectRevision,
   );
@@ -179,6 +191,36 @@ function ArrangementPanel({
     }
   }, [libraryInstrumentAvailable, pasteLibraryInstrument]);
 
+  const importInstrument = useCallback(async (insertAfterAssignmentId: string) => {
+    try {
+      const xml = await window.blueAPI.importArrangementInstrument();
+      if (!xml) return;
+      const root = Element.parse(xml);
+      if (root.getName() !== 'instrument') {
+        throw new Error('File did not contain an instrument.');
+      }
+      const instrument = loadInstrumentFromXML(root);
+      if (!instrument) {
+        throw new Error('Could not read instrument from file.');
+      }
+      await onOrchestraPatch({
+        type: 'pasteInstrument',
+        instrument: createInstrumentSnapshot('imported', instrument, instrument.isEnabled()),
+        insertAfterAssignmentId,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not read instrument from file.');
+    }
+  }, [onOrchestraPatch]);
+
+  const exportInstrument = useCallback(async (assignmentId: string) => {
+    try {
+      await window.blueAPI.exportArrangementInstrument(assignmentId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not export instrument.');
+    }
+  }, []);
+
   const isAddMenuTarget = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Node)) {
       return false;
@@ -203,10 +245,10 @@ function ArrangementPanel({
     >
       <div className="flex items-center justify-between border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div>
-          <div className="text-body font-semibold uppercase tracking-[0.18em] text-app-text-muted">
+          <div className="text-role-headline font-bold uppercase tracking-[0.18em] text-app-text-muted">
             Arrangement
           </div>
-          <div className="text-ui text-app-text-muted">
+          <div className="text-role-callout text-app-text-muted">
             {rows.length} instruments
             {selectedAssignmentId && !selectedRowStillExists ? ' · selection cleared' : ''}
           </div>
@@ -215,7 +257,7 @@ function ArrangementPanel({
           <button
             ref={addBtnRef}
             type="button"
-            className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-body text-app-text-strong transition-colors hover:border-app-accent"
+            className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-role-body text-app-text-strong transition-colors hover:border-app-accent"
             onClick={() => setAddMenuOpen(!addMenuOpen)}
           >
             + Add
@@ -228,7 +270,7 @@ function ArrangementPanel({
               {INSTRUMENT_TYPES.map(({ type, label }) => (
                 <button
                   key={type}
-                  className="w-full px-3 py-1.5 text-left text-body text-app-text-strong hover:bg-app-accent/20"
+                  className="w-full px-3 py-1.5 text-left text-role-body text-app-text-strong hover:bg-app-accent/20"
                   onClick={() => addInstrument(type)}
                 >
                   {label}
@@ -240,7 +282,7 @@ function ArrangementPanel({
       </div>
 
       <div
-        className="min-h-0 flex-1 overflow-auto"
+        className="min-h-0 flex-1 overflow-auto bg-black"
         data-library-autoscroll
         tabIndex={0}
         onKeyDown={(event) => {
@@ -260,7 +302,7 @@ function ArrangementPanel({
       >
         <table
           ref={tableRef}
-          className="border-collapse text-left text-body"
+          className="border-collapse text-left text-role-body"
           style={{ width: '100%' }}
         >
           <thead className="sticky top-0 z-10 bg-app-surface text-app-text-muted">
@@ -289,6 +331,7 @@ function ArrangementPanel({
           <tbody>
             {table.getRowModel().rows.map((row, index) => {
               const selected = row.original.assignmentId === selectedAssignmentId;
+              const midiFocused = row.original.assignmentId === focusedAssignmentId;
               const canInsertAfter = insertionIds[index + 1] !== null;
               const projectNode = projectNodes.find((candidate) => (
                 candidate.key?.scope === 'projectOwned'
@@ -315,19 +358,36 @@ function ArrangementPanel({
                       onCopy={(assignmentId) => captureAssignment(assignmentId, 'copy')}
                       onCut={(assignmentId) => captureAssignment(assignmentId, 'cut')}
                       onPaste={() => pasteInstrument(index + 1)}
+                      onImport={() => importInstrument(row.original.assignmentId)}
+                      onExport={() => exportInstrument(row.original.assignmentId)}
                       onOrchestraPatch={onOrchestraPatch}
                     >
                       <ProjectLibraryDragSource node={projectNode}>
                       <tr
                         {...dropProps}
                         data-assignment-id={row.original.assignmentId}
+                        data-midi-focused={midiFocused ? 'true' : undefined}
                         data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
                         className={[
-                          'cursor-default border-b border-app-border/50 text-app-text-soft',
+                          'cursor-default border-b border-l-2 border-l-transparent border-app-border/50 text-app-text-soft',
                           active ? 'ring-1 ring-inset ring-app-accent' : '',
+                          midiFocused ? 'border-l-app-accent ring-1 ring-inset ring-app-accent/70' : '',
                           selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
                         ].join(' ')}
-                        onClick={() => onSelectAssignment(row.original.assignmentId)}
+                        onClick={() => {
+                          const clicked = row.original;
+                          onSelectAssignment(clicked.assignmentId);
+                          // Spec 067: an explicit user row selection focuses this
+                          // Orchestra assignment for MIDI routing. The auto/editor
+                          // fallback selection in OrchestraPanel never reaches this
+                          // handler, so opening the panel or auto-selecting the first
+                          // editor row does not steal performance focus.
+                          useMidiRoutingStore.getState().focusOrchestra({
+                            projectSessionId,
+                            assignmentId: clicked.assignmentId,
+                            displayName: clicked.instrumentName || '(unnamed)',
+                          });
+                        }}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td
@@ -357,7 +417,7 @@ function ArrangementPanel({
         </table>
 
         {rows.length === 0 ? (
-          <div className="flex h-full items-center justify-center p-6 text-sm text-app-text-muted">
+          <div className="flex h-full items-center justify-center p-6 text-role-body text-app-text-muted">
             Add an instrument to start building the project arrangement.
           </div>
         ) : null}

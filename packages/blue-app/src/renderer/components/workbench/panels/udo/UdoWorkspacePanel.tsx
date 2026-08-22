@@ -5,6 +5,7 @@ import { useUdoImportExport } from '../../../../hooks/use-udo-actions';
 import { createDefaultUdoSnapshot } from '../../../../utils/program-settings-defaults';
 import SplitPane from '../orchestra/SplitPane';
 import UdoEditor from './UdoEditor';
+import { toUdoCompletionDefinitions } from '../editors/udo-completion-scope';
 import UdoTable, {
   getProjectUdoSessionObjectId,
   type UdoLibraryDropTarget,
@@ -23,6 +24,19 @@ interface UdoWorkspacePanelProps {
   onUpdateUdo: (index: number, patch: Partial<UdoDefinitionSnapshot>) => void;
   onConvertStyle: (index: number, style: 'CLASSIC' | 'MODERN') => void;
   libraryDropTarget?: UdoLibraryDropTarget;
+  /**
+   * Project-global UDO definitions available to the UDO body editor. Project
+   * hosts pass the current project UDOs; standalone library hosts omit this so
+   * project UDOs never leak into library editing.
+   */
+  projectUdos?: readonly UdoDefinitionSnapshot[];
+  /**
+   * UDOs owned by the current host and available as context completions.
+   * Defaults to the editable owner list, including self for recursion. The
+   * project-global UDO workspace overrides this with an empty list because its
+   * owner definitions belong exclusively to project scope.
+   */
+  completionContextUdos?: readonly UdoDefinitionSnapshot[];
 }
 
 function createRange(start: number, end: number): number[] {
@@ -50,6 +64,8 @@ export default function UdoWorkspacePanel({
   onUpdateUdo,
   onConvertStyle,
   libraryDropTarget,
+  projectUdos,
+  completionContextUdos = udos,
 }: UdoWorkspacePanelProps): React.ReactElement {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const anchorIndexRef = useRef<number | null>(null);
@@ -97,6 +113,14 @@ export default function UdoWorkspacePanel({
     const [selectedIndex] = selectedIndices;
     return selectedIndex !== undefined ? udos[selectedIndex] ?? null : null;
   }, [selectedIndices, udos]);
+
+  const udoCompletionOptions = useMemo(
+    () => ({
+      contextUdos: toUdoCompletionDefinitions(completionContextUdos),
+      projectUdos: toUdoCompletionDefinitions(projectUdos ?? []),
+    }),
+    [completionContextUdos, projectUdos],
+  );
 
   const setSingleSelection = useCallback((index: number) => {
     setSelectedIndices([index]);
@@ -299,6 +323,7 @@ export default function UdoWorkspacePanel({
       second={
         <UdoEditor
           udo={selectedUdo}
+          javaBlueCompletionOptions={udoCompletionOptions}
           onUpdateUdo={handleUpdateSelectedUdo}
           onConvertStyle={handleConvertSelectedStyle}
           onTestOpcode={handleTestSelectedUdo}

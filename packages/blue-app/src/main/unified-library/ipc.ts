@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LEGACY_LIBRARY_FORMATS } from '@blue/data';
-import { dialog, type BrowserWindow, type IpcMain, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
+import { BrowserWindow, dialog, type IpcMain, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
+import { showNativeConfirmation } from '../native-confirmation';
 import {
   UNIFIED_LIBRARY_BROWSE_CHANNEL,
   UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
@@ -22,7 +23,11 @@ import {
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
   UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
   UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL,
   UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
@@ -31,8 +36,10 @@ import {
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
@@ -61,15 +68,21 @@ import {
   isUserLibraryMutation,
   isPrepareLibraryMutationRequest,
   isCutLibraryToClipboardRequest,
+  isLibraryInteractionClipboard,
+  isBsbCanvasClipboard,
   isScoreTimelineSoundObjectRequest,
+  isTrackInstrumentClipboardRequest,
+  isBlueLiveSoundObjectClipboardRequest,
   isLibraryType,
 } from '../../shared/unified-library';
 import { UnifiedLibraryService } from './service';
+import { resolveWorkDirectoryDefaultPath } from '../work-directory';
 
 export interface UnifiedLibraryIpcOptions {
   readonly ipcMain: IpcMain;
   readonly service: UnifiedLibraryService;
   readonly getWindows: () => readonly BrowserWindow[];
+  readonly getWorkDirectory?: () => string | undefined;
 }
 
 function isStringRecord(value: unknown): value is Readonly<Record<string, string>> {
@@ -81,6 +94,7 @@ function isStringRecord(value: unknown): value is Readonly<Record<string, string
 
 export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): () => void {
   const { ipcMain, service, getWindows } = options;
+  const getWorkDirectory = options.getWorkDirectory;
   ipcMain.handle(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL, () => service.getSnapshot());
   ipcMain.handle(UNIFIED_LIBRARY_BROWSE_CHANNEL, (_event, request: unknown) => (
     isBrowseLibraryRequest(request)
@@ -173,12 +187,38 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid Library Cut request.', false),
         })
   ));
+  ipcMain.handle(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+    clipboard === null || isLibraryInteractionClipboard(clipboard)
+      ? service.setClipboard(clipboard)
+      : false
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+    clipboard === null || isBsbCanvasClipboard(clipboard)
+      ? service.setBsbClipboard(clipboard)
+      : false
+  ));
   ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
     isScoreTimelineSoundObjectRequest(request)
       ? service.captureScoreSoundObjectClipboard(request)
       : Promise.resolve({
           ok: false as const,
           error: createLibraryServiceError('invalid-request', 'Invalid timeline SoundObject request.', false),
+        })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, (_event, request: unknown) => (
+    isTrackInstrumentClipboardRequest(request)
+      ? service.captureTrackInstrumentClipboard(request)
+      : Promise.resolve({
+          ok: false as const,
+          error: createLibraryServiceError('invalid-request', 'Invalid Track instrument request.', false),
+        })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
+    isBlueLiveSoundObjectClipboardRequest(request)
+      ? service.captureBlueLiveSoundObjectClipboard(request)
+      : Promise.resolve({
+          ok: false as const,
+          error: createLibraryServiceError('invalid-request', 'Invalid Blue Live SoundObject request.', false),
         })
   ));
   ipcMain.handle(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
@@ -269,10 +309,43 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.copyLibraryTransferToUser(value.source, value.parentId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Library transfer request.', false) });
   });
+  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, async (_event, parentId: unknown) => {
+    if (typeof parentId !== 'string' || parentId.trim().length === 0) {
+      return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library folder.', false) };
+    }
+    const owner = getWindows().find((window) => !window.isDestroyed());
+    const options: OpenDialogOptions = {
+      title: 'Import Instrument',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
+      filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+      properties: ['openFile'],
+    };
+    const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return null;
+    return service.importInstrumentFile(parentId, result.filePaths[0]);
+  });
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, async (_event, key: unknown) => {
+    if (!isLibraryItemKey(key) || key.scope !== 'user' || key.libraryType !== 'instrument') {
+      return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library item.', false) };
+    }
+    const owner = getWindows().find((window) => !window.isDestroyed());
+    const options: SaveDialogOptions = {
+      title: 'Export Instrument',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), 'default.binstr'),
+      filters: [{ name: 'blue Instrument File', extensions: ['binstr'] }],
+      properties: ['showOverwriteConfirmation'],
+    };
+    const result = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
+    if (result.canceled || !result.filePath) return null;
+    let targetPath = result.filePath;
+    if (!targetPath.toLowerCase().endsWith('.binstr')) targetPath += '.binstr';
+    return service.exportInstrumentFile(key, targetPath);
+  });
   ipcMain.handle(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Library XML',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       filters: [{ name: 'Java Blue Library XML', extensions: ['xml'] }],
       properties: ['openFile', 'multiSelections'],
     };
@@ -283,6 +356,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Configuration Directory',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       properties: ['openDirectory'],
     };
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
@@ -303,47 +377,44 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
         )
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid import preview.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (_event, libraryType: unknown) => {
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (event, libraryType: unknown) => {
     if (!isLibraryType(libraryType)) return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid library type.', false) };
     const names = { instrument: 'userInstrumentLibrary.xml', udo: 'udoLibrary.xml', effect: 'effectsLibrary.xml', soundObject: 'soundObjectLibrary.xml' } as const;
-    const owner = getWindows().find((window) => !window.isDestroyed());
+    const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
     const options: SaveDialogOptions = {
-      title: `Export ${libraryType} Library`, defaultPath: names[libraryType],
+      title: `Export ${libraryType} Library`,
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), names[libraryType]),
       filters: [{ name: 'Java Blue Library XML', extensions: ['xml'] }],
     };
     const result = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
     if (result.canceled || !result.filePath) return null;
     const exported = await service.exportCurrentLibrary(libraryType, result.filePath, async (preflight) => {
       const output = preflight.outputs[0]!;
-      const confirmation = owner
-        ? await dialog.showMessageBox(owner, {
-            type: output.overwritesExisting ? 'warning' : 'info',
-            buttons: ['Cancel', output.overwritesExisting ? 'Overwrite' : 'Export'],
-            defaultId: 0,
-            cancelId: 0,
-            title: 'Review Library Export',
-            message: output.overwritesExisting
-              ? `“${path.basename(output.targetPath)}” will be replaced.`
-              : `Export “${path.basename(output.targetPath)}”?`,
-            detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
-          })
-        : await dialog.showMessageBox({
-            type: output.overwritesExisting ? 'warning' : 'info',
-            buttons: ['Cancel', output.overwritesExisting ? 'Overwrite' : 'Export'],
-            defaultId: 0, cancelId: 0, title: 'Review Library Export',
-            message: output.overwritesExisting
-              ? `“${path.basename(output.targetPath)}” will be replaced.`
-              : `Export “${path.basename(output.targetPath)}”?`,
-            detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
-          });
-      return confirmation.response === 1;
+      const confirmation = await showNativeConfirmation(owner, {
+        id: 'review-library-export',
+        type: output.overwritesExisting ? 'warning' : 'info',
+        title: 'Review Library Export',
+        message: output.overwritesExisting
+          ? `“${path.basename(output.targetPath)}” will be replaced.`
+          : `Export “${path.basename(output.targetPath)}”?`,
+        detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
+        actions: [
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          { id: 'export', label: output.overwritesExisting ? 'Overwrite' : 'Export', role: output.overwritesExisting ? 'destructive' : 'accept' },
+        ],
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      });
+      return confirmation.actionId === 'export' && confirmation.outcome === 'selected';
     });
     return exported.ok && !exported.value ? null : exported;
   });
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async () => {
-    const owner = getWindows().find((window) => !window.isDestroyed());
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async (event) => {
+    const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
-      title: 'Export All Java Blue Libraries', properties: ['openDirectory', 'createDirectory'],
+      title: 'Export All Java Blue Libraries',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
+      properties: ['openDirectory', 'createDirectory'],
     };
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
     if (result.canceled || !result.filePaths[0]) return null;
@@ -353,21 +424,22 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
         .map((output) => path.basename(output.targetPath));
       const itemCount = preflight.outputs.reduce((sum, output) => sum + output.itemCount, 0);
       const unsupportedCount = preflight.outputs.reduce((sum, output) => sum + output.unsupportedPreservedCount, 0);
-      const messageOptions = {
-        type: existingNames.length > 0 ? 'warning' as const : 'info' as const,
-        buttons: ['Cancel', existingNames.length > 0 ? 'Overwrite All' : 'Export All'],
-        defaultId: 0,
-        cancelId: 0,
+      const confirmation = await showNativeConfirmation(owner, {
+        id: 'review-library-exports',
+        type: existingNames.length > 0 ? 'warning' : 'info',
         title: 'Review Library Exports',
         message: existingNames.length > 0
           ? `${existingNames.length} library export ${existingNames.length === 1 ? 'file will be replaced' : 'files will be replaced'}.`
           : 'Export all four Java Blue libraries?',
         detail: `Compatibility preflight passed for all four files and ${itemCount} items. ${unsupportedCount} unsupported items will be preserved unchanged. No content will be omitted.${existingNames.length > 0 ? `\n\nReplace: ${existingNames.join(', ')}` : ''}`,
-      };
-      const confirmation = owner
-        ? await dialog.showMessageBox(owner, messageOptions)
-        : await dialog.showMessageBox(messageOptions);
-      return confirmation.response === 1;
+        actions: [
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          { id: 'export-all', label: existingNames.length > 0 ? 'Overwrite All' : 'Export All', role: existingNames.length > 0 ? 'destructive' : 'accept' },
+        ],
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      });
+      return confirmation.actionId === 'export-all' && confirmation.outcome === 'selected';
     });
     return exported.ok && !exported.value ? null : exported;
   });
@@ -376,6 +448,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Restore Unified Library Backup',
+      defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
       filters: [{ name: 'SQLite Database', extensions: ['sqlite', 'db'] }],
       properties: ['openFile'],
     };
@@ -424,7 +497,11 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_MUTATE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL);
@@ -442,8 +519,10 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL);

@@ -1,16 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
-import {
-  DockviewReact,
-  DockviewReadyEvent,
-  type DockviewApi,
-} from 'dockview';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { DockviewReact, DockviewReadyEvent, type DockviewApi } from 'dockview';
 import 'dockview/dist/styles/dockview.css';
+import { ChevronRight } from 'lucide-react';
 import AuxiliaryRail from './AuxiliaryRail';
 import AuxiliaryHeaderActions from './AuxiliaryHeaderActions';
 import AuxiliarySlideout from './AuxiliarySlideout';
@@ -29,11 +20,12 @@ import {
   getAuxiliarySlideoutForEdge,
   getMinimizedTabsForEdge,
   getGroupInstanceForPanel,
+  isAuxiliaryInteractionTarget,
   isAuxiliaryPanelId,
-  logAuxiliaryDockedSizeDebug,
   shouldPreventAuxiliaryPanelDrop,
   type AuxiliaryDockedSizeSnapshot,
   type AuxiliaryEdge,
+  type AuxiliaryGroupSizeAction,
 } from './auxiliary-layout';
 import {
   getAuxiliaryEdgeDropTarget,
@@ -53,7 +45,10 @@ const LAYOUT_STORAGE_KEY = 'blue-workbench-layout';
 const AUXILIARY_DRAG_THRESHOLD = 8;
 
 export function selectWorkbenchLayout(
-  layoutSnapshot: Pick<WindowLayoutSettingsSnapshot, 'workbench' | 'lastResetAt'> | null | undefined,
+  layoutSnapshot:
+    | Pick<WindowLayoutSettingsSnapshot, 'workbench' | 'lastResetAt'>
+    | null
+    | undefined,
   legacyLayout: string | null,
 ): string | null {
   // A reset marker means the next workbench must be rebuilt from defaults.
@@ -70,9 +65,7 @@ export function selectWorkbenchLayout(
   return layoutSnapshot?.lastResetAt ? null : legacyLayout;
 }
 
-export function removeLegacyWelcomePanel(
-  api: Pick<DockviewApi, 'getPanel'>,
-): void {
+export function removeLegacyWelcomePanel(api: Pick<DockviewApi, 'getPanel'>): void {
   api.getPanel('WelcomeTopComponent')?.api.close();
 }
 
@@ -111,7 +104,13 @@ function isAuxiliaryEdge(value: string | undefined): value is AuxiliaryEdge {
  */
 export function reportOwnership(api: DockviewApi, windowId?: string) {
   const blueAPI =
-    typeof window !== 'undefined' ? (window as { blueAPI?: Record<string, (...args: unknown[]) => unknown> }).blueAPI : undefined;
+    typeof window !== 'undefined'
+      ? (
+          window as {
+            blueAPI?: Record<string, (...args: unknown[]) => unknown>;
+          }
+        ).blueAPI
+      : undefined;
   if (!blueAPI) return;
 
   try {
@@ -164,12 +163,8 @@ export default function WorkbenchShell() {
   const auxiliary = useWorkbenchStore((s) => s.auxiliary);
   const toggleAuxiliaryPanel = useWorkbenchStore((s) => s.toggleAuxiliaryPanel);
   const dockAuxiliaryPanel = useWorkbenchStore((s) => s.dockAuxiliaryPanel);
-  const hideAllAuxiliarySlideouts = useWorkbenchStore(
-    (s) => s.hideAllAuxiliarySlideouts,
-  );
-  const resizeAuxiliarySlideout = useWorkbenchStore(
-    (s) => s.resizeAuxiliarySlideout,
-  );
+  const hideAllAuxiliarySlideouts = useWorkbenchStore((s) => s.hideAllAuxiliarySlideouts);
+  const resizeAuxiliarySlideout = useWorkbenchStore((s) => s.resizeAuxiliarySlideout);
   const closeAuxiliaryPanel = useWorkbenchStore((s) => s.closeAuxiliaryPanel);
   const restoreAuxiliaryGroup = useWorkbenchStore((s) => s.restoreAuxiliaryGroup);
   const moveAuxiliaryEdge = useWorkbenchStore((s) => s.moveAuxiliaryEdge);
@@ -186,15 +181,12 @@ export default function WorkbenchShell() {
   const workbenchWindowIdRef = useRef<string | undefined>(undefined);
   const layoutHydratedRef = useRef(false);
   const suppressLayoutPersistenceRef = useRef(false);
-  const pendingDockviewSizeSnapshotRef =
-    useRef<AuxiliaryDockedSizeSnapshot | null>(null);
-  const pendingManualDragSizeSnapshotRef =
-    useRef<AuxiliaryDockedSizeSnapshot | null>(null);
+  const pendingDockviewSizeSnapshotRef = useRef<AuxiliaryDockedSizeSnapshot | null>(null);
+  const pendingManualDragSizeSnapshotRef = useRef<AuxiliaryDockedSizeSnapshot | null>(null);
   const pendingDragRef = useRef<PendingAuxiliaryDrag | null>(null);
   const activeDragRef = useRef<ActiveAuxiliaryDrag | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveAuxiliaryDrag | null>(null);
-  const [headerContextMenu, setHeaderContextMenu] =
-    useState<HeaderContextMenuState | null>(null);
+  const [headerContextMenu, setHeaderContextMenu] = useState<HeaderContextMenuState | null>(null);
 
   const disposeListeners = useCallback(() => {
     for (const disposable of listenersRef.current) {
@@ -204,10 +196,7 @@ export default function WorkbenchShell() {
   }, []);
 
   const persistLayout = useCallback(() => {
-    if (
-      !layoutHydratedRef.current ||
-      suppressLayoutPersistenceRef.current
-    ) {
+    if (!layoutHydratedRef.current || suppressLayoutPersistenceRef.current) {
       return;
     }
 
@@ -242,9 +231,11 @@ export default function WorkbenchShell() {
 
         const blueAPI =
           typeof window !== 'undefined'
-            ? (window as {
-                blueAPI?: Record<string, (...args: unknown[]) => unknown>;
-              }).blueAPI
+            ? (
+                window as {
+                  blueAPI?: Record<string, (...args: unknown[]) => unknown>;
+                }
+              ).blueAPI
             : undefined;
         let displayWorkAreas: DisplayWorkArea[] | undefined;
         try {
@@ -284,7 +275,9 @@ export default function WorkbenchShell() {
         // future ownership updates.
         if (blueAPI) {
           try {
-            const result = await blueAPI['registerWorkbenchWindow']({ role: 'main' }) as { windowId?: string } | undefined;
+            const result = (await blueAPI['registerWorkbenchWindow']({
+              role: 'main',
+            })) as { windowId?: string } | undefined;
             if (result?.windowId) {
               workbenchWindowIdRef.current = result.windowId;
               reportOwnership(event.api, result.windowId);
@@ -296,9 +289,7 @@ export default function WorkbenchShell() {
 
         listenersRef.current = [
           event.api.onWillDragGroup((dragEvent) => {
-            if (
-              dragEvent.group.panels.some((panel) => isAuxiliaryPanelId(panel.id))
-            ) {
+            if (dragEvent.group.panels.some((panel) => isAuxiliaryPanelId(panel.id))) {
               dragEvent.nativeEvent.preventDefault();
             }
           }),
@@ -306,20 +297,10 @@ export default function WorkbenchShell() {
             const transfer = dropEvent.getData();
 
             if (transfer?.panelId && isAuxiliaryPanelId(transfer.panelId)) {
-              pendingDockviewSizeSnapshotRef.current =
-                captureAuxiliaryDockedSizesFromApi(
-                  event.api,
-                  useWorkbenchStore.getState().auxiliary,
-                );
-              logAuxiliaryDockedSizeDebug('shell.onWillDrop snapshot', event.api, {
-                snapshot: pendingDockviewSizeSnapshotRef.current,
-                state: useWorkbenchStore.getState().auxiliary,
-                meta: {
-                  panelId: transfer.panelId,
-                  dropKind: dropEvent.kind,
-                  targetGroupId: dropEvent.group?.id,
-                },
-              });
+              pendingDockviewSizeSnapshotRef.current = captureAuxiliaryDockedSizesFromApi(
+                event.api,
+                useWorkbenchStore.getState().auxiliary,
+              );
             }
 
             if (
@@ -351,9 +332,7 @@ export default function WorkbenchShell() {
             }
 
             const shell = shellRef.current;
-            const mainElement = shell?.querySelector<HTMLElement>(
-              '.workbench-shell__main',
-            );
+            const mainElement = shell?.querySelector<HTMLElement>('.workbench-shell__main');
 
             const targetEdge =
               getAuxiliaryEdgeFromGroupElement(panel.group.element) ??
@@ -369,18 +348,7 @@ export default function WorkbenchShell() {
               return;
             }
 
-            const preservedDockedSizes =
-              pendingDockviewSizeSnapshotRef.current ?? undefined;
-            logAuxiliaryDockedSizeDebug('shell.onDidMovePanel before store move', event.api, {
-              snapshot: preservedDockedSizes,
-              state: useWorkbenchStore.getState().auxiliary,
-              meta: {
-                panelId: panel.id,
-                fromGroupId: from.id,
-                toGroupId: panel.group.id,
-                targetEdge,
-              },
-            });
+            const preservedDockedSizes = pendingDockviewSizeSnapshotRef.current ?? undefined;
             pendingDockviewSizeSnapshotRef.current = null;
             movePanelToEdge(panel.id, targetEdge, preservedDockedSizes);
             reportOwnership(event.api, workbenchWindowIdRef.current);
@@ -405,9 +373,11 @@ export default function WorkbenchShell() {
     // the workbench to drop its layout, and let the canonical reset IPC
     // resolve separately through the layout store.
     const blueAPI = typeof window !== 'undefined' ? window.blueAPI : undefined;
-    const ipc = blueAPI as unknown as {
-      onWindowLayoutReset?: (cb: () => void) => () => void;
-    } | undefined;
+    const ipc = blueAPI as unknown as
+      | {
+          onWindowLayoutReset?: (cb: () => void) => () => void;
+        }
+      | undefined;
     const unsubscribeReset = ipc?.onWindowLayoutReset?.(() => {
       suppressLayoutPersistenceRef.current = true;
       try {
@@ -436,17 +406,9 @@ export default function WorkbenchShell() {
     }
   }, [auxiliary, persistLayout]);
 
-  const isAuxiliaryOverlayTarget = useCallback((target: EventTarget | null) => {
-    const element = target as HTMLElement | null;
-    return Boolean(
-      element?.closest('[data-auxiliary-slideout="true"]')
-      || element?.closest('[data-auxiliary-rail="true"]'),
-    );
-  }, []);
-
   useDocumentMouseDownOutside({
     enabled: Boolean(leftSlideout || rightSlideout || bottomSlideout),
-    isInside: isAuxiliaryOverlayTarget,
+    isInside: isAuxiliaryInteractionTarget,
     onMouseDownOutside: () => hideAllAuxiliarySlideouts(),
   });
 
@@ -469,14 +431,7 @@ export default function WorkbenchShell() {
         return;
       }
 
-      pendingManualDragSizeSnapshotRef.current = captureAuxiliaryDockedSizesFromApi(
-        api,
-        auxiliary,
-      );
-      logAuxiliaryDockedSizeDebug('shell.manualDrag snapshot', api, {
-        snapshot: pendingManualDragSizeSnapshotRef.current,
-        state: auxiliary,
-      });
+      pendingManualDragSizeSnapshotRef.current = captureAuxiliaryDockedSizesFromApi(api, auxiliary);
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -489,9 +444,7 @@ export default function WorkbenchShell() {
         return;
       }
 
-      const slideoutHandle = target.closest<HTMLElement>(
-        '[data-aux-slideout-drag-handle="true"]',
-      );
+      const slideoutHandle = target.closest<HTMLElement>('[data-aux-slideout-drag-handle="true"]');
       if (slideoutHandle) {
         const panelId = slideoutHandle.dataset.auxPanelId;
         const sourceEdge = slideoutHandle.dataset.auxEdge;
@@ -562,10 +515,7 @@ export default function WorkbenchShell() {
         return;
       }
 
-      const distance = Math.hypot(
-        event.clientX - pending.startX,
-        event.clientY - pending.startY,
-      );
+      const distance = Math.hypot(event.clientX - pending.startX, event.clientY - pending.startY);
 
       if (distance < AUXILIARY_DRAG_THRESHOLD) {
         return;
@@ -602,38 +552,12 @@ export default function WorkbenchShell() {
     function handlePointerUp() {
       const completed = activeDragRef.current;
 
-      if (
-        completed &&
-        completed.targetEdge &&
-        completed.targetEdge !== completed.sourceEdge
-      ) {
-        const preservedDockedSizes =
-          pendingManualDragSizeSnapshotRef.current ?? undefined;
-        const { api, auxiliary } = useWorkbenchStore.getState();
-        if (api) {
-          logAuxiliaryDockedSizeDebug('shell.manualDrag before store move', api, {
-            snapshot: preservedDockedSizes,
-            state: auxiliary,
-            meta: {
-              kind: completed.kind,
-              panelId: completed.panelId,
-              sourceEdge: completed.sourceEdge,
-              targetEdge: completed.targetEdge,
-            },
-          });
-        }
+      if (completed && completed.targetEdge && completed.targetEdge !== completed.sourceEdge) {
+        const preservedDockedSizes = pendingManualDragSizeSnapshotRef.current ?? undefined;
         if (completed.kind === 'edge') {
-          moveAuxiliaryEdge(
-            completed.sourceEdge,
-            completed.targetEdge,
-            preservedDockedSizes,
-          );
+          moveAuxiliaryEdge(completed.sourceEdge, completed.targetEdge, preservedDockedSizes);
         } else if (completed.kind === 'panel' && completed.panelId) {
-          movePanelToEdge(
-            completed.panelId,
-            completed.targetEdge,
-            preservedDockedSizes,
-          );
+          movePanelToEdge(completed.panelId, completed.targetEdge, preservedDockedSizes);
         }
       }
 
@@ -673,8 +597,7 @@ export default function WorkbenchShell() {
         {
           '--workbench-left-rail-width': leftTabs.length > 0 ? '40px' : '0px',
           '--workbench-right-rail-width': rightTabs.length > 0 ? '40px' : '0px',
-          '--workbench-bottom-rail-height':
-            bottomTabs.length > 0 ? '36px' : '0px',
+          '--workbench-bottom-rail-height': bottomTabs.length > 0 ? '36px' : '0px',
         } as CSSProperties
       }
       data-aux-dragging={activeDrag ? 'true' : undefined}
@@ -714,9 +637,7 @@ export default function WorkbenchShell() {
             closeAuxiliaryPanel(rightSlideout.panelId);
           }}
           onDock={() => dockAuxiliaryPanel(rightSlideout.panelId)}
-          onResize={(size) =>
-            resizeAuxiliarySlideout(rightSlideout.panelId, size)
-          }
+          onResize={(size) => resizeAuxiliarySlideout(rightSlideout.panelId, size)}
         />
       ) : null}
 
@@ -727,9 +648,7 @@ export default function WorkbenchShell() {
             closeAuxiliaryPanel(bottomSlideout.panelId);
           }}
           onDock={() => dockAuxiliaryPanel(bottomSlideout.panelId)}
-          onResize={(size) =>
-            resizeAuxiliarySlideout(bottomSlideout.panelId, size)
-          }
+          onResize={(size) => resizeAuxiliarySlideout(bottomSlideout.panelId, size)}
         />
       ) : null}
 
@@ -800,11 +719,17 @@ export default function WorkbenchShell() {
       ) : null}
 
       {leftTabs.length > 0 && bottomTabs.length > 0 ? (
-        <div className="workbench-shell__corner workbench-shell__corner--left-bottom" aria-hidden="true" />
+        <div
+          className="workbench-shell__corner workbench-shell__corner--left-bottom"
+          aria-hidden="true"
+        />
       ) : null}
 
       {rightTabs.length > 0 && bottomTabs.length > 0 ? (
-        <div className="workbench-shell__corner workbench-shell__corner--right-bottom" aria-hidden="true" />
+        <div
+          className="workbench-shell__corner workbench-shell__corner--right-bottom"
+          aria-hidden="true"
+        />
       ) : null}
 
       {headerContextMenu ? (
@@ -829,6 +754,9 @@ function WorkbenchHeaderContextMenu({
   const closeGroup = useWorkbenchStore((s) => s.closeGroup);
   const floatGroup = useWorkbenchStore((s) => s.floatGroup);
   const dockGroup = useWorkbenchStore((s) => s.dockGroup);
+  const movePanelToEdge = useWorkbenchStore((s) => s.movePanelToEdge);
+  const moveGroupToEdge = useWorkbenchStore((s) => s.moveGroupToEdge);
+  const resizeAuxiliaryGroup = useWorkbenchStore((s) => s.resizeAuxiliaryGroup);
   const minimizeAuxiliaryGroup = useWorkbenchStore((s) => s.minimizeAuxiliaryGroup);
   const newDocumentTabGroup = useWorkbenchStore((s) => s.newDocumentTabGroup);
   const collapseDocumentTabGroup = useWorkbenchStore((s) => s.collapseDocumentTabGroup);
@@ -853,6 +781,7 @@ function WorkbenchHeaderContextMenu({
     return null;
   }
 
+  const instance = getGroupInstanceForPanel(auxiliary, menu.panelId);
   const descriptor = getPanel(menu.panelId);
   const groupPanelIds = panel.group.panels.map((candidate) => candidate.id);
   const dockviewLocation = panel.api.location.type;
@@ -896,7 +825,6 @@ function WorkbenchHeaderContextMenu({
     'dock',
     'shift-left',
     'shift-right',
-    'move',
     'clone',
     'new-document-tab-group',
   ]);
@@ -936,8 +864,47 @@ function WorkbenchHeaderContextMenu({
     >
       {commandState.commands.map((command, index) => {
         const previousKind = commandState.commands[index - 1]?.kind;
-        const showSeparator = index > 0 && headerGroupOf(previousKind) !== headerGroupOf(command.kind);
+        const showSeparator =
+          index > 0 && headerGroupOf(previousKind) !== headerGroupOf(command.kind);
         const enabled = command.enabled && !groupSurfaceDisabled.has(command.kind);
+
+        if (command.kind === 'move' || command.kind === 'move-group') {
+          return (
+            <HeaderEdgeCommandSubmenu
+              key={command.kind}
+              label={command.label}
+              enabled={enabled}
+              showSeparator={showSeparator}
+              currentEdge={instance?.edge}
+              onSelect={(edge) => {
+                if (command.kind === 'move') {
+                  movePanelToEdge(menu.panelId, edge);
+                } else if (instance) {
+                  moveGroupToEdge(instance.groupInstanceId, edge);
+                }
+                onClose();
+              }}
+            />
+          );
+        }
+
+        if (command.kind === 'size-group') {
+          return (
+            <HeaderSizeCommandSubmenu
+              key={command.kind}
+              label={command.label}
+              enabled={enabled}
+              showSeparator={showSeparator}
+              onSelect={(action) => {
+                if (instance) {
+                  resizeAuxiliaryGroup(instance.groupInstanceId, action);
+                }
+                onClose();
+              }}
+            />
+          );
+        }
+
         return (
           <div key={command.kind}>
             {showSeparator ? (
@@ -956,6 +923,127 @@ function WorkbenchHeaderContextMenu({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function HeaderEdgeCommandSubmenu({
+  label,
+  enabled,
+  showSeparator,
+  currentEdge,
+  onSelect,
+}: {
+  label: string;
+  enabled: boolean;
+  showSeparator: boolean;
+  currentEdge?: AuxiliaryEdge;
+  onSelect: (edge: AuxiliaryEdge) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="workbench-context-menu__submenu"
+      onMouseEnter={() => setOpen(true)}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      {showSeparator ? (
+        <div className="workbench-context-menu__separator" aria-hidden="true" />
+      ) : null}
+      <button
+        type="button"
+        role="menuitem"
+        className="workbench-context-menu__item workbench-context-menu__subtrigger"
+        data-disabled={!enabled ? '' : undefined}
+        disabled={!enabled}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden="true" />
+      </button>
+      {open && enabled ? (
+        <div className="workbench-context-menu workbench-context-menu__submenu-content" role="menu">
+          {AUXILIARY_EDGES.map((edge) => (
+            <button
+              key={edge}
+              type="button"
+              role="menuitem"
+              className="workbench-context-menu__item"
+              data-disabled={edge === currentEdge ? '' : undefined}
+              disabled={edge === currentEdge}
+              onClick={() => onSelect(edge)}
+            >
+              {edge[0]!.toUpperCase() + edge.slice(1)}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const HEADER_SIZE_OPTIONS: readonly {
+  action: AuxiliaryGroupSizeAction;
+  label: string;
+}[] = [
+  { action: 'increase', label: 'Larger' },
+  { action: 'decrease', label: 'Smaller' },
+  { action: 'reset', label: 'Reset' },
+];
+
+function HeaderSizeCommandSubmenu({
+  label,
+  enabled,
+  showSeparator,
+  onSelect,
+}: {
+  label: string;
+  enabled: boolean;
+  showSeparator: boolean;
+  onSelect: (action: AuxiliaryGroupSizeAction) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="workbench-context-menu__submenu"
+      onMouseEnter={() => setOpen(true)}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      {showSeparator ? (
+        <div className="workbench-context-menu__separator" aria-hidden="true" />
+      ) : null}
+      <button
+        type="button"
+        role="menuitem"
+        className="workbench-context-menu__item workbench-context-menu__subtrigger"
+        data-disabled={!enabled ? '' : undefined}
+        disabled={!enabled}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>{label}</span>
+        <ChevronRight size={14} aria-hidden="true" />
+      </button>
+      {open && enabled ? (
+        <div className="workbench-context-menu workbench-context-menu__submenu-content" role="menu">
+          {HEADER_SIZE_OPTIONS.map((option) => (
+            <button
+              key={option.action}
+              type="button"
+              role="menuitem"
+              className="workbench-context-menu__item"
+              onClick={() => onSelect(option.action)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -8,8 +8,8 @@ import { BlueData } from './blue-data';
 import { GenericInstrument } from './instruments/generic-instrument';
 import { Channel } from './mixer/channel';
 import { AudioClip } from './score/audio/audio-clip';
-import { AudioLayer } from './score/audio/audio-layer';
-import { AudioLayerGroup } from './score/audio/audio-layer-group';
+import { Track } from './score/track/track';
+import { TrackLayerGroup } from './score/track/track-layer-group';
 import { initializeJavaScriptRuntime } from './javascript-runtime';
 import { TimeDuration } from './time/time-duration';
 import { TimePosition } from './time/time-position';
@@ -84,7 +84,7 @@ function createRenderWindowProject(diskAlwaysRenderEntireProject: boolean): Blue
   const props = data.getProjectProperties();
   props.diskAlwaysRenderEntireProject = diskAlwaysRenderEntireProject;
 
-  const layer = new AudioLayer();
+  const layer = new Track();
   const clip = new AudioClip();
   clip.setAudioFile('/tmp/render-window.wav');
   clip.setStartTime(TimePosition.beats(4));
@@ -92,7 +92,7 @@ function createRenderWindowProject(diskAlwaysRenderEntireProject: boolean): Blue
   clip.setLooping(null, false);
   layer.push(clip);
 
-  const layerGroup = new AudioLayerGroup();
+  const layerGroup = new TrackLayerGroup();
   layerGroup.push(layer);
   data.getScore().push(layerGroup);
 

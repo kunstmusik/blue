@@ -8,7 +8,7 @@ export default function MidiInputPanel(): ReactElement {
 
   if (!loaded || !midiInput) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-blue-muted">
+      <div className="flex h-full items-center justify-center text-role-body text-blue-muted">
         No project loaded
       </div>
     );

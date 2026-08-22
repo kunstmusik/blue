@@ -32,4 +32,17 @@ class ClojureScoreObjectEvaluationTest {
             Files.deleteIfExists(projectDir);
         }
     }
+
+    @Test
+    void exposesObjectBuilderCommandlineBinding() {
+        ClojureSession session = new ClojureSession("user0");
+
+        String scoreText = session.evaluateScoreObjectWithOutput(
+                "(def score commandline)",
+                1.0,
+                null,
+                "i2 0 3 440").value();
+
+        assertEquals("i2 0 3 440", scoreText);
+    }
 }

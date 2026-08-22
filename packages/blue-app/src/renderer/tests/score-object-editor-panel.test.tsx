@@ -9,8 +9,8 @@ import {
   Comment,
   External,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   PolyObject,
   SoundLayer,
   Instance,
@@ -24,7 +24,6 @@ import {
   PianoRoll,
   PianoNote,
   TrackerObject,
-  NotationObject,
   JMask,
   FadeType,
   TimeBase,
@@ -37,8 +36,51 @@ import {
   applyProjectDocumentPatch,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLibraryEntryRef,
+  type BlueSynthBuilderInstrumentSnapshot,
+  type UdoDefinitionSnapshot,
+  type ScoreObjectEditorDocumentSnapshot,
+  type ScorePatch,
 } from '../../shared/project-editor';
 import AudioClipScoreObjectEditor from '../components/workbench/panels/score-object/editors/AudioClipScoreObjectEditor';
+import SoundEditor from '../components/workbench/panels/score-object/editors/SoundEditor';
+
+function udoSnapshot(name: string): UdoDefinitionSnapshot {
+  return {
+    name,
+    style: 'CLASSIC',
+    outTypes: 'a',
+    inTypes: 'a',
+    inputArguments: '',
+    code: '',
+    comments: '',
+  };
+}
+
+function makeBsbInstrument(udoNames: string[] = []): BlueSynthBuilderInstrumentSnapshot {
+  return {
+    assignmentId: 'sound-bsb',
+    type: 'blueSynthBuilder',
+    name: 'Sound BSB',
+    enabled: true,
+    comment: '',
+    instrumentText: 'aout oscili <amp>, <freq>',
+    alwaysOnInstrumentText: '',
+    globalOrc: '',
+    globalSco: '',
+    objectNames: ['amp', 'freq'],
+    widgets: [],
+    editEnabled: true,
+    gridSettings: { enabled: false, snapEnabled: false, width: 10, height: 10 },
+    widgetTree: {
+      id: 'root', type: 'BSBRootGroup', objectName: '',
+      x: 0, y: 0, width: 0, height: 0,
+      value: 0, minimum: 0, maximum: 0,
+      editable: true, properties: {},
+      children: [],
+    },
+    udolist: udoNames.map(udoSnapshot),
+  };
+}
 
 function makeLibRef(libId: string, objectType: string, index: number = 0): ScoreObjectLibraryEntryRef {
   return { libraryId: libId, libraryIndex: index, objectType };
@@ -145,8 +187,8 @@ describe('AudioClip editor document creation and mutation (T026)', () => {
   function makeAudioClipData() {
     const data = new BlueData();
     data.getScore().length = 0;
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     clip.setName('Test Clip');
     clip.setAudioFile('sound.wav');
@@ -469,5 +511,50 @@ describe('PianoRoll editor document and mutation', () => {
     expect(pr.getFieldDefinitions()[0]!.getDefaultValue()).toBeCloseTo(6);
     expect(pr.getNotes()[0]!.getFields()).toHaveLength(1);
     expect(pr.getNotes()[0]!.getFields()[0]!.getValue()).toBe(5);
+  });
+});
+
+describe('Sound object UDO completion scope (US1, T010)', () => {
+  function makeSoundDocument(udolist: UdoDefinitionSnapshot[]): ScoreObjectEditorDocumentSnapshot {
+    return {
+      shared: {
+        name: 'Sound',
+        comment: '',
+        startTime: { value: 0, unit: 'BEATS' },
+        subjectiveDuration: { value: 4, unit: 'BEATS' },
+        timeBehavior: TimeBehavior.SCORE,
+        repeatPoint: null,
+        noteProcessorChain: { chains: [], selectedId: null },
+        target: makeTimelineTarget('Sound'),
+      },
+      editor: {
+        kind: 'structured',
+        editorFamily: 'Sound',
+        payload: {
+          comment: '',
+          bsbInstrument: makeBsbInstrument(udolist.map((u) => u.name)),
+          automationParameters: [],
+          availableTabs: ['code', 'interface', 'udo', 'comments'],
+          testAvailable: false,
+          deferredCapabilities: [],
+        },
+      },
+    } as unknown as ScoreObjectEditorDocumentSnapshot;
+  }
+
+  it('project Sound BlueSynthBuilder orchestra fields receive owner-plus-project scope', () => {
+    const document = makeSoundDocument([udoSnapshot('OwnerUDO')]);
+    const html = renderToStaticMarkup(
+      React.createElement(SoundEditor, {
+        document,
+        projectUdos: [udoSnapshot('ProjectUDO')],
+        onPatch: ((_patch: ScorePatch) => {}) as (patch: ScorePatch) => void,
+      }),
+    );
+
+    // The Sound code tab (active first) renders the BSB code editor; owner (1)
+    // plus project (1) UDOs are supplied to its orchestra fields.
+    const scopes = [...html.matchAll(/data-udo-scope="([^"]+)"/g)].map((m) => m[1]);
+    expect(scopes.filter((scope) => scope === '1:1').length).toBe(3);
   });
 });

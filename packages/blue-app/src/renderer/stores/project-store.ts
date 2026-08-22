@@ -3,17 +3,22 @@ import { toast } from 'sonner';
 import {
   BlueSynthBuilder,
   BlueX7,
+  cloneBlueX7Voice,
   Effect,
   Element,
   GenericInstrument,
   JavaScriptInstrument,
+  PythonInstrument,
 } from '@blue/data';
 import {
   createEmptyProjectEditorSnapshot,
+  createEmptyScratchPadSnapshot,
   createEmptyMixerSnapshot,
   createEmptyScoreDocumentSnapshot,
   createMixerEffectEntrySnapshot,
   createDefaultBsbWidgetSnapshot,
+  createBsbRealtimeControlUpdate,
+  createInstrumentSnapshot,
   collectBsbReplacementKeysFromSnapshotTree,
   ensureUniqueName,
   reconcileMixerSnapshotWithArrangement,
@@ -21,6 +26,8 @@ import {
   type BlueLivePatch,
   type ClojureProjectSnapshot,
   type BlueSynthBuilderInstrumentSnapshot,
+  type BlueX7InstrumentSnapshot,
+  isValidBlueX7Patch,
   type BsbInterfacePatch,
   type BsbRealtimeControlUpdate,
   type BsbWidgetNodeSnapshot,
@@ -28,6 +35,7 @@ import {
   type EmbeddedOpcodeListPatch,
   type GenericInstrumentSnapshot,
   type JavaScriptInstrumentSnapshot,
+  type PythonInstrumentSnapshot,
   type MidiInputPatch,
   type MidiInputProcessorSnapshot,
   type InstrumentPatch,
@@ -41,12 +49,17 @@ import {
   type MixerSendEntrySnapshot,
   type MixerSnapshot,
   type NoteProcessorChainSnapshot,
+  type PatternLayerSnapshot,
+  type PatternScorePatch,
+  type PatternSourceObjectSnapshot,
   type PresetGroupSnapshot,
   type PresetSnapshot,
   type ProjectDocumentPatch,
   type ProjectLoadedPayload,
   type ProjectEditorSnapshot,
   type ProjectPropertiesSnapshot,
+  type ScratchPadPatch,
+  type ScratchPadSnapshot,
   type MarkerSnapshot,
   type OrchestraPatch,
   type OrchestraSnapshot,
@@ -55,6 +68,9 @@ import {
   type ScoreLayerGroupSnapshot,
   type ScoreLayerGroupType,
   type ScoreLayerSnapshot,
+  type TrackLayerGroupSnapshot,
+  type TrackSnapshot,
+  type TrackInstrumentSummary,
   type ScoreRowObjectSnapshot,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLocationRef,
@@ -63,6 +79,9 @@ import {
   type TempoMapPatch,
   type ToolbarProjectTransportSnapshot,
   type UdoDefinitionSnapshot,
+  areLayerRangesValid,
+  isValidLayerRange,
+  isValidLayerRangeTarget,
 } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 import {
@@ -77,6 +96,11 @@ import {
   convertUdoSnapshotStyle,
   formatUdoListAsOpcodeText,
 } from '../components/workbench/panels/udo/udo-snapshot-utils';
+import {
+  useMidiRoutingStore,
+  type MidiRoutingReconciliation,
+} from './midi-routing-store';
+import { useLayerSelectionStore } from './layer-selection-store';
 
 interface ProjectState {
   title: string;
@@ -94,6 +118,7 @@ interface ProjectState {
   orchestra: OrchestraSnapshot;
   mixer: MixerSnapshot;
   projectProperties: ProjectPropertiesSnapshot;
+  scratchPad: ScratchPadSnapshot;
   clojureProject: ClojureProjectSnapshot;
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
@@ -129,6 +154,7 @@ interface ProjectActions {
   updateProjectProperties: (
     patch: Partial<ProjectPropertiesSnapshot>,
   ) => Promise<void>;
+  updateScratchPad: (patch: ScratchPadPatch) => Promise<void>;
   updateClojureProject: (
     clojureProject: ClojureProjectSnapshot,
   ) => Promise<void>;
@@ -140,6 +166,7 @@ interface ProjectActions {
   applyBlueLivePatch: (patch: BlueLivePatch) => Promise<void>;
   setGeneratedCsd: (csd: { text: string; title: string } | null) => void;
   generateCsdToScreen: () => Promise<void>;
+  generateRealtimeCsdToScreen: () => Promise<void>;
   generateCsdToDisk: () => Promise<void>;
   flushPendingPatches: () => Promise<void>;
   moveScoreObjects: (moves: Array<{ objectId: string; targetStartBeats: number; targetLayerIndex?: number; targetGroupId?: string }>) => void;
@@ -187,11 +214,15 @@ const PATCH_FLUSH_DELAY_MS = 100;
 let nextLocalScoreObjectId = 1;
 
 let pendingFlushPromise: Promise<void> | null = null;
+let pendingDirtyBaseline: boolean | null = null;
+let pendingSequenceChanged = false;
 
 function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
   switch (patch.type) {
     case 'addLayer':
     case 'removeLayer':
+    case 'moveLayerRange':
+    case 'removeLayerRanges':
     case 'renameLayer':
     case 'renameLayerGroup':
     case 'moveLayerGroup':
@@ -207,11 +238,33 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'insertAutomationPoint':
     case 'deleteAutomationPoint':
     case 'moveAutomationPoint':
+    case 'setAutomationResolution':
     case 'moveAutomationRange':
     case 'scaleAutomationRange':
+    case 'convertScoreObjectToObjectBuilder':
+    case 'convertToPolyObject':
       return true;
     case 'addLayerGroup':
-      return patch.groupType === 'audio';
+      // Pattern groups need the canonical snapshot because row/source identities
+      // are assigned by the main process; track groups pull mixer state.
+      return patch.groupType === 'track' || patch.groupType === 'patterns';
+    case 'updateSoundObjectBehavior':
+    case 'replaceNoteProcessorChain':
+      // Pattern source objects have no optimistic projection for these
+      // patches; the canonical snapshot must refresh their bar renderer.
+      return (patch as { target?: { patternSource?: unknown } }).target?.patternSource !== undefined;
+    case 'addScoreObjects':
+      return patch.objects.some((object) => object.objectType === 'PolyObject');
+    case 'addTrackItem':
+    case 'moveTrackItems':
+    case 'removeTrackItems':
+    case 'setSubjectiveDurationToObjective':
+    case 'replaceTrackNoteProcessorChain':
+    case 'createTrackInstrument':
+    case 'replaceTrackInstrument':
+    case 'clearTrackInstrument':
+    case 'updateTrackInstrument':
+      return true;
     default:
       return false;
   }
@@ -227,6 +280,16 @@ function patchesRequireCanonicalProjectRefresh(
       || patch.clojureProject !== undefined
     ),
   );
+}
+
+function patchesRequireMutationAcknowledgement(
+  patches: ProjectDocumentPatch[],
+): boolean {
+  return patches.some((patch) => (
+    patch.score?.type === 'createTrackInstrument'
+    || patch.score?.type === 'replaceTrackInstrument'
+    || patch.score?.type === 'clearTrackInstrument'
+  ));
 }
 
 function normalizeMixerPatchIdentifiers(patch: MixerPatch): MixerPatch {
@@ -256,6 +319,39 @@ function createLocalScoreObjectId(objectType: string): string {
   return `local-${prefix}-${nextLocalScoreObjectId++}`;
 }
 
+function createDefaultPatternLayerSnapshot(groupId: string, layerIndex: number): PatternLayerSnapshot {
+  const layerId = `pl-local-${groupId}-${layerIndex}`;
+  const objectId = `local-sobj-pattern-${groupId}-${layerIndex}`;
+  const sourceObject: PatternSourceObjectSnapshot = {
+    objectId,
+    objectType: 'GenericScore',
+    name: '',
+    backgroundColor: 0x404040,
+    editorTarget: {
+      selectionId: objectId,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      patternSource: { groupId, layerId, sourceObjectId: objectId },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    },
+    barRenderer: { kind: 'generic', labelLines: [''], timeBehavior: 'NONE', repeatPointBeats: null },
+  };
+  return {
+    layerId,
+    name: '',
+    height: 44,
+    muted: false,
+    solo: false,
+    items: [],
+    sourceObject,
+    activeCellIndices: [],
+  };
+}
+
 function createDefaultScoreLayerSnapshot(groupId: string, layerIndex: number): ScoreLayerSnapshot {
   return {
     layerId: `${groupId}-layer-${layerIndex}`,
@@ -272,24 +368,34 @@ function createAddedLayerGroupSnapshot(groupType: ScoreLayerGroupType | undefine
   const groupId = `lg-${timestamp}`;
   const layers = [createDefaultScoreLayerSnapshot(groupId, 0)];
 
-  switch (groupType) {
-    case 'audio':
+  switch (groupType ?? 'track') {
+    case 'track': {
+      const trackId = `${groupId}-track-0`;
       return {
         groupId,
-        groupType: 'audio',
-        name: 'Audio Layer Group',
-        layerCount: layers.length,
+        groupType: 'track',
+        name: 'Track Layer Group',
+        defaultHeightIndex: 0,
+        layerCount: 1,
         isOpenableContainer: false,
-        layers,
+        layers: [{
+          ...layers[0]!,
+          layerId: trackId,
+          layerKind: 'track',
+          instrument: null,
+        }],
       };
+    }
     case 'patterns':
       return {
         groupId,
         groupType: 'patterns',
         name: 'Patterns Layer Group',
-        layerCount: layers.length,
+        layerCount: 1,
         isOpenableContainer: false,
-        layers,
+        patternBeatsLength: 4,
+        effectivePatternBeatsLength: 4,
+        layers: [createDefaultPatternLayerSnapshot(groupId, 0)],
       };
     case 'polyObject':
     default:
@@ -408,8 +514,20 @@ function findAddScoreObjectsTargetGroupIndex(
 
   return score.layerGroups.findIndex((group) => (
     group.groupId === groupId
-      && ((group.groupType === 'audio' && allAudio) || (group.groupType === 'polyObject' && allSoundObjects))
+      && ((group.groupType === 'track' && (allAudio || allSoundObjects))
+        || (group.groupType === 'polyObject' && allSoundObjects))
   ));
+}
+
+function finishPendingDirtySequenceIfSettled(): void {
+  if (pendingPatches.length > 0 || pendingDirtyBaseline === null) {
+    return;
+  }
+  if (!pendingSequenceChanged) {
+    storeSet({ isDirty: pendingDirtyBaseline });
+  }
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
 }
 
 const doFlushAsync = async (): Promise<void> => {
@@ -421,6 +539,10 @@ const doFlushAsync = async (): Promise<void> => {
 
   try {
     const receipt = await window.blueAPI.commitProjectDocumentPatches(patches);
+    if (receipt.changed === false && patchesRequireMutationAcknowledgement(patches)) {
+      throw new Error('Track instrument change was not applied; the project may have changed. Please try again.');
+    }
+    pendingSequenceChanged = pendingSequenceChanged || receipt.changed !== false;
     if (receipt?.revision !== undefined) {
       if (receipt.sessionId === latestProjectSessionId) {
         latestProjectPatchRequestId = receipt.revision;
@@ -437,8 +559,10 @@ const doFlushAsync = async (): Promise<void> => {
         console.error('[project-store] Failed to refresh canonical project state after commit:', refreshErr);
       }
     }
+    finishPendingDirtySequenceIfSettled();
   } catch (err: unknown) {
-    toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+    // Recover the canonical view and reject. Background callers attach their
+    // own toast handler; explicit live-command barriers observe this rejection.
     try {
       const snapshot = await window.blueAPI.getProjectDocument();
       if (snapshot) {
@@ -447,6 +571,8 @@ const doFlushAsync = async (): Promise<void> => {
     } catch (recoveryErr: unknown) {
       console.error('[project-store] Failed to recover canonical project state after commit error:', recoveryErr);
     }
+    finishPendingDirtySequenceIfSettled();
+    throw err instanceof Error ? err : new Error(String(err));
   }
 };
 
@@ -469,7 +595,9 @@ const scheduleFlush = (): void => {
 
   pendingPatchTimer = setTimeout(() => {
     pendingPatchTimer = null;
-    void startFlush();
+    void startFlush().catch((err: unknown) => {
+      toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }, PATCH_FLUSH_DELAY_MS);
 };
 
@@ -479,12 +607,14 @@ export const __testFlushPendingPatches = (): void => {
     pendingPatchTimer = null;
   }
 
-  void startFlush();
+  void startFlush().catch((err: unknown) => {
+    toast.error(`Failed to save project changes: ${err instanceof Error ? err.message : String(err)}`);
+  });
 };
 
 export const __testAwaitPendingPatches = async (): Promise<void> => {
   while (pendingFlushPromise) {
-    await pendingFlushPromise;
+    await pendingFlushPromise.catch(() => undefined);
   }
 };
 
@@ -496,12 +626,16 @@ export const __testClearPendingPatches = (): void => {
 
   pendingPatches = [];
   pendingFlushPromise = null;
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
 };
 
 function resetTransientProjectMutationState(): void {
   latestProjectPatchRequestId = 0;
   latestProjectSessionId = 0;
   pendingPatches = [];
+  pendingDirtyBaseline = null;
+  pendingSequenceChanged = false;
   if (pendingPatchTimer) {
     clearTimeout(pendingPatchTimer);
     pendingPatchTimer = null;
@@ -521,67 +655,10 @@ function buildRealtimeControlUpdate(
     return undefined;
   }
 
-  const baseUpdate = {
-    assignmentId: patch.orchestra.assignmentId,
-    widgetId: bsbPatch.type === 'updateWidgetProperties' || bsbPatch.type === 'updateSliderBankValue'
-      ? bsbPatch.widgetId
-      : undefined,
-  };
-
-  switch (bsbPatch.type) {
-    case 'updateWidgetProperties': {
-      const properties = bsbPatch.properties;
-      if (typeof properties.value === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'value',
-          payload: { value: properties.value },
-        };
-      }
-
-      if (typeof properties.selectedIndex === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'selectedIndex',
-          payload: { selectedIndex: properties.selectedIndex },
-        };
-      }
-
-      if (typeof properties.selected === 'boolean') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'selected',
-          payload: { selected: properties.selected },
-        };
-      }
-
-      if (typeof properties.xValue === 'number' && typeof properties.yValue === 'number') {
-        return {
-          ...baseUpdate,
-          widgetId: bsbPatch.widgetId,
-          kind: 'xy',
-          payload: { xValue: properties.xValue, yValue: properties.yValue },
-        };
-      }
-
-      return undefined;
-    }
-    case 'updateSliderBankValue':
-      return {
-        ...baseUpdate,
-        widgetId: bsbPatch.widgetId,
-        kind: 'sliderBank',
-        payload: {
-          value: bsbPatch.value,
-          sliderIndex: bsbPatch.sliderIndex,
-        },
-      };
-    default:
-      return undefined;
-  }
+  return createBsbRealtimeControlUpdate(
+    { assignmentId: patch.orchestra.assignmentId },
+    bsbPatch,
+  );
 }
 
 function syncSummaryFromProperties(
@@ -602,14 +679,18 @@ function applyProjectInfoToState(
     if (!preserveDirty) {
       resetTransientProjectMutationState();
       storeSet(buildInitialState());
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
+      useLayerSelectionStore.getState().clear();
     }
     return;
   }
 
+  let reconciliation: MidiRoutingReconciliation | undefined;
   storeSet((state: ProjectState) => {
     const incomingSessionId = info.sessionId ?? state.sessionId;
     if (incomingSessionId !== latestProjectSessionId) {
       resetTransientProjectMutationState();
+      useLayerSelectionStore.getState().clear();
       latestProjectSessionId = incomingSessionId;
     }
 
@@ -617,6 +698,7 @@ function applyProjectInfoToState(
       ? mergeProjectProperties(state.projectProperties, info.projectProperties)
       : state.projectProperties;
     const nextOrchestra = info.orchestra ?? state.orchestra;
+    const nextScore = info.score ?? state.score;
     const nextTransport = info.transport
       ? {
           ...state.transport,
@@ -631,6 +713,11 @@ function applyProjectInfoToState(
           author: state.author,
           sampleRate: state.sampleRate,
         };
+      reconciliation = buildMidiRoutingReconciliation(
+        nextScore,
+        nextOrchestra,
+        incomingSessionId,
+      );
 
     return {
       ...state,
@@ -656,6 +743,9 @@ function applyProjectInfoToState(
           ? reconcileMixerSnapshotWithArrangement(state.mixer, nextOrchestra)
           : state.mixer,
       projectProperties: nextProjectProperties,
+      scratchPad: info.scratchPad
+        ? { ...info.scratchPad }
+        : state.scratchPad,
       clojureProject: info.clojureProject
         ? cloneClojureProjectSnapshot(info.clojureProject)
         : state.clojureProject,
@@ -664,9 +754,37 @@ function applyProjectInfoToState(
       projectUdos: info.projectUdos ?? state.projectUdos,
       blueLive: info.blueLive ?? state.blueLive,
       midiInput: info.midiInput ?? state.midiInput,
-      score: info.score ?? state.score,
+      score: nextScore,
     };
   });
+  if (reconciliation) {
+    useMidiRoutingStore.getState().reconcileFocus(reconciliation);
+  }
+}
+
+function buildMidiRoutingReconciliation(
+  score: ScoreDocumentSnapshot,
+  orchestra: OrchestraSnapshot,
+  projectSessionId: number,
+): MidiRoutingReconciliation {
+  return {
+    projectSessionId,
+    tracks: score.layerGroups.flatMap((group) => (
+      group.groupType === 'track'
+        ? group.layers.map((layer) => ({
+            projectSessionId,
+            rootGroupId: group.groupId,
+            trackId: layer.layerId,
+            displayName: layer.name,
+          }))
+        : []
+    )),
+    orchestra: orchestra.arrangement.rows.map((row) => ({
+      projectSessionId,
+      assignmentId: row.assignmentId,
+      displayName: row.instrumentName || '(unnamed)',
+    })),
+  };
 }
 
 function mergeProjectProperties(
@@ -705,6 +823,7 @@ function buildInitialState(): ProjectState {
     orchestra: snapshot.orchestra,
     mixer: snapshot.mixer ?? createEmptyMixerSnapshot(),
     projectProperties: snapshot.projectProperties,
+    scratchPad: snapshot.scratchPad ?? createEmptyScratchPadSnapshot(),
     clojureProject: snapshot.clojureProject,
     transport: snapshot.transport,
     tablesText: snapshot.tablesText,
@@ -926,6 +1045,18 @@ function applyBlueLivePatchToSnapshot(
         if (cell) {
           next.bins.cells[patch.column]![patch.row] = { ...cell, enabled: patch.enabled };
         }
+      }
+      break;
+    case 'setCell':
+      if (
+        patch.column >= 0
+        && patch.column < next.bins.cells.length
+        && patch.row >= 0
+        && patch.row < next.bins.cells[patch.column]!.length
+      ) {
+        next.bins.cells[patch.column]![patch.row] = patch.cell
+          ? { ...patch.cell }
+          : null;
       }
       break;
     case 'insertRow':
@@ -1435,19 +1566,19 @@ function applyMixerPatchToSnapshot(
   return next;
 }
 
-interface AudioLayerSnapshotLocation {
+interface TrackSnapshotLocation {
   groupId: string;
   layerIndex: number;
   layerId: string;
 }
 
-function collectAudioLayerSnapshotLocations(
+function collectTrackSnapshotLocations(
   score: ScoreDocumentSnapshot,
-): AudioLayerSnapshotLocation[] {
-  const result: AudioLayerSnapshotLocation[] = [];
+): TrackSnapshotLocation[] {
+  const result: TrackSnapshotLocation[] = [];
 
   for (const group of score.layerGroups) {
-    if (group.groupType !== 'audio') {
+    if (group.groupType !== 'track') {
       continue;
     }
 
@@ -1463,13 +1594,13 @@ function collectAudioLayerSnapshotLocations(
   return result;
 }
 
-function applyAudioLayerRenameToMixerSnapshot(
+function applyTrackRenameToMixerSnapshot(
   mixer: MixerSnapshot,
   score: ScoreDocumentSnapshot,
   patch: Extract<ScorePatch, { type: 'renameLayer' }>,
 ): MixerSnapshot {
-  const audioLayers = collectAudioLayerSnapshotLocations(score);
-  const targetLayer = audioLayers.find(
+  const tracks = collectTrackSnapshotLocations(score);
+  const targetLayer = tracks.find(
     (layer) => layer.groupId === patch.groupId && layer.layerIndex === patch.layerIndex,
   );
   if (!targetLayer) {
@@ -1498,7 +1629,7 @@ function applyAudioLayerRenameToMixerSnapshot(
   return changed ? { ...mixer, channelListGroups: nextChannelListGroups, channels: nextChannels } : mixer;
 }
 
-function applyMixerChannelRenameToAudioLayerSnapshot(
+function applyMixerChannelRenameToTrackSnapshot(
   score: ScoreDocumentSnapshot,
   mixer: MixerSnapshot,
   patch: Extract<MixerPatch, { type: 'updateChannel' }>,
@@ -1507,15 +1638,15 @@ function applyMixerChannelRenameToAudioLayerSnapshot(
     return score;
   }
 
-  const audioLayerLocations = collectAudioLayerSnapshotLocations(score);
-  const audioLayerIds = new Set(audioLayerLocations.map((layer) => layer.layerId));
+  const trackLocations = collectTrackSnapshotLocations(score);
+  const trackIds = new Set(trackLocations.map((layer) => layer.layerId));
   const targetChannel = getMixerSourceChannels(mixer).find((channel) => channel.id === patch.channelId);
   const targetAssociation = targetChannel?.association;
-  if (!targetAssociation || !audioLayerIds.has(targetAssociation)) {
+  if (!targetAssociation || !trackIds.has(targetAssociation)) {
     return score;
   }
 
-  const targetLayer = audioLayerLocations.find((layer) => layer.layerId === targetAssociation);
+  const targetLayer = trackLocations.find((layer) => layer.layerId === targetAssociation);
   if (!targetLayer) {
     return score;
   }
@@ -1610,6 +1741,7 @@ function isScoreItemMatchingTarget(
   item: ScoreLayerSnapshot['items'][number],
   target: ScoreObjectEditorTargetSnapshot,
 ): boolean {
+  if (target.ownerKind === 'blueLive') return false;
   const itemTarget = item.editorTarget;
   if (!itemTarget) return false;
 
@@ -1715,10 +1847,117 @@ function cloneVisibleNoteProcessorChain(
   return cloneSnapshotValue(chain);
 }
 
+function applyPatternCellsToLayer(layer: PatternLayerSnapshot, cellIndex: number, active: boolean): PatternLayerSnapshot {
+  const has = layer.activeCellIndices.includes(cellIndex);
+  if (active === has) return layer;
+  if (active) {
+    const next = [...layer.activeCellIndices, cellIndex];
+    next.sort((a, b) => a - b);
+    return { ...layer, activeCellIndices: next };
+  }
+  return { ...layer, activeCellIndices: layer.activeCellIndices.filter((index) => index !== cellIndex) };
+}
+
+/**
+ * Optimistic projection for the canonical pattern patch family. Cell writes
+ * apply immutably per row (unknown rows are skipped; the canonical snapshot
+ * corrects them), and step-length writes update both raw and effective values.
+ */
+function applyPatternPatchToSnapshot(
+  score: ScoreDocumentSnapshot,
+  patch: PatternScorePatch,
+): ScoreDocumentSnapshot {
+  if (patch.type === 'updatePatternBeatsLength') {
+    const length = patch.patternBeatsLength;
+    if (!Number.isInteger(length) || length <= 0) return score;
+    const nextLayerGroups = score.layerGroups.map((lg) => (
+      lg.groupType === 'patterns' && lg.groupId === patch.groupId && lg.patternBeatsLength !== length
+        ? { ...lg, patternBeatsLength: length, effectivePatternBeatsLength: length }
+        : lg
+    ));
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.changes.length === 0) return score;
+  let changed = false;
+  const nextLayerGroups = score.layerGroups.map((lg) => {
+    if (lg.groupType !== 'patterns' || lg.groupId !== patch.groupId) return lg;
+    let layers = lg.layers;
+    let groupChanged = false;
+    for (const change of patch.changes) {
+      if (!Number.isInteger(change.cellIndex) || change.cellIndex < 0) continue;
+      const layerIndex = layers.findIndex((layer) => layer.layerId === change.layerId);
+      if (layerIndex < 0) continue;
+      const nextLayer = applyPatternCellsToLayer(layers[layerIndex]!, change.cellIndex, change.active);
+      if (nextLayer === layers[layerIndex]) continue;
+      layers = [...layers];
+      layers[layerIndex] = nextLayer;
+      groupChanged = true;
+    }
+    if (!groupChanged) return lg;
+    changed = true;
+    return { ...lg, layers };
+  });
+  return changed ? { ...score, layerGroups: nextLayerGroups } : score;
+}
+
+function applyPatternSourceSharedProperties(
+  score: ScoreDocumentSnapshot,
+  target: ScoreObjectEditorTargetSnapshot,
+  patch: { name?: string; backgroundColor?: number },
+): ScoreDocumentSnapshot {
+  const ref = target.patternSource!;
+  let changed = false;
+  const nextLayerGroups = score.layerGroups.map((lg) => {
+    if (lg.groupType !== 'patterns' || lg.groupId !== ref.groupId) return lg;
+    const layers = lg.layers.map((layer) => {
+      if (layer.layerId !== ref.layerId || layer.sourceObject.objectId !== ref.sourceObjectId) return layer;
+      let sourceObject = layer.sourceObject;
+      if (patch.name !== undefined && sourceObject.name !== patch.name) {
+        sourceObject = {
+          ...sourceObject,
+          name: patch.name,
+          barRenderer: { ...sourceObject.barRenderer, labelLines: splitBarLabelLines(patch.name) },
+        };
+      }
+      if (patch.backgroundColor !== undefined && sourceObject.backgroundColor !== patch.backgroundColor) {
+        sourceObject = { ...sourceObject, backgroundColor: patch.backgroundColor };
+      }
+      if (sourceObject === layer.sourceObject) return layer;
+      changed = true;
+      return { ...layer, sourceObject };
+    });
+    return { ...lg, layers };
+  });
+  return changed ? { ...score, layerGroups: nextLayerGroups } : score;
+}
+
 function applyScorePatchToSnapshot(
   score: ScoreDocumentSnapshot,
   patch: ScorePatch,
 ): ScoreDocumentSnapshot {
+  if (
+    patch.type === 'addTrackItem'
+    || patch.type === 'moveTrackItems'
+    || patch.type === 'resizeTrackItems'
+    || patch.type === 'removeTrackItems'
+    || patch.type === 'replaceTrackNoteProcessorChain'
+    || patch.type === 'createTrackInstrument'
+    || patch.type === 'replaceTrackInstrument'
+    || patch.type === 'clearTrackInstrument'
+    || patch.type === 'updateTrackInstrument'
+  ) {
+    return applyTrackPatchToSnapshot(score, patch);
+  }
+
+  if (patch.type === 'updatePatternCells' || patch.type === 'updatePatternBeatsLength') {
+    return applyPatternPatchToSnapshot(score, patch);
+  }
+
+  if (patch.type === 'updateSharedProperties' && patch.target.patternSource) {
+    return applyPatternSourceSharedProperties(score, patch.target, patch.patch);
+  }
+
   if (patch.type === 'removeScoreObjects') {
     if (patch.targets.length === 0) return score;
     const nextLayerGroups = score.layerGroups.map((lg) => ({
@@ -1739,17 +1978,22 @@ function applyScorePatchToSnapshot(
   if (patch.type === 'addLayer') {
     const nextLayerGroups = score.layerGroups.map((lg) => {
       if (lg.groupId !== patch.groupId) return lg;
-      const newLayer: ScoreLayerSnapshot = {
-        layerId: `layer-${Date.now()}`,
-        name: '',
-        height: 44,
-        muted: false,
-        solo: false,
-        items: [],
-      };
+      // Pattern rows need the full pattern snapshot shape; a generic layer
+      // snapshot would be missing the required source/cell fields before the
+      // canonical refresh arrives.
+      const newLayer: ScoreLayerSnapshot = lg.groupType === 'patterns'
+        ? createDefaultPatternLayerSnapshot(lg.groupId, patch.layerIndex + 1)
+        : {
+          layerId: `layer-${Date.now()}`,
+          name: '',
+          height: 44,
+          muted: false,
+          solo: false,
+          items: [],
+        };
       const layers = [...lg.layers];
       layers.splice(patch.layerIndex + 1, 0, newLayer);
-      return { ...lg, layers, layerCount: layers.length };
+      return { ...lg, layers, layerCount: layers.length } as ScoreLayerGroupSnapshot;
     });
     return { ...score, layerGroups: nextLayerGroups };
   }
@@ -1775,6 +2019,59 @@ function applyScorePatchToSnapshot(
       layers.splice(clampedTarget, 0, moved!);
       return { ...lg, layers };
     });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'moveLayerRange') {
+    const nextLayerGroups = score.layerGroups.map((lg) => {
+      if (lg.groupId !== patch.groupId) return lg;
+      const { startIndex, endIndex, targetIndex } = patch;
+      if (!isValidLayerRange(startIndex, endIndex, lg.layers.length)
+        || !isValidLayerRangeTarget(startIndex, endIndex, targetIndex, lg.layers.length)) return lg;
+      const count = endIndex - startIndex + 1;
+      if (startIndex === targetIndex) return lg;
+      const layers = [...lg.layers];
+      const moved = layers.splice(startIndex, count);
+      layers.splice(targetIndex, 0, ...moved);
+      return { ...lg, layers };
+    });
+    return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'removeLayerRanges') {
+    const ranges = patch.ranges;
+    if (!areLayerRangesValid(ranges, (groupId) => (
+      score.layerGroups.find((group) => group.groupId === groupId)?.layers.length
+    ))) return score;
+
+    const byGroup = new Map<string, Array<{ startIndex: number; endIndex: number }>>();
+    for (const r of ranges) {
+      let list = byGroup.get(r.groupId);
+      if (!list) {
+        list = [];
+        byGroup.set(r.groupId, list);
+      }
+      list.push({ startIndex: r.startIndex, endIndex: r.endIndex });
+    }
+
+    let nextLayerGroups = score.layerGroups.map((lg) => {
+      const groupRanges = byGroup.get(lg.groupId);
+      if (!groupRanges || groupRanges.length === 0) return lg;
+      const sorted = [...groupRanges].sort((a, b) => b.startIndex - a.startIndex);
+      let layers = [...lg.layers];
+      for (const r of sorted) {
+        layers.splice(r.startIndex, r.endIndex - r.startIndex + 1);
+      }
+      return { ...lg, layers, layerCount: layers.length };
+    });
+
+    if (patch.deleteEmptyLayerGroups) {
+      const affectedGroupIds = new Set(ranges.map((range) => range.groupId));
+      nextLayerGroups = nextLayerGroups.filter((lg) => (
+        !affectedGroupIds.has(lg.groupId) || lg.layers.length > 0
+      ));
+    }
+
     return { ...score, layerGroups: nextLayerGroups };
   }
 
@@ -1975,6 +2272,7 @@ function applyScorePatchToSnapshot(
     || patch.type === 'insertAutomationPoint'
     || patch.type === 'deleteAutomationPoint'
     || patch.type === 'moveAutomationPoint'
+    || patch.type === 'setAutomationResolution'
   ) {
     return score;
   }
@@ -2009,6 +2307,246 @@ function applyScorePatchToSnapshot(
   return { ...score, layerGroups: nextLayerGroups };
 }
 
+function applyTrackPatchToSnapshot(
+  score: ScoreDocumentSnapshot,
+  patch: Extract<ScorePatch, {
+    type:
+      | 'addTrackItem'
+      | 'moveTrackItems'
+      | 'resizeTrackItems'
+      | 'removeTrackItems'
+      | 'replaceTrackNoteProcessorChain'
+      | 'createTrackInstrument'
+      | 'replaceTrackInstrument'
+      | 'clearTrackInstrument'
+      | 'updateTrackInstrument'
+  }>,
+): ScoreDocumentSnapshot {
+  const findTrack = (groupId: string, trackId: string) => {
+    const group = score.layerGroups.find((candidate) => candidate.groupId === groupId && candidate.groupType === 'track');
+    if (!group || group.groupType !== 'track') return null;
+    const layerIndex = group.layers.findIndex((layer) => layer.layerId === trackId);
+    if (layerIndex < 0) return null;
+    return { group, layerIndex, layer: group.layers[layerIndex]! };
+  };
+
+  const findItem = (groupId: string, trackId: string, objectId?: string, objectIndex?: number) => {
+    const target = findTrack(groupId, trackId);
+    if (!target) return null;
+    const index = objectId
+      ? target.layer.items.findIndex((item) => item.objectId === objectId)
+      : objectIndex ?? -1;
+    if (index < 0 || index >= target.layer.items.length) return null;
+    return { ...target, itemIndex: index, item: target.layer.items[index]! };
+  };
+
+  if (patch.type === 'addTrackItem') {
+    const target = findTrack(patch.track.rootGroupId, patch.track.trackId);
+    if (!target) return score;
+    const objectType = patch.item.objectType ?? patch.item.type ?? 'Unknown';
+    const objectId = `local-${objectType === 'AudioClip' ? 'aclp' : 'sobj'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const item: ScoreRowObjectSnapshot = {
+      objectId,
+      objectType,
+      name: patch.item.name ?? objectType,
+      startBeats: patch.startBeats,
+      durationBeats: patch.item.durationBeats ?? 1,
+      startTimeBase: patch.item.startTimeBase ?? 'BEATS',
+      durationTimeBase: patch.item.durationTimeBase ?? 'BEATS',
+      backgroundColor: patch.item.backgroundColor ?? 0x404040,
+      isContainer: false,
+      editorTarget: {
+        selectionId: objectId,
+        selectedObjectType: objectType,
+        editorObjectType: objectType,
+        ownerKind: 'timeline',
+        displayContext: 'timeline',
+        location: {
+          rootGroupIndex: score.layerGroups.indexOf(target.group),
+          containerPath: [],
+          layerIndex: target.layerIndex,
+          objectIndex: target.layer.items.length,
+          rootGroupId: target.group.groupId,
+          layerId: target.layer.layerId,
+          trackId: target.layer.layerId,
+          layerKind: 'track',
+        },
+        supportsTimeBehavior: objectType !== 'AudioClip',
+        supportsRepeatPoint: objectType !== 'AudioClip',
+        supportsNoteProcessorChain: objectType !== 'AudioClip',
+      },
+      serializedXml: patch.item.serializedXml,
+      barRenderer: {
+        kind: objectType === 'AudioClip' ? 'audioClip' : 'fallback',
+        labelLines: [patch.item.name ?? objectType],
+        ...(objectType === 'AudioClip'
+          ? {
+            audioFilePath: '',
+            waveformKey: null,
+            fileStartTimeBeats: 0,
+            audioDurationBeats: 0,
+            looping: true,
+            fadeInBeats: 0,
+            fadeInType: 'LINEAR' as const,
+            fadeOutBeats: 0,
+            fadeOutType: 'LINEAR' as const,
+          }
+          : { reason: 'missing-data' as const }),
+      } as ScoreRowObjectSnapshot['barRenderer'],
+    };
+    const layers = score.layerGroups.map((group) => {
+      if (group.groupId !== target.group.groupId || group.groupType !== 'track') return group;
+      return {
+        ...group,
+        layers: group.layers.map((layer, index) => index === target.layerIndex
+          ? { ...layer, items: [...layer.items, item] }
+          : layer),
+      };
+    });
+    return { ...score, layerGroups: layers };
+  }
+
+  if (patch.type === 'removeTrackItems') {
+    const targets = patch.targets.map((target) => findItem(
+      target.track.rootGroupId,
+      target.track.trackId,
+      target.objectId,
+      target.objectIndex,
+    ));
+    if (targets.some((target) => !target)) return score;
+    const itemIds = new Set((targets as Array<NonNullable<typeof targets[number]>>).map((target) => target.item.objectId));
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => ({
+          ...layer,
+          items: layer.items.filter((item) => !itemIds.has(item.objectId)),
+        })),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  if (patch.type === 'moveTrackItems') {
+    const resolved = patch.moves.map((move) => ({
+      source: findItem(move.source.track.rootGroupId, move.source.track.trackId, move.source.objectId, move.source.objectIndex),
+      destination: findTrack(move.destination.rootGroupId, move.destination.trackId),
+      move,
+    }));
+    if (resolved.some((entry) => !entry.source || !entry.destination)) return score;
+    const movedIds = new Set(resolved.map((entry) => entry.source!.item.objectId));
+    const destinations = new Map<string, Array<{ item: ScoreRowObjectSnapshot; start: number }>>();
+    for (const entry of resolved) {
+      const bucket = destinations.get(entry.destination!.layer.layerId) ?? [];
+      bucket.push({ item: entry.source!.item, start: entry.move.targetStartBeats });
+      destinations.set(entry.destination!.layer.layerId, bucket);
+    }
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => {
+          const additions = destinations.get(layer.layerId) ?? [];
+          const items = layer.items
+            .filter((item) => !movedIds.has(item.objectId))
+            .concat(additions.map(({ item, start }) => ({ ...item, startBeats: start })));
+          return { ...layer, items };
+        }),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  if (patch.type === 'resizeTrackItems') {
+    const resolved = patch.resizes.map((resize) => ({
+      target: findItem(
+        resize.target.track.rootGroupId,
+        resize.target.track.trackId,
+        resize.target.objectId,
+        resize.target.objectIndex,
+      ),
+      resize,
+    }));
+    if (resolved.some((entry) => !entry.target)) return score;
+    const itemIds = new Set(resolved.map((entry) => entry.target!.item.objectId));
+    if (itemIds.size !== resolved.length) return score;
+    const byId = new Map(resolved.map((entry) => [entry.target!.item.objectId, entry.resize]));
+    const layerGroups = score.layerGroups.map((group) => group.groupType === 'track'
+      ? {
+        ...group,
+        layers: group.layers.map((layer) => ({
+          ...layer,
+          items: layer.items.map((item) => {
+            const resize = byId.get(item.objectId);
+            if (!resize) return item;
+            return {
+              ...item,
+              startBeats: resize.targetStartBeats,
+              durationBeats: resize.targetDurationBeats,
+            };
+          }),
+        })),
+      }
+      : group);
+    return { ...score, layerGroups };
+  }
+
+  const target = findTrack(patch.track.rootGroupId, patch.track.trackId);
+  if (!target) return score;
+  if (patch.type === 'replaceTrackNoteProcessorChain') {
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, noteProcessorChain: cloneVisibleNoteProcessorChain(patch.chain) } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'clearTrackInstrument') {
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument: null } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'createTrackInstrument' || patch.type === 'replaceTrackInstrument') {
+    const instrument = patch.type === 'createTrackInstrument'
+      ? { type: patch.instrumentType, instrumentType: patch.instrumentType, name: '', comment: '', enabled: true, supported: true, trackId: target.layer.layerId }
+      : { type: patch.instrument.type, instrumentType: patch.instrument.instrumentType, name: patch.instrument.name, comment: patch.instrument.comment, enabled: patch.instrument.enabled, supported: patch.instrument.type !== 'unknown', trackId: target.layer.layerId, snapshot: cloneSnapshotValue(patch.instrument) };
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument } : layer) }
+        : group),
+    };
+  }
+  if (patch.type === 'updateTrackInstrument') {
+    const current = target.layer.instrument;
+    if (!current) return score;
+    const nextSummary = { ...current };
+    const nextSnapshot = current.snapshot ? { ...current.snapshot } : undefined;
+    if (patch.patch.name !== undefined) {
+      nextSummary.name = patch.patch.name;
+      if (nextSnapshot) nextSnapshot.name = patch.patch.name;
+    }
+    if (patch.patch.comment !== undefined) {
+      nextSummary.comment = patch.patch.comment;
+      if (nextSnapshot) nextSnapshot.comment = patch.patch.comment;
+    }
+    if (patch.patch.enabled !== undefined) {
+      nextSummary.enabled = patch.patch.enabled;
+      if (nextSnapshot) nextSnapshot.enabled = patch.patch.enabled;
+    }
+    if (nextSnapshot) nextSummary.snapshot = nextSnapshot;
+    return {
+      ...score,
+      layerGroups: score.layerGroups.map((group) => group.groupId === target.group.groupId && group.groupType === 'track'
+        ? { ...group, layers: group.layers.map((layer, index) => index === target.layerIndex ? { ...layer, instrument: nextSummary } : layer) }
+        : group),
+    };
+  }
+  return score;
+}
+
 function cloneSnapshotValue<T>(value: T): T {
   if (value === null || value === undefined || typeof value !== 'object') {
     return value;
@@ -2026,6 +2564,13 @@ function cloneSnapshotValue<T>(value: T): T {
 }
 
 function cloneInstrumentSnapshotForMutation<T extends InstrumentSnapshot>(instrument: T): T {
+  if (instrument.type === 'blueX7') {
+    const x7 = instrument as unknown as BlueX7InstrumentSnapshot;
+    return {
+      ...x7,
+      voice: x7.voice ? cloneBlueX7Voice(x7.voice) : x7.voice,
+    } as unknown as T;
+  }
   return { ...instrument };
 }
 
@@ -2086,61 +2631,11 @@ function createDefaultInstrumentSnapshot(
   enabled = true,
 ): InstrumentSnapshot {
   switch (instrumentType) {
-    case 'generic': {
-      const instrument = new GenericInstrument();
-      return {
-        assignmentId,
-        type: 'generic',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        text: instrument.getText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-      };
-    }
-    case 'javascript': {
-      const instrument = new JavaScriptInstrument();
-      return {
-        assignmentId,
-        type: 'javascript',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        text: instrument.getText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-      };
-    }
-    case 'blueX7': {
-      const instrument = new BlueX7();
-      return {
-        assignmentId,
-        type: 'blueX7',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-      };
-    }
-    case 'blueSynthBuilder': {
-      const instrument = new BlueSynthBuilder();
-      return {
-        assignmentId,
-        type: 'blueSynthBuilder',
-        name: instrument.getName(),
-        enabled,
-        comment: instrument.getComment(),
-        instrumentText: instrument.getInstrumentText(),
-        alwaysOnInstrumentText: instrument.getAlwaysOnInstrumentText(),
-        globalOrc: instrument.getGlobalOrc(),
-        globalSco: instrument.getGlobalSco(),
-        objectNames: [],
-        widgets: [],
-        editEnabled: true,
-        gridSettings: { columns: 8, rows: 4, snap: true },
-        widgetTree: { id: 'root', type: 'BSBRootGroup', objectName: '', x: 0, y: 0, width: 0, height: 0, value: 0, minimum: 0, maximum: 1, properties: {}, editable: true, children: [] },
-      };
-    }
+    case 'generic': return createInstrumentSnapshot(assignmentId, new GenericInstrument(), enabled);
+    case 'javascript': return createInstrumentSnapshot(assignmentId, new JavaScriptInstrument(), enabled);
+    case 'python': return createInstrumentSnapshot(assignmentId, new PythonInstrument(), enabled);
+    case 'blueX7': return createInstrumentSnapshot(assignmentId, new BlueX7(), enabled);
+    case 'blueSynthBuilder': return createInstrumentSnapshot(assignmentId, new BlueSynthBuilder(), enabled);
   }
 
   throw new Error(`Unsupported instrument type: ${instrumentType}`);
@@ -2232,6 +2727,66 @@ function updateInstrumentSnapshot(
         instrument.objectNames = previousObjectNames;
         instrument.widgets = previousWidgets;
       }
+    }
+  } else if (instrument.type === 'blueX7') {
+    const x7 = instrument as BlueX7InstrumentSnapshot;
+    if (patch.blueX7 && x7.voice && isValidBlueX7Patch(patch.blueX7)) {
+      const p = patch.blueX7;
+      const v = x7.voice;
+      switch (p.type) {
+        case 'setCommonField':
+          v.common = { ...v.common, [p.field]: p.value };
+          break;
+        case 'setOperatorEnabled':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6) {
+            const nextEnabled = [...v.common.operatorEnabled] as [boolean, boolean, boolean, boolean, boolean, boolean];
+            nextEnabled[p.operatorIndex] = p.enabled;
+            v.common = { ...v.common, operatorEnabled: nextEnabled };
+          }
+          break;
+        case 'setLfoField':
+          v.lfo = { ...v.lfo, [p.field]: p.value };
+          break;
+        case 'setOperatorField':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6) {
+            const nextOps = [...v.operators] as typeof v.operators;
+            nextOps[p.operatorIndex] = { ...nextOps[p.operatorIndex], [p.field]: p.value };
+            v.operators = nextOps;
+          }
+          break;
+        case 'setSharedOscillatorSync':
+          v.operators = v.operators.map((op) => ({ ...op, sync: p.value })) as typeof v.operators;
+          break;
+        case 'setSharedPitchModulationSensitivity':
+          v.operators = v.operators.map((op) => ({ ...op, modulationPitch: p.value })) as typeof v.operators;
+          break;
+        case 'setOperatorEnvelopePoint':
+          if (p.operatorIndex >= 0 && p.operatorIndex < 6 && p.stageIndex >= 0 && p.stageIndex < 4) {
+            const nextOps = [...v.operators] as typeof v.operators;
+            const nextEnv = [...nextOps[p.operatorIndex].envelope] as typeof nextOps[0]['envelope'];
+            nextEnv[p.stageIndex] = { ...p.point };
+            nextOps[p.operatorIndex] = { ...nextOps[p.operatorIndex], envelope: nextEnv };
+            v.operators = nextOps;
+          }
+          break;
+        case 'setPitchEnvelopePoint':
+          if (p.stageIndex >= 0 && p.stageIndex < 4) {
+            const nextPeg = [...v.pitchEnvelope] as typeof v.pitchEnvelope;
+            nextPeg[p.stageIndex] = { ...p.point };
+            v.pitchEnvelope = nextPeg;
+          }
+          break;
+        case 'setCsoundPostCode':
+          v.csoundPostCode = p.text;
+          break;
+        case 'replaceVoice':
+          x7.voice = cloneBlueX7Voice(p.voice);
+          break;
+      }
+      const syncs = x7.voice.operators.map((op) => op.sync);
+      const pmss = x7.voice.operators.map((op) => op.modulationPitch);
+      x7.sharedOscillatorSync = syncs.every((s) => s === syncs[0]) ? syncs[0] : 'mixed';
+      x7.sharedPitchModulationSensitivity = pmss.every((s) => s === pmss[0]) ? pmss[0] : 'mixed';
     }
   }
 }
@@ -2826,6 +3381,19 @@ export function applyBsbInterfacePatchToSnapshot(
             case 'width': node.width = value as number; break;
             case 'height': node.height = value as number; break;
             case 'value': node.value = value as number; break;
+            case 'resolution':
+              // Preserve the exact decimal text in the optimistic snapshot;
+              // the numeric projection is display/layout-only.
+              if (typeof value === 'string') {
+                node.properties.resolutionDecimal = value;
+                const numeric = Number(value);
+                if (Number.isFinite(numeric)) {
+                  node.properties.resolution = numeric;
+                }
+              } else if (typeof value === 'number') {
+                node.properties.resolution = value;
+              }
+              break;
             case 'defaultValue':
               node.properties.defaultValue = value as number;
               if (node.type === 'BSBValue') {
@@ -3023,6 +3591,87 @@ export function applyBsbInterfacePatchToSnapshot(
         instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
       }
       break;
+    case 'addPresetFromSnapshot':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const targetGroup = getPresetGroupSnapshotAtPath(
+          instrument.presetGroup,
+          patch.parentGroupPath,
+        );
+        if (targetGroup) {
+          targetGroup.presets.push({
+            ...patch.preset,
+            values: patch.preset.values ? { ...patch.preset.values } : undefined,
+          });
+          targetGroup.currentPresetModified = false;
+        }
+      }
+      break;
+    case 'addPresetGroupFromSnapshot':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const targetGroup = getPresetGroupSnapshotAtPath(
+          instrument.presetGroup,
+          patch.parentGroupPath,
+        );
+        if (targetGroup) {
+          targetGroup.subGroups.push(clonePresetGroupSnapshot(patch.group));
+        }
+      }
+      break;
+    case 'renamePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const preset = findPresetById(instrument.presetGroup, patch.presetUniqueId);
+        if (preset) preset.name = patch.name;
+      }
+      break;
+    case 'renamePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const group = getPresetGroupSnapshotAtPath(instrument.presetGroup, patch.groupPath);
+        if (group) group.name = patch.name;
+      }
+      break;
+    case 'removePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        const parent = findPresetParentSnapshot(instrument.presetGroup, patch.presetUniqueId);
+        const index = parent?.presets.findIndex((preset) => preset.uniqueId === patch.presetUniqueId) ?? -1;
+        if (parent && index >= 0) {
+          parent.presets.splice(index, 1);
+          clearMissingCurrentPresetSnapshot(instrument.presetGroup);
+        }
+      }
+      break;
+    case 'removePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        removePresetGroupSnapshotAtPath(instrument.presetGroup, patch.groupPath);
+      }
+      break;
+    case 'movePreset':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        movePresetSnapshot(
+          instrument.presetGroup,
+          patch.presetUniqueId,
+          patch.parentGroupPath,
+          patch.targetIndex,
+        );
+      }
+      break;
+    case 'movePresetGroup':
+      if (instrument.presetGroup) {
+        instrument.presetGroup = clonePresetGroupSnapshot(instrument.presetGroup);
+        movePresetGroupSnapshot(
+          instrument.presetGroup,
+          patch.groupPath,
+          patch.parentGroupPath,
+          patch.targetIndex,
+        );
+      }
+      break;
     case 'synchronizePresets':
       // Optimistic update - actual sync happens on main process
       if (instrument.presetGroup) {
@@ -3188,6 +3837,14 @@ function shouldPreserveWidgetMetadataForBsbPatch(patch: BsbInterfacePatch): bool
     case 'updatePreset':
     case 'addPreset':
     case 'addPresetGroup':
+    case 'addPresetFromSnapshot':
+    case 'addPresetGroupFromSnapshot':
+    case 'renamePreset':
+    case 'renamePresetGroup':
+    case 'removePreset':
+    case 'removePresetGroup':
+    case 'movePreset':
+    case 'movePresetGroup':
     case 'synchronizePresets':
     case 'updateEmbeddedOpcodeList':
     case 'randomize':
@@ -3200,7 +3857,7 @@ function shouldPreserveWidgetMetadataForBsbPatch(patch: BsbInterfacePatch): bool
 }
 
 function applyEmbeddedOpcodeListPatchToSnapshot(
-  instrument: (GenericInstrumentSnapshot | JavaScriptInstrumentSnapshot),
+  instrument: (GenericInstrumentSnapshot | JavaScriptInstrumentSnapshot | PythonInstrumentSnapshot),
   patch: EmbeddedOpcodeListPatch,
 ): void {
   switch (patch.type) {
@@ -3279,6 +3936,125 @@ function findPresetById(
   return undefined;
 }
 
+function getPresetGroupSnapshotAtPath(
+  root: PresetGroupSnapshot,
+  path: readonly number[],
+): PresetGroupSnapshot | undefined {
+  let current = root;
+  for (const index of path) {
+    if (!Number.isInteger(index) || index < 0) return undefined;
+    const next = current.subGroups[index];
+    if (!next) return undefined;
+    current = next;
+  }
+  return current;
+}
+
+function findPresetParentSnapshot(
+  root: PresetGroupSnapshot,
+  uniqueId: string,
+): PresetGroupSnapshot | undefined {
+  if (root.presets.some((preset) => preset.uniqueId === uniqueId)) return root;
+  for (const subGroup of root.subGroups) {
+    const parent = findPresetParentSnapshot(subGroup, uniqueId);
+    if (parent) return parent;
+  }
+  return undefined;
+}
+
+function clearMissingCurrentPresetSnapshot(group: PresetGroupSnapshot): void {
+  if (group.currentPresetUniqueId && !findPresetById(group, group.currentPresetUniqueId)) {
+    group.currentPresetUniqueId = undefined;
+    group.currentPresetModified = false;
+  }
+}
+
+function removePresetGroupSnapshotAtPath(
+  root: PresetGroupSnapshot,
+  path: readonly number[],
+): boolean {
+  if (path.length === 0) return false;
+  const parent = getPresetGroupSnapshotAtPath(root, path.slice(0, -1));
+  const index = path[path.length - 1];
+  if (!parent || index === undefined || !Number.isInteger(index) || index < 0) return false;
+  const [removed] = parent.subGroups.splice(index, 1);
+  if (!removed) return false;
+  clearMissingCurrentPresetSnapshot(root);
+  return true;
+}
+
+function movePresetSnapshot(
+  root: PresetGroupSnapshot,
+  uniqueId: string,
+  parentGroupPath: readonly number[],
+  targetIndex: number,
+): boolean {
+  const sourceParent = findPresetParentSnapshot(root, uniqueId);
+  const targetParent = getPresetGroupSnapshotAtPath(root, parentGroupPath);
+  if (!sourceParent || !targetParent) return false;
+
+  const sourceIndex = sourceParent.presets.findIndex((preset) => preset.uniqueId === uniqueId);
+  if (sourceIndex < 0) return false;
+  const [preset] = sourceParent.presets.splice(sourceIndex, 1);
+  if (!preset) return false;
+
+  const rawPresetIndex = Number.isFinite(targetIndex)
+    ? Math.trunc(targetIndex) - targetParent.subGroups.length
+    : targetParent.presets.length;
+  const adjustedPresetIndex = sourceParent === targetParent && sourceIndex < rawPresetIndex
+    ? rawPresetIndex - 1
+    : rawPresetIndex;
+  const presetIndex = Math.max(0, Math.min(adjustedPresetIndex, targetParent.presets.length));
+  targetParent.presets.splice(presetIndex, 0, preset);
+  return true;
+}
+
+function isSnapshotPathWithin(
+  path: readonly number[],
+  possibleParent: readonly number[],
+): boolean {
+  return possibleParent.length < path.length
+    && possibleParent.every((index, position) => path[position] === index);
+}
+
+function movePresetGroupSnapshot(
+  root: PresetGroupSnapshot,
+  sourcePath: readonly number[],
+  parentGroupPath: readonly number[],
+  targetIndex: number,
+): boolean {
+  const samePath = sourcePath.length === parentGroupPath.length
+    && sourcePath.every((index, position) => parentGroupPath[position] === index);
+  if (sourcePath.length === 0 || samePath || isSnapshotPathWithin(parentGroupPath, sourcePath)) {
+    return false;
+  }
+
+  const sourceParent = getPresetGroupSnapshotAtPath(root, sourcePath.slice(0, -1));
+  const targetParent = getPresetGroupSnapshotAtPath(root, parentGroupPath);
+  const sourceIndex = sourcePath[sourcePath.length - 1];
+  if (
+    !sourceParent
+    || !targetParent
+    || sourceIndex === undefined
+    || !Number.isInteger(sourceIndex)
+    || sourceIndex < 0
+  ) {
+    return false;
+  }
+
+  const [group] = sourceParent.subGroups.splice(sourceIndex, 1);
+  if (!group) return false;
+  const rawGroupIndex = Number.isFinite(targetIndex)
+    ? Math.trunc(targetIndex)
+    : targetParent.subGroups.length;
+  const adjustedGroupIndex = sourceParent === targetParent && sourceIndex < rawGroupIndex
+    ? rawGroupIndex - 1
+    : rawGroupIndex;
+  const groupIndex = Math.max(0, Math.min(adjustedGroupIndex, targetParent.subGroups.length));
+  targetParent.subGroups.splice(groupIndex, 0, group);
+  return true;
+}
+
 function applyOrchestraPatchSnapshot(
   orchestra: OrchestraSnapshot,
   patch: OrchestraPatch,
@@ -3338,15 +4114,20 @@ function applyOrchestraPatchSnapshot(
       pastedInstrument.assignmentId = assignmentId;
       const nextRows = cloneArrangementRowsForMutation(next);
       const nextInstruments = cloneInstrumentsForMutation(next);
-      nextRows.push({
+      const pastedRow = {
         assignmentId,
         enabled: pastedInstrument.enabled,
         instrumentName: pastedInstrument.name,
         instrumentType: pastedInstrument.type,
         instrumentSummary: pastedInstrument.type,
         editable: true,
-      });
-      nextInstruments.push(pastedInstrument);
+      };
+      const insertAfterIndex = patch.insertAfterAssignmentId
+        ? nextRows.findIndex((row) => row.assignmentId === patch.insertAfterAssignmentId)
+        : -1;
+      const insertIndex = insertAfterIndex >= 0 ? insertAfterIndex + 1 : nextRows.length;
+      nextRows.splice(insertIndex, 0, pastedRow);
+      nextInstruments.splice(insertIndex, 0, pastedInstrument);
       break;
     }
     case 'updateAssignment': {
@@ -3544,6 +4325,8 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     clearProject: () => {
       resetTransientProjectMutationState();
       set(buildInitialState());
+      useMidiRoutingStore.getState().clearFocusForProjectSession();
+      useLayerSelectionStore.getState().clear();
     },
 
   revertProject: async () => {
@@ -3571,6 +4354,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       normalizedPatch.orchestra === undefined &&
       normalizedPatch.mixer === undefined &&
       normalizedPatch.clojureProject === undefined &&
+      (!normalizedPatch.scratchPad || Object.keys(normalizedPatch.scratchPad).length === 0) &&
       normalizedPatch.tablesText === undefined &&
       normalizedPatch.projectUdo === undefined &&
       normalizedPatch.blueLive === undefined &&
@@ -3580,6 +4364,11 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       (!normalizedPatch.transport || Object.keys(normalizedPatch.transport).length === 0)
     ) {
       return;
+    }
+
+    if (pendingDirtyBaseline === null) {
+      pendingDirtyBaseline = get().isDirty;
+      pendingSequenceChanged = false;
     }
 
     set((state) => {
@@ -3608,7 +4397,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         );
 
         if (normalizedPatch.mixer.type === 'updateChannel' && normalizedPatch.mixer.patch.name !== undefined) {
-          next.score = applyMixerChannelRenameToAudioLayerSnapshot(
+          next.score = applyMixerChannelRenameToTrackSnapshot(
             state.score,
             next.mixer,
             normalizedPatch.mixer,
@@ -3637,6 +4426,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         next.clojureProject = cloneClojureProjectSnapshot(
           normalizedPatch.clojureProject,
         );
+      }
+
+      if (normalizedPatch.scratchPad !== undefined) {
+        next.scratchPad = {
+          ...state.scratchPad,
+          ...normalizedPatch.scratchPad,
+        };
       }
 
       if (normalizedPatch.transport) {
@@ -3693,7 +4489,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         next.lastScorePatch = normalizedPatch.score;
 
         if (normalizedPatch.score.type === 'renameLayer') {
-          next.mixer = applyAudioLayerRenameToMixerSnapshot(
+          next.mixer = applyTrackRenameToMixerSnapshot(
             next.mixer,
             next.score,
             normalizedPatch.score,
@@ -3737,6 +4533,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
   updateProjectProperties: async (patch) => {
     await get().applyProjectDocumentPatch({ projectProperties: patch });
+  },
+
+  updateScratchPad: async (patch) => {
+    await get().applyProjectDocumentPatch({ scratchPad: patch });
   },
 
   updateClojureProject: async (clojureProject) => {
@@ -3872,6 +4672,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     await window.blueAPI.generateCsdToScreen();
   },
 
+  generateRealtimeCsdToScreen: async () => {
+    await window.blueAPI.generateRealtimeCsdToScreen();
+  },
+
   generateCsdToDisk: async () => {
     await window.blueAPI.generateCsdToDisk();
   },
@@ -3881,7 +4685,12 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       clearTimeout(pendingPatchTimer);
       pendingPatchTimer = null;
     }
-    await startFlush();
+    // Drain both a currently active commit and any edits queued while it was in
+    // flight. The raw commit promise rejects, so live commands cannot continue
+    // after a failed acknowledgement.
+    while (pendingFlushPromise || pendingPatches.length > 0) {
+      await (pendingFlushPromise ?? startFlush());
+    }
   },
 
   moveScoreObjects: (moves) => {

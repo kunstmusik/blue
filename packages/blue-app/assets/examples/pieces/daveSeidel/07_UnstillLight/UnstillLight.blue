@@ -1,0 +1,847 @@
+<blueData version='0.124.1'>
+  <projectProperties>
+    <title>Unstill Light</title>
+    <author>Dave Seidel</author>
+    <notes>For Greg Schiemer and Warren Burt.
+
+Copyright (c) 2008 Dave Seidel, some rights reserved.  This work is licensed under a
+Creative Commons Attribution License (see http://creativecommons.org/licenses/by/3.0/).
+
+For more information, go to http://mysterybear.net/article/30/unstill-light
+
+Add the following lines after &lt;CsoundSynthesizer&gt; and before &lt;CsInstruments&gt; below,
+uncomment by removing the leading semicolons, then edit as desired.
+
+*** START OF OPTIONS ***
+&lt;CsOptions&gt;
+;; 96K/24-bit
+;--sample-rate=96000 --control-rate=96000 --format=wav:24bit -o &quot;UnstillLight-(96-24).wav&quot;
+;; 44.1K/16-bit
+--sample-rate=44100 --control-rate=44100 --format=wav:short -o &quot;UnstillLight-(44-16).wav&quot;
+&lt;/CsOptions&gt;
+*** END OF OPTIONS ***
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>100</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>render\UnstillLight.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>modified Scheimer epimoric chorus</name>
+        <comment>The is based on an instrument designed by Greg Scheimer (http://www.uow.edu.au/crearts/staff/schiemer.html) for his wonderful piece &quot;Tempered Dekanies&quot; (http://www.uow.edu.au/crearts/staff/schiemer/ICMPC7.pdf).</comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3
+iamp	=	ampdb(p4)
+ifreq	=	p5
+itable	=	p6
+irise	=	p7
+ifall	=	p8
+
+kfreq   =       ifreq
+Smsg	strget	p9
+	puts	Smsg, 1, 1
+	prints	&quot;: %f\\n&quot;, ifreq
+
+ibend1	=	1021/1020
+ibend2	=	1020/1019
+
+kover	linen   iamp, irise, idur, ifall
+
+k5      =	ifreq * ibend1
+k6      =	ifreq * ibend2
+k7      =	ifreq * (2-ibend1)
+k8      =	ifreq * (2-ibend2)
+
+a0      poscil3   kover, kfreq, itable
+a1      poscil3   kover, k5, itable
+a2      poscil3   kover, k6, itable
+a3      poscil3   kover, k7, itable
+a4      poscil3   kover, k8, itable
+
+asigl   =       a0 + a1 + a4
+asigr   =       a0 + a2 + a3
+
+blueMixerOut	asigl, asigr
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='5' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>simple ring modulator</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3
+iamp	=	ampdb(p4)
+ifreq1	=	p5
+ifreq2	=	p6
+itable	=	p7
+irise	=	p8
+ifall	=	p9
+ipan	=	p10
+
+kenv	linen   iamp, irise, idur, ifall
+
+a1	poscil3	kenv, ifreq1, itable
+a2	poscil3	kenv, ifreq2, itable
+a3	=	a1 * a2
+
+asigl, asigr	yipan	ipan, a3
+blueMixerOut	asigl, asigr</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>2.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>-2.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='703871823' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-2.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-2.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>3.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>ReverbSC</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+            <comments/>
+            <opcodeList/>
+            <graphicInterface editEnabled='false'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>7</x>
+                <y>7</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>feedback</objectName>
+                <x>8</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.8896358</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>11</x>
+                <y>36</y>
+                <label>Feedback</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>cutoff</objectName>
+                <x>72</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>20.0</minimum>
+                <maximum>20000.0</maximum>
+                <value>8000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>36</y>
+                <label>Cut-Off</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>wetdry</objectName>
+                <x>136</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5209015</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>139</x>
+                <y>36</y>
+                <label>Wet/Dry</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='-317864823' name='cutoff' label='' min='20.0' max='20000.0' resolution='-1.0' automationEnabled='false' value='8000.0'>
+                <line name='' version='2' max='20000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='8000.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-317864825' name='feedback' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.8896358'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.8896358'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-317864821' name='wetdry' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.5209015'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.5209015'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='-990904222' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='3.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='3.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>-0.5</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='532121566' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-0.5'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='-0.5'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>; sine wave table
+gifn1	ftgen	1, 0, 1048577, 10, 1
+</globalOrc>
+    <globalSco>
+</globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>yipan</opcodeName>
+      <outTypes>aa</outTypes>
+      <inTypes>ia</inTypes>
+      <codeBody>iSpace,aout	xin
+iSpace		=	iSpace * 3.14159265359 * .5
+krtl		= 	sqrt(2) / 2 * (cos(iSpace) + sin(iSpace))
+krtr		= 	sqrt(2) / 2 * (cos(iSpace) - sin(iSpace))
+aLeft		=	aout * krtl
+aRight		=	aout * krtr
+		xout	aLeft, aRight
+</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>12</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='rational' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>11.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-16737895</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>&apos;&apos;&apos;rational.py:  Module to do rational arithmetic.
+
+  For full documentation, see http://www.nmt.edu/tcc/help/lang/python/examples/rational/.
+  Exports:
+    gcd ( a, b ):
+      [ a and b are integers -&gt;
+          return the greatest common divisor of a and b ]
+    Rational ( a, b ):
+      [ (a is a nonnegative integer) and
+        (b is a positive integer) -&gt;
+          return a new Rational instance with 
+          numerator a and denominator b ]
+    .n:    [ the numerator ]
+    .d:    [ the denominator ]   
+    .__add__(self, other):
+      [ other is a Rational instance -&gt;
+          return the sum of self and other as a Rational instance ]
+    .__sub__(self, other):
+      [ other is a Rational instance -&gt;
+          return the difference of self and other as a Rational
+          instance ]
+    .__mul__(self, other):
+      [ other is a Rational instance -&gt;
+          return the product of self and other as a Rational
+          instance ]
+    .__div__(self, other):
+      [ other is a Rational instance -&gt;
+          return the quotient of self and other as a Rational
+          instance ]
+    .__str__(self):
+      [ return a string representation of self ]
+    .__float__(self):
+      [ return a float approximation of self ]
+    .mixed(self):
+      [ return a string representation of self as a mixed
+        fraction ]
+&apos;&apos;&apos;
+def gcd ( a, b ):
+    &apos;&apos;&apos;Greatest common divisor function; Euclid&apos;s algorithm.
+
+      [ a and b are integers -&gt;
+          return the greatest common divisor of a and b ]
+   &apos;&apos;&apos;
+    if  b == 0:
+        return a
+    else:
+        return gcd(b, a%b)
+
+class Rational:
+    &quot;&quot;&quot;An instance represents a rational number.
+    &quot;&quot;&quot;
+    def __init__ ( self, a, b ):
+        &quot;&quot;&quot;Constructor for Rational.
+        &quot;&quot;&quot;
+        if  b == 0:
+            raise ZeroDivisionError, ( &quot;Denominator of a rational &quot;
+                &quot;may not be zero.&quot; )
+        else:
+            g  =  gcd ( a, b )
+            self.n  =  a / g
+            self.d  =  b / g
+    def __add__ ( self, other ):
+        &quot;&quot;&quot;Add two rational numbers.
+        &quot;&quot;&quot;
+        return Rational ( self.n * other.d + other.n * self.d,
+                          self.d * other.d )
+    def __sub__ ( self, other ):
+        &quot;&quot;&quot;Return self minus other.
+        &quot;&quot;&quot;
+        return Rational ( self.n * other.d - other.n * self.d,
+                          self.d * other.d )
+    def __mul__ ( self, other ):
+        &quot;&quot;&quot;Implement multiplication.
+        &quot;&quot;&quot;
+        return  Rational ( self.n * other.n, self.d * other.d )
+    def __div__ ( self, other ):
+        &quot;&quot;&quot;Implement division.
+        &quot;&quot;&quot;
+        return  Rational ( self.n * other.d, self.d * other.n )
+    def __str__ ( self ):
+        &apos;&apos;&apos;Display self as a string.
+        &apos;&apos;&apos;
+        return &quot;%d/%d&quot; % ( self.n, self.d )
+    def __float__ ( self ):
+        &quot;&quot;&quot;Implement the float() conversion function.
+        &quot;&quot;&quot;
+        return  float ( self.n ) / float ( self.d )
+    def mixed ( self ):
+        &quot;&quot;&quot;Render self as a mixed fraction in string form.
+        &quot;&quot;&quot;
+        #-- 1 --
+        # [ whole  :=  self.n / self.d, truncated
+        #   n2  :=  self.n % self.d ]
+        whole, n2  =  divmod ( self.n, self.d )
+        #-- 2 --
+        # [ if (whole is zero) and (n2 is zero) -&gt;
+        #     return &quot;0&quot;
+        #   else if (whole is zero) and (n2 is nonzero) -&gt;
+        #     return str(n2)+&quot;/&quot;+str(self.d)
+        #   else if n2 is zero -&gt;
+        #     return str(whole)
+        #   else -&gt;
+        #     return str(whole)+&quot; and &quot;+str(n2)+&quot;/&quot;+str(self.d) ]
+        if  whole == 0:
+            if  n2 == 0:  return &quot;0&quot;
+            else:         return (&quot;%s/%s&quot; % (n2, self.d) )
+        else:
+            if  n2 == 0:  return str(whole)
+            else:         return (&quot;%s and %s/%s&quot; % (whole, n2, self.d) )
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='epimore' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>11.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-16737895</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>class Epimore:    
+
+    def __init__(self, numerator):
+	# by definition, this instance represents numerator/numerator-1
+        denominator = numerator - 1
+
+	# save the original value
+        self.source = Rational(numerator, denominator)
+        self.source_s = &quot;%d/%d&quot; % (numerator, denominator)
+
+	# compute harmonic mean (hm) and arithmetic mean (am)
+        n2 = numerator*2
+        d2 = denominator*2
+        middle = d2 + ((n2 - d2) / 2)
+
+        self.hm = Rational(middle, d2)
+        self.hm_s = &quot;%d/%d&quot; % (middle, d2)
+
+        self.am = Rational(n2, middle)        
+        self.am_s = &quot;%d/%d&quot; % (n2, middle)
+        
+        # compute Tiepstra&apos;s &quot;significant relation&quot; (difference between am and hm)
+        temp = self.am / self.hm
+        self.sr = Rational(temp.d, temp.n)
+        self.sr_s = &quot;%d/%d&quot; % (temp.d, temp.n)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='data' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>11.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-16737895</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># base frequency
+_base = 480
+
+# array of Epimore instances
+_epimores = [
+  Epimore(2),
+  Epimore(3),
+  Epimore(4),
+  Epimore(5),
+  Epimore(6),
+  Epimore(7),
+  Epimore(8),
+  Epimore(9),
+]
+
+def getSource(i):
+	epi = _epimores[i]
+	return _base * (float(epi.source.n) / float(epi.source.d))
+def getSource_s(i):
+	return _epimores[i].source_s
+
+def getSourceInv(i):
+	epi = _epimores[i]
+	return _base * (float(epi.source.d) / float(epi.source.n))
+
+def getHM(i):
+	epi = _epimores[i]
+	return _base * (float(epi.hm.n) / float(epi.hm.d))
+def getHM_s(i):
+	return _epimores[i].hm_s
+
+def getHMInv(i):
+	epi = _epimores[i]
+	return _base * (float(epi.hm.d) / float(epi.hm.n))
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='otonal epimore' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>15.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(1), getSource_s(1))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>75.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(2), getSource_s(2))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>135.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(3), getSource_s(3))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>195.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(4), getSource_s(4))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>255.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(5), getSource_s(5))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>315.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(6), getSource_s(6))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>82.0</subjectiveDuration>
+        <startTime>375.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper epimore: %s\&quot;&quot; % (getSource(7), getSource_s(7))</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='otonal harmonic mean' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(1), getHM_s(1))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>85.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(2), getHM_s(2))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>145.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(3), getHM_s(3))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>205.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(4), getHM_s(4))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>265.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(5), getHM_s(5))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>325.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(6), getHM_s(6))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>385.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;upper harmonic mean: %s\&quot;&quot; % (getHM(7), getHM_s(7))</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='1/1' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>467.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;1/1\&quot;&quot; % (_base)</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>8.0</subjectiveDuration>
+        <startTime>469.0</startTime>
+        <name>Comment</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>was 405 start, 62 length</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='utonal harmonic mean' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>20.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(1))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>80.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(2))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>140.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(3))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>200.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(4))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>260.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(5))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>320.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(6))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>380.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted harmonic mean\&quot;&quot; % (getHMInv(7))</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='utonal epimores' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>10.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(1))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>70.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(2))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>130.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(3))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>190.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(4))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>250.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(5))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>310.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(6))</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>87.0</subjectiveDuration>
+        <startTime>370.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;i4 0.0 1.0 69 %f 1 2.0 2.0 \&quot;inverted epimore\&quot;&quot; % (getSourceInv(7))</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='ring mod drone' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>467.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>i = 0
+db = 31
+f1 = getSourceInv(i)
+f2 = getHMInv(i)
+f3 = getSource(i)
+f4 = getHM(i)
+s1 = &quot;i5 0.0 1.0 %f %f %f 1 4.0 2.0 0.0\n&quot; % (db, _base, f1)
+s2 = &quot;i5 0.0 1.0 %f %f %f 1 4.0 2.0 0.0\n&quot; % (db, _base, f2)
+s3 = &quot;i5 0.0 1.0 %f %f %f 1 4.0 2.0 0.0\n&quot; % (db, _base, f3)
+s4 = &quot;i5 0.0 1.0 %f %f %f 1 4.0 2.0 0.0\n&quot; % (db, _base, f4)
+score = s1 + s2 + s3 + s4</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+      <linePoint x='43.0' y='46.333336'/>
+      <linePoint x='86.0' y='30.0'/>
+    </line>
+  </tempo>
+</blueData>

@@ -6,10 +6,10 @@
 # intentionally reserved for a future release policy; the current workflow
 # does not require or consume Apple or Azure signing credentials.
 #
-# A final promoter job downloads all expected artifacts, validates the
-# consolidated manifest, creates a draft release, attaches platform ZIPs and
-# checksums, and publishes one public GitHub Release only when the complete
-# asset set is verified.
+# A final promoter job downloads all expected native package artifacts,
+# validates the consolidated manifest, creates a draft release, attaches the
+# packages and checksums, and publishes one public GitHub Release only when the
+# complete asset set is verified.
 #
 # Security contract:
 #   - Package jobs use read-only repository access and no production signing
@@ -67,6 +67,8 @@ jobs:
     name: package (macos-${{ matrix.arch }})
     needs: validate-version
     runs-on: ${{ matrix.runner }}
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     strategy:
       fail-fast: false
       matrix:
@@ -81,8 +83,11 @@ jobs:
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
 
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
 
       - name: Build unsigned macOS package
         env:
@@ -94,30 +99,30 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Create stable release ZIP
-        working-directory: packages/blue-app/release
+      - name: Stage stable macOS package
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          installer="Blue-${APP_VERSION}-arm64.dmg"
-          bundle="blue-macos-arm64-${APP_VERSION}.zip"
-          test -f "$installer"
-          zip -j "$bundle" "$installer"
+          source="packages/blue-app/release/Blue-${APP_VERSION}-arm64.dmg"
+          asset="packages/blue-app/release/blue-macos-arm64-${APP_VERSION}.dmg"
+          test -f "$source"
+          cp "$source" "$asset"
 
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v5
+      - name: Upload macOS package
+        uses: actions/upload-artifact@v7
         with:
-          name: blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.zip
-          path: packages/blue-app/release/blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.dmg
+          archive: false
           if-no-files-found: error
           retention-days: 14
-          compression-level: 0
           overwrite: true
 
   package-windows:
     name: package (windows-x64)
     needs: validate-version
     runs-on: windows-2022
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     permissions:
       contents: read
     steps:
@@ -127,8 +132,11 @@ jobs:
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
 
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
 
       - name: Build unsigned Windows installer
         run: |
@@ -138,32 +146,33 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Create stable release ZIP
+      - name: Stage stable Windows package
         shell: pwsh
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          $installer = "packages/blue-app/release/Blue-Setup-$env:APP_VERSION.exe"
-          $bundle = "packages/blue-app/release/blue-windows-x64-$env:APP_VERSION.zip"
-          if (-not (Test-Path -PathType Leaf $installer)) {
-            throw "Expected Windows installer not found: $installer"
+          $source = "packages/blue-app/release/Blue-Setup-$env:APP_VERSION.exe"
+          $asset = "packages/blue-app/release/blue-windows-x64-$env:APP_VERSION.exe"
+          if (-not (Test-Path -PathType Leaf $source)) {
+            throw "Expected Windows installer not found: $source"
           }
-          Compress-Archive -Path $installer -DestinationPath $bundle
+          Copy-Item -Path $source -Destination $asset
 
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v5
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v7
         with:
-          name: blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip
-          path: packages/blue-app/release/blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.exe
+          archive: false
           if-no-files-found: error
           retention-days: 14
-          compression-level: 0
           overwrite: true
 
   package-linux:
     name: package (linux-x64)
     needs: validate-version
     runs-on: ubuntu-22.04
+    env:
+      BLUE_RELEASE_CHANNEL: stable
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -171,8 +180,11 @@ jobs:
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
 
-      - name: Verify package inputs
-        run: pnpm verify:package-inputs
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
 
       - name: Build Linux packages
         run: |
@@ -180,28 +192,41 @@ jobs:
 
       - name: Verify packaged app (smoke)
         run: |
-          pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+          xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Create stable release ZIP
-        working-directory: packages/blue-app/release
+      - name: Verify AppImage direct and extracted runtime
+        run: |
+          xvfb-run --auto-servernum pnpm --filter @blue/app verify:appimage
+
+      - name: Stage stable Linux packages
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          appimage="Blue-${APP_VERSION}.AppImage"
-          deb="Blue_${APP_VERSION}_amd64.deb"
-          bundle="blue-linux-x64-${APP_VERSION}.zip"
-          test -f "$appimage"
-          test -f "$deb"
-          zip -j "$bundle" "$appimage" "$deb"
+          appimage_source="packages/blue-app/release/Blue-${APP_VERSION}.AppImage"
+          deb_source="packages/blue-app/release/Blue_${APP_VERSION}_amd64.deb"
+          appimage_asset="packages/blue-app/release/blue-linux-x64-${APP_VERSION}.AppImage"
+          deb_asset="packages/blue-app/release/blue-linux-x64-${APP_VERSION}.deb"
+          test -f "$appimage_source"
+          test -f "$deb_source"
+          cp "$appimage_source" "$appimage_asset"
+          cp "$deb_source" "$deb_asset"
 
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v5
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v7
         with:
-          name: blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip
-          path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.AppImage
+          archive: false
           if-no-files-found: error
           retention-days: 14
-          compression-level: 0
+          overwrite: true
+
+      - name: Upload Linux Debian package
+        uses: actions/upload-artifact@v7
+        with:
+          path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.deb
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
           overwrite: true
 
   publish-stable:
@@ -221,10 +246,10 @@ jobs:
           node-version: 22
 
       - name: Download all package artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: release-assets
-          pattern: blue-*-${{ needs.validate-version.outputs.app-version }}.zip
+          pattern: blue-*-${{ needs.validate-version.outputs.app-version }}.*
 
       - name: Consolidate and verify the exact release asset set
         env:
@@ -232,9 +257,10 @@ jobs:
         run: |
           mkdir -p consolidated
           expected=(
-            "blue-macos-arm64-${APP_VERSION}.zip"
-            "blue-windows-x64-${APP_VERSION}.zip"
-            "blue-linux-x64-${APP_VERSION}.zip"
+            "blue-macos-arm64-${APP_VERSION}.dmg"
+            "blue-windows-x64-${APP_VERSION}.exe"
+            "blue-linux-x64-${APP_VERSION}.AppImage"
+            "blue-linux-x64-${APP_VERSION}.deb"
           )
           for asset in "${expected[@]}"; do
             mapfile -t matches < <(find release-assets -type f -name "$asset" -print)
@@ -244,9 +270,9 @@ jobs:
             fi
             cp "${matches[0]}" consolidated/
           done
-          mapfile -t actual < <(find release-assets -type f -name 'blue-*.zip' -print)
+          mapfile -t actual < <(find release-assets -type f -name 'blue-*' -print)
           if [ "${#actual[@]}" -ne "${#expected[@]}" ]; then
-            echo "Unexpected or duplicate release ZIPs were downloaded:"
+            echo "Unexpected or duplicate release packages were downloaded:"
             printf '  %s\n' "${actual[@]}"
             exit 1
           fi
@@ -260,7 +286,7 @@ jobs:
             --out consolidated/release-manifest.json \
             --release-dir consolidated \
             --checksums-out consolidated/checksums-sha256.txt \
-            --asset-mode bundles \
+            --asset-mode packages \
             --verification-status verified \
             --app-version "$APP_VERSION" \
             --source-revision ${{ github.sha }}
@@ -271,7 +297,7 @@ jobs:
         run: |
           node scripts/release-artifact-manifest.mjs validate \
             --manifest consolidated/release-manifest.json \
-            --asset-mode bundles \
+            --asset-mode packages \
             --require-verified \
             --app-version "$APP_VERSION" \
             --source-revision ${{ github.sha }} \
@@ -284,9 +310,9 @@ jobs:
             echo "body<<RELEASE_BODY_EOF"
             echo "Source revision: \`${{ github.sha }}\`"
             echo ""
-            echo "macOS: **unsigned** DMG in \`blue-macos-arm64-${{ needs.validate-version.outputs.app-version }}.zip\`."
-            echo "Windows: **unsigned** NSIS installer in \`blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip\`."
-            echo "Linux: AppImage and Debian package in \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip\`."
+            echo "macOS: **unsigned** \`blue-macos-arm64-${{ needs.validate-version.outputs.app-version }}.dmg\`."
+            echo "Windows: **unsigned** \`blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.exe\`."
+            echo "Linux: \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.AppImage\` or \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.deb\`."
             echo ""
             echo "## Installation"
             echo ""
@@ -298,7 +324,7 @@ jobs:
             echo ""
             echo "## Runtime prerequisites"
             echo ""
-            echo "Install **Java 17+**, **Csound 7**, and **\`blue-engine\`** separately for audio playback. They are not bundled."
+            echo "Blue Engine is bundled. Install **Java 17+** for Java-backed features and **Csound 7** for audio playback; Blue still opens and edits projects when Csound is unavailable."
             echo ""
             echo "## Verification"
             echo ""
@@ -317,7 +343,10 @@ jobs:
           body: ${{ steps.body.outputs.body }}
           generate_release_notes: true
           files: |
-            consolidated/blue-*.zip
+            consolidated/blue-*.dmg
+            consolidated/blue-*.exe
+            consolidated/blue-*.AppImage
+            consolidated/blue-*.deb
             consolidated/checksums-sha256.txt
             consolidated/release-manifest.json
           fail_on_unmatched_files: true

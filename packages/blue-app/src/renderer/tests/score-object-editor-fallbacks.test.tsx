@@ -7,8 +7,8 @@ import {
   Instance,
   SoundObjectLibrary,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
+  AudioFile,
+  FrozenSoundObject,
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
@@ -24,6 +24,17 @@ function makeLibRef(libId: string, objectType: string, index: number = 0): Score
 
 function addLibObject(lib: SoundObjectLibrary, obj: any): string {
   return lib.addObject(obj);
+}
+
+function makeDataWithObject(obj: any): BlueData {
+  const data = new BlueData();
+  data.getScore().length = 0;
+  const poly = new PolyObject();
+  const layer = new SoundLayer();
+  layer.push(obj);
+  poly.push(layer);
+  data.getScore().push(poly);
+  return data;
 }
 
 function makeTimelineTarget(
@@ -45,6 +56,21 @@ function makeTimelineTarget(
 }
 
 describe('Fallback for unsupported types (T035)', () => {
+  it('keeps supported file-backed types on their dedicated editor routes', () => {
+    const audioFile = new AudioFile();
+    const frozen = new FrozenSoundObject();
+
+    const audioDoc = createScoreObjectEditorDocument(makeDataWithObject(audioFile), {
+      target: makeTimelineTarget('AudioFile'),
+    });
+    const frozenDoc = createScoreObjectEditorDocument(makeDataWithObject(frozen), {
+      target: makeTimelineTarget('FrozenSoundObject'),
+    });
+
+    expect(audioDoc?.editor.kind).toBe('audioFile');
+    expect(frozenDoc?.editor.kind).toBe('frozenSoundObject');
+  });
+
   it('returns fallback with unsupported reason for unknown object type', () => {
     const data = new BlueData();
     data.getScore().length = 0;

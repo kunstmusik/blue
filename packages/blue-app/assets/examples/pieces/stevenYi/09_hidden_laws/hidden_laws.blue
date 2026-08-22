@@ -1,0 +1,1571 @@
+<blueData version='2.7.4_dev'>
+  <projectProperties>
+    <title>Hidden Laws</title>
+    <author>Steven Yi</author>
+    <notes>A quiet meditation developed using four processes made up of bit-shifting and bit-masking operations. 
+The rules, or &quot;laws&quot;, of each process are not complex on their own but together create an intricate texture and rhythm. 
+
+Completed: July 11, 2019
+
+Visualization: 
+
+https://codepen.io/kunstmusik/pen/xoMMbJ</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>64</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>true</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Voice</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ifreq = p4
+iamp = ampdbfs(p5)
+irvb = ampdbfs(-12)
+  
+;; Signal Generator
+kfreq = ifreq * (lfo(&lt;lfo_amp&gt;, &lt;lfo_freq&gt;) + 1)
+asig = vco2(iamp, kfreq)
+asig += vco2(iamp, kfreq * 2, 12)
+
+  
+;; Signal Processing
+  
+asig = zdf_ladder(asig, &lt;filt_cut&gt;, 4)
+;asig = zdf_ladder(asig, expon:a(sr / 3, p3, ifreq), 4)
+
+asig *= linsegr(0, 0.25, 1, 0.25, 0) * ampdbfs(&lt;gain_adj&gt;)
+  
+;; Panning and send to mixer
+al, ar pan2 asig, &lt;pan&gt;
+ 
+;sbus_mix(0, al, ar)
+;sbus_mix(1, al * irvb, ar * irvb)
+
+blueMixerOut &quot;&lt;subchan_send&gt;&quot;, al * &lt;reverb_amt&gt;, ar * &lt;reverb_amt&gt;
+
+blueMixerOut al, ar
+</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
+        <graphicInterface editEnabled='false'>
+          <gridSettings>
+            <width>10</width>
+            <height>10</height>
+            <gridStyle>DOT</gridStyle>
+            <snapGridEnabled>true</snapGridEnabled>
+          </gridSettings>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+            <objectName></objectName>
+            <x>0</x>
+            <y>0</y>
+            <groupName>Group</groupName>
+            <backgroundColor>0x00000033</backgroundColor>
+            <borderColor>0x000000ff</borderColor>
+            <labelTextColor>0xffffffff</labelTextColor>
+            <titleEnabled>true</titleEnabled>
+            <width>20</width>
+            <height>20</height>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>330</x>
+              <y>10</y>
+              <groupName>Space</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>20</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>reverb_amt</objectName>
+                <x>90</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.09999999999999992</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Reverb Amt</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>pan</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Pan</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>gain_adj</objectName>
+                <x>170</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>-60.0</minimum>
+                <maximum>0.0</maximum>
+                <value>-7.105427357601002E-15</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Gain Adj (dB)</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown'>
+                <objectName>subchan_send</objectName>
+                <x>110</x>
+                <y>108</y>
+                <channelOutput>SubChannel1</channelOutput>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                <objectName></objectName>
+                <x>30</x>
+                <y>110</y>
+                <label>Reverb Send:</label>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>10</x>
+              <y>10</y>
+              <groupName>Filter</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>149</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>filt_cut</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>60.0</minimum>
+                <maximum>10000.0</maximum>
+                <value>1000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Cut</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.5</minimum>
+                <maximum>20.0</maximum>
+                <value>4.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Resonance</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>170</x>
+              <y>10</y>
+              <groupName>LFO</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_amp</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>0.25</maximum>
+                <value>0.005</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Amp</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_freq</objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.001</minimum>
+                <maximum>8.0</maximum>
+                <value>4.7</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Freq</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+          </bsbObject>
+        </graphicInterface>
+        <parameterList>
+          <parameter uniqueId='-664652614' name='lfo_amp' label='' min='0.0' max='0.25' bdresolution='-1' automationEnabled='false' value='0.005'>
+            <line name='' version='2' max='0.25' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.005'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664652612' name='lfo_freq' label='' min='0.001' max='8.0' bdresolution='-1' automationEnabled='false' value='4.7'>
+            <line name='' version='2' max='8.0' min='0.001' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4.7'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664652608' name='pan' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.5'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.5'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664652606' name='reverb_amt' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.09999999999999992'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.09999999999999992'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651476' name='gain_adj' label='' min='-60.0' max='0.0' bdresolution='-1' automationEnabled='false' value='-7.105427357601002E-15'>
+            <line name='' version='2' max='0.0' min='-60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-7.105427357601002E-15'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651416' name='filt_cut' label='' min='60.0' max='10000.0' bdresolution='-1' automationEnabled='false' value='1000.0'>
+            <line name='' version='2' max='10000.0' min='60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1000.0'/>
+            </line>
+          </parameter>
+        </parameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Voice</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ifreq = p4
+iamp = ampdbfs(p5)
+irvb = ampdbfs(-12)
+  
+;; Signal Generator
+kfreq = ifreq * (lfo(&lt;lfo_amp&gt;, &lt;lfo_freq&gt;) + 1)
+asig = vco2(iamp, kfreq)
+asig += vco2(iamp, kfreq * 2, 12)
+
+  
+;; Signal Processing
+  
+asig = zdf_ladder(asig, &lt;filt_cut&gt;, 4)
+;asig = zdf_ladder(asig, expon:a(sr / 3, p3, ifreq), 4)
+
+asig *= linsegr(0, 0.25, 1, 0.25, 0) * ampdbfs(&lt;gain_adj&gt;)
+  
+;; Panning and send to mixer
+al, ar pan2 asig, &lt;pan&gt;
+ 
+;sbus_mix(0, al, ar)
+;sbus_mix(1, al * irvb, ar * irvb)
+
+blueMixerOut &quot;&lt;subchan_send&gt;&quot;, al * &lt;reverb_amt&gt;, ar * &lt;reverb_amt&gt;
+
+blueMixerOut al, ar
+</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
+        <graphicInterface editEnabled='false'>
+          <gridSettings>
+            <width>10</width>
+            <height>10</height>
+            <gridStyle>DOT</gridStyle>
+            <snapGridEnabled>true</snapGridEnabled>
+          </gridSettings>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+            <objectName></objectName>
+            <x>0</x>
+            <y>0</y>
+            <groupName>Group</groupName>
+            <backgroundColor>0x00000033</backgroundColor>
+            <borderColor>0x000000ff</borderColor>
+            <labelTextColor>0xffffffff</labelTextColor>
+            <titleEnabled>true</titleEnabled>
+            <width>20</width>
+            <height>20</height>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>170</x>
+              <y>10</y>
+              <groupName>LFO</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_amp</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>0.25</maximum>
+                <value>0.005000000000000001</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Amp</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_freq</objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.001</minimum>
+                <maximum>8.0</maximum>
+                <value>4.7</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Freq</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>10</x>
+              <y>10</y>
+              <groupName>Filter</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>149</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>filt_cut</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>60.0</minimum>
+                <maximum>10000.0</maximum>
+                <value>1000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Cut</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.5</minimum>
+                <maximum>20.0</maximum>
+                <value>4.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Resonance</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>330</x>
+              <y>10</y>
+              <groupName>Space</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>20</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                <objectName></objectName>
+                <x>30</x>
+                <y>110</y>
+                <label>Reverb Send:</label>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>pan</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.3</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Pan</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown'>
+                <objectName>subchan_send</objectName>
+                <x>110</x>
+                <y>108</y>
+                <channelOutput>SubChannel1</channelOutput>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>reverb_amt</objectName>
+                <x>90</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.25</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Reverb Amt</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>gain_adj</objectName>
+                <x>170</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>-60.0</minimum>
+                <maximum>0.0</maximum>
+                <value>-3.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Gain Adj (dB)</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+          </bsbObject>
+        </graphicInterface>
+        <parameterList>
+          <parameter uniqueId='-664651360' name='gain_adj' label='' min='-60.0' max='0.0' bdresolution='-1' automationEnabled='false' value='-3.0'>
+            <line name='' version='2' max='0.0' min='-60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-3.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651358' name='reverb_amt' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.25'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.25'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651356' name='pan' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.3'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.3'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651354' name='filt_cut' label='' min='60.0' max='10000.0' bdresolution='-1' automationEnabled='false' value='1000.0'>
+            <line name='' version='2' max='10000.0' min='60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1000.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651352' name='lfo_freq' label='' min='0.001' max='8.0' bdresolution='-1' automationEnabled='false' value='4.7'>
+            <line name='' version='2' max='8.0' min='0.001' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4.7'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651350' name='lfo_amp' label='' min='0.0' max='0.25' bdresolution='-1' automationEnabled='false' value='0.005000000000000001'>
+            <line name='' version='2' max='0.25' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.005000000000000001'/>
+            </line>
+          </parameter>
+        </parameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Voice</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ifreq = p4
+iamp = ampdbfs(p5)
+irvb = ampdbfs(-12)
+  
+;; Signal Generator
+kfreq = ifreq * (lfo(&lt;lfo_amp&gt;, &lt;lfo_freq&gt;) + 1)
+asig = vco2(iamp, kfreq)
+asig += vco2(iamp, kfreq * 2, 12)
+
+  
+;; Signal Processing
+  
+asig = zdf_ladder(asig, &lt;filt_cut&gt;, 4)
+;asig = zdf_ladder(asig, expon:a(sr / 3, p3, ifreq), 4)
+
+asig *= linsegr(0, 0.25, 1, 0.25, 0) * ampdbfs(&lt;gain_adj&gt;)
+  
+;; Panning and send to mixer
+al, ar pan2 asig, &lt;pan&gt;
+ 
+;sbus_mix(0, al, ar)
+;sbus_mix(1, al * irvb, ar * irvb)
+
+blueMixerOut &quot;&lt;subchan_send&gt;&quot;, al * &lt;reverb_amt&gt;, ar * &lt;reverb_amt&gt;
+
+blueMixerOut al, ar
+</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
+        <graphicInterface editEnabled='false'>
+          <gridSettings>
+            <width>10</width>
+            <height>10</height>
+            <gridStyle>DOT</gridStyle>
+            <snapGridEnabled>true</snapGridEnabled>
+          </gridSettings>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+            <objectName></objectName>
+            <x>0</x>
+            <y>0</y>
+            <groupName>Group</groupName>
+            <backgroundColor>0x00000033</backgroundColor>
+            <borderColor>0x000000ff</borderColor>
+            <labelTextColor>0xffffffff</labelTextColor>
+            <titleEnabled>true</titleEnabled>
+            <width>20</width>
+            <height>20</height>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>170</x>
+              <y>10</y>
+              <groupName>LFO</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_freq</objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.001</minimum>
+                <maximum>8.0</maximum>
+                <value>4.7</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Freq</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_amp</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>0.25</maximum>
+                <value>0.005000000000000001</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Amp</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>10</x>
+              <y>10</y>
+              <groupName>Filter</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>149</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.5</minimum>
+                <maximum>20.0</maximum>
+                <value>4.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Resonance</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>filt_cut</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>60.0</minimum>
+                <maximum>10000.0</maximum>
+                <value>1000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Cut</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>330</x>
+              <y>10</y>
+              <groupName>Space</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>20</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>reverb_amt</objectName>
+                <x>90</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.25</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Reverb Amt</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>gain_adj</objectName>
+                <x>170</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>-60.0</minimum>
+                <maximum>0.0</maximum>
+                <value>-3.000000000000007</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Gain Adj (dB)</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                <objectName></objectName>
+                <x>30</x>
+                <y>110</y>
+                <label>Reverb Send:</label>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown'>
+                <objectName>subchan_send</objectName>
+                <x>110</x>
+                <y>108</y>
+                <channelOutput>SubChannel1</channelOutput>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>pan</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.7</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Pan</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+          </bsbObject>
+        </graphicInterface>
+        <parameterList>
+          <parameter uniqueId='-664651344' name='filt_cut' label='' min='60.0' max='10000.0' bdresolution='-1' automationEnabled='false' value='1000.0'>
+            <line name='' version='2' max='10000.0' min='60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1000.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651342' name='lfo_freq' label='' min='0.001' max='8.0' bdresolution='-1' automationEnabled='false' value='4.7'>
+            <line name='' version='2' max='8.0' min='0.001' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4.7'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651340' name='lfo_amp' label='' min='0.0' max='0.25' bdresolution='-1' automationEnabled='false' value='0.005000000000000001'>
+            <line name='' version='2' max='0.25' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.005000000000000001'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651338' name='gain_adj' label='' min='-60.0' max='0.0' bdresolution='-1' automationEnabled='false' value='-3.000000000000007'>
+            <line name='' version='2' max='0.0' min='-60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-3.000000000000007'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651336' name='reverb_amt' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.25'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.25'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651334' name='pan' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.7'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.7'/>
+            </line>
+          </parameter>
+        </parameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Voice</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ifreq = p4
+iamp = ampdbfs(p5)
+irvb = ampdbfs(-12)
+  
+;; Signal Generator
+kfreq = ifreq * (lfo(&lt;lfo_amp&gt;, &lt;lfo_freq&gt;) + 1)
+asig = vco2(iamp, kfreq)
+asig += vco2(iamp, kfreq * 2, 12)
+
+  
+;; Signal Processing
+  
+asig = zdf_ladder(asig, &lt;filt_cut&gt;, 4)
+;asig = zdf_ladder(asig, expon:a(sr / 3, p3, ifreq), 4)
+
+asig *= linsegr(0, 0.25, 1, 0.25, 0) * ampdbfs(&lt;gain_adj&gt;)
+  
+;; Panning and send to mixer
+al, ar pan2 asig, &lt;pan&gt;
+ 
+;sbus_mix(0, al, ar)
+;sbus_mix(1, al * irvb, ar * irvb)
+
+blueMixerOut &quot;&lt;subchan_send&gt;&quot;, al * &lt;reverb_amt&gt;, ar * &lt;reverb_amt&gt;
+
+blueMixerOut al, ar
+</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
+        <graphicInterface editEnabled='false'>
+          <gridSettings>
+            <width>10</width>
+            <height>10</height>
+            <gridStyle>DOT</gridStyle>
+            <snapGridEnabled>true</snapGridEnabled>
+          </gridSettings>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+            <objectName></objectName>
+            <x>0</x>
+            <y>0</y>
+            <groupName>Group</groupName>
+            <backgroundColor>0x00000033</backgroundColor>
+            <borderColor>0x000000ff</borderColor>
+            <labelTextColor>0xffffffff</labelTextColor>
+            <titleEnabled>true</titleEnabled>
+            <width>20</width>
+            <height>20</height>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>330</x>
+              <y>10</y>
+              <groupName>Space</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>20</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown'>
+                <objectName>subchan_send</objectName>
+                <x>110</x>
+                <y>108</y>
+                <channelOutput>SubChannel1</channelOutput>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>gain_adj</objectName>
+                <x>170</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>-60.0</minimum>
+                <maximum>0.0</maximum>
+                <value>-6.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Gain Adj (dB)</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>pan</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5499999999999999</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Pan</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>reverb_amt</objectName>
+                <x>90</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.49999999999999994</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Reverb Amt</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                <objectName></objectName>
+                <x>30</x>
+                <y>110</y>
+                <label>Reverb Send:</label>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>170</x>
+              <y>10</y>
+              <groupName>LFO</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>20</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_amp</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>0.25</maximum>
+                <value>0.05</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Amp</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>lfo_freq</objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.001</minimum>
+                <maximum>8.0</maximum>
+                <value>4.7</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Freq</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+              <objectName></objectName>
+              <x>10</x>
+              <y>10</y>
+              <groupName>Filter</groupName>
+              <backgroundColor>0x00000033</backgroundColor>
+              <borderColor>0x000000ff</borderColor>
+              <labelTextColor>0xffffffff</labelTextColor>
+              <titleEnabled>true</titleEnabled>
+              <width>149</width>
+              <height>141</height>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.5</minimum>
+                <maximum>20.0</maximum>
+                <value>4.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Resonance</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>filt_cut</objectName>
+                <x>10</x>
+                <y>10</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>60.0</minimum>
+                <maximum>10000.0</maximum>
+                <value>1000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+                <valueDisplayEnabled>true</valueDisplayEnabled>
+                <label>Cut</label>
+                <labelEnabled>true</labelEnabled>
+                <font>
+                  <name>System Regular</name>
+                  <size>12.0</size>
+                </font>
+              </bsbObject>
+            </bsbObject>
+          </bsbObject>
+        </graphicInterface>
+        <parameterList>
+          <parameter uniqueId='-664651328' name='pan' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.5499999999999999'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.5499999999999999'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651326' name='reverb_amt' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.49999999999999994'>
+            <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.49999999999999994'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651324' name='gain_adj' label='' min='-60.0' max='0.0' bdresolution='-1' automationEnabled='false' value='-6.0'>
+            <line name='' version='2' max='0.0' min='-60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='-6.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651322' name='lfo_freq' label='' min='0.001' max='8.0' bdresolution='-1' automationEnabled='false' value='4.7'>
+            <line name='' version='2' max='8.0' min='0.001' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4.7'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651320' name='lfo_amp' label='' min='0.0' max='0.25' bdresolution='-1' automationEnabled='false' value='0.05'>
+            <line name='' version='2' max='0.25' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.05'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-664651318' name='filt_cut' label='' min='60.0' max='10000.0' bdresolution='-1' automationEnabled='false' value='1000.0'>
+            <line name='' version='2' max='10000.0' min='60.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1000.0'/>
+            </line>
+          </parameter>
+        </parameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>20.0</extraRenderTime>
+    <channelList listName='Orchestra' list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-749001868' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-664651348' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-664651332' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-664651316' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList listName='SubChannels' list='subChannels'>
+      <channel>
+        <name>SubChannel1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'>
+          <effect>
+            <name>ReverbSC</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+            <comments/>
+            <opcodeList/>
+            <graphicInterface editEnabled='false'>
+              <gridSettings>
+                <width>15</width>
+                <height>15</height>
+                <gridStyle>NONE</gridStyle>
+                <snapGridEnabled>false</snapGridEnabled>
+              </gridSettings>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+                <objectName></objectName>
+                <x>0</x>
+                <y>0</y>
+                <groupName>Group</groupName>
+                <backgroundColor>0x00000033</backgroundColor>
+                <borderColor>0x000000ff</borderColor>
+                <labelTextColor>0xffffffff</labelTextColor>
+                <titleEnabled>true</titleEnabled>
+                <width>20</width>
+                <height>20</height>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>80</x>
+                  <y>36</y>
+                  <label>Cut-Off</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>wetdry</objectName>
+                  <x>136</x>
+                  <y>55</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>0.0</minimum>
+                  <maximum>1.0</maximum>
+                  <value>0.0</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                  <label>label</label>
+                  <labelEnabled>false</labelEnabled>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>7</x>
+                  <y>7</y>
+                  <label>ReverbSC</label>
+                  <font>
+                    <name>System Bold</name>
+                    <size>18.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>36</y>
+                  <label>Feedback</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>139</x>
+                  <y>36</y>
+                  <label>Wet/Dry</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>cutoff</objectName>
+                  <x>72</x>
+                  <y>55</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>20.0</minimum>
+                  <maximum>20000.0</maximum>
+                  <value>3000.0</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                  <label>label</label>
+                  <labelEnabled>false</labelEnabled>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>feedback</objectName>
+                  <x>8</x>
+                  <y>55</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>0.0</minimum>
+                  <maximum>1.0</maximum>
+                  <value>0.8</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                  <label>label</label>
+                  <labelEnabled>false</labelEnabled>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+              </bsbObject>
+            </graphicInterface>
+            <parameterList>
+              <parameter uniqueId='-749000605' name='cutoff' label='' min='20.0' max='20000.0' bdresolution='-1' automationEnabled='false' value='3000.0'>
+                <line name='' version='2' max='20000.0' min='20.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='3000.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-749000603' name='wetdry' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+                <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-749000601' name='feedback' label='' min='0.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.8'>
+                <line name='' version='2' max='1.0' min='0.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.8'/>
+                </line>
+              </parameter>
+            </parameterList>
+          </effect>
+        </effectsChain>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-749001725' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>3.4000000953674316</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-749008451' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='3.4000000953674316'>
+        <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='3.4000000953674316'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
+    <repeatEnabled>false</repeatEnabled>
+    <liveCodeText></liveCodeText>
+  </liveData>
+  <score>
+    <tempo>
+      <enabled>true</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='48.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>4</pixelSecond>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
+    <noteProcessorChain/>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>Preamble</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>2</timeBehavior>
+      <noteProcessorChain/>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='Preamble' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+          <subjectiveDuration>40.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>Preamble</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <clojureCode>(require &apos;[score.core :refer :all]
+         &apos;[score.amp :refer :all]
+         &apos;[score.freq :refer :all])
+
+(defn bit-proc [indx bit-mask-val bit-to-check]
+    (bit-and (bit-shift-right indx (bit-and indx bit-mask-val)) bit-to-check)
+)
+
+(defn bit-score [instr len bit-pattern bit-to-check pch]
+    (gen-score
+        instr
+        (reduce
+            #(let [bit (bit-proc %2 bit-pattern bit-to-check)]
+                (if (= bit bit-to-check)
+                (conj % (+ %2 (rand 0.01)))
+                %))
+            []
+            (range len))
+        0.95
+        (hertz pch)
+        -12))
+
+</clojureCode>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>SoundObject Layer Group</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>2</timeBehavior>
+      <noteProcessorChain/>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+      </soundLayer>
+      <soundLayer name='1: [9 0]' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+          <subjectiveDuration>360.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>1: [9 0]</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <clojureCode>(def score 
+    (bit-score 1 360 2r101 1 [9 0]))
+</clojureCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='2: [9 2]' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+          <subjectiveDuration>360.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>2: [9 2]</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <clojureCode>(def score 
+    (bit-score 2 360 2r111 1 [9 2]))
+</clojureCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='3: [9 3]' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+          <subjectiveDuration>360.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>3: [9 3]</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <clojureCode>(def score 
+    (bit-score 3 360 2r111 2 [9 3]))
+</clojureCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='4: [9 4]' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+          <subjectiveDuration>360.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>4: [9 4]</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <clojureCode>(def score 
+    (bit-score 1 360 2r101 2 [9 4]))
+</clojureCode>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+      </soundLayer>
+    </soundObject>
+  </score>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <midiInputProcessor>
+    <keyMapping>TUNING_CPS</keyMapping>
+    <velMapping>CONSTANT</velMapping>
+    <pitchConstant/>
+    <ampConstant>-12</ampConstant>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.625565</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594630943592953</ratio>
+        <ratio>1.122462048309373</ratio>
+        <ratio>1.1892071150027212</ratio>
+        <ratio>1.2599210498948734</ratio>
+        <ratio>1.3348398541700346</ratio>
+        <ratio>1.4142135623730954</ratio>
+        <ratio>1.498307076876682</ratio>
+        <ratio>1.5874010519682</ratio>
+        <ratio>1.6817928305074297</ratio>
+        <ratio>1.7817974362806794</ratio>
+        <ratio>1.887748625363388</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+  <pluginData>
+    <blueDataObject bdoType='blue.clojure.project.ClojureProjectData'>
+      <clojureLibraryEntry>
+        <coordinates>kunstmusik/score</coordinates>
+        <version>0.4.0</version>
+      </clojureLibraryEntry>
+    </blueDataObject>
+  </pluginData>
+</blueData>

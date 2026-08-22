@@ -24,7 +24,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
   { id: 'UserDefinedOpcodeTopComponent', title: 'UDOs', mode: 'editor', openAtStartup: true, position: 300 },
   { id: 'ProjectPropertiesTopComponent', title: 'Project Properties', mode: 'editor', openAtStartup: true },
   { id: 'BlueLiveTopComponent', title: 'Blue Live', mode: 'editor', openAtStartup: true, position: 800, icon: '🔴' },
-  { id: 'ScratchPadTopComponent', title: 'Scratch Pad', mode: 'editor', openAtStartup: false },
+  {
+    id: 'ScratchPadTopComponent',
+    title: 'Scratch Pad',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'Scratch Pad',
+  },
 
   {
     id: 'SoundObjectPropertiesTopComponent',
@@ -57,6 +64,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     openAtStartup: false,
     auxiliaryGroupId: 'properties-main',
     auxiliaryRailLabel: 'Audio Player',
+  },
+  {
+    id: 'SoundFontViewerTopComponent',
+    title: 'SoundFont Viewer',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'SoundFont Viewer',
   },
   {
     id: 'MarkersTopComponent',
@@ -123,13 +138,21 @@ export type NativeMenuCommand =
   | { type: 'close-floating-group'; panelId: string }
   | { type: 'reset-windows' }
   | { type: 'open-effects-library' }
+  | { type: 'open-ftable-converter' }
+  | { type: 'open-csoundrc-editor' }
+  | { type: 'open-code-repository-editor' }
+  | { type: 'open-midi-import' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }
+  | { type: 'set-follow-playback'; enabled: boolean }
+  | { type: 'set-follow-playback-on-render-start'; enabled: boolean }
   | { type: 'toggle-loop-rendering' }
   | { type: 'add-marker' }
   | { type: 'navigate-next-marker' }
   | { type: 'navigate-previous-marker' }
   | { type: 'rewind-to-start' }
+  | { type: 'render-stop-project' }
+  | { type: 'audition-score-objects' }
   | { type: 'edit-tempo-map' }
   | { type: 'edit-meter-map' }
   | { type: 'show-not-yet-implemented' };

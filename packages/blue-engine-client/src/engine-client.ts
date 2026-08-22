@@ -6,6 +6,12 @@
  */
 import { Request, Subscriber } from 'zeromq';
 import {
+  BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
+  decodeEngineCapabilitiesJson,
+  EngineCapabilities,
+} from './capabilities';
+import {
   encodeSetChannel,
   encodeGetChannel,
   encodeCreateAutomation,
@@ -27,6 +33,7 @@ import {
   CMD_STOP,
   CMD_DESTROY_ENGINE,
   CMD_GET_ENGINE_STATE,
+  CMD_GET_CAPABILITIES,
   CMD_CREATE_CHANNEL,
   CMD_SET_CHANNEL,
   CMD_GET_CHANNEL,
@@ -55,6 +62,12 @@ export interface EngineClientOptions {
 
 export type EngineStateListener = (snapshot: EngineStateSnapshot) => void;
 
+interface EngineResponse {
+  ok: boolean;
+  message: string;
+  payload: Buffer;
+}
+
 export class EngineClient {
   private socket: Request | null = null;
   private subscriber: Subscriber | null = null;
@@ -65,7 +78,13 @@ export class EngineClient {
   private subscriptionLoop: Promise<void> | null = null;
   private subscriptionClosed = false;
   private subscriptionError: Error | null = null;
-  private requestQueue: Promise<any> = Promise.resolve();
+  private requestQueue: Promise<EngineResponse> = Promise.resolve({
+    ok: true,
+    message: '',
+    payload: Buffer.alloc(0),
+  });
+  private disconnectPromise: Promise<void> | null = null;
+  private verifiedCapabilities: EngineCapabilities | null = null;
 
   constructor(options: EngineClientOptions = {}) {
     this.endpoint = options.endpoint ?? 'tcp://localhost:5555';
@@ -93,6 +112,7 @@ export class EngineClient {
     this.subscriber.connect(this.pubEndpoint);
     this.subscriptionClosed = false;
     this.subscriptionError = null;
+    this.verifiedCapabilities = null;
     this.subscriptionLoop = this.consumeStateEvents().catch((error: unknown) => {
       const normalizedError = error instanceof Error ? error : new Error(String(error));
       this.subscriptionError = normalizedError;
@@ -107,31 +127,94 @@ export class EngineClient {
    * Disconnect from the engine.
    */
   async disconnect(destroyEngine = true): Promise<void> {
+    if (this.disconnectPromise) {
+      return this.disconnectPromise;
+    }
+
+    const disconnectPromise = this.performDisconnect(destroyEngine);
+    this.disconnectPromise = disconnectPromise;
+    try {
+      await disconnectPromise;
+    } finally {
+      if (this.disconnectPromise === disconnectPromise) {
+        this.disconnectPromise = null;
+      }
+    }
+  }
+
+  private async performDisconnect(destroyEngine: boolean): Promise<void> {
     this.subscriptionClosed = true;
 
-    if (this.subscriber) {
-      this.subscriber.close();
-      this.subscriber = null;
-    }
+    const subscriber = this.subscriber;
+    this.subscriber = null;
+    const subscriptionLoop = this.subscriptionLoop;
+    this.subscriptionLoop = null;
+    const socket = this.socket;
 
-    if (this.socket) {
-      if (destroyEngine) {
-        try {
-          await this.sendRaw(CMD_DESTROY_ENGINE);
-        } catch {
-          // The engine process may already be gone.
-        }
+    if (subscriber) {
+      try {
+        subscriber.close();
+      } catch {
+        // The native socket may already be closed during process teardown.
       }
-      this.socket.close();
-      this.socket = null;
     }
 
-    if (this.subscriptionLoop) {
-      await this.subscriptionLoop;
-      this.subscriptionLoop = null;
+    if (socket && destroyEngine) {
+      try {
+        await this.sendRaw(CMD_DESTROY_ENGINE);
+      } catch {
+        // The engine process may already be gone.
+      }
+    }
+
+    this.socket = null;
+    if (socket) {
+      try {
+        socket.close();
+      } catch {
+        // The native socket may already be closed during process teardown.
+      }
+    }
+
+    // Closing the socket rejects any in-flight request and lets queued
+    // requests observe the disconnected state. Wait for both to settle before
+    // allowing the host process to tear down the native addon.
+    try {
+      await this.requestQueue;
+    } catch {
+      // sendRaw normalizes request failures, but keep teardown best-effort.
+    }
+
+    if (subscriptionLoop) {
+      try {
+        await subscriptionLoop;
+      } catch {
+        // consumeStateEvents suppresses expected close errors.
+      }
     }
 
     this.subscriptionError = null;
+    this.verifiedCapabilities = null;
+  }
+
+  async getCapabilities(): Promise<{
+    ok: boolean;
+    capabilities?: EngineCapabilities;
+    message: string;
+  }> {
+    const response = await this.sendRaw(CMD_GET_CAPABILITIES);
+    if (!response.ok) {
+      return { ok: false, message: response.message };
+    }
+    try {
+      const capabilities = decodeEngineCapabilitiesJson(response.message);
+      return { ok: true, capabilities, message: '' };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : 'Invalid engine capabilities',
+      };
+    }
   }
 
   /**
@@ -139,7 +222,7 @@ export class EngineClient {
    * Response format: [status: uint8][msg_len: uint32 LE][message: bytes]
    * All requests must use the 5-byte header format, even with no payload.
    */
-  private async sendRaw(cmd: number, payload?: Buffer): Promise<{ ok: boolean; message: string; payload: Buffer }> {
+  private async sendRaw(cmd: number, payload?: Buffer): Promise<EngineResponse> {
     return (this.requestQueue = this.requestQueue
       .then(async () => {
         if (!this.socket) {
@@ -187,6 +270,35 @@ export class EngineClient {
    * Must be called before any other command.
    */
   async createEngine(): Promise<{ ok: boolean; message: string }> {
+    if (!this.verifiedCapabilities) {
+      const capabilityResult = await this.getCapabilities();
+      if (!capabilityResult.ok || !capabilityResult.capabilities) {
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message: `Engine capability handshake failed: ${capabilityResult.message}`,
+        };
+      }
+      if (capabilityResult.capabilities.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION) {
+        const actualVersion = capabilityResult.capabilities.protocolVersion;
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message:
+            `Blue Engine protocol mismatch: expected ${BLUE_ENGINE_PROTOCOL_VERSION}, ` +
+            `received ${actualVersion}`,
+        };
+      }
+      if (!capabilityResult.capabilities.features.includes(AUTOMATION_DECIMAL_FEATURE)) {
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message: `Blue Engine is missing required capability: ${AUTOMATION_DECIMAL_FEATURE}`,
+        };
+      }
+      this.verifiedCapabilities = capabilityResult.capabilities;
+    }
+
     // If engine already exists, destroy it first
     let resp = await this.sendRaw(CMD_CREATE_ENGINE);
     if (!resp.ok && resp.message.includes('Engine already created')) {
@@ -331,12 +443,10 @@ export class EngineClient {
     name: string,
     curve: AutomationCurveCode,
     enabled: boolean,
-    resolution: number,
-    resolutionScale: number,
-    highPrecision: boolean,
+    resolutionDecimal: string,
     points: AutomationPoint[],
   ): Promise<{ ok: boolean; message: string }> {
-    const data = encodeCreateAutomation(name, curve, enabled, resolution, resolutionScale, highPrecision, points);
+    const data = encodeCreateAutomation(name, curve, enabled, resolutionDecimal, points);
     return this.sendRaw(CMD_CREATE_AUTOMATION, data);
   }
 
@@ -348,12 +458,10 @@ export class EngineClient {
     name: string,
     curve: AutomationCurveCode,
     enabled: boolean,
-    resolution: number,
-    resolutionScale: number,
-    highPrecision: boolean,
+    resolutionDecimal: string,
     points: AutomationPoint[],
   ): Promise<{ ok: boolean; message: string }> {
-    const data = encodeUpdateAutomation(name, curve, enabled, resolution, resolutionScale, highPrecision, points);
+    const data = encodeUpdateAutomation(name, curve, enabled, resolutionDecimal, points);
     return this.sendRaw(CMD_UPDATE_AUTOMATION, data);
   }
 

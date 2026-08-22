@@ -90,8 +90,8 @@ export default function SettingsApp(): React.ReactElement {
     setValidationIssues([]);
   }, []);
 
-  const handleApply = useCallback(async () => {
-    if (!draft) return;
+  const handleApply = useCallback(async (): Promise<boolean> => {
+    if (!draft) return false;
     // Merge the latest MIDI draft back into the program settings draft before
     // saving so the Apply button reflects unsaved Settings edits.
     const merged: ProgramSettingsSnapshot = {
@@ -105,10 +105,50 @@ export default function SettingsApp(): React.ReactElement {
       setMidiSavedPreferences(result.snapshot.midiInput);
       setDirty(false);
       setValidationIssues(result.validationIssues ?? []);
+      return true;
     } else {
       setValidationIssues(result.validationIssues ?? []);
+      return false;
     }
   }, [draft, midiDraft, setMidiSavedPreferences]);
+
+  const handleSettingsCloseRequest = useCallback(async () => {
+    const api = window.blueAPI as unknown as {
+      confirmSettingsClose?: () => Promise<'yes' | 'no' | 'cancel'>;
+      resolveSettingsClose?: (resolution: 'allow' | 'cancel') => void;
+    };
+    if (!api.resolveSettingsClose) return;
+    if (!dirty && !midiDraftDirty) {
+      api.resolveSettingsClose('allow');
+      return;
+    }
+
+    let decision: 'yes' | 'no' | 'cancel';
+    try {
+      decision = await api.confirmSettingsClose?.() ?? 'cancel';
+    } catch {
+      decision = 'cancel';
+    }
+    if (decision === 'yes') {
+      try {
+        api.resolveSettingsClose((await handleApply()) ? 'allow' : 'cancel');
+      } catch {
+        api.resolveSettingsClose('cancel');
+      }
+    } else if (decision === 'no') {
+      api.resolveSettingsClose('allow');
+    } else {
+      api.resolveSettingsClose('cancel');
+    }
+  }, [dirty, handleApply, midiDraftDirty]);
+
+  useEffect(() => {
+    const api = window.blueAPI as unknown as {
+      onSettingsCloseRequest?: (callback: () => void) => () => void;
+    };
+    if (!api.onSettingsCloseRequest) return undefined;
+    return api.onSettingsCloseRequest(() => { void handleSettingsCloseRequest(); });
+  }, [handleSettingsCloseRequest]);
 
   const handleCancel = useCallback(() => {
     if (savedSnapshot) {
@@ -132,14 +172,14 @@ export default function SettingsApp(): React.ReactElement {
 
   if (loading || !draft) {
     return (
-      <div className="px-6 py-6 text-content text-app-text-muted">
+      <div className="px-6 py-6 text-role-body text-app-text-muted">
         Loading settings...
       </div>
     );
   }
 
   const secondaryButtonClass =
-    'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-content transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
+    'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-role-body transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
   const hasInvalidOscDraft = !isValidOscPort(draft.osc.preferredPort);
 
   const renderPanel = () => {
@@ -176,7 +216,17 @@ export default function SettingsApp(): React.ReactElement {
         return (
           <RealtimeRenderSettings
             settings={draft.realtimeRender}
+            enginePath={draft.appSpecific.enginePath}
+            csoundLibraryPath={draft.appSpecific.csoundLibraryPath}
             onChange={(realtimeRender) => handleDraftChange({ ...draft, realtimeRender })}
+            onEnginePathChange={(enginePath) => handleDraftChange({
+              ...draft,
+              appSpecific: { ...draft.appSpecific, enginePath },
+            })}
+            onCsoundLibraryPathChange={(csoundLibraryPath) => handleDraftChange({
+              ...draft,
+              appSpecific: { ...draft.appSpecific, csoundLibraryPath },
+            })}
           />
         );
       case 'diskRender':
@@ -200,8 +250,8 @@ export default function SettingsApp(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-screen bg-app-bg text-app-text text-content">
-      <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-app-surface py-3">
+    <div className="flex h-screen bg-app-bg text-app-text text-role-body">
+      <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-black py-3">
         {PROGRAM_SETTINGS_PANEL_ORDER.map((cat) => (
           <button
             key={cat.id}
@@ -221,7 +271,7 @@ export default function SettingsApp(): React.ReactElement {
           {renderPanel()}
         </div>
         {validationIssues.length > 0 && (
-          <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-body text-app-danger">
+          <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-role-body text-app-danger">
             {validationIssues.map((issue, i) => (
               <div key={i}>{issue.path}: {issue.message}</div>
             ))}
@@ -250,7 +300,7 @@ export default function SettingsApp(): React.ReactElement {
             type="button"
             onClick={handleApply}
             disabled={(!dirty && !midiDraftDirty) || hasInvalidOscDraft}
-            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-content text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
+            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-role-body text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply
           </button>

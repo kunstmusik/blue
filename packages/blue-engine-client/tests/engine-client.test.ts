@@ -112,7 +112,17 @@ vi.mock('zeromq', () => {
 });
 
 import { EngineClient } from '../src/engine-client';
-import { CMD_DESTROY_ENGINE, CMD_GET_ENGINE_STATE, ENGINE_STATE_TOPIC } from '../src/protocol';
+import {
+  BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
+} from '../src/capabilities';
+import {
+  CMD_CREATE_ENGINE,
+  CMD_DESTROY_ENGINE,
+  CMD_GET_CAPABILITIES,
+  CMD_GET_ENGINE_STATE,
+  ENGINE_STATE_TOPIC,
+} from '../src/protocol';
 
 function encodeOkResponse(payload = ''): Buffer {
   const payloadBuffer = Buffer.from(payload, 'utf-8');
@@ -121,6 +131,16 @@ function encodeOkResponse(payload = ''): Buffer {
   response.writeUInt32LE(payloadBuffer.length, 1);
   payloadBuffer.copy(response, 5);
   return response;
+}
+
+function capabilities(protocolVersion = BLUE_ENGINE_PROTOCOL_VERSION, features = [AUTOMATION_DECIMAL_FEATURE]): string {
+  return JSON.stringify({
+    schemaVersion: 1,
+    engineVersion: '0.1.0',
+    protocolVersion,
+    sourceRevision: 'test',
+    features: ['engine-state-v1', ...features],
+  });
 }
 
 async function flushAsyncWork(): Promise<void> {
@@ -277,5 +297,72 @@ describe('EngineClient', () => {
 
     request.responses.push(encodeOkResponse());
     await client.disconnect();
+  });
+
+  it('gets and validates engine capabilities', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+    request.responses.push(encodeOkResponse(capabilities()));
+
+    const result = await client.getCapabilities();
+
+    expect(request.sent[0].readUInt8(0)).toBe(CMD_GET_CAPABILITIES);
+    expect(result).toEqual({
+      ok: true,
+      capabilities: expect.objectContaining({ protocolVersion: BLUE_ENGINE_PROTOCOL_VERSION }),
+      message: '',
+    });
+    request.responses.push(encodeOkResponse());
+    await client.disconnect();
+  });
+
+  it('performs the capability handshake before CREATE_ENGINE', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+    request.responses.push(encodeOkResponse(capabilities()), encodeOkResponse());
+
+    expect(await client.createEngine()).toEqual(expect.objectContaining({ ok: true, message: '' }));
+    expect(request.sent.map((message) => message.readUInt8(0))).toEqual([
+      CMD_GET_CAPABILITIES,
+      CMD_CREATE_ENGINE,
+    ]);
+    request.responses.push(encodeOkResponse());
+    await client.disconnect();
+  });
+
+  it('rejects malformed capabilities and closes sockets', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+    const subscriber = mockState.subscriberInstances[0];
+    request.responses.push(encodeOkResponse('{'));
+
+    const result = await client.createEngine();
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('capability handshake failed');
+    expect(request.sent).toHaveLength(1);
+    expect(request.close).toHaveBeenCalledOnce();
+    expect(subscriber.close).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a protocol mismatch before CREATE_ENGINE and tears down', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+    request.responses.push(encodeOkResponse(capabilities(99)));
+
+    const result = await client.createEngine();
+
+    expect(result).toEqual({
+      ok: false,
+      message: `Blue Engine protocol mismatch: expected ${BLUE_ENGINE_PROTOCOL_VERSION}, received 99`,
+    });
+    expect(request.sent.map((message) => message.readUInt8(0))).toEqual([
+      CMD_GET_CAPABILITIES,
+    ]);
+    expect(request.close).toHaveBeenCalledOnce();
   });
 });

@@ -16,21 +16,25 @@ export class LiveObjectSetList implements BlueDataObject {
     this._sets.push(set);
   }
 
-  removeAt(index: number): void {
+  removeAt(index: number): boolean {
+    if (index < 0 || index >= this._sets.length) return false;
     this._sets.splice(index, 1);
+    return true;
   }
 
-  rename(index: number, name: string): void {
-    if (index >= 0 && index < this._sets.length) {
-      this._sets[index].setName(name);
-    }
+  rename(index: number, name: string): boolean {
+    if (index < 0 || index >= this._sets.length) return false;
+    if (this._sets[index].getName() === name) return false;
+    this._sets[index].setName(name);
+    return true;
   }
 
-  move(from: number, to: number): void {
-    if (from < 0 || from >= this._sets.length) return;
-    if (to < 0 || to >= this._sets.length) return;
+  move(from: number, to: number): boolean {
+    if (from < 0 || from >= this._sets.length) return false;
+    if (to < 0 || to >= this._sets.length || from === to) return false;
     const [item] = this._sets.splice(from, 1);
     this._sets.splice(to, 0, item);
+    return true;
   }
 
   captureEnabledSet(bins: LiveObjectBins, name: string): LiveObjectSet {
@@ -45,8 +49,7 @@ export class LiveObjectSetList implements BlueDataObject {
   applySet(index: number, bins: LiveObjectBins): boolean {
     if (index < 0 || index >= this._sets.length) return false;
     const objects = this._sets[index].resolveLiveObjects(bins);
-    bins.setEnabledFromLiveObjectSet(objects);
-    return true;
+    return bins.setEnabledFromLiveObjectSet(objects);
   }
 
   saveAsXML(): Element {

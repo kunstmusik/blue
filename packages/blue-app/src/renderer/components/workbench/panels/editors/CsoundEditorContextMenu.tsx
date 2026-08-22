@@ -1,10 +1,12 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { EditorView } from '@codemirror/view';
+import { ChevronRight } from 'lucide-react';
 import React, { useMemo, type MutableRefObject, type ReactNode } from 'react';
 
 import {
   copySelectionToClipboard,
   cutSelectionToClipboard,
+  getSelectedText,
   pasteClipboardText,
   type CsoundEditorClipboardBridge,
   insertTextAtSelection,
@@ -24,6 +26,7 @@ interface CsoundEditorContextMenuProps {
   menuItems: CsoundEditorMenuItem[];
   clipboardBridge?: CsoundEditorClipboardBridge;
   onEvaluateCode?: () => void;
+  onAddToCodeRepository?: (selectedText: string) => void;
 }
 
 function getPortalContainer(): HTMLElement | undefined {
@@ -65,6 +68,7 @@ function renderMenuItem(
   editorViewRef: MutableRefObject<EditorView | null>,
   clipboardBridge: CsoundEditorClipboardBridge | undefined,
   onEvaluateCode?: () => void,
+  onAddToCodeRepository?: (selectedText: string) => void,
 ): ReactNode {
   if (isSeparatorItem(item)) {
     return <ContextMenu.Separator key={item.id} className="editor-context-menu__separator" />;
@@ -81,6 +85,7 @@ function renderMenuItem(
           title={item.disabledReason}
         >
           <span>{item.label}</span>
+          <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
         {portalContainer ? (
           <ContextMenu.Portal container={portalContainer}>
@@ -89,7 +94,7 @@ function renderMenuItem(
               sideOffset={6}
               alignOffset={-4}
             >
-              {item.items.map((childItem) => renderMenuItem(childItem, editorViewRef, clipboardBridge, onEvaluateCode))}
+              {item.items.map((childItem) => renderMenuItem(childItem, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
             </ContextMenu.SubContent>
           </ContextMenu.Portal>
         ) : null}
@@ -153,6 +158,13 @@ function renderMenuItem(
         case 'evaluate-code':
           onEvaluateCode?.();
           break;
+        case 'add-to-code-repository': {
+          const selectedText = getSelectedText(editorView.state);
+          if (selectedText.length > 0) {
+            onAddToCodeRepository?.(selectedText);
+          }
+          break;
+        }
       }
     };
 
@@ -181,6 +193,7 @@ export default function CsoundEditorContextMenu({
   menuItems,
   clipboardBridge,
   onEvaluateCode,
+  onAddToCodeRepository,
 }: CsoundEditorContextMenuProps): React.ReactElement {
   const portalContainer = useMemo(() => getPortalContainer(), []);
 
@@ -194,7 +207,7 @@ export default function CsoundEditorContextMenu({
             className="editor-context-menu"
             sideOffset={6}
           >
-            {menuItems.map((item) => renderMenuItem(item, editorViewRef, clipboardBridge, onEvaluateCode))}
+            {menuItems.map((item) => renderMenuItem(item, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
           </ContextMenu.Content>
         </ContextMenu.Portal>
       ) : null}

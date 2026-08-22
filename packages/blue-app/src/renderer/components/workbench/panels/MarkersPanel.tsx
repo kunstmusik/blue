@@ -34,23 +34,23 @@ export default function MarkersPanel(): React.ReactElement {
 
   if (!loaded) {
     return (
-      <div className="h-full flex items-center justify-center text-blue-muted text-sm p-4">
+      <div className="h-full flex items-center justify-center text-blue-muted text-role-body p-4">
         No project loaded
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-blue-bg text-blue-text">
-      <div className="flex-1 min-h-0 overflow-auto">
+    <div className="h-full flex flex-col bg-black text-blue-text">
+      <div className="flex-1 min-h-0 overflow-auto bg-black">
         {markers.length === 0 ? (
-          <div className="p-4 text-blue-muted text-ui text-center">
+          <div className="p-4 text-blue-muted text-role-body text-center">
             No markers defined.
             <br />
             Shift+click the marker row or use Project &gt; Add Marker to create one.
           </div>
         ) : (
-          <table className="w-full table-fixed text-ui">
+          <table className="w-full table-fixed text-role-body">
             <thead>
               <tr className="border-b border-blue-border/20 bg-blue-surface/50">
                 <th className="w-28 px-2 py-1 text-left font-medium text-blue-muted">TimeBase</th>
@@ -164,7 +164,7 @@ function MarkerRow({
     <tr className="border-b border-blue-border/10 align-top hover:bg-blue-surface/40">
       <td className="px-2 py-1.5">
         <select
-          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-1.5 py-1 text-ui text-blue-text focus:border-blue-accent focus:outline-none"
+          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-1.5 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftTimeBase}
           onChange={(e) => handleTimeBaseChange(e.target.value)}
         >
@@ -177,7 +177,7 @@ function MarkerRow({
         <input
           ref={timeInputRef}
           type="text"
-          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-2 py-1 text-ui text-blue-text focus:border-blue-accent focus:outline-none"
+          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-2 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftTime}
           onChange={(e) => setDraftTime(e.target.value)}
           onBlur={commitTime}
@@ -192,7 +192,7 @@ function MarkerRow({
         <input
           ref={labelInputRef}
           type="text"
-          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-2 py-1 text-ui text-blue-text focus:border-blue-accent focus:outline-none"
+          className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-2 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftLabel}
           onChange={(e) => setDraftLabel(e.target.value)}
           onBlur={commitLabel}
@@ -205,14 +205,14 @@ function MarkerRow({
       </td>
       <td className="whitespace-nowrap px-2 py-1.5 text-right">
         <button
-          className="mr-1 rounded border border-blue-border/30 px-1.5 py-0.5 text-tiny text-blue-muted hover:bg-blue-surface hover:text-blue-text"
+          className="mr-1 rounded border border-blue-border/30 px-1.5 py-0.5 text-role-callout text-blue-muted hover:bg-blue-surface hover:text-blue-text"
           onClick={() => onSetRenderStart(marker)}
           title="Set render start to marker time"
         >
           Start
         </button>
         <button
-          className="rounded border border-blue-border/30 px-1.5 py-0.5 text-tiny text-blue-muted hover:bg-blue-surface hover:text-red-400"
+          className="rounded border border-blue-border/30 px-1.5 py-0.5 text-role-callout text-blue-muted hover:bg-blue-surface hover:text-red-400"
           onClick={() => onRemove(marker.sourceIndex)}
           title="Remove marker"
         >

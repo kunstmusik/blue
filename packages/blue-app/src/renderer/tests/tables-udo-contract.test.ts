@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   createProjectEditorSnapshot,
+  createEffectEditorSnapshot,
   applyProjectDocumentPatch,
   isEmptyProjectDocumentPatch,
   udoToSnapshot,
 } from '../../shared/project-editor';
-import { BlueData, OpcodeDefinition, UDOStyle, Tables } from '@blue/data';
+import { BlueData, Effect, OpcodeDefinition, UDOStyle, Tables } from '@blue/data';
 
 function makeTestProject(): BlueData {
   const data = new BlueData();
@@ -178,6 +179,51 @@ describe('Tables and UDO contract tests', () => {
       expect(snap.inTypes).toBe('k');
       expect(snap.code).toBe('xout 1');
       expect(snap.comments).toBe('a comment');
+    });
+  });
+
+  describe('completion compatibility (US5, T031)', () => {
+    it('udoToSnapshot preserves authored UDO definition fields used by completion', () => {
+      const udo = new OpcodeDefinition();
+      udo.setName('PolyTone');
+      udo.setStyle(UDOStyle.MODERN);
+      udo.setOutTypes('a, k');
+      udo.setInTypes('');
+      udo.setInputArguments('aSig, kFreq');
+      udo.setCode('xout aSig, kFreq');
+      udo.setComments('');
+
+      const snap = udoToSnapshot(udo);
+      // Completion derives its signature from exactly these fields; they must
+      // remain the authored values, unaffected by the completion feature.
+      expect(snap.name).toBe('PolyTone');
+      expect(snap.style).toBe('MODERN');
+      expect(snap.outTypes).toBe('a, k');
+      expect(snap.inputArguments).toBe('aSig, kFreq');
+    });
+
+    it('createEffectEditorSnapshot forces an empty project UDO projection for library effects', () => {
+      const udo = new OpcodeDefinition();
+      udo.setName('ProjectOnly');
+      udo.setStyle(UDOStyle.CLASSIC);
+      udo.setOutTypes('a');
+      udo.setInTypes('a');
+      const projectUdoSnapshot = [udoToSnapshot(udo)];
+
+      const effect = new Effect();
+      effect.setName('Delay');
+      effect.setCode('aout = ain');
+
+      const project = createEffectEditorSnapshot(effect, 'fx-1', 'project', {
+        projectUdos: projectUdoSnapshot,
+      });
+      expect(project.projectUdos).toHaveLength(1);
+
+      const library = createEffectEditorSnapshot(effect, 'fx-2', 'library', {
+        projectUdos: projectUdoSnapshot,
+      });
+      // Library effects never receive project UDOs, even when supplied.
+      expect(library.projectUdos).toEqual([]);
     });
   });
 });

@@ -265,9 +265,7 @@ async function sendAutomationDefinitions(client, parameters, renderStartTime, te
         varName,
         mapAutomationCurve(param.getCurve()),
         true,
-        param.getResolution(),
-        param.getResolutionScale(),
-        param.isHighPrecision(),
+        param.getResolutionText(),
         points,
       );
     } else {

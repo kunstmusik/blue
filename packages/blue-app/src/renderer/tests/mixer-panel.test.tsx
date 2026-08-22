@@ -92,19 +92,33 @@ function seedLoadedProjectWithEffects(): void {
   mockProjectState.mixer = snapshot.mixer!;
 }
 
-function seedLoadedProjectWithAudioGroup(): void {
+function seedLoadedProjectWithTrackGroup(): void {
   const snapshot = createEmptyMixerSnapshot();
   snapshot.channelListGroups = [
     {
       association: 'audio-group-unique',
-      listName: 'Audio Layer Group',
+      listName: 'Track Layer Group',
       listNameEditSupported: true,
       channels: [
         {
           id: 'audio-channel-1',
-          name: 'Layer 1',
+          name: '',
           channelKind: 'instrument',
           association: 'audio-layer-1',
+          outChannel: 'Master',
+          muted: false,
+          solo: false,
+          level: 0,
+          volume: 1,
+          pan: 0.5,
+          preChain: [],
+          postChain: [],
+        },
+        {
+          id: 'audio-channel-2',
+          name: '',
+          channelKind: 'instrument',
+          association: 'audio-layer-2',
           outChannel: 'Master',
           muted: false,
           solo: false,
@@ -186,6 +200,36 @@ describe('MixerPanel', () => {
     container.remove();
   });
 
+  it('fills the available level slider height', async () => {
+    seedLoadedProject();
+    const heightSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains('mixer-level-slider-wrapper')) {
+          return { height: 180 } as DOMRect;
+        }
+        return { height: 0 } as DOMRect;
+      });
+
+    const { container, root } = renderPanel();
+
+    try {
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(
+        [...container.querySelectorAll('.mixer-level-slider-wrapper svg')]
+          .map((slider) => slider.getAttribute('height')),
+      ).toEqual(['180', '180']);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+      heightSpy.mockRestore();
+    }
+  });
+
   it('keeps only one Effect selected across all channels', () => {
     seedLoadedProjectWithEffects();
     const { container, root } = renderPanel();
@@ -205,8 +249,8 @@ describe('MixerPanel', () => {
     container.remove();
   });
 
-  it('opens rename dialog on double-clicking audio group header and commits rename patch', async () => {
-    seedLoadedProjectWithAudioGroup();
+  it('opens rename dialog on double-clicking Track group header and commits rename patch', async () => {
+    seedLoadedProjectWithTrackGroup();
     const { container, root } = renderPanel();
 
     await act(async () => {
@@ -214,7 +258,7 @@ describe('MixerPanel', () => {
     });
 
     const header = Array.from(container.querySelectorAll('.mixer-channel-group__header')).find(
-      (node) => node.textContent?.includes('Audio Layer Group'),
+      (node) => node.textContent?.includes('Track Layer Group'),
     ) as HTMLDivElement;
     expect(header).toBeTruthy();
 
@@ -240,6 +284,25 @@ describe('MixerPanel', () => {
         name: 'Renamed From Mixer Header',
       },
     });
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('shows unnamed Track strips as italic one-based Track labels', () => {
+    seedLoadedProjectWithTrackGroup();
+    const { container, root } = renderPanel();
+
+    const names = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        '.mixer-channel-group__strips .mixer-channel-name',
+      ),
+    );
+
+    expect(names.map((name) => name.textContent)).toEqual(['Track 1', 'Track 2']);
+    expect(names.every((name) => name.classList.contains('mixer-channel-name--fallback'))).toBe(true);
 
     act(() => {
       root.unmount();

@@ -229,10 +229,10 @@ function ReadoutText({
         stroke="rgba(255, 255, 255, 0.14)"
         strokeWidth={1}
       />
-      <text x={textX} y={baseline1} fill="#ffffff" fontSize={fontSize}>
+      <text x={textX} y={baseline1} fill="#ffffff" className="text-role-subheadline" style={{ fontSize: 'var(--text-role-subheadline)' }}>
         {xText}
       </text>
-      <text x={textX} y={baseline2} fill="#ffffff" fontSize={fontSize}>
+      <text x={textX} y={baseline2} fill="#ffffff" className="text-role-subheadline" style={{ fontSize: 'var(--text-role-subheadline)' }}>
         {yText}
       </text>
     </g>

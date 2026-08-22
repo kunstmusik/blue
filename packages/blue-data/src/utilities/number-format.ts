@@ -10,10 +10,12 @@ const BLUE_NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
  * - up to 10 fractional digits
  * - trims unnecessary trailing zeros
  * - avoids scientific notation within the retained precision
+ * - non-finite values use Java DecimalFormat symbols ("∞"/"-∞"/"NaN")
  */
 export function formatBlueNumber(value: number): string {
   if (!Number.isFinite(value)) {
-    return String(value);
+    if (Number.isNaN(value)) return 'NaN';
+    return value > 0 ? '∞' : '-∞';
   }
 
   const normalized = Object.is(value, -0) ? 0 : value;

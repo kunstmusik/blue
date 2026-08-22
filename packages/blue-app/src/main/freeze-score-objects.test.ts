@@ -21,6 +21,7 @@ import {
   resolveFreezeTargets,
 } from './freeze-score-objects';
 import type { ScoreObjectEditorTargetSnapshot } from '../shared/project-editor';
+import type { FreezeItemStatus } from '../shared/render-freeze-contract';
 import { createProjectEditorSnapshot, createScoreObjectEditorDocument } from '../shared/project-editor';
 
 function createWavFile(channels = 1): Buffer {
@@ -356,7 +357,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-atomic',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, createWavFile());
             return { exitCode: 0, stderr: '' };
           },
@@ -394,7 +395,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-invalid',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, 'not audio');
             return { exitCode: 0, stderr: '' };
           },
@@ -431,7 +432,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-format',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, buildAiffBytes(1, 100, 16, 100));
             return { exitCode: 0, stderr: '' };
           },
@@ -470,7 +471,7 @@ describe('resolveFreezeTargets', () => {
         'freeze-cancel',
         vi.fn(),
         {
-          runCsound: async (_executable, args) => {
+          runCsound: async (args) => {
             fs.writeFileSync(args[1]!, createWavFile());
             cancelled = true;
             return { exitCode: -1, stderr: 'cancelled' };
@@ -497,7 +498,7 @@ describe('resolveFreezeTargets', () => {
       source.setSubjectiveDuration(TimeDuration.beats(1));
       layer.push(source);
 
-      const runCsound = vi.fn(async (_executable: string, args: string[]) => {
+      const runCsound = vi.fn(async (args: string[]) => {
         fs.writeFileSync(args[1]!, createWavFile(2));
         return { exitCode: 0, stderr: '' };
       });
@@ -520,9 +521,10 @@ describe('resolveFreezeTargets', () => {
       expect((layer[0] as FrozenSoundObject).getNumChannels()).toBe(2);
       expect(layer[0].getSubjectiveDuration().getValue()).toBeGreaterThan(0);
       expect(runCsound).toHaveBeenCalledWith(
-        'csound',
         expect.arrayContaining(['-Wdo', path.join(projectDirectory, 'freeze0.wav')]),
         projectDirectory,
+        expect.any(Function),
+        undefined,
         expect.any(Function),
       );
 
@@ -537,10 +539,10 @@ describe('resolveFreezeTargets', () => {
 
       const document = createScoreObjectEditorDocument(data, { target: row.editorTarget! });
       expect(document?.editor).toMatchObject({
-        kind: 'file',
-        objectType: 'FrozenSoundObject',
-        filePath: 'freeze0.wav',
-        originalObjectType: 'GenericScore',
+        kind: 'frozenSoundObject',
+        frozenWaveFileName: 'freeze0.wav',
+        sourceName: 'Pattern1',
+        sourceType: 'GenericScore',
       });
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
@@ -582,5 +584,250 @@ describe('resolveFreezeTargets', () => {
     const { resolved, rejected } = resolveFreezeTargets(data, [target]);
     expect(resolved).toHaveLength(0);
     expect(rejected).toHaveLength(1);
+  });
+});
+
+describe('executeFreezeUnfreeze item events', () => {
+  function createTarget(objectIndex: number, selectionId = `sel-${objectIndex}`): ScoreObjectEditorTargetSnapshot {
+    return {
+      selectionId,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+  }
+
+  function createContext(data: BlueData, projectDirectory: string) {
+    return {
+      data,
+      projectDirectory,
+      utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+      platform: 'linux',
+    };
+  }
+
+  it('emits pending, running with the allocated file, streamed output, and complete for a freeze', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-item-events-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      const source = new GenericScore();
+      source.setName('ItemSource');
+      source.setStartTime(TimePosition.beats(0));
+      source.setSubjectiveDuration(TimeDuration.beats(1));
+      layer.push(source);
+
+      const events: FreezeItemStatus[] = [];
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory),
+        [createTarget(0)],
+        'freeze-item-events',
+        vi.fn(),
+        {
+          runCsound: async (args: string[], _cwd: string, _onProgress, _totalDuration, onOutput) => {
+            onOutput?.('chunk-a', 'stdout');
+            onOutput?.('chunk-b\n', 'stderr');
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+        (event) => { events.push(event); },
+      );
+
+      expect(operation.ok).toBe(true);
+      expect(events.filter((event) => event.phase === 'pending')).toEqual([
+        expect.objectContaining({
+          operationId: 'freeze-item-events',
+          selectionId: 'sel-0',
+          name: 'ItemSource',
+          action: 'freeze',
+          freezeFile: null,
+        }),
+      ]);
+
+      const running = events.filter((event) => event.phase === 'running');
+      expect(running[0]).toMatchObject({ selectionId: 'sel-0', freezeFile: null, outputAppend: null });
+      expect(running).toContainEqual(expect.objectContaining({ freezeFile: 'freeze0.wav', outputAppend: null }));
+      expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-a', outputType: 'stdout' }));
+      expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-b\n', outputType: 'stderr' }));
+
+      expect(events.filter((event) => event.phase === 'complete')).toEqual([
+        expect.objectContaining({
+          selectionId: 'sel-0',
+          name: 'ItemSource',
+          action: 'freeze',
+          freezeFile: 'freeze0.wav',
+        }),
+      ]);
+      expect(events.filter((event) => event.phase === 'failed')).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('emits pending and complete carrying the freeze file for an unfreeze', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-item-unfreeze-'));
+    try {
+      fs.writeFileSync(path.join(projectDirectory, 'freeze0.wav'), createWavFile());
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      const source = new GenericScore();
+      source.setName('ThawMe');
+      const frozen = new FrozenSoundObject();
+      frozen.setName('F: ThawMe');
+      frozen.setFrozenSoundObject(source);
+      frozen.setFrozenWaveFileName('freeze0.wav');
+      frozen.setStartTime(TimePosition.beats(0));
+      frozen.setSubjectiveDuration(TimeDuration.beats(1));
+      layer.push(frozen);
+
+      const events: FreezeItemStatus[] = [];
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory),
+        [createTarget(0)],
+        'freeze-item-unfreeze',
+        vi.fn(),
+        { runCsound: vi.fn() },
+        (event) => { events.push(event); },
+      );
+
+      expect(operation.ok).toBe(true);
+      expect(operation.unfrozenCount).toBe(1);
+      expect(events.map((event) => event.phase)).toEqual(['pending', 'running', 'complete']);
+      for (const event of events) {
+        expect(event).toMatchObject({
+          selectionId: 'sel-0',
+          name: 'F: ThawMe',
+          action: 'unfreeze',
+          freezeFile: 'freeze0.wav',
+        });
+      }
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('emits a failed item event with the reason when Csound fails', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-item-fail-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      const source = new GenericScore();
+      source.setName('Doomed');
+      source.setStartTime(TimePosition.beats(0));
+      source.setSubjectiveDuration(TimeDuration.beats(1));
+      layer.push(source);
+
+      const events: FreezeItemStatus[] = [];
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory),
+        [createTarget(0)],
+        'freeze-item-fail',
+        vi.fn(),
+        {
+          runCsound: async () => ({ exitCode: 1, stderr: 'csound blew up' }),
+        },
+        (event) => { events.push(event); },
+      );
+
+      expect(operation.ok).toBe(false);
+      const failed = events.filter((event) => event.phase === 'failed');
+      expect(failed).toEqual([
+        expect.objectContaining({
+          selectionId: 'sel-0',
+          name: 'Doomed',
+          action: 'freeze',
+          reason: expect.stringContaining('Csound exited with code 1'),
+        }),
+      ]);
+      expect(events.filter((event) => event.phase === 'complete')).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('does not report staged items complete when a later target fails', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-item-rollback-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      const first = new GenericScore();
+      first.setName('First');
+      first.setStartTime(TimePosition.beats(0));
+      first.setSubjectiveDuration(TimeDuration.beats(1));
+      const second = new GenericScore();
+      second.setName('Second');
+      second.setStartTime(TimePosition.beats(1));
+      second.setSubjectiveDuration(TimeDuration.beats(1));
+      layer.push(first, second);
+
+      const events: FreezeItemStatus[] = [];
+      let runCount = 0;
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory),
+        [createTarget(0), createTarget(1)],
+        'freeze-item-rollback',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            runCount += 1;
+            if (runCount === 1) {
+              fs.writeFileSync(args[1]!, createWavFile());
+              return { exitCode: 0, stderr: '' };
+            }
+            return { exitCode: 1, stderr: 'second object failed' };
+          },
+        },
+        (event) => { events.push(event); },
+      );
+
+      expect(operation.ok).toBe(false);
+      expect(layer[0]).toBe(first);
+      expect(layer[1]).toBe(second);
+      expect(events.filter((event) => event.phase === 'complete')).toEqual([]);
+      expect(events).toContainEqual(expect.objectContaining({
+        selectionId: 'sel-1',
+        phase: 'failed',
+      }));
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('emits failed item events for targets rejected during resolution', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-item-reject-'));
+    try {
+      const data = new BlueData();
+      const target = createTarget(0, 'lib-1');
+      target.ownerKind = 'library';
+      target.displayContext = 'library';
+      delete target.location;
+
+      const events: FreezeItemStatus[] = [];
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory),
+        [target],
+        'freeze-item-reject',
+        vi.fn(),
+        { runCsound: vi.fn() },
+        (event) => { events.push(event); },
+      );
+
+      expect(operation.ok).toBe(false);
+      expect(events).toEqual([
+        expect.objectContaining({
+          selectionId: 'lib-1',
+          phase: 'failed',
+          reason: expect.stringContaining('timeline'),
+        }),
+      ]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
   });
 });

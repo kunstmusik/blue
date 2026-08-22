@@ -75,18 +75,16 @@ function getFtableNumberSet(ftableText: string): Set<number> {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed.startsWith('f')) {
+    if (!trimmed.startsWith('f') || trimmed.startsWith(';')) {
       continue;
     }
 
-    const parts = trimmed.split(/\s+/);
-    if (parts.length < 2) {
-      continue;
-    }
-
-    const num = parseInt(parts[1], 10);
-    if (!Number.isNaN(num)) {
-      ftableNumbers.add(num);
+    const match = trimmed.match(/^f\s*(\d+)/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (!Number.isNaN(num)) {
+        ftableNumbers.add(num);
+      }
     }
   }
 

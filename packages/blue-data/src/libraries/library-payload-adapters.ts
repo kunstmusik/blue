@@ -25,7 +25,6 @@ const KNOWN_SOUND_OBJECT_TYPES = new Set([
   'JavaScriptObject',
   'JMask',
   'LineObject',
-  'NotationObject',
   'ObjectBuilder',
   'PatternObject',
   'PianoRoll',

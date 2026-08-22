@@ -360,7 +360,8 @@ public final class JeroMqRuntimeServer {
         ClojureSession.ClojureEvaluationResult evaluation = projectSession.getClojureSession().evaluateScoreObjectWithOutput(
                 params.code,
                 params.blueDuration,
-                params.blueProjectDir != null ? params.blueProjectDir : projectSession.getProjectDir());
+                params.blueProjectDir != null ? params.blueProjectDir : projectSession.getProjectDir(),
+                params.commandline);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("scoreText", evaluation.value());
@@ -478,5 +479,6 @@ public final class JeroMqRuntimeServer {
         public String code;
         public double blueDuration;
         public String blueProjectDir;
+        public String commandline;
     }
 }

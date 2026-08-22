@@ -1,5 +1,11 @@
+// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createDefaultAuxiliaryLayoutState } from '../components/workbench/auxiliary-layout';
+import {
+  applyAuxiliaryLayout,
+  createDefaultAuxiliaryLayoutState,
+} from '../components/workbench/auxiliary-layout';
+import { acquireTreeDndManager } from '../components/tree/tree-dnd-domain';
 import {
   hasRestoredStartupEditorPanel,
   useWorkbenchStore,
@@ -7,6 +13,7 @@ import {
 import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
+import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createLibraryEditorSession } from './library-editor-fixtures';
 
 const dockviewSnapshot = {
@@ -1112,6 +1119,111 @@ describe('workbench store native menu commands', () => {
 
     expect(addMarkerAtTime).toHaveBeenCalledWith(10);
   });
+
+  it('routes Render/Stop Project through the playback store', () => {
+    const togglePlaySpy = vi
+      .spyOn(usePlaybackStore.getState(), 'togglePlay')
+      .mockResolvedValue(undefined);
+
+    try {
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'render-stop-project',
+      });
+
+      expect(togglePlaySpy).toHaveBeenCalledOnce();
+    } finally {
+      togglePlaySpy.mockRestore();
+    }
+  });
+
+  it('applies resolved set-follow-playback commands without a second toggle or write (SPEC 079)', () => {
+    usePlaybackStore.setState({
+      followPlayback: true,
+      savedFollowPlayback: true,
+    });
+
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'set-follow-playback',
+      enabled: false,
+    } as never);
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+  });
+
+  it('applies resolved set-follow-playback-on-render-start commands (SPEC 079)', () => {
+    usePlaybackStore.setState({ followPlaybackOnStart: true });
+
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'set-follow-playback-on-render-start',
+      enabled: false,
+    } as never);
+
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('routes legacy follow toggle commands through the explicit persisting action (SPEC 079)', async () => {
+    const updatePlaybackPreferences = vi.fn().mockResolvedValue({ ok: true });
+    const syncFollowPlaybackState = vi.fn();
+    vi.stubGlobal('window', {
+      blueAPI: { updatePlaybackPreferences, syncFollowPlaybackState },
+    });
+
+    try {
+      usePlaybackStore.setState({
+        followPlayback: true,
+        savedFollowPlayback: true,
+      });
+
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'toggle-follow-playback',
+      });
+
+      expect(usePlaybackStore.getState().followPlayback).toBe(false);
+      expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+      expect(updatePlaybackPreferences).toHaveBeenCalledTimes(1);
+      expect(updatePlaybackPreferences).toHaveBeenCalledWith({ followPlayback: false });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('passes the current score selection to the audition playback path', () => {
+    const auditionScoreObjects = vi
+      .spyOn(usePlaybackStore.getState(), 'auditionScoreObjects')
+      .mockResolvedValue(undefined);
+    useScoreSelectionStore.getState().setSelection(['sobj-1', 'aclp-2']);
+
+    try {
+      useWorkbenchStore.getState().handleNativeMenuCommand({
+        type: 'audition-score-objects',
+      });
+      expect(auditionScoreObjects).toHaveBeenCalledWith(['sobj-1', 'aclp-2']);
+    } finally {
+      auditionScoreObjects.mockRestore();
+      useScoreSelectionStore.getState().clearSelection();
+    }
+  });
+
+  it('ignores audition commands when the selection is empty or not timeline-owned', () => {
+    const auditionScoreObjects = vi
+      .spyOn(usePlaybackStore.getState(), 'auditionScoreObjects')
+      .mockResolvedValue(undefined);
+
+    try {
+      useScoreSelectionStore.getState().clearSelection();
+      useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
+      useScoreSelectionStore.getState().setSelection([{
+        objectId: 'live-1',
+        editorTarget: { ownerKind: 'blueLive' } as never,
+      }]);
+      useWorkbenchStore.getState().handleNativeMenuCommand({ type: 'audition-score-objects' });
+      expect(auditionScoreObjects).not.toHaveBeenCalled();
+    } finally {
+      auditionScoreObjects.mockRestore();
+      useScoreSelectionStore.getState().clearSelection();
+    }
+  });
 });
 
 describe('workbench-store reset-windows command', () => {
@@ -1145,5 +1257,216 @@ describe('workbench-store reset-windows command', () => {
 
     expect(loadLayoutSpy).toHaveBeenCalledWith(null);
     loadLayoutSpy.mockRestore();
+  });
+});
+
+function createTransitionApiStub() {
+  const livePanels = new Map<string, any>();
+  const groups = new Map<string, any>();
+
+  function getOrCreateGroup(id: string) {
+    if (groups.has(id)) return groups.get(id);
+    const group = {
+      id,
+      size: 300,
+      panels: [] as any[],
+      activePanel: undefined as any,
+      focus: vi.fn(),
+      api: {
+        location: { type: 'grid' as const },
+        isMaximized: () => false,
+        setHeaderPosition: () => undefined,
+        setSize: () => undefined,
+      },
+      element: {
+        dataset: {},
+        getBoundingClientRect: () => ({ width: 300, height: 210 }),
+      },
+    };
+    groups.set(id, group);
+    return group;
+  }
+
+  const api = {
+    get groups() {
+      return Array.from(groups.values());
+    },
+    get panels() {
+      return Array.from(livePanels.values());
+    },
+    addGroup: vi.fn(({ id }: { id?: string }) => getOrCreateGroup(id ?? `g-${groups.size}`)),
+    addPanel: vi.fn(({ id, position }: { id: string; position?: any }) => {
+      const refGroup = position?.referenceGroup ?? getOrCreateGroup(`g-${id}`);
+      const panel = {
+        id,
+        title: id,
+        group: refGroup,
+        api: {
+          title: id,
+          setTitle: vi.fn((title: string) => {
+            panel.title = title;
+          }),
+          isMaximized: vi.fn(() => false),
+          setActive: vi.fn(() => {
+            panel.group.activePanel = panel;
+          }),
+          close: vi.fn(() => {
+            livePanels.delete(id);
+            panel.group.panels = panel.group.panels.filter((entry: any) => entry.id !== id);
+          }),
+          moveTo: vi.fn(({ group: targetGroup, index }: { group: any; index?: number }) => {
+            panel.group.panels = panel.group.panels.filter((entry: any) => entry.id !== id);
+            panel.group = targetGroup;
+            const at = Math.max(0, Math.min(index ?? targetGroup.panels.length, targetGroup.panels.length));
+            targetGroup.panels.splice(at, 0, panel);
+          }),
+        },
+      };
+      livePanels.set(id, panel);
+      const at = position?.index ?? refGroup.panels.length;
+      refGroup.panels.splice(at, 0, panel);
+      refGroup.activePanel = panel;
+      return panel;
+    }),
+    getPanel: (id: string) => livePanels.get(id),
+    removeGroup: vi.fn((group: any) => {
+      groups.delete(group.id);
+    }),
+    toJSON: () => dockviewSnapshot,
+  } as any;
+
+  api.addPanel({ id: 'ScoreTopComponent', component: 'default', title: 'Score' });
+  return api;
+}
+
+describe('workbench store deferred and failed transitions', () => {
+  function seedStoreWithLibrariesDockedRight() {
+    const state = createDefaultAuxiliaryLayoutState();
+    const properties = state.groups.find(
+      (group) => group.kind === 'seeded' && group.seedGroupId === 'properties-main',
+    )!;
+    properties.edge = 'right';
+    properties.panelIds = ['LibrariesTopComponent', 'SoundObjectPropertiesTopComponent'];
+    properties.dockedPanelIds = [...properties.panelIds];
+    properties.activePanelId = 'LibrariesTopComponent';
+
+    const api = createTransitionApiStub();
+    const applied = applyAuxiliaryLayout(api, state);
+    useWorkbenchStore.setState({
+      api,
+      auxiliary: applied,
+      floatingOrigins: {},
+      closedPanelOrigins: {},
+    });
+    return api;
+  }
+
+  function serializedAuxiliary(): any {
+    const json = useWorkbenchStore.getState().saveLayout();
+    expect(json).not.toBeNull();
+    return JSON.parse(json as string).auxiliary;
+  }
+
+  it('does not publish or persist a deferred edge move while a tree drag is active', () => {
+    seedStoreWithLibrariesDockedRight();
+
+    const manager = acquireTreeDndManager(document)!;
+    const sourceId = manager.getRegistry().addSource('blue/test', {
+      canDrag: () => true,
+      isDragging: () => true,
+      beginDrag: () => ({ kind: 'blue/test' }),
+      endDrag: () => undefined,
+    });
+    manager.getActions().beginDrag([sourceId]);
+
+    useWorkbenchStore.getState().moveAuxiliaryEdge('right', 'left');
+
+    const auxiliary = useWorkbenchStore.getState().auxiliary;
+    expect(
+      auxiliary.groups.filter((group) => group.panelIds.length > 0).map((group) => group.edge),
+    ).not.toContain('left');
+
+    const persisted = serializedAuxiliary();
+    expect(
+      persisted.groups.filter((group: any) => group.panelIds.length > 0).map((group: any) => group.edge),
+    ).not.toContain('left');
+
+    manager.getActions().endDrag();
+    manager.getRegistry().removeSource(sourceId);
+  });
+
+  it('keeps auxiliary close and reopen metadata atomic around deferred and failed transitions', () => {
+    const api = seedStoreWithLibrariesDockedRight();
+    const panelId = 'LibrariesTopComponent';
+
+    const beginDrag = () => {
+      const manager = acquireTreeDndManager(document)!;
+      const sourceId = manager.getRegistry().addSource('blue/test', {
+        canDrag: () => true,
+        isDragging: () => true,
+        beginDrag: () => ({ kind: 'blue/test' }),
+        endDrag: () => undefined,
+      });
+      manager.getActions().beginDrag([sourceId]);
+      return () => {
+        manager.getActions().endDrag();
+        manager.getRegistry().removeSource(sourceId);
+      };
+    };
+
+    const cancelClose = beginDrag();
+    useWorkbenchStore.getState().closeAuxiliaryPanel(panelId);
+    expect(api.getPanel(panelId)).toBeDefined();
+    expect(useWorkbenchStore.getState().closedPanelOrigins[panelId]).toBeUndefined();
+    cancelClose();
+
+    useWorkbenchStore.getState().closeAuxiliaryPanel(panelId);
+    expect(api.getPanel(panelId)).toBeUndefined();
+    expect(useWorkbenchStore.getState().closedPanelOrigins[panelId]).toBeDefined();
+
+    const cancelOpen = beginDrag();
+    useWorkbenchStore.getState().openPanel(panelId);
+    expect(api.getPanel(panelId)).toBeUndefined();
+    expect(useWorkbenchStore.getState().closedPanelOrigins[panelId]).toBeDefined();
+    cancelOpen();
+
+    useWorkbenchStore.getState().openPanel(panelId);
+    expect(api.getPanel(panelId)).toBeDefined();
+    expect(useWorkbenchStore.getState().closedPanelOrigins[panelId]).toBeUndefined();
+
+    const failedApi = seedStoreWithLibrariesDockedRight();
+    const failedPanel = failedApi.getPanel(panelId);
+    failedPanel.api.close = () => {
+      throw new Error('close exploded');
+    };
+    useWorkbenchStore.getState().closeAuxiliaryPanel(panelId);
+    expect(failedApi.getPanel(panelId)).toBe(failedPanel);
+    expect(useWorkbenchStore.getState().closedPanelOrigins[panelId]).toBeUndefined();
+  });
+
+  it('does not publish or persist a failed edge move', () => {
+    const api = seedStoreWithLibrariesDockedRight();
+    const originalAddGroup = api.addGroup;
+    api.addGroup = (options: any) => {
+      if (options?.id === 'blue-aux-edge-left') {
+        throw new Error('dockview exploded');
+      }
+      return originalAddGroup(options);
+    };
+
+    useWorkbenchStore.getState().moveAuxiliaryEdge('right', 'left');
+
+    const auxiliary = useWorkbenchStore.getState().auxiliary;
+    expect(
+      auxiliary.groups.filter((group) => group.panelIds.length > 0).map((group) => group.edge),
+    ).not.toContain('left');
+    expect(auxiliary.groups.some((group) => group.panelIds.includes('LibrariesTopComponent'))).toBe(
+      true,
+    );
+
+    const persisted = serializedAuxiliary();
+    expect(
+      persisted.groups.filter((group: any) => group.panelIds.length > 0).map((group: any) => group.edge),
+    ).not.toContain('left');
   });
 });

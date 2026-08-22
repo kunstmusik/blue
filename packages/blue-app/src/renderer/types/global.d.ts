@@ -4,6 +4,10 @@ import type {
   EffectEditorPatchRequest,
   EffectEditorRequest,
   EffectEditorSnapshot,
+  TrackInstrumentEditorPatchRequest,
+  TrackInstrumentEditorPatchResult,
+  TrackInstrumentEditorRequest,
+  TrackInstrumentEditorSnapshot,
   BsbRealtimeControlUpdate,
   MixerRealtimeLevelUpdate,
   EffectRealtimeUpdate,
@@ -20,7 +24,24 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
+  AudioFileSelectionResult,
+  FrozenSoundObjectSaveCopyResult,
 } from '../../shared/project-editor';
+import type {
+  ScoreObjectExportResult,
+  ScoreObjectImportResult,
+} from '../../shared/score-object-file';
+import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
+import type {
+  ReplConsoleCloseRequest,
+  ReplConsoleCloseResult,
+  ReplConsoleEvaluateRequest,
+  ReplConsoleEvaluateResult,
+  ReplConsoleOpenRequest,
+  ReplConsoleOpenResult,
+  ReplConsoleReinitializeRequest,
+  ReplConsoleReinitializeResult,
+} from '../../shared/repl-console';
 import type {
   MissingAudioAssetsChooseRequest,
   MissingAudioAssetsDismissRequest,
@@ -33,10 +54,33 @@ import type {
   CancelRenderOperationRequest,
   RenderOperationResult,
   RenderOperationStatus,
+  FreezeItemStatus,
   FreezeOperationResult,
 } from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
+import type { ScriptRuntimeReinitializeResult } from '../../shared/script-runtime';
+import type {
+  SoundFontInfo,
+} from '../../shared/soundfont-viewer';
+import type {
+  MidiImportCommitResult,
+  MidiImportSettings,
+  MidiImportStartResult,
+} from '../../shared/midi-import';
+import type { AppMetadata } from '../../shared/app-metadata';
+import type {
+  NativeConfirmationRequest,
+  NativeConfirmationResult,
+} from '../../shared/confirmation-dialog';
 import type { EngineOutputPayload } from '../../shared/io-provider';
+import type {
+  EngineProbeRequest,
+  EngineProbeResult,
+} from '../../shared/engine-runtime';
+import type {
+  CsoundIoQueryRequest,
+  CsoundIoQueryResult,
+} from '../../shared/csound-runtime';
 import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
@@ -79,7 +123,10 @@ import type {
   CutLibraryToClipboardRequest,
   CutLibraryToClipboardResult,
   LibraryInteractionClipboard,
+  BsbCanvasClipboard,
   ScoreTimelineSoundObjectRequest,
+  TrackInstrumentClipboardRequest,
+  BlueLiveSoundObjectClipboardRequest,
   OpenLibraryEditorRequest,
   LibraryEditorPatchRequest,
   LibraryEditorConflictDecision,
@@ -92,6 +139,21 @@ import type {
   ManualLibraryImportExecutionRequest,
   ManualLibraryImportResult,
 } from '../../shared/unified-library';
+import type {
+  CodeRepositoryChangedEvent,
+  CodeRepositoryCommitDraftRequest,
+  CodeRepositoryCreateGroupRequest,
+  CodeRepositoryCreateSnippetRequest,
+  CodeRepositoryDeleteNodeRequest,
+  CodeRepositoryExportFileResult,
+  CodeRepositoryImportFileRequest,
+  CodeRepositoryImportResult,
+  CodeRepositoryMoveNodeRequest,
+  CodeRepositoryResult,
+  CodeRepositorySnapshot,
+  CodeRepositoryStatus,
+  CodeRepositoryUpdateNodeRequest,
+} from '../../shared/code-repository';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -158,12 +220,23 @@ declare global {
       cutLibraryToClipboard: (
         request: CutLibraryToClipboardRequest,
       ) => Promise<LibraryResult<CutLibraryToClipboardResult>>;
+      setLibraryClipboard: (clipboard: LibraryInteractionClipboard | null) => Promise<boolean>;
+      setBsbClipboard: (clipboard: BsbCanvasClipboard | null) => Promise<boolean>;
       captureScoreSoundObjectClipboard: (
         request: ScoreTimelineSoundObjectRequest,
+      ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
+      captureTrackInstrumentClipboard: (
+        request: TrackInstrumentClipboardRequest,
+      ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
+      captureBlueLiveSoundObjectClipboard: (
+        request: BlueLiveSoundObjectClipboardRequest,
       ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
       addScoreSoundObjectToProjectLibrary: (
         request: ScoreTimelineSoundObjectRequest,
       ) => Promise<LibraryResult<ProjectMutationReceipt>>;
+      showNativeConfirmation: (
+        request: NativeConfirmationRequest,
+      ) => Promise<NativeConfirmationResult>;
       openLibraryItemEditor: (
         request: OpenLibraryEditorRequest,
       ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
@@ -207,6 +280,12 @@ declare global {
         source: LibraryTransferSourceReference,
         parentId: string,
       ) => Promise<LibraryResult<LibraryMutationReceipt>>;
+      importLibraryInstrument: (
+        parentId: string,
+      ) => Promise<LibraryResult<LibraryMutationReceipt> | null>;
+      exportLibraryInstrument: (
+        key: LibraryItemKey,
+      ) => Promise<LibraryResult<true> | null>;
       selectLibraryImportFiles: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       selectLibraryImportDirectory: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       executeLibraryImport: (
@@ -232,6 +311,36 @@ declare global {
         callback: (event: LibraryChangedEvent) => void,
       ) => () => void;
 
+      // Code Repository
+      getCodeRepositorySnapshot: () => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      getCodeRepositoryStatus: () => Promise<CodeRepositoryStatus>;
+      commitCodeRepositoryDraft: (
+        request: CodeRepositoryCommitDraftRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      createCodeRepositoryGroup: (
+        request: CodeRepositoryCreateGroupRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      createCodeRepositorySnippet: (
+        request: CodeRepositoryCreateSnippetRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      moveCodeRepositoryNode: (
+        request: CodeRepositoryMoveNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      updateCodeRepositoryNode: (
+        request: CodeRepositoryUpdateNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      deleteCodeRepositoryNode: (
+        request: CodeRepositoryDeleteNodeRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositorySnapshot>>;
+      importCodeRepositoryFile: (
+        request: CodeRepositoryImportFileRequest,
+      ) => Promise<CodeRepositoryResult<CodeRepositoryImportResult> | null>;
+      exportCodeRepositoryXml: () => Promise<CodeRepositoryResult<CodeRepositoryExportFileResult> | null>;
+      retryCodeRepository: () => Promise<CodeRepositoryResult<CodeRepositoryStatus>>;
+      onCodeRepositoryChanged: (
+        callback: (event: CodeRepositoryChangedEvent) => void,
+      ) => () => void;
+
       openFile: () => Promise<string | null>;
       openFilePath: (filePath: string) => Promise<string | null>;
       newFile: () => Promise<string | null>;
@@ -241,6 +350,12 @@ declare global {
       setRecentFiles: (files: string[]) => Promise<string[]>;
       saveFile: () => Promise<string | null>;
       saveFileAs: () => Promise<string | null>;
+      startMidiImport: () => Promise<MidiImportStartResult>;
+      commitMidiImport: (
+        token: string,
+        settings: MidiImportSettings[],
+      ) => Promise<MidiImportCommitResult>;
+      cancelMidiImport: (token: string) => Promise<void>;
       getProjectDocument: () => Promise<ProjectEditorSnapshot | null>;
       updateProjectDocument: (
         patch: ProjectDocumentPatch,
@@ -252,12 +367,27 @@ declare global {
       openEffectInterface: (
         request: EffectEditorRequest,
       ) => Promise<void>;
+      openTrackInstrumentEditor: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<void>;
+      focusTrackInstrumentEditor: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<boolean>;
+      getTrackInstrumentEditorDocument: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<TrackInstrumentEditorSnapshot | null>;
+      updateTrackInstrumentEditorDocument: (
+        request: TrackInstrumentEditorPatchRequest,
+      ) => Promise<TrackInstrumentEditorPatchResult>;
       getEffectEditorDocument: (
         request: EffectEditorRequest,
       ) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (
         request: EffectEditorPatchRequest,
       ) => Promise<EffectEditorSnapshot | null>;
+      onProjectDocumentUpdated: (
+        callback: (event: ProjectDocumentUpdatedEvent) => void,
+      ) => () => void;
       commitProjectDocumentPatches: (
         patches: ProjectDocumentPatch[],
       ) => Promise<ProjectDocumentCommitReceipt>;
@@ -268,6 +398,12 @@ declare global {
       getScoreObjectEditorDocument: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectEditorDocumentSnapshot | null>;
+      selectScoreObjectAudioFile: (
+        request?: { currentPath?: string },
+      ) => Promise<AudioFileSelectionResult>;
+      saveFrozenSoundObjectCopy: (
+        request: { frozenWaveFileName: string },
+      ) => Promise<FrozenSoundObjectSaveCopyResult>;
       testScoreObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
@@ -277,8 +413,24 @@ declare global {
       testJavascriptSoundObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
+      testPythonInstrument: (
+        request: { code: string; assignmentId?: string },
+      ) => Promise<{ ok: boolean; output: string; error?: string }>;
+      openReplConsole: (
+        request: ReplConsoleOpenRequest,
+      ) => Promise<ReplConsoleOpenResult>;
+      evaluateReplConsole: (
+        request: ReplConsoleEvaluateRequest,
+      ) => Promise<ReplConsoleEvaluateResult>;
+      reinitializeReplConsole: (
+        request: ReplConsoleReinitializeRequest,
+      ) => Promise<ReplConsoleReinitializeResult>;
+      closeReplConsole: (
+        request: ReplConsoleCloseRequest,
+      ) => Promise<ReplConsoleCloseResult>;
       reinitializeClojureRuntime: () => Promise<{ ok: boolean; error?: string }>;
       reinitializeJythonRuntime: () => Promise<{ ok: boolean; error?: string }>;
+      reinitializeJavaScriptRuntime: () => Promise<ScriptRuntimeReinitializeResult>;
       getNestedPolyObjectSnapshot: (
         location: ScoreObjectLocationRef,
       ) => Promise<PolyObjectLayerGroupSnapshot | null>;
@@ -297,16 +449,53 @@ declare global {
       restartPlayback: () => Promise<boolean>;
       stopPlayback: () => Promise<void>;
       syncFollowPlaybackState: (enabled: boolean) => void;
+      syncAuditionScoreObjectAvailability: (canAudition: boolean) => void;
+      auditionScoreObjects: (objectIds: string[]) => Promise<boolean>;
       getProjectInfo: () => Promise<Record<string, string> | null>;
+      getPathForFile: (file: File) => string;
+      selectSoundFontFile: () => Promise<string | null>;
+      inspectSoundFont: (filePath: string) => Promise<SoundFontInfo>;
+
+      // File Manager (SPEC 076)
+      getFileManagerRoots: () => Promise<
+        import('../../shared/file-manager').FileManagerRootSnapshot[]
+      >;
+      listFileManagerDirectory: (
+        request: { path: string },
+      ) => Promise<import('../../shared/file-manager').FileManagerDirectoryResult>;
+      validateFileManagerDirectory: (
+        request: { path: string },
+      ) => Promise<import('../../shared/file-manager').FileManagerValidateDirectoryResult>;
+      commitAudioFileDrop: (
+        request: import('../../shared/file-manager').CommitAudioFileDropRequest,
+      ) => Promise<import('../../shared/file-manager').CommitAudioFileDropResult>;
+      getAppMetadata: () => Promise<AppMetadata>;
+      closeAboutWindow: () => Promise<boolean>;
       generateCsdToScreen: () => Promise<void>;
+      generateRealtimeCsdToScreen: () => Promise<void>;
       generateCsdToDisk: () => Promise<void>;
       importBlueUdo: () => Promise<string | null>;
       importCsoundUdo: () => Promise<string | null>;
       exportBlueUdo: (xmlText: string) => Promise<void>;
       exportCsoundUdo: (codeText: string, udoName: string) => Promise<void>;
+      importArrangementInstrument: () => Promise<string | null>;
+      exportArrangementInstrument: (assignmentId: string) => Promise<void>;
+      importPresetFile: () => Promise<string | null>;
+      exportPresetFile: (xmlText: string, presetName: string) => Promise<void>;
+      exportScoreObject: (xmlText: string, objectName: string) => Promise<ScoreObjectExportResult>;
+      importScoreObject: () => Promise<ScoreObjectImportResult | null>;
+      readCsoundRC: () => Promise<{ filePath: string; content: string }>;
+      writeCsoundRC: (text: string) => Promise<{ success: boolean; filePath: string }>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;
       onProjectClosed: (cb: () => void) => () => void;
-      onPlaybackStatus: (cb: (status: { status: string; message?: string }) => void) => () => void;
+      onPlaybackStatus: (
+        cb: (status: {
+          status: string;
+          message?: string;
+          renderStartTime?: number;
+          auditioning?: boolean;
+        }) => void,
+      ) => () => void;
       onPlaybackClock: (cb: (clock: PlaybackClockSnapshot) => void) => () => void;
       onPlaybackError: (cb: (error: string) => void) => () => void;
       onNativeMenuCommand: (cb: (command: NativeMenuCommand) => void) => () => void;
@@ -317,6 +506,9 @@ declare global {
       onEngineOutputReset: (cb: (payload: { tabName: string }) => void) => () => void;
       onGeneratedCsd: (cb: (csdText: string) => void) => () => void;
       onGeneratedCsdError: (cb: (error: string) => void) => () => void;
+      onEngineRecoveryStatus: (
+        cb: (status: import('../../shared/engine-recovery').EngineRecoveryStatus) => void,
+      ) => () => void;
 
       // Blue Live
       toggleBlueLive: () => Promise<BlueLiveStatusSnapshot>;
@@ -326,11 +518,19 @@ declare global {
       triggerBlueLiveNote: (
         request: BlueLiveNoteTriggerRequest,
       ) => Promise<BlueLiveNoteTriggerResult>;
+      triggerBlueLiveObjects: (
+        request: import('../../shared/project-editor').LegacyBlueLiveTriggerRequest,
+      ) => Promise<import('../../shared/project-editor').LegacyBlueLiveTriggerResult>;
       getBlueLiveStatus: () => Promise<BlueLiveStatusSnapshot>;
       onBlueLiveStatus: (cb: (snapshot: BlueLiveStatusSnapshot) => void) => () => void;
 
       // Settings
       openSettingsWindow: () => Promise<void>;
+      onSettingsCloseRequest: (callback: () => void) => () => void;
+      confirmSettingsClose: () => Promise<import('../../shared/settings-window').SettingsClosePromptResponse>;
+      resolveSettingsClose: (
+        resolution: import('../../shared/settings-window').SettingsCloseResolution,
+      ) => void;
       getProgramSettings: () => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
       saveProgramSettings: (
         snapshot: import('../../shared/program-settings').ProgramSettingsSnapshot,
@@ -342,6 +542,11 @@ declare global {
       syncLegacyRendererSettings: (
         snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+      updatePlaybackPreferences: (
+        patch: import('../../shared/program-settings').PlaybackPreferencePatch,
+      ) => Promise<import('../../shared/program-settings').ProgramSettingsSaveResult>;
+      probeEngineRuntime: (request?: EngineProbeRequest) => Promise<EngineProbeResult>;
+      queryCsoundIo: (request?: CsoundIoQueryRequest) => Promise<CsoundIoQueryResult>;
 
       // OSC Control
       getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;
@@ -384,9 +589,13 @@ declare global {
       onRenderOperationStatus: (
         callback: (status: RenderOperationStatus) => void,
       ) => () => void;
+      onFreezeItemStatus: (
+        callback: (item: FreezeItemStatus) => void,
+      ) => () => void;
 
       // Audio File Player
       openAudioFile: () => Promise<string | null>;
+      authorizeAudioFile: (filePath: string) => Promise<boolean>;
       getAudioFileStat: (
         filePath: string,
       ) => Promise<{ size: number; mtime: number } | null>;
@@ -403,6 +612,9 @@ declare global {
       onMidiInputServiceSnapshot: (
         callback: (snapshot: MidiInputServiceSnapshot) => void,
       ) => () => void;
+
+      // BlueX7 Yamaha SysEx Import (SPEC 081)
+      selectBlueX7SysexFile: () => Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>;
     };
   }
 }

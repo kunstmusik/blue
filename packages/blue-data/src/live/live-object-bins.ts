@@ -43,23 +43,25 @@ export class LiveObjectBins implements BlueDataObject {
     this._cells[column][row] = obj;
   }
 
-  insertRow(index: number): void {
+  insertRow(index: number): boolean {
     if (index < 0) index = 0;
     const rows = this.getRowCount();
     if (index > rows) index = rows;
     for (let c = 0; c < this._cells.length; c++) {
       this._cells[c].splice(index, 0, null);
     }
+    return true;
   }
 
-  removeRow(index: number): void {
-    if (index < 0 || index >= this.getRowCount() || this.getRowCount() <= 1) return;
+  removeRow(index: number): boolean {
+    if (index < 0 || index >= this.getRowCount() || this.getRowCount() <= 1) return false;
     for (let c = 0; c < this._cells.length; c++) {
       this._cells[c].splice(index, 1);
     }
+    return true;
   }
 
-  insertColumn(index: number): void {
+  insertColumn(index: number): boolean {
     if (index < 0) index = 0;
     if (index > this._cells.length) index = this._cells.length;
     const rows = this.getRowCount();
@@ -68,11 +70,13 @@ export class LiveObjectBins implements BlueDataObject {
       newCol.push(null);
     }
     this._cells.splice(index, 0, newCol);
+    return true;
   }
 
-  removeColumn(index: number): void {
-    if (index < 0 || index >= this._cells.length || this._cells.length <= 1) return;
+  removeColumn(index: number): boolean {
+    if (index < 0 || index >= this._cells.length || this._cells.length <= 1) return false;
     this._cells.splice(index, 1);
+    return true;
   }
 
   getEnabledLiveObjectSet(): LiveObject[] {
@@ -87,15 +91,21 @@ export class LiveObjectBins implements BlueDataObject {
     return result;
   }
 
-  setEnabledFromLiveObjectSet(set: LiveObject[]): void {
+  setEnabledFromLiveObjectSet(set: LiveObject[]): boolean {
     const setIds = new Set(set.map((o) => o.getUniqueId()));
+    let changed = false;
     for (const col of this._cells) {
       for (const obj of col) {
         if (obj !== null) {
-          obj.setEnabled(setIds.has(obj.getUniqueId()));
+          const enabled = setIds.has(obj.getUniqueId());
+          if (obj.isEnabled() !== enabled) {
+            obj.setEnabled(enabled);
+            changed = true;
+          }
         }
       }
     }
+    return changed;
   }
 
   getLiveObjectByUniqueId(uniqueId: string | null): LiveObject | null {

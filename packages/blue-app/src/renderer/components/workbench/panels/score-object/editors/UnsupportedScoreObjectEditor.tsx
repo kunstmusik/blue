@@ -10,9 +10,9 @@ export default function UnsupportedScoreObjectEditor({ document }: ScoreObjectEd
   return (
     <div className="flex h-full items-center justify-center bg-blue-bg px-6 text-center">
       <div className="max-w-sm">
-        <div className="text-sm text-blue-muted mb-1">{message}</div>
+        <div className="text-role-body text-blue-muted mb-1">{message}</div>
         {document.target.editorObjectType && (
-          <div className="text-body text-blue-muted/60">{document.target.editorObjectType}</div>
+          <div className="text-role-callout text-blue-muted/60">{document.target.editorObjectType}</div>
         )}
       </div>
     </div>

@@ -4,7 +4,7 @@ interface LibraryBreadcrumbsProps {
 
 export function LibraryBreadcrumbs({ parts }: LibraryBreadcrumbsProps): React.ReactElement {
   return (
-    <nav aria-label="Library location" className="min-w-0 truncate text-xs text-app-text-muted">
+    <nav aria-label="Library location" className="min-w-0 truncate text-role-body text-app-text-muted">
       <ol className="flex min-w-0 items-center gap-1">
         {parts.map((part, index) => (
           <li key={`${index}:${part}`} className="flex min-w-0 items-center gap-1">

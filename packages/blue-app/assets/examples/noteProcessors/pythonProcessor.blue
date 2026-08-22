@@ -1,0 +1,223 @@
+<blueData version='0.106.0_beta3'>
+  <projectProperties>
+    <title></title>
+    <author>Steven Yi</author>
+    <notes></notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>simple fm 2:1</name>
+        <comment>Description: 
+
+A simple FM instrument, built using an instrument template code snippet I often use from my personal code repository for building my instruments. Instrument parameters are numerous, but often I use instruments I build from this template with python code that simplifies the process of generating these notes, yet I&apos;m still able to have the flexibility and nuance of all of these parameters.
+
+Parameters:
+
+p4	- start frequency, can be either hertz or pch notation 
+p5	- end frequency, can be either hertz or pch notation
+p6	- amplitude, expressed in decibels
+p7	- panning, from range -1 to 1
+p8	- amplitude envelope type, 0 = adsr, 1 = pyramid, 2 = ramp</comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, .05, .05, .95, .05
+
+; SOUND GENERATION CODE
+
+icar	= 2
+imod	= 1
+
+aout	foscili  	iamp * kenv, kpchline, icar, imod, kenv, gi_sine
+
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+blueMixerOut aLeft, aRight
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooooo</inTypes>
+      <codeBody>ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <heightIndex>2</heightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>import random
+
+for i in noteList:
+	newVal = str((2 * random.random()) - 1)
+	i.setPField(newVal, 7)
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>#Orch Instrument Test Script
+
+score = &quot;&quot;
+
+noteTemplate = &quot;i1 %i 1 %s %s %i 0 %i\n&quot;
+
+for i in range(12):
+	pch = &quot;8.&quot;
+	amp = 80
+
+	if i &lt; 10:
+		pch += &quot;0&quot; + str(i)
+	else:
+		pch += str(i)
+
+	score += noteTemplate%(i, pch, pch, amp, 0)</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+</blueData>

@@ -67,12 +67,12 @@ export default function OscSettings({
         description="Blue tries this inbound UDP port first. If it is already in use, it scans upward to the first available port without changing this preference."
       />
       {!validPort && (
-        <p className="-mt-2 mb-4 text-body text-app-danger">
+        <p className="-mt-2 mb-4 text-role-body text-app-danger">
           Enter a whole port number from 1 through 65535 before applying.
         </p>
       )}
 
-      <div className="rounded-md border border-app-border bg-app-surface p-4 text-body">
+      <div className="rounded-md border border-app-border bg-app-surface p-4 text-role-body">
         <div className="mb-3 flex items-center gap-3">
           <span className={`inline-flex items-center rounded-full px-2 py-0.5 ${phaseClass(runtime)}`}>
             {phaseLabel(runtime)}
@@ -99,28 +99,28 @@ export default function OscSettings({
       </div>
 
       <div className="mt-6">
-        <h3 className="mb-1 text-sm font-semibold text-app-text-strong">Supported OSC Messages</h3>
-        <p className="mb-3 text-ui leading-4 text-app-text-subtle">
+        <h3 className="mb-1 text-role-title-3 font-semibold text-app-text-strong">Supported OSC Messages</h3>
+        <p className="mb-3 text-role-callout text-app-text-subtle">
           Message arguments and bundle timetags are ignored. Addresses use Java Blue-compatible prefix matching.
         </p>
         <div className="overflow-hidden rounded-md border border-app-border">
-          <table className="w-full border-collapse text-left text-body" aria-label="Supported OSC messages">
-            <thead className="bg-app-surface text-ui text-app-text-muted">
+          <table className="w-full border-collapse text-left text-role-body" aria-label="Supported OSC messages">
+            <thead className="bg-app-surface text-role-headline font-bold text-app-text-muted">
               <tr>
-                <th scope="col" className="px-3 py-2 font-medium">Message</th>
-                <th scope="col" className="px-3 py-2 font-medium">Description</th>
+                <th scope="col" className="px-3 py-2">Message</th>
+                <th scope="col" className="px-3 py-2">Description</th>
               </tr>
             </thead>
             {OSC_COMMAND_CATEGORIES.map((category) => (
               <tbody key={category} className="divide-y divide-app-border border-t border-app-border">
                 <tr className="bg-app-surface/60">
-                  <th scope="colgroup" colSpan={2} className="px-3 py-1.5 text-ui font-semibold text-app-text-muted">
+                  <th scope="colgroup" colSpan={2} className="px-3 py-1.5 text-role-headline font-bold text-app-text-muted">
                     {category}
                   </th>
                 </tr>
                 {OSC_COMMAND_REGISTRY.filter((command) => command.category === category).map((command) => (
                   <tr key={command.id} data-osc-command={command.id}>
-                    <td className="whitespace-nowrap px-3 py-2 font-mono text-ui text-app-text">
+                    <td className="whitespace-nowrap px-3 py-2 font-mono text-role-body text-app-text">
                       {command.addressPrefix}
                     </td>
                     <td className="px-3 py-2 text-app-text-muted">{command.description}</td>

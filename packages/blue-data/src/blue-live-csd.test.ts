@@ -131,3 +131,65 @@ describe('Blue Live CSD generation', () => {
     expect(result.stringChannels).toBeDefined();
   });
 });
+describe('Blue Live compiled MIDI target catalog', () => {
+  it('returns a deterministic empty catalog when no instruments are enabled', () => {
+    const data = new BlueData();
+    const result = data.toBlueLiveCSD();
+    expect(result.midiInstrumentTargets).toEqual([]);
+  });
+
+  it('includes enabled Orchestra assignments as orchestra targets and excludes disabled ones', () => {
+    const data = new BlueData();
+    const enabled = new GenericInstrument();
+    enabled.setName('Enabled');
+    enabled.setText('out aout');
+    const other = new GenericInstrument();
+    other.setName('Other');
+    other.setText('out aout');
+    data.getArrangement().addInstrument(enabled, '1');
+    data.getArrangement().addInstrument(other, '2');
+    // Disable the assignment (InstrumentAssignment.enabled), not the instrument.
+    data.getArrangement().updateAssignment('2', { enabled: false });
+
+    const result = data.toBlueLiveCSD();
+    const targets = result.midiInstrumentTargets ?? [];
+    const orch = targets.filter((t) => t.kind === 'orchestra');
+    expect(orch).toHaveLength(1);
+    expect(orch[0]).toMatchObject({ kind: 'orchestra', assignmentId: '1' });
+    expect(targets.some((t) => t.kind === 'orchestra' && t.assignmentId === '2')).toBe(false);
+  });
+
+  it('does not mutate the canonical Arrangement or write target ids into saved XML', () => {
+    const data = new BlueData();
+    const instr = new GenericInstrument();
+    instr.setText('out aout');
+    data.getArrangement().addInstrument(instr, '1');
+    const sizeBefore = data.getArrangement().size();
+    const xmlBefore = data.saveToString();
+
+    data.toBlueLiveCSD();
+
+    expect(data.getArrangement().size()).toBe(sizeBefore);
+    expect(data.saveToString()).toBe(xmlBefore);
+    expect(data.saveToString()).not.toContain('midiInstrumentTargets');
+    expect(data.saveToString()).not.toContain('track-instrument');
+  });
+
+  it('rebuilds the catalog without stale entries after instrument replacement', () => {
+    const data = new BlueData();
+    const first = new GenericInstrument();
+    first.setText('out aout');
+    data.getArrangement().addInstrument(first, '1');
+
+    const firstResult = data.toBlueLiveCSD();
+    expect(firstResult.midiInstrumentTargets).toHaveLength(1);
+
+    data.getArrangement().replaceInstrument('1', new GenericInstrument());
+    const replaced = data.toBlueLiveCSD();
+    expect(replaced.midiInstrumentTargets).toHaveLength(1);
+    expect(replaced.midiInstrumentTargets?.[0]).toMatchObject({
+      kind: 'orchestra',
+      assignmentId: '1',
+    });
+  });
+});

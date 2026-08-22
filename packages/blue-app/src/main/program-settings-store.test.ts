@@ -9,7 +9,9 @@ import {
   syncLegacyRendererSettings,
   clearSettingsCache,
   setSettingsFilePathForTesting,
+  updatePlaybackPreferences,
 } from './program-settings-store';
+import { createDefaultProgramSettings } from '../shared/program-settings';
 
 let tempDir: string;
 
@@ -27,9 +29,9 @@ afterEach(() => {
 describe('program-settings-store', () => {
   it('creates defaults when no file exists', () => {
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
     expect(settings.general.messageColorsEnabled).toBe(false);
-    expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(settings.realtimeRender.audioDriver).toBe('auhal');
   });
 
   it('persists and reloads settings', () => {
@@ -77,7 +79,23 @@ describe('program-settings-store', () => {
     const settings = loadProgramSettings('darwin');
     expect(settings.general.workDirectory).toBe('/partial');
     expect(settings.general.messageColorsEnabled).toBe(false);
-    expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(settings.realtimeRender.audioDriver).toBe('auhal');
+  });
+
+  it('removes the legacy alpha marquee setting from persisted snapshots', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({
+      version: 2,
+      general: {
+        drawAlphaBackgroundOnMarquee: true,
+        messageColorsEnabled: true,
+      },
+    }));
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(Object.hasOwn(settings.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).general.drawAlphaBackgroundOnMarquee).toBeUndefined();
   });
 
   it('migrates a valid legacy OSC input port without treating output placeholders as live settings', () => {
@@ -96,7 +114,7 @@ describe('program-settings-store', () => {
     expect(settings.osc.preferredPort).toBe(9010);
     expect(settings.appSpecific.oscOutputHost).toBe('controller.local');
     expect(settings.appSpecific.oscOutputPort).toBe(9020);
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
   });
 
   it('falls back to defaults when the settings file contains corrupted JSON', () => {
@@ -105,7 +123,7 @@ describe('program-settings-store', () => {
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
     expect(settings.general.workDirectory).toBe('');
   });
 
@@ -115,7 +133,7 @@ describe('program-settings-store', () => {
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(2);
+    expect(settings.version).toBe(3);
   });
 
   it('creates default midiInput preferences when none are saved', () => {
@@ -281,7 +299,7 @@ describe('program-settings-store appZoomPercent (SPEC 061)', () => {
     clearSettingsCache();
 
     const reloaded = loadProgramSettings('darwin');
-    expect(reloaded.version).toBe(2);
+    expect(reloaded.version).toBe(3);
   });
 
   it('rejects a save with an unsupported appZoomPercent via validation', () => {
@@ -290,5 +308,77 @@ describe('program-settings-store appZoomPercent (SPEC 061)', () => {
     const result = saveProgramSettings(settings, 'darwin');
     expect(result.ok).toBe(false);
     expect(result.validationIssues?.some((i) => i.path === 'appSpecific.appZoomPercent')).toBe(true);
+  });
+});
+
+describe('updatePlaybackPreferences', () => {
+  it('updates only followPlayback', () => {
+    const result = updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlayback).toBe(false);
+    expect(settings.playback.followPlaybackOnStart).toBe(createDefaultProgramSettings('darwin').playback.followPlaybackOnStart);
+  });
+
+  it('updates only followPlaybackOnStart', () => {
+    const result = updatePlaybackPreferences({ followPlaybackOnStart: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlaybackOnStart).toBe(false);
+    expect(settings.playback.followPlayback).toBe(createDefaultProgramSettings('darwin').playback.followPlayback);
+  });
+
+  it('updates both followPlayback and followPlaybackOnStart', () => {
+    const result = updatePlaybackPreferences({ followPlayback: false, followPlaybackOnStart: false }, 'darwin');
+    expect(result.ok).toBe(true);
+    const settings = loadProgramSettings('darwin');
+    expect(settings.playback.followPlayback).toBe(false);
+    expect(settings.playback.followPlaybackOnStart).toBe(false);
+  });
+
+  it('rejects invalid non-boolean payload', () => {
+    const result = updatePlaybackPreferences({ followPlayback: 'yes' as any }, 'darwin');
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects empty object payload', () => {
+    const result = updatePlaybackPreferences({}, 'darwin');
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects missing-field request (null/undefined)', () => {
+    const result = updatePlaybackPreferences(null as any, 'darwin');
+    expect(result.ok).toBe(false);
+    const result2 = updatePlaybackPreferences(undefined as any, 'darwin');
+    expect(result2.ok).toBe(false);
+  });
+
+  it('preserves unrelated settings', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.workDirectory = '/my/work/dir';
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+
+    settings = loadProgramSettings('darwin');
+    expect(settings.general.workDirectory).toBe('/my/work/dir');
+  });
+
+  it('preserves existing unrelated fields when a previous save failed', () => {
+    let settings = loadProgramSettings('darwin');
+    settings.general.workDirectory = '/my/valid/dir';
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    settings = loadProgramSettings('darwin');
+    settings.general.directoryTempFileLimit = -1;
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+
+    settings = loadProgramSettings('darwin');
+    expect(settings.general.workDirectory).toBe('/my/valid/dir');
   });
 });

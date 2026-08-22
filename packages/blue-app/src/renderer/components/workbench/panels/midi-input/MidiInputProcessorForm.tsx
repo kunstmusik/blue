@@ -84,14 +84,14 @@ function ScaleSelector({
         <div className="flex items-center gap-1">
           <input
             ref={inputRef}
-            className="flex-1 rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 outline-none focus:border-blue-accent"
+            className="flex-1 rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
             value={scaleName}
             readOnly
             placeholder="12TET"
           />
           <button
             type="button"
-            className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-body text-gray-100 transition hover:border-blue-accent"
+            className="rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-100 transition hover:border-blue-accent"
             onClick={handleFileSelect}
             disabled={dialogOpen}
           >
@@ -174,7 +174,7 @@ export default function MidiInputProcessorForm({
     <div className="flex flex-col gap-3">
       <FormRow label="Key Mapping">
         <select
-          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.keyMapping}
           onChange={(e) => {
             void applyPatch({ midiInput: { type: 'updateKeyMapping', value: e.target.value } });
@@ -197,7 +197,7 @@ export default function MidiInputProcessorForm({
 
       <FormRow label="Constant">
         <input
-          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.pitchConstant}
           onChange={(e) => {
             void applyPatch({ midiInput: { type: 'updatePitchConstant', value: e.target.value } });
@@ -209,7 +209,7 @@ export default function MidiInputProcessorForm({
 
       <FormRow label="Vel Mapping">
         <select
-          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.velocityMapping}
           onChange={(e) => {
             void applyPatch({ midiInput: { type: 'updateVelocityMapping', value: e.target.value } });
@@ -223,7 +223,7 @@ export default function MidiInputProcessorForm({
 
       <FormRow label="Constant">
         <input
-          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.ampConstant}
           onChange={(e) => {
             void applyPatch({ midiInput: { type: 'updateAmpConstant', value: e.target.value } });

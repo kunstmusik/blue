@@ -1,0 +1,4378 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>Aurora (for Kraig Grady)</title>
+    <author>Dave Seidel</author>
+    <notes>Copyright 2007 Dave Seidel, some rights reserved.  This work is licensed under a
+Creative Commons Attribution License (see http://creativecommons.org/licenses/by/3.0/).
+
+For more information, go to http://mysterybear.net/article/24/aurora
+
+Add the following lines after &lt;CsoundSynthesizer&gt; and before &lt;CsInstruments&gt; below,
+uncomment by removing the leading semicolons, then edit as desired.
+
+*** START OF OPTIONS ***
+&lt;CsOptions&gt;
+;; 96K/24-bit
+;--sample-rate=96000 --control-rate=96000 --format=wav:24bit -o &quot;Aurora-(96-24).wav&quot;
+;; 44.1K/16-bit
+--sample-rate=44100 --control-rate=44100 --format=wav:short -o &quot;Aurora-(44-16).wav&quot;
+&lt;/CsOptions&gt;
+*** END OF OPTIONS ***
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>100</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>render\Aurora.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Mode 6 - Tibetan Bowl 140mm</name>
+        <comment>Description: 6 Mode instrument using mpulse as striking force
+
+Based on work by Scott Lindroth and Francois Blanc
+
+NOTE: Mode frequency multiplier should be carefully set so that sr/freq &lt; pi (see documentation on for mode opcode)
+
+Author: Steven Yi
+
+[HISTORY]
+
+v1.0 - Initial Release</comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>;	print	p3
+idur	init	p3*3
+	xtratim	idur
+;p3	= p3 * 3
+;idur	= p3
+;	print idur
+ipch 	getFrequency p4
+iamp	= ampdb(p5)
+
+iSpace	= p7
+
+iQ    = &lt;baseQ&gt;
+
+imaxdel = 1/ipch
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+inummodes = &lt;modeOn0&gt; + &lt;modeOn1&gt; + &lt;modeOn2&gt; + &lt;modeOn3&gt; + &lt;modeOn4&gt; + &lt;modeOn5&gt;
+
+;--- old code
+
+;aexc 	mpulse 	inummodes, 0
+
+;--- new code
+
+ifreq11	=	80
+iQ11	=	8
+ifreq12	=	180
+iQ12	=	3
+ashock	mpulse 	1, 0
+aexc1	mode	ashock, ifreq11, iQ11
+aexc1	=	aexc1*iamp
+aexc2 	mode	ashock, ifreq12, iQ12
+aexc2	=	aexc2*iamp
+aexc	=	(aexc1+aexc2)/2
+
+; &quot;Contact&quot; condition : when aexc reaches 0, the excitator loses 
+; contact with the resonator, and stops &quot;pushing it&quot;
+aexc	limit	aexc, 0, iamp/inummodes
+
+;--- end of new code
+
+aout = 0
+
+if (&lt;modeOn0&gt; == 1) then
+	aout0 mode aexc * &lt;gain0&gt;, ipch * &lt;freqMultiply0&gt;, iQ * &lt;qMultiply0&gt;
+	aout sum aout, aout0
+endif
+
+if (&lt;modeOn1&gt; == 1) then
+	aout1 mode aexc  * &lt;gain1&gt;, ipch * &lt;freqMultiply1&gt;, iQ * &lt;qMultiply1&gt;
+	aout sum aout, aout1
+endif
+
+if (&lt;modeOn2&gt; == 1) then
+	aout2 mode aexc  * &lt;gain2&gt;, ipch * &lt;freqMultiply2&gt;, iQ * &lt;qMultiply2&gt;
+	aout sum aout, aout2
+endif
+
+if (&lt;modeOn3&gt; == 1) then
+	aout3 mode aexc  * &lt;gain3&gt;, ipch * &lt;freqMultiply3&gt;, iQ * &lt;qMultiply3&gt;
+	aout sum aout, aout3
+endif
+
+if (&lt;modeOn4&gt; == 1) then
+	aout4 mode aexc  * &lt;gain4&gt;, ipch * &lt;freqMultiply4&gt;, iQ * &lt;qMultiply4&gt;
+	aout sum aout, aout4
+endif
+
+if (&lt;modeOn5&gt; == 1) then
+	aout5 mode aexc  * &lt;gain5&gt;, ipch * &lt;freqMultiply5&gt;, iQ * &lt;qMultiply5&gt;
+	aout sum aout, aout5
+endif
+
+;aout	=	aout * iamp
+kenv	linen	iamp, 0, idur, 0.2
+aout	=	aout * kenv
+
+;END SOUND GENERATION CODE
+
+aLeft, aRight	panner iSpace, aout
+blueMixerOut aLeft, aRight
+</instrumentText>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='20' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+3&quot;&gt;&lt;b&gt;Mode 6&lt;/b&gt;&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>32</x>
+            <y>384</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Base Q&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>baseQ</objectName>
+            <x>99</x>
+            <y>366</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>100.0</maximum>
+            <value>2000.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply0</objectName>
+            <x>99</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply0</objectName>
+            <x>99</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>19</x>
+            <y>181</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>36</x>
+            <y>260</y>
+            <label>Q Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>123</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply1</objectName>
+            <x>168</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>2.76515</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply1</objectName>
+            <x>168</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.361644</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply2</objectName>
+            <x>237</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>5.12121</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply2</objectName>
+            <x>237</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.19526635</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply3</objectName>
+            <x>306</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>7.80681</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply3</objectName>
+            <x>306</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.12809329</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply4</objectName>
+            <x>375</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>10.78409</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply4</objectName>
+            <x>375</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.09272919</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>192</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>261</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>330</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;4&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>399</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;5&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply5</objectName>
+            <x>444</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply5</objectName>
+            <x>444</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>468</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;6&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn0</objectName>
+            <x>109</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn1</objectName>
+            <x>180</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn2</objectName>
+            <x>247</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn3</objectName>
+            <x>316</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn4</objectName>
+            <x>385</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn5</objectName>
+            <x>454</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>false</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain0</objectName>
+            <x>99</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>34</x>
+            <y>104</y>
+            <label>Input Gain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain1</objectName>
+            <x>168</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain2</objectName>
+            <x>237</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain3</objectName>
+            <x>306</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain4</objectName>
+            <x>375</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain5</objectName>
+            <x>444</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='1912799799' name='freqMultiply0' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799803' name='freqMultiply1' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='2.76515'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='2.76515'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799807' name='freqMultiply2' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='5.12121'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='5.12121'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799811' name='freqMultiply3' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='7.80681'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='7.80681'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799815' name='freqMultiply4' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='10.78409'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='10.78409'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799819' name='freqMultiply5' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799823' name='gain0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799825' name='gain1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799827' name='gain2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799829' name='gain3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799831' name='gain4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799833' name='gain5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799801' name='qMultiply0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799805' name='qMultiply1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.361644'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.361644'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799809' name='qMultiply2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.19526635'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.19526635'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799813' name='qMultiply3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.12809329'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.12809329'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799817' name='qMultiply4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.09272919'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.09272919'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1912799821' name='qMultiply5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'>
+          <presetGroup name='Harmonic'>
+            <preset name='Flute-esque'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:37.0705451965</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3</setting>
+              <setting name='freqMultiply3'>ver2:4</setting>
+              <setting name='freqMultiply4'>ver2:6</setting>
+              <setting name='freqMultiply5'>ver2:8</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.200000003</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <presetGroup name='Inharmonic'>
+            <preset name='Bayan Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:11.485004425</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3.0099999905</setting>
+              <setting name='freqMultiply3'>ver2:4.0100002289</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>true</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Dahina Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Red Cedar Wood Plate 2'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <preset name='test'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.018</setting>
+            <setting name='freqMultiply2'>ver2:1</setting>
+            <setting name='freqMultiply3'>ver2:1</setting>
+            <setting name='freqMultiply4'>ver2:1</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>false</setting>
+            <setting name='modeOn3'>false</setting>
+            <setting name='modeOn4'>false</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.815</setting>
+            <setting name='qMultiply2'>ver2:0.5</setting>
+            <setting name='qMultiply3'>ver2:1</setting>
+            <setting name='qMultiply4'>ver2:1</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+          <preset name='tibetan bowl 3'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.76515</setting>
+            <setting name='freqMultiply2'>ver2:5.12121</setting>
+            <setting name='freqMultiply3'>ver2:7.80681</setting>
+            <setting name='freqMultiply4'>ver2:10.78409</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.361644</setting>
+            <setting name='qMultiply2'>ver2:0.19526635</setting>
+            <setting name='qMultiply3'>ver2:0.12809329</setting>
+            <setting name='qMultiply4'>ver2:0.09272919</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+        </presetGroup>
+        <opcodeList>
+          <udo>
+            <opcodeName>getFrequency</opcodeName>
+            <outTypes>i</outTypes>
+            <inTypes>i</inTypes>
+            <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>panner</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ia</inTypes>
+            <codeBody>iSpace,aout	xin
+iSpace		=	iSpace * 3.14159265359 * .5
+krtl		= 	sqrt(2) / 2 * (cos(iSpace) + sin(iSpace))
+krtr		= 	sqrt(2) / 2 * (cos(iSpace) - sin(iSpace))
+aLeft		=	aout * krtl
+aRight		=	aout * krtr
+		xout	aLeft, aRight</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='5' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>oscillator</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3				; duration
+iamp	=	ampdb(p4)			; amplitude
+ifn	=	p5				; function table number
+ifreq	=	p6
+ipan	=	p7				; -1 to 1
+irise	=	p8
+ifall	=	p9
+
+kenv	linen	iamp, irise, idur, ifall
+asig	poscil3	kenv, ifreq, ifn
+aout	dcblock	asig
+
+aLeft, aRight	yipan	ipan, aout
+blueMixerOut	aLeft, aRight
+
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='8' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Mode 6 - Tibetan Bowl 180mm</name>
+        <comment>Description: 6 Mode instrument using mpulse as striking force
+
+Based on work by Scott Lindroth and Francois Blanc
+
+NOTE: Mode frequency multiplier should be carefully set so that sr/freq &lt; pi (see documentation on for mode opcode)
+
+Author: Steven Yi
+
+[HISTORY]
+
+v1.0 - Initial Release</comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>p3	= p3 * 2
+idur	= p3
+ipch 	getFrequency p4
+iamp	= ampdb(p5)
+
+iSpace	= p7
+
+iQ    = &lt;baseQ&gt;
+
+imaxdel = 1/ipch
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+inummodes = &lt;modeOn0&gt; + &lt;modeOn1&gt; + &lt;modeOn2&gt; + &lt;modeOn3&gt; + &lt;modeOn4&gt; + &lt;modeOn5&gt; + &lt;modeOn6&gt;
+
+;--- old code
+
+;aexc 	mpulse 	inummodes, 0
+
+;--- new code
+
+ifreq11	=	80
+iQ11	=	8
+ifreq12	=	180
+iQ12	=	3
+ashock	mpulse 	1, 0
+aexc1	mode	ashock, ifreq11, iQ11
+aexc1	=	aexc1*iamp
+aexc2 	mode	ashock, ifreq12, iQ12
+aexc2	=	aexc2*iamp
+aexc	=	(aexc1+aexc2)/2
+
+; &quot;Contact&quot; condition : when aexc reaches 0, the excitator loses 
+; contact with the resonator, and stops &quot;pushing it&quot;
+aexc	limit	aexc, 0, iamp/inummodes
+
+;--- end of new code
+
+aout = 0
+
+if (&lt;modeOn0&gt; == 1) then
+	aout0 mode aexc * &lt;gain0&gt;, ipch * &lt;freqMultiply0&gt;, iQ * &lt;qMultiply0&gt;
+	aout sum aout, aout0
+endif
+
+if (&lt;modeOn1&gt; == 1) then
+	aout1 mode aexc  * &lt;gain1&gt;, ipch * &lt;freqMultiply1&gt;, iQ * &lt;qMultiply1&gt;
+	aout sum aout, aout1
+endif
+
+if (&lt;modeOn2&gt; == 1) then
+	aout2 mode aexc  * &lt;gain2&gt;, ipch * &lt;freqMultiply2&gt;, iQ * &lt;qMultiply2&gt;
+	aout sum aout, aout2
+endif
+
+if (&lt;modeOn3&gt; == 1) then
+	aout3 mode aexc  * &lt;gain3&gt;, ipch * &lt;freqMultiply3&gt;, iQ * &lt;qMultiply3&gt;
+	aout sum aout, aout3
+endif
+
+if (&lt;modeOn4&gt; == 1) then
+	aout4 mode aexc  * &lt;gain4&gt;, ipch * &lt;freqMultiply4&gt;, iQ * &lt;qMultiply4&gt;
+	aout sum aout, aout4
+endif
+
+if (&lt;modeOn5&gt; == 1) then
+	aout5 mode aexc  * &lt;gain5&gt;, ipch * &lt;freqMultiply5&gt;, iQ * &lt;qMultiply5&gt;
+	aout sum aout, aout5
+endif
+
+if (&lt;modeOn6&gt; == 1) then
+	aout6 mode aexc  * &lt;gain6&gt;, ipch * &lt;freqMultiply6&gt;, iQ * &lt;qMultiply6&gt;
+	aout sum aout, aout6
+endif
+
+;aout	=	aout * iamp
+kenv	linen	iamp, 0, idur, 0.2
+aout	=	aout * kenv
+
+;END SOUND GENERATION CODE
+
+aLeft, aRight	panner iSpace, aout
+blueMixerOut aLeft, aRight
+</instrumentText>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='20' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+3&quot;&gt;&lt;b&gt;Mode 6&lt;/b&gt;&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>32</x>
+            <y>384</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Base Q&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>baseQ</objectName>
+            <x>99</x>
+            <y>366</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>100.0</maximum>
+            <value>2000.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply0</objectName>
+            <x>99</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply0</objectName>
+            <x>99</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>19</x>
+            <y>181</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>36</x>
+            <y>260</y>
+            <label>Q Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>123</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply1</objectName>
+            <x>168</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>2.77828</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply1</objectName>
+            <x>168</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.35993493</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply2</objectName>
+            <x>237</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>5.18099</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply2</objectName>
+            <x>237</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.19301331</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply3</objectName>
+            <x>306</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>8.16289</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply3</objectName>
+            <x>306</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.122505635</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply4</objectName>
+            <x>375</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>11.66063</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply4</objectName>
+            <x>375</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.085758656</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>192</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>261</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>330</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;4&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>399</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;5&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply5</objectName>
+            <x>444</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>15.63801</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply5</objectName>
+            <x>444</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.063946754</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>468</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;6&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn0</objectName>
+            <x>109</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn1</objectName>
+            <x>180</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn2</objectName>
+            <x>247</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn3</objectName>
+            <x>316</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn4</objectName>
+            <x>385</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn5</objectName>
+            <x>454</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain0</objectName>
+            <x>99</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>34</x>
+            <y>104</y>
+            <label>Input Gain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain1</objectName>
+            <x>168</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain2</objectName>
+            <x>237</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain3</objectName>
+            <x>306</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain4</objectName>
+            <x>375</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain5</objectName>
+            <x>444</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain6</objectName>
+            <x>517</x>
+            <y>85</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply6</objectName>
+            <x>517</x>
+            <y>163</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>19.99</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply6</objectName>
+            <x>518</x>
+            <y>241</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.050025012</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn6</objectName>
+            <x>519</x>
+            <y>318</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='-1633215831' name='freqMultiply0' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215827' name='freqMultiply1' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='2.77828'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='2.77828'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215823' name='freqMultiply2' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='5.18099'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='5.18099'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215819' name='freqMultiply3' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='8.16289'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='8.16289'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215815' name='freqMultiply4' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='11.66063'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='11.66063'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215811' name='freqMultiply5' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='15.63801'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='15.63801'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214959' name='freqMultiply6' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='19.99'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='19.99'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215807' name='gain0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215805' name='gain1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215803' name='gain2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215801' name='gain3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215799' name='gain4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215797' name='gain5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214961' name='gain6' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215829' name='qMultiply0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215825' name='qMultiply1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.35993493'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.35993493'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215821' name='qMultiply2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.19301331'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.19301331'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215817' name='qMultiply3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.122505635'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.122505635'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215813' name='qMultiply4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.085758656'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.085758656'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633215809' name='qMultiply5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.063946754'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.063946754'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214957' name='qMultiply6' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.050025012'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.050025012'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'>
+          <presetGroup name='Harmonic'>
+            <preset name='Flute-esque'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:37.0705451965</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3</setting>
+              <setting name='freqMultiply3'>ver2:4</setting>
+              <setting name='freqMultiply4'>ver2:6</setting>
+              <setting name='freqMultiply5'>ver2:8</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.200000003</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <presetGroup name='Inharmonic'>
+            <preset name='Bayan Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:11.485004425</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3.0099999905</setting>
+              <setting name='freqMultiply3'>ver2:4.0100002289</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>true</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Dahina Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Red Cedar Wood Plate 2'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <preset name='test'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.018</setting>
+            <setting name='freqMultiply2'>ver2:1</setting>
+            <setting name='freqMultiply3'>ver2:1</setting>
+            <setting name='freqMultiply4'>ver2:1</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>false</setting>
+            <setting name='modeOn3'>false</setting>
+            <setting name='modeOn4'>false</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.815</setting>
+            <setting name='qMultiply2'>ver2:0.5</setting>
+            <setting name='qMultiply3'>ver2:1</setting>
+            <setting name='qMultiply4'>ver2:1</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+          <preset name='tibetan bowl 1'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.7782800198</setting>
+            <setting name='freqMultiply2'>ver2:5.1809902191</setting>
+            <setting name='freqMultiply3'>ver2:8.1628904343</setting>
+            <setting name='freqMultiply4'>ver2:11.6606302261</setting>
+            <setting name='freqMultiply5'>ver2:15.638010025</setting>
+            <setting name='freqMultiply6'>ver2:19.99</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='gain6'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>true</setting>
+            <setting name='modeOn6'>true</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.359934926</setting>
+            <setting name='qMultiply2'>ver2:0.1930133104</setting>
+            <setting name='qMultiply3'>ver2:0.122505635</setting>
+            <setting name='qMultiply4'>ver2:0.0857586563</setting>
+            <setting name='qMultiply5'>ver2:0.0639467537</setting>
+            <setting name='qMultiply6'>ver2:0.0500250125</setting>
+          </preset>
+          <preset name='tibetan bowl 3'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.76515</setting>
+            <setting name='freqMultiply2'>ver2:5.12121</setting>
+            <setting name='freqMultiply3'>ver2:7.80681</setting>
+            <setting name='freqMultiply4'>ver2:10.78409</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.361644</setting>
+            <setting name='qMultiply2'>ver2:0.19526635</setting>
+            <setting name='qMultiply3'>ver2:0.12809329</setting>
+            <setting name='qMultiply4'>ver2:0.09272919</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+        </presetGroup>
+        <opcodeList>
+          <udo>
+            <opcodeName>getFrequency</opcodeName>
+            <outTypes>i</outTypes>
+            <inTypes>i</inTypes>
+            <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>panner</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ia</inTypes>
+            <codeBody>iSpace,aout	xin
+iSpace		=	iSpace * 3.14159265359 * .5
+krtl		= 	sqrt(2) / 2 * (cos(iSpace) + sin(iSpace))
+krtr		= 	sqrt(2) / 2 * (cos(iSpace) - sin(iSpace))
+aLeft		=	aout * krtl
+aRight		=	aout * krtr
+		xout	aLeft, aRight</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='9' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Mode 6 - Tibetan Bowl 152mm</name>
+        <comment>Description: 6 Mode instrument using mpulse as striking force
+
+Based on work by Scott Lindroth and Francois Blanc
+
+NOTE: Mode frequency multiplier should be carefully set so that sr/freq &lt; pi (see documentation on for mode opcode)
+
+Author: Steven Yi
+
+[HISTORY]
+
+v1.0 - Initial Release</comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>p3	= p3 * 2
+idur	= p3
+ipch 	getFrequency p4
+iamp	= ampdb(p5)
+
+iSpace	= p7
+
+iQ    = &lt;baseQ&gt;
+
+imaxdel = 1/ipch
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+inummodes = &lt;modeOn0&gt; + &lt;modeOn1&gt; + &lt;modeOn2&gt; + &lt;modeOn3&gt; + &lt;modeOn4&gt; + &lt;modeOn5&gt; + &lt;modeOn6&gt;
+
+;--- old code
+
+;aexc 	mpulse 	inummodes, 0
+
+;--- new code
+
+ifreq11	=	80
+iQ11	=	8
+ifreq12	=	180
+iQ12	=	3
+ashock	mpulse 	1, 0
+aexc1	mode	ashock, ifreq11, iQ11
+aexc1	=	aexc1*iamp
+aexc2 	mode	ashock, ifreq12, iQ12
+aexc2	=	aexc2*iamp
+aexc	=	(aexc1+aexc2)/2
+
+; &quot;Contact&quot; condition : when aexc reaches 0, the excitator loses 
+; contact with the resonator, and stops &quot;pushing it&quot;
+aexc	limit	aexc, 0, iamp/inummodes
+
+;--- end of new code
+
+aout = 0
+
+if (&lt;modeOn0&gt; == 1) then
+	aout0 mode aexc * &lt;gain0&gt;, ipch * &lt;freqMultiply0&gt;, iQ * &lt;qMultiply0&gt;
+	aout sum aout, aout0
+endif
+
+if (&lt;modeOn1&gt; == 1) then
+	aout1 mode aexc  * &lt;gain1&gt;, ipch * &lt;freqMultiply1&gt;, iQ * &lt;qMultiply1&gt;
+	aout sum aout, aout1
+endif
+
+if (&lt;modeOn2&gt; == 1) then
+	aout2 mode aexc  * &lt;gain2&gt;, ipch * &lt;freqMultiply2&gt;, iQ * &lt;qMultiply2&gt;
+	aout sum aout, aout2
+endif
+
+if (&lt;modeOn3&gt; == 1) then
+	aout3 mode aexc  * &lt;gain3&gt;, ipch * &lt;freqMultiply3&gt;, iQ * &lt;qMultiply3&gt;
+	aout sum aout, aout3
+endif
+
+if (&lt;modeOn4&gt; == 1) then
+	aout4 mode aexc  * &lt;gain4&gt;, ipch * &lt;freqMultiply4&gt;, iQ * &lt;qMultiply4&gt;
+	aout sum aout, aout4
+endif
+
+if (&lt;modeOn5&gt; == 1) then
+	aout5 mode aexc  * &lt;gain5&gt;, ipch * &lt;freqMultiply5&gt;, iQ * &lt;qMultiply5&gt;
+	aout sum aout, aout5
+endif
+
+if (&lt;modeOn6&gt; == 1) then
+	aout6 mode aexc  * &lt;gain6&gt;, ipch * &lt;freqMultiply6&gt;, iQ * &lt;qMultiply6&gt;
+	aout sum aout, aout6
+endif
+
+;aout	=	aout * iamp
+kenv	linen	iamp, 0, idur, 0.2
+aout	=	aout * kenv
+
+;END SOUND GENERATION CODE
+
+aLeft, aRight	panner iSpace, aout
+blueMixerOut aLeft, aRight
+</instrumentText>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='20' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+3&quot;&gt;&lt;b&gt;Mode 6&lt;/b&gt;&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>32</x>
+            <y>384</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Base Q&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>baseQ</objectName>
+            <x>99</x>
+            <y>366</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>100.0</maximum>
+            <value>2000.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply0</objectName>
+            <x>99</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply0</objectName>
+            <x>99</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>19</x>
+            <y>181</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>36</x>
+            <y>260</y>
+            <label>Q Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>123</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply1</objectName>
+            <x>168</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>2.66242</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply1</objectName>
+            <x>168</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.37559813</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply2</objectName>
+            <x>237</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>4.83757</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply2</objectName>
+            <x>237</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.20671536</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply3</objectName>
+            <x>306</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>7.51592</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply3</objectName>
+            <x>306</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.1330509</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply4</objectName>
+            <x>375</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>10.64012</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply4</objectName>
+            <x>375</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.0939839</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>192</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>261</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>330</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;4&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>399</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;5&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply5</objectName>
+            <x>444</x>
+            <y>161</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>14.21019</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply5</objectName>
+            <x>444</x>
+            <y>238</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.07037204</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>468</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;6&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn0</objectName>
+            <x>109</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn1</objectName>
+            <x>180</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn2</objectName>
+            <x>247</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn3</objectName>
+            <x>316</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn4</objectName>
+            <x>385</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn5</objectName>
+            <x>454</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain0</objectName>
+            <x>99</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>34</x>
+            <y>104</y>
+            <label>Input Gain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain1</objectName>
+            <x>168</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain2</objectName>
+            <x>237</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain3</objectName>
+            <x>306</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain4</objectName>
+            <x>375</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain5</objectName>
+            <x>444</x>
+            <y>84</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain6</objectName>
+            <x>517</x>
+            <y>85</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply6</objectName>
+            <x>517</x>
+            <y>163</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>18.14027</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply6</objectName>
+            <x>518</x>
+            <y>241</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.05512597</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn6</objectName>
+            <x>519</x>
+            <y>318</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='-1633214953' name='freqMultiply0' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214949' name='freqMultiply1' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='2.66242'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='2.66242'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214945' name='freqMultiply2' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='4.83757'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4.83757'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214941' name='freqMultiply3' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='7.51592'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='7.51592'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214937' name='freqMultiply4' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='10.64012'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='10.64012'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214933' name='freqMultiply5' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='14.21019'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='14.21019'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214915' name='freqMultiply6' label='' min='1.0' max='16.0' resolution='-1.0' automationEnabled='false' value='18.14027'>
+            <line name='' version='2' max='16.0' min='1.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='18.14027'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214929' name='gain0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214927' name='gain1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214925' name='gain2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214923' name='gain3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214921' name='gain4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214919' name='gain5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214917' name='gain6' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214951' name='qMultiply0' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='1.0'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214947' name='qMultiply1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.37559813'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.37559813'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214943' name='qMultiply2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.20671536'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.20671536'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214939' name='qMultiply3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.1330509'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.1330509'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214935' name='qMultiply4' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.0939839'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.0939839'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214931' name='qMultiply5' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.07037204'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.07037204'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='-1633214913' name='qMultiply6' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.05512597'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.05512597'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'>
+          <presetGroup name='Harmonic'>
+            <preset name='Flute-esque'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:37.0705451965</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3</setting>
+              <setting name='freqMultiply3'>ver2:4</setting>
+              <setting name='freqMultiply4'>ver2:6</setting>
+              <setting name='freqMultiply5'>ver2:8</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.200000003</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <presetGroup name='Inharmonic'>
+            <preset name='Bayan Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:11.485004425</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3.0099999905</setting>
+              <setting name='freqMultiply3'>ver2:4.0100002289</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>true</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Dahina Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Red Cedar Wood Plate 2'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <preset name='test'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.018</setting>
+            <setting name='freqMultiply2'>ver2:1</setting>
+            <setting name='freqMultiply3'>ver2:1</setting>
+            <setting name='freqMultiply4'>ver2:1</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>false</setting>
+            <setting name='modeOn3'>false</setting>
+            <setting name='modeOn4'>false</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.815</setting>
+            <setting name='qMultiply2'>ver2:0.5</setting>
+            <setting name='qMultiply3'>ver2:1</setting>
+            <setting name='qMultiply4'>ver2:1</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+          <preset name='tibetan bowl 1'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.7782800198</setting>
+            <setting name='freqMultiply2'>ver2:5.1809902191</setting>
+            <setting name='freqMultiply3'>ver2:8.1628904343</setting>
+            <setting name='freqMultiply4'>ver2:11.6606302261</setting>
+            <setting name='freqMultiply5'>ver2:15.638010025</setting>
+            <setting name='freqMultiply6'>ver2:19.99</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='gain6'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>true</setting>
+            <setting name='modeOn6'>true</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.359934926</setting>
+            <setting name='qMultiply2'>ver2:0.1930133104</setting>
+            <setting name='qMultiply3'>ver2:0.122505635</setting>
+            <setting name='qMultiply4'>ver2:0.0857586563</setting>
+            <setting name='qMultiply5'>ver2:0.0639467537</setting>
+            <setting name='qMultiply6'>ver2:0.0500250125</setting>
+          </preset>
+          <preset name='tibetan bowl 2'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.66242</setting>
+            <setting name='freqMultiply2'>ver2:4.83757</setting>
+            <setting name='freqMultiply3'>ver2:7.51592</setting>
+            <setting name='freqMultiply4'>ver2:10.64012</setting>
+            <setting name='freqMultiply5'>ver2:14.21019</setting>
+            <setting name='freqMultiply6'>ver2:18.14027</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='gain6'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>true</setting>
+            <setting name='modeOn6'>true</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.37559814</setting>
+            <setting name='qMultiply2'>ver2:0.206715355</setting>
+            <setting name='qMultiply3'>ver2:0.1330509106</setting>
+            <setting name='qMultiply4'>ver2:0.0939839024</setting>
+            <setting name='qMultiply5'>ver2:0.0703720358</setting>
+            <setting name='qMultiply6'>ver2:0.0551259711</setting>
+          </preset>
+          <preset name='tibetan bowl 3'>
+            <setting name='baseQ'>ver2:2000</setting>
+            <setting name='freqMultiply0'>ver2:1</setting>
+            <setting name='freqMultiply1'>ver2:2.76515</setting>
+            <setting name='freqMultiply2'>ver2:5.12121</setting>
+            <setting name='freqMultiply3'>ver2:7.80681</setting>
+            <setting name='freqMultiply4'>ver2:10.78409</setting>
+            <setting name='freqMultiply5'>ver2:1</setting>
+            <setting name='gain0'>ver2:1</setting>
+            <setting name='gain1'>ver2:1</setting>
+            <setting name='gain2'>ver2:1</setting>
+            <setting name='gain3'>ver2:1</setting>
+            <setting name='gain4'>ver2:1</setting>
+            <setting name='gain5'>ver2:1</setting>
+            <setting name='modeOn0'>true</setting>
+            <setting name='modeOn1'>true</setting>
+            <setting name='modeOn2'>true</setting>
+            <setting name='modeOn3'>true</setting>
+            <setting name='modeOn4'>true</setting>
+            <setting name='modeOn5'>false</setting>
+            <setting name='qMultiply0'>ver2:1</setting>
+            <setting name='qMultiply1'>ver2:0.361644</setting>
+            <setting name='qMultiply2'>ver2:0.19526635</setting>
+            <setting name='qMultiply3'>ver2:0.12809329</setting>
+            <setting name='qMultiply4'>ver2:0.09272919</setting>
+            <setting name='qMultiply5'>ver2:1</setting>
+          </preset>
+        </presetGroup>
+        <opcodeList>
+          <udo>
+            <opcodeName>getFrequency</opcodeName>
+            <outTypes>i</outTypes>
+            <inTypes>i</inTypes>
+            <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>panner</opcodeName>
+            <outTypes>aa</outTypes>
+            <inTypes>ia</inTypes>
+            <codeBody>iSpace,aout	xin
+iSpace		=	iSpace * 3.14159265359 * .5
+krtl		= 	sqrt(2) / 2 * (cos(iSpace) + sin(iSpace))
+krtr		= 	sqrt(2) / 2 * (cos(iSpace) - sin(iSpace))
+aLeft		=	aout * krtl
+aRight		=	aout * krtr
+		xout	aLeft, aRight</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='10' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>French Horn (Horner and Ayers) - subinstrument version</name>
+        <comment>Need to fix
+</comment>
+        <globalOrc>;[once]{
+gi_horn_seed = .5
+;}
+
+;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco>;Horner and Ayers French Horn tables
+f 1101 0   4097    -9  1 1.0 0
+f 1102 0   16  -2  40 40 80 160 320 640 1280 2560 5120 10240 10240  ;LP Filter Cutoff Lookup table
+f 1103 0   64  -2  11 12 13 52.476 14 15 16 18.006 17 18 19 11.274 20 21 22 6.955 23 24 25 2.260 26 27 10 1.171 28 29 10 1.106 30 10 10 1.019
+f 1104 0   2048    -17 0 0 85 1 114 2 153 3 204 4 272 5 364 6 486 7
+f 1110    0   5   -9  1 0.0 0
+f 1111    0   4097    -9  2 6.236 0 3 12.827 0
+f 1112    0   4097    -9  4 21.591 0 5 11.401 0 6 3.570 0 7 2.833 0
+f 1113    0   4097    -9  8 3.070 0 9 1.053 0 10 0.773 0 11 1.349 0 12 0.819 0 13 0.369 0 14 0.362 0 15 0.165 0 16 0.124 0 18 0.026 0 19 0.042 0
+f 1114    0   4097    -9  2 3.236 0 3 6.827 0
+f 1115    0   4097    -9  4 5.591 0 5 2.401 0 6 1.870 0 7 0.733 0
+f 1116    0   4097    -9  8 0.970 0 9 0.553 0 10 0.373 0 11 0.549 0 12 0.319 0 13 0.119 0 14 0.092 0 15 0.045 0 16 0.034 0
+f 1117    0   4097    -9  2 5.019 0 3 4.281 0
+f 1118    0   4097    -9  4 2.091 0 5 1.001 0 6 0.670 0 7 0.233 0
+f 1119    0   4097    -9  8 0.200 0 9 0.103 0 10 0.073 0 11 0.089 0 12 0.059 0 13 0.029 0
+f 1120    0   4097    -9  2 4.712 0 3 1.847 0
+f 1121    0   4097    -9  4 0.591 0 5 0.401 0 6 0.270 0 7 0.113 0
+f 1122    0   4097    -9  8 0.060 0 9 0.053 0 10 0.023 0
+f 1123    0   4097    -9  2 1.512 0 3 0.247 0
+f 1124    0   4097    -9  4 0.121 0 5 0.101 0 6 0.030 0 7 0.053 0
+f 1125    0   4097    -9  8 0.030 0
+f 1126    0   4097    -9  2 0.412 0 3 0.087 0
+f 1127    0   4097    -9  4 0.071 0 5 0.021 0
+f 1128    0   4097    -9  2 0.309 0 3 0.067 0
+f 1129    0   4097    -9  4 0.031 0
+f 1130    0   4097    -9  2 0.161 0 3 0.047 0</globalSco>
+        <instrumentText>ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+iamp	= p6
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, .15, .1, .95, .2
+
+; INSERT SOUND GENERATING CODE HERE 
+
+ifcut	= 2560		; LP FILTER CUTOFF FREQUENCY
+
+
+kenv2	=		kenv * kenv 			; WAVETABLE ENVELOPES
+kenv3	=		kenv2 * kenv
+kenv4	=		kenv3 * kenv
+
+irange	tablei	ipch, 1104
+iwt1	=	gi_sine					; WAVETABLE NUMBERS
+iwt2	table	(irange*4), 1103
+iwt3	table	(irange*4)+1, 1103
+iwt4	table	(irange*4)+2, 1103
+inorm	table	(irange*4)+3, 1103		; NORMALIZATION FACTOR
+
+iiwt1 			=			iwt1
+iiwt2 			=			iwt2 + 1100
+iiwt3 			=			iwt3 + 1100
+iiwt4 			=			iwt4 + 1100
+
+iphase	= gi_horn_seed				; SAME PHASE FOR ALL TABLES
+giseed	= frac(gi_horn_seed*105.947)
+
+awt1	oscil	kenv, kpchline, iiwt1, iphase ; WAVETABLE LOOKUP
+awt2	oscil	kenv2, kpchline, iiwt2, iphase
+awt3	oscil	kenv3, kpchline, iiwt3, iphase
+awt4	oscil	kenv4, kpchline, iiwt4, iphase
+aout	=		(awt1+awt2+awt3+awt4)*iamp/inorm
+
+afilt	tone	aout, ifcut			; LP FILTER...
+asig	balance	afilt, aout			; ... TO CONTROL BRIGHTNESS
+
+aport	oscil	1, p3/10, gi_sine
+aport	=	(aport * 0.02) + 1
+aout	=	asig * aport
+	
+outs	aout, aout
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='11' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>combination tone horns </name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=       abs(p3)                 ; duration
+iamp	=       ampdb(p4)             	; amplitude
+ifn	=       p5                      ; function table number (waveform)
+ipch1	=	p6			; primary pitch (as a frequency)
+immm	=	p7			; numerator of dyad
+innn	=	p8			; denominator of dyad
+ipan	=	p9			; 1.0 = left &lt;-&gt; 0.0 = right
+iflag	=	p10			; 1 =&gt; use periodicity pitch, 0 =&gt; don&apos;t use it
+irise 	=	p11
+ifall	=	p12
+ienv	=	p13
+
+ipch2	=	ipch1*(immm/innn)	; secondary pitch (primary * ratio)
+idiff	=	ipch2-ipch1		; difference tone
+idiff2	=	(2*ipch2)-ipch1		; 2nd order difference tone
+idiff3	=	(3*ipch2)-(2*ipch1)	; 3rd order difference tone
+iper	=	ipch1/innn		; periodicity pitch, shifted up one 8ve
+isum	=	ipch1+ipch2		; summation tone
+isum2	=	(2*ipch1)+ipch2		; 2nd order summation tone
+
+	prints	&quot;ipch1=%f ipch2=%f idiff=%f idiff2=%f idiff3=%f iper=%f isum=%f isum2=%f\\n&quot;, \
+		ipch1, ipch2, idiff, idiff2, idiff3, iper, isum, isum2
+
+ihorn	=		10
+asig1	subinstr	ihorn, ipch1, ipch1, iamp, 0, ienv
+asig2	subinstr	ihorn, ipch2, ipch2, iamp, 0, ienv
+adiff	subinstr	ihorn, idiff, idiff, iamp, 0, ienv
+adiff2	subinstr	ihorn, idiff2, idiff2, iamp, 0, ienv
+adiff3	subinstr	ihorn, idiff3, idiff3, iamp, 0, ienv
+aper	subinstr	ihorn, iper, iper, iamp, 0, ienv
+asum	subinstr	ihorn, isum, isum, iamp, 0, ienv
+asum2	subinstr	ihorn, isum2, isum2, iamp, 0, ienv
+
+	if (iflag == 0) then
+		goto NO_PERIODICITY_PITCH
+	endif
+
+asig	sum	asig1, asig2, adiff, adiff2, adiff3, asum, asum2, aper
+	goto	OUT
+
+NO_PERIODICITY_PITCH:
+asig	sum	asig1, asig2, adiff, adiff2, adiff3, asum, asum2
+
+OUT:
+aout	dcblock	asig
+al,ar	yipan	ipan, aout
+blueMixerOut	al, ar
+
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>3.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>4</name>
+        <outChannel>SubChannel1</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1912799835' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>-5.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>ReverbSC</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+            <comments/>
+            <opcodeList/>
+            <graphicInterface editEnabled='false'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>7</x>
+                <y>7</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>feedback</objectName>
+                <x>8</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.8</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>11</x>
+                <y>36</y>
+                <label>Feedback</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>cutoff</objectName>
+                <x>72</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>20.0</minimum>
+                <maximum>20000.0</maximum>
+                <value>960.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>36</y>
+                <label>Cut-Off</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>wetdry</objectName>
+                <x>136</x>
+                <y>55</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.75</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>139</x>
+                <y>36</y>
+                <label>Wet/Dry</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='1912800711' name='cutoff' label='' min='20.0' max='20000.0' resolution='-1.0' automationEnabled='false' value='960.0'>
+                <line name='' version='2' max='20000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='960.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='1912800709' name='feedback' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.8'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.8'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='1912800713' name='wetdry' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.75'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.75'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='1912800332' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-5.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-5.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>8</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1633215795' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>9</name>
+        <outChannel>SubChannel1</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1633214911' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>10</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='20229056' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>11</name>
+        <outChannel>SubChannel1</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='20229058' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'>
+      <channel>
+        <name>SubChannel1</name>
+        <outChannel>Master</outChannel>
+        <level>-0.4</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>Advanced Reverb</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>korig    =      &lt;dryMix&gt;
+krev     =      1.0-korig
+kfeed	=	&lt;feed&gt;
+ilp1	=	1/10
+ilp2	=	1/23
+ilp3	=	1/41
+kroll	=	&lt;cutoff&gt;
+
+ajunk    alpass  ain1,1.7,.1
+aleft    alpass  ajunk,1.01,.07
+ajunk    alpass  ain2,1.5,.2
+aright   alpass  ajunk,1.33,.05
+kdel1    randi   .01,1,.666
+kdel1    =       kdel1 + .1
+addl1    delayr  .3
+afeed1   deltapi kdel1
+afeed1   =       afeed1 + kfeed*aleft
+         delayw  aleft
+
+kdel2    randi   .01,.95,.777
+kdel2    =       kdel2 + .1
+addl2    delayr  .3
+afeed2   deltapi kdel2
+afeed2   =       afeed2 + kfeed*aright
+         delayw  aright
+
+aglobin = (afeed1+afeed2)*.05
+atap1 comb aglobin,3.3,ilp1
+atap2 comb aglobin,3.3,ilp2
+atap3 comb aglobin,3.3,ilp3
+aglobrev alpass atap1+atap2+atap3,2.6,.085
+aglobrev tone aglobrev,kroll
+
+kdel3 randi .003,1,.888
+kdel3 = kdel3 + .05
+addl3 delayr .2
+agr1 deltapi kdel3
+delayw aglobrev
+
+kdel4 randi .003,1,.999
+kdel4 = kdel4 + .05
+addl4 delayr .2
+agr2 deltapi kdel4
+delayw aglobrev
+
+arevl = agr1+afeed1
+arevr = agr2+afeed2
+aout1 = (ain1*korig)+(arevl*krev)
+aout2 = (ain2*korig)+(arevr*krev)
+</code>
+            <comments>Advanced Reverb by Eric Lyon</comments>
+            <opcodeList/>
+            <graphicInterface editEnabled='false'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>dryMix</objectName>
+                <x>17</x>
+                <y>19</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.8</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>31</x>
+                <y>94</y>
+                <label>Dry Mix</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+                <objectName>cutoff</objectName>
+                <x>108</x>
+                <y>36</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>1.0</minimum>
+                <maximum>20000.0</maximum>
+                <resolution>1.0</resolution>
+                <value>3000.0</value>
+                <sliderWidth>300</sliderWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>218</x>
+                <y>72</y>
+                <label>Lowpass Freq. Cutoff</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>feed</objectName>
+                <x>23</x>
+                <y>129</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.1</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>27</x>
+                <y>208</y>
+                <label>Feedback</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='-440711718' name='cutoff' label='' min='1.0' max='20000.0' resolution='1.0' automationEnabled='false' value='3000.0'>
+                <line name='' version='2' max='20000.0' min='1.0' resolution='1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='3000.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-440711720' name='dryMix' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.8'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.8'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-440711716' name='feed' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.1'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.1'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='-440711714' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-0.4'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-0.4'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'>
+        <effect>
+          <name>Anti-alias lowpass filter</name>
+          <enabled>true</enabled>
+          <numIns>2</numIns>
+          <numOuts>2</numOuts>
+          <code>aout1	butterlp ain1, sr/2
+aout2	butterlp ain2, sr/2
+</code>
+          <comments/>
+          <opcodeList/>
+          <graphicInterface editEnabled='true'>
+            <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          </graphicInterface>
+          <bsbParameterList/>
+        </effect>
+      </effectsChain>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='1912799549' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>giTblSz	init	1048576
+
+; sine wave
+giFn1	ftgen	1, 0, giTblSz, 10, 1
+
+; &quot;Fibonacci&quot; wave (Mt. Meru A)
+giFn2	ftgen	2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0  144,.0069,0
+
+</globalOrc>
+    <globalSco>;           numgrades    basefreq     tuning-ratios (eq.temp) .......
+
+;                  interval    basekey
+
+;f1 0 64 -2  5      2     240   60     1 [9/8] [151/128] [3/2] [25/16] 2
+;f2 0 64 -2  5      2     240   60     1 [37/32] [21/16] [49/32] [7/4] 2
+
+t 0 45</globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>yipan</opcodeName>
+      <outTypes>aa</outTypes>
+      <inTypes>ia</inTypes>
+      <codeBody>iSpace,aout	xin
+iSpace		=	iSpace * 3.14159265359 * .5
+krtl		= 	sqrt(2) / 2 * (cos(iSpace) + sin(iSpace))
+krtr		= 	sqrt(2) / 2 * (cos(iSpace) - sin(iSpace))
+aLeft		=	aout * krtl
+aRight		=	aout * krtr
+		xout	aLeft, aRight
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooooo</inTypes>
+      <codeBody>ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+;prints &quot;itie=%d  p3=%f\\n&quot;, itie, p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+	kenv logcurve kenv, 1.5
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+	prints	&quot;start note\\n&quot;
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+	prints &quot;end note\\n&quot;
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+	prints &quot;standalone note\\n&quot;
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+	prints &quot;middle note\\n&quot;
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>32</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='drone loop 1' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>132.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>1</timeBehavior>
+        <repeatPoint>-1.0</repeatPoint>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.MultiplyProcessor'>
+            <pfield>6</pfield>
+            <value>0.5</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;idur	=	p3				; duration
+;iamp	=	ampdb(p4)			; amplitude
+;ifn	=	p5				; function table number (waveform)
+;ifreq	=	p6
+;ipan	=	p7				; -1 to 1
+;irise	=	p8
+;ifall	=	p9
+
+i5 0 10 62 2 240    -0.7 2 3	; 1/1
+i5 0 .  .  . 243.75  0.7 . .    ; 1/1 + 65/64
+
+i5 3 7  58 . 322.5  -0.8 . .	; 43/32
+i5 3 .  .  . 427.5   0.8 . .	; 57/32
+
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='drone loop 2' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>130.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>1</timeBehavior>
+        <repeatPoint>-1.0</repeatPoint>
+        <noteProcessorChain/>
+        <score>i11 0 10 58 1 240 1.324717957 1 0 1 3 3 1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='5-scale - 38 beats' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>41.0</subjectiveDuration>
+        <startTime>28.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        <instrumentId>9</instrumentId>
+        <scale>
+          <scaleName>C-MOS5-2.scl</scaleName>
+          <baseFrequency>240.0</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.125</ratio>
+            <ratio>1.1796875</ratio>
+            <ratio>1.5</ratio>
+            <ratio>1.5625</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>38</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>5</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>41.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        <instrumentId>9</instrumentId>
+        <scale>
+          <scaleName>C-MOS5-2.scl</scaleName>
+          <baseFrequency>240.0</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.125</ratio>
+            <ratio>1.1796875</ratio>
+            <ratio>1.5</ratio>
+            <ratio>1.5625</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>38</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>5</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 29 0 0.5</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='7-scale - 41 beats' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>82.0</subjectiveDuration>
+        <startTime>28.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        <instrumentId>4</instrumentId>
+        <scale>
+          <scaleName>C-MOS7-2.scl</scaleName>
+          <baseFrequency>240.0</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.125</ratio>
+            <ratio>1.1796875</ratio>
+            <ratio>1.34375</ratio>
+            <ratio>1.5</ratio>
+            <ratio>1.5625</ratio>
+            <ratio>1.78125</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>38</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>5</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>2.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>3.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>4.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>5.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>6.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>7.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>8.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>9.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>10.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>11.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>12.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>13.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>14.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>15.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>16.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>17.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>18.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>19.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>19.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>20.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>20.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>21.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>21.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>22.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>22.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>23.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>23.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>24.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>24.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>25.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>25.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>26.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>26.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>27.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>27.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>28.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>28.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>29.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>29.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>30.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>30.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>31.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>31.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>32.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>32.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>33.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>33.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>34.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>34.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>35.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>35.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>36.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>36.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>37.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>37.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>38.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>38.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>39.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>39.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>40.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>40.0</start>
+          <duration>1.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; 32 0 -0.5</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

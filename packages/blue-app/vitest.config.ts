@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config';
+import { GithubActionsReporter } from 'vitest/node';
 import { resolve } from 'path';
+import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters';
 
 export default defineConfig({
   test: {
@@ -11,6 +13,7 @@ export default defineConfig({
       'src/renderer/components/**/*.test.{ts,tsx}',
     ],
     globals: true,
+    ...createPackageReporterConfig('@blue/app', GithubActionsReporter),
   },
   resolve: {
     alias: {

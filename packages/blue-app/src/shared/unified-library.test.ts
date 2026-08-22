@@ -7,6 +7,7 @@ import {
   isBrowseLibraryRequest,
   getLibraryTransferSourceType,
   isBeginLibraryDragRequest,
+  isBsbCanvasClipboard,
   isLibraryContextRequest,
   isLibraryDragDescriptor,
   isLibraryExactTransferTarget,
@@ -17,6 +18,7 @@ import {
   isLibraryType,
   isSearchLibrariesRequest,
   isScoreTimelineSoundObjectRequest,
+  isTrackInstrumentClipboardRequest,
   parseLibraryCursor,
 } from './unified-library';
 
@@ -26,6 +28,30 @@ describe('Unified Library shared contracts', () => {
     expect(isLibraryType('all')).toBe(false);
     expect(isLibraryServicePhase('readOnlyFailure')).toBe(true);
     expect(isLibraryServicePhase('broken')).toBe(false);
+  });
+
+  it('guards detached BSB clipboard payloads recursively', () => {
+    const widget = {
+      id: 'slider-1',
+      type: 'BSBHSlider',
+      objectName: 'amp',
+      x: 10,
+      y: 20,
+      width: 120,
+      height: 24,
+      value: 0.5,
+      minimum: 0,
+      maximum: 1,
+      editable: true,
+      properties: {},
+    };
+    expect(isBsbCanvasClipboard({ widgets: [widget], originX: 10, originY: 20 })).toBe(true);
+    expect(isBsbCanvasClipboard({
+      widgets: [{ ...widget, children: [{ ...widget, x: Number.NaN }] }],
+      originX: 10,
+      originY: 20,
+    })).toBe(false);
+    expect(isBsbCanvasClipboard({ widgets: [], originX: 0, originY: 0 })).toBe(false);
   });
 
   it('guards user and project item keys without accepting arbitrary shapes', () => {
@@ -140,9 +166,32 @@ describe('Unified Library shared contracts', () => {
       kind: 'projectSoundObjectLibrary', projectSessionId: 4, projectRevision: 7,
     })).toBe(true);
     expect(isLibraryExactTransferTarget({
+      kind: 'blueLive', projectSessionId: 4, projectRevision: 7,
+      liveCell: { column: 1, row: 2, expectedLiveObjectId: null },
+    })).toBe(true);
+    expect(isLibraryExactTransferTarget({
+      kind: 'scoreBsbSound', projectSessionId: 4, projectRevision: 7,
+      location: {
+        rootGroupId: 'root',
+        containerPath: [],
+        layerId: 'root-layer-0',
+        startTime: 2,
+      },
+      timeContextRevision: '7',
+    })).toBe(true);
+    expect(isLibraryExactTransferTarget({
       kind: 'projectUdo', projectSessionId: 4, projectRevision: 7,
       instrumentAssignmentId: '7', insertIndex: 0,
     })).toBe(true);
+    expect(isLibraryExactTransferTarget({
+      kind: 'projectUdo', projectSessionId: 4, projectRevision: 7,
+      track: { rootGroupId: 'tracks', trackId: 'lead' }, insertIndex: 0,
+    })).toBe(true);
+    expect(isLibraryExactTransferTarget({
+      kind: 'projectUdo', projectSessionId: 4, projectRevision: 7,
+      instrumentAssignmentId: '7',
+      track: { rootGroupId: 'tracks', trackId: 'lead' }, insertIndex: 0,
+    })).toBe(false);
     expect(isLibraryExactTransferTarget({
       kind: 'projectUdo', projectSessionId: 4, projectRevision: 7,
       instrumentAssignmentId: '', insertIndex: 0,
@@ -158,6 +207,7 @@ describe('Unified Library shared contracts', () => {
       operation: 'copy',
       source: { kind: 'library', key: { scope: 'user', libraryType: 'udo', nodeId: 'u-1' }, revision: 3 },
       capturedAt: 100,
+      objectType: 'OpcodeDefinition',
     })).toBe(true);
     expect(isLibraryInteractionClipboard({
       operation: 'cut',
@@ -191,6 +241,18 @@ describe('Unified Library shared contracts', () => {
         layerIndex: 3,
         objectIndex: 4,
       },
+    })).toBe(false);
+    expect(isTrackInstrumentClipboardRequest({
+      projectSessionId: 4,
+      projectRevision: 7,
+      rootGroupId: 'tracks',
+      trackId: 'track-1',
+    })).toBe(true);
+    expect(isTrackInstrumentClipboardRequest({
+      projectSessionId: 4,
+      projectRevision: 7,
+      rootGroupId: 'tracks',
+      trackId: '',
     })).toBe(false);
     expect(isBeginLibraryDragRequest({
       dragSessionId: 'drag-1',

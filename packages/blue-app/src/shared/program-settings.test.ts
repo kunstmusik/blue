@@ -15,12 +15,17 @@ import {
   getMidiDrivers,
   getDefaultCsoundExecutable,
   getDefaultFreezeFlags,
+  getDefaultAudioDriver,
+  getDefaultMidiDriver,
+  isAbsoluteEnginePath,
+  normalizeEnginePathSetting,
   PROGRAM_SETTINGS_PANEL_ORDER,
   TIME_BASE_CHOICES,
   SNAP_VALUE_CHOICES,
   SMPTE_FRAME_RATES,
   FILE_FORMAT_CHOICES,
   SAMPLE_FORMAT_CHOICES,
+  isValidPlaybackPreferencePatch,
   type ProgramSettingsSnapshot,
 } from './program-settings';
 import {
@@ -31,31 +36,56 @@ import {
 describe('program-settings defaults', () => {
   it('creates macOS defaults', () => {
     const s = createDefaultProgramSettings('darwin');
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
     expect(s.general.messageColorsEnabled).toBe(false);
     expect(s.general.csoundErrorWarningEnabled).toBe(true);
     expect(s.general.directoryTempFileLimit).toBe(3);
     expect(s.projectDefaults.defaultPrimaryTimeBase).toBe('BEATS');
+    expect(s.projectDefaults.defaultLayerGroupType).toBe('TRACK');
     expect(s.projectDefaults.defaultUdoStyle).toBe('MODERN');
     expect(s.projectDefaults.defaultSmpteFrameRate).toBe(24);
     expect(s.playback.playbackFps).toBe(24);
     expect(s.playback.followPlayback).toBe(true);
     expect(s.utility.csoundExecutable).toBe('/usr/local/bin/csound');
     expect(s.utility.freezeFlags).toBe('-Ado');
-    expect(s.realtimeRender.audioDriver).toBe('pa_bl');
+    expect(s.realtimeRender.defaultKsmps).toBe('64');
+    expect(s.diskRender.defaultKsmps).toBe('64');
+    expect(s.realtimeRender.audioDriver).toBe('auhal');
+    expect(s.realtimeRender.midiDriver).toBe('portmidi');
     expect(s.realtimeRender.softwareBufferSize).toBe(1024);
     expect(s.realtimeRender.hardwareBufferSize).toBe(4096);
     expect(s.diskRender.fileFormat).toBe('WAV');
     expect(s.diskRender.sampleFormat).toBe('SHORT');
     expect(s.appSpecific.enginePath).toBe('blue-engine');
+    expect(s.appSpecific.csoundLibraryPath).toBe('');
     expect(s.osc.preferredPort).toBe(8000);
+  });
+
+  it('migrates a version-2 runtime path without dropping legacy selections', () => {
+    const merged = mergeWithDefaults({
+      version: 2,
+      appSpecific: {
+        enginePath: '/external/blue-engine',
+        csoundLibraryPath: '/Library/Frameworks/CsoundLib64.framework/CsoundLib64',
+      } as any,
+      realtimeRender: {
+        audioDriver: 'custom-audio',
+        audioOutText: 'saved-output',
+      } as any,
+      utility: { csoundExecutable: '/legacy/csound' } as any,
+    }, 'darwin');
+    expect(merged.version).toBe(2);
+    expect(merged.appSpecific.csoundLibraryPath).toContain('CsoundLib64');
+    expect(merged.realtimeRender.audioDriver).toBe('custom-audio');
+    expect(merged.utility.csoundExecutable).toBe('/legacy/csound');
   });
 
   it('creates Linux defaults', () => {
     const s = createDefaultProgramSettings('linux');
     expect(s.utility.csoundExecutable).toBe('csound');
     expect(s.utility.freezeFlags).toBe('-Wdo');
-    expect(s.realtimeRender.audioDriver).toBe('PortAudio');
+    expect(s.realtimeRender.audioDriver).toBe('alsa');
+    expect(s.realtimeRender.midiDriver).toBe('alsa');
     expect(s.realtimeRender.softwareBufferSize).toBe(256);
     expect(s.realtimeRender.hardwareBufferSize).toBe(1024);
   });
@@ -115,9 +145,27 @@ describe('program-settings platform helpers', () => {
     expect(getDefaultCsoundExecutable('linux')).toBe('csound');
   });
 
+  it('uses Csound runtime module defaults by platform', () => {
+    expect(getDefaultAudioDriver('darwin')).toBe('auhal');
+    expect(getDefaultAudioDriver('linux')).toBe('alsa');
+    expect(getDefaultAudioDriver('win32')).toBe('PortAudio');
+    expect(getDefaultMidiDriver('darwin')).toBe('portmidi');
+    expect(getDefaultMidiDriver('linux')).toBe('alsa');
+    expect(getDefaultMidiDriver('win32')).toBe('portmidi');
+  });
+
   it('returns correct default freeze flags', () => {
     expect(getDefaultFreezeFlags('darwin')).toBe('-Ado');
     expect(getDefaultFreezeFlags('linux')).toBe('-Wdo');
+  });
+
+  it('normalizes bundled engine sentinels and recognizes cross-platform absolute paths', () => {
+    expect(normalizeEnginePathSetting('')).toBe('blue-engine');
+    expect(normalizeEnginePathSetting(' blue-engine ')).toBe('blue-engine');
+    expect(normalizeEnginePathSetting(' /opt/blue-engine ')).toBe('/opt/blue-engine');
+    expect(isAbsoluteEnginePath('/opt/blue-engine')).toBe(true);
+    expect(isAbsoluteEnginePath('C:\\Blue\\blue-engine.exe')).toBe(true);
+    expect(isAbsoluteEnginePath('relative/blue-engine')).toBe(false);
   });
 });
 
@@ -128,11 +176,30 @@ describe('program-settings validation', () => {
     expect(issues.filter((i) => i.severity === 'error')).toHaveLength(0);
   });
 
+  it('rejects a relative external engine override without changing the settings version', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.appSpecific.enginePath = 'relative/blue-engine';
+    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
+      path: 'appSpecific.enginePath',
+      severity: 'error',
+    }));
+    expect(s.version).toBe(3);
+  });
+
   it('rejects invalid directoryTempFileLimit', () => {
     const s = createDefaultProgramSettings('darwin');
     s.general.directoryTempFileLimit = 0;
     const issues = validateProgramSettings(s);
     expect(issues.some((i) => i.path === 'general.directoryTempFileLimit' && i.severity === 'error')).toBe(true);
+  });
+
+  it('rejects an invalid default layer group type', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.projectDefaults.defaultLayerGroupType = 'INVALID' as never;
+    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
+      path: 'projectDefaults.defaultLayerGroupType',
+      severity: 'error',
+    }));
   });
 
   it('rejects invalid playbackFps', () => {
@@ -187,8 +254,15 @@ describe('program-settings mergeWithDefaults', () => {
   it('fills missing sections from defaults', () => {
     const merged = mergeWithDefaults({}, 'darwin');
     expect(merged.general.messageColorsEnabled).toBe(false);
-    expect(merged.realtimeRender.audioDriver).toBe('pa_bl');
-    expect(merged.version).toBe(2);
+    expect(merged.realtimeRender.audioDriver).toBe('auhal');
+    expect(merged.version).toBe(3);
+    expect(merged.projectDefaults.defaultLayerGroupType).toBe('TRACK');
+  });
+
+  it('normalizes a missing or malformed saved default layer group type to Track', () => {
+    expect(mergeWithDefaults({ projectDefaults: {} }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
+    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'invalid' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('TRACK');
+    expect(mergeWithDefaults({ projectDefaults: { defaultLayerGroupType: 'SOUND_OBJECT' } as any }, 'darwin').projectDefaults.defaultLayerGroupType).toBe('SOUND_OBJECT');
   });
 
   it('preserves saved values', () => {
@@ -199,6 +273,18 @@ describe('program-settings mergeWithDefaults', () => {
     expect(merged.general.messageColorsEnabled).toBe(false);
   });
 
+  it('drops the removed alpha marquee setting from legacy snapshots', () => {
+    const merged = mergeWithDefaults({
+      general: {
+        drawAlphaBackgroundOnMarquee: true,
+        messageColorsEnabled: true,
+      } as any,
+    }, 'darwin');
+
+    expect(merged.general.messageColorsEnabled).toBe(true);
+    expect(Object.hasOwn(merged.general, 'drawAlphaBackgroundOnMarquee')).toBe(false);
+  });
+
   it('migrates a valid legacy OSC input port and ignores invalid placeholders', () => {
     expect(mergeWithDefaults({
       appSpecific: { oscInputPort: 9020 } as any,
@@ -206,6 +292,32 @@ describe('program-settings mergeWithDefaults', () => {
     expect(mergeWithDefaults({
       appSpecific: { oscInputPort: 0 } as any,
     }, 'darwin').osc.preferredPort).toBe(8000);
+  });
+
+  it('defaults File Manager favorites to an empty list and normalizes saved entries', () => {
+    expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerFavorites).toEqual([]);
+    expect(mergeWithDefaults({
+      appSpecific: {
+        fileManagerFavorites: ['/Users/a/music', '  ', 7, '/Users/a/music', '/Users/b'],
+      } as any,
+    }, 'darwin').appSpecific.fileManagerFavorites).toEqual(['/Users/a/music', '/Users/b']);
+  });
+
+  it('defaults File Manager root labels to an empty map and normalizes saved entries', () => {
+    expect(mergeWithDefaults({}, 'darwin').appSpecific.fileManagerRootLabels).toEqual({});
+    expect(mergeWithDefaults({
+      appSpecific: {
+        fileManagerRootLabels: {
+          '/Users/a': 'Home Folder',
+          '/': '  ',
+          '/Volumes/media': 123,
+          '/Volumes/backup': 'Backup Drive',
+        },
+      } as any,
+    }, 'darwin').appSpecific.fileManagerRootLabels).toEqual({
+      '/Users/a': 'Home Folder',
+      '/Volumes/backup': 'Backup Drive',
+    });
   });
 });
 
@@ -322,7 +434,7 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
 
   it('seeds 100 on a fresh ProgramSettingsSnapshot without changing the settings version', () => {
     const s = createDefaultProgramSettings('darwin');
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
     expect(s.appSpecific.appZoomPercent).toBe(100);
   });
 
@@ -344,7 +456,7 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
     expect(merged.appSpecific.appZoomPercent).toBe(170);
     expect(merged.appSpecific.enginePath).toBe('/engine');
     expect(merged.appSpecific.recentFiles).toEqual(['/a.blue']);
-    expect(merged.version).toBe(2);
+    expect(merged.version).toBe(3);
   });
 
   it('mergeWithDefaults falls back to 100 for missing appZoomPercent while preserving other app-specific fields', () => {
@@ -404,5 +516,28 @@ describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
       appSpecific: {} as any,
     } as any, 'darwin');
     expect(merged.version).toBe(savedVersion);
+  });
+});
+
+describe('isValidPlaybackPreferencePatch (SPEC 079)', () => {
+  it('accepts patches with at least one boolean field', () => {
+    expect(isValidPlaybackPreferencePatch({ followPlayback: true })).toBe(true);
+    expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: false })).toBe(true);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: false, followPlaybackOnStart: true })).toBe(true);
+  });
+
+  it('rejects empty or non-object payloads', () => {
+    expect(isValidPlaybackPreferencePatch({})).toBe(false);
+    expect(isValidPlaybackPreferencePatch(null)).toBe(false);
+    expect(isValidPlaybackPreferencePatch(undefined)).toBe(false);
+    expect(isValidPlaybackPreferencePatch('followPlayback')).toBe(false);
+    expect(isValidPlaybackPreferencePatch(42)).toBe(false);
+  });
+
+  it('rejects non-boolean field values', () => {
+    expect(isValidPlaybackPreferencePatch({ followPlayback: 'yes' })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: 1 })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: null })).toBe(false);
+    expect(isValidPlaybackPreferencePatch({ followPlayback: true, followPlaybackOnStart: 'no' })).toBe(false);
   });
 });

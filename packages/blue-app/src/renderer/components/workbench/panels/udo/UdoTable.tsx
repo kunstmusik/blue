@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ChevronDown, Import, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Import, Plus } from 'lucide-react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type {
@@ -28,13 +28,16 @@ export interface UdoLibraryDropTarget {
   projectSessionId: number;
   projectRevision: number;
   instrumentAssignmentId?: string;
+  track?: { readonly rootGroupId: string; readonly trackId: string };
 }
 
 export function getProjectUdoSessionObjectId(
   target: UdoLibraryDropTarget | undefined,
   index: number,
 ): string {
-  return target?.instrumentAssignmentId
+  return target?.track
+    ? `track:${target.track.rootGroupId}:${target.track.trackId}:udo:${index}`
+    : target?.instrumentAssignmentId
     ? `instrument:${target.instrumentAssignmentId}:udo:${index}`
     : `udo:${index}`;
 }
@@ -143,7 +146,7 @@ export default function UdoTable({
         <button
           type="button"
           onClick={onAddUdo}
-          className="flex items-center gap-1 rounded px-2 py-1 text-body text-app-text-strong hover:bg-app-accent/20"
+          className="flex items-center gap-1 rounded px-2 py-1 text-role-body text-app-text-strong hover:bg-app-accent/20"
           title="Add UDO"
         >
           <Plus size={14} />
@@ -153,7 +156,7 @@ export default function UdoTable({
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 rounded px-2 py-1 text-body text-app-text-strong hover:bg-app-accent/20"
+              className="flex items-center gap-1 rounded px-2 py-1 text-role-body text-app-text-strong hover:bg-app-accent/20"
               title="Import UDO"
             >
               <Import size={14} />
@@ -184,7 +187,7 @@ export default function UdoTable({
       </div>
 
       <div
-        className="flex min-h-0 flex-1 flex-col overflow-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-auto bg-black"
         data-library-autoscroll
         tabIndex={0}
         onKeyDown={(event) => {
@@ -202,7 +205,7 @@ export default function UdoTable({
           }
         }}
       >
-          <table className="w-full shrink-0 text-left text-body">
+          <table className="w-full shrink-0 text-left text-role-body">
             <thead className="sticky top-0 bg-app-surface-strong">
               <tr className="border-b border-app-border">
                 <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
@@ -242,7 +245,7 @@ export default function UdoTable({
                         <td className="px-3 py-2">
                           <span
                             className={[
-                              'rounded px-1.5 py-0.5 text-tiny font-medium',
+                              'rounded px-1.5 py-0.5 text-role-callout font-medium',
                               udo.style === 'CLASSIC'
                                 ? 'bg-app-accent/20 text-app-accent'
                                 : 'bg-app-surface-raised text-app-text-strong',
@@ -287,7 +290,8 @@ export default function UdoTable({
                             className="editor-context-menu__item editor-context-menu__subtrigger"
                             disabled={!hasSingleSelection}
                           >
-                            Export
+                            <span>Export</span>
+                            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                           </ContextMenu.SubTrigger>
                           <ContextMenu.Portal>
                             <ContextMenu.SubContent className="editor-context-menu">

@@ -12,6 +12,7 @@ import {
 } from '../shared/compactFieldStyles';
 import TimeUnitEditor from './TimeUnitEditor';
 import NoteProcessorChainEditor from './note-processors/NoteProcessorChainEditor';
+import ColorPickerButton from '../../../ColorPicker';
 
 interface ScoreObjectPropertiesFormProps {
   document: ScoreObjectEditorDocumentSnapshot;
@@ -69,19 +70,19 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
   const hex = `#${(color >>> 0).toString(16).padStart(8, '0').slice(2)}`;
   return (
     <div className="flex items-center gap-2">
-      <input
-        type="color"
+      <ColorPickerButton
         value={hex}
-        onChange={(e) => {
-          const hexVal = e.target.value;
+        ariaLabel="Score object color"
+        title="Score object color"
+        className="h-6 w-6 rounded border border-blue-border"
+        onChange={(hexVal) => {
           const r = parseInt(hexVal.slice(1, 3), 16);
           const g = parseInt(hexVal.slice(3, 5), 16);
           const b = parseInt(hexVal.slice(5, 7), 16);
           onChange((0xFF000000 | (r << 16) | (g << 8) | b) >>> 0);
         }}
-        className="h-6 w-6 cursor-pointer rounded border border-blue-border"
       />
-      <span className="text-body text-blue-muted">{hex}</span>
+      <span className="text-role-body text-app-text">{hex}</span>
     </div>
   );
 }
@@ -299,7 +300,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
           {target.supportsNoteProcessorChain && shared.noteProcessorChain != null && (
             <div className="px-3 py-2 mt-2 border-t border-blue-border">
-              <div className="text-body font-medium text-gray-300 mb-1">Note Processors</div>
+              <div className="text-role-headline font-bold text-gray-300 mb-1">Note Processors</div>
               <NoteProcessorChainEditor
                 key={target.selectionId}
                 chain={shared.noteProcessorChain}
@@ -321,7 +322,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
       {target.displayContext === 'instance' && (
         <div className="px-3 py-2 mt-2 border-t border-blue-border">
-          <div className="flex items-center gap-1.5 text-body text-blue-accent">
+          <div className="flex items-center gap-1.5 text-role-body text-blue-accent">
             <span>&#9432;</span>
             <span>Editing library object via Instance</span>
           </div>

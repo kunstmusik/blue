@@ -49,7 +49,6 @@ describe('planDiskCommand — normal mode', () => {
     });
 
     expect(plan.mode).toBe('normal');
-    expect(plan.executable).toBe('csound');
     expect(plan.outputPath).toBe('/tmp/out.wav');
 
     expect(plan.args).toContain('-+msg_color=false');
@@ -329,21 +328,18 @@ describe('planDiskCommand — complete override', () => {
 });
 
 describe('planFreezeCommand', () => {
-  it('builds utility executable + freeze flags + output + csd path', () => {
+  it('builds freeze flags + output + csd path', () => {
     const plan = planFreezeCommand({
-      csoundExecutable: '/usr/local/bin/csound',
       freezeFlags: '-Wdo',
       outputFilePath: '/project/freeze0.wav',
       csdPath: '/tmp/tempCsd123.csd',
     });
 
-    expect(plan.executable).toBe('/usr/local/bin/csound');
     expect(plan.args).toEqual(['-Wdo', '/project/freeze0.wav', '/tmp/tempCsd123.csd']);
   });
 
   it('uses macOS freeze flags -Ado', () => {
     const plan = planFreezeCommand({
-      csoundExecutable: 'csound',
       freezeFlags: '-Ado',
       outputFilePath: '/project/freeze0.aif',
       csdPath: '/tmp/temp.csd',

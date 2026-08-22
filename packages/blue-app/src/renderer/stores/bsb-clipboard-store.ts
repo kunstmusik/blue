@@ -1,15 +1,13 @@
 import { create } from 'zustand';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
+import type { BsbCanvasClipboard } from '../../shared/unified-library';
 
-export interface BsbCanvasClipboard {
-  widgets: BsbWidgetNodeSnapshot[];
-  originX: number;
-  originY: number;
-}
+export type { BsbCanvasClipboard } from '../../shared/unified-library';
 
 interface BsbClipboardState {
   clipboard: BsbCanvasClipboard | null;
   setClipboard: (clipboard: BsbCanvasClipboard | null) => void;
+  receiveClipboard: (clipboard: BsbCanvasClipboard | null) => void;
   clearClipboard: () => void;
 }
 
@@ -26,8 +24,25 @@ function cloneClipboard(clipboard: BsbCanvasClipboard | null): BsbCanvasClipboar
   };
 }
 
+function publishClipboard(clipboard: BsbCanvasClipboard | null): void {
+  const publish = typeof window === 'undefined'
+    ? undefined
+    : window.blueAPI?.setBsbClipboard;
+  if (typeof publish === 'function') {
+    void publish(cloneClipboard(clipboard)).catch(() => undefined);
+  }
+}
+
 export const useBsbClipboardStore = create<BsbClipboardState>((set) => ({
   clipboard: null,
-  setClipboard: (clipboard) => set({ clipboard: cloneClipboard(clipboard) }),
-  clearClipboard: () => set({ clipboard: null }),
+  setClipboard: (clipboard) => {
+    const copy = cloneClipboard(clipboard);
+    set({ clipboard: copy });
+    publishClipboard(copy);
+  },
+  receiveClipboard: (clipboard) => set({ clipboard: cloneClipboard(clipboard) }),
+  clearClipboard: () => {
+    set({ clipboard: null });
+    publishClipboard(null);
+  },
 }));

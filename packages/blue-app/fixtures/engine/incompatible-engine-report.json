@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "engine": {
+    "schemaVersion": 1,
+    "engineVersion": "fixture-incompatible",
+    "protocolVersion": 99,
+    "sourceRevision": "fixture",
+    "features": ["csound-probe-v1"]
+  },
+  "csound": {
+    "status": "ready",
+    "requestedPath": null,
+    "loadedPath": "/fixture/csound",
+    "versionRaw": 7000,
+    "major": 7,
+    "minor": 0,
+    "patch": 0,
+    "supportedMajors": [7],
+    "missingSymbols": [],
+    "message": "Fixture Csound is ready"
+  },
+  "ready": true
+}

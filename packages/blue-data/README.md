@@ -106,6 +106,16 @@ const csd = await data.toCSDAsync(undefined, runtimeClient);
 
 `@blue/data` stays browser-safe and does not launch Java itself. Hosts such as Electron main inject a `JavaRuntimeClientContract` when they want `ClojureObject`, `PythonObject`, Python `ObjectBuilder`, `PythonInstrument`, or `PythonProcessor` execution to participate in on-load processing, note processing, orchestra generation, and score generation.
 
+### Automation resolution parity
+
+`Parameter` keeps its values, bounds, and line points as JavaScript `number`
+(binary64). Its resolution is stored as an exact Java-compatible decimal text;
+use `getResolutionText()` and `setResolutionText()` when the scale matters.
+Positive resolutions quantize interpolated values with Java Blue semantics. A
+zero or negative resolution leaves interpolation unquantized. Project XML
+writes the canonical `bdresolution` text and reads legacy numeric `resolution`
+attributes for compatibility.
+
 ### Creating a Project Programmatically
 
 ```typescript

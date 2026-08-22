@@ -19,8 +19,8 @@ const SNAP_GROUPS: { label: string; values: SnapValueName[] }[] = [
 ];
 
 const menuClass = 'z-50 min-w-35 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
-const itemClass = 'cursor-pointer rounded-sm px-3 py-1 text-ui text-blue-text outline-none data-[highlighted]:bg-app-highlight';
-const subTriggerClass = 'flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-1 text-ui text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+const itemClass = 'cursor-pointer rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+const subTriggerClass = 'flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-1 text-role-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
 export default function PianoRollSnapButton({
   snapEnabled,
@@ -34,7 +34,7 @@ export default function PianoRollSnapButton({
   return (
     <div className="flex items-stretch h-[22px]">
       <button
-        className={`px-1.5 text-ui border rounded-l transition-colors cursor-pointer flex items-center ${
+        className={`px-1.5 text-role-body border rounded-l transition-colors cursor-pointer flex items-center ${
           snapEnabled
             ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
             : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
@@ -115,7 +115,7 @@ function SnapSubmenu({
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={subTriggerClass}>
         {label}
-        <ChevronRight className="w-3 h-3 ml-2" />
+        <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
       </DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
         <DropdownMenu.SubContent className={menuClass} sideOffset={-2} alignOffset={-4}>

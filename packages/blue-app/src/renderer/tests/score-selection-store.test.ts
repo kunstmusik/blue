@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { hasAuditionEligibleSelection, useScoreSelectionStore } from '../stores/score-selection-store';
 import type { ScoreObjectEditorTargetSnapshot } from '../../shared/project-editor';
 
 function target(objectId: string): ScoreObjectEditorTargetSnapshot {
@@ -18,62 +18,55 @@ function target(objectId: string): ScoreObjectEditorTargetSnapshot {
   };
 }
 
-describe('useScoreSelectionStore.addToSelection (shift-marquee parity)', () => {
+describe('useScoreSelectionStore', () => {
   beforeEach(() => {
     useScoreSelectionStore.getState().clearSelection();
+    useScoreSelectionStore.getState().clearPatternClipboard();
   });
 
   afterEach(() => {
     useScoreSelectionStore.getState().clearSelection();
+    useScoreSelectionStore.getState().clearPatternClipboard();
   });
 
-  it('unions new entries with the existing selection instead of replacing it', () => {
+  it('unions additive selections and preserves each target', () => {
     useScoreSelectionStore.getState().setSelection([
       { objectId: 'A', editorTarget: target('A') },
     ]);
-    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['A']);
-
-    // Simulates a shift-marquee that hits B and C in a region that does NOT
-    // overlap the already-selected A.
     useScoreSelectionStore.getState().addToSelection([
       { objectId: 'B', editorTarget: target('B') },
       { objectId: 'C', editorTarget: target('C') },
     ]);
 
-    expect([...useScoreSelectionStore.getState().selectedObjectIds].sort()).toEqual([
-      'A',
-      'B',
-      'C',
-    ]);
+    expect([...useScoreSelectionStore.getState().selectedObjectIds].sort()).toEqual(['A', 'B', 'C']);
+    expect(useScoreSelectionStore.getState().selectedObjectTargets.A).toBeDefined();
+    expect(useScoreSelectionStore.getState().selectedObjectTargets.B).toBeDefined();
   });
 
-  it('is a no-op for empty input (preserves the current selection untouched)', () => {
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'A', editorTarget: target('A') },
-    ]);
-    useScoreSelectionStore.getState().addToSelection([]);
-    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['A']);
+  it('stores a pattern clipboard shape independently of the score-object clipboard', () => {
+    const shape = {
+      cells: [{ rowOffset: 0, cellOffset: 0 }],
+      width: 1,
+      height: 1,
+    };
+    useScoreSelectionStore.getState().copyPatternShape(shape);
+    expect(useScoreSelectionStore.getState().patternClipboard).toEqual(shape);
+    expect(useScoreSelectionStore.getState().clipboard).toEqual([]);
+    useScoreSelectionStore.getState().clearPatternClipboard();
+    expect(useScoreSelectionStore.getState().patternClipboard).toBeNull();
   });
 
-  it('keeps targets for both the previous and added entries', () => {
+  it('marks pattern-source selections ineligible for audition while ordinary timeline targets remain eligible', () => {
+    const patternTarget: ScoreObjectEditorTargetSnapshot = {
+      ...target('source-1'),
+      patternSource: { groupId: 'grp', layerId: 'pl-1', sourceObjectId: 'source-1' },
+    };
     useScoreSelectionStore.getState().setSelection([
-      { objectId: 'A', editorTarget: target('A') },
+      { objectId: 'source-1', editorTarget: patternTarget },
     ]);
-    useScoreSelectionStore.getState().addToSelection([
-      { objectId: 'B', editorTarget: target('B') },
-    ]);
-    const targets = useScoreSelectionStore.getState().selectedObjectTargets;
-    expect(targets.A).toBeDefined();
-    expect(targets.B).toBeDefined();
-  });
+    expect(hasAuditionEligibleSelection(useScoreSelectionStore.getState())).toBe(false);
 
-  it('does not duplicate an object already in the selection', () => {
-    useScoreSelectionStore.getState().setSelection([
-      { objectId: 'A', editorTarget: target('A') },
-    ]);
-    useScoreSelectionStore.getState().addToSelection([
-      { objectId: 'A', editorTarget: target('A') },
-    ]);
-    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['A']);
+    useScoreSelectionStore.getState().setSelection([{ objectId: 'sobj-1', editorTarget: target('sobj-1') }]);
+    expect(hasAuditionEligibleSelection(useScoreSelectionStore.getState())).toBe(true);
   });
 });

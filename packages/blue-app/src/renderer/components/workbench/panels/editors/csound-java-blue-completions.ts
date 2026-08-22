@@ -8,14 +8,23 @@ import {
   csoundRichOpcodeCatalog,
   type RichOpcodeCatalogEntry,
 } from '@kunstmusik/codemirror-lang-csound/rich';
+import {
+  normalizeUdoCallableSignature,
+  parseUDOText,
+  UDOStyle,
+  type NormalizedUdoCallableSignature,
+} from '@blue/data';
 
-import type { JavaBlueCsoundCompletionOptions } from './editor-adapter-types';
+import type {
+  JavaBlueCsoundCompletionOptions,
+  JavaBlueUdoCompletionDefinition,
+} from './editor-adapter-types';
 
 const wordCompletionPattern = /[A-Za-z_][A-Za-z0-9_]*(?::[A-Za-z_][A-Za-z0-9_]*)?/;
 const wordCompletionValidFor = /^[A-Za-z_][A-Za-z0-9_]*(?::[A-Za-z_][A-Za-z0-9_]*)?$/;
 const angleCompletionPattern = /<[A-Za-z0-9_]*$/;
 const angleCompletionValidFor = /^<[A-Za-z0-9_]*$/;
-const userOpcodePattern = /^\s*opcode\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
+const userOpcodeFallbackPattern = /^\s*opcode\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
 
 const csoundVariablePrefixes = [
   'gi',
@@ -154,37 +163,177 @@ export function findDocumentLocalCsoundVariables(
     }));
 }
 
-function findDocumentUserOpcodes(documentText: string): Completion[] {
-  const opcodeNames = new Set<string>();
-  let match: RegExpExecArray | null;
+// ─── Source-aware UDO completion ───
 
-  while ((match = userOpcodePattern.exec(documentText)) !== null) {
-    opcodeNames.add(match[1]);
-  }
+type UdoCompletionSource = 'context' | 'project' | 'document';
 
-  return Array.from(opcodeNames)
-    .sort()
-    .map((label) => ({
-      label,
-      type: 'function',
-      detail: 'UDO',
-      boost: 22,
-    }));
+interface UdoCompletionCandidate {
+  readonly source: UdoCompletionSource;
+  readonly signature: NormalizedUdoCallableSignature;
 }
 
-function createProjectOpcodeCompletions(projectOpcodeNames: string[] | undefined): Completion[] {
-  if (!projectOpcodeNames || projectOpcodeNames.length === 0) {
-    return [];
+const UDO_SOURCE_DETAIL: Record<UdoCompletionSource, string> = {
+  context: 'context UDO',
+  project: 'project UDO',
+  document: 'document UDO',
+};
+
+const UDO_SOURCE_BOOST: Record<UdoCompletionSource, number> = {
+  context: 23,
+  project: 22,
+  document: 21,
+};
+
+const UDO_SOURCE_ORDER: readonly UdoCompletionSource[] = ['context', 'project', 'document'];
+
+function isValidUdoName(name: string): boolean {
+  return name.length > 0 && /^[A-Za-z_][A-Za-z0-9_]*$/.test(name);
+}
+
+function collectSuppliedCandidates(
+  definitions: readonly JavaBlueUdoCompletionDefinition[] | undefined,
+  source: UdoCompletionSource,
+): UdoCompletionCandidate[] {
+  if (!definitions || definitions.length === 0) return [];
+  const candidates: UdoCompletionCandidate[] = [];
+  for (const definition of definitions) {
+    if (!isValidUdoName(definition.name)) continue;
+    candidates.push({
+      source,
+      signature: normalizeUdoCallableSignature(definition),
+    });
+  }
+  return candidates;
+}
+
+/**
+ * Parse complete document-local UDO declarations through the portable parser,
+ * and retain valid in-progress declarations (a name with a not-yet-parseable
+ * signature) as incomplete document candidates so they remain discoverable.
+ */
+function collectDocumentCandidates(documentText: string): UdoCompletionCandidate[] {
+  const seen = new Set<string>();
+  const parsedDeclarationCount = new Map<string, number>();
+  const candidates: UdoCompletionCandidate[] = [];
+
+  const parsed = parseUDOText(documentText).getOpcodes();
+  for (const opcode of parsed) {
+    const name = opcode.getName();
+    if (!isValidUdoName(name)) continue;
+    parsedDeclarationCount.set(name, (parsedDeclarationCount.get(name) ?? 0) + 1);
+    const style = opcode.getStyle() === UDOStyle.MODERN ? 'MODERN' : 'CLASSIC';
+    const signature = normalizeUdoCallableSignature({
+      name,
+      style,
+      outTypes: opcode.getOutTypes(),
+      inTypes: opcode.getInTypes(),
+      inputArguments: opcode.getInputArguments(),
+    });
+    if (seen.has(signature.identityKey)) continue;
+    seen.add(signature.identityKey);
+    candidates.push({ source: 'document', signature });
   }
 
-  return Array.from(new Set(projectOpcodeNames))
-    .sort()
-    .map((label) => ({
-      label,
-      type: 'function',
-      detail: 'project UDO',
-      boost: 21,
-    }));
+  // Fallback for in-progress declarations the parser could not yet complete.
+  // Match each parsed declaration to one source occurrence. Any additional
+  // same-name occurrence is still in progress and must remain discoverable.
+  userOpcodeFallbackPattern.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = userOpcodeFallbackPattern.exec(documentText)) !== null) {
+    const name = match[1];
+    if (!isValidUdoName(name)) continue;
+    const remainingParsedDeclarations = parsedDeclarationCount.get(name) ?? 0;
+    if (remainingParsedDeclarations > 0) {
+      parsedDeclarationCount.set(name, remainingParsedDeclarations - 1);
+      continue;
+    }
+    const signature = normalizeUdoCallableSignature({
+      name,
+      style: 'MODERN',
+      outTypes: '',
+      inTypes: '',
+      // Force an incomplete normalized signature without inventing authored
+      // callable types for a declaration the parser could not finish.
+      inputArguments: '?',
+    });
+    if (seen.has(signature.identityKey)) continue;
+    seen.add(signature.identityKey);
+    candidates.push({ source: 'document', signature });
+  }
+
+  return candidates;
+}
+
+/**
+ * Resolve exact UDO identity duplicates by source precedence
+ * (context > project > document) and within-source duplicates. Same-name
+ * definitions with different normalized signatures remain separate candidates.
+ */
+function dedupeUdoCandidates(candidates: readonly UdoCompletionCandidate[]): UdoCompletionCandidate[] {
+  const byIdentity = new Map<string, UdoCompletionCandidate>();
+  for (const candidate of candidates) {
+    const existing = byIdentity.get(candidate.signature.identityKey);
+    if (!existing) {
+      byIdentity.set(candidate.signature.identityKey, candidate);
+      continue;
+    }
+    const existingRank = UDO_SOURCE_ORDER.indexOf(existing.source);
+    const candidateRank = UDO_SOURCE_ORDER.indexOf(candidate.source);
+    if (candidateRank < existingRank) {
+      byIdentity.set(candidate.signature.identityKey, candidate);
+    }
+  }
+  return Array.from(byIdentity.values());
+}
+
+function udoCandidateToCompletion(candidate: UdoCompletionCandidate): Completion {
+  const { signature, source } = candidate;
+  const incompleteMarker = signature.complete ? '' : ' (incomplete)';
+  return {
+    label: signature.name,
+    displayLabel: `${signature.name} (${signature.inputDisplay}) → ${signature.outputDisplay}${incompleteMarker}`,
+    type: 'function',
+    detail: UDO_SOURCE_DETAIL[source],
+    apply: signature.name,
+    info: udoCandidateInfo(candidate),
+    boost: UDO_SOURCE_BOOST[source],
+  };
+}
+
+function udoCandidateInfo(candidate: UdoCompletionCandidate): string {
+  const { signature, source } = candidate;
+  const parts = [
+    `${signature.name} (${signature.inputDisplay}) → ${signature.outputDisplay}`,
+    '',
+    `Source: ${UDO_SOURCE_DETAIL[source]}`,
+  ];
+  if (!signature.complete) {
+    parts.push('', 'Signature is incomplete; finish the declaration to normalize this overload.');
+  }
+  return parts.join('\n');
+}
+
+function createUdoCompletions(
+  contextUdos: readonly JavaBlueUdoCompletionDefinition[] | undefined,
+  projectUdos: readonly JavaBlueUdoCompletionDefinition[] | undefined,
+  documentText: string,
+): Completion[] {
+  const candidates = dedupeUdoCandidates([
+    ...collectSuppliedCandidates(contextUdos, 'context'),
+    ...collectSuppliedCandidates(projectUdos, 'project'),
+    ...collectDocumentCandidates(documentText),
+  ]);
+  candidates.sort(compareUdoCandidates);
+  return candidates.map(udoCandidateToCompletion);
+}
+
+function compareUdoCandidates(left: UdoCompletionCandidate, right: UdoCompletionCandidate): number {
+  const nameCompare = left.signature.name.localeCompare(right.signature.name);
+  if (nameCompare !== 0) return nameCompare;
+  const sourceCompare =
+    UDO_SOURCE_ORDER.indexOf(left.source) - UDO_SOURCE_ORDER.indexOf(right.source);
+  if (sourceCompare !== 0) return sourceCompare;
+  return left.signature.key.localeCompare(right.signature.key);
 }
 
 function createBsbReplacementKeyCompletions(
@@ -202,20 +351,39 @@ function createBsbReplacementKeyCompletions(
     }));
 }
 
+/**
+ * Deduplicate completion rows. UDO overloads are pre-resolved by exact
+ * signature identity with source precedence; this pass keeps every distinct
+ * UDO overload (same label, different displayLabel) while collapsing exact
+ * duplicate rows and same-name non-UDO categories (variables, native opcodes).
+ * A same-name native opcode remains as a separate row alongside UDO overloads
+ * because it carries different detail/displayLabel.
+ */
 function dedupeCompletions(completions: Completion[]): Completion[] {
-  const labels = new Set<string>();
+  const seen = new Set<string>();
   const deduped: Completion[] = [];
 
   for (const completion of completions) {
-    if (labels.has(completion.label)) {
+    const key = completionKey(completion);
+    if (seen.has(key)) {
       continue;
     }
-
-    labels.add(completion.label);
+    seen.add(key);
     deduped.push(completion);
   }
 
   return deduped;
+}
+
+function completionKey(completion: Completion): string {
+  // UDO overloads share a label but differ by displayLabel/detail; use both so
+  // polymorphic UDO overloads survive while identical rows collapse.
+  if (completion.detail === 'context UDO'
+    || completion.detail === 'project UDO'
+    || completion.detail === 'document UDO') {
+    return `${completion.label}\u0000${completion.displayLabel ?? ''}`;
+  }
+  return completion.label;
 }
 
 function filterWordCompletions(completions: Completion[], filter: string): Completion[] {
@@ -241,8 +409,7 @@ function createWordCompletionResult(
   const documentTextBeforeWord = context.state.doc.sliceString(0, from);
   const completions = dedupeCompletions([
     ...findDocumentLocalCsoundVariables(documentTextBeforeWord, filter),
-    ...findDocumentUserOpcodes(documentText),
-    ...createProjectOpcodeCompletions(options.projectOpcodeNames),
+    ...createUdoCompletions(options.contextUdos, options.projectUdos, documentText),
     ...blueOpcodeCompletions,
     ...opcodeCompletions,
   ]);

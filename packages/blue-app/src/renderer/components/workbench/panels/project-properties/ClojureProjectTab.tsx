@@ -5,7 +5,7 @@ import { InputBase } from './ProjectPropertyFields';
 import type { ClojureProjectTabProps } from './types';
 
 const BUTTON_CLASSES =
-  'rounded-md border border-app-border bg-app-surface px-3 py-2 text-body font-medium text-app-text-strong transition hover:border-app-accent hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-45';
+  'rounded-md border border-app-border bg-app-surface px-3 py-2 text-role-body font-medium text-app-text-strong transition hover:border-app-accent hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-45';
 
 let nextDraftClojureLibraryEntryId = 1;
 
@@ -70,8 +70,8 @@ export default function ClojureProjectTab({
     <div className="space-y-5">
       <div className="flex flex-col gap-3 rounded-xl border border-app-border bg-gradient-to-b from-app-surface to-app-overlay px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm font-medium text-app-text-strong">Project Libraries</div>
-          <div className="mt-1 text-sm text-app-text-muted">
+          <div className="text-role-body font-medium text-app-text-strong">Project Libraries</div>
+          <div className="mt-1 text-role-body text-app-text-muted">
             Dependencies listed here are loaded by the project-level Clojure plugin before evaluation and render.
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function ClojureProjectTab({
         </div>
 
         {clojureProject.libraryEntries.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-app-text-muted">
+          <div className="px-4 py-8 text-role-body text-app-text-muted">
             No Clojure libraries configured for this project.
           </div>
         ) : (
@@ -113,7 +113,7 @@ export default function ClojureProjectTab({
                     onChange={(dependencyCoordinates) =>
                       handleEntryChange(index, { dependencyCoordinates })
                     }
-                    className="font-mono text-body"
+                    className="font-mono text-role-body"
                     placeholder="org.clojure/data.json"
                   />
                 </div>
@@ -125,7 +125,7 @@ export default function ClojureProjectTab({
                     disabled={disabled}
                     value={entry.version}
                     onChange={(version) => handleEntryChange(index, { version })}
-                    className="font-mono text-body"
+                    className="font-mono text-role-body"
                     placeholder="1.0.0"
                   />
                 </div>

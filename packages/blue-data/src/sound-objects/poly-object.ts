@@ -18,34 +18,27 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { Element } from '../serialization/xml-reader';
-import { applyNoteProcessorChain, applyNoteProcessorChainAsync, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  rebaseScoreToRenderStart,
+  setScoreStart,
+} from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { LayerGroupDataEvent, LayerGroupDataEventType } from '../score/layers/layer-group-data-event';
 import { LayerGroupListener } from '../score/layers/layer-group-listener';
 import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../score/score-object-event';
 import { Layer } from '../score/layers/layer';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
-import { GenericScore } from './generic-score';
-import { Comment } from './comment';
-import { CSDSoundObject } from './csd-sound-object';
+import { loadSoundObjectFromXML } from './sound-object-registry';
 import { PythonObject } from './python-object';
 import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';
-import { PianoRoll } from './piano-roll';
-import { PatternObject } from './pattern-object';
-import { AudioFile } from './audio-file';
-import { Sound } from './sound';
-import { External } from './external';
 import { Instance } from './instance';
-import { LineObject } from './line-object';
-import { ZakLineObject } from './zak-line-object';
-import { JMask } from './j-mask';
-import { TrackerObject } from './tracker-object';
-import { NotationObject } from './notation-object';
-import { FrozenSoundObject } from './frozen-sound-object';
-import { ObjectBuilder } from './object-builder';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
+import { normalizeScoreGenerationOptions, type ScoreGenerationOptionsOrSolo } from '../score/score-generation-options';
 
 type OnLoadTarget = PolyObject | JavaScriptObject | ClojureObject | PythonObject;
 
@@ -67,73 +60,7 @@ function resolveOnLoadTarget(sObj: SoundObject): OnLoadTarget | null {
   return null;
 }
 
-/**
- * Normalize a Java class name type to a short name.
- * E.g., "blue.soundObject.PianoRoll" → "PianoRoll"
- */
-function normalizeType(type: string | null): string {
-  if (!type) return '';
-  const shortName = type.split('.').pop() || type;
-  return shortName;
-}
 
-/**
- * Load a nested SoundObject from XML by dispatching based on type attribute.
- * Handles both short names and Java full class names.
- */
-function loadNestedSoundObject(
-  data: Element,
-  objRefMap: ObjRefLoadMap | undefined,
-): SoundObject | null {
-  const rawType = data.getAttribute('type');
-  const type = normalizeType(rawType);
-
-  switch (type) {
-    case 'GenericScore':
-      return GenericScore.loadFromXML(data);
-    case 'PolyObject':
-      return PolyObject.loadFromXML(data, objRefMap);
-    case 'Comment':
-      return Comment.loadFromXML(data);
-    case 'CSDSoundObject':
-      return CSDSoundObject.loadFromXML(data);
-    case 'PythonObject':
-      return PythonObject.loadFromXML(data);
-    case 'ObjectBuilder':
-      return ObjectBuilder.loadFromXML(data);
-    case 'ClojureObject':
-      return ClojureObject.loadFromXML(data);
-    case 'JavaScriptObject':
-      return JavaScriptObject.loadFromXML(data);
-    case 'PianoRoll':
-      return PianoRoll.loadFromXML(data);
-    case 'PatternObject':
-      return PatternObject.loadFromXML(data);
-    case 'AudioFile':
-      return AudioFile.loadFromXML(data);
-    case 'Sound':
-      return Sound.loadFromXML(data);
-    case 'External':
-      return External.loadFromXML(data);
-    case 'Instance':
-      return Instance.loadFromXML(data);
-    case 'LineObject':
-      return LineObject.loadFromXML(data);
-    case 'ZakLineObject':
-      return ZakLineObject.loadFromXML(data);
-    case 'JMask':
-      return JMask.loadFromXML(data);
-    case 'TrackerObject':
-      return TrackerObject.loadFromXML(data);
-    case 'NotationObject':
-      return NotationObject.loadFromXML(data);
-    case 'FrozenSoundObject':
-      return FrozenSoundObject.loadFromXML(data);
-    default:
-      console.warn(`Unknown SoundObject type in PolyObject: ${rawType || '(no type)'}`);
-      return null;
-  }
-}
 
 export class PolyObject extends Array<SoundLayer>
   implements SoundObject, ScoreObjectLayerGroup<SoundLayer>, AutomatableLayerGroup {
@@ -214,14 +141,74 @@ export class PolyObject extends Array<SoundLayer>
   getRepeatPoint(): TimeDuration | null { return this._repeatPoint; }
   setRepeatPoint(rp: TimeDuration | null): void { this._repeatPoint = rp; }
 
+  getSoundObjects(grabMutedSoundObjects = false): SoundObject[] {
+    const sObjects: SoundObject[] = [];
+    for (const layer of this) {
+      if (!grabMutedSoundObjects && layer.isMuted()) {
+        continue;
+      }
+      sObjects.push(...layer);
+    }
+    return sObjects;
+  }
+
+  addSoundObject(layerIndex: number, sObj: SoundObject): void {
+    if (layerIndex >= 0 && layerIndex < this.length) {
+      this[layerIndex].push(sObj);
+    }
+  }
+
+  removeSoundObject(sObj: SoundObject): number {
+    for (let i = 0; i < this.length; i += 1) {
+      const layer = this[i];
+      if (layer.contains(sObj)) {
+        layer.remove(sObj);
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  normalizeSoundObjects(context: TimeContext): void {
+    const sObjects = this.getSoundObjects(false);
+    if (sObjects.length === 0) {
+      return;
+    }
+
+    let min = sObjects[0].getStartTime().toBeats(context);
+    for (let i = 1; i < sObjects.length; i += 1) {
+      const start = sObjects[i].getStartTime().toBeats(context);
+      if (start < min) {
+        min = start;
+      }
+    }
+
+    for (const sObj of sObjects) {
+      const currentStart = sObj.getStartTime().toBeats(context);
+      sObj.setStartTime(TimePosition.beats(currentStart - min));
+    }
+
+    let maxTime = 0;
+    for (const sObj of sObjects) {
+      const start = sObj.getStartTime().toBeats(context);
+      const duration = sObj.getSubjectiveDuration().toBeats(context);
+      if (start + duration > maxTime) {
+        maxTime = start + duration;
+      }
+    }
+
+    this.setSubjectiveDuration(TimeDuration.beats(maxTime));
+  }
+
   generateForCSD(
     context: TimeContext,
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    processWithSolo?: boolean,
+    options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
     const noteList = new NoteList();
+    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -252,9 +239,10 @@ export class PolyObject extends Array<SoundLayer>
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    processWithSolo?: boolean,
+    options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
     const noteList = new NoteList();
+    const processWithSolo = normalizeScoreGenerationOptions(options).processWithSolo ?? this.hasSoloLayers();
     const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
 
     if (shouldProcessWithSolo) {
@@ -299,22 +287,11 @@ export class PolyObject extends Array<SoundLayer>
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    let retVal = processed;
-
-    if (startTime > 0) {
-      setScoreStart(processed, -startTime);
-      const filtered = new NoteList();
-      for (const note of processed) {
-        if (note.getStartTime() >= 0) {
-          filtered.add(note);
-        }
-      }
-      retVal = filtered;
-    }
+    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
-      for (const note of retVal) {
+      for (const note of processed) {
         if (note.getStartTime() <= endTime) {
           filtered.add(note);
         }
@@ -322,7 +299,7 @@ export class PolyObject extends Array<SoundLayer>
       return filtered;
     }
 
-    return retVal;
+    return processed;
   }
 
   private async processGeneratedNotesAsync(
@@ -345,22 +322,11 @@ export class PolyObject extends Array<SoundLayer>
 
     setScoreStart(processed, this._startTime.toBeats(context));
 
-    let retVal = processed;
-
-    if (startTime > 0) {
-      setScoreStart(processed, -startTime);
-      const filtered = new NoteList();
-      for (const note of processed) {
-        if (note.getStartTime() >= 0) {
-          filtered.add(note);
-        }
-      }
-      retVal = filtered;
-    }
+    rebaseScoreToRenderStart(processed, startTime);
 
     if (endTime > startTime) {
       const filtered = new NoteList();
-      for (const note of retVal) {
+      for (const note of processed) {
         if (note.getStartTime() <= endTime) {
           filtered.add(note);
         }
@@ -368,7 +334,7 @@ export class PolyObject extends Array<SoundLayer>
       return filtered;
     }
 
-    return retVal;
+    return processed;
   }
 
   // ─── LayerGroup ───
@@ -380,7 +346,7 @@ export class PolyObject extends Array<SoundLayer>
   newLayerAt(index: number): SoundLayer {
     const layer = new SoundLayer();
     layer.setHeightIndex(this._defaultHeightIndex);
-    const insertIdx = Math.min(index, this.length);
+    const insertIdx = index < 0 ? this.length : Math.min(index, this.length);
     this.splice(insertIdx, 0, layer);
     return layer;
   }
@@ -548,7 +514,7 @@ export class PolyObject extends Array<SoundLayer>
         while (sObjNodes.hasMoreElements()) {
           const sObjNode = sObjNodes.next();
           if (sObjNode.getName() === 'soundObject') {
-            const sObj = loadNestedSoundObject(sObjNode, _objRefMap);
+            const sObj = loadSoundObjectFromXML(sObjNode, _objRefMap);
             if (sObj) layer.push(sObj);
           } else if (sObjNode.getName() === 'noteProcessorChain') {
             layer.setNoteProcessorChain(NoteProcessorChain.loadFromXML(sObjNode));

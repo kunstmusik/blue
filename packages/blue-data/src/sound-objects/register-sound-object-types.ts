@@ -3,6 +3,21 @@
  * with the registry. This file must be imported before any XML loading occurs.
  */
 import { registerSoundObjectType, registerSoundObjectFactory } from './sound-object-registry';
+
+const ASSIGNABLE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'assignable' as const };
+const PROPAGATED = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'propagated' as const };
+const PRESERVE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'preserve' as const };
+const NONE = { trackPlacement: 'compatible' as const, instrumentTargetBehavior: 'none' as const };
+const AUDIO_FILE = {
+  trackPlacement: 'incompatible' as const,
+  trackPlacementReason: 'AudioFile is not valid in a Track; add the file as an AudioClip instead',
+  instrumentTargetBehavior: 'none' as const,
+};
+const POLY_OBJECT = {
+  trackPlacement: 'incompatible' as const,
+  trackPlacementReason: 'PolyObject is not valid in a Track; use a SoundObject Layer Group for nested timelines',
+  instrumentTargetBehavior: 'none' as const,
+};
 import { GenericScore } from './generic-score';
 import { PolyObject } from './poly-object';
 import { PythonObject } from './python-object';
@@ -20,31 +35,29 @@ import { PatternObject } from './pattern-object';
 import { PianoRoll } from './piano-roll';
 import { JMask } from './j-mask';
 import { TrackerObject } from './tracker-object';
-import { NotationObject } from './notation-object';
 import { FrozenSoundObject } from './frozen-sound-object';
 import { ObjectBuilder } from './object-builder';
 
 // Register all built-in SoundObject types
-registerSoundObjectType('GenericScore', GenericScore.loadFromXML);
-registerSoundObjectType('PolyObject', PolyObject.loadFromXML);
-registerSoundObjectType('PythonObject', PythonObject.loadFromXML);
-registerSoundObjectType('ClojureObject', ClojureObject.loadFromXML);
-registerSoundObjectType('JavaScriptObject', JavaScriptObject.loadFromXML);
-registerSoundObjectType('CSDSoundObject', CSDSoundObject.loadFromXML);
-registerSoundObjectType('Comment', Comment.loadFromXML);
-registerSoundObjectType('AudioFile', AudioFile.loadFromXML);
-registerSoundObjectType('Sound', Sound.loadFromXML);
-registerSoundObjectType('External', External.loadFromXML);
-registerSoundObjectType('Instance', Instance.loadFromXML);
-registerSoundObjectType('LineObject', LineObject.loadFromXML);
-registerSoundObjectType('ZakLineObject', ZakLineObject.loadFromXML);
-registerSoundObjectType('PatternObject', PatternObject.loadFromXML);
-registerSoundObjectType('PianoRoll', PianoRoll.loadFromXML);
-registerSoundObjectType('JMask', JMask.loadFromXML);
-registerSoundObjectType('TrackerObject', TrackerObject.loadFromXML);
-registerSoundObjectType('NotationObject', NotationObject.loadFromXML);
-registerSoundObjectType('FrozenSoundObject', FrozenSoundObject.loadFromXML);
-registerSoundObjectType('ObjectBuilder', ObjectBuilder.loadFromXML);
+registerSoundObjectType('GenericScore', GenericScore.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('PolyObject', PolyObject.loadFromXML, POLY_OBJECT);
+registerSoundObjectType('PythonObject', PythonObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('ClojureObject', ClojureObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('JavaScriptObject', JavaScriptObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('CSDSoundObject', CSDSoundObject.loadFromXML, PRESERVE);
+registerSoundObjectType('Comment', Comment.loadFromXML, NONE);
+registerSoundObjectType('AudioFile', AudioFile.loadFromXML, AUDIO_FILE);
+registerSoundObjectType('Sound', Sound.loadFromXML, PRESERVE);
+registerSoundObjectType('External', External.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('Instance', Instance.loadFromXML, PROPAGATED);
+registerSoundObjectType('LineObject', LineObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('ZakLineObject', ZakLineObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('PatternObject', PatternObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('PianoRoll', PianoRoll.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('JMask', JMask.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('TrackerObject', TrackerObject.loadFromXML, ASSIGNABLE);
+registerSoundObjectType('FrozenSoundObject', FrozenSoundObject.loadFromXML, PRESERVE);
+registerSoundObjectType('ObjectBuilder', ObjectBuilder.loadFromXML, ASSIGNABLE);
 
 registerSoundObjectFactory('GenericScore', () => new GenericScore());
 registerSoundObjectFactory('PolyObject', () => {
@@ -67,6 +80,5 @@ registerSoundObjectFactory('PatternObject', () => new PatternObject());
 registerSoundObjectFactory('PianoRoll', () => new PianoRoll());
 registerSoundObjectFactory('JMask', () => new JMask());
 registerSoundObjectFactory('TrackerObject', () => new TrackerObject());
-registerSoundObjectFactory('NotationObject', () => new NotationObject());
 registerSoundObjectFactory('FrozenSoundObject', () => new FrozenSoundObject());
 registerSoundObjectFactory('ObjectBuilder', () => new ObjectBuilder());

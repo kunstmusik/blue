@@ -8,11 +8,14 @@ import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { BSBVSlider } from './bsb-vslider';
 import { Parameter } from '../../automation/parameter';
 import { formatBlueNumber } from '../../utilities/number-format';
+import { JavaDecimal } from '../../automation/java-decimal';
+import { defaultBsbResolution, parseExactBsbResolution, parseLegacyBsbResolution } from './bsb-resolution';
+import { snapToResolutionJava } from '../../automation/java-decimal';
 
 export class BSBVSliderBank extends BSBWidget {
   sliderHeight = 150;
   gap = 5;
-  resolution = 0.1;
+  resolutionDecimal: JavaDecimal = defaultBsbResolution();
   valueDisplayEnabled = true;
   randomizable = true;
   sliders: BSBVSlider[] = [new BSBVSlider()];
@@ -23,7 +26,9 @@ export class BSBVSliderBank extends BSBWidget {
 
   set numberOfSliders(count: number) {
     while (this.sliders.length < count) {
-      this.sliders.push(new BSBVSlider());
+      const slider = new BSBVSlider();
+      slider.resolutionDecimal = this.resolutionDecimal;
+      this.sliders.push(slider);
     }
     while (this.sliders.length > count) {
       this.sliders.pop();
@@ -61,8 +66,14 @@ export class BSBVSliderBank extends BSBWidget {
     if (h) this.sliderHeight = parseInt(h, 10);
     const g = data.getTextString('gap');
     if (g) this.gap = parseInt(g, 10);
-    const res = data.getTextString('bdresolution') ?? data.getTextString('resolution');
-    if (res) this.resolution = parseFloat(res);
+    const exactResolution = data.getTextString('bdresolution');
+    const legacyResolution = data.getTextString('resolution');
+    const loadedResolution = exactResolution
+      ? parseExactBsbResolution(exactResolution)
+      : legacyResolution
+        ? parseLegacyBsbResolution(legacyResolution)
+        : this.resolutionDecimal;
+    this.resolutionDecimal = loadedResolution;
     const vde = data.getElement('valueDisplayEnabled');
     if (vde) this.valueDisplayEnabled = vde.getTextString() === 'true';
     const rand = data.getElement('randomizable');
@@ -72,17 +83,51 @@ export class BSBVSliderBank extends BSBWidget {
     const childElems = data.getElements('bsbObject');
     while (childElems.hasMoreElements()) {
       const childElem = childElems.next();
+      // A bank owns the resolution for all of its child sliders. Preserve the
+      // child's raw value while loading so a stale/legacy child bdresolution
+      // cannot quantize it before the bank resolution is applied below.
+      const rawValueText = childElem.getTextString('value');
       const slider = new BSBVSlider();
       slider.loadFromXML(childElem);
+      if (rawValueText !== null && rawValueText !== '') {
+        const rawValue = parseFloat(rawValueText);
+        if (Number.isFinite(rawValue)) slider.value = rawValue;
+      }
+      slider.resolutionDecimal = loadedResolution;
+      slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, loadedResolution);
       this.sliders.push(slider);
     }
     if (this.sliders.length === 0) {
-      this.sliders.push(new BSBVSlider());
+      const slider = new BSBVSlider();
+      slider.resolutionDecimal = loadedResolution;
+      slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, loadedResolution);
+      this.sliders.push(slider);
     }
   }
 
   randomize(): void {
     if (!this.randomizable) return;
     for (const s of this.sliders) s.randomize();
+  }
+
+  get resolution(): number { return this.resolutionDecimal.doubleValue; }
+  set resolution(value: number) {
+    this.setResolutionText(parseLegacyBsbResolution(String(value)).canonicalText);
+  }
+
+  getResolutionText(): string { return this.resolutionDecimal.canonicalText; }
+  setResolutionText(text: string): void {
+    const next = parseExactBsbResolution(text);
+    this.resolutionDecimal = next;
+    for (const slider of this.sliders) {
+      slider.resolutionDecimal = next;
+      slider.value = snapToResolutionJava(slider.value, this.minimum, this.maximum, next);
+    }
+  }
+
+  override deepCopy(): this {
+    const copy = super.deepCopy();
+    copy.resolutionDecimal = this.resolutionDecimal;
+    return copy;
   }
 }

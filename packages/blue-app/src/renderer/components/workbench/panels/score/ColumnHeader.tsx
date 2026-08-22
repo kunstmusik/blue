@@ -190,6 +190,7 @@ function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smp
 
   return (
     <div
+      data-score-time-ruler={onMouseDown ? 'primary' : undefined}
       className={`relative overflow-hidden border-b border-blue-border/20 ${secondary ? 'bg-blue-surface' : 'bg-blue-bg'} ${onMouseDown ? 'cursor-crosshair select-none' : ''}`}
       style={{ height: ROW_HEIGHT, minWidth: totalBeats * pixelsPerBeat }}
       onMouseDown={onMouseDown}
@@ -214,7 +215,7 @@ function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smp
         >
           {mark.label && (
             <span
-              className="absolute left-1 text-tiny text-blue-muted whitespace-nowrap select-none"
+              className="absolute left-1 text-role-subheadline text-blue-muted whitespace-nowrap select-none"
               style={{ top: mark.type === 'major' ? 1 : -9 }}
             >
               {mark.label}

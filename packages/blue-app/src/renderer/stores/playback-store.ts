@@ -29,9 +29,13 @@ export type PlaybackTransportAnchor = ToolbarProjectTransportSnapshot;
 
 interface PlaybackState {
   isPlaying: boolean;
+  isAuditioning: boolean;
   status: PlaybackStatus;
   message: string;
+  /** Active follow state for the current playback session (may be suspended). */
   followPlayback: boolean;
+  /** Hydrated durable preference; restores active state when a session ends. */
+  savedFollowPlayback: boolean;
   followPlaybackOnStart: boolean;
   latencyCorrection: number;
   clock: PlaybackClockState | null;
@@ -42,13 +46,39 @@ interface PlaybackState {
 interface PlaybackActions {
   togglePlay: () => Promise<void>;
   startFresh: () => Promise<void>;
+  auditionScoreObjects: (objectIds: string[]) => Promise<void>;
+  stopAuditioning: () => Promise<void>;
   stop: () => Promise<void>;
   setPlaying: (playing: boolean) => void;
-  setStatus: (info: { status: string; message?: string }) => void;
+  setStatus: (info: {
+    status: string;
+    message?: string;
+    renderStartTime?: number;
+    auditioning?: boolean;
+  }) => void;
   setError: (error: string) => void;
   acceptPlaybackClock: (snapshot: PlaybackClockSnapshot) => void;
+  /** Explicit user toggle (toolbar, native menu, `F`): persists immediately. */
   toggleFollowPlayback: () => void;
+  /** Explicit user action: updates active + saved follow and persists it. */
+  setFollowPlaybackEnabled: (enabled: boolean) => void;
+  /**
+   * Main-originated resolved follow value (native menu / settings window).
+   * Applies active + saved state without persisting again; main already wrote
+   * the durable preference before sending the command.
+   */
+  applyResolvedFollowPlayback: (enabled: boolean) => void;
+  /**
+   * Session-only suspension from manual horizontal navigation. Never touches
+   * the durable preference; mirrors the active state to the native menu.
+   */
+  suspendFollowForSession: () => void;
+  /** Ends the session's follow override: active state returns to the saved value. */
+  restoreFollowFromSaved: () => void;
+  /** Explicit user toggle of the follow-on-start preference; persists it. */
   toggleFollowPlaybackOnStart: () => void;
+  /** Main-originated resolved on-start value; does not persist again. */
+  applyResolvedFollowPlaybackOnStart: (enabled: boolean) => void;
   hydrateFromProgramSettings: (settings: ProgramSettingsSnapshot) => void;
   tickDisplay: () => void;
   reset: () => void;
@@ -103,11 +133,41 @@ function clonePlaybackTransportAnchor(
   };
 }
 
+/** Mirrors the active follow state to the main-process native-menu cache. */
+function mirrorFollowState(enabled: boolean): void {
+  window.blueAPI?.syncFollowPlaybackState?.(enabled);
+}
+
+/**
+ * Applies the follow-on-start rule for a confirmed new playback session:
+ * enabled starts the session with follow active; disabled starts from the
+ * saved follow preference without forcing it on. Internal loops, seeks, and
+ * engine position restarts never re-run this rule.
+ */
+function applyFollowOnStartRule(state: PlaybackState, set: (partial: Partial<PlaybackState>) => void): void {
+  const next = state.followPlaybackOnStart ? true : state.savedFollowPlayback;
+  if (state.followPlayback === next) return;
+  set({ followPlayback: next });
+  mirrorFollowState(next);
+}
+
+/** Restores the active follow state from the saved preference at session end. */
+function restoreFollowFromSaved(
+  state: PlaybackState,
+  set: (partial: Partial<PlaybackState>) => void,
+): void {
+  if (state.followPlayback === state.savedFollowPlayback) return;
+  set({ followPlayback: state.savedFollowPlayback });
+  mirrorFollowState(state.savedFollowPlayback);
+}
+
 export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, get) => ({
   isPlaying: false,
+  isAuditioning: false,
   status: 'idle',
   message: '',
   followPlayback: true,
+  savedFollowPlayback: true,
   followPlaybackOnStart: true,
   latencyCorrection: 0,
   clock: null,
@@ -127,16 +187,12 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     try {
       set({
         isPlaying: false,
+        isAuditioning: false,
         status: 'starting',
         message: 'Preparing playback...',
         clock: null,
         display: createIdlePlaybackDisplayState(),
       });
-
-      if (get().followPlaybackOnStart) {
-        set({ followPlayback: true });
-        window.blueAPI.syncFollowPlaybackState?.(true);
-      }
 
       await useProjectStore.getState().flushPendingPatches();
 
@@ -153,10 +209,16 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
       if (get().status === 'starting') {
         set({
           isPlaying: playing,
+          isAuditioning: false,
           status: playing ? 'playing' : 'stopped',
           message: playing ? 'Playing via blue-engine' : '',
           transportAnchor: playing ? transportAnchor : null,
         });
+        // Only a confirmed start applies the follow-on-start rule; failed
+        // starts leave the hydrated preferences untouched.
+        if (playing) {
+          applyFollowOnStartRule(get(), set);
+        }
       }
     } catch (err: unknown) {
       get().setError(err instanceof Error ? err.message : String(err));
@@ -167,16 +229,12 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     try {
       set({
         isPlaying: false,
+        isAuditioning: false,
         status: 'starting',
         message: 'Preparing playback...',
         clock: null,
         display: createIdlePlaybackDisplayState(),
       });
-
-      if (get().followPlaybackOnStart) {
-        set({ followPlayback: true });
-        window.blueAPI.syncFollowPlaybackState?.(true);
-      }
 
       await useProjectStore.getState().flushPendingPatches();
 
@@ -193,10 +251,49 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
           message: playing ? 'Playing via blue-engine' : '',
           transportAnchor: playing ? transportAnchor : null,
         });
+        if (playing) {
+          applyFollowOnStartRule(get(), set);
+        }
       }
     } catch (err: unknown) {
       get().setError(err instanceof Error ? err.message : String(err));
     }
+  },
+
+  auditionScoreObjects: async (objectIds) => {
+    if (objectIds.length === 0 || get().status === 'starting' || get().status === 'stopping') {
+      return;
+    }
+
+    try {
+      set({
+        isPlaying: false,
+        isAuditioning: true,
+        status: 'starting',
+        message: 'Preparing audition...',
+        clock: null,
+        display: createIdlePlaybackDisplayState(),
+        transportAnchor: null,
+      });
+
+      await useProjectStore.getState().flushPendingPatches();
+      const playing = await window.blueAPI.auditionScoreObjects([...objectIds]);
+      if (get().status === 'starting') {
+        set({
+          isPlaying: playing,
+          isAuditioning: playing,
+          status: playing ? 'playing' : 'stopped',
+          message: playing ? 'Auditioning selected ScoreObjects' : '',
+        });
+      }
+    } catch (err: unknown) {
+      get().setError(err instanceof Error ? err.message : String(err));
+    }
+  },
+
+  stopAuditioning: async () => {
+    if (!get().isAuditioning) return;
+    await get().stop();
   },
 
   stop: async () => {
@@ -207,6 +304,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
     if (shouldShowStopping) {
       set({
         isPlaying: state.isPlaying,
+        isAuditioning: false,
         status: 'stopping',
         message: 'Stopping playback...',
       });
@@ -217,7 +315,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   setPlaying: (isPlaying) => set({ isPlaying }),
 
-  setStatus: ({ status, message }) => {
+  setStatus: ({ status, message, renderStartTime, auditioning }) => {
     const normalizedStatus: PlaybackStatus =
       status === 'starting' || status === 'playing' || status === 'stopping' || status === 'stopped' || status === 'error'
         ? status
@@ -230,6 +328,17 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         message: message || '',
       };
 
+      if (auditioning !== undefined) {
+        nextState.isAuditioning = auditioning;
+      }
+
+      if (renderStartTime !== undefined && Number.isFinite(renderStartTime)) {
+        nextState.transportAnchor = clonePlaybackTransportAnchor({
+          ...(state.transportAnchor ?? useProjectStore.getState().transport),
+          renderStartTime,
+        });
+      }
+
       if (normalizedStatus === 'starting') {
         nextState.clock = null;
         nextState.display = createIdlePlaybackDisplayState();
@@ -238,10 +347,15 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         normalizedStatus === 'stopped' ||
         normalizedStatus === 'error'
       ) {
+        nextState.isAuditioning = false;
         nextState.clock = null;
         nextState.display = createIdlePlaybackDisplayState();
         nextState.transportAnchor = null;
-      } else if (normalizedStatus === 'playing' && state.transportAnchor === null) {
+      } else if (
+        normalizedStatus === 'playing'
+        && state.transportAnchor === null
+        && nextState.transportAnchor === undefined
+      ) {
         nextState.transportAnchor = clonePlaybackTransportAnchor(
           useProjectStore.getState().transport,
         );
@@ -249,17 +363,25 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
       return nextState;
     });
+
+    // Session end discards the session's follow state (including suspension)
+    // and reverts the toolbar/native menu to the saved preference.
+    if (normalizedStatus === 'idle' || normalizedStatus === 'stopped' || normalizedStatus === 'error') {
+      restoreFollowFromSaved(get(), set);
+    }
   },
 
   setError: (error) => {
     set({
       status: 'error',
       isPlaying: false,
+      isAuditioning: false,
       message: error,
       clock: null,
       display: createIdlePlaybackDisplayState(),
       transportAnchor: null,
     });
+    restoreFollowFromSaved(get(), set);
   },
 
   acceptPlaybackClock: (snapshot) => {
@@ -299,20 +421,80 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   },
 
   toggleFollowPlayback: () => {
-    set((state) => ({
-      followPlayback: !state.followPlayback,
-    }));
+    get().setFollowPlaybackEnabled(!get().followPlayback);
+  },
+
+  setFollowPlaybackEnabled: (enabled) => {
+    const previousSaved = get().savedFollowPlayback;
+    set({ followPlayback: enabled, savedFollowPlayback: enabled });
+    mirrorFollowState(enabled);
+
+    const updatePreferences = window.blueAPI?.updatePlaybackPreferences;
+    if (!updatePreferences) return;
+
+    void updatePreferences({ followPlayback: enabled })
+      .then((result) => {
+        // A failed durable write keeps the last confirmed saved preference;
+        // the active session keeps the user's choice until the next
+        // authoritative settings result reconciles it.
+        if (!result?.ok && get().savedFollowPlayback === enabled) {
+          set({ savedFollowPlayback: previousSaved });
+        }
+      })
+      .catch(() => {
+        if (get().savedFollowPlayback === enabled) {
+          set({ savedFollowPlayback: previousSaved });
+        }
+      });
+  },
+
+  applyResolvedFollowPlayback: (enabled) => {
+    set({ followPlayback: enabled, savedFollowPlayback: enabled });
+  },
+
+  suspendFollowForSession: () => {
+    const state = get();
+    // Navigation while stopped/paused or while follow is already inactive
+    // never changes follow state (FR-008).
+    if (!state.isPlaying || !state.followPlayback) return;
+    set({ followPlayback: false });
+    mirrorFollowState(false);
+  },
+
+  restoreFollowFromSaved: () => {
+    restoreFollowFromSaved(get(), set);
   },
 
   toggleFollowPlaybackOnStart: () => {
-    set((state) => ({
-      followPlaybackOnStart: !state.followPlaybackOnStart,
-    }));
+    const previous = get().followPlaybackOnStart;
+    const next = !previous;
+    set({ followPlaybackOnStart: next });
+
+    const updatePreferences = window.blueAPI?.updatePlaybackPreferences;
+    if (!updatePreferences) return;
+
+    void updatePreferences({ followPlaybackOnStart: next })
+      .then((result) => {
+        if (!result?.ok && get().followPlaybackOnStart === next) {
+          set({ followPlaybackOnStart: previous });
+        }
+      })
+      .catch(() => {
+        if (get().followPlaybackOnStart === next) {
+          set({ followPlaybackOnStart: previous });
+        }
+      });
   },
 
-  hydrateFromProgramSettings: (settings: ProgramSettingsSnapshot) => {
+  applyResolvedFollowPlaybackOnStart: (enabled) => {
+    set({ followPlaybackOnStart: enabled });
+  },
+
+  hydrateFromProgramSettings: (settings) => {
+    const savedFollowPlayback = settings.playback.followPlayback;
     set({
-      followPlayback: settings.playback.followPlayback,
+      followPlayback: savedFollowPlayback,
+      savedFollowPlayback,
       followPlaybackOnStart: settings.playback.followPlaybackOnStart,
       latencyCorrection: settings.playback.playbackLatencyCorrection,
     });
@@ -334,16 +516,24 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   },
 
   reset: () => {
+    // Runtime reset preserves the hydrated follow preferences and restores the
+    // active follow state from the saved preference (FR-013).
+    const { savedFollowPlayback, followPlayback, followPlaybackOnStart } = get();
     set({
       isPlaying: false,
+      isAuditioning: false,
       status: 'idle',
       message: '',
-      followPlayback: true,
-      followPlaybackOnStart: true,
+      followPlayback: savedFollowPlayback,
+      savedFollowPlayback,
+      followPlaybackOnStart,
       latencyCorrection: 0,
       clock: null,
       display: createIdlePlaybackDisplayState(),
       transportAnchor: null,
     });
+    if (followPlayback !== savedFollowPlayback) {
+      mirrorFollowState(savedFollowPlayback);
+    }
   },
 }));

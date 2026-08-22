@@ -1,0 +1,9 @@
+Image has the following dependencies:
+    api-ms-win-crt-runtime-l1-1-0.dll
+    KERNEL32.dll
+    USER32.dll
+    ADVAPI32.dll
+    WS2_32.dll
+    VCRUNTIME140.dll
+    VCRUNTIME140_1.dll
+    ucrtbase.dll

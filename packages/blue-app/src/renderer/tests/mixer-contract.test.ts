@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AudioLayer, AudioLayerGroup, BlueData, Channel, Effect, GenericInstrument, Send } from '@blue/data';
+import { TrackLayer, TrackLayerGroup, BlueData, Channel, Effect, GenericInstrument, Send } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
@@ -96,10 +96,10 @@ describe('Mixer contract', () => {
     instrument.setName('Lead');
     data.getArrangement().addInstrument(instrument, '1');
 
-    const audioGroup = new AudioLayerGroup();
-    const layerA = new AudioLayer();
+    const audioGroup = new TrackLayerGroup();
+    const layerA = new TrackLayer();
     layerA.setName('Audio A');
-    const layerB = new AudioLayer();
+    const layerB = new TrackLayer();
     layerB.setName('Audio B');
     audioGroup.push(layerA);
     audioGroup.push(layerB);
@@ -138,8 +138,8 @@ describe('Mixer contract', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audioGroup = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const audioGroup = new TrackLayerGroup();
+    const layer = new TrackLayer();
     layer.setName('Layer 1');
     audioGroup.push(layer);
     data.getScore().push(audioGroup);
@@ -166,9 +166,9 @@ describe('Mixer contract', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audioGroup = new AudioLayerGroup();
+    const audioGroup = new TrackLayerGroup();
     audioGroup.setName('Original Group Name');
-    const layer = new AudioLayer();
+    const layer = new TrackLayer();
     layer.setName('Layer 1');
     audioGroup.push(layer);
     data.getScore().push(audioGroup);
@@ -196,9 +196,9 @@ describe('Mixer contract', () => {
     const data = new BlueData();
     data.getScore().length = 0;
 
-    const audioGroup = new AudioLayerGroup();
+    const audioGroup = new TrackLayerGroup();
     audioGroup.setName('Original Group Name');
-    const layer = new AudioLayer();
+    const layer = new TrackLayer();
     layer.setName('Layer 1');
     audioGroup.push(layer);
     data.getScore().push(audioGroup);

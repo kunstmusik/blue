@@ -151,15 +151,12 @@ export default function AudioClipBar({
       )}
       {showText && (
         <span
-          className="absolute truncate"
+          className="absolute truncate text-role-subheadline font-bold"
           style={{
             left: 5,
             top: 1,
             right: 2,
             height: 16,
-            lineHeight: '16px',
-            fontSize: 11,
-            fontWeight: 'bold',
             color: fg,
           }}
         >

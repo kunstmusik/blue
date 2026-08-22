@@ -26,7 +26,13 @@ export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, 
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={8} className="editor-context-menu z-[1000] min-w-44">
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          collisionPadding={8}
+          className="editor-context-menu z-[1000] min-w-44"
+          data-auxiliary-portal="true"
+        >
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>Import XML…</DropdownMenu.Item>
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImportDirectory}>Import Java Configuration Directory…</DropdownMenu.Item>
           <DropdownMenu.Item

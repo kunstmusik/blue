@@ -17,7 +17,13 @@ import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { Pattern } from './pattern/pattern';
-import { getNotes, applyTimeBehavior, applyNoteProcessorChain, setScoreStart } from '../utilities/score';
+import {
+  getNotes,
+  applyTimeBehavior,
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  setScoreStart,
+} from '../utilities/score';
 
 export class PatternObject extends AbstractSoundObject {
   private _beats = 4;
@@ -46,25 +52,10 @@ export class PatternObject extends AbstractSoundObject {
   getPattern(index: number): Pattern { return this._patterns[index]; }
   addPattern(pattern: Pattern): void { this._patterns.push(pattern); }
 
-  /**
-   * Generate notes from the step-sequencer patterns.
-   * Mirrors Java PatternObject.generateNotes exactly:
-   * 1. Check for solo patterns
-   * 2. For each active step, parse patternScore and offset to step position
-   * 3. Apply note processor chain
-   * 4. Apply time behavior (repeat/scale)
-   * 5. Apply start time offset
-   */
-  override generateForCSD(
-    context: TimeContext,
-    compileData: CompileData,
-    _startTime: number,
-    _endTime: number,
-  ): NoteList {
+  private generateRawNotes(): NoteList {
     const tempNoteList = new NoteList();
     const timeIncrement = 1.0 / this._subDivisions;
 
-    // Check if any solo pattern exists
     let soloFound = false;
 
     for (const p of this._patterns) {
@@ -96,18 +87,39 @@ export class PatternObject extends AbstractSoundObject {
       }
     }
 
-    // Apply note processor chain
-    applyNoteProcessorChain(tempNoteList, this.getNoteProcessorChain());
+    return tempNoteList;
+  }
 
-    // Apply time behavior
+  private applyTimeAndOffset(notes: NoteList, context: TimeContext): void {
     const duration = this._subjectiveDuration.toBeats(context);
     const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-    applyTimeBehavior(tempNoteList, this._timeBehavior, duration, rpBeats, this._beats);
+    applyTimeBehavior(notes, this._timeBehavior, duration, rpBeats, this._beats);
 
-    // Apply start time offset
     const startTime = this._startTime.toBeats(context);
-    setScoreStart(tempNoteList, startTime);
+    setScoreStart(notes, startTime);
+  }
 
+  override generateForCSD(
+    context: TimeContext,
+    _compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): NoteList {
+    const tempNoteList = this.generateRawNotes();
+    applyNoteProcessorChain(tempNoteList, this.getNoteProcessorChain());
+    this.applyTimeAndOffset(tempNoteList, context);
+    return tempNoteList;
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    const tempNoteList = this.generateRawNotes();
+    await applyNoteProcessorChainAsync(tempNoteList, this.getNoteProcessorChain(), compileData);
+    this.applyTimeAndOffset(tempNoteList, context);
     return tempNoteList;
   }
 

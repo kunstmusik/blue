@@ -1,7 +1,7 @@
 import {
-  AudioLayerGroup,
   ParameterHelper,
   PolyObject,
+  TrackLayerGroup,
 } from '@blue/data';
 import type {
   AutomatableLayer,
@@ -82,6 +82,7 @@ export function collectAffectedScoreAutomationParameterIds(
     case 'insertAutomationPoint':
     case 'deleteAutomationPoint':
     case 'moveAutomationPoint':
+    case 'setAutomationResolution':
       add(patch.parameterId);
       break;
 
@@ -192,8 +193,8 @@ function getAutomationLayerFromGroup(
   }
 
   if (
-    ref.layerKind === 'audio'
-    && group instanceof AudioLayerGroup
+    ref.layerKind === 'track'
+    && group instanceof TrackLayerGroup
     && ref.layerIndex >= 0
     && ref.layerIndex < group.length
   ) {

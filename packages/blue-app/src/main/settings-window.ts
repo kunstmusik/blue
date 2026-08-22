@@ -4,9 +4,15 @@ import {
   attachWindowStateHandlers,
   restoreWindowState,
 } from './window-state-manager';
+import {
+  SETTINGS_CLOSE_REQUEST_CHANNEL,
+  type SettingsCloseResolution,
+} from '../shared/settings-window';
 
 let settingsWindow: BrowserWindow | null = null;
 let disposeStateHandlers: (() => void) | null = null;
+let closeRequestPending = false;
+let allowNextClose = false;
 
 export interface OpenSettingsWindowOptions {
   /**
@@ -27,6 +33,8 @@ export function openSettingsWindow(
     settingsWindow.focus();
     return;
   }
+  closeRequestPending = false;
+  allowNextClose = false;
 
   const useSheetModal = process.platform !== 'darwin';
 
@@ -66,7 +74,26 @@ export function openSettingsWindow(
   settingsWindow.on('closed', () => {
     disposeStateHandlers?.();
     disposeStateHandlers = null;
+    closeRequestPending = false;
+    allowNextClose = false;
     settingsWindow = null;
+  });
+
+  settingsWindow.on('close', (event) => {
+    if (allowNextClose) {
+      allowNextClose = false;
+      return;
+    }
+    event.preventDefault();
+    if (closeRequestPending) return;
+    closeRequestPending = true;
+    try {
+      settingsWindow?.webContents.send(SETTINGS_CLOSE_REQUEST_CHANNEL);
+    } catch {
+      // If the renderer has already gone away, there is no draft left to
+      // protect. Allow the native window to finish closing.
+      resolveSettingsWindowClose('allow');
+    }
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -79,9 +106,20 @@ export function openSettingsWindow(
 
 export function closeSettingsWindow(): void {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    allowNextClose = true;
     settingsWindow.close();
     settingsWindow = null;
   }
+  closeRequestPending = false;
   disposeStateHandlers?.();
   disposeStateHandlers = null;
+}
+
+/** Resolve a renderer-originated close request after the draft is handled. */
+export function resolveSettingsWindowClose(resolution: SettingsCloseResolution): void {
+  if (!settingsWindow || settingsWindow.isDestroyed() || !closeRequestPending) return;
+  closeRequestPending = false;
+  if (resolution !== 'allow') return;
+  allowNextClose = true;
+  settingsWindow.close();
 }

@@ -64,6 +64,7 @@ export interface ClojureEvalResult {
 export interface ClojureEvalScoreObjectParams extends Record<string, unknown> {
   code: string;
   blueDuration: number;
+  commandline?: string;
   blueProjectDir?: string | null;
 }
 

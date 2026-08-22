@@ -183,3 +183,87 @@ describe('Hardware vs Virtual Keyboard routing parity (SPEC 058 US3)', () => {
     expect(off?.midiNote).toBe(on?.midiNote);
   });
 });
+describe('Focused target hardware/Virtual Keyboard parity (Spec 067 US1/US2)', () => {
+  function makeFocusRouter(
+    target: { kind: 'track'; trackId: string } | { kind: 'orchestra'; assignmentId: string } = {
+      kind: 'track',
+      trackId: 'focused-track',
+    },
+  ) {
+    const captured: Array<{ type: string; target?: { kind: string }; source: string }> = [];
+    const trigger = async (req: {
+      type: 'noteOn' | 'noteOff';
+      source: 'hardware' | 'mouse' | 'computer';
+      target?: { kind: string; [k: string]: unknown };
+    }) => {
+      captured.push({ type: req.type, target: req.target as { kind: string } | undefined, source: req.source });
+      return { ok: true };
+    };
+    const router = new MidiNoteRouter({
+      trigger,
+      allNotesOff: async () => ({ ok: true }),
+      isLiveActive: () => true,
+      resolveTarget: () => ({ target, liveSessionId: 1 }),
+    });
+    return { router, captured };
+  }
+
+  it('hardware and Virtual Keyboard resolve the same focused Track target', async () => {
+    const { router, captured } = makeFocusRouter();
+    await router.routeNote({
+      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
+      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+    });
+    await router.routeNote({
+      type: 'noteOn', sourceKind: 'mouse', sourceId: 'virtual-keyboard:mouse:mouse', deviceId: null,
+      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+    });
+    expect(captured).toHaveLength(1); // aggregate: same target/pitch → one note-on
+    expect(captured[0]?.target).toEqual({ kind: 'track', trackId: 'focused-track' });
+  });
+
+  it('hardware and Virtual Keyboard both route to the exact focused Orchestra assignment', async () => {
+    const { router, captured } = makeFocusRouter({
+      kind: 'orchestra',
+      assignmentId: 'named-lead',
+    });
+    await router.routeNote({
+      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
+      channel: 3, midiNote: 64, velocity: 88, timestamp: 0,
+    });
+    await router.routeNote({
+      type: 'noteOff', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
+      channel: 3, midiNote: 64, velocity: 0, timestamp: 1,
+    });
+    await router.routeNote({
+      type: 'noteOn', sourceKind: 'mouse', sourceId: 'virtual-keyboard:mouse:mouse', deviceId: null,
+      channel: 3, midiNote: 64, velocity: 88, timestamp: 2,
+    });
+
+    const noteOns = captured.filter((request) => request.type === 'noteOn');
+    expect(noteOns).toHaveLength(2);
+    expect(noteOns.map((request) => request.target)).toEqual([
+      { kind: 'orchestra', assignmentId: 'named-lead' },
+      { kind: 'orchestra', assignmentId: 'named-lead' },
+    ]);
+    expect(noteOns.map((request) => request.source)).toEqual(['hardware', 'mouse']);
+  });
+
+  it('a focused Track with no compiled instrument fails closed with no fallback', async () => {
+    const trigger = vi.fn(async () => ({ ok: false, message: 'Unresolved MIDI target' }));
+    const router = new MidiNoteRouter({
+      trigger,
+      allNotesOff: async () => ({ ok: true }),
+      isLiveActive: () => true,
+      resolveTarget: () => null, // no resolved target (focused but unavailable)
+    });
+    const r = await router.routeNote({
+      type: 'noteOn', sourceKind: 'hardware', sourceId: 'midi:k', deviceId: 'k',
+      channel: 0, midiNote: 60, velocity: 100, timestamp: 0,
+    });
+    expect(r.accepted).toBe(false);
+    expect(router.heldCount).toBe(0);
+    // No fallback: trigger is not called when resolution fails.
+    expect(trigger).not.toHaveBeenCalled();
+  });
+});

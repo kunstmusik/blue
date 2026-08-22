@@ -4,13 +4,27 @@ import React, { StrictMode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
+
+vi.mock('sonner', () => ({
+  toast: {
+    loading: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    message: vi.fn(),
+  },
+}));
+
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import { getProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import { useScoreSelectionStore } from '../stores/score-selection-store';
+import { useRenderToDiskStore } from '../stores/render-to-disk-store';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
+import type { RenderOperationStatus } from '../../shared/render-freeze-contract';
 import {
   applyWindowLayoutUpdate,
   createDefaultWindowLayoutSettings,
@@ -85,6 +99,7 @@ describe('useIPCListeners', () => {
     onPlaybackClock: vi.fn((cb: (clock: unknown) => void) => addListener(listeners, 'playback-clock', cb)),
     onPlaybackError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'playback-error', cb)),
     onNativeMenuCommand: vi.fn((cb: (command: unknown) => void) => addListener(listeners, 'native-menu-command', cb)),
+    syncAuditionScoreObjectAvailability: vi.fn(),
     onSaveComplete: vi.fn((cb: () => void) => addListener(listeners, 'save-complete', cb)),
     onSaveError: vi.fn((cb: (error: unknown) => void) => addListener(listeners, 'save-error', cb)),
     onEngineOutput: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'engine-output', cb)),
@@ -112,6 +127,7 @@ describe('useIPCListeners', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     useProjectStore.getState().clearProject();
+    useScoreSelectionStore.getState().clearSelection();
     usePlaybackStore.getState().reset();
     useUIStore.getState().setActivePanel('welcome');
     useSettingsStore.setState({
@@ -125,6 +141,18 @@ describe('useIPCListeners', () => {
       oscOutputHost: 'localhost',
     });
     useLayoutSettingsStore.setState({ layout: null });
+    useRenderToDiskStore.setState({
+      open: false,
+      operationId: null,
+      phase: null,
+      progress: null,
+      message: '',
+      outputPath: null,
+      action: null,
+      error: null,
+      outputExpanded: false,
+      cancelRequested: false,
+    });
     blueAPI.getProgramSettings.mockResolvedValue(createDefaultProgramSettings('darwin'));
     blueAPI.updateWindowLayout.mockImplementation(async (request: WindowLayoutUpdateRequest) =>
       applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), request),
@@ -138,6 +166,19 @@ describe('useIPCListeners', () => {
     container.remove();
     delete (window as Window & { blueAPI?: typeof blueAPI }).blueAPI;
     useLayoutSettingsStore.setState({ layout: null });
+    useRenderToDiskStore.setState({
+      open: false,
+      operationId: null,
+      phase: null,
+      progress: null,
+      message: '',
+      outputPath: null,
+      action: null,
+      error: null,
+      outputExpanded: false,
+      cancelRequested: false,
+    });
+    useScoreSelectionStore.getState().clearSelection();
     globalThis.localStorage?.clear();
     vi.clearAllMocks();
   });
@@ -224,6 +265,62 @@ describe('useIPCListeners', () => {
     });
 
     expect(useProjectStore.getState().missingAudioSession).toBeNull();
+  });
+
+  it('clears score selection and audition availability when the project closes', () => {
+    useScoreSelectionStore.getState().setSelection(['sobj-1']);
+    act(() => {
+      root.render(<Harness />);
+    });
+    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+
+    act(() => {
+      projectClosedHandler();
+    });
+
+    expect(useScoreSelectionStore.getState().selectedObjectIds.size).toBe(0);
+    expect(blueAPI.syncAuditionScoreObjectAvailability).toHaveBeenLastCalledWith(false);
+  });
+
+  it('shows a failure toast when a disk render fails after its dialog is gone', () => {
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const renderStatusHandler = listeners.get('render-operation-status')!.values().next().value as (
+      status: RenderOperationStatus,
+    ) => void;
+    const error = 'Open command failed: spawn ENOENT';
+
+    act(() => {
+      renderStatusHandler({
+        operationId: 'disk-closed',
+        kind: 'diskRender',
+        phase: 'failed',
+        message: error,
+        progress: null,
+        outputPath: null,
+        error,
+      });
+    });
+
+    expect(toast.error).toHaveBeenCalledWith(error, { id: 'disk-closed' });
+
+    useRenderToDiskStore.setState({ open: true, operationId: 'disk-visible', phase: 'completed' });
+    act(() => {
+      renderStatusHandler({
+        operationId: 'disk-visible',
+        kind: 'diskRender',
+        phase: 'failed',
+        message: error,
+        progress: null,
+        outputPath: null,
+        error,
+      });
+    });
+    expect(toast.error).toHaveBeenCalledTimes(1);
   });
 
   it('reveals the no-project workbench when a panel is opened from Welcome', () => {
@@ -322,7 +419,88 @@ describe('useIPCListeners', () => {
       },
     });
     expect(persistedLayout.windows.main?.normalBounds).toEqual(legacyBounds);
-    expect(persistedLayout.workbench?.serializedLayout).toBe(legacyWorkbench);
+    expect(persistedLayout.workbench?.serializedLayout).toEqual(legacyWorkbench);
     expect(useLayoutSettingsStore.getState().layout?.windows.main?.normalBounds).toEqual(legacyBounds);
+  });
+
+  it('hydrates saved follow preferences from program settings at startup (SPEC 079)', async () => {
+    const defaults = createDefaultProgramSettings('darwin');
+    blueAPI.getProgramSettings.mockResolvedValue({
+      ...defaults,
+      playback: {
+        ...defaults.playback,
+        followPlayback: false,
+        followPlaybackOnStart: false,
+      },
+    });
+
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('preserves hydrated follow preferences when the project closes (SPEC 079)', async () => {
+    const defaults = createDefaultProgramSettings('darwin');
+    blueAPI.getProgramSettings.mockResolvedValue({
+      ...defaults,
+      playback: { ...defaults.playback, followPlayback: false },
+    });
+
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    // An active suspended session must end with the project close while the
+    // hydrated saved preference survives the runtime reset.
+    act(() => {
+      usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      usePlaybackStore.getState().suspendFollowForSession();
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+
+    const projectClosedHandler = listeners.get('project-closed')!.values().next().value as () => void;
+    act(() => {
+      projectClosedHandler();
+    });
+
+    expect(usePlaybackStore.getState().status).toBe('idle');
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+  });
+
+  it('applies resolved follow commands delivered on the native-menu channel (SPEC 079)', async () => {
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const nativeMenuHandler = listeners.get('native-menu-command')!.values().next().value as (
+      command: unknown,
+    ) => void;
+
+    act(() => {
+      nativeMenuHandler({ type: 'set-follow-playback', enabled: false });
+    });
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    act(() => {
+      nativeMenuHandler({ type: 'set-follow-playback-on-render-start', enabled: false });
+    });
+
+    expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
   });
 });

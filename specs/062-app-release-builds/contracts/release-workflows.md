@@ -4,17 +4,17 @@
 
 | Workflow      | Trigger                            | Credentials                                                                    | Required Outcome                                                                   | Publication                                                        |
 | ------------- | ---------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `pr.yml`      | Pull requests to `develop`, `main` | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; ZIP artifacts uploaded for reviewer download                 |
-| `develop.yml` | Push to `develop`                  | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; ZIP artifacts uploaded for tester download                   |
-| `release.yml` | Stable `vX.Y.Z` tag                | Protected `release` Environment approval plus least-privilege repository token | Complete verified unsigned ZIP set for the tag                                     | One public GitHub Release, published only by the final promoter job |
+| `pr.yml`      | Pull requests to `develop`, `main` | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; native package artifacts uploaded for reviewer download      |
+| `develop.yml` | Push to `develop`                  | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; native package artifacts uploaded for tester download        |
+| `release.yml` | Stable `vX.Y.Z` tag                | Tag-restricted `release` Environment plus least-privilege repository token      | Complete verified unsigned native package set for the tag                          | One public GitHub Release, published only by the final promoter job |
 
 ## Target Matrix
 
-| Target ID     | Runner Family       | Package Formats inside ZIP  | Artifact Naming                                   |
-| ------------- | ------------------- | --------------------------- | ------------------------------------------------- |
-| `macos-arm64` | macOS Apple Silicon | DMG                         | `blue-macos-arm64-{versionInfo}.zip`               |
-| `windows-x64` | Windows             | NSIS                        | `blue-windows-x64-{versionInfo}.zip`               |
-| `linux-x64`   | Ubuntu              | AppImage and Debian package | `blue-linux-x64-{versionInfo}.zip`                 |
+| Target ID     | Runner Family       | Native Package Formats      | Artifact Naming                                                                 |
+| ------------- | ------------------- | --------------------------- | ------------------------------------------------------------------------------- |
+| `macos-arm64` | macOS Apple Silicon | DMG                         | `blue-macos-arm64-{versionInfo}.dmg`                                             |
+| `windows-x64` | Windows             | NSIS                        | `blue-windows-x64-{versionInfo}.exe`                                             |
+| `linux-x64`   | Ubuntu              | AppImage and Debian package | `blue-linux-x64-{versionInfo}.AppImage`, `blue-linux-x64-{versionInfo}.deb`      |
 
 The `{versionInfo}` is `{version}-pr{number}` for PR builds, `{version}-{short-sha}` for develop builds, and `{version}` for stable builds. macOS x64 is intentionally excluded from the hosted matrix; its local package command is a developer experiment only.
 
@@ -32,9 +32,9 @@ Every target job must:
 
 ## Artifact Contract
 
-- Primary artifact names follow `blue-{os}-{cputype}-{versionInfo}.zip` so they are self-describing and always end in `.zip`.
-- Each primary artifact is one ZIP containing only the target's native installer files. Unpacked app directories, `.blockmap` files, helper executables, and builder metadata are excluded.
-- A stable workflow uses the exact same three ZIP filenames for its Actions artifacts and GitHub Release assets.
+- Primary artifact names follow `blue-{os}-{cputype}-{versionInfo}.{ext}` so they are self-describing and retain their native package extension.
+- Each primary artifact is one directly uploaded native installer. Linux publishes its AppImage and Debian package separately. Unpacked app directories, `.blockmap` files, helper executables, and builder metadata are excluded.
+- A stable workflow uses the exact same four native-package filenames for its Actions artifacts and GitHub Release assets.
 - The stable release also attaches a combined checksum manifest and a machine-readable asset manifest that are independently verified by the publisher.
 - No platform job in `pr.yml` or `develop.yml` creates, edits, or publishes a GitHub Release.
 - The `release.yml` promoter validates the complete asset set before creating the public release.
@@ -51,7 +51,7 @@ Every target job must:
 
 - `pr.yml` and `develop.yml` must not reference macOS, Windows, or protected release credentials.
 - Fork and Dependabot workflows retain normal read-only validation behavior and cannot access protected credentials.
-- The `release.yml` workflow uses a protected GitHub Environment for publication approval. No signing-related secret or identity-token permission is used by the current workflows.
+- The `release.yml` workflow uses a tag-restricted GitHub Environment as its publication and future-credential boundary. The current single-maintainer policy does not require a second-person reviewer; the immutable version-tag push is the explicit release decision. No signing-related secret or identity-token permission is used by the current workflows.
 - Workflow jobs declare explicit `GITHUB_TOKEN` permissions. The `release.yml` publisher receives `contents: write`; all other jobs default to `contents: read`.
 - Workflows pass sensitive values by secret context and environment variables, never by command-line argument or generated release text.
 

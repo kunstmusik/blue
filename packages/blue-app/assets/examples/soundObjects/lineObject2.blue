@@ -1,0 +1,251 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>LineObject Example 2</title>
+    <author>steven yi</author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>lineObject2.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>sound</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch	= cpspch(p4)
+iamp	= ampdb(p5)
+
+kenv	adsr 0.05, 0.025, .9, .025
+
+aout	vco2	1, ipch
+
+;aout	moogladder aout, ipch + (ipch * gkcutoff), .8
+aout	moogvcf aout, ipch + (ipch * gkcutoff), .8
+
+aout	= aout * kenv * iamp
+
+	outs aout, aout</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>sound</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch	= cpspch(p4)
+iamp	= ampdb(p5)
+
+kenv	adsr 0.05, 0.025, .9, .025
+
+aout	vco2	1, ipch
+
+;aout	moogladder aout, ipch + (ipch * gkcutoff2), .8
+aout	moogvcf aout, ipch + (ipch * gkcutoff2), .8
+
+aout	= aout * kenv * iamp
+
+	outs aout, aout</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324073' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324071' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324069' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>gkcutoff	init 0
+gkcutoff2	init 0</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>0.8</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>4</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Comment</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>The lineObjects here generate control signals for frequency cutoff of filters, one used in instrument 1 and another in instrument 2</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.LineObject'>
+        <subjectiveDuration>17.546875</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>lineObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <line name='cutoff' version='2' max='8.0' min='1.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='1.0'/>
+          <linePoint x='0.45500848' y='8.0'/>
+          <linePoint x='1.0' y='1.0'/>
+        </line>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>17.53125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>GEN: sound</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>1</timeBehavior>
+        <repeatPoint>-1.0</repeatPoint>
+        <noteProcessorChain/>
+        <score>i1	0.0	.1	7.00 	80
+i1	+	.	7.01 	80
+i1	+	.	7.02 	80
+i1	+	.	7.03 	80
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.LineObject'>
+        <subjectiveDuration>17.546875</subjectiveDuration>
+        <startTime>3.1875</startTime>
+        <name>lineObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <line name='cutoff2' version='2' max='8.0' min='1.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='1.0'/>
+          <linePoint x='0.46604413' y='8.0'/>
+          <linePoint x='1.0' y='1.0'/>
+        </line>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>17.53125</subjectiveDuration>
+        <startTime>3.1875</startTime>
+        <name>GEN: sound</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>1</timeBehavior>
+        <repeatPoint>-1.0</repeatPoint>
+        <noteProcessorChain/>
+        <score>i2	0.0	.1	6.00 	80
+i2	+	.	6.01 	80
+i2	+	.	6.02 	80
+i2	+	.	6.03 	80
+</score>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

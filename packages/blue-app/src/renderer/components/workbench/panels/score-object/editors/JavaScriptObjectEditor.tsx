@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
+import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
 export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
@@ -56,7 +57,8 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
     <div ref={containerRef} className="flex h-full flex-col" tabIndex={-1}>
       <div className="flex items-center gap-2 border-b border-blue-border px-3 py-1 shrink-0">
         <div className="flex-1" />
-        <label className="flex items-center gap-1 text-ui text-gray-300">
+        <JavaScriptRuntimeStatusIndicator />
+        <label className="flex items-center gap-1 text-role-body text-gray-300">
           <input
             type="checkbox"
             checked={onLoadProcessable}
@@ -67,7 +69,7 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
         </label>
         <button
           type="button"
-          className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
+          className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"
           disabled={testing}
           onClick={handleTest}
           title="Test (Cmd/Ctrl+T)"
@@ -76,7 +78,7 @@ export default function JavaScriptObjectEditor({ document, onPatch }: ScoreObjec
         </button>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>

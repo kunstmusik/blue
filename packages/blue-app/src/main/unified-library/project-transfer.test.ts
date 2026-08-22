@@ -1,11 +1,15 @@
 import {
   BlueData,
+  BSBKnob,
+  BlueSynthBuilder,
   Channel,
   Effect,
   GenericInstrument,
   GenericScore,
+  LiveObject,
   OpcodeDefinition,
   PolyObject,
+  Sound,
 } from '@blue/data';
 import { describe, expect, it, vi } from 'vitest';
 import { createMixerSnapshot, createNestedPolyObjectSnapshot, createProjectEditorSnapshot } from '../../shared/project-editor';
@@ -196,6 +200,121 @@ describe('project library transfer', () => {
     expect(scoreObjects[1]?.constructor.name).toBe('Instance');
   });
 
+  it('pastes a shared-buffer BlueSynthBuilder into the Score as an independent Sound', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const snapshot = createProjectEditorSnapshot(project.data, null, 11);
+    const group = snapshot.score!.layerGroups[0]!;
+    const location = {
+      rootGroupId: group.groupId,
+      containerPath: [],
+      layerId: group.layers[0]!.layerId,
+      startTime: 6,
+    };
+    const builder = new BlueSynthBuilder();
+    builder.setName('Buffer BSB');
+    builder.setComment('embedded comment');
+    const knob = new BSBKnob();
+    knob.id = 'amp-knob';
+    knob.objectName = 'amp';
+    knob.value = 0.5;
+    knob.automationAllowed = true;
+    builder.getGraphicInterface().getRootGroup().addChild(knob);
+    const sourceParameter = builder.getParameters()[0]!;
+    sourceParameter.setAutomationEnabled(true);
+    sourceParameter.setPoints([
+      { time: 0, value: 0.25 },
+      { time: 1, value: 0.75 },
+    ]);
+
+    expect(adapter.validateTransferTarget({
+      kind: 'scoreBsbSound',
+      projectSessionId: 11,
+      projectRevision: project.revision,
+      location,
+      timeContextRevision: String(project.revision),
+    }, 'instrument')).toBeNull();
+
+    adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'bsb-buffer' },
+      payloadXml: builder.saveAsXML().toXml(),
+      target: {
+        ...target('instrument', project.revision),
+        destinationKind: 'scoreBsbSound',
+        location,
+      },
+      mode: 'independent',
+    });
+
+    const pasted = (project.data.getScore()[0] as PolyObject)[0]![0];
+    expect(pasted).toBeInstanceOf(Sound);
+    expect(pasted?.getStartTime().getValue()).toBe(6);
+    const pastedBuilder = (pasted as Sound).getBlueSynthBuilder();
+    expect(pastedBuilder).not.toBe(builder);
+    expect((pasted as Sound).getComment()).toBe('embedded comment');
+    const pastedParameter = pastedBuilder.getParameters()[0]!;
+    expect(pastedParameter.isAutomationEnabled()).toBe(false);
+    expect(pastedParameter.getPoints()).toEqual([
+      { time: 0, value: 0.5 },
+      { time: 1, value: 0.5 },
+    ]);
+    expect(sourceParameter.isAutomationEnabled()).toBe(true);
+    expect(sourceParameter.getPoints()[1]?.value).toBe(0.75);
+  });
+
+  it('rejects Paste BSB As Sound for a non-BSB instrument', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const snapshot = createProjectEditorSnapshot(project.data, null, 11);
+    const group = snapshot.score!.layerGroups[0]!;
+    const source = new GenericInstrument();
+
+    expect(() => adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'generic-buffer' },
+      payloadXml: source.saveAsXML().toXml(),
+      target: {
+        ...target('instrument', project.revision),
+        destinationKind: 'scoreBsbSound',
+        location: {
+          rootGroupId: group.groupId,
+          containerPath: [],
+          layerId: group.layers[0]!.layerId,
+          startTime: 0,
+        },
+      },
+      mode: 'independent',
+    })).toThrow(/requires a BlueSynthBuilder/i);
+    expect((project.data.getScore()[0] as PolyObject)[0]).toHaveLength(0);
+  });
+
+  it('rejects Paste BSB As Sound for a stale or incompatible Score target', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const snapshot = createProjectEditorSnapshot(project.data, null, 11);
+    const group = snapshot.score!.layerGroups[0]!;
+    const baseTarget = {
+      kind: 'scoreBsbSound' as const,
+      projectSessionId: 11,
+      location: {
+        rootGroupId: group.groupId,
+        containerPath: [],
+        layerId: group.layers[0]!.layerId,
+        startTime: 0,
+      },
+      timeContextRevision: String(project.revision),
+    };
+
+    expect(adapter.validateTransferTarget({
+      ...baseTarget,
+      projectRevision: project.revision - 1,
+    }, 'instrument')).toMatch(/destination changed|choose it again/i);
+    expect(adapter.validateTransferTarget({
+      ...baseTarget,
+      projectRevision: project.revision,
+      location: { ...baseTarget.location, layerId: 'missing-layer' },
+    }, 'instrument')).toMatch(/layer|target|location/i);
+  });
+
   it('adds a user SoundObject to the project SoundObject Library', () => {
     const project = activeProject();
     const adapter = new UnifiedLibraryProjectAdapter(project.provider);
@@ -374,5 +493,48 @@ describe('project library transfer', () => {
     })).toThrow(/stale target/i);
     expect(project.data.getArrangement().size()).toBe(0);
     expect(project.commit).not.toHaveBeenCalled();
+  });
+
+  it('copies Blue Live SoundObjects through the shared Library buffer target', () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const source = new GenericScore();
+    source.setName('Library Phrase');
+    const exactTarget = {
+      kind: 'blueLive' as const,
+      projectSessionId: 11,
+      projectRevision: project.revision,
+      liveCell: { column: 0, row: 0, expectedLiveObjectId: null },
+    };
+    expect(adapter.validateTransferTarget(exactTarget, 'soundObject')).toBeNull();
+
+    const receipt = adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'soundObject', nodeId: 'phrase' },
+      payloadXml: source.saveAsXML().toXml(),
+      target: {
+        ...target('soundObject', project.revision),
+        destinationKind: 'blueLive',
+        liveCell: exactTarget.liveCell,
+      },
+      mode: 'independent',
+    });
+    const liveObject = project.data.getLiveData().getLiveObjectBins().getLiveObject(0, 0);
+    expect(receipt.insertedIdentity).toBe(liveObject?.getUniqueId());
+    expect(liveObject?.getSoundObject()?.getName()).toBe('Library Phrase');
+    expect(liveObject?.getSoundObject()).not.toBe(source);
+
+    expect(adapter.getBlueLiveSoundObjectSource({
+      projectSessionId: 11,
+      projectRevision: project.revision,
+      liveObjectId: liveObject!.getUniqueId(),
+    })).toMatchObject({ displayName: 'Library Phrase', objectType: 'GenericScore' });
+
+    const replacement = new LiveObject();
+    project.data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, replacement);
+    expect(adapter.validateTransferTarget({
+      ...exactTarget,
+      projectRevision: project.revision,
+      liveCell: { ...exactTarget.liveCell, expectedLiveObjectId: liveObject!.getUniqueId() },
+    }, 'soundObject')).toMatch(/changed/i);
   });
 });

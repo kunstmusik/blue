@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BlueEngineBenchmarkResult",
+  "description": "Machine-readable results format for Blue Engine Release performance benchmarks",
+  "type": "object",
+  "required": [
+    "metadata",
+    "scenarios",
+    "timestamp",
+    "gateStatus"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "buildType",
+        "compiler",
+        "targetArch",
+        "operatingSystem",
+        "sampleRate",
+        "ksmps",
+        "gitCommit"
+      ],
+      "properties": {
+        "buildType": {
+          "type": "string",
+          "enum": ["Release", "RelWithDebInfo"]
+        },
+        "compiler": {
+          "type": "string"
+        },
+        "targetArch": {
+          "type": "string",
+          "enum": ["arm64", "x86_64", "x64"]
+        },
+        "operatingSystem": {
+          "type": "string",
+          "enum": ["macos", "windows", "linux", "darwin"]
+        },
+        "sampleRate": {
+          "type": "number",
+          "minimum": 8000
+        },
+        "ksmps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gitCommit": {
+          "type": "string"
+        },
+        "baselineCommit": {
+          "type": "string"
+        }
+      }
+    },
+    "gateStatus": {
+      "type": "object",
+      "required": [
+        "passed",
+        "primaryImprovementMet",
+        "unaffectedRegressionMet",
+        "spikeCountDischarged"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "primaryImprovementMet": {
+          "type": "boolean",
+          "description": "True if targeted optimization reduced affected host overhead by >= 10%"
+        },
+        "unaffectedRegressionMet": {
+          "type": "boolean",
+          "description": "True if no unaffected scenario regressed p95 host overhead by > 5%"
+        },
+        "spikeCountDischarged": {
+          "type": "boolean",
+          "description": "True if spike counts did not increase unexpectedly without documented rationale"
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "channelCount",
+          "automationCount",
+          "warmupCycles",
+          "measuredCycles",
+          "trials",
+          "medianSummary"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "channelCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 256
+          },
+          "automationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "warmupCycles": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "measuredCycles": {
+            "type": "integer",
+            "minimum": 4096
+          },
+          "trials": {
+            "type": "array",
+            "minItems": 5,
+            "items": {
+              "$ref": "#/$defs/TrialMetrics"
+            }
+          },
+          "medianSummary": {
+            "$ref": "#/$defs/TrialMetrics"
+          },
+          "comparisonToBaseline": {
+            "type": "object",
+            "properties": {
+              "hostCycleAvgDeltaPct": {
+                "type": "number"
+              },
+              "hostCycleP95DeltaPct": {
+                "type": "number"
+              },
+              "autoAvgDeltaPct": {
+                "type": "number"
+              },
+              "shmAvgDeltaPct": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "TrialMetrics": {
+      "type": "object",
+      "required": [
+        "autoAvgUs",
+        "autoP95Us",
+        "autoMaxUs",
+        "autoSpikeCount",
+        "shmAvgUs",
+        "shmP95Us",
+        "shmMaxUs",
+        "shmSpikeCount",
+        "hostCycleAvgUs",
+        "hostCycleP95Us",
+        "hostCycleMaxUs",
+        "hostCycleSpikeCount",
+        "performKsmpsAvgUs"
+      ],
+      "properties": {
+        "autoAvgUs": { "type": "number" },
+        "autoP95Us": { "type": "number" },
+        "autoMaxUs": { "type": "number" },
+        "autoSpikeCount": { "type": "integer" },
+        "shmAvgUs": { "type": "number" },
+        "shmP95Us": { "type": "number" },
+        "shmMaxUs": { "type": "number" },
+        "shmSpikeCount": { "type": "integer" },
+        "hostCycleAvgUs": { "type": "number" },
+        "hostCycleP95Us": { "type": "number" },
+        "hostCycleMaxUs": { "type": "number" },
+        "hostCycleSpikeCount": { "type": "integer" },
+        "performKsmpsAvgUs": { "type": "number" }
+      }
+    }
+  }
+}

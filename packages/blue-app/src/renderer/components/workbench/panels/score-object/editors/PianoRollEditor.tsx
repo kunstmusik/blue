@@ -480,11 +480,11 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
         >
           <div className="flex border-b border-blue-border shrink-0">
             <button
-              className={`px-4 py-1.5 text-body font-medium ${activeTab === 'notes' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
+              className={`px-4 py-1.5 text-role-body font-medium ${activeTab === 'notes' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
               onClick={() => setActiveTab('notes')}
             >Notes</button>
             <button
-              className={`px-4 py-1.5 text-body font-medium ${activeTab === 'properties' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
+              className={`px-4 py-1.5 text-role-body font-medium ${activeTab === 'properties' ? 'text-blue-accent border-b-2 border-blue-accent' : 'text-blue-muted hover:text-gray-200'}`}
               onClick={() => setActiveTab('properties')}
             >Properties</button>
           </div>
@@ -511,14 +511,14 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                   onChangeSnapValue={handleSnapValueChange}
                 />
                 <button
-                  className="h-5.5 px-2 text-ui border border-blue-border/40 rounded bg-blue-surface hover:bg-blue-hover text-blue-text cursor-pointer transition-colors"
+                  className="h-5.5 px-2 text-role-body border border-blue-border/40 rounded bg-blue-surface hover:bg-blue-hover text-blue-text cursor-pointer transition-colors"
                   onClick={() => setRulerDialogOpen(true)}
                   title="Configure ruler display settings"
                 >
                   Ruler
                 </button>
                 <button
-                  className="h-5.5 px-2 text-ui border border-blue-border/40 rounded bg-blue-surface hover:bg-blue-hover text-blue-text cursor-pointer transition-colors"
+                  className="h-5.5 px-2 text-role-body border border-blue-border/40 rounded bg-blue-surface hover:bg-blue-hover text-blue-text cursor-pointer transition-colors"
                   onClick={handleGenerateTest}
                   disabled={testing}
                   title="Generate a preview score from this PianoRoll"
@@ -622,7 +622,7 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
         </div>
       </ContextMenu.Trigger>
       {testError && (
-        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-role-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>

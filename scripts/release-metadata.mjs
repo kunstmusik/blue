@@ -28,11 +28,10 @@
  *     "releaseNotes": string
  *   }
  *
- * Stable releases do not use this script: the tag itself is the version. The
- * stable workflow calls verify-release-version.mjs instead. This script
- * remains safe to invoke for stable channels so a single runner can emit a
- * manifest for both kinds, but the releaseVersion will simply equal
- * appVersion in that case.
+ * Stable releases use this script to embed About-dialog metadata: the
+ * tag itself remains the version, while the stable workflow also calls
+ * verify-release-version.mjs to validate tag/version agreement. The
+ * releaseVersion equals appVersion for the stable channel.
  *
  * No secrets are read or logged.
  */
@@ -163,7 +162,12 @@ function main() {
     process.exit(2);
   }
 
-  const channel = flags.channel === 'stable' ? 'stable' : 'development';
+  const requestedChannel = flags.channel ?? (process.env.BLUE_RELEASE_CHANNEL || 'development');
+  if (requestedChannel !== 'development' && requestedChannel !== 'stable') {
+    process.stderr.write(`--channel or BLUE_RELEASE_CHANNEL must be development or stable, got "${requestedChannel}".\n`);
+    process.exit(2);
+  }
+  const channel = requestedChannel;
   const appVersion = flags['app-version'] ?? readAppVersion();
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
   const timestamp = flags['prerelease-timestamp']

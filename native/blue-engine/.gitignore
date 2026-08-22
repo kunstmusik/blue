@@ -1,0 +1,40 @@
+# Build artifacts
+/build/
+/build-*/
+/cmake-build-*/
+/dist/
+/vcpkg_installed/
+/downloads/
+/packages/
+/CMakeCache.txt
+/CMakeFiles/
+/Makefile
+
+# Compiled objects and binaries
+*.o
+*.obj
+*.lo
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+
+# clangd
+.cache

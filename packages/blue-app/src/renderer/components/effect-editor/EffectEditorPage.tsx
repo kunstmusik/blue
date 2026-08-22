@@ -4,6 +4,7 @@ import type {
   EffectEditorRequest,
   EffectEditorSnapshot,
   EffectEditablePatch,
+  UdoDefinitionSnapshot,
 } from '../../../shared/project-editor';
 import EffectEditorPanel from './EffectEditorPanel';
 
@@ -47,7 +48,11 @@ export default function EffectEditorPage(): React.ReactElement {
   const parsed = useMemo(() => parseRequestFromLocation(), []);
   const request = parsed?.request ?? null;
   const mode = parsed?.mode ?? 'edit';
+  const isProjectEffect = request?.ownerType === 'project';
   const [snapshot, setSnapshot] = useState<EffectEditorSnapshot | null>(null);
+  // Live project UDO projection for project effects; updated by the main
+  // process when project globals change while this window stays open (US4).
+  const [liveProjectUdos, setLiveProjectUdos] = useState<UdoDefinitionSnapshot[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export default function EffectEditorPage(): React.ReactElement {
       }
 
       setSnapshot(loaded);
+      setLiveProjectUdos(loaded.projectUdos);
       document.title = `${loaded.name || 'Effect'} - ${mode === 'interface' ? 'Interface' : 'Effect Editor'}`;
     });
 
@@ -73,6 +79,21 @@ export default function EffectEditorPage(): React.ReactElement {
       cancelled = true;
     };
   }, [request, mode]);
+
+  // Reuse the canonical project-document event. The main process routes it only
+  // to project-owned effect windows; library effects never subscribe.
+  useEffect(() => {
+    if (!isProjectEffect) return;
+    return window.blueAPI.onProjectDocumentUpdated((event) => {
+      setLiveProjectUdos(event.snapshot.projectUdos);
+    });
+  }, [isProjectEffect]);
+
+  const snapshotWithLiveUdos = useMemo<EffectEditorSnapshot | null>(() => {
+    if (!snapshot) return null;
+    if (!isProjectEffect || liveProjectUdos === null) return snapshot;
+    return { ...snapshot, projectUdos: liveProjectUdos };
+  }, [snapshot, isProjectEffect, liveProjectUdos]);
 
   const applyPatch = useCallback(
     async (patch: EffectEditablePatch) => {
@@ -98,12 +119,12 @@ export default function EffectEditorPage(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-app-bg px-6 text-sm text-app-text-muted">
+      <div className="flex h-screen items-center justify-center bg-app-bg px-6 text-role-body text-app-text-muted">
         <div className="flex max-w-md flex-col items-center gap-4 rounded border border-app-border bg-app-surface-strong px-6 py-5 text-center shadow-xl">
           <div>{error}</div>
           <button
             type="button"
-            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-body text-app-text-strong hover:border-app-accent"
+            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-role-body text-app-text-strong hover:border-app-accent"
             onClick={closeWindow}
           >
             Close Window
@@ -113,9 +134,9 @@ export default function EffectEditorPage(): React.ReactElement {
     );
   }
 
-  if (!snapshot || !request) {
+  if (!snapshotWithLiveUdos || !request) {
     return (
-      <div className="flex h-screen items-center justify-center bg-app-bg text-sm text-app-text-muted">
+      <div className="flex h-screen items-center justify-center bg-app-bg text-role-body text-app-text-muted">
         Loading effect editor...
       </div>
     );
@@ -125,7 +146,7 @@ export default function EffectEditorPage(): React.ReactElement {
     return (
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
         <EffectEditorPanel
-          snapshot={snapshot}
+          snapshot={snapshotWithLiveUdos}
           onPatch={applyPatch}
           initialTab="interface"
           interfaceOnly
@@ -136,7 +157,7 @@ export default function EffectEditorPage(): React.ReactElement {
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
-      <EffectEditorPanel snapshot={snapshot} onPatch={applyPatch} />
+      <EffectEditorPanel snapshot={snapshotWithLiveUdos} onPatch={applyPatch} />
     </div>
   );
 }

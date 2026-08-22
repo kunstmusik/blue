@@ -10,23 +10,25 @@
  *       * runs on pull requests to develop and main.
  *       * matrix covers macos-arm64, windows-x64, linux-x64.
  *       * workflow-level `permissions.contents: read` only.
- *       * uploads versioned ZIPs only after success and diagnostics with
- *         `if: always()`.
+ *       * uploads versioned native packages only after success and diagnostics
+ *         with `if: always()`.
  *       * never references the protected `release` Environment.
  *       * never references signing secrets.
  *   - .github/workflows/develop.yml:
  *       * runs on pushes to develop.
- *       * uploads versioned ZIP artifacts without creating a GitHub Release.
+ *       * uploads versioned native package artifacts without creating a
+ *         GitHub Release.
  *   - .github/workflows/release.yml:
  *       * triggered by `v*.*.*` tags.
- *       * publishes unsigned platform ZIPs with exact versioned names.
- *       * validates the complete verified ZIP manifest before publication.
+ *       * publishes unsigned native packages with exact versioned names.
+ *       * validates the complete verified package manifest before publication.
  *       * references the protected `release` Environment only for publishing.
  *       * does not reference signing credentials or Azure OIDC.
  *       * final publisher job has `contents: write`.
  *   - packages/blue-app/electron-builder.yml:
  *       * disables macOS identity auto-discovery so local package scripts are
  *         unsigned by default too.
+ *       * packages the shared runtime modules imported by main and preload.
  *
  * The validator is YAML-structural only. It removes full-line YAML comments
  * before checking required substrings/anchors so disabled matrix entries cannot
@@ -144,6 +146,12 @@ requireSubstring(
   'PR_TRIGGER',
   'pr.yml must trigger on pull requests',
 );
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'BLUE_RELEASE_CHANNEL: development',
+  'PR_METADATA_CHANNEL',
+  'pr.yml must build development-channel metadata',
+);
 forbidRegex(
   '.github/workflows/pr.yml',
   /^\s*push:/m,
@@ -165,17 +173,47 @@ requireSubstring(
   'PR_ALWAYS_UPLOAD',
   'pr.yml must retain diagnostic artifacts with if: always()',
 );
+requireSubstring(
+  '.github/workflows/pr.yml',
+  "if: runner.os == 'Linux'\n        shell: bash\n        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright",
+  'PR_LINUX_SMOKE_DISPLAY',
+  'pr.yml must provide a virtual display for the Linux packaged-project smoke',
+);
 forbidRegex(
   '.github/workflows/pr.yml',
-  /- name:\s*Upload installer artifacts\s+if:\s*always\(\)/,
+  /- name:\s*Upload (?:macOS installer|Windows installer|Linux AppImage|Linux Debian package)\s+if:\s*always\(\)/,
   'PR_PACKAGES_ONLY_AFTER_SUCCESS',
   'pr.yml must not retain distribution packages after a failed verification step',
 );
 requireSubstring(
   '.github/workflows/pr.yml',
-  'name: blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.zip',
-  'PR_ARTIFACT_NAME',
-  'pr.yml distribution artifact names must use the versioned .zip contract',
+  'path: packages/blue-app/release/artifacts/blue-macos-arm64-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.dmg\n          archive: false',
+  'PR_MACOS_ARTIFACT',
+  'pr.yml must directly upload the versioned macOS DMG',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'path: packages/blue-app/release/artifacts/blue-windows-x64-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.exe\n          archive: false',
+  'PR_WINDOWS_ARTIFACT',
+  'pr.yml must directly upload the versioned Windows installer',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.AppImage\n          archive: false',
+  'PR_LINUX_APPIMAGE_ARTIFACT',
+  'pr.yml must directly upload the versioned Linux AppImage',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.deb\n          archive: false',
+  'PR_LINUX_DEB_ARTIFACT',
+  'pr.yml must directly upload the versioned Linux Debian package',
+);
+requireSubstring(
+  '.github/workflows/pr.yml',
+  'uses: actions/upload-artifact@v7',
+  'PR_DIRECT_UPLOAD_VERSION',
+  'pr.yml must use upload-artifact v7 direct-file support',
 );
 requireSubstring(
   '.github/workflows/pr.yml',
@@ -215,6 +253,12 @@ requireSubstring(
   'DEVELOP_TRIGGER',
   'develop.yml must trigger on push to develop',
 );
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'BLUE_RELEASE_CHANNEL: development',
+  'DEVELOP_METADATA_CHANNEL',
+  'develop.yml must build development-channel metadata',
+);
 requireSubstring('.github/workflows/develop.yml', 'target-id: macos-arm64', 'DEVELOP_MACOS_ARM64', 'develop.yml must cover macos-arm64');
 requireSubstring('.github/workflows/develop.yml', 'target-id: windows-x64', 'DEVELOP_WINDOWS_X64', 'develop.yml must cover windows-x64');
 requireSubstring('.github/workflows/develop.yml', 'target-id: linux-x64', 'DEVELOP_LINUX_X64', 'develop.yml must cover linux-x64');
@@ -230,17 +274,47 @@ requireSubstring(
   'DEVELOP_ALWAYS_UPLOAD',
   'develop.yml must retain diagnostic artifacts with if: always()',
 );
+requireSubstring(
+  '.github/workflows/develop.yml',
+  "if: runner.os == 'Linux'\n        shell: bash\n        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright",
+  'DEVELOP_LINUX_SMOKE_DISPLAY',
+  'develop.yml must provide a virtual display for the Linux packaged-project smoke',
+);
 forbidRegex(
   '.github/workflows/develop.yml',
-  /- name:\s*Upload installer artifacts\s+if:\s*always\(\)/,
+  /- name:\s*Upload (?:macOS installer|Windows installer|Linux AppImage|Linux Debian package)\s+if:\s*always\(\)/,
   'DEVELOP_PACKAGES_ONLY_AFTER_SUCCESS',
   'develop.yml must not retain distribution packages after a failed verification step',
 );
 requireSubstring(
   '.github/workflows/develop.yml',
-  'name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.zip',
-  'DEVELOP_ARTIFACT_NAME',
-  'develop.yml distribution artifact names must use the versioned .zip contract',
+  'path: packages/blue-app/release/artifacts/blue-macos-arm64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.dmg\n          archive: false',
+  'DEVELOP_MACOS_ARTIFACT',
+  'develop.yml must directly upload the versioned macOS DMG',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'path: packages/blue-app/release/artifacts/blue-windows-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.exe\n          archive: false',
+  'DEVELOP_WINDOWS_ARTIFACT',
+  'develop.yml must directly upload the versioned Windows installer',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.AppImage\n          archive: false',
+  'DEVELOP_LINUX_APPIMAGE_ARTIFACT',
+  'develop.yml must directly upload the versioned Linux AppImage',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.deb\n          archive: false',
+  'DEVELOP_LINUX_DEB_ARTIFACT',
+  'develop.yml must directly upload the versioned Linux Debian package',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  'uses: actions/upload-artifact@v7',
+  'DEVELOP_DIRECT_UPLOAD_VERSION',
+  'develop.yml must use upload-artifact v7 direct-file support',
 );
 requireSubstring(
   '.github/workflows/develop.yml',
@@ -295,6 +369,12 @@ requireSubstring(
 );
 requireSubstring(
   '.github/workflows/release.yml',
+  'BLUE_RELEASE_CHANNEL: stable',
+  'RELEASE_METADATA_CHANNEL',
+  'release.yml must build stable-channel metadata',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
   'Build unsigned macOS package',
   'RELEASE_MACOS_UNSIGNED',
   'release.yml must build unsigned macOS packages by default',
@@ -331,45 +411,51 @@ requireSubstring(
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'name: blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.zip',
-  'RELEASE_MACOS_ARTIFACT_NAME',
-  'release.yml macOS artifact must use the versioned .zip contract',
+  'path: packages/blue-app/release/blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.dmg\n          archive: false',
+  'RELEASE_MACOS_ARTIFACT',
+  'release.yml must directly upload the versioned macOS DMG',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'name: blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip',
-  'RELEASE_WINDOWS_ARTIFACT_NAME',
-  'release.yml Windows artifact must use the versioned .zip contract',
+  'path: packages/blue-app/release/blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.exe\n          archive: false',
+  'RELEASE_WINDOWS_ARTIFACT',
+  'release.yml must directly upload the versioned Windows installer',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'name: blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip',
-  'RELEASE_LINUX_ARTIFACT_NAME',
-  'release.yml Linux artifact must use the versioned .zip contract',
+  'path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.AppImage\n          archive: false',
+  'RELEASE_LINUX_APPIMAGE_ARTIFACT',
+  'release.yml must directly upload the versioned Linux AppImage',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'bundle="blue-macos-arm64-${APP_VERSION}.zip"',
-  'RELEASE_MACOS_ZIP',
-  'release.yml must create the exact macOS stable ZIP before upload',
+  'path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.deb\n          archive: false',
+  'RELEASE_LINUX_DEB_ARTIFACT',
+  'release.yml must directly upload the versioned Linux Debian package',
+);
+requireRegex(
+  '.github/workflows/release.yml',
+  /package:linux-x64[\s\S]*?xvfb-run --auto-servernum pnpm --filter @blue\/app verify:packaged-app -- --no-playwright/,
+  'RELEASE_LINUX_SMOKE_DISPLAY',
+  'release.yml must provide a virtual display for the Linux packaged-project smoke',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  '$bundle = "packages/blue-app/release/blue-windows-x64-$env:APP_VERSION.zip"',
-  'RELEASE_WINDOWS_ZIP',
-  'release.yml must create the exact Windows stable ZIP before upload',
+  'uses: actions/upload-artifact@v7',
+  'RELEASE_DIRECT_UPLOAD_VERSION',
+  'release.yml must use upload-artifact v7 direct-file support',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'bundle="blue-linux-x64-${APP_VERSION}.zip"',
-  'RELEASE_LINUX_ZIP',
-  'release.yml must create the exact Linux stable ZIP before upload',
+  'uses: actions/download-artifact@v8',
+  'RELEASE_DIRECT_DOWNLOAD_VERSION',
+  'release.yml must use download-artifact v8 direct-file support',
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  '--asset-mode bundles',
-  'RELEASE_BUNDLE_MANIFEST',
-  'release.yml must generate and validate the stable ZIP bundle manifest',
+  '--asset-mode packages',
+  'RELEASE_PACKAGE_MANIFEST',
+  'release.yml must generate and validate the native package manifest',
 );
 requireSubstring(
   '.github/workflows/release.yml',
@@ -379,9 +465,33 @@ requireSubstring(
 );
 requireSubstring(
   '.github/workflows/release.yml',
-  'consolidated/blue-*.zip',
-  'RELEASE_ONLY_ZIP_ASSETS',
-  'release.yml must publish only standardized distribution ZIPs plus explicit metadata',
+  'consolidated/blue-*.dmg',
+  'RELEASE_PUBLISH_DMG',
+  'release.yml must publish the standardized macOS DMG',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'consolidated/blue-*.exe',
+  'RELEASE_PUBLISH_EXE',
+  'release.yml must publish the standardized Windows installer',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'consolidated/blue-*.AppImage',
+  'RELEASE_PUBLISH_APPIMAGE',
+  'release.yml must publish the standardized Linux AppImage',
+);
+requireSubstring(
+  '.github/workflows/release.yml',
+  'consolidated/blue-*.deb',
+  'RELEASE_PUBLISH_DEB',
+  'release.yml must publish the standardized Linux Debian package',
+);
+forbidRegex(
+  '.github/workflows/release.yml',
+  /Create stable release ZIP|--asset-mode bundles|consolidated\/blue-\*\.zip/,
+  'RELEASE_NO_DISTRIBUTION_ZIPS',
+  'release.yml must not wrap native distribution packages in ZIP files',
 );
 forbidRegex(
   '.github/workflows/release.yml',
@@ -402,6 +512,18 @@ requireSubstring(
   'identity: null',
   'BUILDER_MAC_UNSIGNED',
   'electron-builder must disable macOS signing identity auto-discovery by default',
+);
+requireSubstring(
+  'packages/blue-app/electron-builder.yml',
+  '- dist/shared/**/*',
+  'BUILDER_SHARED_RUNTIME',
+  'electron-builder must package shared runtime modules imported by main and preload',
+);
+requireSubstring(
+  'packages/blue-app/electron-builder.yml',
+  '- release-metadata.json',
+  'BUILDER_RELEASE_METADATA',
+  'electron-builder must package generated release metadata for the About dialog',
 );
 
 // === print findings ===

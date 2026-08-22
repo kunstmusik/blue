@@ -7,10 +7,9 @@ import { resolve } from 'path';
 // The Electron plugin bundles main/preload in every mode. In development it
 // also provides HMR + hot restart; in production the single-file preload is
 // required because sandboxed preload scripts cannot require local modules.
-const isDev = process.env.APP_ENV === 'dev';
 const projectRoot = resolve(__dirname);
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     electron({
@@ -20,6 +19,10 @@ export default defineConfig({
           'repository-worker': resolve(
             projectRoot,
             'src/main/unified-library/repository-worker.ts',
+          ),
+          'code-repository-worker': resolve(
+            projectRoot,
+            'src/main/code-repository/repository-worker.ts',
           ),
         },
         vite: {
@@ -43,7 +46,7 @@ export default defineConfig({
     electronRenderer(),
   ],
   root: 'src/renderer',
-  base: isDev ? '/' : './',
+  base: command === 'serve' ? '/' : './',
   build: {
     outDir: resolve(projectRoot, 'dist/renderer'),
     emptyOutDir: true,
@@ -52,6 +55,11 @@ export default defineConfig({
         main: resolve(projectRoot, 'src/renderer/index.html'),
         settings: resolve(projectRoot, 'src/renderer/settings.html'),
         effectEditor: resolve(projectRoot, 'src/renderer/effect-editor.html'),
+        trackInstrumentEditor: resolve(
+          projectRoot,
+          'src/renderer/track-instrument-editor.html',
+        ),
+        about: resolve(projectRoot, 'src/renderer/about.html'),
         popout: resolve(projectRoot, 'src/renderer/popout.html'),
       },
     },
@@ -61,4 +69,4 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src/renderer'),
     },
   },
-});
+}));

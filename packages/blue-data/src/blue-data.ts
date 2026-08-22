@@ -27,6 +27,7 @@ import { InstrumentLibrary } from "./instruments/instrument-library";
 import { Instrument } from "./instruments/instrument";
 import { GenericInstrument } from "./instruments/generic-instrument";
 import { CompileData } from "./compile-data";
+import type { CompiledMidiInstrumentTarget } from "./compile-data";
 import { BlueDataObject } from "./blue-data-object";
 import { NoteList } from "./sound-objects/note-list";
 import { Note } from "./sound-objects/note";
@@ -38,6 +39,10 @@ import {
   assignParameterNames,
 } from "./automation/parameter-helper";
 import { Parameter } from "./automation/parameter";
+import {
+  appendParameterScoreJava,
+  getParameterInstrumentTextJava,
+} from './automation/csd-parameter-automation';
 import { BSBCompilationUnit } from "./instruments/blue-synth-builder/bsb-compilation-unit";
 import { Effect } from "./mixer/effect";
 import { EffectsChain } from "./mixer/effects-chain";
@@ -58,8 +63,10 @@ import { TimeContext } from "./time/time-context";
 import { TempoMap } from "./time/tempo-map";
 import { ClojureObject } from './sound-objects/clojure-object';
 import { Instance } from './sound-objects/instance';
+import { JavaScriptObject } from './sound-objects/javascript-object';
 import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
+import { TrackLayerGroup } from './score/track/track-layer-group';
 import { PythonObject } from './sound-objects/python-object';
 import type { SoundObject } from './sound-objects/sound-object';
 import { PythonInstrument } from './instruments/python-instrument';
@@ -80,6 +87,12 @@ type RenderCsdResult = {
   csdText: string;
   parameters?: Parameter[];
   stringChannels?: Array<{ objectName: string; value: string; channelName: string }>;
+  /**
+   * Spec 067 disposable compiled MIDI target catalog: the exact enabled base Track
+   * and Orchestra instruments compiled into this CSD snapshot, keyed by stable
+   * project identity. Derived render output only; never serialized to XML.
+   */
+  midiInstrumentTargets: readonly CompiledMidiInstrumentTarget[];
 };
 
 export class BlueData implements BlueDataObject {
@@ -527,6 +540,7 @@ export class BlueData implements BlueDataObject {
 
   processOnLoad(session?: JavaScriptSession): void {
     this.score.processOnLoad(session);
+    this.processLiveDataOnLoad(this.score.getTimeContext(), session);
   }
 
   async processOnLoadAsync(
@@ -534,6 +548,47 @@ export class BlueData implements BlueDataObject {
     runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<void> {
     await this.score.processOnLoadAsync(session, runtimeClient);
+    await this.processLiveDataOnLoadAsync(this.score.getTimeContext(), session, runtimeClient);
+  }
+
+  /**
+   * Process on-load-processable SoundObjects embedded in Live Space cells
+   * (synchronous variant). Mirrors the score-graph traversal in
+   * {@link PolyObject.processOnLoad}.
+   */
+  private processLiveDataOnLoad(context: TimeContext, session?: JavaScriptSession): void {
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        const target = liveObject?.getSoundObject();
+        if (target) {
+          processSoundObjectOnLoad(target, context, session);
+        }
+      }
+    }
+  }
+
+  /**
+   * Process on-load-processable SoundObjects embedded in Live Space cells
+   * (async variant). Mirrors the score-graph traversal in
+   * {@link PolyObject.processOnLoadAsync}.
+   */
+  private async processLiveDataOnLoadAsync(
+    context: TimeContext,
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        const target = liveObject?.getSoundObject();
+        if (target) {
+          await processSoundObjectOnLoadAsync(target, context, session, runtimeClient);
+        }
+      }
+    }
   }
 
   usesJavaRuntime(): boolean {
@@ -562,7 +617,7 @@ export class BlueData implements BlueDataObject {
         return true;
       }
 
-      if (soundObject instanceof ObjectBuilder && soundObject.isPythonLanguage()) {
+      if (soundObject instanceof ObjectBuilder && soundObject.usesJavaRuntime()) {
         return true;
       }
 
@@ -595,6 +650,16 @@ export class BlueData implements BlueDataObject {
       if (layerGroup instanceof PolyObject && visit(layerGroup)) {
         return true;
       }
+      if (layerGroup instanceof TrackLayerGroup) {
+        for (const track of layerGroup) {
+          const instrument = track.getInstrument();
+          if (instrument instanceof PythonInstrument) return true;
+          if (chainUsesJavaRuntime(track.getNoteProcessorChain())) return true;
+          for (const item of track) {
+            if ('generateForCSD' in item && visit(item as SoundObject)) return true;
+          }
+        }
+      }
     }
 
     for (const soundObject of this.sObjLib.getAllObjects()) {
@@ -606,6 +671,19 @@ export class BlueData implements BlueDataObject {
     for (const assignment of this.arrangement.getArrangement()) {
       if (assignment.instr instanceof PythonInstrument) {
         return true;
+      }
+    }
+
+    // Include Live Space content: a LiveObject whose SoundObject requires a
+    // host runtime makes the whole project Java-runtime-dependent for trigger
+    // preparation.
+    const liveBins = this.liveData.getLiveObjectBins();
+    for (let c = 0; c < liveBins.getColumnCount(); c++) {
+      for (let r = 0; r < liveBins.getRowCount(); r++) {
+        const liveObject = liveBins.getLiveObject(c, r);
+        if (liveObject && visit(liveObject.getSoundObject())) {
+          return true;
+        }
       }
     }
 
@@ -624,6 +702,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       // Build CsInstruments header (sr/ksmps/nchnls/0dbfs go here, not in CsOptions)
       const orchestraHeader = this.buildOrchestraHeader(profile);
@@ -840,6 +919,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: allParameters,
         stringChannels: allStringChannels,
+        midiInstrumentTargets: [],
       };
     } catch (error) {
       generationError = error;
@@ -872,6 +952,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       const orchestraHeader = this.buildOrchestraHeader(profile);
       const nchnls = this.getNchnls(profile);
@@ -1079,6 +1160,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: allParameters,
         stringChannels: allStringChannels,
+        midiInstrumentTargets: [],
       };
     } catch (error) {
       generationError = error;
@@ -1105,6 +1187,7 @@ export class BlueData implements BlueDataObject {
       for (const [channel, id] of channelIdAssignments) {
         compileData.getChannelIdAssignments().set(channel, id);
       }
+      compileData.setMixerEnabled(clonedMixer.isEnabled());
 
       const orchestraHeader = this.buildOrchestraHeader();
       const nchnls = this.getNchnls();
@@ -1155,6 +1238,8 @@ export class BlueData implements BlueDataObject {
       const baseInstrIds = baseArrangementItems
         .map((ia) => ia.arrangementId)
         .filter((id): id is string => Boolean(id));
+
+      const midiInstrumentTargets = compileData.getCompiledMidiInstrumentTargets();
 
       const alwaysOnInstruments = this.collectAlwaysOnInstruments(
         clonedArrangement,
@@ -1243,6 +1328,7 @@ export class BlueData implements BlueDataObject {
         csdText,
         parameters: compileData.getOriginalParameters(),
         stringChannels: compileData.getStringChannels(),
+        midiInstrumentTargets,
       };
     } catch (error) {
       generationError = error;
@@ -1495,19 +1581,7 @@ export class BlueData implements BlueDataObject {
 
       const instr = new GenericInstrument();
       instr.setName(`Param: ${param.getName()}`);
-
-      if (param.getResolution() > 0.0) {
-        instr.setText(`${compilationVarName} init p4\nturnoff`);
-      } else {
-        instr.setText(
-          `if (p4 == p5) then\n` +
-            `${compilationVarName} init p4\n` +
-            `turnoff\n` +
-            `else\n` +
-            `${compilationVarName} line p4, p3, p5\n` +
-            `endif`,
-        );
-      }
+      instr.setText(getParameterInstrumentTextJava(compilationVarName, param.getResolution()));
 
       const instrId = arrangement.addInstrumentAtEnd(instr);
       this.appendParameterScore(
@@ -1527,128 +1601,15 @@ export class BlueData implements BlueDataObject {
     renderStart: number,
     renderEnd: number,
   ): void {
-    const points = param.getPoints();
-    if (points.length < 2) {
-      return;
-    }
-
-    const resolution = param.getResolution();
-    const hasRenderEnd = renderEnd > renderStart;
-
-    if (resolution > 0.0) {
-      for (let i = 1; i < points.length; i++) {
-        const p1 = points[i - 1]!;
-        const p2 = points[i]!;
-
-        const startTime = p1.time;
-        const endTime = p2.time;
-
-        if (hasRenderEnd && startTime >= renderEnd) {
-          return;
-        }
-        if (endTime <= renderStart) {
-          continue;
-        }
-        if (startTime === endTime || p1.value === p2.value) {
-          continue;
-        }
-
-        const dur = endTime - startTime;
-        const numSteps = Math.abs(Math.round((p2.value - p1.value) / resolution));
-        if (numSteps <= 0) {
-          continue;
-        }
-
-        const step = dur / numSteps;
-        const valStep = p2.value < p1.value ? -resolution : resolution;
-        let currentVal = p1.value;
-        let start = startTime;
-
-        for (let j = 0; j < numSteps - 1; j++) {
-          currentVal += valStep;
-          start += step;
-
-          if (start <= renderStart) {
-            continue;
-          }
-          if (hasRenderEnd && start >= renderEnd) {
-            return;
-          }
-
-          this.addScoreNote(
-            notes,
-            `i${instrId}\t${formatJavaDouble(start - renderStart)}\t.0001\t${formatJavaDouble(currentVal)}`,
-          );
-        }
-
-        const finalStart = start + step;
-        if (hasRenderEnd && finalStart >= renderEnd) {
-          return;
-        }
-
-        this.addScoreNote(
-          notes,
-          `i${instrId}\t${formatJavaDouble(finalStart - renderStart)}\t.0001\t${formatJavaDouble(p2.value)}`,
-        );
-      }
-
-      return;
-    }
-
-    let lastValue = points[0]!.value;
-
-    for (let i = 1; i < points.length; i++) {
-      const p1 = points[i - 1]!;
-      const p2 = points[i]!;
-
-      let startTime = p1.time;
-      let endTime = p2.time;
-
-      if (hasRenderEnd && startTime >= renderEnd) {
-        return;
-      }
-      if (endTime <= renderStart) {
-        lastValue = p2.value;
-        continue;
-      }
-      if (startTime === endTime) {
-        if (i === points.length - 1) {
-          this.addScoreNote(
-            notes,
-            `i${instrId}\t${formatJavaDouble(p2.time - renderStart)}\t.0001\t${formatJavaDouble(p2.value)}\t${formatJavaDouble(p2.value)}`,
-          );
-        }
-        continue;
-      }
-
-      let startVal = p1.value;
-      let endVal = p2.value;
-
-      if (startTime < renderStart) {
-        startVal = param.getValue(renderStart);
-        startTime = renderStart;
-      }
-
-      if (hasRenderEnd && endTime > renderEnd) {
-        endVal = param.getValue(renderEnd);
-        endTime = renderEnd;
-      }
-
-      lastValue = endVal;
-
-      const dur = startVal === endVal ? 0.0001 : endTime - startTime;
-      const relativeStart = startTime - renderStart;
-
-      this.addScoreNote(
-        notes,
-        `i${instrId}\t${formatJavaDouble(relativeStart)}\t${formatJavaDouble(dur)}\t${formatJavaDouble(startVal)}\t${formatJavaDouble(endVal)}`,
-      );
-
-      if (i === points.length - 1) {
-        this.addScoreNote(
-          notes,
-          `i${instrId}\t${formatJavaDouble(relativeStart + dur)}\t.0001\t${formatJavaDouble(lastValue)}\t${formatJavaDouble(lastValue)}`,
-        );
+    const score = appendParameterScoreJava({
+      parameter: param,
+      instrumentId: instrId,
+      renderStart,
+      renderEnd,
+    });
+    for (const line of score.split('\n')) {
+      if (line.length > 0) {
+        this.addScoreNote(notes, line);
       }
     }
   }
@@ -1692,7 +1653,9 @@ export class BlueData implements BlueDataObject {
     arrangement.clearUnusedInstrAssignments();
     const tables = new Tables(this.tableSet);
     const mixer = this.mixer.deepCopy() as Mixer;
-    const compileData = new CompileData(arrangement, tables, true);
+    const compileData = new CompileData(arrangement, tables, false);
+    this.score.prepareTrackInstruments(compileData);
+    compileData.setHandleParametersAndChannels(true);
 
     if (session) {
       setJavaScriptSession(compileData, session);
@@ -2254,22 +2217,55 @@ export class BlueData implements BlueDataObject {
     copy.version = this.version;
     copy.arrangement = new Arrangement(this.arrangement);
     copy.projectProperties = new ProjectProperties(this.projectProperties);
-    copy.sObjLib = this.sObjLib;
-    copy.instrumentLibrary = this.instrumentLibrary;
+
+    // Deep-copy the SoundObject library and seed an original→copy map so that
+    // copied Instance references can be remapped to copied library objects.
+    const originalLibraryObjects = this.sObjLib.getAllObjects();
+    copy.sObjLib = new SoundObjectLibrary(this.sObjLib);
+    const copiedLibraryObjects = copy.sObjLib.getAllObjects();
+    const libraryRemap = new Map<SoundObject, SoundObject>();
+    for (let i = 0; i < originalLibraryObjects.length; i++) {
+      libraryRemap.set(originalLibraryObjects[i]!, copiedLibraryObjects[i]!);
+    }
+
+    // Deep-copy instrument library (was previously aliased by reference).
+    copy.instrumentLibrary = this.instrumentLibrary
+      ? this.instrumentLibrary.deepCopy()
+      : null;
+
     copy.globalOrcSco = new GlobalOrcSco(this.globalOrcSco);
     copy.tableSet = new Tables(this.tableSet);
     copy.score = new Score(this.score);
-    copy.liveData = this.liveData;
+
+    // Deep-copy Live Data (was previously aliased by reference).
+    copy.liveData = this.liveData.deepCopy() as LiveData;
+
     copy.scratchData = new ScratchPadData(this.scratchData);
     copy.noteProcessorChainMap = new NoteProcessorChainMap(this.noteProcessorChainMap);
     copy.markersList = new MarkersList(this.markersList);
     copy.midiInputProcessor = new MidiInputProcessor(this.midiInputProcessor);
     copy.mixer = this.mixer.deepCopy() as Mixer;
-    copy.opcodeList = this.opcodeList;
+
+    // Deep-copy opcode definitions (was previously aliased by reference).
+    copy.opcodeList = new OpcodeList(this.opcodeList);
+
     copy.renderStartTime = this.renderStartTime;
     copy.renderEndTime = this.renderEndTime;
     copy.loopRendering = this.loopRendering;
     copy.pluginDataXml = this.pluginDataXml.map(e => e.clone());
+
+    // Remap any copied Instance that still references an original library
+    // object to point at the corresponding copied library object. This keeps
+    // whole-project copies internally coherent without retaining references
+    // into the canonical graph.
+    if (libraryRemap.size > 0) {
+      const seen = new Set<SoundObject>();
+      for (const soundObject of copy.sObjLib.getAllObjects()) {
+        remapInstanceReferencesInSoundObject(soundObject, libraryRemap, seen);
+      }
+      remapInstanceReferences(copy.score, libraryRemap, seen);
+      remapInstanceReferencesInLiveData(copy.liveData, libraryRemap, seen);
+    }
 
     // Wire projectProperties into score.timeContext (Java parity)
     copy.score.getTimeContext().setSampleRate(
@@ -2277,6 +2273,119 @@ export class BlueData implements BlueDataObject {
     );
 
     return copy;
+  }
+}
+
+/**
+ * Remap Instance references across the Score graph. Traverses each PolyObject
+ * layer and replaces any Instance whose referenced SoundObject is an original
+ * library object with the corresponding copied library object.
+ */
+function remapInstanceReferences(
+  score: Score,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  for (const layerGroup of score) {
+    if (layerGroup instanceof PolyObject) {
+      remapInstanceReferencesInSoundObject(layerGroup, libraryRemap, seen);
+    }
+  }
+}
+
+function remapInstanceReferencesInSoundObject(
+  soundObject: SoundObject,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  if (seen.has(soundObject)) {
+    return;
+  }
+  seen.add(soundObject);
+
+  if (soundObject instanceof Instance) {
+    const referenced = soundObject.getSoundObject();
+    if (referenced && libraryRemap.has(referenced)) {
+      soundObject.setSoundObject(libraryRemap.get(referenced)!);
+    }
+    const copiedReference = soundObject.getSoundObject();
+    if (copiedReference) {
+      remapInstanceReferencesInSoundObject(copiedReference, libraryRemap, seen);
+    }
+    return;
+  }
+
+  if (soundObject instanceof PolyObject) {
+    for (const layer of soundObject) {
+      for (const child of layer) {
+        remapInstanceReferencesInSoundObject(child, libraryRemap, seen);
+      }
+    }
+  }
+}
+
+/**
+ * Remap Instance references found inside Live Data bins (LiveObjects whose
+ * SoundObject is an Instance pointing at an original library object).
+ */
+function remapInstanceReferencesInLiveData(
+  liveData: LiveData,
+  libraryRemap: Map<SoundObject, SoundObject>,
+  seen: Set<SoundObject>,
+): void {
+  const bins = liveData.getLiveObjectBins();
+  for (let c = 0; c < bins.getColumnCount(); c++) {
+    for (let r = 0; r < bins.getRowCount(); r++) {
+      const liveObject = bins.getLiveObject(c, r);
+      if (!liveObject) continue;
+      const soundObject = liveObject.getSoundObject();
+      if (soundObject) {
+        remapInstanceReferencesInSoundObject(soundObject, libraryRemap, seen);
+      }
+    }
+  }
+}
+
+function resolveOnLoadSoundObject(soundObject: SoundObject): SoundObject | null {
+  if (soundObject instanceof Instance) {
+    const referenced = soundObject.getSoundObject();
+    return referenced ? resolveOnLoadSoundObject(referenced) : null;
+  }
+  return soundObject;
+}
+
+function processSoundObjectOnLoad(
+  soundObject: SoundObject,
+  context: TimeContext,
+  session?: JavaScriptSession,
+): void {
+  const target = resolveOnLoadSoundObject(soundObject);
+  if (target instanceof PolyObject) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context);
+  } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context);
+  }
+}
+
+async function processSoundObjectOnLoadAsync(
+  soundObject: SoundObject,
+  context: TimeContext,
+  session?: JavaScriptSession,
+  runtimeClient?: JavaRuntimeClientContract | null,
+): Promise<void> {
+  const target = resolveOnLoadSoundObject(soundObject);
+  if (target instanceof PolyObject) {
+    await target.processOnLoadAsync(context, session, runtimeClient);
+  } else if (target instanceof JavaScriptObject && target.isOnLoadProcessable()) {
+    target.processOnLoad(context, session);
+  } else if (target instanceof ClojureObject && target.isOnLoadProcessable()) {
+    await target.processOnLoadAsync(context, runtimeClient);
+  } else if (target instanceof PythonObject && target.isOnLoadProcessable()) {
+    await target.processOnLoadAsync(context, runtimeClient);
   }
 }
 

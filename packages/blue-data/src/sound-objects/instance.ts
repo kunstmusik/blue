@@ -14,6 +14,9 @@ import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { setScoreStart } from '../utilities/score';
+import type { ScoreGenerationOptions } from '../score/score-generation-options';
+import { markTrackInstrumentTargets } from '../score/score-generation-options';
+import { getTrackPlacementForSoundObject } from './sound-object-registry';
 
 export class Instance extends AbstractSoundObject {
   private _soundObject: SoundObject | null = null;
@@ -46,12 +49,19 @@ export class Instance extends AbstractSoundObject {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): NoteList {
     if (!this._soundObject) {
       return new NoteList();
     }
 
-    const nl = this._soundObject.generateForCSD(context, compileData, startTime, endTime);
+    const nl = this._soundObject.generateForCSD(context, compileData, startTime, endTime, options);
+    const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
+    markTrackInstrumentTargets(
+      nl,
+      descriptor?.instrumentTargetBehavior ?? 'none',
+      options?.instrumentTargetCollector,
+    );
 
     // Apply note processor chain
     const npc = this.getNoteProcessorChain();
@@ -71,17 +81,24 @@ export class Instance extends AbstractSoundObject {
     compileData: CompileData,
     startTime: number,
     endTime: number,
+    options?: ScoreGenerationOptions,
   ): Promise<NoteList> {
     if (!this._soundObject) {
       return new NoteList();
     }
 
     const nl = this._soundObject.generateForCSDAsync
-      ? await this._soundObject.generateForCSDAsync(context, compileData, startTime, endTime)
-      : this._soundObject.generateForCSD(context, compileData, startTime, endTime);
+      ? await this._soundObject.generateForCSDAsync(context, compileData, startTime, endTime, options)
+      : this._soundObject.generateForCSD(context, compileData, startTime, endTime, options);
+    const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
+    markTrackInstrumentTargets(
+      nl,
+      descriptor?.instrumentTargetBehavior ?? 'none',
+      options?.instrumentTargetCollector,
+    );
 
     const npc = this.getNoteProcessorChain();
-    npc.apply(nl);
+    await npc.applyAsync(nl, compileData);
     setScoreStart(nl, this._startTime.toBeats(context));
 
     return nl;

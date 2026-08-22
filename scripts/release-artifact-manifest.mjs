@@ -2,16 +2,21 @@
 /**
  * Release asset manifest and checksum generation/validation.
  *
- * Generates a deterministic machine-readable manifest of either native package
- * outputs or the platform ZIP bundles published by the stable workflow. The
- * manifest is the single source of truth used by the final release promoter to
- * verify that every required target is present and intact.
+ * Generates a deterministic machine-readable manifest of native package
+ * outputs or legacy platform ZIP bundles. The manifest is the single source of
+ * truth used by the final release promoter to verify that every required
+ * target is present and intact.
  *
  * Manifest shape (matches specs/062-app-release-builds/data-model.md):
  *   {
  *     "version": 1,
  *     "appVersion": string,            // packages/blue-app/package.json version
  *     "sourceRevision": string,        // git SHA or "unknown" when git is unavailable
+ *     "engine": {
+ *       "protocolVersion": number,
+ *       "sourceRevision": string,
+ *       "verificationStatus": "pending" | "verified"
+ *     },
  *     "generatedAt": string,           // ISO8601 UTC
  *     "targets": [
  *       {
@@ -156,6 +161,7 @@ function findPackageFilesForTarget(target, releaseDir, appVersion) {
   // electron-builder emits files like:
   //   Blue-0.0.1-arm64.dmg
   //   Blue-0.0.1-x64.dmg
+  //   blue-macos-arm64-0.0.1.dmg
   //   Blue Setup 0.0.1.exe
   //   Blue-0.0.1.AppImage
   //   Blue_0.0.1_amd64.deb
@@ -180,7 +186,9 @@ function findPackageFilesForTarget(target, releaseDir, appVersion) {
       if (!lower.includes(appVersion.toLowerCase())) continue;
 
       if (target.platform === 'macOS' && target.format === 'DMG') {
-        if (!lower.endsWith(`-${target.arch}.dmg`)) continue;
+        const builderName = lower.endsWith(`-${target.arch}.dmg`);
+        const standardizedName = lower === `blue-${target.targetId}-${appVersion.toLowerCase()}.dmg`;
+        if (!builderName && !standardizedName) continue;
       } else if (target.platform === 'Windows') {
         // NSIS produces "Blue Setup 0.0.1.exe"; accept any .exe that includes
         // the version. The promoter verifies the final asset list explicitly.
@@ -224,8 +232,12 @@ async function generate(flags) {
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
   const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
   const verificationStatus = flags['verification-status'] ?? 'pending';
+  const engineProtocolVersion = Number(flags['engine-protocol-version'] ?? 2);
   if (verificationStatus !== 'pending' && verificationStatus !== 'verified') {
     throw new Error(`Unsupported --verification-status value: ${verificationStatus}`);
+  }
+  if (!Number.isSafeInteger(engineProtocolVersion) || engineProtocolVersion < 1) {
+    throw new Error(`Unsupported --engine-protocol-version value: ${flags['engine-protocol-version']}`);
   }
 
   /** @type {Array<Record<string, unknown>>} */
@@ -245,7 +257,9 @@ async function generate(flags) {
       continue;
     }
     if (matches.length > 1) {
-      throw new Error(`Duplicate ${def.targetId}/${def.format} assets: ${matches.map(basename).join(', ')}`);
+      throw new Error(
+        `Duplicate ${def.targetId}/${def.format} assets: ${matches.map((match) => basename(match)).join(', ')}`,
+      );
     }
     const [filePath] = matches;
     const stats = statSync(filePath);
@@ -267,6 +281,11 @@ async function generate(flags) {
     version: 1,
     appVersion,
     sourceRevision,
+    engine: {
+      protocolVersion: engineProtocolVersion,
+      sourceRevision,
+      verificationStatus,
+    },
     generatedAt: new Date().toISOString(),
     targets,
   };
@@ -333,6 +352,24 @@ async function validate(flags) {
   const seenTargetIds = [];
   /** @type {string[]} */
   const seenKeys = [];
+
+  if (!manifest.engine || typeof manifest.engine !== 'object') {
+    errors.push('Manifest engine metadata is missing.');
+  } else {
+    const expectedProtocolVersion = Number(flags['engine-protocol-version'] ?? 2);
+    if (manifest.engine.protocolVersion !== expectedProtocolVersion) {
+      errors.push(
+        `Manifest engine protocolVersion "${manifest.engine.protocolVersion}" does not match "${expectedProtocolVersion}".`,
+      );
+    }
+    if (manifest.engine.sourceRevision !== manifest.sourceRevision) {
+      errors.push('Manifest engine sourceRevision does not match the application sourceRevision.');
+    }
+    if (flags['require-verified'] === 'true' &&
+        manifest.engine.verificationStatus !== 'verified') {
+      errors.push('Manifest engine verificationStatus must be "verified".');
+    }
+  }
 
   for (const target of manifest.targets) {
     if (!target || typeof target !== 'object') {

@@ -63,6 +63,12 @@ function deserializeNoteList(notes: JythonSerializedNote[]): NoteList {
   return noteList;
 }
 
+export const DEFAULT_PYTHON_PROCESSOR_CODE = `# Example: scale duration (p3) by 0.95 for each note
+# for note in noteList:
+#     p3 = float(note.getPField(3))
+#     note.setPField(str(p3 * 0.95), 3)
+`;
+
 export class PythonProcessor extends NoteProcessor {
   private code = '';
 

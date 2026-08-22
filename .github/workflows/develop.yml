@@ -1,11 +1,11 @@
 # Develop branch build.
 #
 # Triggered on push to develop. Builds, tests, and packages the full platform
-# matrix. Uploads installer-only artifacts so testers can download them from
-# the Actions run. No GitHub Release is created.
+# matrix. Uploads each native installer as a direct artifact so testers can
+# download them from the Actions run. No GitHub Release is created.
 #
-# Artifact naming: blue-{os}-{cputype}-{version}-{short-sha}.zip
-#   e.g. blue-macos-arm64-0.0.1-abc1234.zip
+# Artifact naming: blue-{os}-{cputype}-{version}-{short-sha}.{ext}
+#   e.g. blue-linux-x64-0.0.1-abc1234.AppImage
 name: Develop
 
 on:
@@ -38,6 +38,8 @@ jobs:
             package-script: package:linux-x64
 
     runs-on: ${{ matrix.runs-on }}
+    env:
+      BLUE_RELEASE_CHANNEL: development
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -56,10 +58,6 @@ jobs:
             echo "short-sha=${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Verify package inputs
-        shell: bash
-        run: pnpm verify:package-inputs
-
       - name: Run workspace tests
         shell: bash
         run: pnpm test
@@ -73,25 +71,88 @@ jobs:
         run: pnpm --filter @blue/app ${{ matrix.package-script }}
 
       - name: Verify packaged app (smoke)
+        if: runner.os != 'Linux'
         shell: bash
         run: pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Upload installer artifacts
-        uses: actions/upload-artifact@v5
+      - name: Verify packaged app (smoke, Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Stage installer artifacts
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.meta.outputs.app-version }}
+          TARGET_ID: ${{ matrix.target-id }}
+          VERSION_INFO: ${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}
+        run: |
+          staging="packages/blue-app/release/artifacts"
+          mkdir -p "$staging"
+          case "$TARGET_ID" in
+            macos-arm64)
+              cp "packages/blue-app/release/Blue-${APP_VERSION}-arm64.dmg" \
+                "$staging/blue-${TARGET_ID}-${VERSION_INFO}.dmg"
+              ;;
+            windows-x64)
+              cp "packages/blue-app/release/Blue-Setup-${APP_VERSION}.exe" \
+                "$staging/blue-${TARGET_ID}-${VERSION_INFO}.exe"
+              ;;
+            linux-x64)
+              cp "packages/blue-app/release/Blue-${APP_VERSION}.AppImage" \
+                "$staging/blue-${TARGET_ID}-${VERSION_INFO}.AppImage"
+              cp "packages/blue-app/release/Blue_${APP_VERSION}_amd64.deb" \
+                "$staging/blue-${TARGET_ID}-${VERSION_INFO}.deb"
+              ;;
+            *)
+              echo "Unsupported package target: $TARGET_ID"
+              exit 1
+              ;;
+          esac
+
+      - name: Upload macOS installer
+        if: matrix.target-id == 'macos-arm64'
+        uses: actions/upload-artifact@v7
         with:
-          name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.zip
-          path: |
-            packages/blue-app/release/*.dmg
-            packages/blue-app/release/*.exe
-            packages/blue-app/release/*.AppImage
-            packages/blue-app/release/*.deb
-          if-no-files-found: warn
+          path: packages/blue-app/release/artifacts/blue-macos-arm64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.dmg
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Upload Windows installer
+        if: matrix.target-id == 'windows-x64'
+        uses: actions/upload-artifact@v7
+        with:
+          path: packages/blue-app/release/artifacts/blue-windows-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.exe
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Upload Linux AppImage
+        if: matrix.target-id == 'linux-x64'
+        uses: actions/upload-artifact@v7
+        with:
+          path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.AppImage
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Upload Linux Debian package
+        if: matrix.target-id == 'linux-x64'
+        uses: actions/upload-artifact@v7
+        with:
+          path: packages/blue-app/release/artifacts/blue-linux-x64-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.deb
+          archive: false
+          if-no-files-found: error
           retention-days: 30
           overwrite: true
 
       - name: Upload diagnostics
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}-diagnostics.zip
           path: |

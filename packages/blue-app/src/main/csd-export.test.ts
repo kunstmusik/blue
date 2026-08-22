@@ -1,8 +1,30 @@
+import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { saveGeneratedCsdToDisk } from './csd-export';
 
 describe('saveGeneratedCsdToDisk', () => {
+  it('uses the configured work directory for an unsaved project', async () => {
+    const toDiskCSD = vi.fn(() => 'disk-csd');
+    const showSaveDialog = vi.fn(async () => ({
+      canceled: true,
+      filePath: undefined,
+    }));
+
+    await saveGeneratedCsdToDisk({
+      currentData: { toDiskCSD },
+      currentFilePath: null,
+      workDirectory: '/tmp/work',
+      mainWindow: { webContents: { send: vi.fn() } } as any,
+      dialogApi: { showSaveDialog } as any,
+    });
+
+    expect(showSaveDialog).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ defaultPath: path.join('/tmp/work', 'generated.csd') }),
+    );
+  });
+
   it('calls toDiskCSD and writes the selected CSD file', async () => {
     const toDiskCSD = vi.fn(() => 'disk-csd');
     const send = vi.fn();

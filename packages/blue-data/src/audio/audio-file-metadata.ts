@@ -10,7 +10,7 @@
  */
 
 export interface AudioFileMetadata {
-  format: 'WAV' | 'AIFF';
+  format: 'WAV' | 'AIFF' | 'AIFC';
   channels: number;
   sampleRate: number;
   /** Duration in seconds, derived from byte length / (sampleRate * frameSize). */
@@ -19,6 +19,14 @@ export interface AudioFileMetadata {
   frameCount: number;
   /** Bits per sample per channel. */
   bitsPerSample: number;
+  /** Total source byte length. */
+  byteLength: number;
+  /** Encoding label: 'PCM', 'IEEE_FLOAT', 'UNKNOWN', etc. */
+  encodingType: string;
+  /** True for big-endian formats (AIFF), false for little-endian (WAV). */
+  isBigEndian: boolean;
+  /** Header fields that could not be determined from the inspected bytes. */
+  unavailableFields: string[];
 }
 
 export class AudioFileMetadataError extends Error {
@@ -97,9 +105,18 @@ function fourCCBE(data: Uint8Array, offset: number): number {
   return readUint32BE(data, offset);
 }
 
+function fourCCStringBE(data: Uint8Array, offset: number): string {
+  return String.fromCharCode(
+    data[offset],
+    data[offset + 1],
+    data[offset + 2],
+    data[offset + 3],
+  );
+}
+
 /**
  * Parse WAV (RIFF/WAVE) metadata.
- * Finds the `fmt ` chunk for channels/sampleRate/bitsPerSample,
+ * Finds the `fmt ` chunk for channels/sampleRate/bitsPerSample/formatTag,
  * then the `data` chunk for byte length.
  */
 function parseWav(data: Uint8Array): AudioFileMetadata {
@@ -114,10 +131,12 @@ function parseWav(data: Uint8Array): AudioFileMetadata {
     throw new AudioFileMetadataError('Not a WAVE file');
   }
 
+  let formatTag = 0;
   let channels = 0;
   let sampleRate = 0;
   let bitsPerSample = 0;
   let dataByteLength = 0;
+  let hasDataChunk = false;
 
   let offset = 12;
   while (offset + 8 <= data.length) {
@@ -127,12 +146,17 @@ function parseWav(data: Uint8Array): AudioFileMetadata {
 
     if (chunkId === 0x666d7420) {
       // "fmt "
+      if (chunkSize < 16 || chunkStart + 16 > data.length) {
+        throw new AudioFileMetadataError('WAV fmt chunk too small');
+      }
+      formatTag = readUint16LE(data, chunkStart);
       channels = readUint16LE(data, chunkStart + 2);
       sampleRate = readUint32LE(data, chunkStart + 4);
       bitsPerSample = readUint16LE(data, chunkStart + 14);
     } else if (chunkId === 0x64617461) {
       // "data"
       dataByteLength = chunkSize;
+      hasDataChunk = true;
     }
 
     // Chunks are word-aligned (even offsets)
@@ -150,6 +174,18 @@ function parseWav(data: Uint8Array): AudioFileMetadata {
   const durationSeconds = frameCount > 0 && sampleRate > 0
     ? frameCount / sampleRate
     : 0;
+  const unavailableFields = hasDataChunk ? [] : ['frameCount', 'durationSeconds'];
+
+  let encodingType = 'UNKNOWN';
+  if (formatTag === 1) {
+    encodingType = 'PCM';
+  } else if (formatTag === 3) {
+    encodingType = 'IEEE_FLOAT';
+  } else if (formatTag === 6) {
+    encodingType = 'ALAW';
+  } else if (formatTag === 7) {
+    encodingType = 'MULAW';
+  }
 
   return {
     format: 'WAV',
@@ -158,6 +194,10 @@ function parseWav(data: Uint8Array): AudioFileMetadata {
     bitsPerSample,
     frameCount,
     durationSeconds,
+    byteLength: data.length,
+    encodingType,
+    isBigEndian: false,
+    unavailableFields,
   };
 }
 
@@ -180,10 +220,12 @@ function parseAiff(data: Uint8Array): AudioFileMetadata {
     throw new AudioFileMetadataError(`Not an AIFF/AIFC file (formType=${formType.toString(16)})`);
   }
 
+  const isAifc = formType === AIFC_TYPE;
   let channels = 0;
   let sampleRate = 0;
   let bitsPerSample = 0;
   let frameCount = 0;
+  let compressionType = 'NONE';
 
   let offset = 12;
   while (offset + 8 <= data.length) {
@@ -193,10 +235,16 @@ function parseAiff(data: Uint8Array): AudioFileMetadata {
 
     if (chunkId === 0x434f4d4d) {
       // "COMM"
+      if (chunkStart + 18 > data.length) {
+        throw new AudioFileMetadataError('AIFF COMM chunk too small');
+      }
       channels = readUint16BE(data, chunkStart);
       frameCount = readUint32BE(data, chunkStart + 2);
       bitsPerSample = readUint16BE(data, chunkStart + 6);
       sampleRate = readExtendedBE(data, chunkStart + 8);
+      if (isAifc && chunkSize >= 22 && chunkStart + 22 <= data.length) {
+        compressionType = fourCCStringBE(data, chunkStart + 18);
+      }
     }
 
     offset = chunkStart + chunkSize + (chunkSize % 2);
@@ -206,25 +254,52 @@ function parseAiff(data: Uint8Array): AudioFileMetadata {
     throw new AudioFileMetadataError('AIFF COMM chunk not found or incomplete');
   }
 
-  const frameSize = (bitsPerSample / 8) * channels;
   const durationSeconds = frameCount > 0 && sampleRate > 0
     ? frameCount / sampleRate
     : 0;
 
+  let encodingType = 'PCM';
+  let isBigEndian = true;
+
+  if (isAifc) {
+    if (compressionType === 'NONE') {
+      encodingType = 'PCM';
+      isBigEndian = true;
+    } else if (compressionType === 'sowt') {
+      encodingType = 'PCM';
+      isBigEndian = false;
+    } else if (
+      compressionType === 'fl32' ||
+      compressionType === 'FL32' ||
+      compressionType === 'fl64' ||
+      compressionType === 'FL64'
+    ) {
+      encodingType = 'IEEE_FLOAT';
+      isBigEndian = true;
+    } else {
+      encodingType = 'UNKNOWN';
+      isBigEndian = true;
+    }
+  }
+
   return {
-    format: 'AIFF',
+    format: isAifc ? 'AIFC' : 'AIFF',
     channels,
     sampleRate,
     bitsPerSample,
     frameCount,
     durationSeconds,
+    byteLength: data.length,
+    encodingType,
+    isBigEndian,
+    unavailableFields: [],
   };
 }
 
 /**
  * Parse audio file metadata from raw bytes.
  *
- * Detects WAV vs AIFF by the form/magic bytes and dispatches to the
+ * Detects WAV vs AIFF/AIFC by the form/magic bytes and dispatches to the
  * appropriate parser. Throws AudioFileMetadataError on malformed data.
  */
 export function parseAudioFileMetadata(data: Uint8Array): AudioFileMetadata {
@@ -367,6 +442,37 @@ export function buildAiffBytes(
   writeUint32BE(buf, commStart + 10, frameCount);
   writeUint16BE(buf, commStart + 14, bitsPerSample);
   writeExtendedBE(buf, commStart + 16, sampleRate);
+
+  return new Uint8Array(buf);
+}
+
+/**
+ * Build a minimal deterministic AIFC byte array for testing.
+ */
+export function buildAifcBytes(
+  channels: number,
+  sampleRate: number,
+  bitsPerSample: number,
+  frameCount: number,
+  compressionType: string = 'NONE',
+): Uint8Array {
+  const commChunkSize = 22;
+  const formSize = 4 + (8 + commChunkSize);
+
+  const buf = new Array(12 + 8 + commChunkSize).fill(0);
+  writeFourCCBE(buf, 0, 'FORM');
+  writeUint32BE(buf, 4, formSize);
+  writeFourCCBE(buf, 8, 'AIFC');
+
+  // COMM chunk
+  const commStart = 12;
+  writeFourCCBE(buf, commStart, 'COMM');
+  writeUint32BE(buf, commStart + 4, commChunkSize);
+  writeUint16BE(buf, commStart + 8, channels);
+  writeUint32BE(buf, commStart + 10, frameCount);
+  writeUint16BE(buf, commStart + 14, bitsPerSample);
+  writeExtendedBE(buf, commStart + 16, sampleRate);
+  writeFourCCBE(buf, commStart + 26, compressionType.padEnd(4, ' '));
 
   return new Uint8Array(buf);
 }

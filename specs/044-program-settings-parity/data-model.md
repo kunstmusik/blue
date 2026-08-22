@@ -32,7 +32,6 @@
 **Fields**:
 - `workDirectory`: string path, default empty.
 - `newUserDefaultsEnabled`: boolean, default true.
-- `drawAlphaBackgroundOnMarquee`: boolean, default false.
 - `messageColorsEnabled`: boolean, default false.
 - `csoundErrorWarningEnabled`: boolean, default true.
 - `directoryTempFileLimit`: integer, default 3.
@@ -41,7 +40,7 @@
 - File chooser/import/export default locations.
 - Render option message-color behavior.
 - Temporary CSD snapshot cleanup grouping where supported.
-- Future code repository defaults, marquee drawing, and Csound error warnings.
+- Code repository defaults and realtime Csound error warnings.
 
 ## Entity: ProjectDefaultsSettingsSnapshot
 
@@ -211,11 +210,11 @@
 - `javaUsage`: Java workflow or new-project seed behavior.
 - `currentStatus`: `used-by-workflow`, `used-as-new-project-default`, `app-specific-retained`, `resource-only-stale`, or `blocked-by-missing-feature`.
 - `consumerPath`: optional implementation area.
-- `missingFeature`: optional MissingFeatureDependency id.
+- `missingFeature`: optional FeatureParityNote id.
 
-## Entity: MissingFeatureDependency
+## Entity: FeatureParityNote
 
-**Purpose**: Named follow-up area required to fully consume one or more settings.
+**Purpose**: Developer-facing Java parity note for one or more settings. Notes may document either remaining gaps or completed parity work.
 
 **Fields**:
 - `id`: stable identifier such as `disk-render-execution`.

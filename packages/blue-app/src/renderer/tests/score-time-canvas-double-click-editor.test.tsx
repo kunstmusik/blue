@@ -189,4 +189,44 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
 
     expect(openPanel).not.toHaveBeenCalled();
   });
+
+  it('selects a right-clicked SoundObject and applies successive picker colors', () => {
+    const item = soundItem('a', 0, 0);
+    render(item);
+
+    dispatchAt(surface, 'contextmenu', 10, 10);
+    const setColor = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      .find((menuItem) => menuItem.textContent === 'Set Color…')!;
+    expect(setColor).toBeTruthy();
+    act(() => setColor.click());
+
+    const input = document.querySelector<HTMLInputElement>('[aria-label="Hex color"]')!;
+    act(() => {
+      input.value = '#654321';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.value = '#123456';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const picker = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(picker.dataset.placement).toBe('bottom');
+    expect(Number.parseFloat(picker.style.top)).toBeGreaterThanOrEqual(52);
+    expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['a']);
+    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'updateSharedProperties',
+        target: item.editorTarget,
+        patch: { backgroundColor: 0x654321 },
+      },
+    });
+    expect(useProjectStore.getState().applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'updateSharedProperties',
+        target: item.editorTarget,
+        patch: { backgroundColor: 0x123456 },
+      },
+    });
+  });
 });

@@ -38,12 +38,11 @@ export type RenderStatusCallback = (status: RenderOperationStatus) => void;
 
 export interface RenderExecutionSeam {
   runCsound(
-    executable: string,
     args: string[],
     cwd: string,
     onProgress?: (progress: number) => void,
     totalDuration?: number,
-  ): Promise<{ exitCode: number; stderr: string }>;
+  ): Promise<{ exitCode: number; stderr: string; stdout?: string }>;
 }
 
 // ─── Service ───
@@ -162,7 +161,7 @@ export async function executeRenderToDisk(
 
   let result: { exitCode: number; stderr: string };
   try {
-    result = await executionSeam.runCsound(plan.executable, allArgs, projectDirectory, (progress) => {
+    result = await executionSeam.runCsound(allArgs, projectDirectory, (progress) => {
       statusCallback({
         operationId,
         kind: 'diskRender',

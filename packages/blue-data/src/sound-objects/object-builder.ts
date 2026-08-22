@@ -9,8 +9,16 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefLoadMap, ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
-import { applyNoteProcessorChainAsync, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
+import {
+  applyNoteProcessorChain,
+  applyNoteProcessorChainAsync,
+  applyTimeBehavior,
+  getNotes,
+  setScoreStart,
+} from '../utilities/score';
 import { getJavaRuntimeClient, type JavaRuntimeError } from '../java-runtime';
+import { executeJavaScriptCode } from './javascript-object';
+import { getExternalCommandExecutor } from './external';
 
 export type ObjectBuilderLanguageType = 'PYTHON' | 'JAVASCRIPT' | 'CLOJURE' | 'EXTERNAL';
 
@@ -122,25 +130,68 @@ export class ObjectBuilder extends AbstractSoundObject {
     return this.languageType === 'PYTHON';
   }
 
+  usesJavaRuntime(): boolean {
+    return this.languageType === 'PYTHON' || this.languageType === 'CLOJURE';
+  }
+
   private compileCode(): string {
     const unit = new BSBCompilationUnit();
     this.graphicInterface.collectReplacements(unit);
     return unit.replaceBSBValues(this.code);
   }
 
+  private executeExternal(code: string): string {
+    if (this.commandLine.trim().length === 0 && code.trim().length === 0) {
+      return '';
+    }
+
+    const executor = getExternalCommandExecutor();
+    if (!executor) {
+      throw new Error('ObjectBuilder EXTERNAL execution requires an external command executor');
+    }
+
+    return executor.execute(this.commandLine, code, null);
+  }
+
+  private finishNoteList(noteList: NoteList, context: TimeContext): NoteList {
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    const startTime = this.getStartTime().toBeats(context);
+    const repeatPoint = this.getRepeatPoint();
+    const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
+
+    applyTimeBehavior(noteList, this.getTimeBehavior(), duration, repeatPointBeats);
+    setScoreStart(noteList, startTime);
+    return noteList;
+  }
+
   override generateForCSD(
-    _context: TimeContext,
-    _compileData: CompileData,
+    context: TimeContext,
+    compileData: CompileData,
     _startTime: number,
     _endTime: number,
   ): NoteList {
-    if (!this.isPythonLanguage()) {
-      console.warn(`ObjectBuilder.generateForCSD skipped: unsupported language ${this.languageType}`);
-      return new NoteList();
+    const code = this.compileCode();
+    let scoreText: string;
+
+    switch (this.languageType) {
+      case 'JAVASCRIPT':
+        scoreText = executeJavaScriptCode(
+          code,
+          this.getSubjectiveDuration().toBeats(context),
+          compileData,
+        );
+        break;
+      case 'EXTERNAL':
+        scoreText = this.executeExternal(code);
+        break;
+      case 'PYTHON':
+      case 'CLOJURE':
+        console.warn(`ObjectBuilder.generateForCSD skipped: ${this.languageType} requires Java runtime`);
+        return new NoteList();
     }
 
-    console.warn('ObjectBuilder.generateForCSD skipped: requires Java runtime');
-    return new NoteList();
+    const processed = applyNoteProcessorChain(getNotes(scoreText), this.getNoteProcessorChain());
+    return this.finishNoteList(processed, context);
   }
 
   async generateForCSDAsync(
@@ -149,36 +200,48 @@ export class ObjectBuilder extends AbstractSoundObject {
     _startTime: number,
     _endTime: number,
   ): Promise<NoteList> {
-    if (!this.isPythonLanguage()) {
-      throw new Error(`ObjectBuilder only supports Python execution in this build (found ${this.languageType})`);
-    }
-
-    const runtimeClient = getJavaRuntimeClient(compileData);
-    if (!runtimeClient) {
-      throw new Error('ObjectBuilder.generateForCSDAsync requires a Java runtime session');
-    }
-
-    const response = await runtimeClient.evaluateJythonObjectBuilder({
-      code: this.compileCode(),
-      blueDuration: this.getSubjectiveDuration().toBeats(context),
-      commandline: this.commandLine,
-    });
-
-    if (!response.ok) {
-      throw new Error(formatRuntimeError('Failed to evaluate ObjectBuilder', response.error));
-    }
-
-    const noteList = getNotes(response.result?.scoreText ?? '');
-    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const code = this.compileCode();
     const duration = this.getSubjectiveDuration().toBeats(context);
-    const startTime = this.getStartTime().toBeats(context);
-    const repeatPoint = this.getRepeatPoint();
-    const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
+    let scoreText: string;
 
-    applyTimeBehavior(processed, this.getTimeBehavior(), duration, repeatPointBeats);
-    setScoreStart(processed, startTime);
+    if (this.languageType === 'JAVASCRIPT') {
+      scoreText = executeJavaScriptCode(code, duration, compileData);
+    } else if (this.languageType === 'EXTERNAL') {
+      scoreText = this.executeExternal(code);
+    } else {
+      const runtimeClient = getJavaRuntimeClient(compileData);
+      if (!runtimeClient) {
+        throw new Error(`ObjectBuilder ${this.languageType} execution requires a Java runtime session`);
+      }
 
-    return processed;
+      if (this.languageType === 'PYTHON') {
+        const response = await runtimeClient.evaluateJythonObjectBuilder({
+          code,
+          blueDuration: duration,
+          commandline: this.commandLine,
+        });
+
+        if (!response.ok) {
+          throw new Error(formatRuntimeError('Failed to evaluate ObjectBuilder', response.error));
+        }
+        scoreText = response.result?.scoreText ?? '';
+      } else {
+        const response = await runtimeClient.evaluateClojureScoreObject({
+          code,
+          blueDuration: duration,
+          commandline: this.commandLine,
+        });
+
+        if (!response.ok) {
+          throw new Error(formatRuntimeError('Failed to evaluate ObjectBuilder', response.error));
+        }
+        scoreText = response.result?.scoreText ?? '';
+      }
+    }
+
+    const noteList = getNotes(scoreText);
+    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    return this.finishNoteList(processed, context);
   }
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {

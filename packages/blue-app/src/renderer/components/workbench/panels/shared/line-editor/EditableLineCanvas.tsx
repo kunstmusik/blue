@@ -732,7 +732,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                       y={y}
                       fill="#74829c"
                       fontFamily="monospace"
-                      fontSize={9}
+                      className="text-role-subheadline"
                       textAnchor="end"
                       dominantBaseline="middle"
                     >
@@ -757,10 +757,10 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                     />
                     <text
                       x={x}
-                      y={plotTop + plotHeight + 4}
+                      y={plotTop + plotHeight + 5}
                       fill="#74829c"
                       fontFamily="monospace"
-                      fontSize={9}
+                      className="text-role-subheadline"
                       textAnchor="middle"
                       dominantBaseline="hanging"
                     >
@@ -847,7 +847,8 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
       {canUseDom && contextMenuPosition && createPortal(
         <div
           ref={contextMenuRef}
-          className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-body text-app-text-strong shadow-xl"
+          className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-role-body text-app-text-strong shadow-xl"
+          data-auxiliary-portal="true"
           style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
         >
           <button
@@ -876,7 +877,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
 
       {canUseDom && hoverTooltip && createPortal(
         <div
-          className="pointer-events-none fixed z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-tiny text-app-text-strong shadow-lg"
+          className="pointer-events-none fixed z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-role-subheadline text-app-text-strong shadow-lg"
           style={{
             left: Math.max(8, Math.min(hoverTooltip.pointX + 10, window.innerWidth - 176)),
             top: Math.max(8, Math.min(hoverTooltip.canvasTop - 44, window.innerHeight - 44)),
@@ -900,11 +901,11 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
               style={{ width: 400, maxHeight: 300 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="border-b border-app-border px-4 py-2 text-sm font-semibold text-app-text-strong">
+              <div className="border-b border-app-border px-4 py-2 text-role-headline font-bold text-app-text-strong">
                 Line Point Editor
               </div>
-              <div className="overflow-auto" style={{ maxHeight: 230 }}>
-                <table className="w-full border-collapse text-body text-app-text">
+              <div className="overflow-auto bg-black" style={{ maxHeight: 230 }}>
+                <table className="w-full border-collapse text-role-body text-app-text">
                   <thead>
                     <tr className="border-b border-app-border bg-app-menu">
                       <th className="px-2 py-1 text-left font-medium">x</th>
@@ -924,7 +925,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                             <input
                               type="number"
                               step="0.001"
-                              className={`w-full border-0 bg-transparent px-2 py-1 text-body text-app-text-strong outline-none ${
+                              className={`w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none ${
                                 xReadOnly
                                   ? 'cursor-default text-app-text-muted'
                                   : 'focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent'
@@ -943,7 +944,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                             <input
                               type="number"
                               step="0.001"
-                              className="w-full border-0 bg-transparent px-2 py-1 text-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent"
+                              className="w-full border-0 bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent"
                               value={yDisplay}
                               onChange={(event) => setPointEdits((prev) => ({ ...prev, [yKey]: event.target.value }))}
                               onBlur={() => commitCell(sortedIndex, 'y', yDisplay)}
@@ -962,7 +963,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
               <div className="flex justify-end border-t border-app-border px-4 py-2">
                 <button
                   type="button"
-                  className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-body text-app-text-soft hover:border-app-accent"
+                  className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text-soft hover:border-app-accent"
                   onClick={closeEditor}
                 >
                   Close

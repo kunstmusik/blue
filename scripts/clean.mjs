@@ -9,6 +9,11 @@
  *   - packages/blue-java/target       Maven build output
  *   - packages/blue-app/assets/java/blue-java.jar
  *                                       Maven-generated helper JAR (gitignored)
+ *   - packages/blue-app/.engine-stage Electron native-sidecar staging
+ *   - native/blue-engine/build-*      CMake build trees
+ *   - native/blue-engine/dist         verified native artifact output
+ *   - native/blue-engine/vcpkg_installed
+ *                                       package-local vcpkg installation
  *
  * Not touched:
  *   - packages/blue-app/assets/java/pythonLib
@@ -56,6 +61,8 @@ for (const entry of readdirSync(packagesDir)) {
 
 // 2. electron-builder output (unpacked apps, installers, manifests).
 remove('packages/blue-app/release');
+remove('packages/blue-app/.engine-stage');
+remove('packages/blue-app/release-metadata.json');
 
 // 3. Maven build output for the Java helper.
 remove('packages/blue-java/target');
@@ -68,5 +75,17 @@ remove('packages/blue-java/target');
 //    the working-tree copies must be preserved to avoid spurious
 //    `git status` deletions.
 remove('packages/blue-app/assets/java/blue-java.jar');
+
+// 5. Native sidecar build and derived artifact output.
+const nativeEngineDir = join(repoRoot, 'native/blue-engine');
+if (existsSync(nativeEngineDir)) {
+  for (const entry of readdirSync(nativeEngineDir)) {
+    if (entry === 'build' || entry.startsWith('build-')) {
+      remove(`native/blue-engine/${entry}`);
+    }
+  }
+}
+remove('native/blue-engine/dist');
+remove('native/blue-engine/vcpkg_installed');
 
 process.stderr.write('\nClean complete. Run `pnpm app:build` to rebuild.\n');

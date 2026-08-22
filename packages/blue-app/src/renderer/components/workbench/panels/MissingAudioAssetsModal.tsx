@@ -129,13 +129,13 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
         aria-labelledby="missing-audio-title"
       >
         <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
-          <h2 id="missing-audio-title" className="text-sm font-medium text-app-text-bright">
+          <h2 id="missing-audio-title" className="text-role-title-2 font-bold text-app-text-bright">
             Locate Missing Audio Files
           </h2>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto px-4 py-3">
-          <table className="w-full border-collapse text-left text-sm text-app-text">
+        <div className="min-h-0 flex-1 overflow-auto bg-black px-4 py-3">
+          <table className="w-full border-collapse text-left text-role-body text-app-text">
             <thead>
               <tr className="border-b border-app-hover text-app-text-muted">
                 <th scope="col" className="px-2 py-2 font-medium">Original File</th>
@@ -155,7 +155,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
                     <td className="whitespace-nowrap px-2 py-2 align-top text-right">
                       <button
                         type="button"
-                        className="rounded border border-app-hover px-2 py-1 text-xs text-app-text hover:bg-app-hover"
+                        className="rounded border border-app-hover px-2 py-1 text-role-callout text-app-text hover:bg-app-hover"
                         onClick={() => void handleBrowse(row.originalPath)}
                       >
                         Browse
@@ -163,7 +163,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
                       {replacementPath && (
                         <button
                           type="button"
-                          className="ml-1 rounded border border-app-hover px-2 py-1 text-xs text-app-text hover:bg-app-hover"
+                          className="ml-1 rounded border border-app-hover px-2 py-1 text-role-callout text-app-text hover:bg-app-hover"
                           onClick={() => handleClear(row.originalPath)}
                         >
                           Clear
@@ -180,7 +180,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
         <div className="flex items-center justify-end gap-2 border-t border-app-hover px-4 py-3">
           <button
             type="button"
-            className="rounded border border-app-hover px-3 py-1.5 text-sm text-app-text hover:bg-app-hover"
+            className="rounded border border-app-hover px-3 py-1.5 text-role-body text-app-text hover:bg-app-hover"
             onClick={() => closeWithoutChanges(session.sessionId)}
           >
             Cancel
@@ -188,7 +188,7 @@ export default function MissingAudioAssetsModal(): React.ReactElement | null {
           <button
             ref={okButtonRef}
             type="button"
-            className="rounded bg-blue-accent px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:opacity-50"
             onClick={() => void handleConfirm()}
             disabled={resolving}
           >

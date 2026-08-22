@@ -15,6 +15,7 @@ import { ScoreGenerationException } from '../score-generation-exception';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
 import { LayerGroupListener } from './layer-group-listener';
+import type { ScoreGenerationOptionsOrSolo } from '../score-generation-options';
 
 export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<LayerGroup<T>> {
   /** Get the name of this layer group. */
@@ -41,7 +42,7 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<La
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    processWithSolo: boolean,
+    options?: ScoreGenerationOptionsOrSolo,
   ): NoteList;
 
   /** Serialize to XML. */

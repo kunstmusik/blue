@@ -15,6 +15,7 @@ import {
   CMD_LIST_AUTOMATION,
   CMD_CLEAR_AUTOMATION,
   CMD_GET_ENGINE_STATE,
+  CMD_GET_CAPABILITIES,
 } from '../src/protocol';
 
 describe('Automation Protocol Encoding', () => {
@@ -24,9 +25,7 @@ describe('Automation Protocol Encoding', () => {
       'gk_blue_auto0',    // name
       AutomationCurveCode.LINEAR, // curve
       true,               // enabled
-      0.0,                // resolution
-      0,                  // resolutionScale
-      false,              // highPrecision
+      '1E-31', // canonical exact resolution text
       [                   // points
         { time: 0.0, value: 0.5 },
         { time: 4.0, value: 1.0 },
@@ -58,17 +57,12 @@ describe('Automation Protocol Encoding', () => {
     expect(payload.readUInt8(offset)).toBe(1);
     offset += 1;
 
-    // resolution (f64)
-    expect(payload.readDoubleLE(offset)).toBeCloseTo(0.0, 6);
-    offset += 8;
-
-    // resolutionScale (i32)
-    expect(payload.readInt32LE(offset)).toBe(0);
+    // resolution length and canonical ASCII text
+    const resolutionLength = payload.readUInt32LE(offset);
     offset += 4;
-
-    // highPrecision (u8)
-    expect(payload.readUInt8(offset)).toBe(0);
-    offset += 1;
+    expect(payload.toString('ascii', offset, offset + resolutionLength))
+      .toBe('1E-31');
+    offset += resolutionLength;
 
     // n_points (u32)
     expect(payload.readUInt32LE(offset)).toBe(2);
@@ -91,9 +85,7 @@ describe('Automation Protocol Encoding', () => {
       'test',
       AutomationCurveCode.STEP,
       true,
-      0.1,
-      1,
-      false,
+      '0.1',
       [{ time: 0, value: 1 }],
     );
 
@@ -106,7 +98,7 @@ describe('Automation Protocol Encoding', () => {
       ['LINEAR', AutomationCurveCode.LINEAR],
       ['EXPONENTIAL', AutomationCurveCode.EXPONENTIAL],
     ] as const) {
-      const buf = encodeCreateAutomation('ch', code, true, 0, 0, false, []);
+      const buf = encodeCreateAutomation('ch', code, true, '0', []);
       const payload = buf.subarray(5);
       const nameEnd = payload.indexOf(0);
       expect(payload.readUInt8(nameEnd + 1)).toBe(code);
@@ -114,27 +106,41 @@ describe('Automation Protocol Encoding', () => {
   });
 
   it('encodes enabled=false as 0', () => {
-    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, false, 0, 0, false, []);
+    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, false, '0', []);
     const payload = buf.subarray(5);
     const nameEnd = payload.indexOf(0);
     // enabled byte is right after curve byte
     expect(payload.readUInt8(nameEnd + 1 + 1)).toBe(0);
   });
 
-  it('encodes highPrecision=true as 1', () => {
-    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, 0, 0, true, []);
+  it('preserves exact decimal resolution text without numeric conversion', () => {
+    const resolution = '123456789012345678901234567890.0000000000000000000000000000001';
+    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, resolution, []);
     const payload = buf.subarray(5);
     const nameEnd = payload.indexOf(0);
-    const hpOffset = nameEnd + 1 + 1 + 1 + 8 + 4;
-    expect(payload.readUInt8(hpOffset)).toBe(1);
+    const resolutionLengthOffset = nameEnd + 1 + 1 + 1;
+    const resolutionLength = payload.readUInt32LE(resolutionLengthOffset);
+    expect(payload.toString('ascii', resolutionLengthOffset + 4,
+      resolutionLengthOffset + 4 + resolutionLength)).toBe(resolution);
   });
 
   it('encodes with no points', () => {
-    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, 0, 0, false, []);
+    const buf = encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '0', []);
     const payload = buf.subarray(5);
     const nameEnd = payload.indexOf(0);
-    const nPointsOffset = nameEnd + 1 + 1 + 1 + 8 + 4 + 1;
+    const resolutionLengthOffset = nameEnd + 1 + 1 + 1;
+    const resolutionLength = payload.readUInt32LE(resolutionLengthOffset);
+    const nPointsOffset = resolutionLengthOffset + 4 + resolutionLength;
     expect(payload.readUInt32LE(nPointsOffset)).toBe(0);
+  });
+
+  it('rejects lossy or malformed automation inputs before sending', () => {
+    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1,0', [])).toThrow();
+    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1e-7', [])).toThrow();
+    expect(() => encodeCreateAutomation('ch', AutomationCurveCode.LINEAR, true, '1', [
+      { time: Number.NaN, value: 0 },
+    ])).toThrow();
+    expect(() => encodeCreateAutomation('ch\0bad', AutomationCurveCode.LINEAR, true, '1', [])).toThrow();
   });
 
   it('encodes name-only commands (delete, enable, disable)', () => {
@@ -165,6 +171,12 @@ describe('Automation Protocol Encoding', () => {
     expect(buf.readUInt8(0)).toBe(CMD_GET_ENGINE_STATE);
     expect(buf.readUInt32LE(1)).toBe(0);
     expect(buf.length).toBe(5);
+  });
+
+  it('reserves command 0x09 for engine capabilities', () => {
+    expect(CMD_GET_CAPABILITIES).toBe(0x09);
+    const buf = encodeNoPayloadCommand(CMD_GET_CAPABILITIES);
+    expect(buf.readUInt8(0)).toBe(0x09);
   });
 });
 

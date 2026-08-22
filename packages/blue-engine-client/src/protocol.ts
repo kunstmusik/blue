@@ -13,6 +13,7 @@ export const CMD_STOP = 0x06;
 export const CMD_DESTROY_ENGINE = 0x07;
 export const CMD_EXIT = CMD_DESTROY_ENGINE;
 export const CMD_GET_ENGINE_STATE = 0x08;
+export const CMD_GET_CAPABILITIES = 0x09;
 
 export const ENGINE_STATE_TOPIC = 'engine.state';
 
@@ -156,75 +157,135 @@ export function decodeEngineStatePayload(payload: Buffer | string): EngineStateS
 // ─── Automation Encoding ───
 
 /**
+ * Reproduce the small, allocation-bounded part of BigDecimal.toString needed
+ * at the wire boundary. The engine remains authoritative, but rejecting a
+ * non-canonical spelling here prevents a request that the native parser must
+ * inevitably reject (for example `1e-7` instead of `1E-7`).
+ */
+function canonicalJavaDecimalText(text: string): string | null {
+  const match = /^(-?)(?:(\d+)(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/.exec(text);
+  if (!match) return null;
+
+  const integerDigits = match[2] ?? '';
+  const fractionalDigits = match[3] ?? match[4] ?? '';
+  const rawDigits = integerDigits + fractionalDigits;
+  if (rawDigits.length === 0) return null;
+
+  const digits = rawDigits.replace(/^0+(?=\d)/, '');
+  const exponent = BigInt(match[5] ?? '0');
+  const scaleBig = BigInt(fractionalDigits.length) - exponent;
+  if (scaleBig < -2147483648n || scaleBig > 2147483647n) return null;
+  const scale = Number(scaleBig);
+  const negative = match[1] === '-' && digits !== '0';
+  const sign = negative ? '-' : '';
+  const precision = digits.length;
+  const adjusted = precision - 1 - scale;
+
+  if (scale === 0) return sign + digits;
+  if (scale > 0 && adjusted >= -6) {
+    if (scale >= precision) {
+      return sign + '0.' + '0'.repeat(scale - precision) + digits;
+    }
+    return sign + digits.slice(0, precision - scale) + '.' + digits.slice(precision - scale);
+  }
+
+  const mantissa = precision > 1 ? digits[0] + '.' + digits.slice(1) : digits;
+  const exponentText = adjusted >= 0 ? `+${adjusted}` : String(adjusted);
+  return sign + mantissa + 'E' + exponentText;
+}
+
+/**
  * Encode a CREATE_AUTOMATION or UPDATE_AUTOMATION command.
  *
+ * Resolution is deliberately transported as canonical Java BigDecimal text.
+ * It must not be converted through a JavaScript number on this boundary.
+ *
  * Payload format (matching C++ ZmqHandler):
- *   channel_name\0 + curve(u8) + enabled(u8) + resolution(f64)
- *   + resolutionScale(i32) + highPrecision(u8) + n_points(u32)
+ *   channel_name\0 + curve(u8) + enabled(u8) + resolutionLength(u32)
+ *   + resolution ASCII bytes + n_points(u32)
  *   + points[] (each: time(f64) + value(f64) = 16 bytes)
  */
+function encodeAutomation(
+  command: number,
+  name: string,
+  curve: AutomationCurveCode,
+  enabled: boolean,
+  resolutionDecimal: string,
+  points: AutomationPoint[],
+): Buffer {
+  if (name.length === 0 || name.includes('\0')) {
+    throw new RangeError('Automation channel name must be non-empty and must not contain NUL');
+  }
+  if (!Number.isInteger(curve) || curve < AutomationCurveCode.STEP || curve > AutomationCurveCode.EXPONENTIAL) {
+    throw new RangeError(`Unsupported automation curve code: ${curve}`);
+  }
+  if (typeof resolutionDecimal !== 'string' || resolutionDecimal.length === 0) {
+    throw new RangeError('Automation resolution must be non-empty canonical decimal text');
+  }
+  const canonicalResolution = canonicalJavaDecimalText(resolutionDecimal);
+  if (canonicalResolution === null) {
+    throw new RangeError(`Invalid automation resolution text: ${resolutionDecimal}`);
+  }
+  if (canonicalResolution !== resolutionDecimal) {
+    throw new RangeError(`Automation resolution must use canonical Java decimal text: ${resolutionDecimal}`);
+  }
+  const resolutionBuf = Buffer.from(resolutionDecimal, 'ascii');
+  if (resolutionBuf.toString('ascii') !== resolutionDecimal ||
+      [...resolutionBuf].some((byte) => byte < 0x20 || byte > 0x7e)) {
+    throw new RangeError('Automation resolution must contain printable ASCII only');
+  }
+  if (points.length > 0xffff_ffff) {
+    throw new RangeError('Too many automation points');
+  }
+  for (const point of points) {
+    if (!Number.isFinite(point.time) || !Number.isFinite(point.value)) {
+      throw new RangeError('Automation points must contain finite numbers');
+    }
+  }
+
+  const nameBuf = Buffer.from(`${name}\0`, 'utf8');
+  const headerSize = nameBuf.length + 1 + 1 + 4 + resolutionBuf.length + 4;
+  const payloadSize = headerSize + points.length * 16;
+  if (payloadSize > 0xffff_ffff) {
+    throw new RangeError('Automation payload is too large');
+  }
+
+  const payload = Buffer.alloc(payloadSize);
+  let offset = 0;
+  nameBuf.copy(payload, offset);
+  offset += nameBuf.length;
+  payload.writeUInt8(curve, offset);
+  offset += 1;
+  payload.writeUInt8(enabled ? 1 : 0, offset);
+  offset += 1;
+  payload.writeUInt32LE(resolutionBuf.length, offset);
+  offset += 4;
+  resolutionBuf.copy(payload, offset);
+  offset += resolutionBuf.length;
+  payload.writeUInt32LE(points.length, offset);
+  offset += 4;
+  for (const point of points) {
+    payload.writeDoubleLE(point.time, offset);
+    offset += 8;
+    payload.writeDoubleLE(point.value, offset);
+    offset += 8;
+  }
+
+  const commandBuffer = Buffer.alloc(5 + payloadSize);
+  commandBuffer.writeUInt8(command, 0);
+  commandBuffer.writeUInt32LE(payloadSize, 1);
+  payload.copy(commandBuffer, 5);
+  return commandBuffer;
+}
+
 export function encodeCreateAutomation(
   name: string,
   curve: AutomationCurveCode,
   enabled: boolean,
-  resolution: number,
-  resolutionScale: number,
-  highPrecision: boolean,
+  resolutionDecimal: string,
   points: AutomationPoint[],
 ): Buffer {
-  const nameBuf = Buffer.from(name + '\0', 'utf-8');
-  const nPoints = points.length;
-  // header: name\0 + curve(1) + enabled(1) + resolution(8) + resolutionScale(4) + highPrecision(1) + n_points(4)
-  const headerSize = nameBuf.length + 1 + 1 + 8 + 4 + 1 + 4;
-  const pointsSize = nPoints * 16;
-  const payloadSize = headerSize + pointsSize;
-
-  const payload = Buffer.alloc(payloadSize);
-  let offset = 0;
-
-  // channel name (null-terminated)
-  nameBuf.copy(payload, offset);
-  offset += nameBuf.length;
-
-  // curve (u8)
-  payload.writeUInt8(curve, offset);
-  offset += 1;
-
-  // enabled (u8)
-  payload.writeUInt8(enabled ? 1 : 0, offset);
-  offset += 1;
-
-  // resolution (f64 LE)
-  payload.writeDoubleLE(resolution, offset);
-  offset += 8;
-
-  // resolutionScale (i32 LE)
-  payload.writeInt32LE(resolutionScale, offset);
-  offset += 4;
-
-  // highPrecision (u8)
-  payload.writeUInt8(highPrecision ? 1 : 0, offset);
-  offset += 1;
-
-  // n_points (u32 LE)
-  payload.writeUInt32LE(nPoints, offset);
-  offset += 4;
-
-  // points array
-  for (const pt of points) {
-    payload.writeDoubleLE(pt.time, offset);
-    offset += 8;
-    payload.writeDoubleLE(pt.value, offset);
-    offset += 8;
-  }
-
-  // Wrap in 5-byte command header
-  const cmd = Buffer.alloc(5 + payloadSize);
-  cmd.writeUInt8(CMD_CREATE_AUTOMATION, 0);
-  cmd.writeUInt32LE(payloadSize, 1);
-  payload.copy(cmd, 5);
-
-  return cmd;
+  return encodeAutomation(CMD_CREATE_AUTOMATION, name, curve, enabled, resolutionDecimal, points);
 }
 
 /**
@@ -234,15 +295,10 @@ export function encodeUpdateAutomation(
   name: string,
   curve: AutomationCurveCode,
   enabled: boolean,
-  resolution: number,
-  resolutionScale: number,
-  highPrecision: boolean,
+  resolutionDecimal: string,
   points: AutomationPoint[],
 ): Buffer {
-  const buf = encodeCreateAutomation(name, curve, enabled, resolution, resolutionScale, highPrecision, points);
-  // Replace the command byte from CREATE (0x20) to UPDATE (0x21)
-  buf.writeUInt8(CMD_UPDATE_AUTOMATION, 0);
-  return buf;
+  return encodeAutomation(CMD_UPDATE_AUTOMATION, name, curve, enabled, resolutionDecimal, points);
 }
 
 /**

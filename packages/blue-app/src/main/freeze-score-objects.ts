@@ -5,7 +5,7 @@
  *   - Freeze: render source object to project-local freezeN.wav/aif, replace with FrozenSoundObject
  *   - Unfreeze: restore nested source, reference-count cleanup of freeze file
  *
- * Uses Utility settings (separate executable + freeze flags), not Disk Render settings.
+ * Uses Utility freeze flags, not a caller-selected Csound executable.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,6 +27,7 @@ import type { ScoreObjectEditorTargetSnapshot } from '../shared/project-editor';
 import { resolveTimelineTarget } from '../shared/project-editor';
 import type { UtilitySettingsSnapshot } from '../shared/program-settings';
 import type {
+  FreezeItemStatus,
   FreezeOperationResult,
   FreezeRejectedTarget,
   RenderOperationStatus,
@@ -50,9 +51,22 @@ export interface FreezeContext {
 
 export type StatusCallback = (status: RenderOperationStatus) => void;
 
+/** Per-object progress sink for freeze/unfreeze item events. */
+export type FreezeItemEventCallback = (event: FreezeItemStatus) => void;
+
 export interface FreezeExecutionSeam {
-  /** Run Csound with the given args in the project directory. Returns exit code. */
-  runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string }>;
+  /**
+   * Run Csound with the given args in the project directory. Returns exit code.
+   * The optional per-call onOutput receives streamed subprocess output in
+   * addition to any seam-level output sink.
+   */
+  runCsound(
+    args: string[],
+    cwd: string,
+    onProgress?: (progress: number) => void,
+    totalDuration?: number,
+    onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
+  ): Promise<{ exitCode: number; stderr: string; stdout?: string; cancelled?: boolean }>;
 }
 
 // ─── Filename Allocation ───
@@ -222,8 +236,30 @@ export async function executeFreezeUnfreeze(
   operationId: string,
   statusCallback: StatusCallback,
   executionSeam: FreezeExecutionSeam,
+  itemEventCallback?: FreezeItemEventCallback,
 ): Promise<FreezeOperationResult> {
   const { data, projectDirectory, isCancelled } = context;
+
+  const emitItemEvent = (
+    selectionId: string,
+    name: string,
+    action: 'freeze' | 'unfreeze',
+    phase: 'pending' | 'running' | 'complete' | 'failed',
+    options: Partial<Pick<FreezeItemStatus, 'freezeFile' | 'reason' | 'outputAppend' | 'outputType'>> = {},
+  ): void => {
+    itemEventCallback?.({
+      operationId,
+      selectionId,
+      name,
+      action,
+      phase,
+      freezeFile: options.freezeFile ?? null,
+      reason: options.reason ?? null,
+      outputAppend: options.outputAppend ?? null,
+      outputType: options.outputType ?? null,
+    });
+  };
+
   type StagedReplacement = {
     item: { target: ScoreObjectEditorTargetSnapshot; sObj: SoundObject; isFrozen: boolean };
     replacement: SoundObject;
@@ -285,6 +321,15 @@ export async function executeFreezeUnfreeze(
 
   const { resolved, rejected } = resolveFreezeTargets(data, targets);
 
+  for (const item of resolved) {
+    emitItemEvent(item.target.selectionId, item.sObj.getName(), item.isFrozen ? 'unfreeze' : 'freeze', 'pending', {
+      freezeFile: item.isFrozen ? (item.sObj as FrozenSoundObject).getFrozenWaveFileName() : null,
+    });
+  }
+  for (const rejectedTarget of rejected) {
+    emitItemEvent(rejectedTarget.selectionId, '', 'freeze', 'failed', { reason: rejectedTarget.reason });
+  }
+
   if (isCancelled?.()) return reportCancelled();
   if (resolved.length === 0 || rejected.length > 0) {
     return reportFailure(
@@ -314,8 +359,12 @@ export async function executeFreezeUnfreeze(
         const nested = frozen.getFrozenSoundObject();
         const fileName = frozen.getFrozenWaveFileName();
         const artifactPath = resolveFreezeArtifactPath(projectDirectory, fileName);
+        emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'running', { freezeFile: fileName });
         if (!nested) {
           rejected.push({ selectionId: item.target.selectionId, reason: 'Frozen object has no nested source to restore.' });
+          emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'failed', {
+            reason: 'Frozen object has no nested source to restore.',
+          });
           continue;
         }
         const restored = nested.deepCopy() as SoundObject;
@@ -330,6 +379,7 @@ export async function executeFreezeUnfreeze(
         continue;
       }
 
+      emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running');
       statusCallback({
         operationId,
         kind: 'freeze',
@@ -341,16 +391,27 @@ export async function executeFreezeUnfreeze(
       });
 
       try {
-        const freezeResult = await freezeOneObject(context, item.sObj, executionSeam, (progress) => {
-          statusCallback({
-            operationId,
-            kind: 'freeze',
-            phase: 'rendering',
-            message: `Freezing object ${itemIndex + 1} of ${resolved.length}: "${item.sObj.getName()}"...`,
-            progress: objectProgressStart + (objectProgressSpan * progress / 100),
-            outputPath: null,
-            error: null,
-          });
+        const freezeResult = await freezeOneObject(context, item.sObj, executionSeam, {
+          onProgress: (progress) => {
+            statusCallback({
+              operationId,
+              kind: 'freeze',
+              phase: 'rendering',
+              message: `Freezing object ${itemIndex + 1} of ${resolved.length}: "${item.sObj.getName()}"...`,
+              progress: objectProgressStart + (objectProgressSpan * progress / 100),
+              outputPath: null,
+              error: null,
+            });
+          },
+          onStarted: (fileName) => {
+            emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running', { freezeFile: fileName });
+          },
+          onOutput: (text, outputType) => {
+            emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running', {
+              outputAppend: text,
+              outputType,
+            });
+          },
         });
         if (isCancelled?.()) {
           const artifactPath = resolveFreezeArtifactPath(projectDirectory, freezeResult.fileName);
@@ -391,7 +452,9 @@ export async function executeFreezeUnfreeze(
           return reportCancelled();
         }
         const message = err instanceof Error ? err.message : String(err);
-        rejected.push({ selectionId: item.target.selectionId, reason: `Freeze failed: ${message}` });
+        const reason = `Freeze failed: ${message}`;
+        rejected.push({ selectionId: item.target.selectionId, reason });
+        emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'failed', { reason });
       }
     }
   } finally {
@@ -433,6 +496,19 @@ export async function executeFreezeUnfreeze(
     layerResult!.layer[layerResult!.objectIndex] = replacement.replacement;
   }
 
+  for (const replacement of staged) {
+    const freezeFile = replacement.item.isFrozen
+      ? (replacement.item.sObj as FrozenSoundObject).getFrozenWaveFileName()
+      : (replacement.replacement as FrozenSoundObject).getFrozenWaveFileName();
+    emitItemEvent(
+      replacement.item.target.selectionId,
+      replacement.item.sObj.getName(),
+      replacement.item.isFrozen ? 'unfreeze' : 'freeze',
+      'complete',
+      { freezeFile },
+    );
+  }
+
   const deletedFiles: string[] = [];
   for (const artifact of staged.flatMap((replacement) => replacement.unfreezeArtifact ? [replacement.unfreezeArtifact] : [])) {
     if (countFreezeReferences(data.getScore(), artifact.fileName) === 0) {
@@ -468,11 +544,19 @@ interface FreezeOneResult {
   durationSeconds: number;
 }
 
+interface FreezeOneCallbacks {
+  onProgress?: (progress: number) => void;
+  /** Invoked once the freeze filename has been allocated, before Csound runs. */
+  onStarted?: (fileName: string) => void;
+  /** Streamed Csound subprocess output for this item. */
+  onOutput?: (text: string, type: 'stdout' | 'stderr') => void;
+}
+
 async function freezeOneObject(
   context: FreezeContext,
   sourceObject: SoundObject,
   executionSeam: FreezeExecutionSeam,
-  onProgress?: (progress: number) => void,
+  callbacks: FreezeOneCallbacks = {},
 ): Promise<FreezeOneResult> {
   const { data, projectDirectory, utility, platform } = context;
 
@@ -489,6 +573,7 @@ async function freezeOneObject(
   // Allocate freeze filename
   const fileName = allocateFreezeFileName(projectDirectory, platform);
   const outputPath = path.join(projectDirectory, fileName);
+  callbacks.onStarted?.(fileName);
 
   // Write temp CSD
   const csdPath = await writeTempCsdSnapshot(csdText, projectDirectory);
@@ -498,14 +583,17 @@ async function freezeOneObject(
 
   // Build and run command
   const cmd = planFreezeCommand({
-    csoundExecutable: utility.csoundExecutable,
     freezeFlags: utility.freezeFlags,
     outputFilePath: outputPath,
     csdPath,
   });
 
   try {
-    const result = await executionSeam.runCsound(cmd.executable, cmd.args, projectDirectory, onProgress);
+    const result = await executionSeam.runCsound(cmd.args, projectDirectory, callbacks.onProgress, undefined, callbacks.onOutput);
+
+    if (result.cancelled || context.isCancelled?.()) {
+      throw new Error('Operation cancelled.');
+    }
 
     if (result.exitCode !== 0) {
       throw new Error(`Csound exited with code ${result.exitCode}. ${result.stderr}`);

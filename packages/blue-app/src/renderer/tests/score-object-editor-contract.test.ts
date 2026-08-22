@@ -9,11 +9,13 @@ import {
   TimePosition,
   PolyObject,
   SoundLayer,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   External,
   Track,
   TrackerObject,
+  AudioFile,
+  FrozenSoundObject,
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
@@ -92,8 +94,8 @@ function createDataWithAudioClip(): {
 } {
   const data = new BlueData();
   data.getScore().length = 0;
-  const alg = new AudioLayerGroup();
-  const layer = new AudioLayer();
+  const alg = new TrackLayerGroup();
+  const layer = new TrackLayer();
   const clip = new AudioClip();
   clip.setName('Test Clip');
   clip.setAudioFile('test.wav');
@@ -483,5 +485,117 @@ describe('Score patches — updateTypeSpecificEditor', () => {
 
     expect(to.getTracks().getTrack(0)?.getTrackerNote(1).getValue(1)).toBe('8.07');
     expect(to.getTracks().size()).toBe(2);
+  });
+
+  it('handles AudioFile document creation and patches', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = new SoundLayer();
+    const af = new AudioFile();
+    af.setName('Old Name');
+    af.setSoundFileName('old_path.wav');
+    af.setCsoundPostCode('; initial post code');
+    layer.push(af);
+    poly.push(layer);
+    data.getScore().push(poly);
+
+    const target: ScoreObjectEditorTargetSnapshot = {
+      selectionId: 'sobj-0-0',
+      selectedObjectType: 'AudioFile',
+      editorObjectType: 'AudioFile',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+
+    const doc = createScoreObjectEditorDocument(data, { target });
+    expect(doc).not.toBeNull();
+    expect(doc!.editor.kind).toBe('audioFile');
+    if (doc!.editor.kind === 'audioFile') {
+      expect(doc!.editor.filePath).toBe('old_path.wav');
+      expect(doc!.editor.csoundPostCode).toBe('; initial post code');
+      expect(doc!.editor.canChooseFile).toBe(true);
+    }
+
+    // replaceAudioFileSource patch
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'replaceAudioFileSource',
+          target,
+          filePath: 'media/new_track.wav',
+          name: 'new_track.wav',
+        },
+      }),
+    ).toBe(true);
+    expect(af.getSoundFileName()).toBe('media/new_track.wav');
+    expect(af.getName()).toBe('new_track.wav');
+
+    // updateAudioFilePostCode patch
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateAudioFilePostCode',
+          target,
+          csoundPostCode: 'aChannel1 = aChannel1 * 0.8',
+        },
+      }),
+    ).toBe(true);
+    expect(af.getCsoundPostCode()).toBe('aChannel1 = aChannel1 * 0.8');
+  });
+
+  it('handles FrozenSoundObject document creation and rejects file path edits', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = new SoundLayer();
+    const inner = new GenericScore();
+    inner.setName('Source Score');
+    const fso = new FrozenSoundObject();
+    fso.setFrozenSoundObject(inner);
+    fso.setFrozenWaveFileName('freeze0.wav');
+    fso.setNumChannels(2);
+    layer.push(fso);
+    poly.push(layer);
+    data.getScore().push(poly);
+
+    const target: ScoreObjectEditorTargetSnapshot = {
+      selectionId: 'sobj-0-0',
+      selectedObjectType: 'FrozenSoundObject',
+      editorObjectType: 'FrozenSoundObject',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      supportsTimeBehavior: false,
+      supportsRepeatPoint: false,
+      supportsNoteProcessorChain: false,
+    };
+
+    const doc = createScoreObjectEditorDocument(data, { target });
+    expect(doc).not.toBeNull();
+    expect(doc!.editor.kind).toBe('frozenSoundObject');
+    if (doc!.editor.kind === 'frozenSoundObject') {
+      expect(doc!.editor.frozenWaveFileName).toBe('freeze0.wav');
+      expect(doc!.editor.sourceName).toBe('Source Score');
+      expect(doc!.editor.sourceType).toBe('GenericScore');
+      expect(doc!.editor.numChannels).toBe(2);
+      expect(doc!.editor.canSaveCopy).toBe(true);
+    }
+
+    // Attempting to mutate file path is rejected
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target,
+          patch: { filePath: 'arbitrary.wav' },
+        },
+      }),
+    ).toBe(false);
+    expect(fso.getFrozenWaveFileName()).toBe('freeze0.wav');
   });
 });

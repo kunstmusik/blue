@@ -97,7 +97,6 @@ export function LabelText({
   lineHeight = 22,
   italic = false,
   bold = true,
-  fontSize = 11,
 }: {
   labelLines: string[];
   color: string;
@@ -107,7 +106,6 @@ export function LabelText({
   lineHeight?: number;
   italic?: boolean;
   bold?: boolean;
-  fontSize?: number;
 }) {
   if (!show || labelLines.length === 0) return null;
   return (
@@ -115,14 +113,12 @@ export function LabelText({
       {labelLines.map((line, i) => (
         <span
           key={i}
-          className="absolute truncate"
+          className="absolute truncate text-role-subheadline"
           style={{
             left: xOffset,
             top: yStart - 15 + i * lineHeight,
             right: 2,
             height: 16,
-            lineHeight: '16px',
-            fontSize,
             color,
             fontStyle: italic ? 'italic' : 'normal',
             fontWeight: bold ? 'bold' : 'normal',

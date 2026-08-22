@@ -28,12 +28,9 @@ export default function DiskRenderSettings({
       title="Disk Render"
       dependencyNote="These settings are used by Render to Disk, Render and Play, and Render and Open. Project settings supply the CSD header and advanced disk options."
     >
-      <SettingsField
-        label="Csound Executable"
-        value={settings.csoundExecutable}
-        onChange={(value) => set('csoundExecutable', value)}
-        placeholder="/usr/local/bin/csound"
-      />
+      <div className="mb-4 text-role-callout text-app-text-subtle">
+        Disk rendering runs through the managed Blue Engine Csound runtime. The legacy executable value remains preserved for downgrade compatibility.
+      </div>
 
       <SettingsSubsectionTitle>Project Setting Defaults</SettingsSubsectionTitle>
 

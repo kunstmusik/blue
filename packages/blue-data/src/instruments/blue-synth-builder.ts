@@ -13,6 +13,7 @@ import { BSBGraphicInterface, GridSettingsData } from "./blue-synth-builder/bsb-
 import { BSBGroup } from "./blue-synth-builder/bsb-group";
 import { BSBWidget } from "./blue-synth-builder/bsb-widget";
 import { Parameter, AutomationCurve } from "../automation/parameter";
+import { JavaDecimal, parseJavaDecimal, snapToResolutionJava } from '../automation/java-decimal';
 import { BSBCheckBox } from "./blue-synth-builder/bsb-check-box";
 import { BSBHSlider } from "./blue-synth-builder/bsb-hslider";
 import { BSBXYController } from "./blue-synth-builder/bsb-xy-controller";
@@ -76,20 +77,17 @@ interface BSBParameterSpec {
   fixedValue: number;
   minimum: number;
   maximum: number;
-  resolution: number;
+  resolution: JavaDecimal;
+}
+
+function parseRequiredDecimal(text: string): JavaDecimal {
+  const result = parseJavaDecimal(text);
+  if (!result.ok) throw new Error(`${result.code}: ${result.message}`);
+  return result.value;
 }
 
 function clampToRange(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
-}
-
-function snapToResolution(value: number, minimum: number, maximum: number, resolution: number): number {
-  if (!Number.isFinite(resolution) || resolution <= 0) {
-    return clampToRange(value, minimum, maximum);
-  }
-
-  const snapped = minimum + (Math.round((value - minimum) / resolution) * resolution);
-  return clampToRange(snapped, minimum, maximum);
 }
 
 function rescaleValue(
@@ -98,27 +96,29 @@ function rescaleValue(
   oldMaximum: number,
   newMinimum: number,
   newMaximum: number,
-  resolution: number,
+  resolution: JavaDecimal,
 ): number {
   if (oldMaximum === oldMinimum) {
-    return snapToResolution(newMinimum, newMinimum, newMaximum, resolution);
+    return snapToResolutionJava(newMinimum, newMinimum, newMaximum, resolution);
   }
 
   const normalized = (value - oldMinimum) / (oldMaximum - oldMinimum);
   const nextValue = newMinimum + (normalized * (newMaximum - newMinimum));
-  return snapToResolution(nextValue, newMinimum, newMaximum, resolution);
+  return snapToResolutionJava(nextValue, newMinimum, newMaximum, resolution);
 }
 
-function getWidgetResolution(widget: BSBWidget): number {
+function getWidgetResolution(widget: BSBWidget): JavaDecimal {
   if (widget instanceof BSBHSlider || widget instanceof BSBVSlider) {
-    return widget.resolution;
+    return widget.resolutionDecimal;
   }
 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
-    return widget.resolution;
+    return widget.resolutionDecimal;
   }
 
-  return -1;
+  const result = parseJavaDecimal('-1');
+  if (!result.ok) throw new Error('default BSB parameter resolution failed to parse');
+  return result.value;
 }
 
 function rescaleScalarWidgetValue(
@@ -146,7 +146,7 @@ function rescaleWidgetRangeMinimum(widget: BSBWidget, newMinimum: number): void 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.minimum = newMinimum;
     for (const slider of widget.sliders) {
-      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, newMinimum, oldMaximum, widget.resolution));
+      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, newMinimum, oldMaximum, widget.resolutionDecimal));
     }
     return;
   }
@@ -164,7 +164,7 @@ function rescaleWidgetRangeMaximum(widget: BSBWidget, newMaximum: number): void 
   if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
     widget.maximum = newMaximum;
     for (const slider of widget.sliders) {
-      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, oldMinimum, newMaximum, widget.resolution));
+      slider.setValue(rescaleValue(slider.value, oldMinimum, oldMaximum, oldMinimum, newMaximum, widget.resolutionDecimal));
     }
     return;
   }
@@ -417,14 +417,14 @@ export class BlueSynthBuilder extends Instrument {
           fixedValue: widget.xValue,
           minimum: widget.xMin,
           maximum: widget.xMax,
-          resolution: -1,
+          resolution: getWidgetResolution(widget),
         },
         {
           name: `${objectName}Y`,
           fixedValue: widget.yValue,
           minimum: widget.yMin,
           maximum: widget.yMax,
-          resolution: -1,
+          resolution: getWidgetResolution(widget),
         },
       ];
     }
@@ -435,7 +435,7 @@ export class BlueSynthBuilder extends Instrument {
         fixedValue: slider.value,
         minimum: widget.minimum,
         maximum: widget.maximum,
-        resolution: widget.resolution,
+        resolution: widget.resolutionDecimal,
       }));
     }
 
@@ -445,7 +445,7 @@ export class BlueSynthBuilder extends Instrument {
         fixedValue: widget.selected ? 1 : 0,
         minimum: 0,
         maximum: 1,
-        resolution: 1,
+        resolution: parseRequiredDecimal('1'),
       }];
     }
 
@@ -455,7 +455,7 @@ export class BlueSynthBuilder extends Instrument {
         fixedValue: widget.selectedIndex,
         minimum: 0,
         maximum: Math.max(0, widget.dropdownItems.length - 1),
-        resolution: 1,
+        resolution: parseRequiredDecimal('1'),
       }];
     }
 
@@ -465,7 +465,7 @@ export class BlueSynthBuilder extends Instrument {
         fixedValue: widget.value,
         minimum: widget.minimum,
         maximum: widget.maximum,
-        resolution: widget.resolution,
+        resolution: widget.resolutionDecimal,
       }];
     }
 
@@ -476,7 +476,7 @@ export class BlueSynthBuilder extends Instrument {
         fixedValue,
         minimum: widget.minimum,
         maximum: widget.maximum,
-        resolution: -1,
+        resolution: parseRequiredDecimal('-1'),
       }];
     }
 
@@ -529,7 +529,7 @@ export class BlueSynthBuilder extends Instrument {
         parameter.setName(spec.name);
         parameter.setMinimum(spec.minimum);
         parameter.setMaximum(spec.maximum);
-        parameter.setResolution(spec.resolution);
+        parameter.setResolutionDecimal(spec.resolution);
         if (!parameter.isAutomationEnabled()) {
           parameter.setFixedValue(spec.fixedValue);
         }
@@ -734,22 +734,15 @@ export class BlueSynthBuilder extends Instrument {
   }
 
   applyPreset(presetUniqueId: string): boolean {
-    console.log('applyPreset in BSB:', presetUniqueId);
     if (!this._presetGroup) return false;
     const preset = this._presetGroup.findPresetByUniqueId(presetUniqueId);
-    if (!preset) {
-      console.log('preset not found');
-      return false;
-    }
+    if (!preset) return false;
 
     const valuesMap = preset.getValuesMap();
-    console.log('valuesMap size:', valuesMap.size);
-    let updatedCount = 0;
     const visit = (widgets: BSBWidget[]): void => {
       for (const widget of widgets) {
         const val = valuesMap.get(widget.objectName);
         if (val !== undefined) {
-          console.log(`Updating widget ${widget.objectName} to ${val}`);
           if (typeof widget.setPresetValue === 'function') {
             widget.setPresetValue(val);
           } else {
@@ -771,8 +764,6 @@ export class BlueSynthBuilder extends Instrument {
               param.setFixedValue(widget.value);
             }
           }
-
-          updatedCount++;
         }
         if (widget instanceof BSBGroup) {
           visit(widget.getChildren());
@@ -780,7 +771,6 @@ export class BlueSynthBuilder extends Instrument {
       }
     };
     visit(this._graphicInterface.getRootGroup().getChildren());
-    console.log('updated widgets:', updatedCount);
     this.syncParametersFromWidgets();
     this._graphicInterfaceXML = null;
     this._presetGroup.setCurrentPresetUniqueId(presetUniqueId);
@@ -956,6 +946,31 @@ export class BlueSynthBuilder extends Instrument {
             rescaleWidgetRangeMaximum(widget, value);
           }
           break;
+        case "resolution":
+          if (
+            widget instanceof BSBHSlider
+            || widget instanceof BSBVSlider
+            || widget instanceof BSBHSliderBank
+            || widget instanceof BSBVSliderBank
+          ) {
+            if (typeof value === "string") {
+              widget.setResolutionText(value);
+            } else if (typeof value === "number") {
+              widget.resolution = value;
+            }
+          }
+          break;
+        case "resolutionDecimal":
+          if (
+            typeof value === "string"
+            && (widget instanceof BSBHSlider
+              || widget instanceof BSBVSlider
+              || widget instanceof BSBHSliderBank
+              || widget instanceof BSBVSliderBank)
+          ) {
+            widget.setResolutionText(value);
+          }
+          break;
         default:
           if (key in widget) {
             (widget as unknown as Record<string, unknown>)[key] = value;
@@ -1079,6 +1094,7 @@ export class BlueSynthBuilder extends Instrument {
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element("instrument");
     elem.setAttribute("type", "blue.orchestra.BlueSynthBuilder");
+    elem.setAttribute("enabled", this._enabled.toString());
     elem.setAttribute("editEnabled", this._editEnabled.toString());
     elem.addElement("name").setText(this._name);
     elem.addElement("comment").setText(this._comment);
@@ -1106,6 +1122,8 @@ export class BlueSynthBuilder extends Instrument {
     _objRefMap?: ObjRefLoadMap,
   ): BlueSynthBuilder {
     const bsb = new BlueSynthBuilder();
+
+    bsb._enabled = data.getAttribute("enabled") !== "false";
 
     const editEnabled = data.getAttribute("editEnabled");
     if (editEnabled !== null) bsb._editEnabled = editEnabled === "true";
@@ -1152,12 +1170,8 @@ export class BlueSynthBuilder extends Instrument {
 
     // Load opcode list (UDOs)
     const opcodeListElem = data.getElement("opcodeList");
-    console.log(
-      `[BSB] ${bsb._name || "unknown"}: opcodeList element found: ${!!opcodeListElem}`,
-    );
     if (opcodeListElem) {
       bsb._opcodeList = OpcodeList.loadFromXML(opcodeListElem);
-      console.log(`[BSB]   Loaded ${bsb._opcodeList.getOpcodes().length} UDOs`);
     }
 
     bsb.syncParametersFromWidgets();

@@ -6,6 +6,7 @@ import {
   SMPTE_FRAME_RATES,
   LAYER_HEIGHT_CHOICES,
   UDO_STYLE_CHOICES,
+  DEFAULT_LAYER_GROUP_TYPE_CHOICES,
 } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
 import SettingsField, {
@@ -41,6 +42,18 @@ export default function ProjectDefaultsSettings({
         checked={settings.mixerEnabled}
         onChange={(checked) => set('mixerEnabled', checked)}
       />
+
+      <SettingsSelectField
+        label="Default Layer Group"
+        value={settings.defaultLayerGroupType}
+        onChange={(value) => set('defaultLayerGroupType', value as 'TRACK' | 'SOUND_OBJECT')}
+      >
+        {DEFAULT_LAYER_GROUP_TYPE_CHOICES.map((groupType) => (
+          <option key={groupType} value={groupType}>
+            {groupType === 'TRACK' ? 'Track Layer' : 'SoundObject Layer'}
+          </option>
+        ))}
+      </SettingsSelectField>
 
       <SettingsSelectField
         label="Default Layer Height"

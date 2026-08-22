@@ -247,7 +247,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
   }, [sourceIndex, applyPatch]);
 
   const ctxItemClass =
-    'cursor-pointer rounded-sm px-3 py-1 text-body text-app-text outline-none data-[highlighted]:bg-app-highlight';
+    'cursor-pointer rounded-sm px-3 py-1 text-role-body text-app-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -273,7 +273,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
             {renaming ? (
               <input
                 ref={inputRef}
-                className="ml-1 h-4 rounded-sm border border-app-warning/60 bg-app-text-strong/40 px-1 text-body leading-none text-black outline-none"
+                className="ml-1 h-4 rounded-sm border border-app-warning/60 bg-app-text-strong/40 px-1 text-role-body text-black outline-none"
                 style={{ width: Math.max(72, renameValue.length * 8) }}
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
@@ -287,7 +287,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
               />
             ) : (
               <span
-                className="ml-1 text-body leading-none text-black whitespace-nowrap select-none"
+                className="ml-1 text-role-body text-black whitespace-nowrap select-none"
                 title={`${marker.name} [${marker.time.toFixed(2)}]`}
               >
                 {marker.name}

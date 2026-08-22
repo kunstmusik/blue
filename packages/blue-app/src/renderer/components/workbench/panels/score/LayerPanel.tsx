@@ -1,11 +1,12 @@
 import { GROUP_SPACER } from "./types";
 import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from "./types";
 import type { SnapValueName } from "@blue/data";
-import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
+import type { MeterMapSnapshot, TempoMapSnapshot } from "../../../../../shared/project-editor";
 import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
-import AudioLayerGroupCanvas from "./layer-groups/AudioLayerGroupCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
+import { computePatternExtentBeats } from "./layer-groups/patterns-timeline-utils";
+import TrackLayerGroupCanvas from "./layer-groups/TrackLayerGroupCanvas";
 import MultiLineOverlay from "./automation/MultiLineOverlay";
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
@@ -28,6 +29,7 @@ interface Props {
   snapEnabled: boolean;
   snapValue: SnapValueName;
   tempo: number;
+  tempoMap: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
 }
@@ -45,6 +47,7 @@ export default function LayerPanel({
   snapEnabled,
   snapValue,
   tempo,
+  tempoMap,
   smpteFrameRate,
   meterMap,
 }: Props) {
@@ -53,7 +56,7 @@ export default function LayerPanel({
   if (visibleGroups.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-blue-muted text-sm"
+        className="flex items-center justify-center text-blue-muted text-role-body"
         style={{ minHeight: 100 }}
       >
         No score layer groups in this project
@@ -61,7 +64,14 @@ export default function LayerPanel({
     );
   }
 
-  const contentWidth = totalBeats * pixelsPerBeat;
+  // The content width must cover the shared timeline and any active pattern
+  // cell extent that reaches beyond it.
+  const maxPatternExtentBeats = visibleGroups.reduce((max, group) => (
+    group.groupType === 'patterns'
+      ? Math.max(max, computePatternExtentBeats(group))
+      : max
+  ), 0);
+  const contentWidth = Math.max(totalBeats, maxPatternExtentBeats) * pixelsPerBeat;
 
   return (
     <div style={{ minWidth: contentWidth }} className="relative bg-app-canvas">
@@ -120,14 +130,13 @@ export default function LayerPanel({
                 {spacer}
               </div>
             );
-          case "audio":
+          case "patterns":
             return (
               <div key={group.groupId}>
-                <AudioLayerGroupCanvas
+                <PatternsLayerGroupCanvas
                   group={group}
-                  rootGroupIndex={gi}
-                  allLayerGroups={visibleGroups}
-                  mode={mode}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
                   snapEnabled={snapEnabled}
@@ -139,12 +148,35 @@ export default function LayerPanel({
                 {spacer}
               </div>
             );
-          case "patterns":
+          case "track":
             return (
-              <div key={group.groupId}>
-                <PatternsLayerGroupCanvas
+              <div key={group.groupId} className="not-last:border-b border-app-border/40">
+                <TrackLayerGroupCanvas
                   group={group}
+                  allLayerGroups={visibleGroups}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
+                  scoreRootGroupId={scoreRootGroupId ?? group.groupId}
+                  scoreContainerPath={scoreRootGroupId ? scoreContainerPath : []}
+                  mode={mode}
+                  totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
+                  snapEnabled={snapEnabled}
+                  snapValue={snapValue}
+                  tempo={tempo}
+                  tempoMap={tempoMap}
+                  smpteFrameRate={smpteFrameRate}
+                  meterMap={meterMap}
+                  onDoubleClickObject={(objectId) => {
+                    const item = group.layers
+                      .flatMap((layer) => layer.items)
+                      .find((candidate) => candidate.objectId === objectId);
+                    if (!item?.editorTarget?.location) return;
+                    onOpenNested(objectId, item.name, item.editorTarget.location, {
+                      rootGroupId: scoreRootGroupId ?? group.groupId,
+                      containerPath: scoreRootGroupId ? scoreContainerPath : [],
+                    });
+                  }}
                 />
                 {spacer}
               </div>

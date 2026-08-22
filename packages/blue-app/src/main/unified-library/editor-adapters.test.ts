@@ -48,4 +48,196 @@ describe('Library editor adapters', () => {
     expect(result.document).toMatchObject({ kind: 'udo', snapshot: { name: 'After' } });
     expect(result.payloadXml).toContain('After');
   });
+
+  it('hydrates and patches BlueX7 library drafts preserving unknown XML', () => {
+    const rawXml = `<instrument type="blue.orchestra.BlueX7" enabled="true" unknownRootAttr="preserveMe">
+  <name>FM Lead</name>
+  <comment>Original</comment>
+  <customVendorData>important</customVendorData>
+  <algorithmCommonData>
+    <keyTranspose>24</keyTranspose>
+    <algorithm>19</algorithm>
+    <feedback>6</feedback>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+    <operator>true</operator>
+  </algorithmCommonData>
+  <lfoData>
+    <speed>35</speed>
+    <delay>0</delay>
+    <PMD>0</PMD>
+    <AMD>0</AMD>
+    <wave>0</wave>
+    <sync>1</sync>
+  </lfoData>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <operator>
+    <mode>0</mode>
+    <sync>1</sync>
+    <freqCoarse>1</freqCoarse>
+    <freqFine>0</freqFine>
+    <detune>0</detune>
+    <breakpoint>0</breakpoint>
+    <curveLeft>0</curveLeft>
+    <curveRight>0</curveRight>
+    <depthLeft>0</depthLeft>
+    <depthRight>0</depthRight>
+    <keyboardRateScaling>0</keyboardRateScaling>
+    <outputLevel>99</outputLevel>
+    <velocitySensitivity>0</velocitySensitivity>
+    <modulationAmplitude>0</modulationAmplitude>
+    <modulationPitch>0</modulationPitch>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+    <envelopePoint x="0" y="0"/>
+  </operator>
+  <envelopePoint x="0" y="0"/>
+  <envelopePoint x="0" y="0"/>
+  <envelopePoint x="0" y="0"/>
+  <envelopePoint x="0" y="0"/>
+  <csoundPostCode>blueMixerOut aout, aout</csoundPostCode>
+</instrument>`;
+
+    const doc = registry.hydrate('instrument', rawXml, 'blue.orchestra.BlueX7', 'supported');
+    expect(doc.kind).toBe('instrument');
+    if (doc.kind === 'instrument') {
+      expect(doc.snapshot.type).toBe('blueX7');
+      expect(doc.snapshot.name).toBe('FM Lead');
+    }
+
+    const patched = registry.applyPatch(
+      'instrument',
+      rawXml,
+      {
+        kind: 'instrument',
+        patch: {
+          type: 'updateInstrument',
+          assignmentId: 'library-item',
+          patch: {
+            blueX7: {
+              type: 'setCommonField',
+              field: 'algorithm',
+              value: 7,
+            },
+          },
+        },
+      },
+    );
+
+    expect(patched.document.kind).toBe('instrument');
+    if (patched.document.kind === 'instrument' && patched.document.snapshot.type === 'blueX7') {
+      expect(patched.document.snapshot.voice.common.algorithm).toBe(7);
+    }
+    expect(patched.payloadXml).toContain('unknownRootAttr="preserveMe"');
+    expect(patched.payloadXml).toContain('<customVendorData>important</customVendorData>');
+    expect(patched.payloadXml).toContain('<algorithm>7</algorithm>');
+  });
 });

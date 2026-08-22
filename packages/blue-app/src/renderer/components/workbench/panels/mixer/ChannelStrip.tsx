@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Effect, Element } from '@blue/data';
 import type {
@@ -12,6 +12,7 @@ import type {
   MixerSendEntrySnapshot,
   MixerSnapshot,
   ProjectEffectRef,
+  UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import { getLibraryTransferSourceType, type LibraryBrowseNode } from '../../../../../shared/unified-library';
 import {
@@ -29,6 +30,7 @@ import { createDefaultEffectXml } from '../../../../utils/program-settings-defau
 import EffectsChainContextMenu from './EffectsChainContextMenu';
 import { LibraryBlockDropMarker, LibraryDropZone } from '../../../libraries/LibraryDropMarker';
 import { useLibraryStore } from '../../../../stores/library-store';
+import { useProjectStore } from '../../../../stores/project-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 
@@ -48,6 +50,7 @@ const MIXER_SLIDER_MIN_H = 60;
 interface ChannelStripProps {
   mixer: MixerSnapshot;
   channel: MixerChannelSnapshot;
+  unnamedDisplayName?: string;
   isMaster: boolean;
   isSubChannel: boolean;
   onPatch: (patch: Record<string, unknown>) => void;
@@ -95,20 +98,26 @@ function createProjectEffectSnapshotFromXml(
   effectXml: string,
   entryId: string,
   projectRef: ProjectEffectRef,
+  projectUdos: readonly UdoDefinitionSnapshot[],
 ): EffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(effectXml));
-  return createEffectEditorSnapshot(effect, entryId, 'project', { projectRef });
+  return createEffectEditorSnapshot(effect, entryId, 'project', {
+    projectRef,
+    projectUdos: [...projectUdos],
+  });
 }
 
 function applyEffectPatchToSnapshot(
   snapshot: EffectEditorSnapshot,
   patch: EffectEditablePatch,
+  projectUdos: readonly UdoDefinitionSnapshot[],
 ): EffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(snapshot.effectXml));
   applyEffectEditablePatchToEffect(effect, patch);
   return createEffectEditorSnapshot(effect, snapshot.effectId, snapshot.ownerType, {
     projectRef: snapshot.projectRef,
     libraryRef: snapshot.libraryRef,
+    projectUdos: snapshot.ownerType === 'project' ? [...projectUdos] : [],
   });
 }
 
@@ -145,7 +154,28 @@ function MixerLevelSlider({
 }): React.ReactElement {
   const svgRef = useRef<SVGSVGElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
-  const sliderHeight = MIXER_SLIDER_MIN_H;
+  const sliderWrapperRef = useRef<HTMLDivElement>(null);
+  const [sliderHeight, setSliderHeight] = useState(MIXER_SLIDER_MIN_H);
+
+  useEffect(() => {
+    const sliderWrapper = sliderWrapperRef.current;
+    if (!sliderWrapper) return;
+
+    const updateSliderHeight = () => {
+      const nextHeight = Math.max(
+        MIXER_SLIDER_MIN_H,
+        Math.round(sliderWrapper.getBoundingClientRect().height),
+      );
+      setSliderHeight((currentHeight) => currentHeight === nextHeight ? currentHeight : nextHeight);
+    };
+
+    updateSliderHeight();
+    if (typeof ResizeObserver === 'undefined') return;
+    const resizeObserver = new ResizeObserver(updateSliderHeight);
+    resizeObserver.observe(sliderWrapper);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const range = max - min || 1;
   const pct = Math.max(0, Math.min(1, (value - min) / range));
   const trackX = MIXER_SLIDER_WIDTH / 2 - MIXER_TRACK_W / 2;
@@ -191,7 +221,11 @@ function MixerLevelSlider({
   );
 
   return (
-    <div className="mixer-level-slider-wrapper" style={{ width: MIXER_SLIDER_WIDTH }}>
+    <div
+      ref={sliderWrapperRef}
+      className="mixer-level-slider-wrapper"
+      style={{ width: MIXER_SLIDER_WIDTH }}
+    >
       <svg
         ref={svgRef}
         width={MIXER_SLIDER_WIDTH}
@@ -635,7 +669,7 @@ function MixerEffectEditorDialog({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex flex-none items-center border-b border-blue-border bg-app-surface-strong px-4 py-3">
-          <div className="text-sm font-medium text-app-text-strong">{title}</div>
+          <div className="text-role-headline font-bold text-app-text-strong">{title}</div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -658,6 +692,7 @@ function MixerEffectEditorDialog({
 export default function ChannelStrip({
   mixer,
   channel,
+  unnamedDisplayName,
   isMaster,
   isSubChannel,
   onPatch,
@@ -672,6 +707,7 @@ export default function ChannelStrip({
   const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
   const onSelectionChange = controlledOnSelectionChange ?? setLocalSelection;
+  const projectUdos = useProjectStore((state) => state.projectUdos);
   const [editingLevel, setEditingLevel] = useState(false);
   const [levelInput, setLevelInput] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -683,6 +719,14 @@ export default function ChannelStrip({
 
   const sliderValue = getSliderValue(channel.level);
   const canRename = isSubChannel || channel.association != null;
+  const hasExplicitName = channel.name.trim().length > 0;
+  const displayName = hasExplicitName ? channel.name : (unnamedDisplayName ?? 'Unnamed');
+  const isUsingUnnamedDisplayName = !hasExplicitName && unnamedDisplayName !== undefined;
+  const channelNameClassName = [
+    'mixer-channel-name',
+    canRename ? 'mixer-channel-name--editable' : '',
+    isUsingUnnamedDisplayName ? 'mixer-channel-name--fallback' : '',
+  ].filter(Boolean).join(' ');
 
   const validOutputTargets = useMemo(
     () => getValidOutputTargets(mixer, channel.id),
@@ -765,10 +809,10 @@ export default function ChannelStrip({
         mode: 'edit',
         chain,
         entryId: entry.entryId,
-        snapshot: createProjectEffectSnapshotFromXml(entry.effectXml, entry.entryId, projectRef),
+        snapshot: createProjectEffectSnapshotFromXml(entry.effectXml, entry.entryId, projectRef, projectUdos),
       });
     },
-    [channel.id],
+    [channel.id, projectUdos],
   );
 
   const handleAddNewEffectDialog = useCallback(
@@ -781,11 +825,11 @@ export default function ChannelStrip({
           mode: 'create',
           chain,
           entryId,
-          snapshot: createProjectEffectSnapshotFromXml(effectXml, entryId, projectRef),
+          snapshot: createProjectEffectSnapshotFromXml(effectXml, entryId, projectRef, projectUdos),
         });
       })();
     },
-    [channel.id],
+    [channel.id, projectUdos],
   );
 
   const handleEffectDialogPatch = useCallback((patch: EffectEditablePatch) => {
@@ -796,10 +840,10 @@ export default function ChannelStrip({
 
       return {
         ...current,
-        snapshot: applyEffectPatchToSnapshot(current.snapshot, patch),
+        snapshot: applyEffectPatchToSnapshot(current.snapshot, patch, projectUdos),
       };
     });
-  }, []);
+  }, [projectUdos]);
 
   const handleConfirmEffectDialog = useCallback(() => {
     if (!effectDialog) {
@@ -851,8 +895,8 @@ export default function ChannelStrip({
   const stripContent = (
     <>
       <div
-        className={`mixer-channel-name ${canRename ? 'mixer-channel-name--editable' : ''}`}
-        title={canRename ? `${channel.name} (double-click to rename)` : channel.name}
+        className={channelNameClassName}
+        title={canRename ? `${displayName} (double-click to rename)` : displayName}
         onDoubleClick={handleNameDoubleClick}
         ref={nameRef}
       >
@@ -870,7 +914,7 @@ export default function ChannelStrip({
             autoFocus
           />
         ) : (
-          channel.name || 'Unnamed'
+          displayName
         )}
       </div>
 

@@ -15,17 +15,13 @@ import { NoteList } from '../../sound-objects/note-list';
 import { SoundObject } from '../../sound-objects/sound-object';
 import { SoundObjectException } from '../../sound-objects/sound-object-exception';
 import { GenericScore } from '../../sound-objects/generic-score';
+import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registry';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { setScoreStart } from '../../utilities/score';
-
-/**
- * Normalize a Java class name type to a short name.
- */
-function normalizeType(type: string | null): string {
-  if (!type) return '';
-  return type.split('.').pop() || type;
-}
+import { TimeBehavior } from '../../sound-objects/time-behavior';
+import { TimePosition } from '../../time/time-position';
+import { TimeDuration } from '../../time/time-duration';
 
 export class PatternLayer implements Layer {
   private _soundObject: SoundObject;
@@ -42,11 +38,12 @@ export class PatternLayer implements Layer {
       this._soundObject = other._soundObject.deepCopy();
       this._patternData = new PatternData(other._patternData);
     } else {
-      // Default: GenericScore with 4-beat duration
+      // Mirrors the Java PatternLayer constructor: a GenericScore with a real
+      // beat-based start/duration (serializable) and no time behavior.
       this._soundObject = new GenericScore();
-      this._soundObject.setStartTime({ toBeats: () => 0 } as any);
-      (this._soundObject as any)._subjectiveDuration = { toBeats: () => 4 };
-      (this._soundObject as any)._timeBehavior = 'NONE';
+      this._soundObject.setStartTime(TimePosition.beats(0));
+      this._soundObject.setSubjectiveDuration(TimeDuration.beats(4));
+      this._soundObject.setTimeBehavior(TimeBehavior.NONE);
       this._patternData = new PatternData();
     }
   }
@@ -96,6 +93,9 @@ export class PatternLayer implements Layer {
   ): NoteList {
     const notes = new NoteList();
 
+    // Java Blue treats the row's embedded source object as a pattern template:
+    // its own score start must not offset every generated cell.
+    this._soundObject.setStartTime(TimePosition.beats(0));
     const baseNotes = this._soundObject.generateForCSD(context, compileData, -1, -1);
 
     let currentIndex = Math.floor(startTime / patternBeatsLength);
@@ -128,7 +128,7 @@ export class PatternLayer implements Layer {
     return elem;
   }
 
-  static loadFromXML(data: Element, _objRefMap?: ObjRefLoadMap): PatternLayer {
+  static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): PatternLayer {
     const layer = new PatternLayer();
 
     layer._name = data.getAttributeValue('name') ?? '';
@@ -141,13 +141,13 @@ export class PatternLayer implements Layer {
       const nodeName = node.getName();
 
       if (nodeName === 'soundObject') {
-        const rawType = node.getAttribute('type');
-        const type = normalizeType(rawType);
-        if (type === 'GenericScore') {
-          layer._soundObject = GenericScore.loadFromXML(node);
-        } else {
-          console.warn(`Unknown sound object type in pattern layer: ${rawType}`);
+        const loaded = loadSoundObjectFromXML(node, objRefMap);
+        if (loaded) {
+          layer._soundObject = loaded;
         }
+        // If loader returns null (unknown type), keep the default GenericScore.
+        // This matches Java's fallback behavior where PatternLayer retains its
+        // constructor-assigned SoundObject when ObjectUtilities.loadFromXML fails.
       } else if (nodeName === 'patternData') {
         layer._patternData = PatternData.loadFromXML(node);
       }

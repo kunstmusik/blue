@@ -14,6 +14,8 @@ interface LibraryContextMenuProps {
   onCut?: (node: LibraryBrowseNode) => void;
   onCopy?: (node: LibraryBrowseNode) => void;
   onPaste?: (node: LibraryBrowseNode) => void;
+  onImportInstrument?: (node: LibraryBrowseNode) => void;
+  onExportInstrument?: (node: LibraryBrowseNode) => void;
   onDelete?: (node: LibraryBrowseNode) => void;
   onMoveUp?: (node: LibraryBrowseNode) => void;
   onMoveDown?: (node: LibraryBrowseNode) => void;
@@ -30,6 +32,8 @@ export function LibraryContextMenu({
   onCut,
   onCopy,
   onPaste,
+  onImportInstrument,
+  onExportInstrument,
   onDelete,
   onMoveUp,
   onMoveDown,
@@ -42,6 +46,14 @@ export function LibraryContextMenu({
     && getLibraryTransferSourceType(clipboard.source) === node.libraryType
     && hasPasteDestination,
   );
+  const canImportInstrument = userOwned
+    && node.libraryType === 'instrument'
+    && canContainChildren
+    && onImportInstrument;
+  const canExportInstrument = userOwned
+    && node.libraryType === 'instrument'
+    && node.nodeKind === 'item'
+    && onExportInstrument;
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
@@ -50,6 +62,7 @@ export function LibraryContextMenu({
           aria-label={`${node.displayName} commands`}
           className="editor-context-menu z-[1000] min-w-40"
           collisionPadding={8}
+          data-auxiliary-portal="true"
         >
           {canContainChildren && userOwned && onCreateFolder && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCreateFolder(node)}>Create Folder…</ContextMenu.Item>
@@ -72,6 +85,21 @@ export function LibraryContextMenu({
             >
               Paste
             </ContextMenu.Item>
+          )}
+          {(canImportInstrument || canExportInstrument) && (
+            <>
+              <ContextMenu.Separator className="editor-context-menu__separator" />
+              {canImportInstrument && (
+                <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onImportInstrument?.(node)}>
+                  Import…
+                </ContextMenu.Item>
+              )}
+              {canExportInstrument && (
+                <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onExportInstrument?.(node)}>
+                  Export…
+                </ContextMenu.Item>
+              )}
+            </>
           )}
           {userOwned && node.nodeKind !== 'root' && (onMoveUp || onMoveDown) && (
             <>

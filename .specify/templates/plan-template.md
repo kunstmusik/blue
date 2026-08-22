@@ -48,6 +48,8 @@
   location, typed IPC/preload/runtime contract, and migration or recovery path]
 - **Runtime and engine isolation**: [PASS/FAIL/N/A — explain host-owned Java, filesystem,
   process, and ZeroMQ work and confirm renderer/data layers remain isolated]
+- **Host-path portability**: [PASS/FAIL/N/A — identify native path, canonical identity, and
+  external-text forms; name normalization boundaries and synthetic Windows/native OS coverage]
 - **Verification evidence**: [PASS/FAIL — list focused regression tests, round-trip/contract
   coverage, quickstart validation, and affected package type/lint/build commands]
 

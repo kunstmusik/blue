@@ -13,8 +13,8 @@ import { BlueData } from '../../src/blue-data';
 import { ProjectProperties } from '../../src/project-properties';
 import { GenericScore } from '../../src/sound-objects/generic-score';
 import { AudioClip } from '../../src/score/audio/audio-clip';
-import { AudioLayer } from '../../src/score/audio/audio-layer';
-import { AudioLayerGroup } from '../../src/score/audio/audio-layer-group';
+import { Track } from '../../src/score/track/track';
+import { TrackLayerGroup } from '../../src/score/track/track-layer-group';
 import { PatternData } from '../../src/score/patterns/pattern-data';
 import { PatternLayer } from '../../src/score/patterns/pattern-layer';
 import { PatternsLayerGroup } from '../../src/score/patterns/patterns-layer-group';
@@ -45,8 +45,8 @@ describe('Node.js library API', () => {
     expect(typeof ProjectProperties).toBe('function');
     expect(typeof GenericScore).toBe('function');
     expect(typeof AudioClip).toBe('function');
-    expect(typeof AudioLayer).toBe('function');
-    expect(typeof AudioLayerGroup).toBe('function');
+    expect(typeof Track).toBe('function');
+    expect(typeof TrackLayerGroup).toBe('function');
     expect(typeof PatternData).toBe('function');
     expect(typeof PatternLayer).toBe('function');
     expect(typeof PatternsLayerGroup).toBe('function');
@@ -79,8 +79,8 @@ describe('Node.js library API', () => {
     props.author = 'API User';
     props.sampleRate = '44100';
 
-    // Create audio layer group with clips
-    const audioGroup = new AudioLayerGroup();
+    // Create a Track Layer Group with clips
+    const audioGroup = new TrackLayerGroup();
     const layer = audioGroup.newLayerAt(0);
     layer.setName('Audio Track');
 
@@ -122,8 +122,8 @@ describe('Node.js library API', () => {
 
     // Root PolyObject at [0], audio at [1], patterns at [2]
     expect(data.getScore()[0]).toBeInstanceOf(PolyObject);
-    expect(data.getScore()[1]).toBeInstanceOf(AudioLayerGroup);
-    const ag = data.getScore()[1] as AudioLayerGroup;
+    expect(data.getScore()[1]).toBeInstanceOf(TrackLayerGroup);
+    const ag = data.getScore()[1] as TrackLayerGroup;
     expect(ag.length).toBe(1);
     expect(ag[0].getName()).toBe('Audio Track');
     expect(ag[0].length).toBe(1);
@@ -187,7 +187,7 @@ describe('Node.js library API', () => {
 
     // Audio layer
     const score = new Score();
-    const audioGroup = new AudioLayerGroup();
+    const audioGroup = new TrackLayerGroup();
     const layer = audioGroup.newLayerAt(0);
     layer.setName('Layer 1');
 
@@ -210,7 +210,7 @@ describe('Node.js library API', () => {
     const reloadedData = await BlueData.loadFromString(xml1);
 
     // Verify the saved XML contains expected content
-    expect(xml1).toContain('<audioLayerGroup');
+    expect(xml1).toContain('<trackLayerGroup');
     expect(xml1).toContain('audioFile');
     expect(xml1).toContain('/audio/test.wav');
     expect(xml1).toContain('<fadeIn>0.1</fadeIn>');

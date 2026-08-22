@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BlueData,
+  BSBKnob,
   ClojureObject,
   ObjectBuilder,
   PolyObject,
@@ -13,8 +14,8 @@ import {
   AudioFile,
   FrozenSoundObject,
   AudioClip,
-  AudioLayerGroup,
-  AudioLayer,
+  TrackLayerGroup,
+  TrackLayer,
   Instance,
   SoundObjectLibrary,
   PatternObject,
@@ -23,6 +24,7 @@ import {
   Track,
 } from '@blue/data';
 import {
+  applyProjectDocumentPatch,
   createScoreObjectEditorDocument,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLibraryEntryRef,
@@ -136,6 +138,7 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     objectBuilder.setCommandLine('render --fast');
     objectBuilder.setLanguageType('PYTHON');
     objectBuilder.setEditEnabled(false);
+    objectBuilder.setComment('Builder notes');
     const data = makeDataWithObject(objectBuilder);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
@@ -148,8 +151,93 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
         commandLine: 'render --fast',
         languageType: 'PYTHON',
         editEnabled: false,
+        comment: 'Builder notes',
       });
+      expect(doc!.editor.bsbInstrument?.type).toBe('blueSynthBuilder');
+      expect(doc!.editor.bsbInstrument?.widgetTree.type).toBe('BSBRootGroup');
+      expect(doc!.editor.bsbInstrument?.presetGroup?.name).toBe('Presets');
     }
+  });
+
+  it.each([
+    ['JAVASCRIPT', 'javascript'],
+    ['CLOJURE', 'clojure'],
+    ['EXTERNAL', 'text'],
+  ] as const)('maps ObjectBuilder %s to %s editor syntax', (languageType, syntax) => {
+    const objectBuilder = new ObjectBuilder();
+    objectBuilder.setLanguageType(languageType);
+    const data = makeDataWithObject(objectBuilder);
+
+    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
+
+    expect(doc?.editor.kind).toBe('code');
+    if (doc?.editor.kind === 'code') {
+      expect(doc.editor.syntax).toBe(syntax);
+    }
+  });
+
+  it('persists ObjectBuilder code editor metadata patches together', () => {
+    const objectBuilder = new ObjectBuilder();
+    const data = makeDataWithObject(objectBuilder);
+    const target = makeTimelineTarget('ObjectBuilder');
+
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: {
+          text: '(def score commandline)',
+          languageType: 'CLOJURE',
+          commandLine: 'i8 0 1 880',
+          editEnabled: false,
+          comment: 'Clojure builder',
+          bsbInterfacePatch: {
+            type: 'updateGridSettings',
+            patch: { width: 24, height: 18 },
+          },
+        },
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(objectBuilder.getCode()).toBe('(def score commandline)');
+    expect(objectBuilder.getLanguageType()).toBe('CLOJURE');
+    expect(objectBuilder.getCommandLine()).toBe('i8 0 1 880');
+    expect(objectBuilder.isEditEnabled()).toBe(false);
+    expect(objectBuilder.getComment()).toBe('Clojure builder');
+    expect(objectBuilder.getGraphicInterface().getGridSettings().width).toBe(24);
+    expect(objectBuilder.getGraphicInterface().getGridSettings().height).toBe(18);
+  });
+
+  it('applies ObjectBuilder BSB preset patches through the shared interface editor', () => {
+    const objectBuilder = new ObjectBuilder();
+    const knob = new BSBKnob();
+    knob.objectName = 'amp';
+    knob.setValue(0.25);
+    objectBuilder.getGraphicInterface().getRootGroup().addChild(knob);
+    const data = makeDataWithObject(objectBuilder);
+    const target = makeTimelineTarget('ObjectBuilder');
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { bsbInterfacePatch: { type: 'addPreset', presetName: 'Quiet' } },
+      },
+    })).toBe(true);
+
+    const preset = objectBuilder.getPresetGroup().getPresets()[0];
+    expect(preset?.getPresetName()).toBe('Quiet');
+    knob.setValue(0.75);
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { bsbInterfacePatch: { type: 'applyPreset', presetUniqueId: preset!.getUniqueId() } },
+      },
+    })).toBe(true);
+    expect(knob.value).toBe(0.25);
   });
 
   it('returns code editor with text syntax for Comment', () => {
@@ -188,27 +276,103 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
 });
 
 describe('createScoreObjectEditorDocument — file-backed types', () => {
-  it('returns file editor for AudioFile', () => {
+  it('returns audioFile editor for AudioFile', () => {
     const af = new AudioFile();
     af.setName('Sound File');
+    af.setSoundFileName('audio.wav');
+    af.setCsoundPostCode('; post code');
     const data = makeDataWithObject(af);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('AudioFile') });
     expect(doc).not.toBeNull();
-    expect(doc!.editor.kind).toBe('file');
-    if (doc!.editor.kind === 'file') {
-      expect(doc!.editor.filePath).toBeDefined();
+    expect(doc!.editor.kind).toBe('audioFile');
+    if (doc!.editor.kind === 'audioFile') {
+      expect(doc!.editor.filePath).toBe('audio.wav');
+      expect(doc!.editor.csoundPostCode).toBe('; post code');
+      expect(doc!.editor.metadata.status).toBe('empty');
+      expect(doc!.editor.canChooseFile).toBe(true);
     }
   });
 
-  it('returns file editor for FrozenSoundObject', () => {
+  it('returns frozenSoundObject editor for FrozenSoundObject', () => {
+    const inner = new GenericScore();
+    inner.setName('Source Generic');
     const fso = new FrozenSoundObject();
-    fso.setName('Frozen');
+    fso.setFrozenSoundObject(inner);
+    fso.setFrozenWaveFileName('freeze0.wav');
     const data = makeDataWithObject(fso);
 
     const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('FrozenSoundObject') });
     expect(doc).not.toBeNull();
-    expect(doc!.editor.kind).toBe('file');
+    expect(doc!.editor.kind).toBe('frozenSoundObject');
+    if (doc!.editor.kind === 'frozenSoundObject') {
+      expect(doc!.editor.frozenWaveFileName).toBe('freeze0.wav');
+      expect(doc!.editor.sourceName).toBe('Source Generic');
+      expect(doc!.editor.sourceType).toBe('GenericScore');
+      expect(doc!.editor.numChannels).toBe(0);
+      expect(doc!.editor.artifactStatus).toBe('empty');
+      expect(doc!.editor.canSaveCopy).toBe(true);
+    }
+  });
+
+  it('applies replaceAudioFileSource patch atomically to soundFileName and name', () => {
+    const af = new AudioFile();
+    af.setName('Original Name');
+    af.setSoundFileName('original.wav');
+    af.setCsoundPostCode('; keep post code');
+    const data = makeDataWithObject(af);
+
+    const target = makeTimelineTarget('AudioFile');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'replaceAudioFileSource',
+        target,
+        filePath: 'media/new_audio.wav',
+        name: 'new_audio.wav',
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(af.getSoundFileName()).toBe('media/new_audio.wav');
+    expect(af.getName()).toBe('new_audio.wav');
+    expect(af.getCsoundPostCode()).toBe('; keep post code');
+  });
+
+  it('applies updateAudioFilePostCode patch to csoundPostCode', () => {
+    const af = new AudioFile();
+    af.setSoundFileName('sample.wav');
+    af.setCsoundPostCode('');
+    const data = makeDataWithObject(af);
+
+    const target = makeTimelineTarget('AudioFile');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateAudioFilePostCode',
+        target,
+        csoundPostCode: 'aChannel1 = aChannel1 * 0.5',
+      },
+    });
+
+    expect(changed).toBe(true);
+    expect(af.getCsoundPostCode()).toBe('aChannel1 = aChannel1 * 0.5');
+  });
+
+  it('rejects mutating FrozenSoundObject file path via updateTypeSpecificEditor patch', () => {
+    const fso = new FrozenSoundObject();
+    fso.setFrozenWaveFileName('freeze0.wav');
+    const data = makeDataWithObject(fso);
+
+    const target = makeTimelineTarget('FrozenSoundObject');
+    const changed = applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { filePath: 'hacked.wav' },
+      },
+    });
+
+    expect(changed).toBe(false);
+    expect(fso.getFrozenWaveFileName()).toBe('freeze0.wav');
   });
 });
 
@@ -353,8 +517,8 @@ describe('createScoreObjectEditorDocument — audioClip type', () => {
   it('returns audioClip editor with all fields', () => {
     const data = new BlueData();
     data.getScore().length = 0;
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     clip.setName('My Clip');
     clip.setAudioFile('test.wav');
@@ -485,8 +649,8 @@ describe('createScoreObjectEditorDocument — shared properties completeness', (
 
   it('omits timeBehavior and repeatPoint for non-sound-objects (AudioClip)', () => {
     const data = new BlueData();
-    const alg = new AudioLayerGroup();
-    const layer = new AudioLayer();
+    const alg = new TrackLayerGroup();
+    const layer = new TrackLayer();
     const clip = new AudioClip();
     layer.push(clip);
     alg.push(layer);

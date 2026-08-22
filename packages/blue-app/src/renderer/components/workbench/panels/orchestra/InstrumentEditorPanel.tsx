@@ -1,23 +1,31 @@
 import React, { useCallback, useState } from 'react';
-import type { InstrumentSnapshot } from '../../../../../shared/project-editor';
+import type { InstrumentSnapshot, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
 import BlueSynthBuilderEditor from './BlueSynthBuilderEditor';
 import BlueX7Editor from './BlueX7Editor';
 import GenericInstrumentEditor from './GenericInstrumentEditor';
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
 import JavaScriptInstrumentEditor from './JavaScriptInstrumentEditor';
-import PythonInstrumentDummyPanel from './PythonInstrumentDummyPanel';
+import PythonInstrumentEditor from './PythonInstrumentEditor';
 import type { OrchestraMutationProps } from './types';
+import type { UdoLibraryDropTarget } from '../udo/UdoTable';
 
 interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   instrument: InstrumentSnapshot | undefined;
+  /** Explicit host-owned project scope; library hosts pass an empty list. */
+  projectUdos: readonly UdoDefinitionSnapshot[];
+  embeddedUdoTarget?: UdoLibraryDropTarget;
 }
 
 const EditorSurface = React.memo(function EditorSurface({
   instrument,
+  projectUdos,
   onOrchestraPatch,
+  embeddedUdoTarget,
 }: {
   instrument: InstrumentSnapshot;
+  projectUdos: readonly UdoDefinitionSnapshot[];
+  embeddedUdoTarget?: UdoLibraryDropTarget;
 } & OrchestraMutationProps): React.ReactElement {
   const dispatchInstrumentPatch = useCallback(
     (patch: InstrumentPatch) =>
@@ -34,24 +42,30 @@ const EditorSurface = React.memo(function EditorSurface({
       return (
         <GenericInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'javascript':
       return (
         <JavaScriptInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'python':
       return (
-        <PythonInstrumentDummyPanel
+        <PythonInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'blueX7':
@@ -66,20 +80,22 @@ const EditorSurface = React.memo(function EditorSurface({
       return (
         <BlueSynthBuilderEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          embeddedUdoTarget={embeddedUdoTarget}
         />
       );
     case 'unknown':
       return (
-        <div className="flex h-full items-center justify-center p-6 text-center text-sm text-blue-muted">
+        <div className="flex h-full items-center justify-center p-6 text-center text-role-body text-blue-muted">
           Unsupported instrument type: {instrument.instrumentType}
         </div>
       );
   }
 
   return (
-    <div className="flex h-full items-center justify-center p-6 text-sm text-blue-muted">
+    <div className="flex h-full items-center justify-center p-6 text-role-body text-blue-muted">
       Unsupported instrument.
     </div>
   );
@@ -88,6 +104,8 @@ const EditorSurface = React.memo(function EditorSurface({
 function InstrumentEditorPanel({
   instrument,
   onOrchestraPatch,
+  projectUdos,
+  embeddedUdoTarget,
 }: InstrumentEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
@@ -109,10 +127,10 @@ function InstrumentEditorPanel({
   if (!instrument) {
     return (
       <section className="flex h-full flex-col bg-blue-bg" aria-label="Instrument editor">
-        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-body font-semibold uppercase tracking-[0.18em] text-blue-muted">
+        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-role-callout font-semibold uppercase tracking-[0.18em] text-blue-muted">
           Instrument Editor
         </div>
-        <div className="flex flex-1 items-center justify-center p-6 text-sm text-blue-muted">
+        <div className="flex flex-1 items-center justify-center p-6 text-role-body text-blue-muted">
           Select an arrangement instrument to edit.
         </div>
       </section>
@@ -125,7 +143,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-body',
+            'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'editor'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -137,7 +155,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-body',
+            'border-b-2 px-3 py-2 text-role-body',
             activeTab === 'comments'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -154,7 +172,12 @@ function InstrumentEditorPanel({
           aria-hidden={activeTab !== 'editor'}
           style={{ visibility: activeTab === 'editor' ? 'visible' : 'hidden' }}
         >
-          <EditorSurface instrument={instrument} onOrchestraPatch={onOrchestraPatch} />
+          <EditorSurface
+            instrument={instrument}
+            projectUdos={projectUdos}
+            onOrchestraPatch={onOrchestraPatch}
+            embeddedUdoTarget={embeddedUdoTarget}
+          />
         </div>
         <div
           className={activeTab === 'comments' ? 'relative h-full' : 'pointer-events-none absolute inset-0'}

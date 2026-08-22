@@ -8,7 +8,7 @@ import { useLibraryStore } from '../../stores/library-store';
 import { BLUE_LIBRARY_DRAG_MIME, readLibraryDragDescriptor, readLibraryDragSource } from './library-drag-drop';
 
 function targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
-  if (target.kind === 'orchestra') return 'instrument';
+  if (target.kind === 'orchestra' || target.kind === 'trackInstrument') return 'instrument';
   if (target.kind === 'projectUdo') return 'udo';
   if (target.kind === 'effectChain') return 'effect';
   return 'soundObject';

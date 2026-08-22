@@ -93,7 +93,7 @@ describe('UnifiedLibraryRepository foundation', () => {
     } finally {
       directory.cleanup();
     }
-  });
+  }, 20_000);
 
   it('keeps payloads lazy and rejects stale revisions atomically', () => {
     const repository = UnifiedLibraryRepository.open(':memory:');

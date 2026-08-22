@@ -16,6 +16,11 @@ await build({
   target: ['node20'],
   format: 'cjs',
   outfile: outFile,
+  nodePaths: [
+    path.resolve(rootDir, 'node_modules'),
+    path.resolve(rootDir, '../blue-data/node_modules'),
+    path.resolve(rootDir, '../../node_modules'),
+  ],
   external: ['quickjs-emscripten'],
   banner: {
     js: '#!/usr/bin/env node',
