@@ -45,6 +45,14 @@ export function validateLibraryNodeName(name: string): string | null {
   return null;
 }
 
+/**
+ * Native HTML drag/drop tree for Libraries (SPEC 084).
+ *
+ * Explicit non-participant in the per-`Document` React DnD ownership domain:
+ * this tree uses `draggable`/`DataTransfer` events only and must never create
+ * a React DnD HTML5 backend. It coexists with `BlueTree` surfaces in the same
+ * document; see docs/tree-drag-and-drop.md before changing its drag behavior.
+ */
 export function LibraryTree({
   label,
   nodes,
@@ -350,6 +358,10 @@ export function LibraryTree({
               draggable={(node.nodeKind === 'item' && node.supportStatus !== 'unsupported')
                 || (node.scope === 'user' && node.nodeKind === 'folder')}
               onDragStart={(event) => {
+                // This is a browser-native library drag, not a React DnD
+                // Arborist source. Keep the shared tree manager from starting
+                // an empty drag for the same DOM event.
+                event.stopPropagation();
                 const descriptor = dragDescriptors.current[node.nodeId];
                 if (!descriptor) {
                   event.preventDefault();

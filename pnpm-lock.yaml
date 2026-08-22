@@ -90,6 +90,9 @@ importers:
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
+      dnd-core:
+        specifier: 14.0.1
+        version: 14.0.1
       dockview:
         specifier: ^5.2.0
         version: 5.2.0(react@19.2.5)
@@ -108,6 +111,9 @@ importers:
       react-arborist:
         specifier: ^3.5.0
         version: 3.5.0(@types/node@25.6.0)(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      react-dnd-html5-backend:
+        specifier: 14.1.0
+        version: 14.1.0
       react-dom:
         specifier: ^19.2.4
         version: 19.2.5(react@19.2.5)
@@ -1814,6 +1820,7 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   abbrev@4.0.0:
     resolution: {integrity: sha512-a1wflyaL0tHtJSmLSOVybYhy22vRih4eduhhrkcjgrWGnRfrZtovJ2FRjxuTtkkj47O/baf0R86QU5OuYpz8fA==}

@@ -31,6 +31,7 @@ import {
   revealAuxiliaryPanel,
   syncAuxiliaryLayoutFromApi,
   toggleMinimizedAuxiliaryPanel,
+  transitionAuxiliaryLayout,
   type AuxiliaryEdge,
   type AuxiliaryGroupSizeAction,
   type AuxiliaryLayoutState,
@@ -737,18 +738,16 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
 
     if (isAuxiliaryPanelId(panelId)) {
       const origin = closedPanelOrigins[panelId];
-      // Remove the durable close record before Dockview emits its layout
-      // event, ensuring the next serialized layout reflects the reopened
-      // component rather than a stale closed-panel restore target.
-      if (origin) {
-        set({
-          closedPanelOrigins: removeClosedPanelOrigin(closedPanelOrigins, panelId),
-        });
-      }
+      const nextAuxiliary = origin
+        ? restoreClosedAuxiliaryPanel(api, auxiliary, panelId, origin)
+        : revealAuxiliaryPanel(api, auxiliary, panelId);
       set({
-        auxiliary: origin
-          ? restoreClosedAuxiliaryPanel(api, auxiliary, panelId, origin)
-          : revealAuxiliaryPanel(api, auxiliary, panelId),
+        auxiliary: nextAuxiliary,
+        ...(origin && getGroupInstanceForPanel(nextAuxiliary, panelId)
+          ? {
+              closedPanelOrigins: removeClosedPanelOrigin(closedPanelOrigins, panelId),
+            }
+          : {}),
       });
       return;
     }
@@ -893,20 +892,22 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     const { api, auxiliary, floatingOrigins, closedPanelOrigins } = get();
     if (!api || !isAuxiliaryPanelId(panelId)) return;
 
+    const wasOpen = Boolean(getGroupInstanceForPanel(auxiliary, panelId));
+
     const origin = captureClosedPanelOrigin({
       api,
       auxiliary,
       floatingOrigins,
       panelId,
     });
-    if (origin) {
-      set({
-        closedPanelOrigins: { ...closedPanelOrigins, [panelId]: origin },
-      });
-    }
-
+    const nextAuxiliary = closeAuxiliaryPanelLayout(api, auxiliary, panelId);
     set({
-      auxiliary: closeAuxiliaryPanelLayout(api, auxiliary, panelId),
+      auxiliary: nextAuxiliary,
+      ...(wasOpen && !getGroupInstanceForPanel(nextAuxiliary, panelId) && origin
+        ? {
+            closedPanelOrigins: { ...closedPanelOrigins, [panelId]: origin },
+          }
+        : {}),
     });
   },
 
@@ -1163,14 +1164,19 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     const { api, auxiliary } = get();
     if (!api) return;
 
-    const next = moveAuxiliaryEdgeLayout(auxiliary, sourceEdge, targetEdge);
+    const desired = moveAuxiliaryEdgeLayout(auxiliary, sourceEdge, targetEdge);
     const nextPreservedDockedSizes =
       preservedDockedSizes ?? captureAuxiliaryDockedSizesFromApi(api, auxiliary);
-    set({
-      auxiliary: applyAuxiliaryLayout(api, next, {
-        preserveDockedSizes: nextPreservedDockedSizes,
-      }),
+    const result = transitionAuxiliaryLayout(api, auxiliary, desired, {
+      preserveDockedSizes: nextPreservedDockedSizes,
     });
+    if (result.status === 'applied') {
+      set({ auxiliary: result.state });
+      return;
+    }
+    if (result.status === 'failed') {
+      toast.error('Panel move failed; the previous layout was kept.');
+    }
   },
 
   getAuxiliaryGroupForPanel: (panelId) => {
@@ -1183,40 +1189,55 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     const { api, auxiliary } = get();
     if (!api) return;
 
-    const next = moveGroupToEdgeLayout(auxiliary, groupInstanceId, targetEdge);
+    const desired = moveGroupToEdgeLayout(auxiliary, groupInstanceId, targetEdge);
     const preservedDockedSizes = captureAuxiliaryDockedSizesFromApi(api, auxiliary);
-    set({
-      auxiliary: applyAuxiliaryLayout(api, next, {
-        preserveDockedSizes: preservedDockedSizes,
-      }),
+    const result = transitionAuxiliaryLayout(api, auxiliary, desired, {
+      preserveDockedSizes: preservedDockedSizes,
     });
+    if (result.status === 'applied') {
+      set({ auxiliary: result.state });
+      return;
+    }
+    if (result.status === 'failed') {
+      toast.error('Panel move failed; the previous layout was kept.');
+    }
   },
 
   movePanelToEdge: (panelId, targetEdge, preservedDockedSizes) => {
     const { api, auxiliary } = get();
     if (!api) return;
 
-    const next = movePanelToEdgeLayout(auxiliary, panelId, targetEdge);
+    const desired = movePanelToEdgeLayout(auxiliary, panelId, targetEdge);
     const nextPreservedDockedSizes =
       preservedDockedSizes ?? captureAuxiliaryDockedSizesFromApi(api, auxiliary);
-    set({
-      auxiliary: applyAuxiliaryLayout(api, next, {
-        preserveDockedSizes: nextPreservedDockedSizes,
-      }),
+    const result = transitionAuxiliaryLayout(api, auxiliary, desired, {
+      preserveDockedSizes: nextPreservedDockedSizes,
     });
+    if (result.status === 'applied') {
+      set({ auxiliary: result.state });
+      return;
+    }
+    if (result.status === 'failed') {
+      toast.error('Panel move failed; the previous layout was kept.');
+    }
   },
 
   mergeBackToSeededGroup: (groupInstanceId) => {
     const { api, auxiliary } = get();
     if (!api) return;
 
-    const next = mergeBackToSeededGroupLayout(auxiliary, groupInstanceId);
+    const desired = mergeBackToSeededGroupLayout(auxiliary, groupInstanceId);
     const preservedDockedSizes = captureAuxiliaryDockedSizesFromApi(api, auxiliary);
-    set({
-      auxiliary: applyAuxiliaryLayout(api, next, {
-        preserveDockedSizes: preservedDockedSizes,
-      }),
+    const result = transitionAuxiliaryLayout(api, auxiliary, desired, {
+      preserveDockedSizes: preservedDockedSizes,
     });
+    if (result.status === 'applied') {
+      set({ auxiliary: result.state });
+      return;
+    }
+    if (result.status === 'failed') {
+      toast.error('Panel move failed; the previous layout was kept.');
+    }
   },
 
   resetLayout: () => {
@@ -1487,15 +1508,18 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
           removeAssociatedReference: true,
         });
 
-        // Rebuild the auxiliary layout. Since we already closed the popout
-        // panels above, clearLiveAuxiliaryPanels in applyAuxiliaryLayout will
-        // skip them (they no longer exist in api.getPanel).
-        const applied = applyAuxiliaryLayout(api, nextAuxiliary, {
+        // Re-dock through the targeted transition: the popout panels were
+        // removed above, so they are re-added while every unaffected panel
+        // keeps its live object. A failure keeps the last valid layout.
+        const result = transitionAuxiliaryLayout(api, auxiliary, nextAuxiliary, {
           preserveDockedSizes: preservedDockedSizes,
         });
 
         set({
-          auxiliary: syncAuxiliaryLayoutFromApi(api, applied),
+          auxiliary:
+            result.status === 'applied'
+              ? result.state
+              : cloneAuxiliaryLayoutState(auxiliary),
           floatingOrigins: removeFloatingOriginMap(floatingOrigins, groupId),
         });
         return;

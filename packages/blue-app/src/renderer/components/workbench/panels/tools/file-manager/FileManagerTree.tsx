@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, File, Folder, FolderOpen } from 'lucide-react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { Tree, type NodeRendererProps, type TreeApi } from 'react-arborist';
+import type { NodeRendererProps, TreeApi } from 'react-arborist';
+import { BlueTree } from '../../../../tree/BlueTree';
 import {
   getFileManagerActionState,
   type FileManagerRootSnapshot,
@@ -282,15 +283,48 @@ export default function FileManagerTree({
     const el = containerRef.current;
     if (!el) return;
 
+    const restoreSilentlyLostScroll = () => {
+      // Dockview grid restructuring can hide or clamp the tree container for
+      // one layout pass, silently resetting its physical scroll offset while
+      // the session offset stays authoritative. Re-assert it after the next
+      // frame so an unaffected panel keeps its position across layout moves.
+      const targetScroll = sessionTreeState.scrollOffset;
+      if (targetScroll <= 0 || restoringInitialScrollRef.current) return;
+      requestAnimationFrame(() => {
+        const listEl = treeApiRef.current?.listEl.current;
+        if (!listEl || listEl.scrollTop !== 0) return;
+        treeApiRef.current?.list.current?.scrollTo(targetScroll);
+        listEl.scrollTop = targetScroll;
+      });
+    };
+
     const measure = () => {
       setTreeHeight(el.clientHeight || 400);
+      restoreSilentlyLostScroll();
     };
 
     measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
+    const ResizeObserverCtor = el.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
+    const resizeObserver = typeof ResizeObserverCtor === 'function'
+      ? new ResizeObserverCtor(measure)
+      : null;
+    resizeObserver?.observe(el);
+
+    // Dockview can change the panel's visibility and inline layout without
+    // changing the tree container's measured size. Those mutations can still
+    // reset the physical list offset, so reassert the session offset on the
+    // nearest stable panel host as well.
+    const MutationObserverCtor = el.ownerDocument.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+    const mutationObserver = typeof MutationObserverCtor === 'function'
+      ? new MutationObserverCtor(restoreSilentlyLostScroll)
+      : null;
+    const mutationTarget = el.closest<HTMLElement>('.dv-groupview') ?? el.parentElement ?? el;
+    mutationObserver?.observe(mutationTarget, { attributes: true, childList: true, subtree: true });
+
+    return () => {
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
   }, []);
 
   // Restore scroll offset on mount
@@ -546,7 +580,7 @@ export default function FileManagerTree({
       )}
       <div ref={containerRef} className="min-h-0 flex-1 w-full overflow-hidden bg-black">
         <TreeActionsContext.Provider value={actions}>
-          <Tree<FileTreeNode>
+          <BlueTree<FileTreeNode>
             key={focusedNodeId ?? 'roots'}
             ref={treeApiRef}
             data={data}
@@ -568,13 +602,18 @@ export default function FileManagerTree({
                 if (props.scrollOffset === 0) return;
                 restoringInitialScrollRef.current = false;
               }
-              sessionTreeState.scrollOffset = props.scrollOffset;
+              // In a hidden Dockview tab, react-window may clamp the reported
+              // offset to zero while the browser still retains the physical
+              // scroll position. The list element is the authoritative value
+              // for restoring this session after the tab becomes visible.
+              const physicalScrollOffset = treeApiRef.current?.listEl.current?.scrollTop ?? 0;
+              sessionTreeState.scrollOffset = Math.max(props.scrollOffset, physicalScrollOffset);
             }}
             disableDrag={() => true}
             disableDrop={() => true}
           >
             {NodeRenderer}
-          </Tree>
+          </BlueTree>
         </TreeActionsContext.Provider>
       </div>
       {renamingRoot && (

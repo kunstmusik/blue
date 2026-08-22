@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import {
   applyAuxiliaryLayout,
@@ -15,7 +17,9 @@ import {
   getMinimizedTabsForEdge,
   hideAuxiliarySlideout,
   isAuxiliaryPanelId,
+  maximizeAuxiliaryGroupLayout,
   mergeBackToSeededGroup,
+  minimizeAuxiliaryGroupLayout,
   minimizeAuxiliaryPanelLayout,
   moveAuxiliaryEdge,
   moveGroupToEdge,
@@ -23,15 +27,18 @@ import {
   parseStoredWorkbenchLayout,
   revealAuxiliaryPanel,
   resetAuxiliaryLayout,
+  restoreAuxiliaryGroupLayout,
   restoreClosedAuxiliaryPanel,
   resizeAuxiliaryGroupLayout,
   resizeAuxiliarySlideout,
   syncAuxiliaryLayoutFromApi,
   shouldPreventAuxiliaryPanelDrop,
   toggleMinimizedAuxiliaryPanel,
+  transitionAuxiliaryLayout,
   type AuxiliaryGroupInstance,
   type AuxiliaryLayoutState,
 } from '../components/workbench/auxiliary-layout';
+import { acquireTreeDndManager } from '../components/tree/tree-dnd-domain';
 
 const legacyDockview = {
   grid: {
@@ -68,7 +75,13 @@ function createDockviewApiStub() {
             group.bounds.height = height as number;
           }
         },
-        isMaximized: () => false,
+        isMaximized: () => Boolean((group as any).maximized),
+        maximize: () => {
+          (group as any).maximized = true;
+        },
+        exitMaximized: () => {
+          (group as any).maximized = false;
+        },
         setHeaderPosition: () => undefined,
         location: { type: 'grid' as const },
       },
@@ -133,18 +146,31 @@ function createDockviewApiStub() {
         title: id,
         api: {
           setActive: () => {
-            refGroup.activePanel = panel;
+            panel.group.activePanel = panel;
           },
           setTitle: (title: string) => {
             panel.title = title;
           },
-          isMaximized: () => false,
+          isMaximized: () => Boolean((panel.group as any).maximized),
+          maximize: () => {
+            (panel.group as any).maximized = true;
+          },
           close: () => {
             livePanels.delete(id);
-            refGroup.panels = refGroup.panels.filter((entry: any) => entry.id !== id);
-            if (refGroup.activePanel?.id === id) {
-              refGroup.activePanel = refGroup.panels[0];
+            panel.group.panels = panel.group.panels.filter((entry: any) => entry.id !== id);
+            if (panel.group.activePanel?.id === id) {
+              panel.group.activePanel = panel.group.panels[0];
             }
+          },
+          moveTo: ({ group: targetGroup, index }: { group: any; index?: number }) => {
+            const previous = panel.group;
+            previous.panels = previous.panels.filter((entry: any) => entry.id !== id);
+            if (previous.activePanel?.id === id) {
+              previous.activePanel = previous.panels[0];
+            }
+            panel.group = targetGroup;
+            insertPanel(panel, { index }, targetGroup);
+            livePanels.set(id, panel);
           },
         },
         group: refGroup,
@@ -160,6 +186,9 @@ function createDockviewApiStub() {
       return panel;
     },
     getPanel: (id: string) => livePanels.get(id),
+    removeGroup: (group: any) => {
+      groups.delete(group.id);
+    },
     toJSON: () => legacyDockview,
   } as any;
 }
@@ -1333,5 +1362,343 @@ describe('workbench layout envelope version 7 (SPEC 055 placement origins)', () 
     const parsed = parseStoredWorkbenchLayout(JSON.stringify({ unrelated: true }));
     expect(parsed.auxiliary.version).toBe(5);
     expect(parsed.floatingOrigins).toBeUndefined();
+  });
+});
+
+describe('auxiliary layout transition contract', () => {
+  interface TransitionFixture {
+    api: any;
+    current: AuxiliaryLayoutState;
+    desired: AuxiliaryLayoutState;
+  }
+
+  function buildEdgeMoveFixture(): TransitionFixture {
+    const state = createDefaultAuxiliaryLayoutState();
+    seedGroupPanels(
+      state,
+      'properties-main',
+      ['LibrariesTopComponent', 'SoundObjectPropertiesTopComponent'],
+    );
+    seedGroupPanels(state, 'output-main', ['OutputTopComponent', 'BlueFileManagerTopComponent']);
+
+    const api = createDockviewApiStub();
+    const current = applyAuxiliaryLayout(api, state);
+    const desired = moveAuxiliaryEdge(current, 'right', 'left');
+    return { api, current, desired };
+  }
+
+  it('applies an edge move with targeted operations and preserves panel identity', () => {
+    const { api, current, desired } = buildEdgeMoveFixture();
+    const librariesPanel = api.getPanel('LibrariesTopComponent');
+    const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
+
+    const result = transitionAuxiliaryLayout(api, current, desired, {
+      preserveDockedSizes: { left: 260, right: 200, bottom: 210 },
+    });
+
+    expect(result.status).toBe('applied');
+    if (result.status !== 'applied') return;
+
+    expect(api.getPanel('LibrariesTopComponent')).toBe(librariesPanel);
+    expect(api.getPanel('BlueFileManagerTopComponent')).toBe(fileManagerPanel);
+
+    const leftGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-left');
+    expect(leftGroup).toBeDefined();
+    expect(leftGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-right')).toBeUndefined();
+
+    const bottomGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-bottom');
+    expect(bottomGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'BlueFileManagerTopComponent',
+      'OutputTopComponent',
+    ]);
+
+    const moved = result.state.groups.find(
+      (group) => group.kind !== 'seeded' && group.panelIds.includes('LibrariesTopComponent'),
+    );
+    expect(moved?.edge).toBe('left');
+    expect(moved?.dockedPanelIds).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+  });
+
+  it('defers without live mutation while a tree drag is active', () => {
+    const { api, current, desired } = buildEdgeMoveFixture();
+
+    const manager = acquireTreeDndManager(document)!;
+    const sourceId = manager.getRegistry().addSource('blue/test', {
+      canDrag: () => true,
+      isDragging: () => true,
+      beginDrag: () => ({ kind: 'blue/test' }),
+      endDrag: () => undefined,
+    });
+    manager.getActions().beginDrag([sourceId]);
+
+    const result = transitionAuxiliaryLayout(api, current, desired);
+
+    expect(result.status).toBe('deferred');
+    if (result.status !== 'deferred') return;
+    expect(result.reason).toBe('drag-active');
+    expect(result.state).toEqual(current);
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-left')).toBeUndefined();
+
+    manager.getActions().endDrag();
+    manager.getRegistry().removeSource(sourceId);
+  });
+
+  it('fails preflight before live mutation for unregistered docked panels', () => {
+    const { api, current } = buildEdgeMoveFixture();
+    const bad = cloneAuxiliaryLayoutState(current);
+    const seeded = findSeeded(bad, 'properties-main')!;
+    seeded.panelIds = ['NotARealPanel', ...seeded.panelIds];
+    seeded.dockedPanelIds = ['NotARealPanel', ...seeded.dockedPanelIds];
+
+    const result = transitionAuxiliaryLayout(api, current, bad);
+
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') return;
+    expect(result.reason).toContain('NotARealPanel');
+    expect(result.state).toEqual(current);
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-left')).toBeUndefined();
+    expect(api.getPanel('LibrariesTopComponent')).toBeDefined();
+  });
+
+  it('fails preflight when a panel is docked in multiple desired groups', () => {
+    const { api, current } = buildEdgeMoveFixture();
+    const bad = cloneAuxiliaryLayoutState(current);
+    const seeded = findSeeded(bad, 'properties-main')!;
+    bad.groups.push({
+      ...cloneAuxiliaryLayoutState(bad).groups.find((g) => g.kind === 'seeded' && g.seedGroupId === 'output-main')!,
+      groupInstanceId: 'derived:conflict',
+      kind: 'derived-singleton',
+      edge: 'left',
+      panelIds: ['LibrariesTopComponent'],
+      dockedPanelIds: ['LibrariesTopComponent'],
+      activePanelId: 'LibrariesTopComponent',
+      displayOrder: 99,
+    });
+    expect(seeded.dockedPanelIds).toContain('LibrariesTopComponent');
+
+    const result = transitionAuxiliaryLayout(api, current, bad);
+
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') return;
+    expect(result.reason).toContain('LibrariesTopComponent');
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-left')).toBeUndefined();
+  });
+
+  it('rolls back a failed move and keeps the last valid layout usable', () => {
+    const { api, current, desired } = buildEdgeMoveFixture();
+    const librariesPanel = api.getPanel('LibrariesTopComponent');
+
+    const originalMoveTo = librariesPanel.api.moveTo.bind(librariesPanel.api);
+    librariesPanel.api.moveTo = (options: any) => {
+      throw new Error('dockview exploded');
+    };
+    const restoreMoveTo = () => {
+      librariesPanel.api.moveTo = originalMoveTo;
+    };
+
+    const result = transitionAuxiliaryLayout(api, current, desired);
+
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') {
+      restoreMoveTo();
+      return;
+    }
+    expect(result.reason).toContain('dockview exploded');
+    expect(result.state).toEqual(current);
+
+    restoreMoveTo();
+
+    // The best-effort rollback removed the half-created target group and the
+    // previous placement stays live with the same panel object.
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-left')).toBeUndefined();
+    const rightGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-right');
+    expect(rightGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+    expect(api.getPanel('LibrariesTopComponent')).toBe(librariesPanel);
+  });
+
+  it('rolls back a failed auxiliary close without losing the live panel', () => {
+    const { api, current } = buildEdgeMoveFixture();
+    const librariesPanel = api.getPanel('LibrariesTopComponent');
+    const originalClose = librariesPanel.api.close;
+    librariesPanel.api.close = () => {
+      throw new Error('close exploded');
+    };
+
+    const next = closeAuxiliaryPanelLayout(api, current, 'LibrariesTopComponent');
+
+    expect(next).toEqual(current);
+    expect(api.getPanel('LibrariesTopComponent')).toBe(librariesPanel);
+
+    librariesPanel.api.close = originalClose;
+  });
+});
+
+describe('auxiliary layout transition presentations', () => {
+  function buildPresentationFixture() {
+    const state = createDefaultAuxiliaryLayoutState();
+    seedGroupPanels(
+      state,
+      'properties-main',
+      ['SoundObjectPropertiesTopComponent', 'LibrariesTopComponent'],
+    );
+    seedGroupPanels(state, 'output-main', ['OutputTopComponent', 'BlueFileManagerTopComponent']);
+
+    const api = createDockviewApiStub();
+    const current = applyAuxiliaryLayout(api, state);
+    return { api, current };
+  }
+
+  it('minimizes one panel without disturbing unaffected live panels', () => {
+    const { api, current } = buildPresentationFixture();
+    const soundObjectPanel = api.getPanel('SoundObjectPropertiesTopComponent');
+    const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
+
+    const next = minimizeAuxiliaryPanelLayout(api, current, 'LibrariesTopComponent');
+
+    expect(api.getPanel('LibrariesTopComponent')).toBeUndefined();
+    expect(api.getPanel('SoundObjectPropertiesTopComponent')).toBe(soundObjectPanel);
+    expect(api.getPanel('BlueFileManagerTopComponent')).toBe(fileManagerPanel);
+
+    const rightGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-right');
+    expect(rightGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'SoundObjectPropertiesTopComponent',
+    ]);
+
+    const properties = findSeeded(next, 'properties-main')!;
+    expect(properties.dockedPanelIds).toEqual(['SoundObjectPropertiesTopComponent']);
+  });
+
+  it('docks a previously minimized panel back without recreating neighbors', () => {
+    const { api, current } = buildPresentationFixture();
+    const minimized = minimizeAuxiliaryPanelLayout(api, current, 'LibrariesTopComponent');
+    const soundObjectPanel = api.getPanel('SoundObjectPropertiesTopComponent');
+    const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
+
+    const next = dockAuxiliaryPanel(api, minimized, 'LibrariesTopComponent');
+
+    expect(api.getPanel('LibrariesTopComponent')).toBeDefined();
+    expect(api.getPanel('SoundObjectPropertiesTopComponent')).toBe(soundObjectPanel);
+    expect(api.getPanel('BlueFileManagerTopComponent')).toBe(fileManagerPanel);
+
+    const properties = findSeeded(next, 'properties-main')!;
+    expect(properties.dockedPanelIds).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+  });
+
+  it('minimizes an entire edge group and removes its docked presentation', () => {
+    const { api, current } = buildPresentationFixture();
+
+    const next = minimizeAuxiliaryGroupLayout(api, current, 'properties-main');
+
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-right')).toBeUndefined();
+    expect(api.getPanel('SoundObjectPropertiesTopComponent')).toBeUndefined();
+
+    const bottomGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-bottom');
+    expect(bottomGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'BlueFileManagerTopComponent',
+      'OutputTopComponent',
+    ]);
+
+    const properties = findSeeded(next, 'properties-main')!;
+    expect(properties.dockedPanelIds).toEqual([]);
+    expect(properties.panelIds).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+  });
+
+  it('restores a maximized group presentation after a targeted transition', () => {
+    const { api, current } = buildPresentationFixture();
+
+    const next = maximizeAuxiliaryGroupLayout(api, current, 'properties-main');
+
+    const properties = findSeeded(next, 'properties-main')!;
+    expect(properties.dockedPanelIds).toEqual([
+      'SoundObjectPropertiesTopComponent',
+      'LibrariesTopComponent',
+    ]);
+    expect(properties.isMaximized).toBe(true);
+
+    const rightGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-right');
+    expect(rightGroup.api.isMaximized()).toBe(true);
+    expect(api.groups.find((group: any) => group.id === 'blue-aux-edge-bottom')).toBeDefined();
+  });
+
+  it('exits a live maximized group when the canonical presentation is restored', () => {
+    const { api, current } = buildPresentationFixture();
+
+    const maximized = maximizeAuxiliaryGroupLayout(api, current, 'properties-main');
+    const rightGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-right');
+    expect(rightGroup.api.isMaximized()).toBe(true);
+
+    const restored = restoreAuxiliaryGroupLayout(api, maximized, 'properties-main');
+
+    expect(findSeeded(restored, 'properties-main')!.isMaximized).toBe(false);
+    expect(rightGroup.api.isMaximized()).toBe(false);
+  });
+
+  it('moves a derived singleton group between edges with identity reuse', () => {
+    const { api, current } = buildPresentationFixture();
+    const desiredSplit = movePanelToEdge(current, 'LibrariesTopComponent', 'left');
+    const split = transitionAuxiliaryLayout(api, current, desiredSplit).state;
+
+    const librariesPanel = api.getPanel('LibrariesTopComponent');
+    const fileManagerPanel = api.getPanel('BlueFileManagerTopComponent');
+    expect(librariesPanel).toBeDefined();
+
+    const derived = split.groups.find(
+      (group) => group.kind === 'derived-singleton' && group.panelIds.includes('LibrariesTopComponent'),
+    );
+    expect(derived?.edge).toBe('left');
+
+    const desiredBottom = moveGroupToEdge(split, derived!.groupInstanceId, 'bottom');
+    const moved = transitionAuxiliaryLayout(api, split, desiredBottom).state;
+
+    expect(api.getPanel('LibrariesTopComponent')).toBe(librariesPanel);
+    expect(api.getPanel('BlueFileManagerTopComponent')).toBe(fileManagerPanel);
+
+    const movedDerived = moved.groups.find(
+      (group) => group.groupInstanceId === derived!.groupInstanceId,
+    );
+    expect(movedDerived?.edge).toBe('bottom');
+
+    const leftGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-left');
+    expect(leftGroup).toBeUndefined();
+
+    const bottomGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-bottom');
+    expect(bottomGroup.panels.map((panel: any) => panel.id)).toEqual([
+      'BlueFileManagerTopComponent',
+      'OutputTopComponent',
+      'LibrariesTopComponent',
+    ]);
+  });
+
+  it('restores captured per-edge docked sizes through an applied transition', () => {
+    const { api, current } = buildPresentationFixture();
+    const desired = moveAuxiliaryEdge(current, 'right', 'left');
+
+    const result = transitionAuxiliaryLayout(api, current, desired, {
+      preserveDockedSizes: { left: 260, right: 200, bottom: 300 },
+    });
+
+    expect(result.status).toBe('applied');
+    if (result.status !== 'applied') return;
+
+    const leftGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-left');
+    expect(leftGroup.bounds.width).toBe(260);
+    const bottomGroup = api.groups.find((group: any) => group.id === 'blue-aux-edge-bottom');
+    expect(bottomGroup.bounds.height).toBe(300);
   });
 });

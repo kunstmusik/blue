@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Tree, type NodeRendererProps, type NodeApi } from 'react-arborist';
+import type { NodeRendererProps, NodeApi } from 'react-arborist';
+import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight, FolderOpen, Folder, FileAudio } from 'lucide-react';
 
@@ -350,7 +351,7 @@ export default function EffectLibraryTree({
   return (
     <div ref={containerRef} className="h-full w-full bg-black">
       <TreeActionsContext.Provider value={contextActions}>
-        <Tree<LibraryTreeNode>
+        <BlueTree<LibraryTreeNode>
           ref={treeRef}
           data={data}
           openByDefault
@@ -372,7 +373,7 @@ export default function EffectLibraryTree({
           className="effects-library-tree"
         >
           {Node}
-        </Tree>
+        </BlueTree>
       </TreeActionsContext.Provider>
     </div>
   );

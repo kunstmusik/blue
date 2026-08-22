@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { ChevronRight, FileCode, Folder, FolderOpen } from 'lucide-react';
-import { Tree, type NodeRendererProps } from 'react-arborist';
+import type { NodeRendererProps } from 'react-arborist';
+import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { CODE_REPOSITORY_ROOT_ID, collectDescendantIds } from '@blue/data';
 import type { CodeRepositoryNode } from '@blue/data';
@@ -230,7 +231,7 @@ export default function CodeRepositoryTree({
       <p className="mb-2 text-role-callout text-app-text-muted">Right-click an item for actions. Double-click to rename.</p>
       <TreeActionsContext.Provider value={actions}>
         <div className="min-h-0 flex-1 overflow-auto rounded bg-black p-1">
-          <Tree<RepoTreeNode>
+          <BlueTree<RepoTreeNode>
             data={treeData}
             openByDefault
             width="100%"
@@ -254,7 +255,7 @@ export default function CodeRepositoryTree({
             disableDrop={(args) => args.parentNode.data.kind === 'snippet'}
           >
             {NodeRenderer}
-          </Tree>
+          </BlueTree>
         </div>
       </TreeActionsContext.Provider>
     </div>

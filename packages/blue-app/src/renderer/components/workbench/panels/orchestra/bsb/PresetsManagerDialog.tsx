@@ -8,7 +8,8 @@ import {
   useState,
   type ReactElement,
 } from 'react';
-import { Tree, type NodeApi, type NodeRendererProps } from 'react-arborist';
+import type { NodeApi, NodeRendererProps } from 'react-arborist';
+import { BlueTree } from '../../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Element, Preset, PresetGroup } from '@blue/data';
 import {
@@ -798,7 +799,7 @@ export default function PresetsManagerDialog({
           className="min-h-0 flex-1 overflow-hidden bg-black px-2 py-2"
         >
           <PresetTreeActionsContext.Provider value={treeActions}>
-            <Tree<PresetTreeNode>
+            <BlueTree<PresetTreeNode>
               data={[rootNode]}
               openByDefault
               width="100%"
@@ -836,7 +837,7 @@ export default function PresetsManagerDialog({
               className="presets-manager-tree"
             >
               {PresetNode}
-            </Tree>
+            </BlueTree>
           </PresetTreeActionsContext.Provider>
         </div>
 
