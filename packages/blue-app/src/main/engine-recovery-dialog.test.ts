@@ -1,14 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { BrowserWindow, MessageBoxOptions, MessageBoxReturnValue } from 'electron';
 import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
+import type { NativeConfirmationDialogSeam } from './native-confirmation';
 
-vi.mock('electron', () => ({
-  dialog: { showMessageBox: vi.fn() },
-}));
+const windowStub = {
+  isDestroyed: () => false,
+} as unknown as BrowserWindow;
 
-const windowStub = {} as BrowserWindow;
-
-function makeShowMessageBox(responses: number[]) {
+function makeDialogSeam(responses: number[]) {
   const shownOptions: MessageBoxOptions[] = [];
   let index = 0;
   const showMessageBox = vi.fn(
@@ -19,19 +18,20 @@ function makeShowMessageBox(responses: number[]) {
       return { response } as MessageBoxReturnValue;
     },
   );
-  return { showMessageBox, shownOptions };
+  const dialogSeam: NativeConfirmationDialogSeam = { showMessageBox };
+  return { dialogSeam, shownOptions, showMessageBox };
 }
 
 describe('showEngineRecoveryFailureDialog actions', () => {
   it('offers Restart Audio Engine, Show Diagnostics, and Cancel', async () => {
-    const { showMessageBox, shownOptions } = makeShowMessageBox([2]);
+    const { dialogSeam, shownOptions } = makeDialogSeam([2]);
 
     const action = await showEngineRecoveryFailureDialog(
       windowStub,
       'engine failed',
       'diagnostic detail',
       { onRestart: vi.fn() },
-      { showMessageBox },
+      { dialogSeam },
     );
 
     expect(action).toBe('cancel');
@@ -40,7 +40,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
   });
 
   it('invokes the restart action exactly once and shows no diagnostics dialog', async () => {
-    const { showMessageBox, shownOptions } = makeShowMessageBox([0]);
+    const { dialogSeam, shownOptions } = makeDialogSeam([0]);
     const onRestart = vi.fn(async () => {});
 
     const action = await showEngineRecoveryFailureDialog(
@@ -48,7 +48,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
       'engine failed',
       'diagnostic detail',
       { onRestart },
-      { showMessageBox },
+      { dialogSeam },
     );
 
     expect(action).toBe('restart');
@@ -57,7 +57,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
   });
 
   it('shows the diagnostics log with the provided detail and does not restart', async () => {
-    const { showMessageBox, shownOptions } = makeShowMessageBox([1]);
+    const { dialogSeam, shownOptions } = makeDialogSeam([1]);
     const onRestart = vi.fn(async () => {});
 
     const action = await showEngineRecoveryFailureDialog(
@@ -65,7 +65,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
       'engine failed',
       'structured diagnostic detail',
       { onRestart },
-      { showMessageBox },
+      { dialogSeam },
     );
 
     expect(action).toBe('diagnostics');
@@ -77,7 +77,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
 
   it('takes no action on Cancel or dialog dismissal', async () => {
     for (const dismissResponse of [2, 2]) {
-      const { showMessageBox, shownOptions } = makeShowMessageBox([dismissResponse]);
+      const { dialogSeam, shownOptions } = makeDialogSeam([dismissResponse]);
       const onRestart = vi.fn(async () => {});
 
       const action = await showEngineRecoveryFailureDialog(
@@ -85,7 +85,7 @@ describe('showEngineRecoveryFailureDialog actions', () => {
         'engine failed',
         'diagnostic detail',
         { onRestart },
-        { showMessageBox },
+        { dialogSeam },
       );
 
       expect(action).toBe('cancel');

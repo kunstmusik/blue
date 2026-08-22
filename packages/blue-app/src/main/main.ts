@@ -60,6 +60,11 @@ import {
   validateFileManagerDirectory,
 } from './file-manager-service';
 import {
+  NATIVE_CONFIRMATION_CHANNEL,
+  type NativeConfirmationResult,
+} from '../shared/confirmation-dialog';
+import { showNativeConfirmation } from './native-confirmation';
+import {
   BLUE_X7_IMPORT_SYSEX_CHANNEL,
   selectBlueX7SysexFile,
 } from './blue-x7-sysex-import';
@@ -408,14 +413,19 @@ async function showCsoundErrorWarning(message: string): Promise<void> {
     return;
   }
 
-  const result = await dialog.showMessageBox(mainWindow, {
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'csound-error-warning',
     type: 'error',
     title: 'Csound Error',
     message: 'There was an error in running Csound.',
     detail: `Please view the Csound Output panel for more information.\n\n${message}`,
-    checkboxLabel: 'Disable Error Message Dialog',
-    buttons: ['OK'],
-    defaultId: 0,
+    actions: [{ id: 'ok', label: 'OK', role: 'accept' }],
+    defaultActionId: 'ok',
+    cancelActionId: 'ok',
+    checkbox: {
+      label: 'Disable Error Message Dialog',
+      checked: false,
+    },
   });
 
   if (result.checkboxChecked) {
@@ -1299,34 +1309,46 @@ function setAuditionScoreObjectAvailability(enabled: boolean): void {
 
 async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
   if (!activeRenderOperationId) return true;
-  await dialog.showMessageBox(mainWindow!, {
-    type: 'info',
-    title: 'Render in Progress',
-    message: 'Wait for the active render/freeze operation to finish or cancel it before changing projects.',
-  });
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    await showNativeConfirmation(mainWindow, {
+      id: 'render-in-progress-notice',
+      type: 'info',
+      title: 'Render in Progress',
+      message: 'Wait for the active render/freeze operation to finish or cancel it before changing projects.',
+      actions: [{ id: 'ok', label: 'OK', role: 'accept' }],
+      defaultActionId: 'ok',
+      cancelActionId: 'ok',
+    });
+  }
   return false;
 }
 
 async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {}): Promise<boolean> {
   if (!(await canReplaceProjectWhileRenderActive())) return false;
   if (!currentData) return true;
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
 
-  const result = await dialog.showMessageBox(mainWindow!, {
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'confirm-save-before-replace',
     type: 'question',
     title: 'Save Changes?',
     message: 'Save changes before proceeding?',
     detail: currentFilePath
       ? `File: ${path.basename(currentFilePath)}`
       : 'This project has not been saved yet.',
-    buttons: ['Save', "Don't Save", 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
+    actions: [
+      { id: 'save', label: 'Save', role: 'accept' },
+      { id: 'discard', label: "Don't Save", role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'save',
+    cancelActionId: 'cancel',
   });
 
   if (options.quitAfterSave) {
     // Quit keeps its immediate policy: Save writes then quits, Don't Save
     // quits without writing, and a cancelled or failed save aborts the quit.
-    if (result.response === 0) {
+    if (result.actionId === 'save' && result.outcome === 'selected') {
       pendingQuit = true;
       if (currentFilePath) {
         doSave(currentFilePath);
@@ -1340,7 +1362,7 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
       return true;
     }
 
-    if (result.response === 1) {
+    if (result.actionId === 'discard' && result.outcome === 'selected') {
       doQuit();
       return true;
     }
@@ -1351,7 +1373,7 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
   // Replacement consent requires a durable save: a cancelled Save As,
   // declined overwrite, or failed write blocks the replacement (FR-011).
   const outcome = await resolveReplacementSaveDecision({
-    choose: () => (result.response === 0 ? 'save' : result.response === 1 ? 'discard' : 'cancel'),
+    choose: () => (result.actionId === 'save' && result.outcome === 'selected' ? 'save' : result.actionId === 'discard' && result.outcome === 'selected' ? 'discard' : 'cancel'),
     hasCurrentProject: () => currentData !== null,
     hasCurrentPath: () => currentFilePath !== null,
     saveCurrent: () => currentFilePath !== null && doSave(currentFilePath),
@@ -1480,7 +1502,6 @@ function rebuildApplicationMenu(): void {
     onZoomIn: () => { appZoomController.execute('zoom-in'); syncAboutWindowZoom(); },
     onZoomOut: () => { appZoomController.execute('zoom-out'); syncAboutWindowZoom(); },
     onActualSize: () => { appZoomController.execute('actual-size'); syncAboutWindowZoom(); },
-    onNotYetImplemented: () => { mainWindow?.webContents.send('native-menu-command', { type: 'show-not-yet-implemented' }); },
   }));
 
   Menu.setApplicationMenu(menu);
@@ -1727,18 +1748,27 @@ async function confirmLibraryDraftTransition(
 ): Promise<boolean> {
   const preview = unifiedLibraryService?.prepareLibraryDraftShutdown(reason);
   if (!preview || preview.mayContinue) return true;
-  if (!mainWindow) return false;
-  const result = await dialog.showMessageBox(mainWindow, {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  const result = await showNativeConfirmation(mainWindow, {
+    id: 'unsaved-library-editors',
     type: 'warning',
     title: 'Unsaved Library Editors',
     message: `${preview.dirtySessionIds.length} Library editor${preview.dirtySessionIds.length === 1 ? ' has' : 's have'} unsaved changes.`,
     detail: 'Save all drafts, discard them, or cancel this operation.',
-    buttons: ['Save All', 'Discard', 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
+    actions: [
+      { id: 'save', label: 'Save All', role: 'accept' },
+      { id: 'discard', label: 'Discard', role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'save',
+    cancelActionId: 'cancel',
     noLink: true,
   });
-  const decision = result.response === 0 ? 'save' : result.response === 1 ? 'discard' : 'cancel';
+  const decision = (result.actionId === 'save' && result.outcome === 'selected')
+    ? 'save'
+    : (result.actionId === 'discard' && result.outcome === 'selected')
+    ? 'discard'
+    : 'cancel';
   const resolved = await unifiedLibraryService?.resolveLibraryDraftShutdown(decision);
   return resolved?.mayContinue ?? false;
 }
@@ -1974,19 +2004,30 @@ async function importCsdFile(): Promise<boolean> {
         }
         return result;
       },
-      showModeDialog: () => dialog.showMessageBox(win, {
-        type: 'question',
-        title: 'CSD Import Method',
-        message: 'How would you like to import the score?',
-        buttons: [
-          'Global Score',
-          'Single Sound Object',
-          'Sound Object per Instrument',
-          'Cancel',
-        ],
-        defaultId: 0,
-        cancelId: 3,
-      }),
+      showModeDialog: async () => {
+        const res = await showNativeConfirmation(win, {
+          id: 'csd-import-method',
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          actions: [
+            { id: 'global-score', label: 'Global Score' },
+            { id: 'single-sound-object', label: 'Single Sound Object' },
+            { id: 'sound-object-per-instrument', label: 'Sound Object per Instrument' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'global-score',
+          cancelActionId: 'cancel',
+        });
+        const actionToIndex: Record<string, number> = {
+          'global-score': 0,
+          'single-sound-object': 1,
+          'sound-object-per-instrument': 2,
+          'cancel': 3,
+        };
+        const responseIndex = res.outcome === 'selected' && res.actionId in actionToIndex ? actionToIndex[res.actionId] : 3;
+        return { response: responseIndex, checkboxChecked: false };
+      },
       cancelModeResponse: 3,
       readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
       convert: (csdText, modeType) => convertCSDtoBlue(csdText, modeType),
@@ -2024,19 +2065,30 @@ async function importOrcSco(): Promise<boolean> {
         filters: [{ name: 'Csound SCO File (*.sco)', extensions: ['sco', 'SCO'] }],
         properties: ['openFile'],
       }),
-      showModeDialog: () => dialog.showMessageBox(win, {
-        type: 'question',
-        title: 'CSD Import Method',
-        message: 'How would you like to import the score?',
-        buttons: [
-          'Global Score',
-          'Single Sound Object',
-          'Sound Object per Instrument',
-          'Cancel',
-        ],
-        defaultId: 0,
-        cancelId: 3,
-      }),
+      showModeDialog: async () => {
+        const res = await showNativeConfirmation(win, {
+          id: 'csd-import-method',
+          type: 'question',
+          title: 'CSD Import Method',
+          message: 'How would you like to import the score?',
+          actions: [
+            { id: 'global-score', label: 'Global Score' },
+            { id: 'single-sound-object', label: 'Single Sound Object' },
+            { id: 'sound-object-per-instrument', label: 'Sound Object per Instrument' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'global-score',
+          cancelActionId: 'cancel',
+        });
+        const actionToIndex: Record<string, number> = {
+          'global-score': 0,
+          'single-sound-object': 1,
+          'sound-object-per-instrument': 2,
+          'cancel': 3,
+        };
+        const responseIndex = res.outcome === 'selected' && res.actionId in actionToIndex ? actionToIndex[res.actionId] : 3;
+        return { response: responseIndex, checkboxChecked: false };
+      },
       cancelModeResponse: 3,
       readSource: (filePath) => fs.readFileSync(filePath, 'utf-8'),
       convert: (orcText, scoText, modeType) => convertOrcScoToBlue(orcText, scoText, modeType),
@@ -3867,24 +3919,32 @@ ipcMain.handle('blue-live:get-status', async () => {
   return blueLiveSession.getStatus();
 });
 
-// ─── Settings IPC Handler ───
+// ─── Confirmation and Settings IPC Handlers ───
+
+ipcMain.handle(NATIVE_CONFIRMATION_CHANNEL, async (event, request: unknown): Promise<NativeConfirmationResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  return showNativeConfirmation(owner, request);
+});
 
 ipcMain.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsClosePromptResponse> => {
   const owner = BrowserWindow.fromWebContents(event.sender);
-  const options = {
-    type: 'question' as const,
+  const result = await showNativeConfirmation(owner, {
+    id: 'settings-confirm-close',
+    type: 'question',
     title: 'Unsaved Settings',
     message: 'You have unsaved settings.',
     detail: 'Do you want to apply them before closing Settings?',
-    buttons: ['Yes', 'No', 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
+    actions: [
+      { id: 'yes', label: 'Yes', role: 'accept' },
+      { id: 'no', label: 'No', role: 'destructive' },
+      { id: 'cancel', label: 'Cancel', role: 'cancel' },
+    ],
+    defaultActionId: 'yes',
+    cancelActionId: 'cancel',
     noLink: true,
-  };
-  const result = owner && !owner.isDestroyed()
-    ? await dialog.showMessageBox(owner, options)
-    : await dialog.showMessageBox(options);
-  return result.response === 0 ? 'yes' : result.response === 1 ? 'no' : 'cancel';
+  });
+  if (result.outcome !== 'selected') return 'cancel';
+  return result.actionId === 'yes' ? 'yes' : result.actionId === 'no' ? 'no' : 'cancel';
 });
 
 ipcMain.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown) => {
@@ -4444,7 +4504,16 @@ ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObject
   return doc;
 });
 
-ipcMain.handle('select-score-object-audio-file', async (_event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
+ipcMain.handle('select-score-object-audio-file', async (event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  if (!owner || owner.isDestroyed()) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No active owner window.',
+    };
+  }
+
   if (!currentData) {
     return {
       status: 'error',
@@ -4467,8 +4536,7 @@ ipcMain.handle('select-score-object-audio-file', async (_event, request?: { curr
     },
     {
       showOpenDialog: async (defaultPath) => {
-        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
-        const result = await dialog.showOpenDialog(win ?? (undefined as unknown as BrowserWindow), {
+        const result = await dialog.showOpenDialog(owner, {
           title: 'Select Audio File',
           defaultPath,
           properties: ['openFile'],
@@ -4483,7 +4551,16 @@ ipcMain.handle('select-score-object-audio-file', async (_event, request?: { curr
   );
 });
 
-ipcMain.handle('save-frozen-sound-object-copy', async (_event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
+ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
+  const owner = BrowserWindow.fromWebContents(event.sender);
+  if (!owner || owner.isDestroyed()) {
+    return {
+      status: 'error',
+      code: 'no-project',
+      message: 'No active owner window.',
+    };
+  }
+
   if (!currentData || !currentFilePath) {
     return {
       status: 'error',
@@ -4501,8 +4578,7 @@ ipcMain.handle('save-frozen-sound-object-copy', async (_event, request: { frozen
     },
     {
       showSaveDialog: async (defaultPath, defaultFileName) => {
-        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
-        const result = await dialog.showSaveDialog(win ?? (undefined as unknown as BrowserWindow), {
+        const result = await dialog.showSaveDialog(owner, {
           title: 'Save Copy of Frozen Audio',
           defaultPath: defaultPath && defaultFileName ? path.join(defaultPath, defaultFileName) : defaultPath,
           filters: [
@@ -4513,16 +4589,19 @@ ipcMain.handle('save-frozen-sound-object-copy', async (_event, request: { frozen
         return result.canceled || !result.filePath ? null : result.filePath;
       },
       confirmOverwrite: async (fileName) => {
-        const win = mainWindow ?? BrowserWindow.getFocusedWindow();
-        const res = await dialog.showMessageBox(win ?? (undefined as unknown as BrowserWindow), {
+        const res = await showNativeConfirmation(owner, {
+          id: 'overwrite-frozen-audio',
           type: 'question',
-          buttons: ['Overwrite', 'Cancel'],
-          defaultId: 1,
-          cancelId: 1,
           title: 'Overwrite File?',
           message: `File already exists: ${fileName}\n\nDo you want to overwrite it?`,
+          actions: [
+            { id: 'overwrite', label: 'Overwrite', role: 'destructive' },
+            { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          ],
+          defaultActionId: 'cancel',
+          cancelActionId: 'cancel',
         });
-        return res.response === 0;
+        return res.actionId === 'overwrite' && res.outcome === 'selected';
       },
     },
   );

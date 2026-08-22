@@ -83,24 +83,66 @@ describe('library editing UI', () => {
     const onCancel = vi.fn();
     const container = document.createElement('div');
     const root = createRoot(container);
+
+    for (const [label, callback] of [
+      ['Reload latest', onReload],
+      ['Overwrite latest', onOverwrite],
+      ['Cancel', onCancel],
+    ] as const) {
+      act(() => root.render(
+        <LibrarySessionDialog
+          key={label}
+          title="Library item changed"
+          message="Choose a conflict resolution."
+          primaryLabel="Reload latest"
+          secondaryLabel="Overwrite latest"
+          onPrimary={onReload}
+          onSecondary={onOverwrite}
+          onCancel={onCancel}
+        />,
+      ));
+      act(() => [...container.querySelectorAll('button')].find((button) => button.textContent === label)?.click());
+      expect(callback).toHaveBeenCalledOnce();
+    }
+    act(() => root.unmount());
+  });
+
+  it('always exposes a safe cancel path when a session has no cancel callback', () => {
+    const onPrimary = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
     act(() => root.render(
       <LibrarySessionDialog
-        title="Library item changed"
-        message="Choose a conflict resolution."
-        primaryLabel="Reload latest"
-        secondaryLabel="Overwrite latest"
-        onPrimary={onReload}
-        onSecondary={onOverwrite}
-        onCancel={onCancel}
+        title="Library item missing"
+        message="Choose how to continue."
+        onPrimary={onPrimary}
       />,
     ));
-    for (const label of ['Reload latest', 'Overwrite latest', 'Cancel']) {
-      act(() => [...container.querySelectorAll('button')].find((button) => button.textContent === label)?.click());
-    }
-    expect(onReload).toHaveBeenCalledOnce();
-    expect(onOverwrite).toHaveBeenCalledOnce();
-    expect(onCancel).toHaveBeenCalledOnce();
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog.querySelector('[data-action-id="cancel"]')).toBeTruthy();
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onPrimary).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+    act(() => root.render(
+      <LibrarySessionDialog
+        key="backdrop"
+        title="Library item missing"
+        message="Choose how to continue."
+        onPrimary={onPrimary}
+      />,
+    ));
+    const backdrop = container.querySelector('[role="presentation"]') as HTMLElement;
+    act(() => backdrop.click());
+    expect(onPrimary).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
     act(() => root.unmount());
+    container.remove();
   });
 
   it('uses name-only inline rename and mouse/keyboard contextual commands without row buttons', async () => {

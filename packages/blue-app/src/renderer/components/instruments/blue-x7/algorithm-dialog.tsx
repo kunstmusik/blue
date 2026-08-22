@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { getAlgorithmImage } from '../../../assets/blue-x7/algorithm-images';
-import { useDialogFocus } from './use-dialog-focus';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 export interface AlgorithmDialogProps {
   currentAlgorithm: number;

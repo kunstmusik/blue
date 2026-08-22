@@ -45,6 +45,11 @@ import {
   type EngineRecoveryStatus,
 } from '../shared/engine-recovery';
 import {
+  NATIVE_CONFIRMATION_CHANNEL,
+  type NativeConfirmationRequest,
+  type NativeConfirmationResult,
+} from '../shared/confirmation-dialog';
+import {
   SOUND_FONT_FILE_SELECT_CHANNEL,
   SOUND_FONT_INSPECT_CHANNEL,
   type SoundFontInfo,
@@ -396,6 +401,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
   addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<ProjectMutationReceipt>>,
+  showNativeConfirmation: (request: NativeConfirmationRequest) =>
+    ipcRenderer.invoke(NATIVE_CONFIRMATION_CHANNEL, request) as Promise<NativeConfirmationResult>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
   getLibraryEditorSession: (sessionId: string) =>

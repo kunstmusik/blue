@@ -1,4 +1,5 @@
-import { dialog, type BrowserWindow, type MessageBoxOptions, type MessageBoxReturnValue } from 'electron';
+import type { BrowserWindow } from 'electron';
+import { NativeConfirmationDialogSeam, showNativeConfirmation } from './native-confirmation';
 
 export type EngineRecoveryDialogAction = 'restart' | 'diagnostics' | 'cancel';
 
@@ -8,7 +9,7 @@ export interface EngineRecoveryDialogActions {
 }
 
 export interface EngineRecoveryDialogDependencies {
-  showMessageBox?: (window: BrowserWindow, options: MessageBoxOptions) => Promise<MessageBoxReturnValue>;
+  dialogSeam?: NativeConfirmationDialogSeam;
 }
 
 /**
@@ -23,33 +24,45 @@ export async function showEngineRecoveryFailureDialog(
   actions: EngineRecoveryDialogActions,
   dependencies: EngineRecoveryDialogDependencies = {},
 ): Promise<EngineRecoveryDialogAction> {
-  const showMessageBox =
-    dependencies.showMessageBox ?? ((win, options) => dialog.showMessageBox(win, options));
+  const result = await showNativeConfirmation(
+    window,
+    {
+      id: 'engine-recovery-failure',
+      type: 'error',
+      title: 'Audio Engine Recovery Failed',
+      message: 'Audio Engine Recovery Failed',
+      detail: errorMessage,
+      actions: [
+        { id: 'restart', label: 'Restart Audio Engine', role: 'accept' },
+        { id: 'diagnostics', label: 'Show Diagnostics', role: 'secondary' },
+        { id: 'cancel', label: 'Cancel', role: 'cancel' },
+      ],
+      defaultActionId: 'restart',
+      cancelActionId: 'cancel',
+    },
+    dependencies.dialogSeam,
+  );
 
-  const result = await showMessageBox(window, {
-    type: 'error',
-    title: 'Audio Engine Recovery Failed',
-    message: 'Audio Engine Recovery Failed',
-    detail: errorMessage,
-    buttons: ['Restart Audio Engine', 'Show Diagnostics', 'Cancel'],
-    defaultId: 0,
-    cancelId: 2,
-  });
-
-  if (result.response === 0) {
+  if (result.actionId === 'restart' && result.outcome === 'selected') {
     await actions.onRestart();
     return 'restart';
   }
 
-  if (result.response === 1) {
-    await showMessageBox(window, {
-      type: 'info',
-      title: 'Audio Engine Diagnostics',
-      message: 'Audio Engine Diagnostic Log',
-      detail: diagnostics,
-      buttons: ['Close'],
-      defaultId: 0,
-    });
+  if (result.actionId === 'diagnostics' && result.outcome === 'selected') {
+    await showNativeConfirmation(
+      window,
+      {
+        id: 'engine-recovery-diagnostics',
+        type: 'info',
+        title: 'Audio Engine Diagnostics',
+        message: 'Audio Engine Diagnostic Log',
+        detail: diagnostics,
+        actions: [{ id: 'close', label: 'Close', role: 'accept' }],
+        defaultActionId: 'close',
+        cancelActionId: 'close',
+      },
+      dependencies.dialogSeam,
+    );
     return 'diagnostics';
   }
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'sonner';
 import type { DockviewApi, DockviewGroupPanel, IDockviewPanel } from 'dockview';
 import {
   applyAuxiliaryLayout,
@@ -1679,9 +1680,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
         void usePlaybackStore.getState().auditionScoreObjects(objectIds);
         return;
       }
-      case 'show-not-yet-implemented':
-        window.alert('not yet implemented');
-        return;
       case 'edit-tempo-map':
         window.dispatchEvent(new CustomEvent('blue-edit-tempo-map'));
         return;

@@ -246,14 +246,12 @@ describe('Libraries panel', () => {
       },
     });
     const { container, root } = render(<LibrariesPanel />);
-    const dialog = container.querySelector('[role="dialog"]');
-    const surface = dialog?.querySelector('[data-library-dialog-surface]');
+    const dialog = container.querySelector('[role="dialog"], [role="alertdialog"]');
+    expect(dialog).toBeTruthy();
     expect(dialog?.textContent).toContain('3 Library nodes');
     expect(dialog?.textContent).toContain('unsaved changes');
     expect(dialog?.textContent).toContain('Discard & Delete');
     expect(dialog?.textContent).toContain('Save & Delete');
-    expect(surface?.className).toContain('bg-app-overlay');
-    expect(surface?.className).not.toContain('bg-app-panel');
     act(() => { root.unmount(); });
   });
 

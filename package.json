@@ -7,8 +7,8 @@
     "app:package": "pnpm --filter @blue/app package:current",
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
-    "test:scripts": "node --test scripts/audit-renderer-typography.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
-    "lint": "pnpm audit:renderer-typography && pnpm -r run lint",
+    "test:scripts": "node --test scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
+    "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint",
     "fixtures:java-automation": "node scripts/generate-java-blue-automation-fixtures.mjs",
     "fixtures:java-automation:check": "node scripts/generate-java-blue-automation-fixtures.mjs --check",
     "audit:renderer-theme": "node scripts/audit-renderer-theme.mjs",
@@ -26,6 +26,7 @@
     "eslint": "^10.2.0",
     "prettier": "^3.8.2",
     "typescript": "^5.8.0",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.4"
   },
   "pnpm": {
@@ -35,6 +36,13 @@
       "electron-winstaller",
       "esbuild",
       "zeromq"
-    ]
+    ],
+    "packageExtensions": {
+      "vite-plugin-electron@0.29.1": {
+        "peerDependencies": {
+          "vite": "^7.3.2"
+        }
+      }
+    }
   }
 }

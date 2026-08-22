@@ -368,7 +368,6 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     ]]);
     const item = soundGroup.layers[0]!.items[0]!;
     const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
 
     act(() => {
@@ -376,7 +375,18 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
     clickContextMenuItem('Convert to ObjectBuilder');
 
-    expect(confirm).toHaveBeenCalledWith('This operation can not be undone.\nAre you sure?');
+    // Dialog is shown
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Convert to ObjectBuilder?');
+    expect(dialog?.textContent).toContain('This operation can not be undone. Are you sure?');
+
+    // Confirm conversion
+    const convertBtn = dialog?.querySelector<HTMLButtonElement>('[data-action-id="convert"]')!;
+    act(() => {
+      convertBtn.click();
+    });
+
     expect(applyPatch).toHaveBeenCalledWith({
       score: {
         type: 'convertScoreObjectToObjectBuilder',
@@ -385,7 +395,38 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
 
     act(() => { root.unmount(); });
-    confirm.mockRestore();
+  });
+
+  it('fails closed when the ObjectBuilder conversion target changes while confirmation is open', () => {
+    const soundGroup = createSoundGroup([[
+      createSoundItem('python-object', 'Python', 0, 0, 1, 2, 'PythonObject'),
+    ]]);
+    const item = soundGroup.layers[0]!.items[0]!;
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<typeof vi.fn>;
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup]);
+
+    act(() => {
+      dispatchMouseEvent(surface, 'contextmenu', 35, 10);
+    });
+    clickContextMenuItem('Convert to ObjectBuilder');
+
+    act(() => {
+      useScoreSelectionStore.getState().setSelection([{
+        objectId: item.objectId,
+        editorTarget: {
+          ...item.editorTarget!,
+          location: { ...item.editorTarget!.location!, objectIndex: 1 },
+        },
+      }]);
+    });
+
+    const convertButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="convert"]');
+    act(() => {
+      convertButton?.click();
+    });
+
+    expect(applyPatch).not.toHaveBeenCalled();
+    act(() => { root.unmount(); });
   });
 
   it('disables ObjectBuilder conversion for unsupported score object types', () => {

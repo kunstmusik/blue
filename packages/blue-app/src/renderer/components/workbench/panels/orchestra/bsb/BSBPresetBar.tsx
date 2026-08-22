@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type {
@@ -7,10 +7,17 @@ import type {
   PresetGroupSnapshot,
 } from '../../../../../../shared/project-editor';
 import PresetsManagerDialog from './PresetsManagerDialog';
+import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
 
 interface BSBPresetBarProps {
   instrument: BlueSynthBuilderInstrumentSnapshot;
   onBsbInterfacePatch: (patch: BsbInterfacePatch) => void;
+}
+
+interface PromptState {
+  kind: 'preset' | 'folder';
+  title: string;
+  label: string;
 }
 
 export default function BSBPresetBar({
@@ -20,6 +27,8 @@ export default function BSBPresetBar({
   const presetGroup = instrument.presetGroup;
   const [menuOpen, setMenuOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
+  const [promptState, setPromptState] = useState<PromptState | null>(null);
+  const [promptValue, setPromptValue] = useState('');
 
   const handleUpdatePreset = useCallback(() => {
     if (!presetGroup?.currentPresetUniqueId) return;
@@ -27,16 +36,16 @@ export default function BSBPresetBar({
   }, [presetGroup, onBsbInterfacePatch]);
 
   const handleAddPreset = useCallback(() => {
-    const presetName = window.prompt('Enter Preset Name');
-    if (!presetName || presetName.trim().length === 0) return;
-    onBsbInterfacePatch({ type: 'addPreset', presetName: presetName.trim() });
-  }, [onBsbInterfacePatch]);
+    setPromptState({ kind: 'preset', title: 'Add Preset', label: 'Preset Name' });
+    setPromptValue('');
+    setMenuOpen(false);
+  }, []);
 
   const handleAddFolder = useCallback(() => {
-    const folderName = window.prompt('Enter Folder Name');
-    if (!folderName || folderName.trim().length === 0) return;
-    onBsbInterfacePatch({ type: 'addPresetGroup', groupName: folderName.trim() });
-  }, [onBsbInterfacePatch]);
+    setPromptState({ kind: 'folder', title: 'Add Folder', label: 'Folder Name' });
+    setPromptValue('');
+    setMenuOpen(false);
+  }, []);
 
   const handleSynchronizePresets = useCallback(() => {
     onBsbInterfacePatch({ type: 'synchronizePresets' });
@@ -149,7 +158,7 @@ export default function BSBPresetBar({
         </>
       );
     },
-    [onBsbInterfacePatch, handleAddFolder, handleAddPreset, handleSynchronizePresets, handleManagePresets],
+    [handleAddFolder, handleAddPreset, handleManagePresets, handleSynchronizePresets, onBsbInterfacePatch],
   );
 
   const currentPresetPath = getCurrentPresetPath();
@@ -204,6 +213,60 @@ export default function BSBPresetBar({
           onBsbInterfacePatch={onBsbInterfacePatch}
           onClose={handleCloseManager}
         />
+      )}
+
+      {promptState && (
+        <ConfirmationDialog
+          open={true}
+          title={promptState.title}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            {
+              id: 'confirm',
+              label: 'Add',
+              intent: 'primary',
+              disabled: promptValue.trim().length === 0,
+            },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'confirm' && promptValue.trim().length > 0) {
+              if (promptState.kind === 'preset') {
+                onBsbInterfacePatch({ type: 'addPreset', presetName: promptValue.trim() });
+              } else {
+                onBsbInterfacePatch({ type: 'addPresetGroup', groupName: promptValue.trim() });
+              }
+            }
+            setPromptState(null);
+            setPromptValue('');
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (promptValue.trim().length > 0) {
+                if (promptState.kind === 'preset') {
+                  onBsbInterfacePatch({ type: 'addPreset', presetName: promptValue.trim() });
+                } else {
+                  onBsbInterfacePatch({ type: 'addPresetGroup', groupName: promptValue.trim() });
+                }
+                setPromptState(null);
+                setPromptValue('');
+              }
+            }}
+          >
+            <label className="block text-role-body text-app-text-muted mb-1">
+              {promptState.label}
+            </label>
+            <input
+              type="text"
+              autoFocus
+              value={promptValue}
+              onChange={(e) => setPromptValue(e.target.value)}
+              className="w-full rounded border border-app-border bg-app-surface px-2 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
+            />
+          </form>
+        </ConfirmationDialog>
       )}
     </>
   );

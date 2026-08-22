@@ -16,12 +16,14 @@ const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(),
     addLayer: vi.fn(),
+    getProjectDocumentRevision: vi.fn(() => 0),
   },
 }));
 
 vi.mock('../stores/project-store', () => ({
   useProjectStore: (selector: (state: typeof mockProjectState) => unknown) =>
     selector(mockProjectState),
+  getProjectDocumentRevision: () => mockProjectState.getProjectDocumentRevision(),
 }));
 
 function createScoreSnapshot(): ScoreDocumentSnapshot {
@@ -92,6 +94,7 @@ function setTextInputValue(input: HTMLInputElement, value: string): void {
 beforeEach(() => {
   mockProjectState.applyProjectDocumentPatch.mockReset();
   mockProjectState.addLayer.mockReset();
+  mockProjectState.getProjectDocumentRevision.mockReset().mockReturnValue(0);
 });
 
 afterEach(() => {
@@ -201,6 +204,93 @@ describe('ScoreManagerDialog', () => {
         deleteEmptyLayerGroups: true,
       },
     });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('confirms layer-group removal via ConfirmationDialog and cancels safely', () => {
+    const { container, root } = renderDialog();
+    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+    expect(removeGroupButton).toBeTruthy();
+
+    // Click remove layer group
+    act(() => {
+      removeGroupButton.click();
+    });
+
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Delete Layer Group?');
+    expect(dialog?.textContent).toContain('Deleting Layer Groups cannot be undone.');
+
+    // Cancel first
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+    act(() => {
+      cancelButton.click();
+    });
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
+
+    // Open again and confirm
+    act(() => {
+      removeGroupButton.click();
+    });
+    const confirmDialog = document.body.querySelector('[role="alertdialog"]');
+    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    act(() => {
+      deleteButton.click();
+    });
+
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
+      score: {
+        type: 'removeLayerGroup',
+        groupId: 'lg-1',
+      },
+    });
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('does not remove a group when the selected group changes while confirmation is open', () => {
+    const score = {
+      ...createScoreSnapshot(),
+      layerGroups: [
+        ...createScoreSnapshot().layerGroups,
+        {
+          groupId: 'lg-2',
+          groupType: 'track' as const,
+          name: 'Second Group',
+          layerCount: 0,
+          isOpenableContainer: true,
+          layers: [],
+        },
+      ],
+    };
+    const { container, root } = renderDialog(score);
+    const removeGroupButton = container.querySelector<HTMLButtonElement>('button[title="Remove Layer Group"]')!;
+
+    act(() => {
+      removeGroupButton.click();
+    });
+    const secondGroupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find((node) =>
+      node.textContent?.trim() === 'Second Group',
+    ) as HTMLDivElement;
+    expect(secondGroupRow).toBeTruthy();
+    act(() => {
+      secondGroupRow.click();
+    });
+
+    const deleteButton = document.body.querySelector<HTMLButtonElement>('[data-action-id="remove"]')!;
+    act(() => {
+      deleteButton.click();
+    });
+
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
 
     act(() => {
       root.unmount();

@@ -286,7 +286,6 @@ export default function SelectedCodeEditor({
     // Completion options/providers are intentionally excluded: they are applied
     // via completionCompartment.reconfigure() in the effect below so changing
     // them never destroys the EditorView (which would reset the cursor).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completionCompartment, hasEvaluateCodeHandler, mode, placeholder, readOnly]);
 
   // Reconfigure only the autocompletion extension when completion inputs change.

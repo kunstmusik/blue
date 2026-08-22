@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LEGACY_LIBRARY_FORMATS } from '@blue/data';
-import { dialog, type BrowserWindow, type IpcMain, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
+import { BrowserWindow, dialog, type IpcMain, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
+import { showNativeConfirmation } from '../native-confirmation';
 import {
   UNIFIED_LIBRARY_BROWSE_CHANNEL,
   UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
@@ -376,10 +377,10 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
         )
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid import preview.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (_event, libraryType: unknown) => {
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (event, libraryType: unknown) => {
     if (!isLibraryType(libraryType)) return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid library type.', false) };
     const names = { instrument: 'userInstrumentLibrary.xml', udo: 'udoLibrary.xml', effect: 'effectsLibrary.xml', soundObject: 'soundObjectLibrary.xml' } as const;
-    const owner = getWindows().find((window) => !window.isDestroyed());
+    const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
     const options: SaveDialogOptions = {
       title: `Export ${libraryType} Library`,
       defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.(), names[libraryType]),
@@ -389,33 +390,27 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     if (result.canceled || !result.filePath) return null;
     const exported = await service.exportCurrentLibrary(libraryType, result.filePath, async (preflight) => {
       const output = preflight.outputs[0]!;
-      const confirmation = owner
-        ? await dialog.showMessageBox(owner, {
-            type: output.overwritesExisting ? 'warning' : 'info',
-            buttons: ['Cancel', output.overwritesExisting ? 'Overwrite' : 'Export'],
-            defaultId: 0,
-            cancelId: 0,
-            title: 'Review Library Export',
-            message: output.overwritesExisting
-              ? `“${path.basename(output.targetPath)}” will be replaced.`
-              : `Export “${path.basename(output.targetPath)}”?`,
-            detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
-          })
-        : await dialog.showMessageBox({
-            type: output.overwritesExisting ? 'warning' : 'info',
-            buttons: ['Cancel', output.overwritesExisting ? 'Overwrite' : 'Export'],
-            defaultId: 0, cancelId: 0, title: 'Review Library Export',
-            message: output.overwritesExisting
-              ? `“${path.basename(output.targetPath)}” will be replaced.`
-              : `Export “${path.basename(output.targetPath)}”?`,
-            detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
-          });
-      return confirmation.response === 1;
+      const confirmation = await showNativeConfirmation(owner, {
+        id: 'review-library-export',
+        type: output.overwritesExisting ? 'warning' : 'info',
+        title: 'Review Library Export',
+        message: output.overwritesExisting
+          ? `“${path.basename(output.targetPath)}” will be replaced.`
+          : `Export “${path.basename(output.targetPath)}”?`,
+        detail: `Compatibility preflight passed for ${output.itemCount} items. ${output.unsupportedPreservedCount} unsupported items will be preserved unchanged. No content will be omitted.`,
+        actions: [
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          { id: 'export', label: output.overwritesExisting ? 'Overwrite' : 'Export', role: output.overwritesExisting ? 'destructive' : 'accept' },
+        ],
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      });
+      return confirmation.actionId === 'export' && confirmation.outcome === 'selected';
     });
     return exported.ok && !exported.value ? null : exported;
   });
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async () => {
-    const owner = getWindows().find((window) => !window.isDestroyed());
+  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async (event) => {
+    const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Export All Java Blue Libraries',
       defaultPath: resolveWorkDirectoryDefaultPath(getWorkDirectory?.()),
@@ -429,21 +424,22 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
         .map((output) => path.basename(output.targetPath));
       const itemCount = preflight.outputs.reduce((sum, output) => sum + output.itemCount, 0);
       const unsupportedCount = preflight.outputs.reduce((sum, output) => sum + output.unsupportedPreservedCount, 0);
-      const messageOptions = {
-        type: existingNames.length > 0 ? 'warning' as const : 'info' as const,
-        buttons: ['Cancel', existingNames.length > 0 ? 'Overwrite All' : 'Export All'],
-        defaultId: 0,
-        cancelId: 0,
+      const confirmation = await showNativeConfirmation(owner, {
+        id: 'review-library-exports',
+        type: existingNames.length > 0 ? 'warning' : 'info',
         title: 'Review Library Exports',
         message: existingNames.length > 0
           ? `${existingNames.length} library export ${existingNames.length === 1 ? 'file will be replaced' : 'files will be replaced'}.`
           : 'Export all four Java Blue libraries?',
         detail: `Compatibility preflight passed for all four files and ${itemCount} items. ${unsupportedCount} unsupported items will be preserved unchanged. No content will be omitted.${existingNames.length > 0 ? `\n\nReplace: ${existingNames.join(', ')}` : ''}`,
-      };
-      const confirmation = owner
-        ? await dialog.showMessageBox(owner, messageOptions)
-        : await dialog.showMessageBox(messageOptions);
-      return confirmation.response === 1;
+        actions: [
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+          { id: 'export-all', label: existingNames.length > 0 ? 'Overwrite All' : 'Export All', role: existingNames.length > 0 ? 'destructive' : 'accept' },
+        ],
+        defaultActionId: 'cancel',
+        cancelActionId: 'cancel',
+      });
+      return confirmation.actionId === 'export-all' && confirmation.outcome === 'selected';
     });
     return exported.ok && !exported.value ? null : exported;
   });

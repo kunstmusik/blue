@@ -84,3 +84,11 @@ runtime behavior.
   project data) as canonical project content without coercion.
 - Keep `docs/typography.md` up to date in the same change whenever typography roles, metrics,
   ownership boundaries, or exception policies are updated.
+
+## Confirmation dialog guidance
+
+- Never use raw browser blocking dialogs (`window.confirm`, `window.prompt`, `window.alert`, or bare `confirm`, `prompt`, `alert`) in application source.
+- For host-owned/system decisions (file replacement, unsaved close, import/export collisions, recovery), use `showNativeConfirmation` from `packages/blue-app/src/main/native-confirmation.ts` in the main process, or `window.blueAPI.showNativeConfirmation` via preload in the renderer. Never invoke `dialog.showMessageBox` directly outside the dedicated wrapper.
+- For in-app contextual decisions (item/preset deletion, layer group removal, non-undoable score object conversions, draft discard), use `ConfirmationDialog` from `packages/blue-app/src/renderer/components/dialogs/ConfirmationDialog.tsx`.
+- All confirmations must be fail-closed (Escape, backdrop click, closing window, or unexpected IPC failure resolves safely as Cancel with no side-effects).
+- Destructive confirmations must explicitly set destructive intent (red styling) and default focus to Cancel.

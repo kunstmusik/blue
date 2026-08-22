@@ -9,11 +9,22 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/** Focus the first control in a modal, trap Tab, and restore the opener. */
-export function useDialogFocus(isOpen: boolean, onClose: () => void) {
+export interface UseDialogFocusOptions {
+  initialFocusSelector?: string;
+  initialFocusElement?: HTMLElement | null;
+}
+
+/** Focus a control in a modal, trap Tab, and restore the opener on close. */
+export function useDialogFocus(
+  isOpen: boolean,
+  onClose: () => void,
+  options?: UseDialogFocusOptions,
+) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -23,9 +34,24 @@ export function useDialogFocus(isOpen: boolean, onClose: () => void) {
     if (!dialog) return undefined;
 
     const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    const firstControl = focusable()[0];
-    if (firstControl) {
-      firstControl.focus();
+
+    // RequestAnimationFrame / immediate focus
+    const initialSelector = optionsRef.current?.initialFocusSelector;
+    const initialElement = optionsRef.current?.initialFocusElement;
+
+    let targetControl: HTMLElement | null = null;
+    if (initialElement && dialog.contains(initialElement)) {
+      targetControl = initialElement;
+    } else if (initialSelector) {
+      targetControl = dialog.querySelector<HTMLElement>(initialSelector);
+    }
+
+    if (!targetControl) {
+      targetControl = focusable()[0] ?? null;
+    }
+
+    if (targetControl) {
+      targetControl.focus();
     } else {
       dialog.tabIndex = -1;
       dialog.focus();
@@ -34,6 +60,7 @@ export function useDialogFocus(isOpen: boolean, onClose: () => void) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
+        event.stopPropagation();
         onCloseRef.current();
         return;
       }
@@ -61,7 +88,9 @@ export function useDialogFocus(isOpen: boolean, onClose: () => void) {
     dialog.addEventListener('keydown', handleKeyDown);
     return () => {
       dialog.removeEventListener('keydown', handleKeyDown);
-      if (previousFocus?.isConnected) previousFocus.focus();
+      if (previousFocus?.isConnected) {
+        previousFocus.focus();
+      }
     };
   }, [isOpen]);
 

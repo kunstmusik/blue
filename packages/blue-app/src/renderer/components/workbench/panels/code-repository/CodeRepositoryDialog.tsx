@@ -5,6 +5,7 @@ import type { CodeRepositoryNode } from '@blue/data';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import CodeRepositoryTree from './CodeRepositoryTree';
 import CodeRepositorySnippetEditor from './CodeRepositorySnippetEditor';
+import { ConfirmationDialog } from '../../../dialogs/ConfirmationDialog';
 import type { CodeRepositoryDiagnostic, CodeRepositoryError } from '../../../../../shared/code-repository';
 
 function createFreshNodeId(): string {
@@ -104,6 +105,7 @@ export default function CodeRepositoryDialog({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [retryingMigration, setRetryingMigration] = useState(false);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   const snapshotRef = useRef(snapshot);
   const draftRef = useRef<CodeRepositoryNode | null>(null);
 
@@ -152,7 +154,8 @@ export default function CodeRepositoryDialog({
 
   const handleClose = useCallback(() => {
     if (saving) return;
-    if (dirty && !window.confirm('Discard unsaved changes to the Code Repository?')) {
+    if (dirty) {
+      setConfirmDiscardOpen(true);
       return;
     }
     setDraft(null);
@@ -425,6 +428,24 @@ export default function CodeRepositoryDialog({
           </div>
         </div>
       </div>
+      <ConfirmationDialog
+        open={confirmDiscardOpen}
+        title="Discard Unsaved Changes?"
+        description="Discard unsaved changes to the Code Repository?"
+        actions={[
+          { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+          { id: 'discard', label: 'Discard Changes', intent: 'destructive' },
+        ]}
+        cancelActionId="cancel"
+        onDecision={(actionId) => {
+          setConfirmDiscardOpen(false);
+          if (actionId === 'discard') {
+            setDraft(null);
+            setSelectedId(null);
+            onClose();
+          }
+        }}
+      />
     </div>
   );
 }

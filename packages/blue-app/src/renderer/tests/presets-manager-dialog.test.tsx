@@ -366,4 +366,65 @@ describe('PresetsManagerDialog', () => {
       parentGroupPath: [0],
     });
   });
+
+  it('confirms preset removal with explicit Delete button and preserves on Cancel', async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    const onPatch = vi.fn();
+
+    act(() => {
+      root?.render(
+        <PresetsManagerDialog
+          presetGroup={createPresetGroup()}
+          onBsbInterfacePatch={onPatch}
+          onClose={vi.fn()}
+        />,
+      );
+    });
+
+    const presetRow = findTreeRow(container, 'B');
+    expect(presetRow).toBeTruthy();
+    if (!presetRow) return;
+    await openContextMenu(presetRow);
+
+    // Click Remove in context menu -> opens ConfirmationDialog
+    await act(async () => {
+      findMenuItem('Remove')?.click();
+      await Promise.resolve();
+    });
+
+    const dialog = document.body.querySelector('[role="alertdialog"]');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('Delete Preset “B”?');
+
+    // Cancel first
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]');
+    expect(cancelButton).toBeTruthy();
+    act(() => {
+      cancelButton?.click();
+    });
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(onPatch).not.toHaveBeenCalled();
+
+    // Open again and confirm
+    await openContextMenu(presetRow);
+    await act(async () => {
+      findMenuItem('Remove')?.click();
+      await Promise.resolve();
+    });
+
+    const confirmDialog = document.body.querySelector('[role="alertdialog"]');
+    const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="delete"]');
+    expect(deleteButton).toBeTruthy();
+    act(() => {
+      deleteButton?.click();
+    });
+
+    expect(document.body.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(onPatch).toHaveBeenCalledWith({
+      type: 'removePreset',
+      presetUniqueId: 'preset-b',
+    });
+  });
 });

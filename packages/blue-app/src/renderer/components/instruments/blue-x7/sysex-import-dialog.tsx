@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import type { BlueX7Voice } from '@blue/data';
 import { decodeBankVoice, formatBankSlotLabel } from '@blue/data';
-import { useDialogFocus } from './use-dialog-focus';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 type OperatorEnabled = BlueX7Voice['common']['operatorEnabled'];
 

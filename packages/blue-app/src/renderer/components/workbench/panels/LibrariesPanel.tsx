@@ -6,6 +6,7 @@ import { LibraryTree, validateLibraryNodeName } from '../../libraries/LibraryTre
 import { LibraryActionsMenu } from '../../libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../../libraries/LibraryImportDialog';
 import { LibraryRecoveryPanel } from '../../libraries/LibraryRecoveryPanel';
+import { ConfirmationDialog } from '../../dialogs/ConfirmationDialog';
 import { useLibraryStore } from '../../../stores/library-store';
 
 const TYPE_LABELS: Record<LibraryType, string> = {
@@ -316,28 +317,39 @@ export default function LibrariesPanel(): React.ReactElement {
         </div>
       )}
       {state.deletePreview && (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-labelledby="library-delete-title">
-          <div className="w-full max-w-sm rounded border border-app-border bg-app-overlay p-4 text-app-text shadow-2xl" data-library-dialog-surface>
-            <h2 id="library-delete-title" className="text-role-title-3 font-semibold">Delete “{state.deletePreview.displayName}”?</h2>
-            <p className="mt-2 text-role-callout text-app-text-muted">
-              This removes {state.deletePreview.affectedCount} Library {state.deletePreview.affectedCount === 1 ? 'node' : 'nodes'} and cannot be undone.
+        <ConfirmationDialog
+          open={true}
+          title={`Delete “${state.deletePreview.displayName}”?`}
+          description={`This removes ${state.deletePreview.affectedCount} Library ${state.deletePreview.affectedCount === 1 ? 'node' : 'nodes'} and cannot be undone.`}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            ...(state.deletePreview.dirtyEditorSessionIds.length > 0
+              ? [{ id: 'discard', label: 'Discard & Delete', intent: 'destructive' as const }]
+              : []),
+            {
+              id: 'delete',
+              label: state.deletePreview.dirtyEditorSessionIds.length > 0 ? 'Save & Delete' : 'Delete',
+              intent: 'destructive' as const,
+            },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'cancel') {
+              state.cancelDelete();
+              restoreTreeFocus();
+            } else if (actionId === 'discard') {
+              void confirmDelete('discard');
+            } else if (actionId === 'delete') {
+              void confirmDelete(state.deletePreview!.dirtyEditorSessionIds.length > 0 ? 'save' : 'discard');
+            }
+          }}
+        >
+          {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
+            <p className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-role-callout text-amber-200">
+              {state.deletePreview.dirtyEditorSessionIds.length} affected Library Item {state.deletePreview.dirtyEditorSessionIds.length === 1 ? 'editor has' : 'editors have'} unsaved changes.
             </p>
-            {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
-              <p className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-role-callout text-amber-200">
-                {state.deletePreview.dirtyEditorSessionIds.length} affected Library Item {state.deletePreview.dirtyEditorSessionIds.length === 1 ? 'editor has' : 'editors have'} unsaved changes.
-              </p>
-            )}
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <button type="button" className="rounded border border-app-border px-3 py-1 text-role-callout" onClick={() => { state.cancelDelete(); restoreTreeFocus(); }}>Cancel</button>
-              {state.deletePreview.dirtyEditorSessionIds.length > 0 && (
-                <button type="button" className="rounded border border-red-500/60 px-3 py-1 text-role-callout text-red-300" onClick={() => { void confirmDelete('discard'); }}>Discard &amp; Delete</button>
-              )}
-              <button type="button" className="rounded bg-red-600 px-3 py-1 text-role-callout text-white" onClick={() => { void confirmDelete(state.deletePreview!.dirtyEditorSessionIds.length > 0 ? 'save' : 'discard'); }}>
-                {state.deletePreview.dirtyEditorSessionIds.length > 0 ? 'Save & Delete' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </ConfirmationDialog>
       )}
     </div>
   );

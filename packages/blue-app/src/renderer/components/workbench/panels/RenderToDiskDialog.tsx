@@ -10,7 +10,7 @@ import {
 } from './operation-dialog-shared';
 import { DISK_RENDER_OUTPUT_TAB, useRenderToDiskStore } from '../../../stores/render-to-disk-store';
 import { useOutputStore } from '../../../stores/output-store';
-import { useDialogFocus } from '../../instruments/blue-x7/use-dialog-focus';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 /**
  * Global modal tracking a Render-to-Disk operation: a single row showing the

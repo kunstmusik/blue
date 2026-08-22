@@ -59,7 +59,6 @@ export interface ApplicationMenuTemplateOptions {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onActualSize: () => void;
-  onNotYetImplemented: () => void;
 }
 
 function buildWorkbenchMenuItems(
@@ -70,18 +69,6 @@ function buildWorkbenchMenuItems(
     label: panel.title,
     click: () => onFocusPanel(panel.id),
   }));
-}
-
-function buildPlaceholderItem(
-  label: string,
-  options: ApplicationMenuTemplateOptions,
-  overrides: Partial<MenuItemConstructorOptions> = {},
-): MenuItemConstructorOptions {
-  return {
-    label,
-    ...overrides,
-    click: () => options.onNotYetImplemented(),
-  };
 }
 
 function buildRecentProjectsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
@@ -197,10 +184,8 @@ function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
 function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
     { label: 'Code Repository Editor', click: () => options.onOpenCodeRepositoryEditor() },
-    // Scanned Synthesis Matrix Editor - Not being implemented at this time
-    // buildPlaceholderItem('Scanned Synthesis Matrix Editor', options),
     { label: 'Effects Library', click: () => options.onOpenEffectsLibrary() },
-    buildPlaceholderItem('Blue Share', options),
+    { label: 'Blue Share', enabled: false },
     { label: 'FTable Converter', click: () => options.onOpenFTableConverter() },
     { label: '.csound7rc Editor', click: () => options.onOpenCsoundRCEditor() },
   ];

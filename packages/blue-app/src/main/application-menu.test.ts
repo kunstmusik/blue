@@ -40,7 +40,6 @@ function createHandlers() {
     onRenderToDisk: vi.fn(),
     onRenderToDiskAndPlay: vi.fn(),
     onRenderToDiskAndOpen: vi.fn(),
-    onNotYetImplemented: vi.fn(),
     onAddMarker: vi.fn(),
     onNavigateNextMarker: vi.fn(),
     onNavigatePreviousMarker: vi.fn(),
@@ -195,7 +194,6 @@ describe('application menu template', () => {
     expect(renderStopItem?.enabled).toBe(true);
     renderStopItem?.click?.();
     expect(handlers.onRenderStopProject).toHaveBeenCalledOnce();
-    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
   });
 
   it('disables Render/Stop Project while a render/freeze operation is active', () => {
@@ -250,7 +248,6 @@ describe('application menu template', () => {
     expect(auditionItem?.enabled).toBe(true);
     auditionItem?.click?.();
     expect(handlers.onAuditionScoreObjects).toHaveBeenCalledOnce();
-    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
   });
 
   it('disables Audition ScoreObjects for an empty selection or busy render', () => {
@@ -318,7 +315,6 @@ describe('application menu template', () => {
     const importMidiItem = fileMenu.find((item) => item.label === 'Import MIDI File');
     importMidiItem?.click?.();
     expect(handlers.onImportMidiFile).toHaveBeenCalledTimes(1);
-    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
     const projectMenu = getSubmenu(template[4]);
     expect(projectMenu.find((item) => item.label === 'Generate CSD to Screen')).toBeTruthy();
@@ -326,11 +322,9 @@ describe('application menu template', () => {
     expect(projectMenu.find((item) => item.label === 'Blue Live')).toBeTruthy();
     projectMenu.find((item) => item.label === 'Generate CSD to Screen')?.click?.();
     expect(handlers.onGenerateCsdToScreen).toHaveBeenCalledTimes(1);
-    // "Generate Realtime CSD to Screen" is now wired (not a placeholder): it
-    // must dispatch its own handler and must not fall back to onNotYetImplemented.
+    // "Generate Realtime CSD to Screen" is wired to its own handler.
     projectMenu.find((item) => item.label === 'Generate Realtime CSD to Screen')?.click?.();
     expect(handlers.onGenerateRealtimeCsdToScreen).toHaveBeenCalledTimes(1);
-    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
 
     const scriptMenu = getSubmenu(template[5]);
     expect(getLabels(scriptMenu)).toEqual(['Reinitialize JavaScript Interpreter', 'Reinitialize Jython Interpreter']);
@@ -342,7 +336,6 @@ describe('application menu template', () => {
     const toolsMenu = getSubmenu(template[6]);
     toolsMenu.find((item) => item.label === 'Code Repository Editor')?.click?.();
     expect(handlers.onOpenCodeRepositoryEditor).toHaveBeenCalledTimes(1);
-    expect(handlers.onNotYetImplemented).not.toHaveBeenCalled();
     expect(toolsMenu.find((item) => item.label === 'Effects Library')).toBeTruthy();
     toolsMenu.find((item) => item.label === 'Effects Library')?.click?.();
     expect(handlers.onOpenEffectsLibrary).toHaveBeenCalledTimes(1);
@@ -361,6 +354,23 @@ describe('application menu template', () => {
     expect(editorsMenu.map((item) => item.label).slice(0, 3)).toEqual(['Score', 'Orchestra', 'Global Orchestra']);
     editorsMenu[0]?.click?.();
     expect(handlers.onFocusPanel).toHaveBeenCalledWith('ScoreTopComponent');
+  });
+
+  it('keeps Blue Share visible but disabled without a placeholder handler', () => {
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...createHandlers(),
+    });
+    const toolsMenu = getSubmenu(template.find((item) => item.label === 'Tools'));
+    const blueShare = toolsMenu.find((item) => item.label === 'Blue Share');
+
+    expect(blueShare).toMatchObject({ label: 'Blue Share', enabled: false });
+    expect(blueShare?.click).toBeUndefined();
   });
 
   it('builds the non-Darwin File menu with Settings and Quit entries', () => {

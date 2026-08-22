@@ -6,7 +6,7 @@ import type {
   RenderOperationStatus,
 } from '../../../../shared/render-freeze-contract';
 import { useFreezeOperationStore } from '../../../stores/freeze-operation-store';
-import { useDialogFocus } from '../../instruments/blue-x7/use-dialog-focus';
+import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 import {
   OperationStatusCell,
   isTerminalOperationPhase,

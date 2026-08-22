@@ -441,7 +441,6 @@ function safeResolveExternal(context: RuntimeVerificationContext, packageName: s
   try {
     // Dynamic require resolution: this code runs in the Electron main
     // process where CommonJS require is available.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Module = require('module') as typeof import('module');
     const resolved = Module.createRequire(path.join(context.mainModuleDir, '__verify__.js')).resolve(packageName);
     return resolved;
@@ -453,7 +452,6 @@ function safeResolveExternal(context: RuntimeVerificationContext, packageName: s
 
 function safeResolveZeromq(_context: RuntimeVerificationContext): string | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Module = require('module') as typeof import('module');
     return Module.createRequire(__filename).resolve('zeromq');
   } catch {
@@ -463,7 +461,6 @@ function safeResolveZeromq(_context: RuntimeVerificationContext): string | null 
 
 function safeResolveNodeSqlite(): string | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Module = require('module') as typeof import('module');
     return Module.createRequire(__filename).resolve('node:sqlite');
   } catch {

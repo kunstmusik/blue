@@ -1,7 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import type {
   ScoreDocumentSnapshot,
   ScoreLayerGroupSnapshot,
@@ -9,6 +9,7 @@ import type {
   ScoreLayerSnapshot,
 } from '../../../../../shared/project-editor';
 import LayerRemovalConfirmationDialog from './LayerRemovalConfirmationDialog';
+import { ConfirmationDialog } from '../../../dialogs/ConfirmationDialog';
 import {
   buildLayerRemovalPlan,
   createMoveLayerRangePatch,
@@ -22,6 +23,12 @@ import {
 interface Props {
   score: ScoreDocumentSnapshot;
   onClose: () => void;
+}
+
+interface PendingRemoveGroup {
+  group: ScoreLayerGroupSnapshot;
+  selectedGroupIndex: number;
+  projectRevision: number;
 }
 
 const ADD_LAYER_GROUP_OPTIONS: Array<{ groupType: ScoreLayerGroupType; label: string }> = [
@@ -57,6 +64,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
   const [editingLayerRow, setEditingLayerRow] = useState(-1);
   const [editLayerName, setEditLayerName] = useState('');
   const [pendingRemovalPlan, setPendingRemovalPlan] = useState<LayerRemovalPlan | null>(null);
+  const [pendingRemoveGroup, setPendingRemoveGroup] = useState<PendingRemoveGroup | null>(null);
 
   const groups = score.layerGroups;
   const selectedGroup = groups[selectedGroupIndex];
@@ -76,11 +84,12 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
 
   const handleRemoveLayerGroup = useCallback(() => {
     if (!selectedGroup) return;
-    if (!confirm('Deleting Layer Groups can not be undone. Please Confirm.')) return;
-    applyPatch({ score: { type: 'removeLayerGroup', groupId: selectedGroup.groupId } });
-    setSelectedGroupIndex(Math.max(0, selectedGroupIndex - 1));
-    setSelectedLayerIndex(-1);
-  }, [selectedGroup, selectedGroupIndex, applyPatch]);
+    setPendingRemoveGroup({
+      group: selectedGroup,
+      selectedGroupIndex,
+      projectRevision: getProjectDocumentRevision(),
+    });
+  }, [selectedGroup, selectedGroupIndex]);
 
   const handlePushGroupUp = useCallback(() => {
     if (selectedGroupIndex <= 0) return;
@@ -285,6 +294,34 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
           plan={pendingRemovalPlan}
           onCancel={() => setPendingRemovalPlan(null)}
           onConfirm={handleRemovalConfirm}
+        />
+      )}
+      {pendingRemoveGroup && (
+        <ConfirmationDialog
+          open={true}
+          title="Delete Layer Group?"
+          description={`Delete layer group “${pendingRemoveGroup.group.name || pendingRemoveGroup.group.groupId}”? Deleting Layer Groups cannot be undone.`}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            { id: 'remove', label: 'Delete Group', intent: 'destructive' },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'remove') {
+              const currentGroup = score.layerGroups.find((group) => group.groupId === pendingRemoveGroup.group.groupId);
+              const selectionStillMatches = score.layerGroups[selectedGroupIndex]?.groupId === pendingRemoveGroup.group.groupId;
+              if (
+                currentGroup
+                && selectionStillMatches
+                && getProjectDocumentRevision() === pendingRemoveGroup.projectRevision
+              ) {
+                applyPatch({ score: { type: 'removeLayerGroup', groupId: pendingRemoveGroup.group.groupId } });
+                setSelectedGroupIndex(Math.max(0, pendingRemoveGroup.selectedGroupIndex - 1));
+                setSelectedLayerIndex(-1);
+              }
+            }
+            setPendingRemoveGroup(null);
+          }}
         />
       )}
     </div>

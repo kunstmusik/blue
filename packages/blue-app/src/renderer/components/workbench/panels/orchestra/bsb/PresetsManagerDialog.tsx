@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
 import type {
   BsbInterfacePatch,
   PresetGroupSnapshot,
@@ -459,6 +460,7 @@ export default function PresetsManagerDialog({
   const [treeHeight, setTreeHeight] = useState(420);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<PresetClipboard | null>(() => presetClipboard);
+  const [pendingDeleteNode, setPendingDeleteNode] = useState<PresetTreeNode | null>(null);
 
   useEffect(() => {
     const element = treeContainerRef.current;
@@ -541,17 +543,9 @@ export default function PresetsManagerDialog({
     (node: NodeApi<PresetTreeNode>) => {
       const data = node.data;
       if (data.kind === 'group' && data.groupPath.length === 0) return;
-      const label = data.kind === 'group' ? 'folder' : 'preset';
-      if (!window.confirm(`Delete ${label} “${data.name}”?`)) return;
-
-      if (data.kind === 'group') {
-        dispatch({ type: 'removePresetGroup', groupPath: data.groupPath });
-      } else if (data.presetUniqueId) {
-        dispatch({ type: 'removePreset', presetUniqueId: data.presetUniqueId });
-      }
-      setSelectedId(null);
+      setPendingDeleteNode(data);
     },
-    [dispatch],
+    [],
   );
 
   const handleCut = useCallback(
@@ -856,6 +850,29 @@ export default function PresetsManagerDialog({
           </button>
         </div>
       </div>
+      {pendingDeleteNode && (
+        <ConfirmationDialog
+          open={true}
+          title={`Delete ${pendingDeleteNode.kind === 'group' ? 'Folder' : 'Preset'} “${pendingDeleteNode.name}”?`}
+          description={`Delete ${pendingDeleteNode.kind === 'group' ? 'folder' : 'preset'} “${pendingDeleteNode.name}”? This action cannot be undone.`}
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            { id: 'delete', label: 'Delete', intent: 'destructive' },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'delete') {
+              if (pendingDeleteNode.kind === 'group') {
+                dispatch({ type: 'removePresetGroup', groupPath: pendingDeleteNode.groupPath });
+              } else if (pendingDeleteNode.presetUniqueId) {
+                dispatch({ type: 'removePreset', presetUniqueId: pendingDeleteNode.presetUniqueId });
+              }
+              setSelectedId(null);
+            }
+            setPendingDeleteNode(null);
+          }}
+        />
+      )}
     </div>
   );
 }

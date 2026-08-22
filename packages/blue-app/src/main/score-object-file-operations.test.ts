@@ -165,6 +165,20 @@ describe('score-object-file-operations', () => {
   });
 
   describe('selectScoreObjectAudioFile', () => {
+    it('fails closed when no open-dialog owner is available', async () => {
+      const { deps } = createTestFixtureFS();
+
+      const result = await selectScoreObjectAudioFile(
+        { context: { projectDirectory: projectDir, sfDir: null } },
+        deps,
+      );
+
+      expect(result).toMatchObject({
+        status: 'error',
+        code: 'no-project',
+      });
+    });
+
     it('returns cancelled when user cancels chooser', async () => {
       const { deps } = createTestFixtureFS();
       deps.showOpenDialog = vi.fn().mockResolvedValue(null);
@@ -377,6 +391,20 @@ describe('score-object-file-operations', () => {
         expect(result.code).toBe('unreadable-artifact');
       }
       expect(deps.showSaveDialog).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when no save-dialog owner is available', async () => {
+      const { deps } = createTestFixtureFS();
+
+      const result = await saveFrozenSoundObjectCopy(
+        { frozenWaveFileName: 'freeze0.wav', context: { projectDirectory: projectDir, sfDir: null } },
+        deps,
+      );
+
+      expect(result).toMatchObject({
+        status: 'error',
+        code: 'no-project',
+      });
     });
 
     it('returns cancelled when user cancels save dialog', async () => {

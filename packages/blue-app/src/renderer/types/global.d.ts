@@ -68,6 +68,10 @@ import type {
   MidiImportStartResult,
 } from '../../shared/midi-import';
 import type { AppMetadata } from '../../shared/app-metadata';
+import type {
+  NativeConfirmationRequest,
+  NativeConfirmationResult,
+} from '../../shared/confirmation-dialog';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
   EngineProbeRequest,
@@ -230,6 +234,9 @@ declare global {
       addScoreSoundObjectToProjectLibrary: (
         request: ScoreTimelineSoundObjectRequest,
       ) => Promise<LibraryResult<ProjectMutationReceipt>>;
+      showNativeConfirmation: (
+        request: NativeConfirmationRequest,
+      ) => Promise<NativeConfirmationResult>;
       openLibraryItemEditor: (
         request: OpenLibraryEditorRequest,
       ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;

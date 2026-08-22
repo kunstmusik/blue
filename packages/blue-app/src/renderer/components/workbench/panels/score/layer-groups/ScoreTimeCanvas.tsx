@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import ShiftObjectsDialog from '../ShiftObjectsDialog';
+import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
 import { ChevronRight } from 'lucide-react';
 import type { PolyObjectLayerGroupSnapshot, ScoreLayerGroupSnapshot, ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
@@ -248,6 +249,12 @@ function sameTarget(
 
 type GestureMode = 'none' | 'marquee' | 'move' | 'resizeLeft' | 'resizeRight';
 
+interface PendingConvertTarget {
+  target: ScoreObjectEditorTargetSnapshot;
+  projectSessionId: number;
+  projectRevision: number;
+}
+
 const RESIZE_EDGE_PX = 5;
 const DEFAULT_SOBJ_BG = 0xFF404040;
 const DEFAULT_SOBJ_DURATION = 4.0;
@@ -287,6 +294,7 @@ export default function ScoreTimeCanvas({
   const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const [showShiftDialog, setShowShiftDialog] = useState(false);
+  const [pendingConvertTarget, setPendingConvertTarget] = useState<PendingConvertTarget | null>(null);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const libraryClipboard = useLibraryStore((s) => s.clipboard);
   const librarySoundObjectAvailable = libraryClipboard
@@ -1240,12 +1248,12 @@ export default function ScoreTimeCanvas({
     ) {
       return;
     }
-    // Java warns this operation is not undoable; confirm before proceeding.
-    if (!window.confirm('This operation can not be undone.\nAre you sure?')) return;
-    void applyProjectDocumentPatch({
-      score: { type: 'convertScoreObjectToObjectBuilder', target: entries[0]!.editorTarget },
+    setPendingConvertTarget({
+      target: entries[0]!.editorTarget,
+      projectSessionId,
+      projectRevision,
     });
-  }, [applyProjectDocumentPatch, getSelectedEntries]);
+  }, [getSelectedEntries, projectRevision, projectSessionId]);
 
   const handleImport = useCallback(async () => {
     if (!window.blueAPI?.importScoreObject || !contextMenuPos) return;
@@ -1810,6 +1818,34 @@ export default function ScoreTimeCanvas({
           onConfirm={handleConfirmShift}
           onClose={() => setShowShiftDialog(false)}
           minStartBeats={minStartBeats}
+        />
+      )}
+      {pendingConvertTarget && (
+        <ConfirmationDialog
+          open={true}
+          title="Convert to ObjectBuilder?"
+          description="This operation can not be undone. Are you sure?"
+          actions={[
+            { id: 'cancel', label: 'Cancel', intent: 'cancel' },
+            { id: 'convert', label: 'Convert', intent: 'destructive' },
+          ]}
+          cancelActionId="cancel"
+          onDecision={(actionId) => {
+            if (actionId === 'convert' && pendingConvertTarget) {
+              const currentTarget = findEditorTarget(pendingConvertTarget.target.selectionId);
+              if (
+                pendingConvertTarget.projectSessionId === projectSessionId
+                && pendingConvertTarget.projectRevision === projectRevision
+                && currentTarget?.selectionId === pendingConvertTarget.target.selectionId
+                && sameTarget(currentTarget, pendingConvertTarget.target)
+              ) {
+                void applyProjectDocumentPatch({
+                  score: { type: 'convertScoreObjectToObjectBuilder', target: currentTarget },
+                });
+              }
+            }
+            setPendingConvertTarget(null);
+          }}
         />
       )}
     </ContextMenu.Root>

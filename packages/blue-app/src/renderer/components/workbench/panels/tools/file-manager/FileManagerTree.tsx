@@ -276,7 +276,6 @@ export default function FileManagerTree({
     applyTree((previous) =>
       roots.map((root) => rootToNode(root, findNode(previous, root.id))),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootKey]);
 
   useEffect(() => {
