@@ -251,7 +251,7 @@ describe('resolveFreezeTargets', () => {
       {
         data,
         projectDirectory: path.join(process.cwd(), 'freeze-project'),
-        utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+        utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
         platform: 'linux',
       },
       [createTarget(0)],
@@ -294,7 +294,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(0)],
@@ -311,7 +311,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(1)],
@@ -350,7 +350,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(0), createTarget(1)],
@@ -388,7 +388,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(0)],
@@ -425,7 +425,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'utility-csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'utility-csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(0)],
@@ -463,7 +463,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'utility-csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'utility-csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
           isCancelled: () => cancelled,
         },
@@ -506,7 +506,7 @@ describe('resolveFreezeTargets', () => {
         {
           data,
           projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
           platform: 'linux',
         },
         [createTarget(0)],
@@ -606,7 +606,7 @@ describe('executeFreezeUnfreeze item events', () => {
     return {
       data,
       projectDirectory,
-      utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo' },
+      utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
       platform: 'linux',
     };
   }
@@ -655,6 +655,14 @@ describe('executeFreezeUnfreeze item events', () => {
       expect(running).toContainEqual(expect.objectContaining({ freezeFile: 'freeze0.wav', outputAppend: null }));
       expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-a', outputType: 'stdout' }));
       expect(running).toContainEqual(expect.objectContaining({ outputAppend: 'chunk-b\n', outputType: 'stderr' }));
+
+      expect(events.filter((event) => event.phase === 'rendered')).toEqual([
+        expect.objectContaining({
+          selectionId: 'sel-0',
+          action: 'freeze',
+          freezeFile: 'freeze0.wav',
+        }),
+      ]);
 
       expect(events.filter((event) => event.phase === 'complete')).toEqual([
         expect.objectContaining({
@@ -826,6 +834,653 @@ describe('executeFreezeUnfreeze item events', () => {
           reason: expect.stringContaining('timeline'),
         }),
       ]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
+  function createTarget(objectIndex: number): ScoreObjectEditorTargetSnapshot {
+    return {
+      selectionId: `sel-${objectIndex}`,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+  }
+
+  function createContext(data: BlueData, projectDirectory: string, freezeMaxJobs: number) {
+    return {
+      data,
+      projectDirectory,
+      utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs },
+      platform: 'linux',
+    };
+  }
+
+  function addSource(layer: unknown[], index: number): GenericScore {
+    const source = new GenericScore();
+    source.setName(`Source ${index}`);
+    source.setStartTime(TimePosition.beats(index));
+    source.setSubjectiveDuration(TimeDuration.beats(1));
+    layer.push(source);
+    return source;
+  }
+
+  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+    const startedAt = Date.now();
+    while (!predicate()) {
+      if (Date.now() - startedAt > deadlineMs) {
+        throw new Error(`Timed out waiting for: ${label}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  it('runs freeze renders concurrently up to the configured max jobs', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-parallel-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 4; index++) addSource(layer, index);
+
+      let active = 0;
+      let peak = 0;
+      let releaseBarrier: () => void = () => undefined;
+      const barrier = new Promise<void>((resolve) => { releaseBarrier = resolve; });
+
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory, 4),
+        [0, 1, 2, 3].map((index) => createTarget(index)),
+        'freeze-parallel',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            active += 1;
+            peak = Math.max(peak, active);
+            if (active === 4) releaseBarrier();
+            await Promise.race([barrier, new Promise((resolve) => setTimeout(resolve, 300))]);
+            fs.writeFileSync(args[1]!, createWavFile());
+            active -= 1;
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      expect(peak).toBe(4);
+      expect(operation.ok).toBe(true);
+      expect(operation.frozenCount).toBe(4);
+      expect(layer.filter((sObj) => sObj instanceof FrozenSoundObject)).toHaveLength(4);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('queues jobs beyond the cap and produces order-independent results', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-queue-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 6; index++) addSource(layer, index);
+
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 6 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let dispatchIndex = 0;
+      let active = 0;
+      let peak = 0;
+      const outputPaths: string[] = [];
+
+      const operationPromise = executeFreezeUnfreeze(
+        createContext(data, projectDirectory, 4),
+        [0, 1, 2, 3, 4, 5].map((index) => createTarget(index)),
+        'freeze-queue',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            const myIndex = dispatchIndex++;
+            active += 1;
+            peak = Math.max(peak, active);
+            outputPaths.push(args[1]!);
+            await gatePromises[myIndex];
+            fs.writeFileSync(args[1]!, createWavFile());
+            active -= 1;
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      await waitFor(() => dispatchIndex === 4 && active === 4, 'first four jobs running concurrently');
+      expect(dispatchIndex).toBe(4);
+
+      // Complete jobs in reverse order to prove results are order-independent.
+      gates[3]!();
+      await waitFor(() => dispatchIndex === 5, 'fifth job dispatched after a slot freed');
+      for (const gate of gates) gate();
+      const operation = await operationPromise;
+
+      expect(peak).toBe(4);
+      expect(operation.ok).toBe(true);
+      expect(operation.frozenCount).toBe(6);
+
+      const freezeFiles = Array.from(layer as unknown[])
+        .filter((sObj): sObj is FrozenSoundObject => sObj instanceof FrozenSoundObject)
+        .map((sObj) => sObj.getFrozenWaveFileName())
+        .sort();
+      expect(freezeFiles).toEqual(['freeze0.wav', 'freeze1.wav', 'freeze2.wav', 'freeze3.wav', 'freeze4.wav', 'freeze5.wav']);
+      expect(new Set(outputPaths).size).toBe(6);
+      for (let index = 0; index < 6; index++) {
+        const frozen = layer[index] as FrozenSoundObject;
+        expect(frozen.getName()).toBe(`F: Source ${index}`);
+      }
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('allocates pairwise-distinct freeze filenames for parallel jobs', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-names-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 5; index++) addSource(layer, index);
+
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 5 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let dispatchIndex = 0;
+      const outputPaths: string[] = [];
+
+      const operationPromise = executeFreezeUnfreeze(
+        createContext(data, projectDirectory, 2),
+        [0, 1, 2, 3, 4].map((index) => createTarget(index)),
+        'freeze-names',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            const myIndex = dispatchIndex++;
+            outputPaths.push(args[1]!);
+            await gatePromises[myIndex];
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      await waitFor(() => dispatchIndex === 2, 'two jobs dispatched under cap 2');
+      for (const gate of gates) gate();
+      const operation = await operationPromise;
+
+      expect(operation.ok).toBe(true);
+      expect(outputPaths).toHaveLength(5);
+      expect(new Set(outputPaths).size).toBe(5);
+      const names = outputPaths.map((outputPath) => path.basename(outputPath)).sort();
+      expect(names).toEqual(['freeze0.wav', 'freeze1.wav', 'freeze2.wav', 'freeze3.wav', 'freeze4.wav']);
+      for (const outputPath of outputPaths) {
+        expect(fs.existsSync(outputPath)).toBe(true);
+      }
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('renders strictly one at a time in input order with freezeMaxJobs 1', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-serial-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 3; index++) addSource(layer, index);
+
+      let active = 0;
+      let peak = 0;
+      let completed = 0;
+      const renderOrder: string[] = [];
+
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory, 1),
+        [0, 1, 2].map((index) => createTarget(index)),
+        'freeze-serial',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            expect(active, 'a new render must not start before the previous one completed').toBe(0);
+            expect(completed, 'renders dispatch in input order').toBe(renderOrder.length);
+            active += 1;
+            peak = Math.max(peak, active);
+            renderOrder.push(path.basename(args[1]!));
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            fs.writeFileSync(args[1]!, createWavFile());
+            active -= 1;
+            completed += 1;
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      expect(peak).toBe(1);
+      expect(renderOrder).toEqual(['freeze0.wav', 'freeze1.wav', 'freeze2.wav']);
+      expect(operation.ok).toBe(true);
+      expect(operation.frozenCount).toBe(3);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('does not occupy render slots for unfreeze items in a mixed selection', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-mixed-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      addSource(layer, 0);
+      addSource(layer, 1);
+      const nestedSource = new GenericScore();
+      nestedSource.setName('Nested');
+      nestedSource.setStartTime(TimePosition.beats(5));
+      nestedSource.setSubjectiveDuration(TimeDuration.beats(1));
+      const frozen = new FrozenSoundObject();
+      frozen.setFrozenSoundObject(nestedSource);
+      frozen.setFrozenWaveFileName('freeze9.wav');
+      frozen.setName('F: Nested');
+      frozen.setStartTime(TimePosition.beats(5));
+      frozen.setSubjectiveDuration(TimeDuration.beats(1));
+      layer.push(frozen);
+      fs.writeFileSync(path.join(projectDirectory, 'freeze9.wav'), createWavFile());
+
+      let renderCalls = 0;
+      let active = 0;
+      let peak = 0;
+      const operation = await executeFreezeUnfreeze(
+        createContext(data, projectDirectory, 2),
+        [0, 1, 2].map((index) => createTarget(index)),
+        'freeze-mixed',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            renderCalls += 1;
+            active += 1;
+            peak = Math.max(peak, active);
+            fs.writeFileSync(args[1]!, createWavFile());
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            active -= 1;
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      expect(operation.ok).toBe(true);
+      expect(operation.frozenCount).toBe(2);
+      expect(operation.unfrozenCount).toBe(1);
+      expect(renderCalls, 'only the two freeze items render').toBe(2);
+      expect(peak).toBe(2);
+      expect(layer[0]).toBeInstanceOf(FrozenSoundObject);
+      expect(layer[1]).toBeInstanceOf(FrozenSoundObject);
+      expect(layer[2]).toBeInstanceOf(GenericScore);
+      expect((layer[2] as GenericScore).getName()).toBe('Nested');
+      expect(fs.existsSync(path.join(projectDirectory, 'freeze9.wav'))).toBe(false);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('executeFreezeUnfreeze hybrid failure handling (SPEC 085)', () => {
+  function createTarget(objectIndex: number): ScoreObjectEditorTargetSnapshot {
+    return {
+      selectionId: `sel-${objectIndex}`,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+  }
+
+  function addSource(layer: unknown[], index: number): GenericScore {
+    const source = new GenericScore();
+    source.setName(`Source ${index}`);
+    source.setStartTime(TimePosition.beats(index));
+    source.setSubjectiveDuration(TimeDuration.beats(1));
+    layer.push(source);
+    return source;
+  }
+
+  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+    const startedAt = Date.now();
+    while (!predicate()) {
+      if (Date.now() - startedAt > deadlineMs) {
+        throw new Error(`Timed out waiting for: ${label}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  it('drains in-flight jobs when one object fails per-object', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-drain-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 3; index++) addSource(layer, index);
+
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let dispatchIndex = 0;
+      const dispatched: number[] = [];
+      const jobReturned = new Set<number>();
+
+      const operationPromise = executeFreezeUnfreeze(
+        {
+          data,
+          projectDirectory,
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 2 },
+          platform: 'linux',
+        },
+        [0, 1, 2].map((index) => createTarget(index)),
+        'freeze-drain',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            const myIndex = dispatchIndex++;
+            dispatched.push(myIndex);
+            await gatePromises[myIndex];
+            jobReturned.add(myIndex);
+            if (myIndex === 0) {
+              return { exitCode: 1, stderr: 'render error' };
+            }
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      await waitFor(() => dispatchIndex === 2, 'two jobs in flight under cap 2');
+      gates[0]!();
+      await waitFor(() => jobReturned.has(0), 'failing job settled');
+      // The in-flight job is allowed to finish; no new job may dispatch.
+      gates[1]!();
+      const operation = await operationPromise;
+
+      expect(dispatched).toEqual([0, 1]);
+      expect(operation.ok).toBe(false);
+      expect(operation.rejectedTargets).toEqual([
+        expect.objectContaining({ selectionId: 'sel-0' }),
+      ]);
+      for (const source of layer) {
+        expect(source).toBeInstanceOf(GenericScore);
+      }
+      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      expect(leftovers).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('removes an artifact when staging fails after the render succeeds', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-post-render-failure-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      const source = addSource(layer, 0);
+      let outputPath: string | undefined;
+
+      const operation = await executeFreezeUnfreeze(
+        {
+          data,
+          projectDirectory,
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 1 },
+          platform: 'linux',
+        },
+        [createTarget(0)],
+        'freeze-post-render-failure',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            outputPath = args[1];
+            fs.writeFileSync(args[1]!, createWavFile());
+            vi.spyOn(source, 'deepCopy').mockImplementationOnce(() => {
+              throw new Error('FrozenSoundObject construction failed');
+            });
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      expect(operation.ok).toBe(false);
+      expect(operation.error).toContain('FrozenSoundObject construction failed');
+      expect(outputPath).toBeDefined();
+      expect(fs.existsSync(outputPath!)).toBe(false);
+      expect(layer[0]).toBe(source);
+      expect(fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'))).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('aborts all in-flight jobs immediately on a systemic failure', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-systemic-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 3; index++) addSource(layer, index);
+
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let cancelInflight: () => void = () => undefined;
+      const cancelPromise = new Promise<void>((resolve) => { cancelInflight = resolve; });
+      const cancelledJobs: number[] = [];
+      let dispatchIndex = 0;
+      let abortRequested = false;
+
+      const operation = await executeFreezeUnfreeze(
+        {
+          data,
+          projectDirectory,
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 3 },
+          platform: 'linux',
+          abortInFlight: () => {
+            abortRequested = true;
+            cancelInflight();
+          },
+        },
+        [0, 1, 2].map((index) => createTarget(index)),
+        'freeze-systemic',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            const myIndex = dispatchIndex++;
+            if (myIndex === 0) {
+              return { exitCode: -1, stderr: 'Blue Engine unavailable', errorCode: 'CSOUND_UNAVAILABLE' };
+            }
+            const winner = await Promise.race([
+              gatePromises[myIndex].then(() => 'gate' as const),
+              cancelPromise.then(() => 'cancelled' as const),
+            ]);
+            if (winner === 'cancelled') {
+              cancelledJobs.push(myIndex);
+              return { exitCode: -1, stderr: 'Operation cancelled.', cancelled: true };
+            }
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      expect(abortRequested).toBe(true);
+      expect(cancelledJobs.sort()).toEqual([1, 2]);
+      expect(gates).toHaveLength(3);
+      expect(operation.ok).toBe(false);
+      expect(operation.error).toContain('CSOUND_UNAVAILABLE');
+      expect(operation.rejectedTargets).toEqual([
+        expect.objectContaining({ selectionId: 'sel-0' }),
+      ]);
+      for (const source of layer) {
+        expect(source).toBeInstanceOf(GenericScore);
+      }
+      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      expect(leftovers).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('cancels cleanly while several jobs are in flight', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-cancel-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 3; index++) addSource(layer, index);
+
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 3 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let cancelled = false;
+      let dispatchIndex = 0;
+
+      const operationPromise = executeFreezeUnfreeze(
+        {
+          data,
+          projectDirectory,
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 3 },
+          platform: 'linux',
+          isCancelled: () => cancelled,
+        },
+        [0, 1, 2].map((index) => createTarget(index)),
+        'freeze-cancel',
+        vi.fn(),
+        {
+          runCsound: async (args: string[]) => {
+            const myIndex = dispatchIndex++;
+            await gatePromises[myIndex];
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      await waitFor(() => dispatchIndex === 3, 'all three jobs in flight');
+      cancelled = true;
+      for (const gate of gates) gate();
+      const operation = await operationPromise;
+
+      expect(operation.cancelled).toBe(true);
+      expect(operation.ok).toBe(false);
+      for (const source of layer) {
+        expect(source).toBeInstanceOf(GenericScore);
+      }
+      const leftovers = fs.readdirSync(projectDirectory).filter((name) => name.startsWith('freeze') || name.startsWith('tempCsd'));
+      expect(leftovers).toEqual([]);
+    } finally {
+      fs.rmSync(projectDirectory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
+  function createTarget(objectIndex: number): ScoreObjectEditorTargetSnapshot {
+    return {
+      selectionId: `sel-${objectIndex}`,
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex },
+      supportsTimeBehavior: true,
+      supportsRepeatPoint: true,
+      supportsNoteProcessorChain: true,
+    };
+  }
+
+  async function waitFor(predicate: () => boolean, label: string, deadlineMs = 3000): Promise<void> {
+    const startedAt = Date.now();
+    while (!predicate()) {
+      if (Date.now() - startedAt > deadlineMs) {
+        throw new Error(`Timed out waiting for: ${label}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  it('reports order-independent aggregate progress across concurrent jobs', async () => {
+    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-progress-'));
+    try {
+      const data = new BlueData();
+      const layer = (data.getScore()[0] as PolyObject)[0];
+      for (let index = 0; index < 2; index++) {
+        const source = new GenericScore();
+        source.setName(`Source ${index}`);
+        source.setStartTime(TimePosition.beats(index));
+        source.setSubjectiveDuration(TimeDuration.beats(1));
+        layer.push(source);
+      }
+
+      const statuses: Array<{ phase: string; progress: number | null }> = [];
+      const gates: Array<() => void> = [];
+      const gatePromises = Array.from({ length: 2 }, () => new Promise<void>((resolve) => { gates.push(resolve); }));
+      let dispatchIndex = 0;
+
+      const operationPromise = executeFreezeUnfreeze(
+        {
+          data,
+          projectDirectory,
+          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 2 },
+          platform: 'linux',
+        },
+        [0, 1].map((index) => createTarget(index)),
+        'freeze-progress',
+        (status) => { statuses.push({ phase: status.phase, progress: status.progress }); },
+        {
+          runCsound: async (args: string[], _cwd: string, onProgress?: (progress: number) => void) => {
+            const myIndex = dispatchIndex++;
+            await gatePromises[myIndex];
+            onProgress?.(myIndex === 0 ? 50 : 100);
+            fs.writeFileSync(args[1]!, createWavFile());
+            return { exitCode: 0, stderr: '' };
+          },
+        },
+      );
+
+      await waitFor(() => dispatchIndex === 2, 'both jobs in flight');
+      // Complete in reverse dispatch order to prove order independence.
+      gates[1]!();
+      gates[0]!();
+      const operation = await operationPromise;
+
+      expect(operation.ok).toBe(true);
+
+      const renderingProgress = statuses
+        .filter((status) => status.phase === 'rendering' && status.progress !== null)
+        .map((status) => status.progress!);
+      // (0 + 100%) / 2 jobs -> 45; (1 complete + 50%) -> 67.5; all complete -> 90.
+      expect(renderingProgress).toContain(45);
+      expect(renderingProgress).toContain(67.5);
+      expect(renderingProgress).toContain(90);
+      expect(renderingProgress.filter((progress) => progress === 90)).toHaveLength(1);
+      expect(renderingProgress.slice(0, -1).every((progress) => progress < 90)).toBe(true);
+      for (let index = 1; index < renderingProgress.length; index++) {
+        expect(renderingProgress[index]).toBeGreaterThanOrEqual(renderingProgress[index - 1]!);
+      }
+      expect(Math.max(...renderingProgress)).toBeLessThanOrEqual(90);
+
+      const aggregateProgress = statuses
+        .filter((status) => status.progress !== null)
+        .map((status) => status.progress!);
+      for (let index = 1; index < aggregateProgress.length; index++) {
+        expect(aggregateProgress[index]).toBeGreaterThanOrEqual(aggregateProgress[index - 1]!);
+      }
+
+      const committing = statuses.filter((status) => status.phase === 'committing');
+      expect(committing).toHaveLength(1);
+      expect(committing[0]!.progress).toBe(95);
+
+      const completed = statuses.filter((status) => status.phase === 'completed');
+      expect(completed).toHaveLength(1);
+      expect(completed[0]!.progress).toBe(100);
+      expect(statuses.filter((status) => status.progress === 100)).toHaveLength(1);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }

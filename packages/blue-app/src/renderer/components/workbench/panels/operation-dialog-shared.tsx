@@ -7,6 +7,7 @@ import type { RenderOperationStatus } from '../../../../shared/render-freeze-con
 export type OperationRowStatus =
   | 'pending'
   | 'running'
+  | 'rendered'
   | 'complete'
   | 'failed'
   | 'cancelled'
@@ -27,13 +28,22 @@ export function operationDialogTitle(verb: string, phase: RenderOperationStatus[
   return `${verb} - ${state}`;
 }
 
-/** Indefinite spinner while running, checkmark on success, X on failure. */
+/** Indefinite spinner while running, dimmed check once rendered, checkmark
+ *  after commit, X on failure. */
 export function OperationStatusCell({ status }: { status: OperationRowStatus }): React.ReactElement {
   if (status === 'running') {
     return (
       <span className="inline-flex items-center gap-1.5 text-app-text">
         <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />
         Running
+      </span>
+    );
+  }
+  if (status === 'rendered') {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-app-text-muted">
+        <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+        Rendered
       </span>
     );
   }

@@ -142,7 +142,7 @@ describe('render-freeze-contract', () => {
     });
 
     it('accepts well-formed freeze item statuses in every phase', () => {
-      for (const phase of ['pending', 'running', 'complete', 'failed'] as const) {
+      for (const phase of ['pending', 'running', 'rendered', 'complete', 'failed'] as const) {
         expect(isFreezeItemStatus(freezeItem({ phase }))).toBe(true);
       }
       expect(isFreezeItemStatus(freezeItem({

@@ -11,14 +11,17 @@ import type { ScoreObjectClipboardEntry } from './score-selection-store';
 import { useProjectStore } from './project-store';
 
 /**
- * Per-object row state for the freeze/unfreeze progress dialog. `cancelled`
- * and `notApplied` are renderer-derived terminal states: the main process
- * reports the overall phase, and rows that never finished are mapped onto
- * them when the operation ends.
+ * Per-object row state for the freeze/unfreeze progress dialog. `rendered`
+ * marks a parallel job whose render finished and staged while the operation
+ * is still running; `complete` is set only after the atomic commit.
+ * `cancelled` and `notApplied` are renderer-derived terminal states: the
+ * main process reports the overall phase, and rows that never committed are
+ * mapped onto them when the operation ends.
  */
 export type FreezeRowStatus =
   | 'pending'
   | 'running'
+  | 'rendered'
   | 'complete'
   | 'failed'
   | 'cancelled'
@@ -38,7 +41,7 @@ export interface FreezeOperationRow {
 const MAX_ROW_OUTPUT_CHARS = 200_000;
 
 const TERMINAL_PHASES: readonly RenderOperationPhase[] = ['completed', 'cancelled', 'failed'];
-const NON_TERMINAL_ROW_STATUS: readonly FreezeRowStatus[] = ['pending', 'running'];
+const NON_TERMINAL_ROW_STATUS: readonly FreezeRowStatus[] = ['pending', 'running', 'rendered'];
 
 function isTerminalPhase(phase: RenderOperationPhase | null): boolean {
   return phase !== null && TERMINAL_PHASES.includes(phase);
@@ -100,9 +103,12 @@ export interface FreezeOperationState {
   progress: number | null;
   message: string;
   rows: FreezeOperationRow[];
+  /**
+   * SPEC 085 focus model: the row whose output the console shows. Defaults to
+   * the first row and changes only when the user clicks a row — running
+   * events from parallel jobs never move it.
+   */
   selectedSelectionId: string | null;
-  /** True once the user clicks a row; stops the selection following the running row. */
-  selectionLocked: boolean;
   outputExpanded: boolean;
   result: FreezeOperationResult | null;
   error: string | null;
@@ -125,7 +131,6 @@ const initialState = {
   message: '',
   rows: [],
   selectedSelectionId: null,
-  selectionLocked: false,
   outputExpanded: false,
   result: null,
   error: null,
@@ -250,12 +255,9 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
       };
       const rows = [...state.rows];
       rows[rowIndex] = updated;
-      return {
-        rows,
-        selectedSelectionId: applyPhase && event.phase === 'running' && !state.selectionLocked
-          ? updated.selectionId
-          : state.selectedSelectionId,
-      };
+      // The focused row never moves in response to item events; only the
+      // user's row click (selectRow) changes which output is shown.
+      return { rows };
     });
   },
 
@@ -274,7 +276,7 @@ export const useFreezeOperationStore = create<FreezeOperationState>((set, get) =
   selectRow(selectionId) {
     set((state) => {
       if (!state.rows.some((row) => row.selectionId === selectionId)) return state;
-      return { selectedSelectionId: selectionId, selectionLocked: true };
+      return { selectedSelectionId: selectionId };
     });
   },
 

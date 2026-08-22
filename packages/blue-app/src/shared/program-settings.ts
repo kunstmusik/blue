@@ -69,6 +69,11 @@ export interface PlaybackSettingsSnapshot {
 export interface UtilitySettingsSnapshot {
   csoundExecutable: string;
   freezeFlags: string;
+  /**
+   * Maximum concurrent Csound renders within one freeze operation (SPEC 085).
+   * Integer in 1–32; defaults to 4. Invalid or missing saved values load as 4.
+   */
+  freezeMaxJobs: number;
 }
 
 export interface RealtimeRenderSettingsSnapshot {
@@ -312,6 +317,28 @@ export function getDefaultFreezeFlags(platform: string): string {
   return platform === 'darwin' ? '-Ado' : '-Wdo';
 }
 
+export const FREEZE_MAX_JOBS_DEFAULT = 4;
+export const FREEZE_MAX_JOBS_MIN = 1;
+export const FREEZE_MAX_JOBS_MAX = 32;
+
+/**
+ * SPEC 085: any invalid saved freezeMaxJobs value loads as the default 4 —
+ * missing, null, non-finite, non-integer, or outside 1–32. The normalized
+ * value is used in memory; the file is rewritten only on the next save.
+ */
+export function normalizeFreezeMaxJobs(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return FREEZE_MAX_JOBS_DEFAULT;
+  if (value < FREEZE_MAX_JOBS_MIN || value > FREEZE_MAX_JOBS_MAX) return FREEZE_MAX_JOBS_DEFAULT;
+  return value;
+}
+
+export function isSupportedFreezeMaxJobs(value: unknown): value is number {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= FREEZE_MAX_JOBS_MIN
+    && value <= FREEZE_MAX_JOBS_MAX;
+}
+
 export function getDefaultAudioDriver(platform: string): string {
   switch (platform) {
     case 'darwin':
@@ -408,6 +435,7 @@ export function createDefaultUtilitySettings(platform: string): UtilitySettingsS
   return {
     csoundExecutable: getDefaultCsoundExecutable(platform),
     freezeFlags: getDefaultFreezeFlags(platform),
+    freezeMaxJobs: FREEZE_MAX_JOBS_DEFAULT,
   };
 }
 
@@ -533,6 +561,14 @@ export function validateProgramSettings(
     issues.push({
       path: 'general.directoryTempFileLimit',
       message: 'Must be at least 1',
+      severity: 'error',
+    });
+  }
+
+  if (!isSupportedFreezeMaxJobs(snapshot.utility?.freezeMaxJobs)) {
+    issues.push({
+      path: 'utility.freezeMaxJobs',
+      message: `Must be an integer between ${FREEZE_MAX_JOBS_MIN} and ${FREEZE_MAX_JOBS_MAX}`,
       severity: 'error',
     });
   }
@@ -774,7 +810,14 @@ export function mergeWithDefaults(
       ),
     },
     playback: { ...defaults.playback, ...saved.playback },
-    utility: { ...defaults.utility, ...saved.utility },
+    // SPEC 085: normalize defensively so missing or malformed saved values
+    // (including hand-edited files) load as the default instead of an
+    // unusable concurrency cap.
+    utility: {
+      ...defaults.utility,
+      ...saved.utility,
+      freezeMaxJobs: normalizeFreezeMaxJobs(saved.utility?.freezeMaxJobs),
+    },
     realtimeRender: { ...defaults.realtimeRender, ...saved.realtimeRender },
     diskRender: { ...defaults.diskRender, ...saved.diskRender },
     appSpecific: mergedAppSpecific,

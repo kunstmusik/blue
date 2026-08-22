@@ -135,7 +135,6 @@ describe('FreezeOperationDialog', () => {
       message: '',
       rows: [],
       selectedSelectionId: null,
-      selectionLocked: false,
       outputExpanded: false,
       result: null,
       error: null,
@@ -159,6 +158,69 @@ describe('FreezeOperationDialog', () => {
   function dialogElement(): HTMLElement {
     return container.querySelector('[role="dialog"]') as HTMLElement;
   }
+
+  it('keeps concurrent running rows independent and settles unfinished rows after a failed parallel operation (SPEC 085)', async () => {
+    const entries = [
+      entry({ selectionId: 'score-1', name: 'Pattern 1' }),
+      entry({ selectionId: 'score-2', name: 'Pattern 2' }),
+      entry({ selectionId: 'score-3', name: 'Pattern 3' }),
+    ];
+    const operationId = await beginOperation(entries);
+
+    act(() => {
+      // Three rows running concurrently with interleaved output chunks.
+      itemCallback(freezeItem(operationId, { selectionId: 'score-1', name: 'Pattern 1', phase: 'running', freezeFile: 'freeze0.wav' }));
+      itemCallback(freezeItem(operationId, { selectionId: 'score-2', name: 'Pattern 2', phase: 'running', freezeFile: 'freeze1.wav' }));
+      itemCallback(freezeItem(operationId, { selectionId: 'score-3', name: 'Pattern 3', phase: 'running', freezeFile: 'freeze2.wav' }));
+      itemCallback(freezeItem(operationId, { selectionId: 'score-2', name: 'Pattern 2', outputAppend: 'B-1\n', outputType: 'stdout' }));
+      itemCallback(freezeItem(operationId, { selectionId: 'score-1', name: 'Pattern 1', outputAppend: 'A-1\n', outputType: 'stderr' }));
+      itemCallback(freezeItem(operationId, { selectionId: 'score-2', name: 'Pattern 2', outputAppend: 'B-2\n', outputType: 'stdout' }));
+      // Job 3 finishes rendering; its row reflects that before commit.
+      itemCallback(freezeItem(operationId, { selectionId: 'score-3', name: 'Pattern 3', phase: 'rendered', freezeFile: 'freeze2.wav' }));
+      // One object fails per-object; the others keep running.
+      itemCallback(freezeItem(operationId, { selectionId: 'score-1', name: 'Pattern 1', phase: 'failed', reason: 'Freeze failed: Csound exited with code 1.' }));
+    });
+
+    let state = useFreezeOperationStore.getState();
+    expect(state.rows.map((row) => [row.selectionId, row.status])).toEqual([
+      ['score-1', 'failed'],
+      ['score-2', 'running'],
+      ['score-3', 'rendered'],
+    ]);
+    expect(state.rows[0]!.output).toBe('A-1\n');
+    expect(state.rows[1]!.output).toBe('B-1\nB-2\n');
+    expect(state.rows[2]!.output).toBe('');
+
+    // Focus model: running and rendered events never move the selection;
+    // it stays on the first row until the user clicks another row.
+    expect(state.selectedSelectionId).toBe('score-1');
+    expect(container.querySelector('[data-testid="freeze-row-score-1"]')!.getAttribute('aria-selected')).toBe('true');
+
+    act(() => {
+      (container.querySelector('[data-testid="freeze-row-score-2"]') as HTMLElement).click();
+    });
+    expect(useFreezeOperationStore.getState().selectedSelectionId).toBe('score-2');
+
+    act(() => {
+      itemCallback(freezeItem(operationId, { selectionId: 'score-2', name: 'Pattern 2', outputAppend: 'B-3\n', outputType: 'stdout' }));
+    });
+    expect(useFreezeOperationStore.getState().selectedSelectionId).toBe('score-2');
+
+    act(() => {
+      statusCallback(operationStatus(operationId, {
+        phase: 'failed',
+        message: 'Freeze/unfreeze did not change the project because one or more objects failed.',
+        progress: null,
+        error: 'Freeze/unfreeze did not change the project because one or more objects failed.',
+      }));
+    });
+
+    state = useFreezeOperationStore.getState();
+    expect(state.phase).toBe('failed');
+    // A rendered-but-uncommitted row was never applied.
+    expect(state.rows.map((row) => row.status)).toEqual(['failed', 'notApplied', 'notApplied']);
+    expect(state.rows[1]!.output).toBe('B-1\nB-2\nB-3\n');
+  });
 
   it('tracks rows, buttons, and title from running through completion', async () => {
     const entries = [

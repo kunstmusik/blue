@@ -26,6 +26,10 @@ import {
   FILE_FORMAT_CHOICES,
   SAMPLE_FORMAT_CHOICES,
   isValidPlaybackPreferencePatch,
+  FREEZE_MAX_JOBS_DEFAULT,
+  FREEZE_MAX_JOBS_MIN,
+  FREEZE_MAX_JOBS_MAX,
+  normalizeFreezeMaxJobs,
   type ProgramSettingsSnapshot,
 } from './program-settings';
 import {
@@ -539,5 +543,74 @@ describe('isValidPlaybackPreferencePatch (SPEC 079)', () => {
     expect(isValidPlaybackPreferencePatch({ followPlaybackOnStart: 1 })).toBe(false);
     expect(isValidPlaybackPreferencePatch({ followPlayback: null })).toBe(false);
     expect(isValidPlaybackPreferencePatch({ followPlayback: true, followPlaybackOnStart: 'no' })).toBe(false);
+  });
+});
+
+describe('program-settings utility.freezeMaxJobs (SPEC 085)', () => {
+  it('defaults to 4 on fresh Utility and ProgramSettings snapshots', () => {
+    expect(createDefaultUtilitySettings('darwin').freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
+    expect(createDefaultUtilitySettings('win32').freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
+    expect(createDefaultProgramSettings('darwin').utility.freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
+  });
+
+  it('mergeWithDefaults preserves a valid saved freezeMaxJobs with utility siblings intact', () => {
+    const merged = mergeWithDefaults({
+      utility: { csoundExecutable: '/custom/csound', freezeFlags: '-W', freezeMaxJobs: 7 } as any,
+    } as any, 'darwin');
+    expect(merged.utility.freezeMaxJobs).toBe(7);
+    expect(merged.utility.csoundExecutable).toBe('/custom/csound');
+    expect(merged.utility.freezeFlags).toBe('-W');
+  });
+
+  it('mergeWithDefaults loads the default 4 for missing, malformed, and out-of-range values', () => {
+    const cases: Array<{ input: unknown; label: string }> = [
+      { input: undefined, label: 'missing' },
+      { input: null, label: 'null' },
+      { input: '4', label: 'string' },
+      { input: 4.5, label: 'fractional' },
+      { input: Number.NaN, label: 'NaN' },
+      { input: 0, label: 'below range' },
+      { input: -2, label: 'negative' },
+      { input: 33, label: 'above range' },
+      { input: 1000, label: 'far above range' },
+    ];
+    for (const { input, label } of cases) {
+      expect(normalizeFreezeMaxJobs(input), label).toBe(FREEZE_MAX_JOBS_DEFAULT);
+      const merged = mergeWithDefaults({ utility: { freezeMaxJobs: input } as any } as any, 'darwin');
+      expect(merged.utility.freezeMaxJobs, label).toBe(FREEZE_MAX_JOBS_DEFAULT);
+    }
+  });
+
+  it('accepts the inclusive range boundaries through merge and normalization', () => {
+    expect(normalizeFreezeMaxJobs(FREEZE_MAX_JOBS_MIN)).toBe(FREEZE_MAX_JOBS_MIN);
+    expect(normalizeFreezeMaxJobs(FREEZE_MAX_JOBS_MAX)).toBe(FREEZE_MAX_JOBS_MAX);
+  });
+
+  it('validateProgramSettings rejects non-integer and out-of-range values at the boundaries', () => {
+    for (const value of [0, -1, 33, 1.5, Number.NaN]) {
+      const snapshot = createDefaultProgramSettings('darwin');
+      snapshot.utility.freezeMaxJobs = value as number;
+      const issues = validateProgramSettings(snapshot).filter((issue) => issue.path === 'utility.freezeMaxJobs');
+      expect(issues, `value ${value}`).toHaveLength(1);
+      expect(issues[0].severity).toBe('error');
+    }
+  });
+
+  it('validateProgramSettings accepts the inclusive range without utility issues', () => {
+    for (const value of [FREEZE_MAX_JOBS_MIN, 4, FREEZE_MAX_JOBS_MAX]) {
+      const snapshot = createDefaultProgramSettings('darwin');
+      snapshot.utility.freezeMaxJobs = value;
+      const issues = validateProgramSettings(snapshot).filter((issue) => issue.path === 'utility.freezeMaxJobs');
+      expect(issues, `value ${value}`).toHaveLength(0);
+    }
+  });
+
+  it('resetting the utility panel restores the default freezeMaxJobs', () => {
+    const snapshot = createDefaultProgramSettings('darwin');
+    snapshot.utility.freezeMaxJobs = 12;
+    snapshot.utility.freezeFlags = '-W';
+    const reset = resetProgramSettingsPanel(snapshot, 'utility', 'darwin');
+    expect(reset.utility.freezeMaxJobs).toBe(FREEZE_MAX_JOBS_DEFAULT);
+    expect(reset.utility.freezeFlags).toBe('-Ado');
   });
 });

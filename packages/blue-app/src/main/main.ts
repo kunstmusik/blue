@@ -927,7 +927,7 @@ function createCsoundExecutionSeam(
   const trackRenderProcess = options.trackRenderProcess ?? true;
 
   return {
-    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number, onOutput?: (text: string, type: 'stdout' | 'stderr') => void): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean }> {
+    async runCsound(args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number, onOutput?: (text: string, type: 'stdout' | 'stderr') => void): Promise<{ exitCode: number; stderr: string; stdout: string; cancelled?: boolean; errorCode?: string | null }> {
       const controller = trackRenderProcess && activeRenderAbortController
         ? activeRenderAbortController
         : new AbortController();
@@ -957,13 +957,14 @@ function createCsoundExecutionSeam(
         },
       );
       if (!result) {
-        return { exitCode: -1, stderr: 'Blue Engine runtime service is unavailable.', stdout: '' };
+        return { exitCode: -1, stderr: 'Blue Engine runtime service is unavailable.', stdout: '', errorCode: 'CSOUND_UNAVAILABLE' };
       }
       return {
         exitCode: result.exitCode ?? -1,
         stderr: result.stderr || (result.state === 'failed' ? result.message : ''),
         stdout: result.stdout,
         cancelled: result.state === 'cancelled',
+        errorCode: result.errorCode,
       };
     },
   };
@@ -1206,6 +1207,11 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
         utility: settings.utility,
         platform: process.platform,
         isCancelled: () => cancellationSignal.cancelled,
+        // SPEC 085: a systemic freeze failure aborts every in-flight render
+        // through the shared operation controller. The user-cancellation
+        // signal stays untouched so the outcome is reported as a failure,
+        // not as a cancel.
+        abortInFlight: () => { activeRenderAbortController?.abort(); },
         javaScriptSession: javaScriptSession ?? undefined,
         javaRuntimeClient,
       },

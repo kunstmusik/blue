@@ -135,6 +135,7 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
 
     entry('utility', 'utility.csoundExecutable', 'Csound Executable (legacy)', '/usr/local/bin/csound (macOS)', 'Retained for downgrade compatibility; managed Blue Engine executes Csound', 'app-specific-retained', { consumerPath: 'settings migration only' }),
     entry('utility', 'utility.freezeFlags', 'Freeze Flags', '-Ado (macOS)', 'SoundObject freeze render flags', 'used-by-workflow', { consumerPath: 'freeze-score-objects.ts:planFreezeCommand' }),
+    entry('utility', 'utility.freezeMaxJobs', 'Maximum Freeze Jobs', '(none — blue-electron extension, default 4)', 'No Java counterpart; Java Blue freezes sequentially. Caps concurrent freeze renders per operation (SPEC 085)', 'used-by-workflow', { consumerPath: 'freeze-score-objects.ts:executeFreezeUnfreeze' }),
 
     entry('realtimeRender', 'realtimeRender.csoundExecutable', 'Csound Executable (legacy)', '/usr/local/bin/csound (macOS)', 'Retained for downgrade compatibility; realtime uses Blue Engine', 'app-specific-retained', { consumerPath: 'settings migration only' }),
     entry('appSpecific', 'appSpecific.csoundLibraryPath', 'Csound Library Override', '(auto)', 'Managed Csound library selection', 'used-by-workflow', { consumerPath: 'EngineRuntimeService' }),

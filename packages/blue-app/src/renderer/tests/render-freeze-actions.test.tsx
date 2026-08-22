@@ -152,7 +152,6 @@ describe('render/freeze renderer actions', () => {
       message: '',
       rows: [],
       selectedSelectionId: null,
-      selectionLocked: false,
       outputExpanded: false,
       result: null,
       error: null,

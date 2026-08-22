@@ -298,6 +298,91 @@ describe('settings renderer (044)', () => {
     expect(container.textContent).toContain('SoundFont inspection');
   });
 
+  it('edits Maximum Freeze Jobs on the Utility panel and surfaces its validation issues (SPEC 085)', async () => {
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+
+    const buttons = Array.from(container.querySelectorAll('button'));
+    const utilButton = buttons.find((b) => b.textContent === 'Utility');
+    await act(() => { utilButton?.click(); });
+
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+    expect(input).toBeInstanceOf(HTMLInputElement);
+    expect(input.value).toBe('4');
+
+    await act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '7');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const applyButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Apply',
+    );
+
+    mockBlueAPI.saveProgramSettings.mockResolvedValueOnce({
+      ok: false,
+      validationIssues: [{ path: 'utility.freezeMaxJobs', message: 'Must be an integer between 1 and 32', severity: 'error' }],
+    });
+    await act(async () => { applyButton?.click(); });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: 7 }) }),
+    );
+    expect(container.textContent).toContain('Must be an integer between 1 and 32');
+
+    await act(async () => { applyButton?.click(); });
+    await act(async () => { await Promise.resolve(); });
+    expect(mockBlueAPI.saveProgramSettings).toHaveLastReturnedWith(
+      Promise.resolve(expect.objectContaining({
+        snapshot: expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: 7 }) }),
+      })),
+    );
+
+    const reset = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Reset Panel');
+    await act(async () => { reset?.click(); });
+    expect(mockBlueAPI.resetProgramSettingsPanel).toHaveBeenCalledWith('utility');
+  });
+
+  it('keeps invalid Maximum Freeze Jobs drafts for main-process validation (SPEC 085)', async () => {
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+
+    const utilButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Utility');
+    await act(() => { utilButton?.click(); });
+
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+    const applyButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Apply',
+    );
+    const validationResult = {
+      ok: false,
+      validationIssues: [{
+        path: 'utility.freezeMaxJobs',
+        message: 'Must be an integer between 1 and 32',
+        severity: 'error' as const,
+      }],
+    };
+    mockBlueAPI.saveProgramSettings.mockResolvedValue(validationResult);
+
+    for (const value of ['0', '1.5', '']) {
+      await act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => { applyButton?.click(); });
+      await act(async () => { await Promise.resolve(); });
+
+      expect(mockBlueAPI.saveProgramSettings).toHaveBeenLastCalledWith(
+        expect.objectContaining({ utility: expect.objectContaining({ freezeMaxJobs: value }) }),
+      );
+    }
+
+    expect(container.textContent).toContain('Must be an integer between 1 and 32');
+  });
+
   it('uses semantic typography roles across headers, navigation, and controls', async () => {
     await act(async () => {
       root.render(<SettingsApp />);

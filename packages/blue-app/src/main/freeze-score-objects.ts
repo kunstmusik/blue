@@ -45,8 +45,37 @@ export interface FreezeContext {
   platform: string;
   /** True after the operation has been cancelled by its main-process owner. */
   isCancelled?: () => boolean;
+  /**
+   * SPEC 085: called when a systemic failure dooms the operation so the
+   * owner can abort every in-flight render immediately (the shared
+   * operation AbortController in the main process). Distinct from user
+   * cancellation: `isCancelled` must stay false.
+   */
+  abortInFlight?: () => void;
   javaScriptSession?: JavaScriptSession;
   javaRuntimeClient?: JavaRuntimeClientContract | null;
+}
+
+/**
+ * Engine-runtime error codes for failures of the shared command or
+ * environment that no freeze job can survive (SPEC 085, FR-007a).
+ */
+const SYSTEMIC_FREEZE_ERROR_CODES: ReadonlySet<string> = new Set([
+  'CSOUND_UNAVAILABLE',
+  'ENGINE_CAPABILITY_MISSING',
+  'CSOUND_EXECUTION_INVALID_CWD',
+  'CSOUND_PROCESS_FAILED',
+]);
+
+/** A failure of the shared render environment, not of one object. */
+class SystemicFreezeError extends Error {
+  readonly errorCode: string;
+
+  constructor(message: string, errorCode: string) {
+    super(message);
+    this.name = 'SystemicFreezeError';
+    this.errorCode = errorCode;
+  }
 }
 
 export type StatusCallback = (status: RenderOperationStatus) => void;
@@ -66,7 +95,7 @@ export interface FreezeExecutionSeam {
     onProgress?: (progress: number) => void,
     totalDuration?: number,
     onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
-  ): Promise<{ exitCode: number; stderr: string; stdout?: string; cancelled?: boolean }>;
+  ): Promise<{ exitCode: number; stderr: string; stdout?: string; cancelled?: boolean; errorCode?: string | null }>;
 }
 
 // ─── Filename Allocation ───
@@ -79,10 +108,16 @@ export interface FreezeExecutionSeam {
  * starts at zero when none exists, and advances on collision.
  *
  * macOS uses `.aif`; other platforms use `.wav`.
+ *
+ * `reservedNames` carries names already allocated earlier in the same
+ * operation whose artifacts are not on disk yet; candidates inside it are
+ * skipped so a sequentially-prepared parallel batch can never target the
+ * same file (SPEC 085, FR-006).
  */
 export function allocateFreezeFileName(
   projectDirectory: string,
   platform: string,
+  reservedNames?: ReadonlySet<string>,
 ): string {
   const extension = platform === 'darwin' ? '.aif' : '.wav';
   let entries: string[] = [];
@@ -114,8 +149,14 @@ export function allocateFreezeFileName(
   let counter = maxCounter + 1;
   let candidate = `freeze${counter}${extension}`;
 
-  // Advance on collision (Java-compatible behavior)
+  // Advance on collision (Java-compatible behavior), including names
+  // reserved within the current batch.
   while (true) {
+    if (reservedNames?.has(candidate)) {
+      counter++;
+      candidate = `freeze${counter}${extension}`;
+      continue;
+    }
     try {
       fs.accessSync(path.join(projectDirectory, candidate));
       counter++;
@@ -244,7 +285,7 @@ export async function executeFreezeUnfreeze(
     selectionId: string,
     name: string,
     action: 'freeze' | 'unfreeze',
-    phase: 'pending' | 'running' | 'complete' | 'failed',
+    phase: 'pending' | 'running' | 'rendered' | 'complete' | 'failed',
     options: Partial<Pick<FreezeItemStatus, 'freezeFile' | 'reason' | 'outputAppend' | 'outputType'>> = {},
   ): void => {
     itemEventCallback?.({
@@ -345,120 +386,197 @@ export async function executeFreezeUnfreeze(
     }
   };
   try {
-    for (let itemIndex = 0; itemIndex < resolved.length; itemIndex++) {
-      const item = resolved[itemIndex];
-      const objectProgressStart = (itemIndex / resolved.length) * 90;
-      const objectProgressSpan = 90 / resolved.length;
+    // Unfreeze targets stage without rendering and never occupy render slots.
+    for (const item of resolved) {
+      if (!item.isFrozen) continue;
+      const frozen = item.sObj as FrozenSoundObject;
+      const nested = frozen.getFrozenSoundObject();
+      const fileName = frozen.getFrozenWaveFileName();
+      const artifactPath = resolveFreezeArtifactPath(projectDirectory, fileName);
+      emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'running', { freezeFile: fileName });
+      if (!nested) {
+        rejected.push({ selectionId: item.target.selectionId, reason: 'Frozen object has no nested source to restore.' });
+        emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'failed', {
+          reason: 'Frozen object has no nested source to restore.',
+        });
+        continue;
+      }
+      const restored = nested.deepCopy() as SoundObject;
+      restored.setStartTime(frozen.getStartTime());
+      staged.push({
+        item,
+        replacement: restored,
+        ...(artifactPath && fs.existsSync(artifactPath)
+          ? { unfreezeArtifact: { fileName, path: artifactPath } }
+          : {}),
+      });
+    }
+
+    // Prepare freeze jobs sequentially: the shared script session behind CSD
+    // generation is never used concurrently, and Java-compatible filename
+    // allocation stays race-free by reserving names within the batch.
+    const prepared: PreparedFreezeJob[] = [];
+    const reservedNames = new Set<string>();
+    for (const item of resolved) {
+      if (item.isFrozen) continue;
       if (isCancelled?.()) {
         removeGeneratedArtifacts();
         return reportCancelled();
       }
-
-      if (item.isFrozen) {
-        const frozen = item.sObj as FrozenSoundObject;
-        const nested = frozen.getFrozenSoundObject();
-        const fileName = frozen.getFrozenWaveFileName();
-        const artifactPath = resolveFreezeArtifactPath(projectDirectory, fileName);
-        emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'running', { freezeFile: fileName });
-        if (!nested) {
-          rejected.push({ selectionId: item.target.selectionId, reason: 'Frozen object has no nested source to restore.' });
-          emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'failed', {
-            reason: 'Frozen object has no nested source to restore.',
-          });
-          continue;
-        }
-        const restored = nested.deepCopy() as SoundObject;
-        restored.setStartTime(frozen.getStartTime());
-        staged.push({
-          item,
-          replacement: restored,
-          ...(artifactPath && fs.existsSync(artifactPath)
-            ? { unfreezeArtifact: { fileName, path: artifactPath } }
-            : {}),
-        });
-        continue;
-      }
-
-      emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running');
-      statusCallback({
-        operationId,
-        kind: 'freeze',
-        phase: 'rendering',
-        message: `Freezing object ${itemIndex + 1} of ${resolved.length}: "${item.sObj.getName()}"...`,
-        progress: itemIndex === 0 ? null : objectProgressStart,
-        outputPath: null,
-        error: null,
-      });
-
       try {
-        const freezeResult = await freezeOneObject(context, item.sObj, executionSeam, {
-          onProgress: (progress) => {
-            statusCallback({
-              operationId,
-              kind: 'freeze',
-              phase: 'rendering',
-              message: `Freezing object ${itemIndex + 1} of ${resolved.length}: "${item.sObj.getName()}"...`,
-              progress: objectProgressStart + (objectProgressSpan * progress / 100),
-              outputPath: null,
-              error: null,
-            });
-          },
-          onStarted: (fileName) => {
-            emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running', { freezeFile: fileName });
-          },
-          onOutput: (text, outputType) => {
-            emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'running', {
-              outputAppend: text,
-              outputType,
-            });
-          },
-        });
-        if (isCancelled?.()) {
-          const artifactPath = resolveFreezeArtifactPath(projectDirectory, freezeResult.fileName);
-          if (artifactPath) fs.rmSync(artifactPath, { force: true });
-          removeGeneratedArtifacts();
-          return reportCancelled();
-        }
-
-        statusCallback({
-          operationId,
-          kind: 'freeze',
-          phase: 'inspecting',
-          message: `Inspecting object ${itemIndex + 1} of ${resolved.length}...`,
-          progress: objectProgressStart + objectProgressSpan * 0.9,
-          outputPath: freezeResult.fileName,
-          error: null,
-        });
-
-        const fso = new FrozenSoundObject();
-        fso.setFrozenSoundObject(item.sObj.deepCopy() as SoundObject);
-        fso.setFrozenWaveFileName(freezeResult.fileName);
-        fso.setNumChannels(freezeResult.channels);
-        fso.setName(`F: ${item.sObj.getName()}`);
-        fso.setStartTime(item.sObj.getStartTime());
-
-        const timeContext = data.getScore().getTimeContext();
-        const measuredBeats = timeContext.secondsToBeats(freezeResult.durationSeconds);
-        const sourceDuration = item.sObj.getSubjectiveDuration();
-        fso.setSubjectiveDuration(
-          beatsToDuration(measuredBeats, sourceDuration.getTimeBase(), timeContext),
-        );
-
-        const artifactPath = resolveFreezeArtifactPath(projectDirectory, freezeResult.fileName);
-        staged.push({ item, replacement: fso, generatedArtifactPath: artifactPath ?? undefined });
+        const job = await prepareFreezeJob(context, item, reservedNames);
+        reservedNames.add(job.fileName);
+        prepared.push(job);
       } catch (err) {
-        if (isCancelled?.()) {
-          removeGeneratedArtifacts();
-          return reportCancelled();
-        }
         const message = err instanceof Error ? err.message : String(err);
         const reason = `Freeze failed: ${message}`;
         rejected.push({ selectionId: item.target.selectionId, reason });
         emitItemEvent(item.target.selectionId, item.sObj.getName(), 'freeze', 'failed', { reason });
       }
     }
+
+    if (prepared.length > 0 && !isCancelled?.()) {
+      const maxJobs = resolveFreezeMaxJobs(context.utility.freezeMaxJobs);
+      const totalRenderJobs = prepared.length;
+      const timeContext = data.getScore().getTimeContext();
+      let completedRenderJobs = 0;
+      let nextDispatch = 0;
+      let stopDispatch = false;
+      let systemicFailure: SystemicFreezeError | null = null;
+      const inflightProgress = new Map<number, number>();
+      let lastReportedProgress = -1;
+
+      const reportRendering = (): void => {
+        const runningCount = inflightProgress.size;
+        const inflightSum = [...inflightProgress.values()].reduce((total, value) => total + value / 100, 0);
+        const raw = ((completedRenderJobs + inflightSum) / totalRenderJobs) * 90;
+        const progress = Math.max(Math.min(raw, 90), Math.max(lastReportedProgress, 0));
+        lastReportedProgress = progress;
+        statusCallback({
+          operationId,
+          kind: 'freeze',
+          phase: 'rendering',
+          message: `Freezing ${totalRenderJobs} object${totalRenderJobs === 1 ? '' : 's'}: ${completedRenderJobs} rendered, ${runningCount} running...`,
+          progress,
+          outputPath: null,
+          error: null,
+        });
+      };
+
+      statusCallback({
+        operationId,
+        kind: 'freeze',
+        phase: 'rendering',
+        message: `Freezing ${totalRenderJobs} object${totalRenderJobs === 1 ? '' : 's'} with up to ${maxJobs} concurrent render${maxJobs === 1 ? '' : 's'}...`,
+        progress: null,
+        outputPath: null,
+        error: null,
+      });
+
+      const renderOne = async (job: PreparedFreezeJob, dispatchIndex: number): Promise<void> => {
+        emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'running');
+        emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'running', { freezeFile: job.fileName });
+        inflightProgress.set(dispatchIndex, 0);
+        reportRendering();
+        try {
+          const freezeResult = await runPreparedFreezeJob(context, job, executionSeam, {
+            onProgress: (progress) => {
+              inflightProgress.set(dispatchIndex, progress);
+              reportRendering();
+            },
+            onOutput: (text, outputType) => {
+              emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'running', {
+                outputAppend: text,
+                outputType,
+              });
+            },
+          });
+
+          const inspectionProgress = Math.max(
+            lastReportedProgress,
+            Math.min(90, ((completedRenderJobs + 0.9) / totalRenderJobs) * 90),
+          );
+          lastReportedProgress = inspectionProgress;
+          statusCallback({
+            operationId,
+            kind: 'freeze',
+            phase: 'inspecting',
+            message: `Inspecting "${job.item.sObj.getName()}" (${completedRenderJobs + 1} of ${totalRenderJobs})...`,
+            progress: inspectionProgress,
+            outputPath: job.fileName,
+            error: null,
+          });
+
+          const fso = new FrozenSoundObject();
+          fso.setFrozenSoundObject(job.item.sObj.deepCopy() as SoundObject);
+          fso.setFrozenWaveFileName(freezeResult.fileName);
+          fso.setNumChannels(freezeResult.channels);
+          fso.setName(`F: ${job.item.sObj.getName()}`);
+          fso.setStartTime(job.item.sObj.getStartTime());
+
+          const measuredBeats = timeContext.secondsToBeats(freezeResult.durationSeconds);
+          const sourceDuration = job.item.sObj.getSubjectiveDuration();
+          fso.setSubjectiveDuration(
+            beatsToDuration(measuredBeats, sourceDuration.getTimeBase(), timeContext),
+          );
+
+          staged.push({ item: job.item, replacement: fso, generatedArtifactPath: job.artifactPath ?? undefined });
+          completedRenderJobs += 1;
+          inflightProgress.delete(dispatchIndex);
+          emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'rendered', { freezeFile: job.fileName });
+          reportRendering();
+        } catch (err) {
+          // The render may have succeeded before artifact inspection,
+          // FrozenSoundObject construction, or duration conversion fails.
+          // Remove the job's output on every post-render failure path.
+          fs.rmSync(job.outputPath, { force: true });
+          inflightProgress.delete(dispatchIndex);
+          if (err instanceof SystemicFreezeError) {
+            if (!systemicFailure) {
+              systemicFailure = err;
+              rejected.push({ selectionId: job.item.target.selectionId, reason: err.message });
+              emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'failed', { reason: err.message });
+            }
+            // Abort every in-flight job immediately; their results are
+            // discarded by the systemic failure path below.
+            context.abortInFlight?.();
+            return;
+          }
+          if (systemicFailure || isCancelled?.()) return;
+          // Per-object failure: stop dispatching new jobs, drain in-flight
+          // jobs, and discard their staged results during cleanup.
+          stopDispatch = true;
+          const message = err instanceof Error ? err.message : String(err);
+          const reason = `Freeze failed: ${message}`;
+          rejected.push({ selectionId: job.item.target.selectionId, reason });
+          emitItemEvent(job.item.target.selectionId, job.item.sObj.getName(), 'freeze', 'failed', { reason });
+        }
+      };
+
+      const worker = async (): Promise<void> => {
+        while (nextDispatch < prepared.length && !isCancelled?.() && !systemicFailure && !stopDispatch) {
+          const dispatchIndex = nextDispatch++;
+          await renderOne(prepared[dispatchIndex], dispatchIndex);
+        }
+      };
+
+      await Promise.all(Array.from({ length: Math.min(maxJobs, prepared.length) }, () => worker()));
+
+      // Re-read through the union: renderOne assigns this inside closures,
+      // which TypeScript's control-flow analysis cannot observe.
+      const systemic = systemicFailure as SystemicFreezeError | null;
+      if (systemic && !isCancelled?.()) {
+        removeGeneratedArtifacts();
+        return reportFailure(systemic.message, rejected);
+      }
+    }
   } finally {
     await cleanupTempCsdSnapshots();
+  }
+
+  if (isCancelled?.()) {
+    removeGeneratedArtifacts();
+    return reportCancelled();
   }
 
   if (rejected.length > 0) {
@@ -544,82 +662,122 @@ interface FreezeOneResult {
   durationSeconds: number;
 }
 
-interface FreezeOneCallbacks {
+/** A freeze target with everything needed to run its render (SPEC 085). */
+interface PreparedFreezeJob {
+  item: { target: ScoreObjectEditorTargetSnapshot; sObj: SoundObject; isFrozen: boolean };
+  fileName: string;
+  outputPath: string;
+  artifactPath: string | null;
+  csdPath: string;
+  args: string[];
+}
+
+/** Freeze-job concurrency cap read defensively: the settings layer already normalizes. */
+function resolveFreezeMaxJobs(value: number | undefined): number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : 1;
+}
+
+interface FreezeJobRunCallbacks {
   onProgress?: (progress: number) => void;
-  /** Invoked once the freeze filename has been allocated, before Csound runs. */
-  onStarted?: (fileName: string) => void;
   /** Streamed Csound subprocess output for this item. */
   onOutput?: (text: string, type: 'stdout' | 'stderr') => void;
 }
 
-async function freezeOneObject(
+/**
+ * Prepare one freeze job: build the isolated temporary project, generate its
+ * CSD through the shared script session, allocate a Java-compatible artifact
+ * name, and write the temporary CSD. Runs only in the sequential prepare
+ * phase so shared state is never used concurrently.
+ */
+async function prepareFreezeJob(
   context: FreezeContext,
-  sourceObject: SoundObject,
-  executionSeam: FreezeExecutionSeam,
-  callbacks: FreezeOneCallbacks = {},
-): Promise<FreezeOneResult> {
+  item: PreparedFreezeJob['item'],
+  reservedNames: ReadonlySet<string>,
+): Promise<PreparedFreezeJob> {
   const { data, projectDirectory, utility, platform } = context;
 
-  // Build temporary project with isolated object
-  const freezeData = buildFreezeRenderData(data, sourceObject);
+  const freezeData = buildFreezeRenderData(data, item.sObj);
 
-  // Generate CSD
   const csdText = await generateDiskCsd(
     freezeData.tempData,
     context.javaScriptSession,
     context.javaRuntimeClient,
   );
 
-  // Allocate freeze filename
-  const fileName = allocateFreezeFileName(projectDirectory, platform);
+  const fileName = allocateFreezeFileName(projectDirectory, platform, reservedNames);
   const outputPath = path.join(projectDirectory, fileName);
-  callbacks.onStarted?.(fileName);
 
-  // Write temp CSD
   const csdPath = await writeTempCsdSnapshot(csdText, projectDirectory);
   if (!csdPath) {
     throw new Error('Failed to write temporary CSD file for freeze.');
   }
 
-  // Build and run command
   const cmd = planFreezeCommand({
     freezeFlags: utility.freezeFlags,
     outputFilePath: outputPath,
     csdPath,
   });
 
+  return {
+    item,
+    fileName,
+    outputPath,
+    artifactPath: resolveFreezeArtifactPath(projectDirectory, fileName),
+    csdPath,
+    args: cmd.args,
+  };
+}
+
+/**
+ * Run one prepared freeze job: execute Csound and inspect the artifact.
+ * Removes its own output file when anything fails.
+ */
+async function runPreparedFreezeJob(
+  context: FreezeContext,
+  job: PreparedFreezeJob,
+  executionSeam: FreezeExecutionSeam,
+  callbacks: FreezeJobRunCallbacks = {},
+): Promise<FreezeOneResult> {
+  const { projectDirectory, platform } = context;
+
   try {
-    const result = await executionSeam.runCsound(cmd.args, projectDirectory, callbacks.onProgress, undefined, callbacks.onOutput);
+    const result = await executionSeam.runCsound(job.args, projectDirectory, callbacks.onProgress, undefined, callbacks.onOutput);
 
     if (result.cancelled || context.isCancelled?.()) {
       throw new Error('Operation cancelled.');
     }
 
     if (result.exitCode !== 0) {
+      if (result.errorCode && SYSTEMIC_FREEZE_ERROR_CODES.has(result.errorCode)) {
+        throw new SystemicFreezeError(
+          `Csound runtime failed for all jobs (${result.errorCode}): ${result.stderr}`,
+          result.errorCode,
+        );
+      }
       throw new Error(`Csound exited with code ${result.exitCode}. ${result.stderr}`);
     }
 
-    if (!fs.existsSync(outputPath)) {
-      throw new Error(`Freeze render completed but output file not found: ${outputPath}`);
+    if (!fs.existsSync(job.outputPath)) {
+      throw new Error(`Freeze render completed but output file not found: ${job.outputPath}`);
     }
 
-    const fileBytes = fs.readFileSync(outputPath);
+    const fileBytes = fs.readFileSync(job.outputPath);
     const meta = parseAudioFileMetadata(new Uint8Array(fileBytes));
     const expectedFormat = platform === 'darwin' ? 'AIFF' : 'WAV';
     if (meta.format !== expectedFormat) {
       throw new Error(`Freeze artifact format ${meta.format} does not match expected ${expectedFormat} output.`);
     }
     if (!Number.isFinite(meta.durationSeconds) || meta.durationSeconds <= 0) {
-      throw new Error(`Freeze artifact has no measurable audio duration: ${outputPath}`);
+      throw new Error(`Freeze artifact has no measurable audio duration: ${job.outputPath}`);
     }
 
     return {
-      fileName,
+      fileName: job.fileName,
       channels: meta.channels,
       durationSeconds: meta.durationSeconds,
     };
   } catch (error) {
-    fs.rmSync(outputPath, { force: true });
+    fs.rmSync(job.outputPath, { force: true });
     throw error;
   }
 }

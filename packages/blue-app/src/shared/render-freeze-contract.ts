@@ -105,7 +105,7 @@ export function isRenderOperationStatus(value: unknown): value is RenderOperatio
 
 // ─── Main → Renderer freeze item status ───
 
-export type FreezeItemPhase = 'pending' | 'running' | 'complete' | 'failed';
+export type FreezeItemPhase = 'pending' | 'running' | 'rendered' | 'complete' | 'failed';
 
 export type FreezeItemAction = 'freeze' | 'unfreeze';
 
@@ -114,7 +114,9 @@ export type FreezeItemAction = 'freeze' | 'unfreeze';
  * FREEZE_ITEM_STATUS_CHANNEL alongside the overall RenderOperationStatus
  * stream so the renderer can drive a per-object progress dialog. Rows are
  * keyed by selectionId (target.selectionId). Csound subprocess output for the
- * item streams incrementally via outputAppend chunks.
+ * item streams incrementally via outputAppend chunks. `rendered` reports that
+ * a parallel job's render finished and staged; `complete` is emitted only
+ * after the operation's atomic commit (SPEC 085).
  */
 export interface FreezeItemStatus {
   operationId: string;
@@ -128,7 +130,7 @@ export interface FreezeItemStatus {
   outputType: 'stdout' | 'stderr' | null;
 }
 
-const FREEZE_ITEM_PHASES: readonly FreezeItemPhase[] = ['pending', 'running', 'complete', 'failed'];
+const FREEZE_ITEM_PHASES: readonly FreezeItemPhase[] = ['pending', 'running', 'rendered', 'complete', 'failed'];
 const FREEZE_ITEM_ACTIONS: readonly FreezeItemAction[] = ['freeze', 'unfreeze'];
 
 export function isFreezeItemStatus(value: unknown): value is FreezeItemStatus {

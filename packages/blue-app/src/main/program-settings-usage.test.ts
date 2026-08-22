@@ -26,6 +26,17 @@ describe('program-settings-usage matrix', () => {
     expect(textEntry!.currentStatus).toBe('resource-only-stale');
   });
 
+  it('records freezeMaxJobs as a used blue-electron extension with no Java counterpart (SPEC 085)', () => {
+    const matrix = buildUsageMatrix();
+    const entry = matrix.find((e) => e.settingKey === 'utility.freezeMaxJobs');
+    expect(entry).toBeDefined();
+    expect(entry!.panel).toBe('utility');
+    expect(entry!.currentStatus).toBe('used-by-workflow');
+    expect(entry!.javaDefault).toContain('blue-electron extension');
+    expect(entry!.javaUsage).toContain('No Java counterpart');
+    expect(entry!.consumerPath).toContain('freeze-score-objects.ts');
+  });
+
   it('covers all FR-004 through FR-015 settings', () => {
     const matrix = buildUsageMatrix();
     const keys = new Set(matrix.map((e) => e.settingKey));
