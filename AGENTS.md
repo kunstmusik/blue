@@ -37,6 +37,7 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 
 ## Architecture boundaries
 
+- For large-module refactors, apply the review rule and boundary maps in `docs/modularization.md`.
 - `@blue/data` production source must remain browser-safe and host-neutral: no Node.js
   built-ins, DOM APIs, Electron APIs, `require()`, dynamic `import()`, or inline
   `import("...").Type` annotations.
