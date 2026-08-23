@@ -104,9 +104,10 @@ compatibility surface; the extracted files are package-internal.
 
 ### Seam 1 — shared project-editor
 
-- **Façade:** `packages/blue-app/src/shared/project-editor/index.ts` is the explicit compatibility
-  barrel; the old `project-editor.ts` file is deleted, so all existing `shared/project-editor`
-  specifiers resolve to the directory index.
+- **Façade:** `packages/blue-app/src/shared/project-editor.ts` is the one-line compatibility
+  façade over the internal `project-editor/index.ts` barrel. Existing source specifiers and the
+  emitted CommonJS path remain stable, preventing a stale pre-refactor file from shadowing the
+  internal directory after an incremental build.
 - **Responsibility/dependencies:** `contract.ts` owns snapshot/patch/realtime types and validators;
   `identity.ts` owns all six WeakMap registries; `bsb-widgets.ts` owns BSB serialization and patch
   helpers; `snapshot-score.ts` owns score/document/automation builders; `snapshot-mixer-orchestra.ts`
@@ -120,10 +121,11 @@ compatibility surface; the extracted files are package-internal.
   the existing contracts. The identity registries exist exactly once in `identity.ts`.
 - **Lowest test seam:** the project-editor, score-timeline-automation, and project-store checkpoint
   (T024), plus the main/preload builds. The first run had one unrelated performance timing miss;
-  the exact checkpoint rerun passed 361 files, 3,575 tests, and 2 skips.
-- **Rollback boundary:** restore `project-editor.ts`, remove the eight internal modules, and leave
-  the 284 consumer import specifiers untouched. The explicit index surface is the compatibility
-  proof; no consumer edits were needed for this seam.
+  the corrected focused checkpoint passed 22 files and 178 tests.
+- **Rollback boundary:** restore the original `project-editor.ts` implementation, remove the eight
+  internal modules, and leave the 284 consumer import specifiers untouched. The file façade plus
+  explicit internal index surface is the compatibility proof; no consumer edits were needed for
+  this seam.
 
 ### Seam-3 deletion record
 

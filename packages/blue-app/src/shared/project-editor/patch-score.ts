@@ -2466,10 +2466,10 @@ export function applyScoreObjectPatch(
         const to = sObj as TrackerObject;
         const p = patch.patch;
         if (p.showNoteNames !== undefined) {
-          // stored in tracker payload, not directly on model
+          to.setKeyboardNotesEnabled(p.showNoteNames === true);
         }
         if (p.octave !== undefined) {
-          // stored in tracker payload, not directly on model
+          to.setKeyboardOctave(p.octave as number);
         }
         if (Array.isArray(p.cellChanges)) {
           const trackList = to.getTracks();

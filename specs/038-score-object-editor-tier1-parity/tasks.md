@@ -52,6 +52,8 @@
 ## Handoff Notes
 
 - Manual Tier 1 quickstart validation was signed off on 2026-05-10.
+- Focused TrackerObject keyboard/toolbar and cross-layer soundObject editor continuity were
+  rechecked and passed on 2026-08-23; see `quickstart.md` for the regression record.
 - Keep `Sound`, `PianoRoll`, and `JMask` out of this slice; they belong to the Tier 2 follow-up spec.
 - Reuse the Spec 037 registry and auxiliary panel shell instead of introducing parallel editor infrastructure.
 - Reuse Spec 036 nested score navigation for `PolyObject` open-in-score flows wherever possible.

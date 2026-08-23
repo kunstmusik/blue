@@ -26,7 +26,7 @@ Establish a repeatable modularization pattern and apply it to four first-wave se
 
 **Constraints**: No new public exports (spec FR-004 internal-first clarification); no circular dependencies; `@blue/data` production source stays browser-safe with top-level static imports only; no changes to IPC channels, `.blue` XML output, CSD output, or layout persistence format.
 
-**Scale/Scope**: Four seams, ~19k source lines redistributed across ~16 new internal modules. 284 files import `project-editor` (all keep working via the directory-index façade); 7 runtime consumers + 10 test files import `auxiliary-layout`; `BlueData` is consumed by 177 `blue-app` files and `blue-cli` (public API unchanged).
+**Scale/Scope**: Four seams, ~19k source lines redistributed across ~16 new internal modules. 284 files import `project-editor` (all keep working via the retained file façade); 7 runtime consumers + 10 test files import `auxiliary-layout`; `BlueData` is consumed by 177 `blue-app` files and `blue-cli` (public API unchanged).
 
 ## Constitution Check
 
@@ -79,10 +79,11 @@ docs/
                                           #      referenced from AGENTS.md
 
 packages/blue-app/src/shared/
-└── project-editor/                       # seam 1: replaces project-editor.ts; the specifier
-    ├── index.ts                          #   '../shared/project-editor' resolves here, so all 284
-    │                                     #   consumers keep working unchanged (pure re-export façade
-    │                                     #   incl. existing bsb-widget-keys re-exports)
+├── project-editor.ts                     # seam 1 compatibility façade; stable source and emitted
+│                                         # CommonJS path; re-exports project-editor/index.ts
+└── project-editor/                       # package-internal seam-1 modules
+    ├── index.ts                          # internal re-export barrel incl. existing
+    │                                     # bsb-widget-keys re-exports
     ├── contract.ts                       # snapshot/patch/realtime type declarations + embedded
     │                                     #   validators/factories (src lines ~124–2525)
     ├── identity.ts                       # WeakMap ID registries: mixer channel/entry IDs, score
@@ -134,7 +135,7 @@ packages/blue-data/src/
                                           #   usesJavaRuntime traversal
 ```
 
-**Structure Decision**: Façade-first, directory-index where the façade is a pure barrel (`project-editor/`), same-file façade where the aggregate remains meaningful (`blue-data.ts` keeps the class), sibling-file barrel for `auxiliary-layout.ts`, and a single new module plus panel re-export for the reducer. All new modules are package-internal (not added to `@blue/data`'s `index.ts` or any new barrel beyond the façades). Extraction order runs lowest-risk first: seam 4 → seam 3 → seam 2 → seam 1 (internally staged contract → identity → bsb-widgets → snapshots → patches → orchestrator), each step leaving the repository green and independently revertible (FR-012).
+**Structure Decision**: Façade-first, retaining `project-editor.ts` as a one-line file façade over the internal directory barrel so both source and emitted CommonJS resolution remain stable; same-file façade where the aggregate remains meaningful (`blue-data.ts` keeps the class); sibling-file barrel for `auxiliary-layout.ts`; and a single new module plus panel re-export for the reducer. All new modules are package-internal (not added to `@blue/data`'s `index.ts` or any new barrel beyond the façades). Extraction order runs lowest-risk first: seam 4 → seam 3 → seam 2 → seam 1 (internally staged contract → identity → bsb-widgets → snapshots → patches → orchestrator), each step leaving the repository green and independently revertible (FR-012).
 
 ## Complexity Tracking
 

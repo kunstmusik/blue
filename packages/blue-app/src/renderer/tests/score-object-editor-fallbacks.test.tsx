@@ -13,6 +13,7 @@ import {
 import {
   createScoreObjectEditorDocument,
   createFallbackEditorDocument,
+  createProjectEditorSnapshot,
   applyProjectDocumentPatch,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLibraryEntryRef,
@@ -111,6 +112,34 @@ describe('Fallback for unsupported types (T035)', () => {
       expect(doc!.editor.reason).toBe('removed-target');
       expect(doc!.editor.message).toContain('no longer exists');
     }
+  });
+
+  it('resolves a temporarily stale drag location by stable selection identity', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const sourceLayer = new SoundLayer();
+    const targetLayer = new SoundLayer();
+    const score = new GenericScore();
+    score.setName('Dragged score');
+    sourceLayer.push(score);
+    poly.push(sourceLayer, targetLayer);
+    data.getScore().push(poly);
+
+    const snapshot = createProjectEditorSnapshot(data, null);
+    const originalTarget = snapshot.score!.layerGroups[0]!.layers[0]!.items[0]!.editorTarget!;
+    const provisionalTarget: ScoreObjectEditorTargetSnapshot = {
+      ...originalTarget,
+      location: {
+        ...originalTarget.location!,
+        layerIndex: 1,
+        objectIndex: 0,
+      },
+    };
+
+    const doc = createScoreObjectEditorDocument(data, { target: provisionalTarget });
+    expect(doc?.editor.kind).toBe('code');
+    expect(doc?.shared.name).toBe('Dragged score');
   });
 
   it('returns fallback when target has no location', () => {

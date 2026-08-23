@@ -37,7 +37,7 @@ The stable entry point preserving existing callers.
 | implementation | re-export / delegate | No logic of its own beyond delegation |
 | lifetime | "until an intentionally approved API migration" | Façade cleanup is later, separately reviewed work (spec Assumptions) |
 
-Instances: `packages/blue-app/src/shared/project-editor/index.ts` (barrel),
+Instances: `packages/blue-app/src/shared/project-editor.ts` (file façade over the internal barrel),
 `packages/blue-app/src/renderer/components/workbench/auxiliary-layout.ts` (barrel),
 `packages/blue-data/src/blue-data.ts` (class façade + aggregate),
 `ScoreObjectEditorPanel.tsx` re-export of `applyPatchToDocument`.
@@ -76,7 +76,7 @@ the authoritative summary:
 
 | Seam | Façade | Extracted (internal) modules | Key invariant |
 |---|---|---|---|
-| 1 project-editor | `project-editor/index.ts` barrel | `contract`, `identity`, `bsb-widgets`, `snapshot-score`, `snapshot-mixer-orchestra`, `patch-score`, `patch-mixer-bluelive`, `patch-document` | `identity.ts` WeakMap registries are a single instance shared by builders and appliers |
+| 1 project-editor | `project-editor.ts` file façade | `contract`, `identity`, `bsb-widgets`, `snapshot-score`, `snapshot-mixer-orchestra`, `patch-score`, `patch-mixer-bluelive`, `patch-document` | `identity.ts` WeakMap registries are a single instance shared by builders and appliers |
 | 2 auxiliary-layout | `auxiliary-layout.ts` barrel | `auxiliary-layout-model`, `auxiliary-layout-migrations`, `workbench-layout-envelope`, `auxiliary-layout-dockview` | Pure model never imports the adapter; migration funnel + envelope codec move as one unit with their tests |
 | 3 BlueData | `blue-data.ts` class façade | `blue-data/xml-policy`, `blue-data/csd-policy`, `blue-data/runtime-policy` | Public class API unchanged; policy modules use `import type { BlueData }` (no runtime cycle); sync/async CSD duplication moved verbatim |
 | 4 score-object reducer | `ScoreObjectEditorPanel.tsx` re-export | `score-object/score-object-document-reducer.ts` | Verbatim move; BSB shared-reference mutation semantics preserved; no React dependency |

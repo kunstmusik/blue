@@ -8,10 +8,11 @@ implementation moves behind it.
 ## Import specifier
 
 - `@blue/app` internal: `../shared/project-editor`, `../../shared/project-editor`,
-  `./project-editor` (shared siblings) — all resolve to `project-editor/index.ts`.
+  `./project-editor` (shared siblings) — all resolve to the retained `project-editor.ts` façade,
+  which delegates to `project-editor/index.ts`.
 - No consumer file is modified by seam 1.
 
-## Export surface (251 symbols + 5 `bsb-widget-keys` re-exports, grouped)
+## Export surface (250 symbols + 4 `bsb-widget-keys` re-exports, grouped)
 
 The barrel re-exports, from the internal modules named in plan.md:
 
@@ -19,13 +20,13 @@ The barrel re-exports, from the internal modules named in plan.md:
 |---|---|---|
 | Score/editor/automation/track/mixer/orchestra/instrument snapshot & patch types | `ScoreDocumentSnapshot`, `ScorePatch`, `ScoreAutomationPatch`, `ProjectEditorSnapshot`, `ProjectDocumentPatch`, `InstrumentPatch`, `MixerPatch`, `OrchestraSnapshot`, `ScoreObjectEditorDocumentSnapshot`, `TempoMapPatch`, `MeterMapPatch`, … | `contract.ts` |
 | Embedded validators/factories among the types | `BLUE_LIVE_SOUND_OBJECT_TYPES`, `isBlueLiveSoundObjectType`, `isValidLayerRange`, `areLayerRangesValid`, `validateLegacyBlueLiveTriggerRequest`, `createBsbRealtimeControlUpdate`, `isBsbRealtimeControlUpdate`, `isValidBlueX7Voice`, `isValidBlueX7Patch` | `contract.ts` |
-| Identity helpers | `getMixerChannelSnapshotId`, `getMixerEntrySnapshotId`, `getScoreObjectId`, `assign*` helpers | `identity.ts` (single WeakMap instance) |
+| Identity helpers | `getMixerChannelSnapshotId`, `getMixerEntrySnapshotId`, `assignLayerSelectionId` | `identity.ts` (single WeakMap instance) |
 | Empty/default factories | `createEmptyProjectEditorSnapshot`, `createEmptyScoreDocumentSnapshot`, `createEmptyMixerSnapshot`, `createEmptyOrchestraSnapshot`, `createEmptyTempoMapSnapshot`, `createEmptyMeterMapSnapshot`, `createEmptyToolbarProjectTransportSnapshot` | `snapshot-*` modules |
 | Snapshot builders | `createProjectEditorSnapshot`, `createScoreObjectEditorDocument`, `createFallbackEditorDocument`, `createScoreDocumentSnapshot`, `resolveTimelineScoreObjects`, `resolveTimelineTarget`, `resolveEditorTarget`, `resolveScoreInsertionLocation`, `createBarRendererForSoundObject`, `createBarRendererForAudioClip`, `createInstrumentSnapshot`, `createOrchestraSnapshot`, `createEffectEditorSnapshot`, `createTrackInstrumentEditorSnapshot`, `createProjectUdoListSnapshot`, `setCodeText`, `createNoteProcessorChainSnapshot` | `snapshot-score.ts` / `snapshot-mixer-orchestra.ts` |
-| BSB widget/preset operations | `applyBsbInterfacePatch`, `createWidgetFromSnapshot`, `ensureUniqueName`, `serializeBsbWidgetSnapshot`, preset-group helpers | `bsb-widgets.ts` |
-| Patch appliers | `applyProjectDocumentPatch`, `applyScoreObjectPatch`, `applyScoreTimeStatePatch`, `applyTempoMapPatch`, `applyMeterMapPatch`, `applyMixerPatchToData`, `applyEffectEditablePatchToEffect`, `applyBlueLivePatch`, `applyMidiInputPatch`, `applyInstrumentPatch`, `applyProjectUdoPatch`, `applyTrackScorePatch`, `applyScoreAutomationPatch` | `patch-*.ts` |
+| BSB widget operations | `createBsbWidgetSnapshotFromWidget`, `createDefaultBsbWidgetSnapshot`, `ensureUniqueName` | `bsb-widgets.ts` |
+| Patch appliers | `applyProjectDocumentPatch`, `applyScoreTimeStatePatch`, `applyProjectPropertiesPatch`, `applyClojureProjectPatch`, `applyJMaskPatchToPayload`, `applyEffectEditablePatchToEffect` | `patch-*.ts` |
 | Reconciliation & guards | `reconcileMixerSnapshotWithArrangement`, `reconcileMixerWithArrangement`, `isEmptyProjectDocumentPatch`, `findMixerChannelById` | `patch-mixer-bluelive.ts` / `patch-document.ts` |
-| Nested document helpers | `createNestedPolyObjectSnapshot`, `convertGenericToBsb`, `createInstrumentForType`, `createInstrumentFromSnapshot` | `snapshot-mixer-orchestra.ts` / `bsb-widgets.ts` |
+| Nested document helpers | `createNestedPolyObjectSnapshot` | `patch-mixer-bluelive.ts` |
 | Re-exports | `collectBsbReplacementKeys*`, `getBsbReplacementKeys*` from `./bsb-widget-keys` | `index.ts` |
 
 ## Behavioral invariants

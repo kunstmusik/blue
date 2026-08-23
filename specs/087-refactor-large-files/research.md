@@ -6,10 +6,11 @@ orientation aids, not move specifications; the move is defined by symbol.
 ## R1 — Façade strategy per seam
 
 **Decision**: Façade-first with three shapes matched to each module:
-1. `project-editor.ts` → `project-editor/` directory with `index.ts` as a pure re-export barrel.
-   The module specifier `.../shared/project-editor` resolves to the directory index unchanged, so
-   all 284 consumer files (13 main-process, preload type-imports, ~100 renderer, 11 shared
-   siblings, 134 tests) compile without edits.
+1. `project-editor.ts` remains as a one-line compatibility façade over the internal
+   `project-editor/index.ts` barrel. The module specifier and emitted CommonJS file path stay
+   unchanged, so all 284 consumer files (13 main-process, preload type-imports, ~100 renderer,
+   11 shared siblings, 134 tests) compile without edits and incremental builds cannot resolve a
+   stale pre-refactor `dist/shared/project-editor.js` ahead of a directory index.
 2. `auxiliary-layout.ts` stays as a file but becomes a pure re-export barrel of the new sibling
    modules (7 runtime consumers + 10 test files unchanged).
 3. `blue-data.ts` stays as the aggregate class + façade with thin delegates; policy modules live
@@ -23,13 +24,14 @@ panel re-export plus repointed tests give both compatibility and a clean canonic
 
 **Alternatives considered**: (a) mass-repoint all consumers to new modules — high-churn, violates
 the first-delivery compatibility stance; (b) keep everything in one file with section headers —
-rejected: does not create testable seams or ownership; (c) `project-editor.ts` re-exporting from
-same-directory part files — viable but keeps an 11.7k-line directory sibling ambiguous; the
-directory-index form makes the façade explicit and tiny.
+rejected: does not create testable seams or ownership; (c) delete `project-editor.ts` and rely on
+directory-index resolution — rejected after review because `tsc` does not clean `dist`, allowing
+the previous CommonJS file to shadow the new directory in an incremental checkout.
 
 ## R2 — Seam 1: `shared/project-editor.ts` (11,672 lines)
 
-**Findings**: 251 top-level exports in three separable clusters plus hazards:
+**Findings**: 250 direct exports plus 4 `bsb-widget-keys` re-exports in three separable clusters,
+plus hazards:
 - **Contracts** (~124–2525): all snapshot/patch/realtime type declarations + 9 embedded
   validators/factories (`BLUE_LIVE_SOUND_OBJECT_TYPES`, `isValidLayerRange*`,
   `areLayerRangesValid`, `validateLegacyBlueLiveTriggerRequest`, `createBsbRealtimeControlUpdate`,
@@ -229,11 +231,12 @@ The required baseline was run from the repository root before any source extract
 Developer-local Java parity fixture directories were available at
 `/Users/stevenyi/work/blue/demo2026` and `/Users/stevenyi/work/blue/rhythmic`.
 
-## Final automated validation (2026-08-22)
+## Final automated validation (updated 2026-08-23)
 
 | Command | Result |
 |---|---|
-| `pnpm --filter @blue/app test -- project-editor score-timeline-automation project-store` | PASS on rerun — 361 files, 3,575 tests passed, 2 skipped |
+| `pnpm --filter @blue/app test project-editor score-timeline-automation project-store` | PASS — focused run: 22 files, 178 tests passed |
+| `pnpm --filter @blue/app test score-object-editor-panel jmask-editor-contract audioclip-score-object-editor object-builder-editor-parity` | PASS — focused run: 6 files, 51 tests passed |
 | `pnpm --filter @blue/app build:main` | PASS |
 | `pnpm --filter @blue/app build:preload` | PASS |
 | `pnpm --filter @blue/app build:renderer` | PASS |
@@ -241,8 +244,11 @@ Developer-local Java parity fixture directories were available at
 | `pnpm lint` | PASS |
 | `git diff --check` | PASS |
 
-The first seam-1 checkpoint attempt had one nondeterministic performance-threshold miss in
-`src/main/unified-library/performance.test.ts`; the exact command passed on rerun. The initial
-workspace-wide test attempt was blocked only by sandbox socket permissions and passed when rerun
-with local socket binding permitted. The interactive manual scenario in T033 was not run in this
-desktop session; the task remains open along with user-controlled commit staging in T026.
+The original seam-1 checkpoint command included a literal `--`, so Vitest ran the whole app suite;
+its first attempt had one nondeterministic performance-threshold miss in
+`src/main/unified-library/performance.test.ts`. The corrected focused command above passed. The
+initial workspace-wide test attempt was blocked only by sandbox socket permissions and passed when
+rerun with local socket binding permitted. The focused TrackerObject and score-object editor
+regression follow-up was manually checked on 2026-08-23 and passed; the broader interactive
+manual scenario in T033 remains open because its CSD, auxiliary-layout, and legacy-layout steps
+were not part of that focused pass.

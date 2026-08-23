@@ -35,3 +35,13 @@ Validate that the first grouped follow-up closes the remaining moderate score-ob
 - `PolyObject` is no longer a placeholder.
 - `TrackerObject` provides a practical Java-style editing surface.
 - Tier 1 editors continue to honor Spec 037 fallback behavior when the selection becomes invalid.
+
+## Manual Validation Record
+
+2026-08-23: Rechecked the TrackerObject follow-up behavior on the refactor branch. The
+`USE KEYBOARD NOTES` checkbox remains enabled through the editor refresh, Arrow Up/Down moves
+row focus without scrolling the tracks page, and Space toggles a tie from the dedicated
+status cell or tracker-grid background. Moving a selected soundObject between layers also
+keeps its editor populated. The focused regression coverage is captured in
+`tracker-score-object-editor-keyboard.test.tsx`, `score-object-editor-panel-tracker-patch.test.ts`,
+and `score-object-editor-fallbacks.test.tsx`.

@@ -4,7 +4,9 @@
 
 **Created**: 2026-08-22
 
-**Status**: In progress — first-wave implementation, automated validation, and seam commits complete; interactive manual validation remains pending (2026-08-22)
+**Status**: In progress — first-wave implementation, automated validation, seam commits, and the
+focused TrackerObject/score-object editor regression follow-up are complete (2026-08-23); the
+broader CSD/layout/legacy-layout end-to-end checklist remains pending.
 
 **Input**: User description: "Review the codebase for large files that can be modularized like main.ts and project-store.ts, then establish a carefully designed refactoring effort with best practices for the codebase."
 

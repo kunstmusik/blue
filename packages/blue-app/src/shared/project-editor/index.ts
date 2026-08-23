@@ -10,7 +10,6 @@ export {
   createBsbWidgetSnapshotFromWidget,
   createDefaultBsbWidgetSnapshot,
   ensureUniqueName,
-  snapshotToUdo,
 } from './bsb-widgets';
 
 export {
@@ -63,9 +62,6 @@ export {
 
 export {
   applyScoreTimeStatePatch,
-  applyScoreObjectPatch,
-  applyTempoMapPatch,
-  applyMeterMapPatch,
 } from './patch-score';
 
 export {

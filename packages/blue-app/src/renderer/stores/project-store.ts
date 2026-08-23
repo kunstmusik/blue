@@ -2132,16 +2132,6 @@ function applyScorePatchToSnapshot(
         ...layer,
         items: layer.items.map((item) => {
           if (!isScoreItemMatchingTarget(item, target)) return item;
-          if (item.editorTarget?.editorObjectType === 'TrackerObject') {
-            const nextEditor = { ...item.editorTarget } as any;
-            if (typePatch.steps !== undefined) nextEditor.steps = typePatch.steps;
-            if (typePatch.stepsPerBeat !== undefined) nextEditor.stepsPerBeat = typePatch.stepsPerBeat;
-            if (typePatch.octave !== undefined) nextEditor.octave = typePatch.octave;
-            if (typePatch.showNoteNames !== undefined) nextEditor.showNoteNames = typePatch.showNoteNames;
-
-            return { ...item, editorTarget: nextEditor };
-          }
-
           if (item.barRenderer.kind === 'audioClip') {
             return {
               ...item,

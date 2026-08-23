@@ -27,6 +27,10 @@ import {
 export class TrackerObject extends AbstractSoundObject {
   private _stepsPerBeat = 4;
   private _tracks = new TrackList();
+  // Java keeps these in TrackerEditor. The Electron editor document needs the
+  // canonical object to retain them across asynchronous panel refreshes.
+  private _keyboardNotesEnabled = false;
+  private _keyboardOctave = 0;
 
   constructor(other?: TrackerObject) {
     super();
@@ -37,6 +41,8 @@ export class TrackerObject extends AbstractSoundObject {
       this.copyFrom(other);
       this._stepsPerBeat = other._stepsPerBeat;
       this._tracks = new TrackList(other._tracks);
+      this._keyboardNotesEnabled = other._keyboardNotesEnabled;
+      this._keyboardOctave = other._keyboardOctave;
     }
   }
 
@@ -45,6 +51,15 @@ export class TrackerObject extends AbstractSoundObject {
 
   getTracks(): TrackList { return this._tracks; }
   setTracks(tracks: TrackList): void { this._tracks = tracks; }
+
+  isKeyboardNotesEnabled(): boolean { return this._keyboardNotesEnabled; }
+  setKeyboardNotesEnabled(enabled: boolean): void { this._keyboardNotesEnabled = enabled; }
+
+  getKeyboardOctave(): number { return this._keyboardOctave; }
+  setKeyboardOctave(octave: number): void {
+    if (!Number.isFinite(octave)) return;
+    this._keyboardOctave = Math.max(-8, Math.min(8, Math.trunc(octave)));
+  }
 
   override getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;

@@ -23,10 +23,10 @@ quoted there and not repeated here.
 ### Seam 4 — score-object document reducer
 
 ```bash
-pnpm --filter @blue/app test -- score-object-editor-panel
-pnpm --filter @blue/app test -- jmask-editor-contract
-pnpm --filter @blue/app test -- audioclip-score-object-editor
-pnpm --filter @blue/app test -- object-builder-editor-parity
+pnpm --filter @blue/app test score-object-editor-panel
+pnpm --filter @blue/app test jmask-editor-contract
+pnpm --filter @blue/app test audioclip-score-object-editor
+pnpm --filter @blue/app test object-builder-editor-parity
 ```
 
 Expected: all pass with zero snapshot/fixture changes. The five repointed test imports
@@ -35,8 +35,8 @@ are themselves part of the verification (a wrong extraction surface fails to com
 ### Seam 3 — BlueData XML/CSD/runtime policy
 
 ```bash
-pnpm --filter @blue/data test -- blue-data
-pnpm --filter @blue/data test -- track-layer-migration
+pnpm --filter @blue/data test blue-data
+pnpm --filter @blue/data test track-layer-migration
 pnpm --filter @blue/app test          # downstream consumers incl. blue-cli-parity paths
 pnpm --filter @blue/data build        # ESM + CJS strict compile
 ```
@@ -49,10 +49,10 @@ pass unchanged; no `.blue` fixture diff. If the Java parity fixtures exist local
 ### Seam 2 — auxiliary layout split
 
 ```bash
-pnpm --filter @blue/app test -- workbench-auxiliary
-pnpm --filter @blue/app test -- workbench-layout-persistence
-pnpm --filter @blue/app test -- workbench-store
-pnpm --filter @blue/app test -- auxiliary-slideout
+pnpm --filter @blue/app test workbench-auxiliary
+pnpm --filter @blue/app test workbench-layout-persistence
+pnpm --filter @blue/app test workbench-store
+pnpm --filter @blue/app test auxiliary-slideout
 ```
 
 Expected: every migration version (v2–v7 envelope, v5 model), transition/rollback
@@ -62,9 +62,9 @@ against the barrel import.
 ### Seam 1 — project-editor split (per staged module, repeat)
 
 ```bash
-pnpm --filter @blue/app test -- project-editor
-pnpm --filter @blue/app test -- score-timeline-automation
-pnpm --filter @blue/app test -- project-store
+pnpm --filter @blue/app test project-editor
+pnpm --filter @blue/app test score-timeline-automation
+pnpm --filter @blue/app test project-store
 pnpm --filter @blue/app build:main      # main-process runtime imports compile
 pnpm --filter @blue/app build:preload   # type-only imports compile
 ```
@@ -85,6 +85,14 @@ git diff --check
 
 Expected: repository-wide suites, ESLint, typography/confirmation-dialog audits, and
 whitespace checks pass, or every exception is documented with residual risk (FR-015).
+
+## Focused manual regression follow-up
+
+2026-08-23: The refactor follow-up was manually checked for the TrackerObject and score-object
+editor regressions reported during review. The keyboard-notes toolbar state survives an editor
+refresh; Arrow Up/Down changes the focused tracker row without scrolling the tracks page; Space
+toggles ties from the status cell or grid background; and dragging a selected soundObject between
+layers leaves its editor populated. These checks supplement the automated whole-feature gate.
 
 ## Manual end-to-end scenario (once, after all seams)
 

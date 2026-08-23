@@ -87,7 +87,6 @@ import {
   MeterMap,
   MeasureMeterPair,
   Meter,
-  FadeType,
   ObjectBuilder,
   ScratchPadData,
   getTrackPlacementForSoundObject,
@@ -126,38 +125,6 @@ export interface MarkerSnapshot {
 }
 
 export type AudioFadeType = 'LINEAR' | 'CONSTANT_POWER' | 'SYMMETRIC' | 'FAST' | 'SLOW';
-
-function normalizeAudioFadeType(value: string | null | undefined): AudioFadeType {
-  switch ((value ?? '').trim().toUpperCase().replace(/\s+/g, '_')) {
-    case 'CONSTANT_POWER':
-      return 'CONSTANT_POWER';
-    case 'SYMMETRIC':
-      return 'SYMMETRIC';
-    case 'FAST':
-      return 'FAST';
-    case 'SLOW':
-      return 'SLOW';
-    case 'LINEAR':
-    default:
-      return 'LINEAR';
-  }
-}
-
-function toBlueDataFadeType(value: string | null | undefined): FadeType {
-  switch (normalizeAudioFadeType(value)) {
-    case 'CONSTANT_POWER':
-      return FadeType.CONSTANT_POWER;
-    case 'SYMMETRIC':
-      return FadeType.SYMMETRIC;
-    case 'FAST':
-      return FadeType.FAST;
-    case 'SLOW':
-      return FadeType.SLOW;
-    case 'LINEAR':
-    default:
-      return FadeType.LINEAR;
-  }
-}
 
 export type ScoreObjectBarRendererSnapshot =
   | GenericBarRendererSnapshot

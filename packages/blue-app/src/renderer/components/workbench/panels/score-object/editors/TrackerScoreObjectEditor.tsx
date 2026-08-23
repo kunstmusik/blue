@@ -15,6 +15,7 @@ const COLUMN_TYPES = [
 ];
 
 const SHORTCUT_HELP = [
+  ['space (tie cell)', 'toggle note tie'],
   ['ctrl-space', 'clear or duplicate previous note'],
   ['ctrl-shift-space', 'toggle OFF note'],
   ['ctrl-up', 'increment value'],
@@ -834,6 +835,7 @@ export default function TrackerScoreObjectEditor({
   } = useScoreObjectTest(scoreDocument.target);
   const gridRef = useRef<HTMLTableElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const activeCellRef = useRef({ trackIndex: 0, columnIndex: -1, stepIndex: 0 });
   const draftCellsRef = useRef<Record<string, string>>({});
   const noteCopyBuffer = useRef<NoteSnapshot[]>([]);
 
@@ -1064,6 +1066,21 @@ export default function TrackerScoreObjectEditor({
           e.preventDefault();
           (e.currentTarget as HTMLInputElement).blur();
         }
+        return;
+      }
+
+      // Intentional Electron usability addition: the dedicated tie/status cell
+      // accepts plain Space while Ctrl/Cmd+T remains available from any cell.
+      if (!mod && e.code === 'Space' && columnIndex === -1) {
+        e.preventDefault();
+        patch({
+          trackerAction: {
+            type: 'toggleTie',
+            trackIndex,
+            stepIndex,
+            columnIndex,
+          },
+        });
         return;
       }
 
@@ -1328,6 +1345,40 @@ export default function TrackerScoreObjectEditor({
     ],
   );
 
+  const handleGridKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || editor.rows.length === 0 || editor.tracks.length === 0) {
+      return;
+    }
+    const active = activeCellRef.current;
+    const trackIndex = Math.max(0, Math.min(editor.tracks.length - 1, active.trackIndex));
+    const stepIndex = Math.max(0, Math.min(editor.rows.length - 1, active.stepIndex));
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const delta = e.key === 'ArrowUp' ? -1 : 1;
+      focusCell(
+        gridRef,
+        trackIndex,
+        active.columnIndex,
+        Math.max(0, Math.min(editor.rows.length - 1, stepIndex + delta)),
+      );
+      return;
+    }
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      e.stopPropagation();
+      patch({
+        trackerAction: {
+          type: 'toggleTie',
+          trackIndex,
+          stepIndex,
+          columnIndex: -1,
+        },
+      });
+    }
+  }, [editor.rows.length, editor.tracks.length, patch]);
+
   const handleSelectTrack = useCallback((index: number) => {
     setSelectedTrack(index);
   }, []);
@@ -1439,7 +1490,18 @@ export default function TrackerScoreObjectEditor({
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto bg-black">
+      <div
+        className="flex-1 overflow-auto bg-black focus:outline-none"
+        tabIndex={0}
+        aria-label="Tracker grid"
+        onKeyDown={handleGridKeyDown}
+        onMouseDown={(event) => {
+          const target = event.target as HTMLElement;
+          if (!target.closest('input, button, [role="menuitem"]')) {
+            event.currentTarget.focus();
+          }
+        }}
+      >
         {editor.tracks.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-role-body text-app-text-muted">
             No tracks -- click "+ TRACK" to add one
@@ -1559,6 +1621,9 @@ export default function TrackerScoreObjectEditor({
                               value={statusVal}
                               placeholder="."
                               readOnly
+                              onFocus={() => {
+                                activeCellRef.current = { trackIndex: ti, columnIndex: -1, stepIndex: ri };
+                              }}
                               onKeyDown={(e) => handleKeyDown(e, ti, -1, ri)}
                               spellCheck={false}
                             />
@@ -1583,6 +1648,7 @@ export default function TrackerScoreObjectEditor({
                                   placeholder={ci === 0 ? '...' : '---'}
                                   readOnly={statusVal === 'OFF'}
                                   onFocus={(e) => {
+                                    activeCellRef.current = { trackIndex: ti, columnIndex: ci, stepIndex: ri };
                                     const current = e.currentTarget.value.trim();
                                     if (current === '...' || current === '---') {
                                       handleCellChange(ti, ci, ri, '');

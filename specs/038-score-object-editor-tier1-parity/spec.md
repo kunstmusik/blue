@@ -57,6 +57,11 @@ As a composer using `TrackerObject`, I need the auxiliary editor to expose the m
 - What happens when a `TrackerObject` has more tracks or rows than comfortably fit in the auxiliary panel viewport?
 - What happens when the selected object is removed while one of these Tier 1 editors is open?
 
+### Intentional Divergences
+
+- Java keeps the keyboard-note toggle and keyboard octave in `TrackerEditor`. Electron retains them as transient canonical `TrackerObject` session state so asynchronous editor-document refreshes do not reset the toolbar, but does not serialize them into Java-compatible `.blue` XML.
+- Java uses Ctrl/Cmd+T to toggle a tracker tie. Electron preserves that shortcut and additionally accepts plain Space when focus is on the dedicated tie/status cell or tracker-grid background; data cells retain normal Space text entry.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements

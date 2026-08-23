@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BlueData, PolyObject, SoundLayer, Track, TrackerObject } from '@blue/data';
 import {
+  applyProjectDocumentPatch,
   createScoreObjectEditorDocument,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
@@ -20,7 +21,7 @@ function makeTimelineTarget(): ScoreObjectEditorTargetSnapshot {
   };
 }
 
-function makeTrackerDocument(trackCount: number, steps: number) {
+function makeTrackerHarness(trackCount: number, steps: number) {
   const data = new BlueData();
   data.getScore().length = 0;
   const poly = new PolyObject();
@@ -38,10 +39,32 @@ function makeTrackerDocument(trackCount: number, steps: number) {
   if (!doc || doc.editor.kind !== 'tracker') {
     throw new Error('Expected tracker editor document');
   }
-  return doc;
+  return { data, doc, tracker };
+}
+
+function makeTrackerDocument(trackCount: number, steps: number) {
+  return makeTrackerHarness(trackCount, steps).doc;
 }
 
 describe('ScoreObjectEditorPanel tracker optimistic patching', () => {
+  it('round-trips tracker keyboard toolbar state through the canonical object', () => {
+    const { data, doc } = makeTrackerHarness(1, 8);
+
+    expect(applyProjectDocumentPatch(data, {
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target: doc.target,
+        patch: { showNoteNames: true, octave: 3 },
+      },
+    })).toBe(true);
+
+    const refreshed = createScoreObjectEditorDocument(data, { target: doc.target });
+    expect(refreshed?.editor.kind).toBe('tracker');
+    if (refreshed?.editor.kind !== 'tracker') return;
+    expect(refreshed.editor.showNoteNames).toBe(true);
+    expect(refreshed.editor.octave).toBe(3);
+  });
+
   it('adds tracker defaults for a new track (pch/db columns)', () => {
     const doc = makeTrackerDocument(1, 8);
     const next = applyPatchToDocument(doc, {

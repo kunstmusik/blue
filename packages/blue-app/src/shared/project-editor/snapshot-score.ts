@@ -1336,7 +1336,16 @@ export function resolveEditorTarget(data: BlueData, target: ScoreObjectEditorTar
   } else {
     const loc = target.location;
     if (!loc) return null;
-    sObj = resolveTimelineTarget(score, loc)?.sObj ?? null;
+    const locationResolved = resolveTimelineTarget(score, loc)?.sObj ?? null;
+    if (locationResolved) {
+      sObj = locationResolved;
+    } else {
+      // During an optimistic cross-layer drag the renderer has the destination
+      // location before the main-owned graph commits it. Stable selection
+      // identity keeps the same object editable through that short interval.
+      sObj = (resolveTimelineScoreObjects(data, [target.selectionId])?.[0]
+        ?? null) as SoundObject | AudioClip | null;
+    }
   }
 
   return sObj ? { sObj, isLibraryOwned } : null;
@@ -1659,8 +1668,8 @@ export function createScoreObjectEditorDocument(
         target,
         steps: numSteps,
         stepsPerBeat,
-        showNoteNames: false,
-        octave: 0,
+        showNoteNames: to.isKeyboardNotesEnabled(),
+        octave: to.getKeyboardOctave(),
         tracks,
         rows,
         canTest: true,

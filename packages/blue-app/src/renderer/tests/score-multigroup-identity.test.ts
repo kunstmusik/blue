@@ -10,6 +10,8 @@ import {
   SoundLayer,
   TimeDuration,
   TimePosition,
+  Track,
+  TrackerObject,
 } from '@blue/data';
 import {
   applyProjectDocumentPatch,
@@ -121,6 +123,33 @@ describe('score multigroup object identity', () => {
     expect(updatedGroups[1]!.layers[0]!.items).toHaveLength(1);
     expect(updatedGroups[1]!.layers[0]!.items[0]!.objectId).toBe(moving.objectId);
     expect(updatedGroups[1]!.layers[0]!.items[0]!.startBeats).toBe(9);
+  });
+
+  it('keeps TrackerObject editor state out of its routing target', async () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const group = new PolyObject();
+    const layer = new SoundLayer();
+    const tracker = new TrackerObject();
+    tracker.getTracks().addTrack(new Track());
+    layer.push(tracker);
+    group.push(layer);
+    data.getScore().push(group);
+
+    const snapshot = createProjectEditorSnapshot(data, null);
+    useProjectStore.getState().setProjectInfo(snapshot);
+    const before = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
+
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'updateTypeSpecificEditor',
+        target: before!,
+        patch: { showNoteNames: true, octave: 2 },
+      },
+    });
+
+    const after = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!.editorTarget;
+    expect(after).toEqual(before);
   });
 
   it('removes only the targeted object during optimistic score updates', () => {
