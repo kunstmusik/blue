@@ -5,7 +5,7 @@ import {
   type ScoreObjectEditorTargetSnapshot,
   type SoundEditorPayload,
 } from '../../shared/project-editor';
-import { applyPatchToDocument } from '../components/workbench/panels/ScoreObjectEditorPanel';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 
 const MINIMAL_BSB_XML = `<instrument type="blue.orchestra.BlueSynthBuilder" editEnabled="true">
   <name>TestBSB</name>

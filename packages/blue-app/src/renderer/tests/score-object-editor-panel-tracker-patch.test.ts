@@ -4,7 +4,7 @@ import {
   createScoreObjectEditorDocument,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
-import { applyPatchToDocument } from '../components/workbench/panels/ScoreObjectEditorPanel';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 
 function makeTimelineTarget(): ScoreObjectEditorTargetSnapshot {
   return {

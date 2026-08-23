@@ -14,7 +14,7 @@ import {
   type ScoreObjectEditorDocumentSnapshot,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
-import { applyPatchToDocument } from '../components/workbench/panels/ScoreObjectEditorPanel';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import JMaskEditor from '../components/workbench/panels/score-object/editors/JMaskEditor';
 import {
   createDefaultGeneratorSnapshot,

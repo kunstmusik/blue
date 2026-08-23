@@ -18,7 +18,7 @@ import {
   type ScoreObjectEditorDocumentSnapshot,
 } from '../../shared/project-editor';
 import AudioClipScoreObjectEditor from '../components/workbench/panels/score-object/editors/AudioClipScoreObjectEditor';
-import { applyPatchToDocument } from '../components/workbench/panels/ScoreObjectEditorPanel';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

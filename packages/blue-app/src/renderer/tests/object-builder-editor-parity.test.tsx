@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScoreObjectEditorDocumentSnapshot } from '../../shared/project-editor';
-import { applyPatchToDocument } from '../components/workbench/panels/ScoreObjectEditorPanel';
+import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import ObjectBuilderScoreObjectEditor from '../components/workbench/panels/score-object/editors/ObjectBuilderScoreObjectEditor';
 import { resolveEditorComponent } from '../components/workbench/panels/score-object/editor-registry';
 
