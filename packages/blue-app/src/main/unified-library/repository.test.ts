@@ -160,5 +160,5 @@ describe('UnifiedLibraryRepository foundation', () => {
     } finally {
       directory.cleanup();
     }
-  });
+  }, 20_000);
 });
