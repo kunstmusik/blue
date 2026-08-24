@@ -91,6 +91,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
         <AlgorithmTopology
           algorithm={common.algorithm}
           operatorEnabled={common.operatorEnabled}
+          onToggleOperator={handleOperatorToggle}
           onOpenModal={onOpenAlgorithmModal}
         />
 

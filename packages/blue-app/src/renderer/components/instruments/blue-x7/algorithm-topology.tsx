@@ -1,9 +1,10 @@
 import React from 'react';
-import { getAlgorithmImage } from '../../../assets/blue-x7/algorithm-images';
+import { AlgorithmSvg } from './algorithm-svg';
 
 export interface AlgorithmTopologyProps {
   algorithm: number;
   operatorEnabled?: [boolean, boolean, boolean, boolean, boolean, boolean];
+  onToggleOperator?: (opIndex: number) => void;
   onSelectAlgorithm?: (algorithm: number) => void;
   onOpenModal?: () => void;
 }
@@ -11,10 +12,9 @@ export interface AlgorithmTopologyProps {
 export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
   algorithm,
   operatorEnabled,
+  onToggleOperator,
   onOpenModal,
 }) => {
-  const imgSrc = getAlgorithmImage(algorithm);
-
   return (
     <div
       className="flex w-full min-w-0 flex-col items-center justify-center rounded border border-blue-border bg-blue-bg/80 p-2 gap-2 sm:w-auto"
@@ -37,39 +37,20 @@ export const AlgorithmTopology: React.FC<AlgorithmTopologyProps> = ({
       </div>
 
       <div
-        className="relative flex max-w-full items-center justify-center bg-white/90 rounded p-1 shadow-sm cursor-pointer hover:ring-2 hover:ring-blue-accent/50"
-        onClick={onOpenModal}
-        title="Click to view and choose from all 32 algorithms"
+        className="relative flex max-w-full items-center justify-center bg-blue-surface/40 border border-blue-border/40 rounded p-1.5 shadow-sm min-h-[110px] min-w-[120px]"
+        title={onToggleOperator ? 'Click an operator box to enable/disable it' : undefined}
       >
-        {imgSrc ? (
-          <img
-            src={imgSrc}
-            alt={`Algorithm ${algorithm} routing diagram`}
-            className="h-24 w-auto max-w-full object-contain"
-            data-testid={`algorithm-img-${algorithm}`}
+        <div className="h-28 w-auto max-w-full flex items-center justify-center">
+          <AlgorithmSvg
+            algorithm={algorithm}
+            operatorEnabled={operatorEnabled}
+            onToggleOperator={onToggleOperator}
+            interactive={Boolean(onToggleOperator)}
+            className="h-28 w-auto max-w-full object-contain"
+            dataTestId={`algorithm-img-${algorithm}`}
           />
-        ) : (
-          <div className="h-24 w-24 flex items-center justify-center text-role-callout text-gray-700 font-bold">
-            Alg {algorithm}
-          </div>
-        )}
-      </div>
-
-      {operatorEnabled && (
-        <div className="flex gap-1 text-role-callout">
-          {operatorEnabled.map((enabled, i) => (
-            <span
-              key={i}
-              className={`px-1 rounded ${
-                enabled ? 'bg-blue-accent/20 text-blue-accent font-medium' : 'bg-gray-800 text-gray-500 line-through'
-              }`}
-              title={`Operator ${i + 1}: ${enabled ? 'Enabled' : 'Muted'}`}
-            >
-              Op {i + 1}
-            </span>
-          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 };

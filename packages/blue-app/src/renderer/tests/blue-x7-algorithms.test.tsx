@@ -32,18 +32,20 @@ describe('BlueX7 Algorithm Topology and Manifest', () => {
     root = null;
   });
 
-  it('has static asset mappings for all 32 DX7 algorithms', () => {
+  it('has static asset mappings for all 32 DX7 algorithms as SVGs', () => {
     expect(Object.keys(ALGORITHM_IMAGES)).toHaveLength(32);
     for (let i = 1; i <= 32; i++) {
       const src = getAlgorithmImage(i);
       expect(src).toBeDefined();
       expect(typeof src).toBe('string');
-      expect(src.length).toBeGreaterThan(0);
+      expect(src!.length).toBeGreaterThan(0);
+      expect(src).toMatch(/\.svg|data:image\/svg\+xml/);
     }
   });
 
-  it('renders AlgorithmTopology with diagram, alt text, and operator enable badges', () => {
+  it('renders AlgorithmTopology with interactive SVG diagram and toggles operators on click', () => {
     const onOpenModal = vi.fn();
+    const onToggleOperator = vi.fn();
     const enables: [boolean, boolean, boolean, boolean, boolean, boolean] = [
       true,
       false,
@@ -58,21 +60,38 @@ describe('BlueX7 Algorithm Topology and Manifest', () => {
         <AlgorithmTopology
           algorithm={19}
           operatorEnabled={enables}
+          onToggleOperator={onToggleOperator}
           onOpenModal={onOpenModal}
         />,
       );
     });
 
-    const img = container?.querySelector('img') as HTMLImageElement;
-    expect(img).not.toBeNull();
-    expect(img.getAttribute('alt')).toBe('Algorithm 19 routing diagram');
+    const svg = container?.querySelector('[data-testid="algorithm-img-19"]') as SVGSVGElement;
+    expect(svg).not.toBeNull();
 
-    // Operator badges
     expect(container?.textContent).toContain('Algorithm 19');
-    expect(container?.textContent).toContain('Op 1');
-    expect(container?.textContent).toContain('Op 2');
 
-    // Clicking diagram triggers onOpenModal
+    // Click operator 2 box
+    const op2Box = container?.querySelector('g[aria-label^="Operator 2"]') as SVGGElement;
+    expect(op2Box).not.toBeNull();
+    expect(op2Box.getAttribute('aria-pressed')).toBe('false');
+
+    act(() => {
+      op2Box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(onToggleOperator).toHaveBeenCalledWith(1); // 0-indexed operator 2
+
+    // Click operator 1 box
+    const op1Box = container?.querySelector('g[aria-label^="Operator 1"]') as SVGGElement;
+    expect(op1Box).not.toBeNull();
+    expect(op1Box.getAttribute('aria-pressed')).toBe('true');
+
+    act(() => {
+      op1Box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(onToggleOperator).toHaveBeenCalledWith(0); // 0-indexed operator 1
+
+    // Clicking Change button triggers onOpenModal
     const btn = container?.querySelector('button[aria-label="Choose Algorithm Dialog"]') as HTMLButtonElement;
     act(() => {
       btn.click();

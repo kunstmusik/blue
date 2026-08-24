@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.0 63.0 126.0 80.0" width="126.0" height="80.0" fill="none">
+  <line x1="48.0" y1="95.0" x2="48.0" y2="107.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="80.0" y1="95.0" x2="80.0" y2="107.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="80.0" y1="95.0" x2="112.0" y2="107.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 91.0 84.0 H 98.0 V 67.0 H 80.0 V 73.0" fill="none" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="16.0" y1="139.0" x2="112.0" y2="139.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16.0" y1="129.0" x2="16.0" y2="139.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="48.0" y1="129.0" x2="48.0" y2="139.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="80.0" y1="129.0" x2="80.0" y2="139.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="112.0" y1="129.0" x2="112.0" y2="139.0" stroke="#8da4c4" stroke-width="1.8" stroke-linecap="round"/>
+  <g id="op-1">
+    <rect x="5.0" y="107.0" width="22.0" height="22.0" rx="3" fill="#1b4d3e" stroke="#38a169" stroke-width="1.5"/>
+    <text x="16.0" y="118.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">1</text>
+  </g>
+  <g id="op-3">
+    <rect x="37.0" y="73.0" width="22.0" height="22.0" rx="3" fill="#203a63" stroke="#5a85c3" stroke-width="1.5"/>
+    <text x="48.0" y="84.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">3</text>
+  </g>
+  <g id="op-2">
+    <rect x="37.0" y="107.0" width="22.0" height="22.0" rx="3" fill="#1b4d3e" stroke="#38a169" stroke-width="1.5"/>
+    <text x="48.0" y="118.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">2</text>
+  </g>
+  <g id="op-6">
+    <rect x="69.0" y="73.0" width="22.0" height="22.0" rx="3" fill="#203a63" stroke="#5a85c3" stroke-width="1.5"/>
+    <text x="80.0" y="84.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">6</text>
+  </g>
+  <g id="op-4">
+    <rect x="69.0" y="107.0" width="22.0" height="22.0" rx="3" fill="#1b4d3e" stroke="#38a169" stroke-width="1.5"/>
+    <text x="80.0" y="118.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">4</text>
+  </g>
+  <g id="op-5">
+    <rect x="101.0" y="107.0" width="22.0" height="22.0" rx="3" fill="#1b4d3e" stroke="#38a169" stroke-width="1.5"/>
+    <text x="112.0" y="118.0" fill="#f1f5f9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="var(--text-role-subheadline, 11px)" font-weight="700" text-anchor="middle" dominant-baseline="central">5</text>
+  </g>
+</svg>

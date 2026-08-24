@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { getAlgorithmImage } from '../../../assets/blue-x7/algorithm-images';
+import { AlgorithmSvg } from './algorithm-svg';
 import { useDialogFocus } from '../../dialogs/use-dialog-focus';
 
 export interface AlgorithmDialogProps {
@@ -49,7 +49,6 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
         <div className="grid grid-cols-4 gap-3 overflow-y-auto p-4 sm:grid-cols-8">
           {Array.from({ length: 32 }, (_, i) => i + 1).map((alg) => {
             const isSelected = currentAlgorithm === alg;
-            const imgSrc = getAlgorithmImage(alg);
 
             return (
               <button
@@ -67,16 +66,11 @@ export const AlgorithmDialog: React.FC<AlgorithmDialogProps> = ({
                     : 'border-blue-border bg-blue-surface/30 hover:border-gray-400 hover:bg-blue-surface'
                 }`}
               >
-                <div className="flex items-center justify-center bg-white/90 rounded p-1 w-full aspect-square">
-                  {imgSrc ? (
-                    <img
-                      src={imgSrc}
-                      alt={`Algorithm ${alg}`}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  ) : (
-                    <span className="text-role-headline font-bold text-gray-800">{alg}</span>
-                  )}
+                <div className="flex items-center justify-center bg-blue-surface/40 border border-blue-border/40 rounded p-1 w-full aspect-square">
+                  <AlgorithmSvg
+                    algorithm={alg}
+                    className="max-h-full max-w-full object-contain"
+                  />
                 </div>
                 <span className="mt-1 text-role-callout text-gray-200">
                   Alg {alg}
