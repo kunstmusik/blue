@@ -25,6 +25,18 @@ import { getFloatingViewport } from './floating-position-utils';
 export { computeColorPickerPosition } from './color-picker-utils';
 export type { ColorPickerAnchorRect } from './color-picker-utils';
 
+/**
+ * Cross-realm Node check. Portal children are created by the container's own
+ * document, and Dockview popout documents use a different JS realm from this
+ * module, so `instanceof Node` fails for exactly the nodes this component must
+ * recognize. Structural duck-typing works across realms.
+ */
+function isNodeLike(target: EventTarget | null): target is Node {
+  return target != null
+    && typeof (target as Node).nodeType === 'number'
+    && typeof (target as Node).contains === 'function';
+}
+
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6',
   '#8b5cf6', '#ec4899', '#ffffff', '#94a3b8', '#475569', '#111827',
@@ -103,15 +115,24 @@ export function ColorPickerPopover({
     placement: 'bottom',
   }));
   const hsl = hexToHsl(normalizedValue);
+  // Floating workbench panels live in a popout document while sharing this
+  // renderer context; the popover must render, listen, and dismiss within the
+  // document that contains its anchor, not the main window's document. Node
+  // SSR environments have no document; the popover renders nothing there.
+  const popoverDocument: Document | null = anchorElement?.ownerDocument
+    ?? (typeof document === 'undefined' ? null : document);
 
   useEffect(() => setDraftHex(normalizedValue), [normalizedValue]);
 
   useLayoutEffect(() => {
-    if (!open || !anchor) return;
+    if (!open || !anchor || !popoverDocument) return;
     const bounds = popoverRef.current?.getBoundingClientRect();
     const viewport = anchorElement
       ? getFloatingViewport(anchorElement)
-      : { width: window.innerWidth, height: window.innerHeight };
+      : {
+          width: popoverDocument.defaultView?.innerWidth ?? COLOR_PICKER_SIZE.width,
+          height: popoverDocument.defaultView?.innerHeight ?? COLOR_PICKER_SIZE.height,
+        };
     setPosition(computeColorPickerPosition(
       anchor,
       {
@@ -120,24 +141,28 @@ export function ColorPickerPopover({
       },
       viewport,
     ));
-  }, [anchor, anchorElement, open]);
+  }, [anchor, anchorElement, open, popoverDocument]);
 
+  // Containment must not use `instanceof Node`: portal children are created by
+  // the anchor's own document, whose realm differs from this module's in
+  // floating workbench popouts, so cross-realm nodes fail that check and any
+  // mousedown inside the popover would be misread as an outside dismissal.
   const isInside = useCallback((target: EventTarget | null) => (
-    target instanceof Node
+    isNodeLike(target)
       && (popoverRef.current?.contains(target) === true || anchorElement?.contains(target) === true)
   ), [anchorElement]);
-  useDocumentMouseDownOutside({ enabled: open, isInside, onMouseDownOutside: onClose });
+  useDocumentMouseDownOutside({ enabled: open, isInside, onMouseDownOutside: onClose, targetDocument: popoverDocument });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !popoverDocument) return;
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, open]);
+    popoverDocument.addEventListener('keydown', handleKeyDown);
+    return () => popoverDocument.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open, popoverDocument]);
 
-  if (!open || !anchor) return null;
+  if (!open || !anchor || !popoverDocument) return null;
 
   const updateHsl = (next: Partial<typeof hsl>): void => {
     onChange(hslToHex(next.h ?? hsl.h, next.s ?? hsl.s, next.l ?? hsl.l));
@@ -174,7 +199,7 @@ export function ColorPickerPopover({
         />
       </label>
     </div>,
-    document.body,
+    popoverDocument.body,
   );
 }
 

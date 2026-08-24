@@ -72,13 +72,17 @@ export function computeFloatingPosition(
 
 /** Finds the nearest scroll viewport so a portaled popup does not cover a fixed footer. */
 export function getFloatingViewport(anchor: HTMLElement): FloatingViewport {
+  // Floating workbench panels are hosted in a popout document while sharing
+  // this renderer context; the global `window` is the main window. Measure
+  // against the window that actually contains the anchor.
+  const view = anchor.ownerDocument.defaultView ?? window;
   const fallback: FloatingViewport = {
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: view.innerWidth,
+    height: view.innerHeight,
   };
   let parent = anchor.parentElement;
   while (parent) {
-    const style = window.getComputedStyle(parent);
+    const style = view.getComputedStyle(parent);
     const overflow = `${style.overflow} ${style.overflowX} ${style.overflowY}`;
     if (/(auto|scroll|overlay)/.test(overflow)) {
       const bounds = parent.getBoundingClientRect();
@@ -86,9 +90,9 @@ export function getFloatingViewport(anchor: HTMLElement): FloatingViewport {
         return {
           ...fallback,
           left: Math.max(0, bounds.left),
-          right: Math.min(window.innerWidth, bounds.right),
+          right: Math.min(view.innerWidth, bounds.right),
           top: Math.max(0, bounds.top),
-          bottom: Math.min(window.innerHeight, bounds.bottom),
+          bottom: Math.min(view.innerHeight, bounds.bottom),
         };
       }
     }

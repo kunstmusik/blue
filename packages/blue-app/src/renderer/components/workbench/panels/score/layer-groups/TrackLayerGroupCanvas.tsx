@@ -196,6 +196,7 @@ export default function TrackLayerGroupCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const colorPickerRef = useRef<ScoreObjectColorPickerHandle>(null);
   const colorPickerAnchorRef = useRef<ColorPickerAnchorRect | null>(null);
+  const colorPickerAnchorElementRef = useRef<HTMLElement | null>(null);
   const pendingColorTargetsRef = useRef<ScoreObjectEditorTargetSnapshot[]>([]);
   const gestureRef = useRef<GestureState | null>(null);
   const [marquee, setMarquee] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
@@ -548,7 +549,7 @@ export default function TrackLayerGroupCanvas({
     const anchor = colorPickerAnchorRef.current;
     if (targets.length === 0 || !anchor) return;
     pendingColorTargetsRef.current = targets;
-    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor);
+    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor, colorPickerAnchorElementRef.current);
   }, [getSelectedEntries]);
 
   const handleReplaceWithBuffer = useCallback(() => {
@@ -1341,6 +1342,7 @@ export default function TrackLayerGroupCanvas({
                 top: bounds.top + hit.layerTop,
                 bottom: bounds.top + hit.layerTop + rowHeight,
               };
+              colorPickerAnchorElementRef.current = event.currentTarget as HTMLElement;
               const display = getDisplayItem(hit.item);
               if (display.barRenderer.kind === 'audioClip') {
                 const relativeX = x - display.startBeats * pixelsPerBeat;
@@ -1355,6 +1357,7 @@ export default function TrackLayerGroupCanvas({
               }
             } else {
               colorPickerAnchorRef.current = null;
+              colorPickerAnchorElementRef.current = null;
             }
             if (hit && !selectedObjectIds.has(hit.item.objectId)) {
               select(hit.item.objectId, false, hit.item.editorTarget);
