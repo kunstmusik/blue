@@ -116,4 +116,25 @@ describe('auditionSelectedScoreObjects', () => {
     })).resolves.toBe(true);
     expect(data.saveToString()).toBe(sourceXml);
   });
+
+  it('keeps an audition isolated when the canonical project is replaced after handoff', async () => {
+    const { data, selected } = fixture();
+    let auditionCopy: BlueData | null = null;
+
+    await expect(auditionSelectedScoreObjects(data, [selected], {
+      isRenderOperationActive: false,
+      isRealtimePlaying: () => false,
+      stopRealtime: vi.fn().mockResolvedValue(undefined),
+      startRealtime: vi.fn(async (copy: BlueData) => {
+        auditionCopy = copy;
+        return true;
+      }),
+    })).resolves.toBe(true);
+
+    const handedOffXml = auditionCopy!.saveToString();
+    data.getScore().length = 0;
+    expect(auditionCopy).not.toBe(data);
+    expect(auditionCopy!.saveToString()).toBe(handedOffXml);
+    expect(data.saveToString()).not.toBe(handedOffXml);
+  });
 });

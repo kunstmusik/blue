@@ -30,11 +30,21 @@ import {
 } from '../shared/workbench-window-contract';
 import { getPanel } from '../shared/workbench-menu';
 import { WorkbenchWindowManager } from './workbench-window-manager';
+import { registerIpcTransaction, type IpcMainLike } from './ipc/ipc-registration';
+
+export const WORKBENCH_WINDOW_IPC_CHANNELS = [
+  WORKBENCH_WINDOW_REGISTER_CHANNEL,
+  WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL,
+  WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
+  WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
+  WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
+] as const;
 
 let manager: WorkbenchWindowManager | null = null;
 const webContentsByWindowId = new Map<string, WebContents>();
 const pendingFloatingWindowCloses = new Set<string>();
 let initialized = false;
+let unregisterWorkbenchIpc: (() => void) | null = null;
 
 function getManager(): WorkbenchWindowManager {
   if (!manager) {
@@ -249,15 +259,17 @@ export function sendToMainWindow(channel: string, payload: unknown): void {
 }
 
 /**
- * Wires the workbench-window IPC channels. Idempotent; safe to call once at
- * startup. Handlers delegate to the registry.
+ * Wires the workbench-window IPC channels. Duplicate initialization fails
+ * before side effects; handlers delegate to the registry.
  */
-export function initWorkbenchWindowHost(): void {
-  if (initialized) return;
-  initialized = true;
+export function initWorkbenchWindowHost(registrationTarget: IpcMainLike = ipcMain): void {
+  if (initialized) {
+    throw new Error('Workbench window IPC is already initialized.');
+  }
   const m = getManager();
+  unregisterWorkbenchIpc = registerIpcTransaction(registrationTarget, 'workbench-window', (scope) => {
 
-  ipcMain.handle(
+  scope.handle(
     WORKBENCH_WINDOW_REGISTER_CHANNEL,
     (
       event,
@@ -322,7 +334,7 @@ export function initWorkbenchWindowHost(): void {
     },
   );
 
-  ipcMain.on(
+  scope.on(
     WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL,
     (_event, update: WorkbenchWindowOwnershipUpdate) => {
       // Floating ownership is reported by the main renderer because Dockview
@@ -347,7 +359,7 @@ export function initWorkbenchWindowHost(): void {
     },
   );
 
-  ipcMain.handle(
+  scope.handle(
     WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
     (
       _event,
@@ -362,7 +374,7 @@ export function initWorkbenchWindowHost(): void {
     },
   );
 
-  ipcMain.handle(
+  scope.handle(
     WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
     (
       _event,
@@ -389,7 +401,7 @@ export function initWorkbenchWindowHost(): void {
     },
   );
 
-  ipcMain.handle(
+  scope.handle(
     WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
     (
       _event,
@@ -400,6 +412,14 @@ export function initWorkbenchWindowHost(): void {
       return { docked: false };
     },
   );
+  });
+  initialized = true;
+}
+
+export function disposeWorkbenchWindowHost(): void {
+  unregisterWorkbenchIpc?.();
+  unregisterWorkbenchIpc = null;
+  initialized = false;
 }
 
 export { PROJECT_DOCUMENT_UPDATED_CHANNEL };

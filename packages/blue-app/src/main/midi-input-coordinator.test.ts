@@ -8,6 +8,8 @@ const mockWindows: Array<{
 
 const ipcHandle = vi.fn();
 const ipcOn = vi.fn();
+const ipcRemoveHandler = vi.fn();
+const ipcRemoveListener = vi.fn();
 const ipcRemoveAllListeners = vi.fn();
 
 vi.mock('electron', () => ({
@@ -17,6 +19,8 @@ vi.mock('electron', () => ({
   ipcMain: {
     handle: (...args: unknown[]) => ipcHandle(...args),
     on: (...args: unknown[]) => ipcOn(...args),
+    removeHandler: (...args: unknown[]) => ipcRemoveHandler(...args),
+    removeListener: (...args: unknown[]) => ipcRemoveListener(...args),
     removeAllListeners: (...args: unknown[]) => ipcRemoveAllListeners(...args),
   },
 }));
@@ -92,13 +96,15 @@ afterEach(() => {
   coordinator?.resetForTesting();
   ipcHandle.mockReset();
   ipcOn.mockReset();
+  ipcRemoveHandler.mockReset();
+  ipcRemoveListener.mockReset();
   ipcRemoveAllListeners.mockReset();
 });
 
 describe('MidiInputCoordinator', () => {
   it('registers exactly one set of IPC handlers', () => {
     coordinator.registerIpcHandlers();
-    coordinator.registerIpcHandlers();
+    expect(() => coordinator.registerIpcHandlers()).toThrow('already initialized');
     expect(ipcHandlers.has(MIDI_INPUT_INITIALIZE_CHANNEL)).toBe(true);
     expect(ipcHandlers.has(MIDI_INPUT_GET_SNAPSHOT_CHANNEL)).toBe(true);
     expect(ipcHandlers.has(MIDI_INPUT_REQUEST_RESCAN_CHANNEL)).toBe(true);
@@ -281,5 +287,6 @@ describe('MidiInputCoordinator', () => {
     const rescanHandler = ipcHandlers.get(MIDI_INPUT_REQUEST_RESCAN_CHANNEL)!;
     const result = (await rescanHandler({ sender: settingsContents })) as { accepted: boolean };
     expect(result.accepted).toBe(false);
+    rejectCoordinator.disposeIpcHandlers();
   });
 });

@@ -81,4 +81,25 @@ describe('evaluateJavaScriptConsole', () => {
     expect(failed.error?.message).toBe('boom');
     expect(recovered).toMatchObject({ ok: true, value: '9' });
   });
+
+  it('does not carry runtime globals into a replacement project session', () => {
+    createSession();
+    expect(evaluateJavaScriptConsole(
+      session,
+      { code: 'globalThis.projectScopedValue = 42; projectScopedValue', projectSessionId: 7 },
+      project,
+    )).toMatchObject({ ok: true, value: '42', projectSessionId: 7 });
+
+    session.dispose();
+    session = new JavaScriptSession();
+    const replacementProject = {
+      ...project,
+      project: { ...project.project, sessionId: 8, label: 'Replacement Project' },
+    };
+    expect(evaluateJavaScriptConsole(
+      session,
+      { code: 'typeof projectScopedValue', projectSessionId: 8 },
+      replacementProject,
+    )).toMatchObject({ ok: true, value: 'undefined', projectSessionId: 8 });
+  });
 });

@@ -146,6 +146,74 @@ the five reducer-test import repoints in seam 4.
 | 3 | `e2069bd` | Auxiliary layout model/migrations/envelope/adapter (seam 2) | Four extracted layout modules and barrel |
 | 4 | `e4ce585` | Shared project-editor contract/identity/snapshots/patches (seam 1) | Directory barrel, internal modules, and stale map cleanup |
 
+## Second-wave boundary inventory — 088-large-file-refactor
+
+The following inventory freezes the responsibilities that remain in the two target façades
+before the second-wave ownership moves. It is an ownership record, not a line-count target.
+
+### `packages/blue-app/src/renderer/stores/project-store.ts`
+
+| Responsibility | Callers | State read/write | Side effects | Failure/lifecycle | Test seam | Rollback unit |
+|---|---|---|---|---|---|---|
+| Zustand façade and project-loaded projection | Renderer stores, hooks, editors, tests | Transient renderer snapshot; no `BlueData` write | Zustand updates, MIDI/layer selection reconciliation | Reset on project/session replacement; preserves dirty flag for refresh | `project-store.test.ts`, IPC listener tests | Restore delegate wiring |
+| BSB optimistic snapshot patching | Instrument editors, score-object reducer, presets/performance tests | Caller-owned instrument snapshot; nested tree identity and metadata aliases | None; pure renderer transformation | Tolerated malformed/missing targets remain no-ops | BSB editor, presets, performance, sound-patch tests; direct BSB seam | Restore BSB implementation inline |
+| Patch batching and canonical acknowledgement | All optimistic project-document actions | One pending FIFO, trailing timer, in-flight commit, local revision/session fence, dirty baseline | Typed preload commit/refresh calls, toast/log delivery | One in-flight batch; no retry; refresh is best effort | Direct queue fake-timer/adapters plus façade tests | Restore queue protocol inline |
+| Cross-domain optimistic reducers | Score, mixer, orchestra, MIDI, project properties, transport, UDO, Blue Live, scratch pad | Transient renderer snapshots | Realtime-control preload calls | Existing reducer-specific no-op and immediate-update behavior | Existing project-store/domain suites | Retain in façade until narrow seam exists |
+| Renderer-only session/UI state | Toolbar, score navigation, missing-audio and editor panels | Dirty/loading/title/selection/session projection | Zustand-only state changes | Reset with project lifecycle | Store and panel tests | Retain in façade |
+
+Canonical ownership remains the main-process `BlueData` document bridge. The BSB seam and queue
+depend on shared contracts and injected callbacks; neither imports the façade, host APIs, React,
+Zustand, or Electron.
+
+### `packages/blue-app/src/main/main.ts`
+
+| Responsibility | Callers | State read/write | Side effects | Failure/lifecycle | Test seam | Rollback unit |
+|---|---|---|---|---|---|---|
+| Application composition and pre-ready registration | Electron app lifecycle | Window/service references | Protocol registration, IPC registration, verification branches | Pre-ready once; startup failure unwinds completed reversible stages | IPC inventory and startup lifecycle oracle | Restore composition call |
+| Project identity and replacement coordination | File actions, document IPC, editor/runtime handlers | Active `BlueData`, native path, revision, session identity | Filesystem, runtime/editor cleanup, broadcasts, recent files | Open/new/save-as/revert/close preserve current order and stale fences | Project session/lifecycle and replacement suites | Restore identity writes in main |
+| Window/menu/activation lifecycle | Main renderer, settings/about/popouts | BrowserWindow refs and layout/follow state | Window creation/focus/menu/event listeners | Explicit normal shutdown order | Window/layout/workbench tests | Restore composition wiring |
+| Direct project/file-session IPC (17) | Renderer/preload bridge | Project session plus recent/MIDI/missing-audio owners | Dialogs, filesystem, replacement and broadcasts | Preserve null/status/error envelopes | Project-lifecycle registrar tests | Restore one registrar block |
+| Direct artifact IPC (15) | Renderer/preload bridge | Project read and host artifact state | Dialogs, import/export, SoundFont/CsoundRC, native paths | Preserve cancellation/validation/owner targeting | Project-artifacts registrar tests | Restore one registrar block |
+| Playback/runtime/render IPC (30) | Renderer/preload bridge | Engine/runtime/project session owners | Playback, CSD, Blue Live, REPL, realtime, render/freeze | Preserve mutual exclusion, cancellation, events | Playback-runtime/source-audit tests | Restore one registrar block |
+| Project document/editor/audio IPC (27) | Renderer/preload bridge | Project session/document and editor owners | Patch commit, editor windows, audio/score-object tools | Preserve receipt/fence/broadcast and unavailable/error forms | Project-document registrar tests | Restore one registrar block |
+| Application/settings/layout IPC (23) | Renderer/preload bridge | Settings, OSC, file manager, window-layout owners | Confirmation, persistence, native paths, targeting | Fail-closed confirmation and ordered shutdown | Application registrar tests | Restore one registrar block |
+| Existing registrar/service composition (65) | Main startup/shutdown | Unified library, code repository, workbench, MIDI owners | SQLite/services/windows/listeners | Duplicate-safe lease and exact disposer | Existing registrar tests plus inventory | Restore lease adoption independently |
+
+`ProjectSession` is the sole writer for active document identity, native path, revision, and
+numeric session fence. It does not absorb runtime, window, engine, library, MIDI, or temporary-file
+ownership. `main.ts` remains the application composition root and retains the explicit normal
+shutdown order; failed startup uses a separate reverse-order rollback stack.
+
+## Second-wave review decisions
+
+- Accepted: BSB snapshot reducer, patch queue coordinator, `ProjectSession`, project lifecycle
+  coordinator, transactional IPC registration lease, startup-failure rollback, and five cohesive
+  IPC registrars.
+- Retained: cross-domain renderer reducers, runtime/window/service implementations, and main
+  composition/menu/normal-shutdown code whose callers still cross multiple domains.
+- Deferred: additional score/mixer/orchestra reducer splits, one-module-per-channel IPC splits,
+  generic event buses, and a replacement god object. Revisit only after a smaller owner, explicit
+  dependency direction, and a focused oracle exist.
+
+### Final boundary audit — 2026-08-23
+
+- A source search found no direct assignments to the retired `currentData`, `currentFilePath`,
+  `currentProjectRevision`, or `currentProjectSessionId` variables in `main.ts`; `ProjectSession`
+  is the only active identity writer.
+- A source search found one renderer patch queue owner (`createProjectPatchQueue`) and no second
+  pending-patch or in-flight-commit protocol in the façade. The façade delegates revision, flush,
+  await, and reset operations to that queue.
+- The five domain registrar modules own the real `electronIpcMain` registrations; `main.ts`
+  retains only the compatibility collector and composes them through one ordered 112-endpoint
+  transaction. Existing registrar owners remain separate, expose frozen channel-order arrays for
+  the executable 177-endpoint oracle, and use the shared lease.
+- Pure renderer modules have no back-imports from the store façade or main process. Main-process
+  registrars remain host-side and do not import renderer modules. No new dependency cycle was
+  identified.
+- Accepted-seam rollback remains independently scoped: remove the BSB module, queue module,
+  session/lifecycle modules, lease adoption, or domain registrar composition without changing
+  unrelated reducer families or host services.
+
 ## Deferred inventory
 
 Each item has a candidate seam and a concrete reason to defer it. Revisit only when the stated
@@ -153,19 +221,27 @@ test/contract prerequisite exists; do not split it solely because the file remai
 
 ### `packages/blue-app/src/main/main.ts` (5,017 lines)
 
-- **Candidate seam:** window lifecycle, IPC registration, and service/runtime wiring.
+- **Accepted seams:** `ProjectSession`, `project-lifecycle.ts`, the transactional registration
+  lease, and five channel-set registrar adapters now provide the narrow ownership boundaries.
+- **Retained responsibility:** handler implementations, runtime/window/service wiring, composition,
+  and explicit normal shutdown remain in `main.ts`. The completed composition checkpoint proves
+  source order and startup-failure compatibility; retaining the handler bodies avoids inventing
+  shallow host-operation wrappers without narrower state ownership.
 - **Risk:** high; initialization ordering and host-side side effects cross nearly every feature.
-- **Review outcome:** defer until an IPC contract inventory and startup/shutdown integration seam
-  exist. Preserve the file as a cohesive host orchestrator in the meantime.
+- **Revisit condition:** identify a narrower host-state owner and focused behavior oracle before
+  relocating any handler body out of the composition root; the 177-endpoint compatibility oracle
+  must continue to pass unchanged.
 
 ### `packages/blue-app/src/renderer/stores/project-store.ts` (4,926 lines)
 
-- **Candidate seam:** move `applyBsbInterfacePatchToSnapshot` and
-  `shouldPreserveWidgetMetadataForBsbPatch` together as a store-independent patch module.
-- **Risk:** high; shared-reference aliasing, optimistic updates, and store subscriptions are
-  behaviorally coupled.
-- **Review outcome:** defer until the project-editor reducer and snapshot contracts have settled,
-  then add direct aliasing/metadata tests before moving the seam.
+- **Accepted seams:** BSB snapshot mutation and the patch queue now live in store-independent
+  modules behind the unchanged façade and are covered by direct identity/timing tests.
+- **Retained responsibility:** cross-domain score, mixer, orchestra, MIDI, transport, and UI
+  reducers remain in the façade because their narrow ownership boundary is not yet isolated.
+- **Risk:** high; shared-reference aliasing, optimistic updates, and store subscriptions remain
+  behaviorally coupled in the retained reducer families.
+- **Revisit condition:** identify a smaller injected reducer owner and add a cross-domain oracle
+  before any further split.
 
 ### Score timeline canvases
 

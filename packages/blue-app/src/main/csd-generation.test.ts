@@ -65,4 +65,28 @@ describe("screen CSD generation", () => {
     expect(toCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
     expect(toCSD).not.toHaveBeenCalled();
   });
+
+  it("keeps in-flight CSD output bound to the project that initiated it", async () => {
+    let resolveOriginal!: (value: string) => void;
+    const original = {
+      toDiskCSD: vi.fn(() => "original-sync"),
+      toDiskCSDAsync: vi.fn(() => new Promise<string>((resolve) => {
+        resolveOriginal = resolve;
+      })),
+    };
+    const replacement = {
+      toDiskCSD: vi.fn(() => "replacement-sync"),
+      toDiskCSDAsync: vi.fn(async () => "replacement-async"),
+    };
+    const runtimeClient = {} as JavaRuntimeClientContract;
+
+    const originalOutput = generateDiskCsdForScreen(original, undefined, runtimeClient);
+    const replacementOutput = generateDiskCsdForScreen(replacement, undefined, runtimeClient);
+    resolveOriginal("original-async");
+
+    await expect(originalOutput).resolves.toBe("original-async");
+    await expect(replacementOutput).resolves.toBe("replacement-async");
+    expect(original.toDiskCSDAsync).toHaveBeenCalledOnce();
+    expect(replacement.toDiskCSDAsync).toHaveBeenCalledOnce();
+  });
 });

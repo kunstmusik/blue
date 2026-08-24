@@ -4,7 +4,7 @@
 import {
   app,
   BrowserWindow,
-  ipcMain,
+  ipcMain as electronIpcMain,
   dialog,
   Menu,
   nativeImage,
@@ -170,6 +170,7 @@ import {
 } from './bsb-instrument-runtime-sync';
 import {
   broadcastToWorkbenchWindows,
+  disposeWorkbenchWindowHost,
   getWorkbenchWindowManager,
   initWorkbenchWindowHost,
   registerFloatingWindow,
@@ -338,6 +339,15 @@ import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
 import { CodeRepositoryService } from './code-repository/service';
 import { registerCodeRepositoryIpc } from './code-repository/ipc';
+import { registerMainProcessDomainIpc } from './ipc/main-process-domain-ipc';
+import type {
+  IpcMainEventListener,
+  IpcMainInvokeHandler,
+  IpcMainLike,
+} from './ipc/ipc-registration';
+import { createProjectLifecycle } from './project-lifecycle';
+import { ProjectSession } from './project-session';
+import { createStartupLifecycle } from './startup-lifecycle';
 import {
   runPackagedMetadataVerificationAndExit,
   runPackagedRuntimeVerificationAndExit,
@@ -345,14 +355,58 @@ import {
 } from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
-let currentData: BlueData | null = null;
-let currentFilePath: string | null = null;
-let currentProjectRevision = 0;
+const projectSession = new ProjectSession();
+
+const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
+const collectedIpcListeners = new Map<string, IpcMainEventListener>();
+
+/**
+ * Keeps the legacy handler bodies close to their existing owners while the
+ * domain registrars own the real Electron registration and teardown. The
+ * collector is only used during module evaluation; all side effects happen
+ * when the five registrars are composed below.
+ */
+const ipcRegistration: IpcMainLike = {
+  handle(channel, listener) {
+    if (collectedIpcHandlers.has(channel) || collectedIpcListeners.has(channel)) {
+      throw new Error(`Duplicate collected IPC registration: ${channel}`);
+    }
+    collectedIpcHandlers.set(channel, listener);
+  },
+  on(channel, listener) {
+    if (collectedIpcHandlers.has(channel) || collectedIpcListeners.has(channel)) {
+      throw new Error(`Duplicate collected IPC registration: ${channel}`);
+    }
+    collectedIpcListeners.set(channel, listener);
+  },
+  removeHandler() {},
+  removeListener() {},
+};
+
+function getCurrentData(): BlueData {
+  // The session intentionally returns null when no project is loaded. Keep
+  // the legacy runtime guard behavior at call sites while giving the many
+  // existing guarded paths a stable non-null type after their check.
+  return projectSession.read().data as BlueData;
+}
+
+function getCurrentFilePath(): string {
+  return projectSession.read().filePath as string;
+}
+
+function getCurrentProjectRevision(): number {
+  return projectSession.read().revision;
+}
+
+function getCurrentProjectSessionId(): number {
+  return projectSession.read().sessionId;
+}
 let canAuditionScoreObjects = false;
 let unifiedLibraryService: UnifiedLibraryService | null = null;
 let unregisterUnifiedLibraryIpc: (() => void) | null = null;
 let codeRepositoryService: CodeRepositoryService | null = null;
 let unregisterCodeRepositoryIpc: (() => void) | null = null;
+let unregisterDomainIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
 let activeRenderOperationId: string | null = null;
@@ -372,13 +426,13 @@ let blueLiveTriggerController: BlueLiveTriggerController | null = null;
 function getBlueLiveTriggerController(): BlueLiveTriggerController {
   if (blueLiveTriggerController) return blueLiveTriggerController;
   const accessors: BlueLiveTriggerControllerAccessors = {
-    getCanonicalProject: () => currentData,
-    getProjectSessionId: () => currentProjectSessionId,
-    getDocumentRevision: () => currentProjectRevision,
+    getCanonicalProject: () => getCurrentData(),
+    getProjectSessionId: () => getCurrentProjectSessionId(),
+    getDocumentRevision: () => getCurrentProjectRevision(),
     getBlueLiveSession: () => blueLiveSession,
     getJavaScriptSession: () => javaScriptSession,
     getJavaRuntimeSessionManager: () => javaRuntimeSessionManager,
-    getCurrentFilePath: () => currentFilePath,
+    getCurrentFilePath: () => getCurrentFilePath(),
   };
   blueLiveTriggerController = new BlueLiveTriggerController(accessors);
   return blueLiveTriggerController;
@@ -397,7 +451,6 @@ let replRuntimeQueue: Promise<unknown> = Promise.resolve();
 let midiInputCoordinator: MidiInputCoordinator | null = null;
 let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
-let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
 let currentSavedFollowPlayback = true;
 let currentFollowPlaybackOnStartEnabled = true;
@@ -463,7 +516,7 @@ const midiImportService = new MidiImportService({
   },
   readFile: (filePath) => fs.readFileSync(filePath),
   parseFile: parseMidiImportBytes,
-  getProjectSessionId: () => currentProjectSessionId,
+  getProjectSessionId: () => getCurrentProjectSessionId(),
 });
 
 interface ProjectOnLoadState {
@@ -527,11 +580,11 @@ setCurrentSessionWindowResetHandler(() => {
 });
 
 function getCurrentProjectDocument() {
-  if (!currentData) {
+  if (!getCurrentData()) {
     return null;
   }
 
-  return createProjectEditorSnapshot(currentData, currentFilePath, currentProjectSessionId);
+  return createProjectEditorSnapshot(getCurrentData(), getCurrentFilePath(), getCurrentProjectSessionId());
 }
 
 function broadcastOscSnapshot(snapshot: OscServerRuntimeSnapshot): void {
@@ -563,15 +616,15 @@ function initializeOscControlService(): void {
  * Broadcasts the current project document snapshot to every registered
  * workbench renderer so floating windows see the same mutations as the main
  * workbench (SPEC 055 FR-010). Callers are responsible for incrementing
- * {@link currentProjectRevision} before invoking this so the broadcast carries
- * a fresh revision. Requires a non-null `currentData`.
+ * {@link getCurrentProjectRevision()} before invoking this so the broadcast carries
+ * a fresh revision. Requires a non-null `getCurrentData()`.
  */
 function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
   const snapshot = getCurrentProjectDocument();
   if (!snapshot) return;
   const event: ProjectDocumentUpdatedEvent = {
-    sessionId: currentProjectSessionId,
-    revision: currentProjectRevision,
+    sessionId: getCurrentProjectSessionId(),
+    revision: getCurrentProjectRevision(),
     snapshot,
     ...(sourceWindowId ? { sourceWindowId } : {}),
   };
@@ -581,15 +634,15 @@ function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
-  if (!currentData) {
+  if (!getCurrentData()) {
     return null;
   }
 
-  return findMixerChannelById(currentData.getMixer(), channelId);
+  return findMixerChannelById(getCurrentData().getMixer(), channelId);
 }
 
 function getProjectEffectEntryByRequest(request: EffectEditorRequest) {
-  if (!currentData || request.ownerType !== 'project' || !request.projectRef) {
+  if (!getCurrentData() || request.ownerType !== 'project' || !request.projectRef) {
     return null;
   }
 
@@ -625,30 +678,30 @@ function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
 
   return createEffectEditorSnapshot(result.entry, result.effectId, 'project', {
     projectRef: request.projectRef,
-    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
+    projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });
 }
 
 function trackInstrumentRequestIsCurrent(request: TrackInstrumentEditorRequest): boolean {
   const { projectSessionId, projectRevision } = request.track;
-  return projectSessionId === currentProjectSessionId
-    && projectRevision === currentProjectRevision;
+  return projectSessionId === getCurrentProjectSessionId()
+    && projectRevision === getCurrentProjectRevision();
 }
 
 function getTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
-  if (!currentData || !trackInstrumentRequestIsCurrent(request)) return null;
+  if (!getCurrentData() || !trackInstrumentRequestIsCurrent(request)) return null;
 
   return getCurrentTrackInstrumentEditorSnapshot(request);
 }
 
 function getCurrentTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
-  if (!currentData || request.track.projectSessionId !== currentProjectSessionId) return null;
+  if (!getCurrentData() || request.track.projectSessionId !== getCurrentProjectSessionId()) return null;
 
-  return createTrackInstrumentEditorSnapshot(currentData, {
+  return createTrackInstrumentEditorSnapshot(getCurrentData(), {
     track: {
       ...request.track,
-      projectSessionId: currentProjectSessionId,
-      projectRevision: currentProjectRevision,
+      projectSessionId: getCurrentProjectSessionId(),
+      projectRevision: getCurrentProjectRevision(),
     },
   });
 }
@@ -656,7 +709,7 @@ function getCurrentTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorR
 async function applyTrackInstrumentEditorPatch(
   request: TrackInstrumentEditorPatchRequest,
 ): Promise<TrackInstrumentEditorPatchResult> {
-  const data = currentData;
+  const data = getCurrentData();
   if (!data) {
     return { status: 'unavailable', snapshot: null };
   }
@@ -676,21 +729,21 @@ async function applyTrackInstrumentEditorPatch(
     },
   };
   const changed = applyProjectDocumentPatch(data, patch, {
-    projectSessionId: currentProjectSessionId,
-    projectRevision: currentProjectRevision,
+    projectSessionId: getCurrentProjectSessionId(),
+    projectRevision: getCurrentProjectRevision(),
     defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
   });
   if (!changed) {
     return { status: 'unchanged', snapshot: currentSnapshot };
   }
 
-  currentProjectRevision += 1;
+  projectSession.recordMutation({ changed: true });
   broadcastProjectDocumentUpdate();
   const directRealtimeUpdate = request.patch.bsbInterface
     ? createBsbRealtimeControlUpdate(
         {
           track: {
-            projectSessionId: currentProjectSessionId,
+            projectSessionId: getCurrentProjectSessionId(),
             rootGroupId: request.track.rootGroupId,
             trackId: request.track.trackId,
           },
@@ -711,8 +764,8 @@ async function applyTrackInstrumentEditorPatch(
     snapshot: getTrackInstrumentEditorSnapshot({
       track: {
         ...request.track,
-        projectSessionId: currentProjectSessionId,
-        projectRevision: currentProjectRevision,
+        projectSessionId: getCurrentProjectSessionId(),
+        projectRevision: getCurrentProjectRevision(),
       },
     }),
   };
@@ -773,7 +826,7 @@ function getWidgetSize(widget: BSBWidget, ctor: string): { width: number; height
 }
 
 function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
-  if (!currentData) {
+  if (!getCurrentData()) {
     return null;
   }
 
@@ -800,12 +853,12 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
 
   return createEffectEditorSnapshot(effectEntry.entry, effectEntry.effectId, 'project', {
     projectRef: request.projectRef,
-    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
+    projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });
 }
 
 function maybeCloseRemovedProjectEffectEditors(patch: ProjectDocumentPatch): void {
-  if (!patch.mixer || !currentData) {
+  if (!patch.mixer || !getCurrentData()) {
     return;
   }
 
@@ -838,7 +891,7 @@ function maybeCloseRemovedProjectEffectEditors(patch: ProjectDocumentPatch): voi
 
 function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): void {
   const scorePatch = patch.score;
-  if (!scorePatch || !currentData) return;
+  if (!scorePatch || !getCurrentData()) return;
 
   if (scorePatch.type === 'removeLayerGroup') {
     closeTrackInstrumentEditorWindowsForGroup(scorePatch.groupId);
@@ -857,7 +910,7 @@ function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): v
   if (scorePatch.type === 'removeLayerRanges') {
     const removedCountByGroup = new Map<string, number>();
     for (const r of scorePatch.ranges) {
-      const group = findTrackLayerGroupById(currentData.getScore(), r.groupId);
+      const group = findTrackLayerGroupById(getCurrentData().getScore(), r.groupId);
       if (group) {
         const startIndex = Math.max(0, r.startIndex);
         const endIndex = Math.min(group.length - 1, r.endIndex);
@@ -877,7 +930,7 @@ function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): v
     }
     if (scorePatch.deleteEmptyLayerGroups) {
       for (const [groupId, removedCount] of removedCountByGroup) {
-        const group = findTrackLayerGroupById(currentData.getScore(), groupId);
+        const group = findTrackLayerGroupById(getCurrentData().getScore(), groupId);
         if (group && group.length > 0 && removedCount >= group.length) {
           closeTrackInstrumentEditorWindowsForGroup(groupId);
         }
@@ -887,7 +940,7 @@ function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): v
   }
 
   if (scorePatch.type !== 'removeLayer') return;
-  const group = findTrackLayerGroupById(currentData.getScore(), scorePatch.groupId);
+  const group = findTrackLayerGroupById(getCurrentData().getScore(), scorePatch.groupId);
   const track = group?.[scorePatch.layerIndex];
   if (track) {
     closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
@@ -910,7 +963,7 @@ function findTrackLayerGroupById(groups: readonly unknown[], groupId: string): T
 
 function updateWindowTitle(): void {
   if (mainWindow) {
-    mainWindow.setTitle(getWindowTitle(currentFilePath));
+    mainWindow.setTitle(getWindowTitle(getCurrentFilePath()));
   }
 }
 
@@ -1058,7 +1111,7 @@ function broadcastRenderStatus(status: RenderOperationStatus): void {
 // ─── Render to Disk handler ───
 
 async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId?: string): Promise<RenderOperationResult> {
-  if (!currentData) {
+  if (!getCurrentData()) {
     return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'No project loaded.' };
   }
 
@@ -1069,7 +1122,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
   // One-shot Blue Engine children are isolated from the realtime ZMQ session;
   // leave active playback/Blue Live untouched while an offline operation runs.
 
-  const projectDirectory = resolveRenderWorkingDirectory(currentFilePath, app.getPath('temp'));
+  const projectDirectory = resolveRenderWorkingDirectory(getCurrentFilePath(), app.getPath('temp'));
 
   const operationId = requestedOperationId ?? `disk-${Date.now()}`;
   activeRenderOperationId = operationId;
@@ -1082,17 +1135,17 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 
   try {
     const settings = loadProgramSettings();
-    const props = currentData.getProjectProperties();
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const props = getCurrentData().getProjectProperties();
+    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
 
     // Resolve output file
     let outputFile = props.diskCompleteOverride
       ? null
-      : resolveOutputFilePath(currentData, projectDirectory);
+      : resolveOutputFilePath(getCurrentData(), projectDirectory);
 
     if (!props.diskCompleteOverride && !outputFile) {
-      const defaultName = props.fileName?.trim() || `${currentFilePath ? path.basename(currentFilePath, '.blue') : 'untitled'}.wav`;
-      const dialogDirectory = currentFilePath
+      const defaultName = props.fileName?.trim() || `${getCurrentFilePath() ? path.basename(getCurrentFilePath(), '.blue') : 'untitled'}.wav`;
+      const dialogDirectory = getCurrentFilePath()
         ? projectDirectory
         : (getConfiguredWorkDirectory() ?? projectDirectory);
       const result = await dialog.showSaveDialog(mainWindow!, {
@@ -1135,7 +1188,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 
     const renderResult = await executeRenderToDisk(
       {
-        data: currentData,
+        data: getCurrentData(),
         projectDirectory,
         diskRender: settings.diskRender,
         general: settings.general,
@@ -1173,7 +1226,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 // ─── Freeze handler ───
 
 async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Promise<FreezeOperationResult> {
-  if (!currentData) {
+  if (!getCurrentData()) {
     return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [], error: 'No project loaded.', project: null };
   }
 
@@ -1181,7 +1234,7 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
     return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [], error: 'Another render/freeze operation is already running.', project: null };
   }
 
-  const projectDirectory = currentFilePath ? path.dirname(currentFilePath) : null;
+  const projectDirectory = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
   if (!projectDirectory) {
     return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [{ selectionId: '*', reason: 'Project must be saved before freezing.' }], error: 'Project must be saved before freezing.', project: null };
   }
@@ -1198,11 +1251,11 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
   try {
     const settings = loadProgramSettings();
     const seam = createCsoundExecutionSeam(cancellationSignal);
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
 
     const result = await executeFreezeUnfreeze(
       {
-        data: currentData,
+        data: getCurrentData(),
         projectDirectory,
         utility: settings.utility,
         platform: process.platform,
@@ -1226,7 +1279,7 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
 
     // Broadcast updated project if any mutations occurred
     if (result.frozenCount > 0 || result.unfrozenCount > 0) {
-      currentProjectRevision++;
+      projectSession.recordMutation({ changed: true });
       broadcastProjectDocumentUpdate();
     }
 
@@ -1260,7 +1313,7 @@ function getRecentProjectFilesSnapshot(): string[] {
 }
 
 function getCurrentProjectDirectory(): string | null {
-  return currentFilePath ? path.dirname(currentFilePath) : null;
+  return getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
 }
 
 function getProjectMediaDirectory(data: BlueData, projectDirectory: string | null): string | null {
@@ -1303,11 +1356,11 @@ function buildRealtimeEngineOptions(data: BlueData, projectDirectory: string | n
 }
 
 function hasLoadedProject(): boolean {
-  return Boolean(currentData);
+  return Boolean(getCurrentData());
 }
 
 function setAuditionScoreObjectAvailability(enabled: boolean): void {
-  const next = Boolean(enabled && currentData);
+  const next = Boolean(enabled && getCurrentData());
   if (canAuditionScoreObjects === next) return;
   canAuditionScoreObjects = next;
   rebuildApplicationMenu();
@@ -1331,7 +1384,7 @@ async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
 
 async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {}): Promise<boolean> {
   if (!(await canReplaceProjectWhileRenderActive())) return false;
-  if (!currentData) return true;
+  if (!getCurrentData()) return true;
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
   const result = await showNativeConfirmation(mainWindow, {
@@ -1339,8 +1392,8 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
     type: 'question',
     title: 'Save Changes?',
     message: 'Save changes before proceeding?',
-    detail: currentFilePath
-      ? `File: ${path.basename(currentFilePath)}`
+    detail: getCurrentFilePath()
+      ? `File: ${path.basename(getCurrentFilePath())}`
       : 'This project has not been saved yet.',
     actions: [
       { id: 'save', label: 'Save', role: 'accept' },
@@ -1356,8 +1409,8 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
     // quits without writing, and a cancelled or failed save aborts the quit.
     if (result.actionId === 'save' && result.outcome === 'selected') {
       pendingQuit = true;
-      if (currentFilePath) {
-        doSave(currentFilePath);
+      if (getCurrentFilePath()) {
+        doSave(getCurrentFilePath());
       } else {
         const saved = await saveFileAs();
         if (!saved) {
@@ -1380,9 +1433,9 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
   // declined overwrite, or failed write blocks the replacement (FR-011).
   const outcome = await resolveReplacementSaveDecision({
     choose: () => (result.actionId === 'save' && result.outcome === 'selected' ? 'save' : result.actionId === 'discard' && result.outcome === 'selected' ? 'discard' : 'cancel'),
-    hasCurrentProject: () => currentData !== null,
-    hasCurrentPath: () => currentFilePath !== null,
-    saveCurrent: () => currentFilePath !== null && doSave(currentFilePath),
+    hasCurrentProject: () => getCurrentData() !== null,
+    hasCurrentPath: () => getCurrentFilePath() !== null,
+    saveCurrent: () => getCurrentFilePath() !== null && doSave(getCurrentFilePath()),
     saveAs: () => saveFileAs(),
   });
   return outcome === 'saved' || outcome === 'discarded';
@@ -1395,7 +1448,7 @@ function rebuildApplicationMenu(): void {
     canAuditionScoreObjects,
     isDarwin: process.platform === 'darwin',
     recentProjects: getRecentProjectFilesSnapshot(),
-    canRevertProject: Boolean(currentFilePath),
+    canRevertProject: Boolean(getCurrentFilePath()),
     followPlaybackEnabled: currentFollowPlaybackEnabled,
     followPlaybackOnStartEnabled: currentFollowPlaybackOnStartEnabled,
     onNewFile: () => { void handleNewFile(); },
@@ -1544,7 +1597,7 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    title: getWindowTitle(currentFilePath),
+    title: getWindowTitle(getCurrentFilePath()),
     icon: getAppIcon(),
     show: false,
     webPreferences: {
@@ -1679,7 +1732,7 @@ function createWindow(): void {
       return;
     }
     if (stopReason !== 'completed') return;
-    if (!currentData || !currentData.isLoopRendering()) return;
+    if (!getCurrentData() || !getCurrentData().isLoopRendering()) return;
     void startPlayback();
   });
 
@@ -1795,7 +1848,7 @@ async function requestQuit(): Promise<void> {
     await engineBridge.stopPlayback();
   }
 
-  if (!currentData) {
+  if (!getCurrentData()) {
     doQuit();
     return;
   }
@@ -1820,6 +1873,9 @@ async function doQuit(): Promise<void> {
     await oscControlService?.shutdown();
     oscControlService = null;
 
+    unregisterDomainIpc?.();
+    unregisterDomainIpc = null;
+
     unregisterUnifiedLibraryIpc?.();
     unregisterUnifiedLibraryIpc = null;
     await unifiedLibraryService?.stop();
@@ -1831,6 +1887,8 @@ async function doQuit(): Promise<void> {
     codeRepositoryService = null;
 
     await midiInputCoordinator?.requestShutdown();
+    midiInputCoordinator?.disposeIpcHandlers();
+    midiInputCoordinator = null;
 
     if (blueLiveSession) {
       try {
@@ -1858,10 +1916,9 @@ async function doQuit(): Promise<void> {
     closeEffectEditorWindowsForOwner('project');
     closeEffectEditorWindowsForOwner('library');
     closeTrackInstrumentEditorWindows();
-    currentData = null;
+    disposeWorkbenchWindowHost();
+    projectSession.resetForShutdown();
     canAuditionScoreObjects = false;
-    currentFilePath = null;
-    currentProjectRevision = 0;
     setActiveMissingAudioSession(null);
     rebuildApplicationMenu();
     await cleanupTempCsdSnapshots();
@@ -1896,7 +1953,7 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
 
   const projectProperties = data.getProjectProperties();
   const payload: ProjectLoadedPayload = {
-    ...createProjectEditorSnapshot(data, filePath, currentProjectSessionId),
+    ...createProjectEditorSnapshot(data, filePath, getCurrentProjectSessionId()),
     title: filePath
       ? projectProperties.title || path.basename(filePath)
       : 'Untitled',
@@ -1932,13 +1989,41 @@ function scanMissingAudioAssets(
 
   const session: MissingAudioAssetsSession = {
     sessionId: createMissingAudioSessionId(),
-    projectSessionId: currentProjectSessionId,
+    projectSessionId: getCurrentProjectSessionId(),
     projectFilePath: filePath,
     missingFiles: rows,
   };
   setActiveMissingAudioSession(session);
   return session;
 }
+
+const projectLifecycle = createProjectLifecycle({
+  session: projectSession,
+  stopProjectRuntimes: async () => {
+    await stopActiveBlueLiveBeforeProjectReplacement();
+    await disposeJavaRuntimeSession();
+  },
+  closeProjectEditors: () => {
+    closeEffectEditorWindowsForOwner('project');
+    closeTrackInstrumentEditorWindows();
+  },
+  clearProjectServices: () => {
+    midiImportService.clearAll();
+    setActiveMissingAudioSession(null);
+  },
+  publishProjectChanged: () => {
+    unifiedLibraryService?.publishProjectChanged();
+  },
+  publishProjectLoaded: () => {
+    rebuildApplicationMenu();
+    updateWindowTitle();
+  },
+  publishProjectClosed: () => {
+    rebuildApplicationMenu();
+    updateWindowTitle();
+    broadcastToWorkbenchWindows('project-closed', null);
+  },
+});
 
 async function openFile(): Promise<boolean> {
   if (!mainWindow) return false;
@@ -2117,8 +2202,8 @@ async function importOrcSco(): Promise<boolean> {
  * normalize, platform case rules), not by raw string comparison.
  */
 function isCurrentProjectFilePath(filePath: string): boolean {
-  return currentData !== null && currentFilePath !== null
-    && isSameProjectPathIdentity(filePath, currentFilePath);
+  return getCurrentData() !== null && getCurrentFilePath() !== null
+    && isSameProjectPathIdentity(filePath, getCurrentFilePath());
 }
 
 /**
@@ -2136,22 +2221,9 @@ async function readProjectFromDisk(filePath: string): Promise<BlueData> {
  * project-loaded. Callers own every decision that leads here.
  */
 async function installProjectData(data: BlueData, filePath: string | null): Promise<void> {
-  await stopActiveBlueLiveBeforeProjectReplacement();
-  await disposeJavaRuntimeSession();
-  closeEffectEditorWindowsForOwner('project');
-  closeTrackInstrumentEditorWindows();
-
-  currentData = data;
+  await projectLifecycle.replace({ data, filePath });
   canAuditionScoreObjects = false;
-  currentFilePath = filePath;
-  currentProjectRevision = 0;
-  currentProjectSessionId += 1;
-  midiImportService.clearAll();
   getBlueLiveTriggerController().openGate();
-  unifiedLibraryService?.publishProjectChanged();
-  setActiveMissingAudioSession(null);
-  rebuildApplicationMenu();
-  updateWindowTitle();
 
   disposeJavaScriptSession();
   try {
@@ -2231,16 +2303,16 @@ async function runPackagedProjectVerificationAndExit(): Promise<never> {
     projectPath,
     projectSavePath,
     loadProject: loadProjectFromDisk,
-    getLoadedProject: () => currentData
+    getLoadedProject: () => getCurrentData()
       ? {
-          filePath: currentFilePath,
-          title: currentData.getProjectProperties().title,
+          filePath: getCurrentFilePath(),
+          title: getCurrentData().getProjectProperties().title,
         }
       : null,
     saveProjectCopy: async (savePath) => {
-      if (!currentData) return false;
+      if (!getCurrentData()) return false;
       try {
-        fs.writeFileSync(savePath, currentData.saveToString(), 'utf8');
+        fs.writeFileSync(savePath, getCurrentData().saveToString(), 'utf8');
         await BlueData.loadFromString(fs.readFileSync(savePath, 'utf8'));
         return true;
       } catch {
@@ -2293,8 +2365,8 @@ async function runPackagedEngineMismatchVerificationAndExit(): Promise<never> {
   );
   const passed = result.errorCode === 'ENGINE_PROTOCOL_MISMATCH' &&
     result.selection?.source === 'settings-override' &&
-    currentData !== null &&
-    currentFilePath === projectPath;
+    getCurrentData() !== null &&
+    getCurrentFilePath() === projectPath;
   process.stderr.write(
     `${passed ? '[ok]' : '[FAIL]'} Incompatible engine was ` +
       `${passed ? 'rejected before playback while the project remained open' : 'not rejected safely'}.\n`,
@@ -2323,25 +2395,14 @@ async function closeProject(): Promise<void> {
   if (!(await confirmLibraryDraftTransition('closeProject'))) return;
 
   // Stop any non-idle Blue Live session before clearing the canonical project.
-  await stopActiveBlueLiveBeforeProjectReplacement();
   disposeJavaScriptSession();
-  await disposeJavaRuntimeSession();
-  currentData = null;
+  await projectLifecycle.close();
   canAuditionScoreObjects = false;
-  currentFilePath = null;
-  currentProjectRevision = 0;
-  currentProjectSessionId += 1;
-  midiImportService.clearAll();
-  unifiedLibraryService?.publishProjectChanged();
-  setActiveMissingAudioSession(null);
-  rebuildApplicationMenu();
-  updateWindowTitle();
-  broadcastToWorkbenchWindows('project-closed', null);
 }
 
 async function revertProject(): Promise<void> {
-  if (!currentFilePath) return;
-  const filePath = currentFilePath;
+  if (!getCurrentFilePath()) return;
+  const filePath = getCurrentFilePath();
   if (!(await confirmSaveBeforeReplace())) return;
   if (!(await confirmLibraryDraftTransition('switchProject'))) return;
   await loadProjectFromDisk(filePath);
@@ -2353,23 +2414,23 @@ async function openRecentProject(filePath: string): Promise<void> {
 }
 
 async function saveFile(): Promise<void> {
-  if (!currentData || !currentFilePath) {
+  if (!getCurrentData() || !getCurrentFilePath()) {
     await saveFileAs();
     return;
   }
-  doSave(currentFilePath);
+  doSave(getCurrentFilePath());
 }
 
 async function saveFileAs(): Promise<boolean> {
-  if (!mainWindow || !currentData) return false;
+  if (!mainWindow || !getCurrentData()) return false;
 
-  const previousProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
+  const previousProjectDir = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
 
   const saved = await runTransactionalSaveAs({
     chooseDestination: async () => {
       const result = await dialog.showSaveDialog(mainWindow!, {
         title: 'Save Blue Project',
-        defaultPath: currentFilePath ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
+        defaultPath: getCurrentFilePath() ?? getConfiguredWorkDirectoryDefaultPath('project.blue'),
         filters: [{ name: 'Blue Project', extensions: ['blue'] }],
       });
       if (result.canceled || !result.filePath) return null;
@@ -2377,7 +2438,7 @@ async function saveFileAs(): Promise<boolean> {
     },
     writeProject: (filePath) => writeProjectToDisk(filePath),
     publishPath: (filePath) => {
-      currentFilePath = filePath;
+      projectSession.publishPath(filePath);
     },
   });
 
@@ -2385,9 +2446,9 @@ async function saveFileAs(): Promise<boolean> {
 
   updateWindowTitle();
   rebuildApplicationMenu();
-  mainWindow?.webContents.send('save-complete', { filePath: currentFilePath });
+  mainWindow?.webContents.send('save-complete', { filePath: getCurrentFilePath() });
 
-  const nextProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
+  const nextProjectDir = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
   if (previousProjectDir !== nextProjectDir) {
     await disposeJavaRuntimeSession();
   }
@@ -2402,11 +2463,11 @@ async function saveFileAs(): Promise<boolean> {
 
 function normalizeBsbSelectedPath(filePath: string): string {
   const normalized = filePath.replace(/\\/g, '/');
-  if (!currentFilePath) {
+  if (!getCurrentFilePath()) {
     return normalized;
   }
 
-  const projectDir = path.dirname(currentFilePath);
+  const projectDir = path.dirname(getCurrentFilePath());
   const relativePath = path.relative(projectDir, filePath);
   if (!relativePath || path.isAbsolute(relativePath) || relativePath.startsWith('..')) {
     return normalized;
@@ -2417,18 +2478,18 @@ function normalizeBsbSelectedPath(filePath: string): string {
 
 function resolveBsbDefaultPath(currentValue?: string): string | undefined {
   if (!currentValue || currentValue.trim().length === 0) {
-    return currentFilePath ? path.dirname(currentFilePath) : getConfiguredWorkDirectoryDefaultPath();
+    return getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : getConfiguredWorkDirectoryDefaultPath();
   }
 
   if (path.isAbsolute(currentValue)) {
     return currentValue;
   }
 
-  if (!currentFilePath) {
+  if (!getCurrentFilePath()) {
     return getConfiguredWorkDirectoryDefaultPath(currentValue);
   }
 
-  return path.resolve(path.dirname(currentFilePath), currentValue);
+  return path.resolve(path.dirname(getCurrentFilePath()), currentValue);
 }
 
 function resolveAudioFilePathForRead(filePath: string): string | null {
@@ -2445,11 +2506,11 @@ function resolveAudioFilePathForRead(filePath: string): string | null {
     }
   }
 
-  if (path.isAbsolute(trimmed) || !currentFilePath) {
+  if (path.isAbsolute(trimmed) || !getCurrentFilePath()) {
     return trimmed;
   }
 
-  return path.resolve(path.dirname(currentFilePath), trimmed);
+  return path.resolve(path.dirname(getCurrentFilePath()), trimmed);
 }
 
 async function openBsbFileSelector(currentValue?: string): Promise<string | null> {
@@ -2477,11 +2538,11 @@ async function normalizeBsbFileSelectorPath(filePath: string): Promise<string | 
 }
 
 async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<string | null> {
-  if (!currentData || !currentFilePath || !currentValue || currentValue.trim().length === 0) {
+  if (!getCurrentData() || !getCurrentFilePath() || !currentValue || currentValue.trim().length === 0) {
     return null;
   }
 
-  const projectDir = path.dirname(currentFilePath);
+  const projectDir = path.dirname(getCurrentFilePath());
   const sourceFile = path.isAbsolute(currentValue)
     ? currentValue
     : path.resolve(projectDir, currentValue);
@@ -2490,7 +2551,7 @@ async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<
     return null;
   }
 
-  const mediaFolder = currentData.getProjectProperties().mediaFolder?.trim() ?? '';
+  const mediaFolder = getCurrentData().getProjectProperties().mediaFolder?.trim() ?? '';
   const targetDir = path.isAbsolute(mediaFolder)
     ? mediaFolder
     : path.resolve(projectDir, mediaFolder.length > 0 ? mediaFolder : 'media');
@@ -2510,9 +2571,9 @@ async function copyBsbFileSelectorToMediaFolder(currentValue?: string): Promise<
  * replacement rather than discard consent.
  */
 function writeProjectToDisk(filePath: string): boolean {
-  if (!currentData) return false;
+  if (!getCurrentData()) return false;
   try {
-    const xml = currentData.saveToString();
+    const xml = getCurrentData().saveToString();
     fs.writeFileSync(filePath, xml, 'utf-8');
     return true;
   } catch (err: unknown) {
@@ -2529,7 +2590,7 @@ function writeProjectToDisk(filePath: string): boolean {
 }
 
 function doSave(filePath: string): boolean {
-  if (!currentData) return false;
+  if (!getCurrentData()) return false;
   if (!writeProjectToDisk(filePath)) return false;
 
   updateWindowTitle();
@@ -2595,23 +2656,23 @@ function getReplProjectLabel(data: BlueData | null, filePath: string | null): st
 
 function createReplProjectContext(): ReplConsoleProjectContext {
   return {
-    loaded: currentData !== null,
-    sessionId: currentProjectSessionId,
-    label: getReplProjectLabel(currentData, currentFilePath),
-    filePath: currentFilePath,
-    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+    loaded: getCurrentData() !== null,
+    sessionId: getCurrentProjectSessionId(),
+    label: getReplProjectLabel(getCurrentData(), getCurrentFilePath()),
+    filePath: getCurrentFilePath(),
+    projectDir: getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null,
   };
 }
 
 function createReplProjectDataSnapshot(): Record<string, unknown> | null {
-  if (!currentData) return null;
+  if (!getCurrentData()) return null;
 
-  const properties = currentData.getProjectProperties();
-  const globalOrcSco = currentData.getGlobalOrcSco();
+  const properties = getCurrentData().getProjectProperties();
+  const globalOrcSco = getCurrentData().getGlobalOrcSco();
   return {
-    sessionId: currentProjectSessionId,
-    filePath: currentFilePath,
-    projectDir: currentFilePath ? path.dirname(currentFilePath) : null,
+    sessionId: getCurrentProjectSessionId(),
+    filePath: getCurrentFilePath(),
+    projectDir: getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null,
     projectProperties: {
       title: properties.title,
       author: properties.author,
@@ -2626,10 +2687,10 @@ function createReplProjectDataSnapshot(): Record<string, unknown> | null {
     },
     globalOrc: globalOrcSco.getGlobalOrc(),
     globalSco: globalOrcSco.getGlobalSco(),
-    tablesText: currentData.getTableSet().getTables(),
+    tablesText: getCurrentData().getTableSet().getTables(),
     scratchPad: {
-      text: currentData.getScratchPadData().getScratchText(),
-      wordWrapEnabled: currentData.getScratchPadData().isWordWrapEnabled(),
+      text: getCurrentData().getScratchPadData().getScratchText(),
+      wordWrapEnabled: getCurrentData().getScratchPadData().isWordWrapEnabled(),
     },
   };
 }
@@ -2682,9 +2743,9 @@ async function reinitializeJavaScriptRuntime(): Promise<ScriptRuntimeReinitializ
   return enqueueReplRuntime(async () => {
     try {
       await reinitializeJavaScriptRuntimeNow();
-      if (currentData) {
+      if (getCurrentData()) {
         lastProjectOnLoadState = null;
-        await runProjectOnLoad(currentData);
+        await runProjectOnLoad(getCurrentData());
       }
       return { ok: true };
     } catch (error: unknown) {
@@ -2694,10 +2755,10 @@ async function reinitializeJavaScriptRuntime(): Promise<ScriptRuntimeReinitializ
 }
 
 async function reinitializeJythonRuntimeNow(): Promise<void> {
-  if (!currentData) {
+  if (!getCurrentData()) {
     throw new Error('No project loaded.');
   }
-  if (!currentData.usesJavaRuntime()) {
+  if (!getCurrentData().usesJavaRuntime()) {
     throw new Error('Active project does not use the Java runtime.');
   }
   if (!javaRuntimeSessionManager) {
@@ -2705,9 +2766,9 @@ async function reinitializeJythonRuntimeNow(): Promise<void> {
   }
 
   await javaRuntimeSessionManager.reinitializeJython(
-    currentData,
-    currentProjectSessionId,
-    currentFilePath,
+    getCurrentData(),
+    getCurrentProjectSessionId(),
+    getCurrentFilePath(),
   );
 }
 
@@ -2715,9 +2776,9 @@ async function reinitializeJythonRuntime(): Promise<ScriptRuntimeReinitializeRes
   return enqueueReplRuntime(async () => {
     try {
       await reinitializeJythonRuntimeNow();
-      if (currentData) {
+      if (getCurrentData()) {
         lastProjectOnLoadState = null;
-        await runProjectOnLoad(currentData);
+        await runProjectOnLoad(getCurrentData());
       }
       return { ok: true };
     } catch (error: unknown) {
@@ -2727,7 +2788,7 @@ async function reinitializeJythonRuntime(): Promise<ScriptRuntimeReinitializeRes
 }
 
 async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
-  if (!currentData) {
+  if (!getCurrentData()) {
     throw new Error('No project loaded.');
   }
   if (!javaRuntimeSessionManager) {
@@ -2735,9 +2796,9 @@ async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
   }
 
   return javaRuntimeSessionManager.ensureReady(
-    currentData,
-    currentProjectSessionId,
-    currentFilePath,
+    getCurrentData(),
+    getCurrentProjectSessionId(),
+    getCurrentFilePath(),
   );
 }
 
@@ -2750,7 +2811,7 @@ async function openReplConsoleNow(language: ReplConsoleLanguage): Promise<ReplCo
     }
     return createReplOpenResult(language, 'ready');
   } catch (error: unknown) {
-    return createReplOpenResult(language, currentData ? 'error' : 'unavailable', getErrorMessage(error));
+    return createReplOpenResult(language, getCurrentData() ? 'error' : 'unavailable', getErrorMessage(error));
   }
 }
 
@@ -2767,7 +2828,7 @@ function openReplConsole(language: ReplConsoleLanguage): Promise<ReplConsoleOpen
 function createReplEvaluationFailure(
   language: ReplConsoleLanguage,
   message: string,
-  projectSessionId = currentProjectSessionId,
+  projectSessionId = getCurrentProjectSessionId(),
 ): ReplConsoleEvaluateResult {
   return {
     ok: false,
@@ -2882,17 +2943,17 @@ async function reinitializeReplConsole(
       } else if (request.language === 'python') {
         await reinitializeJythonRuntimeNow();
       } else {
-        if (!javaRuntimeSessionManager || !currentData) throw new Error('Java runtime is unavailable.');
+        if (!javaRuntimeSessionManager || !getCurrentData()) throw new Error('Java runtime is unavailable.');
         await javaRuntimeSessionManager.reinitializeClojure(
-          currentData,
-          currentProjectSessionId,
-          currentFilePath,
+          getCurrentData(),
+          getCurrentProjectSessionId(),
+          getCurrentFilePath(),
         );
       }
 
-      if (currentData) {
+      if (getCurrentData()) {
         lastProjectOnLoadState = null;
-        await runProjectOnLoad(currentData);
+        await runProjectOnLoad(getCurrentData());
       }
 
       return {
@@ -2902,7 +2963,7 @@ async function reinitializeReplConsole(
     } catch (error: unknown) {
       const message = getErrorMessage(error);
       return {
-        ...createReplOpenResult(request.language, currentData ? 'error' : 'unavailable', message),
+        ...createReplOpenResult(request.language, getCurrentData() ? 'error' : 'unavailable', message),
         message,
       };
     }
@@ -2939,7 +3000,7 @@ async function ensureJavaRuntimeSession(data: BlueData | null): Promise<JavaRunt
     return null;
   }
 
-  return javaRuntimeSessionManager.ensureReady(data, currentProjectSessionId, currentFilePath);
+  return javaRuntimeSessionManager.ensureReady(data, getCurrentProjectSessionId(), getCurrentFilePath());
 }
 
 function getProjectOnLoadState(
@@ -2952,7 +3013,7 @@ function getProjectOnLoadState(
       : null;
 
   return {
-    projectSessionId: currentProjectSessionId,
+    projectSessionId: getCurrentProjectSessionId(),
     javaScriptSession,
     jythonStateRevision,
   };
@@ -2984,7 +3045,7 @@ async function runProjectOnLoad(data: BlueData, force = false): Promise<JavaRunt
 
 async function togglePlay(): Promise<boolean> {
   if (!engineBridge) return false;
-  if (!currentData) {
+  if (!getCurrentData()) {
     notifyNoProjectLoaded('playback-error');
     return false;
   }
@@ -3012,7 +3073,7 @@ async function togglePlay(): Promise<boolean> {
  */
 async function restartPlayback(): Promise<boolean> {
   if (!engineBridge) return false;
-  if (!currentData) {
+  if (!getCurrentData()) {
     notifyNoProjectLoaded('playback-error');
     return false;
   }
@@ -3031,20 +3092,20 @@ async function restartPlayback(): Promise<boolean> {
 }
 
 async function startPlayback(
-  data: BlueData | null = currentData,
+  data: BlueData | null = getCurrentData(),
   forceProcessOnLoad = false,
 ): Promise<boolean> {
   if (!engineBridge || !data || !mainWindow) return false;
-  const canonicalDataAtStart = currentData;
-  const projectSessionAtStart = currentProjectSessionId;
-  activeAuditionPlayback = data !== currentData;
+  const canonicalDataAtStart = getCurrentData();
+  const projectSessionAtStart = getCurrentProjectSessionId();
+  activeAuditionPlayback = data !== getCurrentData();
 
   try {
     broadcastToWorkbenchWindows('playback-status', {
       status: 'starting',
       message: 'Preparing playback...',
       renderStartTime: data.getRenderStartTime(),
-      auditioning: data !== currentData,
+      auditioning: data !== getCurrentData(),
     });
 
     mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
@@ -3081,9 +3142,9 @@ async function startPlayback(
     // setup is awaiting. Never submit an old canonical session or its audition
     // copy to the engine after that fence has advanced.
     if (
-      currentProjectSessionId !== projectSessionAtStart
-      || currentData !== canonicalDataAtStart
-      || (data !== currentData && !activeAuditionPlayback)
+      getCurrentProjectSessionId() !== projectSessionAtStart
+      || getCurrentData() !== canonicalDataAtStart
+      || (data !== getCurrentData() && !activeAuditionPlayback)
     ) {
       activeAuditionPlayback = false;
       return false;
@@ -3224,8 +3285,8 @@ async function presentEngineRecoveryFailure(
 }
 
 async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
-  const data = currentData;
-  const projectSessionAtStart = currentProjectSessionId;
+  const data = getCurrentData();
+  const projectSessionAtStart = getCurrentProjectSessionId();
   if (!data || !engineBridge || !mainWindow || activeRenderOperationId) return false;
   if (!Array.isArray(objectIds) || objectIds.length === 0 || objectIds.some((id) => typeof id !== 'string')) {
     setAuditionScoreObjectAvailability(false);
@@ -3240,7 +3301,7 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
 
   try {
     if (playbackStartPromise) await playbackStartPromise;
-    if (currentData !== data || currentProjectSessionId !== projectSessionAtStart) return false;
+    if (getCurrentData() !== data || getCurrentProjectSessionId() !== projectSessionAtStart) return false;
 
     return await auditionSelectedScoreObjects(data, selected, {
       isRenderOperationActive: activeRenderOperationId !== null,
@@ -3267,7 +3328,7 @@ async function stopPlayback(): Promise<void> {
 }
 
 async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start'] | BlueLiveEngineSession['stop']> | { status: string; running: boolean; sessionId: number; message?: string }> {
-  if (!blueLiveSession || !currentData) {
+  if (!blueLiveSession || !getCurrentData()) {
     return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
   }
 
@@ -3281,12 +3342,12 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
 
-  const liveProjectData = currentData;
+  const liveProjectData = getCurrentData();
   let startSnapshot: BlueLiveStatusSnapshot | null = null;
   const liveStart = async (): Promise<boolean> => {
     startSnapshot = await blueLiveSession!.start(
       liveProjectData,
-      currentProjectRevision,
+      getCurrentProjectRevision(),
       getCurrentProjectDirectory(),
       javaScriptSession ?? undefined,
     );
@@ -3328,12 +3389,12 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
 }
 
 async function blueLiveRecompile(): Promise<void> {
-  if (!blueLiveSession || !currentData) return;
+  if (!blueLiveSession || !getCurrentData()) return;
   // Start/recompile is a runtime lifecycle change, not a project edit: do not
   // advance the document revision.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  await blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+  await blueLiveSession.recompile(getCurrentData(), getCurrentProjectRevision(), getCurrentProjectDirectory(), javaScriptSession ?? undefined);
 }
 
 async function blueLiveAllNotesOff(): Promise<void> {
@@ -3356,17 +3417,17 @@ async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
 
 async function generateCsdToScreen(): Promise<void> {
   if (!mainWindow) return;
-  if (!currentData) {
+  if (!getCurrentData()) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
     await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
     // "Generate CSD to Screen" mirrors Java's GenerateCsdToScreenAction, which
     // generates a disk-profile CSD (isRealTime=false).
     const csdText = await generateDiskCsdForScreen(
-      currentData,
+      getCurrentData(),
       javaScriptSession ?? undefined,
       javaRuntimeClient,
     );
@@ -3378,18 +3439,18 @@ async function generateCsdToScreen(): Promise<void> {
 
 async function generateRealtimeCsdToScreen(): Promise<void> {
   if (!mainWindow) return;
-  if (!currentData) {
+  if (!getCurrentData()) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
     await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
     // "Generate Realtime CSD to Screen" mirrors Java's
     // GenerateRealtimeCsdToScreenAction, which generates a realtime-profile
     // CSD (isRealTime=true).
     const csdText = await generateRealtimeCsdForScreen(
-      currentData,
+      getCurrentData(),
       javaScriptSession ?? undefined,
       javaRuntimeClient,
     );
@@ -3401,16 +3462,16 @@ async function generateRealtimeCsdToScreen(): Promise<void> {
 
 async function generateCsdToDisk(): Promise<void> {
   if (!mainWindow) return;
-  if (!currentData) {
+  if (!getCurrentData()) {
     notifyNoProjectLoaded('generated-csd-error');
     return;
   }
   try {
     await ensureJavaScriptEngine();
-    const javaRuntimeClient = await runProjectOnLoad(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
     await saveGeneratedCsdToDisk({
-      currentData,
-      currentFilePath,
+      currentData: getCurrentData(),
+      currentFilePath: getCurrentFilePath(),
       workDirectory: getConfiguredWorkDirectory(),
       mainWindow,
       session: javaScriptSession ?? undefined,
@@ -3453,8 +3514,8 @@ async function resolveMissingAudioAssets(
   if (
     !session
     || session.sessionId !== request.sessionId
-    || session.projectSessionId !== currentProjectSessionId
-    || !currentData
+    || session.projectSessionId !== getCurrentProjectSessionId()
+    || !getCurrentData()
   ) {
     return { ok: false, changed: false, stale: true };
   }
@@ -3464,7 +3525,7 @@ async function resolveMissingAudioAssets(
     return { ok: true, changed: false };
   }
 
-  const projectDirectory = currentFilePath ? path.dirname(currentFilePath) : null;
+  const projectDirectory = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
   const allowedOriginalPaths = new Set(session.missingFiles.map((row) => row.originalPath));
   const mappings = buildReplacementMappings(
     request.replacements,
@@ -3477,24 +3538,24 @@ async function resolveMissingAudioAssets(
     return { ok: true, changed: false };
   }
 
-  const changed = applyReplacementMappings(currentData, mappings);
+  const changed = applyReplacementMappings(getCurrentData(), mappings);
   clearMissingAudioSession(session.sessionId);
 
   if (!changed) {
     return { ok: true, changed: false };
   }
 
-  currentProjectRevision += 1;
-  const project = createProjectEditorSnapshot(currentData, currentFilePath, currentProjectSessionId);
+  projectSession.recordMutation({ changed: true });
+  const project = createProjectEditorSnapshot(getCurrentData(), getCurrentFilePath(), getCurrentProjectSessionId());
   return { ok: true, changed: true, project };
 }
 
-ipcMain.handle('open-file', async () => {
+ipcRegistration.handle('open-file', async () => {
   const loaded = await openFile();
-  return loaded ? currentFilePath : null;
+  return loaded ? getCurrentFilePath() : null;
 });
 
-ipcMain.handle('start-midi-import', async (): Promise<MidiImportStartResult> => {
+ipcRegistration.handle('start-midi-import', async (): Promise<MidiImportStartResult> => {
   if (!mainWindow || !hasLoadedProject()) {
     return { status: 'error', message: 'No project is loaded.' };
   }
@@ -3504,11 +3565,11 @@ ipcMain.handle('start-midi-import', async (): Promise<MidiImportStartResult> => 
   return midiImportService.start();
 });
 
-ipcMain.handle('cancel-midi-import', (_event, token: string): void => {
+ipcRegistration.handle('cancel-midi-import', (_event, token: string): void => {
   midiImportService.clear(token);
 });
 
-ipcMain.handle(
+ipcRegistration.handle(
   'commit-midi-import',
   async (_event, token: string, settings: unknown): Promise<MidiImportCommitResult> => {
     const validation = midiImportService.validateCommit(token, settings);
@@ -3565,73 +3626,73 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle('open-file-path', async (_event, filePath: string) => {
+ipcRegistration.handle('open-file-path', async (_event, filePath: string) => {
   const loaded = await openFilePath(filePath);
-  return loaded ? currentFilePath : null;
+  return loaded ? getCurrentFilePath() : null;
 });
 
-ipcMain.handle('new-file', async () => {
+ipcRegistration.handle('new-file', async () => {
   await handleNewFile();
-  return currentFilePath;
+  return getCurrentFilePath();
 });
 
-ipcMain.handle('missing-audio-assets:choose-replacement', async (_event, request: MissingAudioAssetsChooseRequest) => {
+ipcRegistration.handle('missing-audio-assets:choose-replacement', async (_event, request: MissingAudioAssetsChooseRequest) => {
   return chooseMissingAudioReplacement(request);
 });
 
-ipcMain.handle('missing-audio-assets:resolve', async (_event, request: MissingAudioAssetsResolveRequest) => {
+ipcRegistration.handle('missing-audio-assets:resolve', async (_event, request: MissingAudioAssetsResolveRequest) => {
   return resolveMissingAudioAssets(request);
 });
 
-ipcMain.handle('missing-audio-assets:dismiss', async (_event, request: { sessionId: string }) => {
+ipcRegistration.handle('missing-audio-assets:dismiss', async (_event, request: { sessionId: string }) => {
   clearMissingAudioSession(request.sessionId);
   return { ok: true };
 });
 
-ipcMain.handle('open-bsb-file-selector', async (_event, currentValue?: string) => {
+ipcRegistration.handle('open-bsb-file-selector', async (_event, currentValue?: string) => {
   return openBsbFileSelector(currentValue);
 });
 
-ipcMain.handle('set-bsb-file-selector-path', async (_event, filePath: string) => {
+ipcRegistration.handle('set-bsb-file-selector-path', async (_event, filePath: string) => {
   return normalizeBsbFileSelectorPath(filePath);
 });
 
-ipcMain.handle('copy-bsb-file-selector-to-media-folder', async (_event, currentValue?: string) => {
+ipcRegistration.handle('copy-bsb-file-selector-to-media-folder', async (_event, currentValue?: string) => {
   return copyBsbFileSelectorToMediaFolder(currentValue);
 });
 
-ipcMain.handle('save-file', async () => {
+ipcRegistration.handle('save-file', async () => {
   await saveFile();
-  return currentFilePath;
+  return getCurrentFilePath();
 });
 
-ipcMain.handle('save-file-as', async () => {
+ipcRegistration.handle('save-file-as', async () => {
   await saveFileAs();
-  return currentFilePath;
+  return getCurrentFilePath();
 });
 
-ipcMain.handle('toggle-play', async () => {
+ipcRegistration.handle('toggle-play', async () => {
   return togglePlay();
 });
 
-ipcMain.handle('restart-playback', async () => {
+ipcRegistration.handle('restart-playback', async () => {
   return restartPlayback();
 });
 
-ipcMain.handle('stop-playback', async () => {
+ipcRegistration.handle('stop-playback', async () => {
   await stopPlayback();
 });
 
-ipcMain.handle('audition-score-objects', async (_event, objectIds: unknown) => {
+ipcRegistration.handle('audition-score-objects', async (_event, objectIds: unknown) => {
   return auditionScoreObjects(objectIds);
 });
 
-ipcMain.on('sync-audition-score-object-availability', (event, enabled: unknown) => {
+ipcRegistration.on('sync-audition-score-object-availability', (event, enabled: unknown) => {
   if (event.sender !== mainWindow?.webContents) return;
   setAuditionScoreObjectAvailability(enabled === true);
 });
 
-ipcMain.on('sync-follow-playback-state', (event, enabled: boolean) => {
+ipcRegistration.on('sync-follow-playback-state', (event, enabled: boolean) => {
   if (event.sender !== mainWindow?.webContents) return;
   if (currentFollowPlaybackEnabled !== enabled) {
     currentFollowPlaybackEnabled = enabled;
@@ -3639,31 +3700,31 @@ ipcMain.on('sync-follow-playback-state', (event, enabled: boolean) => {
   }
 });
 
-ipcMain.handle('generate-csd-to-screen', async () => {
+ipcRegistration.handle('generate-csd-to-screen', async () => {
   await generateCsdToScreen();
 });
 
-ipcMain.handle('generate-realtime-csd-to-screen', async () => {
+ipcRegistration.handle('generate-realtime-csd-to-screen', async () => {
   await generateRealtimeCsdToScreen();
 });
 
-ipcMain.handle('generate-csd-to-disk', async () => {
+ipcRegistration.handle('generate-csd-to-disk', async () => {
   await generateCsdToDisk();
 });
 
-ipcMain.handle('get-project-info', () => {
-  if (!currentData) return null;
+ipcRegistration.handle('get-project-info', () => {
+  if (!getCurrentData()) return null;
   return {
-    title: currentData.getProjectProperties().title,
-    author: currentData.getProjectProperties().author,
-    sampleRate: currentData.getProjectProperties().sampleRate,
-    ksmps: currentData.getProjectProperties().ksmps,
-    nchnls: currentData.getProjectProperties().nchnls,
-    version: currentData.getVersion(),
+    title: getCurrentData().getProjectProperties().title,
+    author: getCurrentData().getProjectProperties().author,
+    sampleRate: getCurrentData().getProjectProperties().sampleRate,
+    ksmps: getCurrentData().getProjectProperties().ksmps,
+    nchnls: getCurrentData().getProjectProperties().nchnls,
+    version: getCurrentData().getVersion(),
   };
 });
 
-ipcMain.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> => {
+ipcRegistration.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Choose SoundFont File',
@@ -3679,7 +3740,7 @@ ipcMain.handle(SOUND_FONT_FILE_SELECT_CHANNEL, async (): Promise<string | null> 
     : result.filePaths[0] ?? null;
 });
 
-ipcMain.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => {
+ipcRegistration.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => {
   if (typeof filePath !== 'string' || filePath.trim().length === 0) {
     throw new Error('SoundFont file path is required.');
   }
@@ -3694,7 +3755,7 @@ ipcMain.handle(SOUND_FONT_INSPECT_CHANNEL, async (_event, filePath: unknown) => 
   );
 });
 
-ipcMain.handle('set-recent-files', (_event, files: string[]) => {
+ipcRegistration.handle('set-recent-files', (_event, files: string[]) => {
   if (!Array.isArray(files)) {
     return getRecentProjectFilesSnapshot();
   }
@@ -3703,11 +3764,11 @@ ipcMain.handle('set-recent-files', (_event, files: string[]) => {
   return getRecentProjectFilesSnapshot();
 });
 
-ipcMain.handle('get-recent-files', () => {
+ipcRegistration.handle('get-recent-files', () => {
   return getRecentProjectFilesSnapshot();
 });
 
-ipcMain.handle('import-blue-udo', async () => {
+ipcRegistration.handle('import-blue-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     defaultPath: getConfiguredWorkDirectory(),
@@ -3719,7 +3780,7 @@ ipcMain.handle('import-blue-udo', async () => {
   return xml;
 });
 
-ipcMain.handle('import-arrangement-instrument', async (): Promise<string | null> => {
+ipcRegistration.handle('import-arrangement-instrument', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Import Instrument',
@@ -3731,7 +3792,7 @@ ipcMain.handle('import-arrangement-instrument', async (): Promise<string | null>
   return fs.promises.readFile(result.filePaths[0]!, 'utf-8');
 });
 
-ipcMain.handle('import-csound-udo', async () => {
+ipcRegistration.handle('import-csound-udo', async () => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     defaultPath: getConfiguredWorkDirectory(),
@@ -3743,7 +3804,7 @@ ipcMain.handle('import-csound-udo', async () => {
   return text;
 });
 
-ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
+ipcRegistration.handle('import-preset-file', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Import Presets',
@@ -3755,12 +3816,12 @@ ipcMain.handle('import-preset-file', async (): Promise<string | null> => {
   return fs.promises.readFile(result.filePaths[0], 'utf-8');
 });
 
-ipcMain.handle(BLUE_X7_IMPORT_SYSEX_CHANNEL, async (event) => {
+ipcRegistration.handle(BLUE_X7_IMPORT_SYSEX_CHANNEL, async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   return selectBlueX7SysexFile(window, mainWindow);
 });
 
-ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
+ipcRegistration.handle('import-score-object', async (): Promise<ScoreObjectImportResult | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     defaultPath: getConfiguredWorkDirectory(),
@@ -3769,7 +3830,7 @@ ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult 
   });
   if (result.canceled || result.filePaths.length === 0) return null;
   const xml = await fs.promises.readFile(result.filePaths[0], 'utf-8');
-  const data = currentData;
+  const data = getCurrentData();
   if (!data) return { ok: false, error: 'No project is loaded.' };
   const score = data.getScore();
   return prepareScoreObjectImport(
@@ -3779,7 +3840,7 @@ ipcMain.handle('import-score-object', async (): Promise<ScoreObjectImportResult 
   );
 });
 
-ipcMain.handle('read-csoundrc', () => {
+ipcRegistration.handle('read-csoundrc', () => {
   const csoundRcEnv = process.env.CSOUNDRC;
   const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
   let content = '';
@@ -3793,14 +3854,14 @@ ipcMain.handle('read-csoundrc', () => {
   return { filePath, content };
 });
 
-ipcMain.handle('write-csoundrc', (_event, text: string) => {
+ipcRegistration.handle('write-csoundrc', (_event, text: string) => {
   const csoundRcEnv = process.env.CSOUNDRC;
   const filePath = csoundRcEnv || path.join(app.getPath('home'), '.csound7rc');
   fs.writeFileSync(filePath, text ?? '', 'utf-8');
   return { success: true, filePath };
 });
 
-ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
+ipcRegistration.handle('export-blue-udo', async (_event, xmlText: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: getConfiguredWorkDirectory(),
@@ -3812,9 +3873,9 @@ ipcMain.handle('export-blue-udo', async (_event, xmlText: string) => {
   await fs.promises.writeFile(filePath, xmlText, 'utf-8');
 });
 
-ipcMain.handle('export-arrangement-instrument', async (_event, assignmentId: unknown): Promise<void> => {
-  if (!mainWindow || !currentData || typeof assignmentId !== 'string') return;
-  const instrument = currentData.getArrangement().getInstrumentById(assignmentId);
+ipcRegistration.handle('export-arrangement-instrument', async (_event, assignmentId: unknown): Promise<void> => {
+  if (!mainWindow || !getCurrentData() || typeof assignmentId !== 'string') return;
+  const instrument = getCurrentData().getArrangement().getInstrumentById(assignmentId);
   if (!instrument) return;
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Instrument',
@@ -3828,7 +3889,7 @@ ipcMain.handle('export-arrangement-instrument', async (_event, assignmentId: unk
   await fs.promises.writeFile(filePath, instrument.saveAsXML().toXml(), 'utf-8');
 });
 
-ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: string) => {
+ipcRegistration.handle('export-csound-udo', async (_event, codeText: string, udoName: string) => {
   if (!mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: getConfiguredWorkDirectoryDefaultPath(`${udoName}.udo`),
@@ -3838,7 +3899,7 @@ ipcMain.handle('export-csound-udo', async (_event, codeText: string, udoName: st
   await fs.promises.writeFile(result.filePath, codeText, 'utf-8');
 });
 
-ipcMain.handle('export-preset-file', async (_event, xmlText: string, presetName: string) => {
+ipcRegistration.handle('export-preset-file', async (_event, xmlText: string, presetName: string) => {
   if (!mainWindow || typeof xmlText !== 'string') return;
   const safeName = typeof presetName === 'string'
     ? presetName.trim().replace(/[\\/:*?"<>|]/g, '_') || 'presets'
@@ -3855,7 +3916,7 @@ ipcMain.handle('export-preset-file', async (_event, xmlText: string, presetName:
   await fs.promises.writeFile(filePath, xmlText, 'utf-8');
 });
 
-ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName: string): Promise<ScoreObjectExportResult> => {
+ipcRegistration.handle('export-score-object', async (_event, xmlText: string, objectName: string): Promise<ScoreObjectExportResult> => {
   if (!mainWindow) return { status: 'error', error: 'The main window is not available.' };
   if (typeof xmlText !== 'string' || xmlText.trim().length === 0) {
     return { status: 'error', error: 'The selected Sound Object has no XML to export.' };
@@ -3877,48 +3938,48 @@ ipcMain.handle('export-score-object', async (_event, xmlText: string, objectName
 
 // ─── Blue Live IPC Handlers ───
 
-ipcMain.handle('blue-live:toggle', async () => {
+ipcRegistration.handle('blue-live:toggle', async () => {
   return blueLiveToggle();
 });
 
-ipcMain.handle('blue-live:stop', async () => {
+ipcRegistration.handle('blue-live:stop', async () => {
   if (!blueLiveSession) {
     return { status: 'idle', running: false, sessionId: 0 };
   }
   return blueLiveSession.stop();
 });
 
-ipcMain.handle('blue-live:recompile', async () => {
-  if (!blueLiveSession || !currentData) {
+ipcRegistration.handle('blue-live:recompile', async () => {
+  if (!blueLiveSession || !getCurrentData()) {
     return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
   }
   // Recompile is a runtime lifecycle change, not a project edit.
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
-  return blueLiveSession.recompile(currentData, currentProjectRevision, getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+  return blueLiveSession.recompile(getCurrentData(), getCurrentProjectRevision(), getCurrentProjectDirectory(), javaScriptSession ?? undefined);
 });
 
-ipcMain.handle('blue-live:all-notes-off', async () => {
+ipcRegistration.handle('blue-live:all-notes-off', async () => {
   if (!blueLiveSession) {
     return { ok: false, message: 'Blue Live not initialized' };
   }
   return blueLiveSession.sendAllNotesOff();
 });
 
-ipcMain.handle('blue-live:trigger-note', async (_event, request: BlueLiveNoteTriggerRequest): Promise<BlueLiveNoteTriggerResult> => {
-  if (!blueLiveSession || !currentData) {
+ipcRegistration.handle('blue-live:trigger-note', async (_event, request: BlueLiveNoteTriggerRequest): Promise<BlueLiveNoteTriggerResult> => {
+  if (!blueLiveSession || !getCurrentData()) {
     return { ok: false, message: 'No project loaded' };
   }
 
   return blueLiveSession.triggerNote(request);
 });
 
-ipcMain.handle('blue-live:trigger-objects', async (_event, request: LegacyBlueLiveTriggerRequest): Promise<LegacyBlueLiveTriggerResult> => {
+ipcRegistration.handle('blue-live:trigger-objects', async (_event, request: LegacyBlueLiveTriggerRequest): Promise<LegacyBlueLiveTriggerResult> => {
   const controller = getBlueLiveTriggerController();
   return controller.trigger(request);
 });
 
-ipcMain.handle('blue-live:get-status', async () => {
+ipcRegistration.handle('blue-live:get-status', async () => {
   if (!blueLiveSession) {
     return { status: 'idle', running: false, sessionId: 0 };
   }
@@ -3927,12 +3988,12 @@ ipcMain.handle('blue-live:get-status', async () => {
 
 // ─── Confirmation and Settings IPC Handlers ───
 
-ipcMain.handle(NATIVE_CONFIRMATION_CHANNEL, async (event, request: unknown): Promise<NativeConfirmationResult> => {
+ipcRegistration.handle(NATIVE_CONFIRMATION_CHANNEL, async (event, request: unknown): Promise<NativeConfirmationResult> => {
   const owner = BrowserWindow.fromWebContents(event.sender);
   return showNativeConfirmation(owner, request);
 });
 
-ipcMain.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsClosePromptResponse> => {
+ipcRegistration.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsClosePromptResponse> => {
   const owner = BrowserWindow.fromWebContents(event.sender);
   const result = await showNativeConfirmation(owner, {
     id: 'settings-confirm-close',
@@ -3953,20 +4014,20 @@ ipcMain.handle(SETTINGS_CONFIRM_CLOSE_CHANNEL, async (event): Promise<SettingsCl
   return result.actionId === 'yes' ? 'yes' : result.actionId === 'no' ? 'no' : 'cancel';
 });
 
-ipcMain.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown) => {
+ipcRegistration.on(SETTINGS_CLOSE_RESPONSE_CHANNEL, (_event, resolution: unknown) => {
   if (resolution === 'allow' || resolution === 'cancel') {
     resolveSettingsWindowClose(resolution as SettingsCloseResolution);
   }
 });
 
-ipcMain.handle('settings:open', async () => {
+ipcRegistration.handle('settings:open', async () => {
   if (!mainWindow) return;
   openSettingsWindow(mainWindow, {
     initialZoomFactor: appZoomController.getCurrentFactor(),
   });
 });
 
-ipcMain.handle(APP_METADATA_GET_CHANNEL, () => resolveAppMetadata({
+ipcRegistration.handle(APP_METADATA_GET_CHANNEL, () => resolveAppMetadata({
   appVersion: app.getVersion(),
   appPath: app.getAppPath(),
   resourcesPath: process.resourcesPath,
@@ -3979,7 +4040,7 @@ ipcMain.handle(APP_METADATA_GET_CHANNEL, () => resolveAppMetadata({
   },
 }));
 
-ipcMain.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(event.sender));
+ipcRegistration.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(event.sender));
 
 // ─── Program Settings IPC Handlers ───
 
@@ -4008,11 +4069,11 @@ function syncFollowPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): v
   }
 }
 
-ipcMain.handle('program-settings:get', () => {
+ipcRegistration.handle('program-settings:get', () => {
   return loadProgramSettings();
 });
 
-ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapshot) => {
+ipcRegistration.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapshot) => {
   const previousOscPort = loadProgramSettings().osc.preferredPort;
   // SPEC 061: prevent a stale full-Settings renderer draft from reverting a
   // later main-owned View-menu zoom change. The Settings renderer does not
@@ -4041,7 +4102,7 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
   return result;
 });
 
-ipcMain.handle(
+ipcRegistration.handle(
   'engine-runtime:probe',
   async (_event, request?: EngineProbeRequest): Promise<EngineProbeResult> => {
     if (!engineRuntimeService) {
@@ -4058,7 +4119,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle(
+ipcRegistration.handle(
   'engine-runtime:query-csound-io',
   async (_event, request?: CsoundIoQueryRequest): Promise<CsoundIoQueryResult> => {
     if (!engineRuntimeService) {
@@ -4075,7 +4136,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
+ipcRegistration.handle('program-settings:reset-panel', (_event, panel: string) => {
   const snapshot = resetPanel(panel as any);
   if (panel === 'midi' && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(snapshot);
@@ -4089,20 +4150,20 @@ ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   return snapshot;
 });
 
-ipcMain.handle(OSC_CONTROL_GET_SNAPSHOT_CHANNEL, () => {
+ipcRegistration.handle(OSC_CONTROL_GET_SNAPSHOT_CHANNEL, () => {
   return oscControlService?.getSnapshot()
     ?? createInitialOscServerRuntimeSnapshot(loadProgramSettings().osc);
 });
 
-ipcMain.handle('program-settings:usage-matrix', () => {
+ipcRegistration.handle('program-settings:usage-matrix', () => {
   return buildUsageMatrix();
 });
 
-ipcMain.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy: any) => {
+ipcRegistration.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy: any) => {
   return syncLegacyRendererSettings(legacy);
 });
 
-ipcMain.handle('program-settings:update-playback-preferences', (_event, patch: unknown) => {
+ipcRegistration.handle('program-settings:update-playback-preferences', (_event, patch: unknown) => {
   const result = updatePlaybackPreferences(patch as any);
   if (result.ok && result.snapshot) {
     // Refresh main menu cache from the updated settings
@@ -4116,7 +4177,7 @@ ipcMain.handle('program-settings:update-playback-preferences', (_event, patch: u
 
 // ─── File Manager IPC Handlers (SPEC 076) ───
 
-ipcMain.handle(FILE_MANAGER_GET_ROOTS_CHANNEL, () => {
+ipcRegistration.handle(FILE_MANAGER_GET_ROOTS_CHANNEL, () => {
   const settings = loadProgramSettings();
   return getFileManagerRoots({
     loadFavoritePaths: () => settings.appSpecific.fileManagerFavorites,
@@ -4124,23 +4185,23 @@ ipcMain.handle(FILE_MANAGER_GET_ROOTS_CHANNEL, () => {
   });
 });
 
-ipcMain.handle(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+ipcRegistration.handle(FILE_MANAGER_LIST_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
   return listFileManagerDirectory(request);
 });
 
-ipcMain.handle(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
+ipcRegistration.handle(FILE_MANAGER_VALIDATE_DIRECTORY_CHANNEL, (_event, request: { path: string }) => {
   return validateFileManagerDirectory(request);
 });
 
-ipcMain.handle(COMMIT_AUDIO_FILE_DROP_CHANNEL, (_event, request: CommitAudioFileDropRequest) => {
+ipcRegistration.handle(COMMIT_AUDIO_FILE_DROP_CHANNEL, (_event, request: CommitAudioFileDropRequest) => {
   return commitAudioFileDrop(request, {
-    getCurrentProject: () => (currentData
+    getCurrentProject: () => (getCurrentData()
       ? {
-          sessionId: currentProjectSessionId,
-          revision: currentProjectRevision,
+          sessionId: getCurrentProjectSessionId(),
+          revision: getCurrentProjectRevision(),
           projectDirectory: getCurrentProjectDirectory(),
-          copyToMediaFileOnImport: currentData.getProjectProperties().copyToMediaFileOnImport,
-          mediaFolder: currentData.getProjectProperties().mediaFolder,
+          copyToMediaFileOnImport: getCurrentData().getProjectProperties().copyToMediaFileOnImport,
+          mediaFolder: getCurrentData().getProjectProperties().mediaFolder,
         }
       : null),
     commitProjectDocumentPatch: (patch) => commitProjectDocumentPatchBatch([patch]),
@@ -4149,29 +4210,29 @@ ipcMain.handle(COMMIT_AUDIO_FILE_DROP_CHANNEL, (_event, request: CommitAudioFile
 
 // ─── Window Layout IPC Handlers ───
 
-ipcMain.handle('window-layout:get', () => {
+ipcRegistration.handle('window-layout:get', () => {
   return loadWindowLayoutSettings();
 });
 
-ipcMain.handle(WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL, () => {
+ipcRegistration.handle(WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL, () => {
   return getAvailableDisplayWorkAreas();
 });
 
-ipcMain.handle('window-layout:update', (_event, request: import('../shared/window-layout-settings').WindowLayoutUpdateRequest) => {
+ipcRegistration.handle('window-layout:update', (_event, request: import('../shared/window-layout-settings').WindowLayoutUpdateRequest) => {
   return updateWindowLayout(request);
 });
 
-ipcMain.handle('window-layout:reset', () => {
+ipcRegistration.handle('window-layout:reset', () => {
   return resetWindowLayout();
 });
 
-ipcMain.handle('open-effect-editor', async (_event, request: EffectEditorRequest) => {
+ipcRegistration.handle('open-effect-editor', async (_event, request: EffectEditorRequest) => {
   openEffectEditorWindow(mainWindow, request, {
     initialZoomFactor: appZoomController.getCurrentFactor(),
   });
 });
 
-ipcMain.handle('open-effect-interface', async (_event, request: EffectEditorRequest) => {
+ipcRegistration.handle('open-effect-interface', async (_event, request: EffectEditorRequest) => {
   let interfaceWidth: number | undefined;
   let interfaceHeight: number | undefined;
 
@@ -4191,7 +4252,7 @@ ipcMain.handle('open-effect-interface', async (_event, request: EffectEditorRequ
   });
 });
 
-ipcMain.handle('get-effect-editor-document', (_event, request: EffectEditorRequest) => {
+ipcRegistration.handle('get-effect-editor-document', (_event, request: EffectEditorRequest) => {
   if (request.ownerType === 'library') {
     return null;
   }
@@ -4199,17 +4260,17 @@ ipcMain.handle('get-effect-editor-document', (_event, request: EffectEditorReque
   return getProjectEffectEditorSnapshot(request);
 });
 
-ipcMain.handle('update-effect-editor-document', (_event, request: EffectEditorPatchRequest) => {
+ipcRegistration.handle('update-effect-editor-document', (_event, request: EffectEditorPatchRequest) => {
   return applyProjectEffectEditorPatch(request);
 });
 
-ipcMain.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => {
+ipcRegistration.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => {
   return focusEffectEditorWindow(request);
 });
 
-ipcMain.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
+ipcRegistration.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
   if (!isTrackInstrumentEditorRequest(request)
-    || request.track.projectSessionId !== currentProjectSessionId) {
+    || request.track.projectSessionId !== getCurrentProjectSessionId()) {
     throw new Error('Track instrument editor request is no longer valid.');
   }
   // Opening is a read/focus action. A pending renderer patch may have moved
@@ -4225,18 +4286,18 @@ ipcMain.handle('open-track-instrument-editor', async (_event, request: TrackInst
   });
 });
 
-ipcMain.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
+ipcRegistration.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
   if (!isTrackInstrumentEditorRequest(request)
     || !trackInstrumentRequestIsCurrent(request)) return false;
   return focusTrackInstrumentEditorWindow(request);
 });
 
-ipcMain.handle('get-track-instrument-editor-document', (_event, request: TrackInstrumentEditorRequest) => {
+ipcRegistration.handle('get-track-instrument-editor-document', (_event, request: TrackInstrumentEditorRequest) => {
   if (!isTrackInstrumentEditorRequest(request)) return null;
   return getTrackInstrumentEditorSnapshot(request);
 });
 
-ipcMain.handle('update-track-instrument-editor-document', (_event, request: TrackInstrumentEditorPatchRequest) => {
+ipcRegistration.handle('update-track-instrument-editor-document', (_event, request: TrackInstrumentEditorPatchRequest) => {
   if (!isTrackInstrumentEditorPatchRequest(request)) {
     return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
   }
@@ -4245,7 +4306,7 @@ ipcMain.handle('update-track-instrument-editor-document', (_event, request: Trac
 
 // ─── Evaluate Code IPC Handler ───
 
-ipcMain.handle('engine:evaluate-code', async (_event, request: { editorKind: string; text: string; sourcePanelId: string }) => {
+ipcRegistration.handle('engine:evaluate-code', async (_event, request: { editorKind: string; text: string; sourcePanelId: string }) => {
   const trimmed = request.text?.trim();
   if (!trimmed) {
     return { routedTo: 'none', ok: false, message: 'No text selected' };
@@ -4353,14 +4414,14 @@ async function syncEngineWithProjectPatch(
   }
 }
 
-ipcMain.handle('get-project-document', () => {
+ipcRegistration.handle('get-project-document', () => {
   return getCurrentProjectDocument();
 });
 
 async function commitProjectDocumentPatchBatch(
   patches: ProjectDocumentPatch[],
 ): Promise<ProjectDocumentCommitReceipt> {
-  if (!currentData) {
+  if (!getCurrentData()) {
     throw new Error('No project loaded');
   }
 
@@ -4373,19 +4434,19 @@ async function commitProjectDocumentPatchBatch(
 
   for (const patch of patches) {
     const clojureDependenciesChanged = patch.clojureProject
-      ? clojureProjectPatchChangesRuntimeDependencies(currentData, patch.clojureProject)
+      ? clojureProjectPatchChangesRuntimeDependencies(getCurrentData(), patch.clojureProject)
       : false;
-    const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
+    const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch);
     maybeCloseRemovedProjectEffectEditors(patch);
     maybeCloseRemovedTrackInstrumentEditors(patch);
-    const changed = applyProjectDocumentPatch(currentData, patch, {
-      projectSessionId: currentProjectSessionId,
-      projectRevision: currentProjectRevision,
+    const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
+      projectSessionId: getCurrentProjectSessionId(),
+      projectRevision: getCurrentProjectRevision(),
       defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
     });
     if (changed) {
       anyCanonicalMutation = true;
-      for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
+      for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
         scoreAutomationParameterIds.add(id);
       }
     } else {
@@ -4393,17 +4454,19 @@ async function commitProjectDocumentPatchBatch(
     }
     javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
     if (changed && (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())) {
-      void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds).catch((error) => {
+      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
       });
     }
   }
 
   if (anyCanonicalMutation) {
-    currentProjectRevision += 1;
+    projectSession.recordMutation({
+      changed: true,
+      invalidateSession: javaRuntimeDependenciesChanged,
+    });
   }
   if (javaRuntimeDependenciesChanged) {
-    currentProjectSessionId += 1;
     midiImportService.clearAll();
     await disposeJavaRuntimeSession();
   }
@@ -4412,18 +4475,18 @@ async function commitProjectDocumentPatchBatch(
     unifiedLibraryService?.publishProjectChanged();
   }
   const receipt: ProjectDocumentCommitReceipt = {
-    revision: currentProjectRevision,
-    sessionId: currentProjectSessionId,
+    revision: getCurrentProjectRevision(),
+    sessionId: getCurrentProjectSessionId(),
     changed: anyCanonicalMutation,
   };
   return receipt;
 }
 
-ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
+ipcRegistration.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
   return commitProjectDocumentPatchBatch(patches);
 });
 
-ipcMain.handle('read-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
+ipcRegistration.handle('read-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
   try {
     const resolvedFilePath = resolveAudioFilePathForRead(filePath);
     if (!resolvedFilePath) {
@@ -4437,12 +4500,12 @@ ipcMain.handle('read-audio-file-bytes', async (_event, filePath: string): Promis
   }
 });
 
-ipcMain.handle('read-authorized-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
+ipcRegistration.handle('read-authorized-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
   const resolvedFilePath = resolveAudioFilePathForRead(filePath);
   return resolvedFilePath ? readAuthorizedAudioFileBytes(resolvedFilePath) : null;
 });
 
-ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
+ipcRegistration.handle('open-audio-file', async (): Promise<string | null> => {
   if (!mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Audio File',
@@ -4466,13 +4529,13 @@ ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
 
 // SPEC 076: authorize a File Manager double-clicked file for the audio
 // stream protocol (same policy as dialog-selected and play-render outputs).
-ipcMain.handle('authorize-audio-file', (_event, filePath: string): boolean => {
+ipcRegistration.handle('authorize-audio-file', (_event, filePath: string): boolean => {
   return typeof filePath === 'string' && filePath.length > 0
     ? authorizeAudioFilePath(filePath)
     : false;
 });
 
-ipcMain.handle('get-audio-file-stat', async (
+ipcRegistration.handle('get-audio-file-stat', async (
   _event,
   filePath: string,
 ): Promise<{ size: number; mtime: number } | null> => {
@@ -4489,12 +4552,12 @@ ipcMain.handle('get-audio-file-stat', async (
   }
 });
 
-ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObjectEditorRequest): ScoreObjectEditorDocumentSnapshot | null => {
-  if (!currentData) return null;
-  const doc = createScoreObjectEditorDocument(currentData, request);
+ipcRegistration.handle('get-score-object-editor-document', (_event, request: ScoreObjectEditorRequest): ScoreObjectEditorDocumentSnapshot | null => {
+  if (!getCurrentData()) return null;
+  const doc = createScoreObjectEditorDocument(getCurrentData(), request);
   if (!doc) return null;
 
-  const context = getScoreObjectFileResolutionContext(currentData);
+  const context = getScoreObjectFileResolutionContext(getCurrentData());
 
   if (doc.editor.kind === 'audioFile') {
     doc.editor.metadata = inspectAudioFileMetadata(doc.editor.filePath, context);
@@ -4510,7 +4573,7 @@ ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObject
   return doc;
 });
 
-ipcMain.handle('select-score-object-audio-file', async (event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
+ipcRegistration.handle('select-score-object-audio-file', async (event, request?: { currentPath?: string }): Promise<AudioFileSelectionResult> => {
   const owner = BrowserWindow.fromWebContents(event.sender);
   if (!owner || owner.isDestroyed()) {
     return {
@@ -4520,7 +4583,7 @@ ipcMain.handle('select-score-object-audio-file', async (event, request?: { curre
     };
   }
 
-  if (!currentData) {
+  if (!getCurrentData()) {
     return {
       status: 'error',
       code: 'no-project',
@@ -4528,8 +4591,8 @@ ipcMain.handle('select-score-object-audio-file', async (event, request?: { curre
     };
   }
 
-  const projectProps = currentData.getProjectProperties();
-  const context = getScoreObjectFileResolutionContext(currentData);
+  const projectProps = getCurrentData().getProjectProperties();
+  const context = getScoreObjectFileResolutionContext(getCurrentData());
 
   return selectScoreObjectAudioFile(
     {
@@ -4557,7 +4620,7 @@ ipcMain.handle('select-score-object-audio-file', async (event, request?: { curre
   );
 });
 
-ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
+ipcRegistration.handle('save-frozen-sound-object-copy', async (event, request: { frozenWaveFileName: string }): Promise<FrozenSoundObjectSaveCopyResult> => {
   const owner = BrowserWindow.fromWebContents(event.sender);
   if (!owner || owner.isDestroyed()) {
     return {
@@ -4567,7 +4630,7 @@ ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenW
     };
   }
 
-  if (!currentData || !currentFilePath) {
+  if (!getCurrentData() || !getCurrentFilePath()) {
     return {
       status: 'error',
       code: 'no-project',
@@ -4575,7 +4638,7 @@ ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenW
     };
   }
 
-  const context = getScoreObjectFileResolutionContext(currentData);
+  const context = getScoreObjectFileResolutionContext(getCurrentData());
 
   return saveFrozenSoundObjectCopy(
     {
@@ -4613,21 +4676,21 @@ ipcMain.handle('save-frozen-sound-object-copy', async (event, request: { frozenW
   );
 });
 
-ipcMain.handle('get-named-chain-names', (): string[] => {
-  if (!currentData) return [];
-  return currentData.getNoteProcessorChainMap().getChainNames();
+ipcRegistration.handle('get-named-chain-names', (): string[] => {
+  if (!getCurrentData()) return [];
+  return getCurrentData().getNoteProcessorChainMap().getChainNames();
 });
 
-ipcMain.handle('get-named-chain', (_event, name: string): NoteProcessorChainSnapshot | null => {
-  if (!currentData) return null;
-  const chain = currentData.getNoteProcessorChainMap().getNoteProcessorChain(name);
+ipcRegistration.handle('get-named-chain', (_event, name: string): NoteProcessorChainSnapshot | null => {
+  if (!getCurrentData()) return null;
+  const chain = getCurrentData().getNoteProcessorChainMap().getNoteProcessorChain(name);
   if (!chain) return null;
   return createNoteProcessorChainSnapshot(chain);
 });
 
-ipcMain.handle('get-nested-poly-object-snapshot', (_event, location: ScoreObjectLocationRef): PolyObjectLayerGroupSnapshot | null => {
-  if (!currentData) return null;
-  return createNestedPolyObjectSnapshot(currentData, location);
+ipcRegistration.handle('get-nested-poly-object-snapshot', (_event, location: ScoreObjectLocationRef): PolyObjectLayerGroupSnapshot | null => {
+  if (!getCurrentData()) return null;
+  return createNestedPolyObjectSnapshot(getCurrentData(), location);
 });
 
 async function runScoreObjectTestRequest(
@@ -4636,8 +4699,8 @@ async function runScoreObjectTestRequest(
   let javaRuntimeClient: JavaRuntimeClient | null = null;
 
   try {
-    if (currentData) {
-      javaRuntimeClient = await runProjectOnLoad(currentData);
+    if (getCurrentData()) {
+      javaRuntimeClient = await runProjectOnLoad(getCurrentData());
     }
   } catch (error) {
     return {
@@ -4647,7 +4710,7 @@ async function runScoreObjectTestRequest(
     };
   }
 
-  return testScoreObject(currentData, request, {
+  return testScoreObject(getCurrentData(), request, {
     ensureJavaScriptEngine,
     javaScriptSession,
     javaRuntimeClient,
@@ -4659,7 +4722,7 @@ for (const channel of [
   'test-external-sound-object',
   'test-javascript-sound-object',
 ] as const) {
-  ipcMain.handle(channel, (_event, request: ScoreObjectEditorRequest) => (
+  ipcRegistration.handle(channel, (_event, request: ScoreObjectEditorRequest) => (
     runScoreObjectTestRequest(request)
   ));
 }
@@ -4670,8 +4733,8 @@ async function runPythonInstrumentTestRequest(
   let javaRuntimeClient: JavaRuntimeClient | null = null;
 
   try {
-    if (currentData) {
-      javaRuntimeClient = await runProjectOnLoad(currentData);
+    if (getCurrentData()) {
+      javaRuntimeClient = await runProjectOnLoad(getCurrentData());
     }
   } catch (error) {
     return {
@@ -4686,11 +4749,11 @@ async function runPythonInstrumentTestRequest(
   });
 }
 
-ipcMain.handle('test-python-instrument', (_event, request: PythonInstrumentTestRequest) => (
+ipcRegistration.handle('test-python-instrument', (_event, request: PythonInstrumentTestRequest) => (
   runPythonInstrumentTestRequest(request)
 ));
 
-ipcMain.handle(
+ipcRegistration.handle(
   REPL_CONSOLE_OPEN_CHANNEL,
   async (_event, request: ReplConsoleOpenRequest): Promise<ReplConsoleOpenResult> => {
     if (!isReplConsoleLanguage(request?.language)) {
@@ -4700,34 +4763,34 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle(
+ipcRegistration.handle(
   REPL_CONSOLE_EVALUATE_CHANNEL,
   async (_event, request: ReplConsoleEvaluateRequest): Promise<ReplConsoleEvaluateResult> =>
     evaluateReplConsole(request),
 );
 
-ipcMain.handle(
+ipcRegistration.handle(
   REPL_CONSOLE_REINITIALIZE_CHANNEL,
   async (_event, request: ReplConsoleReinitializeRequest): Promise<ReplConsoleReinitializeResult> =>
     reinitializeReplConsole(request),
 );
 
-ipcMain.handle(
+ipcRegistration.handle(
   REPL_CONSOLE_CLOSE_CHANNEL,
   (_event, _request: ReplConsoleCloseRequest): ReplConsoleCloseResult => ({ ok: true }),
 );
 
-ipcMain.handle(
+ipcRegistration.handle(
   JAVASCRIPT_RUNTIME_REINITIALIZE_CHANNEL,
   async (): Promise<ScriptRuntimeReinitializeResult> => reinitializeJavaScriptRuntime(),
 );
 
-ipcMain.handle('java-runtime:reinitialize', async () => {
-  if (!currentData) {
+ipcRegistration.handle('java-runtime:reinitialize', async () => {
+  if (!getCurrentData()) {
     return { ok: false, error: 'No project loaded.' };
   }
 
-  if (!currentData.usesJavaRuntime()) {
+  if (!getCurrentData().usesJavaRuntime()) {
     return { ok: false, error: 'Active project does not use the Java runtime.' };
   }
 
@@ -4737,37 +4800,37 @@ ipcMain.handle('java-runtime:reinitialize', async () => {
 
   try {
     const javaRuntimeClient = await javaRuntimeSessionManager.reinitializeClojure(
-      currentData,
-      currentProjectSessionId,
-      currentFilePath,
+      getCurrentData(),
+      getCurrentProjectSessionId(),
+      getCurrentFilePath(),
     );
-    await currentData.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient);
-    lastProjectOnLoadState = getProjectOnLoadState(currentData, javaRuntimeClient);
+    await getCurrentData().processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient);
+    lastProjectOnLoadState = getProjectOnLoadState(getCurrentData(), javaRuntimeClient);
     return { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
 });
 
-ipcMain.handle('java-runtime:reinitialize-jython', async () => reinitializeJythonRuntime());
+ipcRegistration.handle('java-runtime:reinitialize-jython', async () => reinitializeJythonRuntime());
 
-ipcMain.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {
-  if (!currentData || !isBsbRealtimeControlUpdate(update)) {
+ipcRegistration.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {
+  if (!getCurrentData() || !isBsbRealtimeControlUpdate(update)) {
     return;
   }
 
   void syncBsbRealtimeControlUpdate(
-    currentData,
+    getCurrentData(),
     update,
-    currentProjectSessionId,
+    getCurrentProjectSessionId(),
     syncActiveRuntimeChannel,
   ).catch((error) => {
     console.error('[main] Failed to sync realtime BSB control update:', error);
   });
 });
 
-ipcMain.handle('send-mixer-realtime-level-update', (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
-  if (!currentData || !engineBridge || !engineBridge.isCurrentlyPlaying()) {
+ipcRegistration.handle('send-mixer-realtime-level-update', (_event, update: import('../shared/project-editor').MixerRealtimeLevelUpdate) => {
+  if (!getCurrentData() || !engineBridge || !engineBridge.isCurrentlyPlaying()) {
     return;
   }
 
@@ -4780,8 +4843,8 @@ ipcMain.handle('send-mixer-realtime-level-update', (_event, update: import('../s
   }
 });
 
-ipcMain.handle('send-effect-realtime-update', (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
-  if (!currentData || !engineBridge || !engineBridge.isCurrentlyPlaying() || !update.bsbWidgetValues) {
+ipcRegistration.handle('send-effect-realtime-update', (_event, update: import('../shared/project-editor').EffectRealtimeUpdate) => {
+  if (!getCurrentData() || !engineBridge || !engineBridge.isCurrentlyPlaying() || !update.bsbWidgetValues) {
     return;
   }
 
@@ -4801,8 +4864,8 @@ ipcMain.handle('send-effect-realtime-update', (_event, update: import('../shared
   }
 });
 
-ipcMain.handle('update-project-document', (_event, patch) => {
-  if (!currentData) {
+ipcRegistration.handle('update-project-document', (_event, patch) => {
+  if (!getCurrentData()) {
     throw new Error('No project loaded');
   }
 
@@ -4812,21 +4875,21 @@ ipcMain.handle('update-project-document', (_event, patch) => {
 
   maybeCloseRemovedProjectEffectEditors(patch);
   maybeCloseRemovedTrackInstrumentEditors(patch);
-  const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
-  const changed = applyProjectDocumentPatch(currentData, patch, {
-    projectSessionId: currentProjectSessionId,
-    projectRevision: currentProjectRevision,
+  const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch);
+  const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
+    projectSessionId: getCurrentProjectSessionId(),
+    projectRevision: getCurrentProjectRevision(),
     defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
   });
   if (changed) {
-    for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
+    for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
       scoreAutomationParameterIds.add(id);
     }
     // Sync with each active real-time engine.
     if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
-      void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds);
+      void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds);
     }
-    currentProjectRevision += 1;
+    projectSession.recordMutation({ changed: true });
     broadcastProjectDocumentUpdate();
   } else {
     scoreAutomationParameterIds.clear();
@@ -4839,14 +4902,14 @@ ipcMain.handle('update-project-document', (_event, patch) => {
 
 // ─── Render/Freeze IPC Handlers ───
 
-ipcMain.handle('render-to-disk', (_event, request: unknown) => {
+ipcRegistration.handle('render-to-disk', (_event, request: unknown) => {
   if (!isRenderToDiskRequest(request)) {
     return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Invalid render-to-disk request.' } satisfies RenderOperationResult;
   }
   return handleRenderToDisk(request.action, request.operationId);
 });
 
-ipcMain.handle('freeze-score-objects', (_event, request: unknown) => {
+ipcRegistration.handle('freeze-score-objects', (_event, request: unknown) => {
   if (!isFreezeScoreObjectsRequest(request)) {
     return {
       ok: false,
@@ -4863,16 +4926,230 @@ ipcMain.handle('freeze-score-objects', (_event, request: unknown) => {
   return handleFreezeScoreObjects(request);
 });
 
-ipcMain.handle('cancel-render-operation', (_event, request: unknown) => {
+ipcRegistration.handle('cancel-render-operation', (_event, request: unknown) => {
   if (!isCancelRenderOperationRequest(request)) return false;
   return handleCancelRenderOperation(request);
 });
 
-registerBlueAudioScheme();
+function registerDomainIpc(): void {
+  unregisterDomainIpc = registerMainProcessDomainIpc({
+    ipcMain: electronIpcMain,
+    handlers: collectedIpcHandlers,
+    listeners: collectedIpcListeners,
+  });
+}
 
-app.whenReady().then(async () => {
+function unregisterDomainIpcStage(): void {
+  unregisterDomainIpc?.();
+  unregisterDomainIpc = null;
+}
+
+function handleZoomBrowserWindowCreated(_event: Electron.Event, window: BrowserWindow): void {
+  const applyCurrentZoom = (): void => {
+    appZoomController.applyToWindow(window);
+  };
+  applyCurrentZoom();
+  window.webContents.on('did-start-navigation', applyCurrentZoom);
+  window.webContents.on('did-navigate', applyCurrentZoom);
+}
+
+async function rollbackApplicationShellStage(): Promise<void> {
+  app.removeListener('browser-window-created', handleZoomBrowserWindowCreated);
+
+  await midiInputCoordinator?.requestShutdown();
+  midiInputCoordinator?.disposeIpcHandlers();
+  midiInputCoordinator = null;
+
+  if (blueLiveSession) {
+    await blueLiveSession.stop();
+  }
+  blueLiveSession = null;
+  blueLiveTriggerController = null;
+
+  await engineBridge?.dispose();
+  engineBridge = null;
+  engineRuntimeService = null;
+
+  await javaRuntimeSessionManager?.dispose();
+  javaRuntimeSessionManager = null;
+  disposeJavaScriptSession();
+
+  for (const window of BrowserWindow.getAllWindows().slice().reverse()) {
+    if (!window.isDestroyed()) window.destroy();
+  }
+  mainWindow = null;
+}
+
+async function startApplicationShellStage(): Promise<void> {
+  try {
+    if (process.platform === 'darwin' && app.dock) {
+      const dockIcon = getAppIcon();
+      if (dockIcon) {
+        app.dock.setIcon(dockIcon);
+      }
+    }
+
+    // SPEC 061: install the zoom listener before the first BrowserWindow.
+    appZoomController.initialize();
+    app.on('browser-window-created', handleZoomBrowserWindowCreated);
+
+    const initialSettings = loadProgramSettings();
+    currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
+    currentSavedFollowPlayback = initialSettings.playback.followPlayback;
+    currentFollowPlaybackOnStartEnabled = initialSettings.playback.followPlaybackOnStart;
+
+    createWindow();
+  } catch (error) {
+    try {
+      await rollbackApplicationShellStage();
+    } catch (cleanupError) {
+      console.error('[startup] Failed to clean up the partial application shell:', cleanupError);
+    }
+    throw error;
+  }
+}
+
+async function rollbackUnifiedLibraryStage(): Promise<void> {
+  unregisterUnifiedLibraryIpc?.();
+  unregisterUnifiedLibraryIpc = null;
+  const service = unifiedLibraryService;
+  unifiedLibraryService = null;
+  await service?.stop();
+}
+
+async function startUnifiedLibraryStage(): Promise<void> {
+  try {
+    unifiedLibraryService = new UnifiedLibraryService(
+      path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
+      undefined,
+      new UnifiedLibraryProjectAdapter(() => getCurrentData()
+        ? {
+            data: getCurrentData(),
+            sessionId: getCurrentProjectSessionId(),
+            revision: getCurrentProjectRevision(),
+            commit: () => {
+              const receipt = projectSession.recordMutation({ changed: true });
+              broadcastProjectDocumentUpdate();
+              return receipt.revision;
+            },
+          }
+        : null),
+      {
+        legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
+        migrationStatePath: path.join(app.getPath('userData'), 'blue-libraries-state.json'),
+      },
+    );
+    unregisterUnifiedLibraryIpc = registerUnifiedLibraryIpc({
+      ipcMain: electronIpcMain,
+      service: unifiedLibraryService,
+      getWindows: () => BrowserWindow.getAllWindows(),
+      getWorkDirectory: getConfiguredWorkDirectory,
+    });
+    await unifiedLibraryService.start();
+  } catch (error) {
+    try {
+      await rollbackUnifiedLibraryStage();
+    } catch (cleanupError) {
+      console.error('[startup] Failed to clean up the partial unified library:', cleanupError);
+    }
+    throw error;
+  }
+}
+
+async function rollbackCodeRepositoryStage(): Promise<void> {
+  unregisterCodeRepositoryIpc?.();
+  unregisterCodeRepositoryIpc = null;
+  const service = codeRepositoryService;
+  codeRepositoryService = null;
+  await service?.stop();
+}
+
+async function startCodeRepositoryStage(): Promise<void> {
+  try {
+    codeRepositoryService = new CodeRepositoryService(
+      path.join(app.getPath('userData'), 'blue_code_repository.sqlite'),
+      {
+        legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
+        migrationStatePath: path.join(app.getPath('userData'), 'blue-code-repository-state.json'),
+      },
+    );
+    unregisterCodeRepositoryIpc = registerCodeRepositoryIpc({
+      ipcMain: electronIpcMain,
+      service: codeRepositoryService,
+      getWindows: () => BrowserWindow.getAllWindows(),
+      getWorkDirectory: getConfiguredWorkDirectory,
+    });
+    await codeRepositoryService.start();
+  } catch (error) {
+    try {
+      await rollbackCodeRepositoryStage();
+    } catch (cleanupError) {
+      console.error('[startup] Failed to clean up the partial code repository:', cleanupError);
+    }
+    throw error;
+  }
+}
+
+async function rollbackOscStage(): Promise<void> {
+  const service = oscControlService;
+  oscControlService = null;
+  await service?.shutdown();
+}
+
+function handleFloatingWindowCreated(_event: Electron.Event, window: BrowserWindow): void {
+  window.webContents.once('did-finish-load', () => {
+    const url = window.webContents.getURL();
+    const popoutMatch = /popout\.html\?id=([^&#]+)/.exec(url);
+    if (popoutMatch) {
+      registerFloatingWindow(window, { popoutGroupId: decodeURIComponent(popoutMatch[1]) });
+    } else if (/popout\.html([?#]|$)/.test(url)) {
+      registerFloatingWindow(window);
+    }
+  });
+}
+
+function handleAppActivate(): void {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+}
+
+function registerWindowHooksStage(): void {
+  app.on('browser-window-created', handleFloatingWindowCreated);
+  app.on('activate', handleAppActivate);
+}
+
+function rollbackWindowHooksStage(): void {
+  app.removeListener('activate', handleAppActivate);
+  app.removeListener('browser-window-created', handleFloatingWindowCreated);
+}
+
+const preReadyStartupLifecycle = createStartupLifecycle([
+  {
+    name: 'domain IPC registrars',
+    start: registerDomainIpc,
+    rollback: unregisterDomainIpcStage,
+  },
+  {
+    name: 'blue audio scheme',
+    start: registerBlueAudioScheme,
+    irreversible: true,
+  },
+]);
+const preReadyStartupPromise = preReadyStartupLifecycle.start();
+const applicationReadyPromise = Promise.all([
+  app.whenReady(),
+  preReadyStartupPromise,
+]);
+
+applicationReadyPromise.then(async () => {
+  const readyStartupLifecycle = createStartupLifecycle([
+    {
+      name: 'protocol and verification',
+      irreversible: true,
+      start: async () => {
   registerBlueAudioProtocolHandler();
-  setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));
+  setExternalCommandExecutor(createMainExternalExecutor(() => getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null));
 
   if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
     await runPackagedProjectVerificationAndExit();
@@ -4880,116 +5157,62 @@ app.whenReady().then(async () => {
   if (process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch') {
     await runPackagedEngineMismatchVerificationAndExit();
   }
-
-  initWorkbenchWindowHost();
-  try {
-    const report = await sweepStaleBlueEngineProcesses();
-    if (report.inspected > 0 || report.removed > 0 || report.terminated > 0 || report.retained > 0) {
-      console.log(
-        `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}, retained=${report.retained}`,
-      );
-    }
-  } catch (error: unknown) {
-    console.warn(`[main] Blue engine startup sweep failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
-  if (process.platform === 'darwin' && app.dock) {
-    const dockIcon = getAppIcon();
-    if (dockIcon) {
-      app.dock.setIcon(dockIcon);
-    }
-  }
-
-  // SPEC 061: initialize the app zoom controller from program settings and
-  // register a browser-window-created handler BEFORE the first BrowserWindow
-  // is created. Apply immediately and across navigation so the restored
-  // factor remains uniform for recreated/future app windows. Explicit main,
-  // Settings, effect, and Dockview popout constructors also receive the
-  // factor for a no-flash first paint.
-  appZoomController.initialize();
-  app.on('browser-window-created', (_event, window) => {
-    const applyCurrentZoom = () => {
-      appZoomController.applyToWindow(window);
-    };
-    applyCurrentZoom();
-    window.webContents.on('did-start-navigation', applyCurrentZoom);
-    window.webContents.on('did-navigate', applyCurrentZoom);
-  });
-
-  // Hydrate follow playback menu state from settings before the first menu
-  // build so the native checkmarks reflect saved preferences, not hard-coded
-  // defaults. loadProgramSettings() is cached, so this does not add a second
-  // disk read.
-  const initialSettings = loadProgramSettings();
-  currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
-  currentSavedFollowPlayback = initialSettings.playback.followPlayback;
-  currentFollowPlaybackOnStartEnabled = initialSettings.playback.followPlaybackOnStart;
-
-  createWindow();
-  unifiedLibraryService = new UnifiedLibraryService(
-    path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
-    undefined,
-    new UnifiedLibraryProjectAdapter(() => currentData
-      ? {
-          data: currentData,
-          sessionId: currentProjectSessionId,
-          revision: currentProjectRevision,
-          commit: () => {
-            currentProjectRevision += 1;
-            broadcastProjectDocumentUpdate();
-            return currentProjectRevision;
-          },
+      },
+    },
+    {
+      name: 'workbench IPC',
+      start: initWorkbenchWindowHost,
+      rollback: disposeWorkbenchWindowHost,
+    },
+    {
+      name: 'stale engine sweep',
+      irreversible: true,
+      start: async () => {
+        try {
+          const report = await sweepStaleBlueEngineProcesses();
+          if (report.inspected > 0 || report.removed > 0 || report.terminated > 0 || report.retained > 0) {
+            console.log(
+              `[main] Blue engine startup sweep: inspected=${report.inspected}, removed=${report.removed}, terminated=${report.terminated}, kept=${report.kept}, retained=${report.retained}`,
+            );
+          }
+        } catch (error: unknown) {
+          console.warn(`[main] Blue engine startup sweep failed: ${error instanceof Error ? error.message : String(error)}`);
         }
-      : null),
-    {
-      legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
-      migrationStatePath: path.join(app.getPath('userData'), 'blue-libraries-state.json'),
+      },
     },
-  );
-  unregisterUnifiedLibraryIpc = registerUnifiedLibraryIpc({
-    ipcMain,
-    service: unifiedLibraryService,
-    getWindows: () => BrowserWindow.getAllWindows(),
-    getWorkDirectory: getConfiguredWorkDirectory,
-  });
-  await unifiedLibraryService.start();
-  codeRepositoryService = new CodeRepositoryService(
-    path.join(app.getPath('userData'), 'blue_code_repository.sqlite'),
     {
-      legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
-      migrationStatePath: path.join(app.getPath('userData'), 'blue-code-repository-state.json'),
+      name: 'application shell',
+      start: startApplicationShellStage,
+      rollback: rollbackApplicationShellStage,
     },
-  );
-  unregisterCodeRepositoryIpc = registerCodeRepositoryIpc({
-    ipcMain,
-    service: codeRepositoryService,
-    getWindows: () => BrowserWindow.getAllWindows(),
-    getWorkDirectory: getConfiguredWorkDirectory,
-  });
-  await codeRepositoryService.start();
-  initializeOscControlService();
+    {
+      name: 'unified library',
+      start: startUnifiedLibraryStage,
+      rollback: rollbackUnifiedLibraryStage,
+    },
+    {
+      name: 'code repository',
+      start: startCodeRepositoryStage,
+      rollback: rollbackCodeRepositoryStage,
+    },
+    {
+      name: 'OSC control',
+      start: initializeOscControlService,
+      rollback: rollbackOscStage,
+    },
+    {
+      name: 'window hooks',
+      start: registerWindowHooksStage,
+      rollback: rollbackWindowHooksStage,
+    },
+  ]);
 
-  // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench
-  // windows so reveal/close/focus routing can target them. Dockview creates the
-  // popout via window.open('popout.html'); Electron realizes it as a new
-  // BrowserWindow which we register here by matching its loaded URL.
-  app.on('browser-window-created', (_event, window) => {
-    window.webContents.once('did-finish-load', () => {
-      const url = window.webContents.getURL();
-      const popoutMatch = /popout\.html\?id=([^&#]+)/.exec(url);
-      if (popoutMatch) {
-        registerFloatingWindow(window, { popoutGroupId: decodeURIComponent(popoutMatch[1]) });
-      } else if (/popout\.html([?#]|$)/.test(url)) {
-        registerFloatingWindow(window);
-      }
-    });
-  });
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
+  try {
+    await readyStartupLifecycle.start();
+  } catch (error) {
+    await preReadyStartupLifecycle.rollbackFailedStartup();
+    throw error;
+  }
 });
 
 // Intercept Cmd+Q and window close buttons

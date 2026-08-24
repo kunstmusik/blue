@@ -2,8 +2,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  __testAwaitPendingPatches,
   __testClearPendingPatches,
   __testFlushPendingPatches,
+  acceptProjectDocumentRevision,
+  applyBsbInterfacePatchToSnapshot,
+  getProjectDocumentRevision,
   useProjectStore,
 } from '../stores/project-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';
@@ -242,6 +246,115 @@ describe('project-store — canonical acknowledgement barrier', () => {
     });
     await useProjectStore.getState().flushPendingPatches();
 
+    expect(getProjectDocument).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a stale in-flight receipt after a project reset', async () => {
+    let resolveCommit!: (value: { revision: number; sessionId: number; changed: boolean }) => void;
+    commitProjectDocumentPatches.mockReturnValueOnce(new Promise((resolve) => {
+      resolveCommit = resolve;
+    }));
+
+    await useProjectStore.getState().updateGlobalOrc('instr 1\nendin');
+    const barrier = useProjectStore.getState().flushPendingPatches();
+    await Promise.resolve();
+
+    useProjectStore.getState().clearProject();
+    useProjectStore.getState().setProjectInfo({
+      ...createEmptyProjectEditorSnapshot(),
+      loaded: true,
+      sessionId: 2,
+      filePath: '/tmp/replacement.blue',
+    });
+    resolveCommit({ revision: 99, sessionId: 1, changed: true });
+    await barrier;
+
+    expect(getProjectDocumentRevision()).toBe(0);
+    expect(useProjectStore.getState()).toMatchObject({
+      loaded: true,
+      sessionId: 2,
+      filePath: '/tmp/replacement.blue',
+    });
+  });
+});
+
+describe('project-store — stable façade contract', () => {
+  const commitProjectDocumentPatches = vi.fn();
+  const getProjectDocument = vi.fn();
+
+  beforeEach(() => {
+    __testClearPendingPatches();
+    useProjectStore.getState().clearProject();
+    const snapshot = createFocusSnapshot(11);
+    snapshot.mixer.enabled = false;
+    useProjectStore.getState().setProjectInfo({
+      ...snapshot,
+      filePath: '/tmp/facade.blue',
+    });
+    window.blueAPI = {
+      ...window.blueAPI,
+      commitProjectDocumentPatches,
+      getProjectDocument,
+      sendBsbRealtimeControlUpdate: vi.fn(async () => undefined),
+    };
+    commitProjectDocumentPatches.mockReset();
+    commitProjectDocumentPatches.mockResolvedValue({ revision: 1, sessionId: 11, changed: true });
+    getProjectDocument.mockReset();
+    getProjectDocument.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    __testClearPendingPatches();
+    useProjectStore.getState().clearProject();
+  });
+
+  it('keeps revision, BSB reducer, flush, await, and clear helpers callable through the façade', async () => {
+    expect(applyBsbInterfacePatchToSnapshot).toBeTypeOf('function');
+    expect(getProjectDocumentRevision()).toBe(0);
+
+    acceptProjectDocumentRevision(11, 4);
+    acceptProjectDocumentRevision(11, 2);
+    expect(getProjectDocumentRevision()).toBe(4);
+
+    await useProjectStore.getState().updateGlobalSco('f0 3600');
+    __testFlushPendingPatches();
+    await __testAwaitPendingPatches();
+    expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+
+    __testClearPendingPatches();
+  });
+
+  it('applies representative document, mixer, orchestra, MIDI, and score patches immediately', async () => {
+    await useProjectStore.getState().applyProjectDocumentPatch({ globalOrc: 'instr 2\nendin' });
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      mixer: { type: 'setMixerEnabled', value: true },
+    });
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      orchestra: { type: 'updateAssignment', assignmentId: '1', enabled: false },
+    });
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      midiInput: { type: 'updateKeyMapping', value: 'pch' },
+    });
+
+    expect(useProjectStore.getState().globalOrc).toBe('instr 2\nendin');
+    expect(useProjectStore.getState().mixer.enabled).toBe(true);
+    expect(useProjectStore.getState().orchestra.arrangement.rows[0]?.enabled).toBe(false);
+    expect(useProjectStore.getState().midiInput?.keyMapping).toBe('pch');
+    expect(useProjectStore.getState().isDirty).toBe(true);
+
+    await useProjectStore.getState().flushPendingPatches();
+    expect(getProjectDocument).not.toHaveBeenCalled();
+
+    commitProjectDocumentPatches.mockResolvedValueOnce({ revision: 2, sessionId: 11, changed: true });
+    getProjectDocument.mockResolvedValueOnce({
+      ...createFocusSnapshot(11),
+      filePath: '/tmp/facade.blue',
+    });
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: { type: 'renameLayer', groupId: 'root-group', layerIndex: 0, name: 'Renamed Track' },
+    });
+    expect(useProjectStore.getState().score.layerGroups[0]?.layers[0]?.name).toBe('Renamed Track');
+    await useProjectStore.getState().flushPendingPatches();
     expect(getProjectDocument).toHaveBeenCalledTimes(1);
   });
 });

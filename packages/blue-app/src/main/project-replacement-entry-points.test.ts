@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { BlueData } from '@blue/data';
 import {
   runCsdImportReplacement,
   runMidiImportReplacement,
   runNonInteractiveProjectLoad,
   runOrcScoImportReplacement,
 } from './project-replacement-entry-points';
+import { createProjectLifecycle } from './project-lifecycle';
+import { ProjectSession } from './project-session';
 
 describe('CSD replacement entry point', () => {
   it('runs the native chooser, mode choice, conversion, decisions, and commit in order', async () => {
@@ -378,5 +381,82 @@ describe('non-interactive project load entry point', () => {
 
     expect(loaded).toBe(false);
     expect(calls).toEqual(['read', 'report:/work/project.blue:malformed project']);
+  });
+});
+
+describe('project lifecycle compatibility workflow', () => {
+  it('preserves identity, XML, cleanup, and publications across open/new/save/save-as/revert/close', async () => {
+    const sourceXml = `<blueData version="5.0.0">
+      <projectProperties><title>Compatibility Project</title></projectProperties>
+      <pluginData><futurePlugin mode="unknown"><payload>keep-me</payload></futurePlugin></pluginData>
+    </blueData>`;
+    const events: string[] = [];
+    const writes = new Map<string, string>();
+    const session = new ProjectSession();
+    const lifecycle = createProjectLifecycle({
+      session,
+      stopProjectRuntimes: () => { events.push('stop'); },
+      closeProjectEditors: () => { events.push('editors'); },
+      clearProjectServices: () => { events.push('clear'); },
+      publishProjectChanged: (snapshot) => { events.push(`changed:${snapshot.filePath}:${snapshot.sessionId}`); },
+      publishProjectLoaded: (snapshot) => { events.push(`loaded:${snapshot.filePath}:${snapshot.sessionId}`); },
+      publishProjectClosed: (snapshot) => { events.push(`closed:${snapshot.filePath}:${snapshot.sessionId}`); },
+    });
+
+    await lifecycle.open(() => ({
+      data: BlueData.loadFromString(sourceXml),
+      filePath: '/native/opened.blue',
+    }));
+    expect(session.read().filePath).toBe('/native/opened.blue');
+    expect(session.read().data?.getProjectProperties().title).toBe('Compatibility Project');
+
+    const openedSessionId = session.read().sessionId;
+    await expect(lifecycle.open(() => { throw new Error('candidate parse failed'); }))
+      .rejects.toThrow('candidate parse failed');
+    expect(session.read().sessionId).toBe(openedSessionId);
+    expect(session.read().filePath).toBe('/native/opened.blue');
+
+    await lifecycle.replace({ data: new BlueData(), filePath: null });
+    expect(await lifecycle.save(() => { throw new Error('unreachable'); })).toBe(false);
+
+    await lifecycle.open(() => ({
+      data: BlueData.loadFromString(sourceXml),
+      filePath: '/native/opened.blue',
+    }));
+    const preSaveAsSessionId = session.read().sessionId;
+    const write = (data: BlueData, filePath: string): void => {
+      events.push(`write:${filePath}`);
+      writes.set(filePath, data.saveToString());
+    };
+    expect(await lifecycle.saveAs('C:\\Users\\Blue\\saved-as.blue', write)).toBe(true);
+    expect(session.read().filePath).toBe('C:\\Users\\Blue\\saved-as.blue');
+    expect(session.read().sessionId).toBe(preSaveAsSessionId);
+    expect(await lifecycle.save(write)).toBe(true);
+
+    const savedXml = writes.get('C:\\Users\\Blue\\saved-as.blue')!;
+    expect(savedXml).toContain('<futurePlugin mode="unknown">');
+    expect(savedXml).toContain('<payload>keep-me</payload>');
+
+    const staleSessionId = session.read().sessionId;
+    await lifecycle.revert(() => ({
+      data: BlueData.loadFromString(savedXml),
+      filePath: 'C:\\Users\\Blue\\saved-as.blue',
+    }));
+    expect(session.read().sessionId).toBeGreaterThan(staleSessionId);
+    expect(session.read().data?.getProjectProperties().title).toBe('Compatibility Project');
+    expect(session.read().data?.saveToString()).toContain('<futurePlugin mode="unknown">');
+
+    await lifecycle.close();
+    expect(session.read().data).toBeNull();
+    expect(session.read().filePath).toBeNull();
+    expect(events).toEqual([
+      'stop', 'editors', 'clear', 'changed:/native/opened.blue:1', 'loaded:/native/opened.blue:1',
+      'stop', 'editors', 'clear', 'changed:null:2', 'loaded:null:2',
+      'stop', 'editors', 'clear', 'changed:/native/opened.blue:3', 'loaded:/native/opened.blue:3',
+      'write:C:\\Users\\Blue\\saved-as.blue', 'changed:C:\\Users\\Blue\\saved-as.blue:3',
+      'write:C:\\Users\\Blue\\saved-as.blue', 'changed:C:\\Users\\Blue\\saved-as.blue:3',
+      'stop', 'editors', 'clear', 'changed:C:\\Users\\Blue\\saved-as.blue:4', 'loaded:C:\\Users\\Blue\\saved-as.blue:4',
+      'stop', 'editors', 'clear', 'closed:null:5',
+    ]);
   });
 });

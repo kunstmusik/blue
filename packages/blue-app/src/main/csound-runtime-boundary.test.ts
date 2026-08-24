@@ -6,6 +6,8 @@ describe('managed Csound execution boundary', () => {
   it('does not launch a configured Csound executable or shell -U from trusted callers', async () => {
     const sources = await Promise.all([
       readFile(path.join(__dirname, 'main.ts'), 'utf8'),
+      readFile(path.join(__dirname, 'ipc', 'project-artifacts-ipc.ts'), 'utf8'),
+      readFile(path.join(__dirname, 'ipc', 'playback-runtime-ipc.ts'), 'utf8'),
       readFile(path.join(__dirname, 'render-to-disk.ts'), 'utf8'),
       readFile(path.join(__dirname, 'freeze-score-objects.ts'), 'utf8'),
       readFile(path.join(__dirname, 'soundfont-viewer.ts'), 'utf8'),

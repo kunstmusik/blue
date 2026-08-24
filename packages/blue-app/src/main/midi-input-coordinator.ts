@@ -29,8 +29,19 @@ import {
   type MidiInputServiceSnapshot,
 } from '../shared/midi-input';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import { registerIpcTransaction, type IpcMainLike } from './ipc/ipc-registration';
+
+export const MIDI_INPUT_IPC_CHANNELS = [
+  MIDI_INPUT_INITIALIZE_CHANNEL,
+  MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL,
+  MIDI_INPUT_COMMAND_ACK_CHANNEL,
+  MIDI_INPUT_GET_SNAPSHOT_CHANNEL,
+  MIDI_INPUT_REQUEST_RESCAN_CHANNEL,
+] as const;
 
 export interface MidiInputCoordinatorDeps {
+  /** Registration target; defaults to Electron's process-wide ipcMain. */
+  ipcMain?: IpcMainLike;
   /** Returns the current program settings snapshot (for midiInput preferences). */
   getProgramSettings: () => ProgramSettingsSnapshot;
   /** Returns true if the webContents belongs to the primary application window. */
@@ -51,17 +62,19 @@ export class MidiInputCoordinator {
   } | null = null;
   private shutdownPromise: Promise<void> | null = null;
   private initialized = false;
+  private unregisterIpc: (() => void) | null = null;
 
   constructor(private deps: MidiInputCoordinatorDeps) {}
 
-  /**
-   * Wires the IPC handlers. Idempotent; safe to call once at startup.
-   */
+  /** Wires the IPC handlers and fails before side effects on duplicate calls. */
   registerIpcHandlers(): void {
-    if (this.initialized) return;
-    this.initialized = true;
+    if (this.initialized) {
+      throw new Error('MIDI input IPC is already initialized.');
+    }
 
-    ipcMain.handle(MIDI_INPUT_INITIALIZE_CHANNEL, async (event): Promise<MidiInputServiceInitialization | null> => {
+    const unregister = registerIpcTransaction(this.deps.ipcMain ?? ipcMain, 'midi-input', (scope) => {
+
+    scope.handle(MIDI_INPUT_INITIALIZE_CHANNEL, async (event): Promise<MidiInputServiceInitialization | null> => {
       if (!this.deps.isPrimaryWebContents(event.sender)) {
         return null;
       }
@@ -78,29 +91,38 @@ export class MidiInputCoordinator {
       };
     });
 
-    ipcMain.on(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, (event, snapshot: unknown) => {
+    scope.on(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, (event, snapshot: unknown) => {
       if (!this.deps.isPrimaryWebContents(event.sender)) return;
       if (!isValidSnapshot(snapshot)) return;
       this.handleReportSnapshot(snapshot);
     });
 
-    ipcMain.on(MIDI_INPUT_COMMAND_ACK_CHANNEL, (event, ack: unknown) => {
+    scope.on(MIDI_INPUT_COMMAND_ACK_CHANNEL, (event, ack: unknown) => {
       if (!this.deps.isPrimaryWebContents(event.sender)) return;
       if (!isValidAck(ack)) return;
       this.handleAck(ack);
     });
 
-    ipcMain.handle(MIDI_INPUT_GET_SNAPSHOT_CHANNEL, async (event): Promise<MidiInputServiceSnapshot | null> => {
+    scope.handle(MIDI_INPUT_GET_SNAPSHOT_CHANNEL, async (event): Promise<MidiInputServiceSnapshot | null> => {
       if (!this.deps.isApplicationWebContents(event.sender)) return null;
       return this.cachedSnapshot;
     });
 
-    ipcMain.handle(MIDI_INPUT_REQUEST_RESCAN_CHANNEL, async (event): Promise<{ accepted: boolean; message?: string }> => {
+    scope.handle(MIDI_INPUT_REQUEST_RESCAN_CHANNEL, async (event): Promise<{ accepted: boolean; message?: string }> => {
       if (!this.deps.isApplicationWebContents(event.sender)) {
         return { accepted: false, message: 'Not permitted' };
       }
       return this.requestRescan();
     });
+    });
+    this.unregisterIpc = unregister;
+    this.initialized = true;
+  }
+
+  disposeIpcHandlers(): void {
+    this.unregisterIpc?.();
+    this.unregisterIpc = null;
+    this.initialized = false;
   }
 
   /**
@@ -245,6 +267,7 @@ export class MidiInputCoordinator {
 
   /** Test/diagnostic accessor; clears internal state. */
   resetForTesting(): void {
+    this.disposeIpcHandlers();
     this.finishPendingShutdown();
     this.cachedSnapshot = null;
     this.primaryContents = null;

@@ -1,4 +1,4 @@
-import { applyBsbInterfacePatchToSnapshot } from '../../../../stores/project-store';
+import { applyBsbInterfacePatchToSnapshot } from '../../../../stores/project-store/bsb-interface-snapshot';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
   BsbInterfacePatch,

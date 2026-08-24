@@ -23,6 +23,27 @@ describe('saveGeneratedCsdToDisk', () => {
       expect.anything(),
       expect.objectContaining({ defaultPath: path.join('/tmp/work', 'generated.csd') }),
     );
+    expect(toDiskCSD).not.toHaveBeenCalled();
+  });
+
+  it('does not generate, write, or publish when export is cancelled', async () => {
+    const toDiskCSD = vi.fn(() => 'must-not-run');
+    const writeFile = vi.fn(async () => undefined);
+    const send = vi.fn();
+
+    await expect(saveGeneratedCsdToDisk({
+      currentData: { toDiskCSD },
+      currentFilePath: '/native/project.blue',
+      mainWindow: { webContents: { send } } as any,
+      dialogApi: {
+        showSaveDialog: vi.fn(async () => ({ canceled: true, filePath: undefined })),
+      } as any,
+      writeFile: writeFile as any,
+    })).resolves.toBeNull();
+
+    expect(toDiskCSD).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
   });
 
   it('calls toDiskCSD and writes the selected CSD file', async () => {

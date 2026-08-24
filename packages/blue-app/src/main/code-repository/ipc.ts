@@ -38,6 +38,21 @@ import {
 } from '../../shared/code-repository';
 import { CodeRepositoryService, ServiceError } from './service';
 import { resolveWorkDirectoryDefaultPath } from '../work-directory';
+import { registerIpcTransaction } from '../ipc/ipc-registration';
+
+export const CODE_REPOSITORY_IPC_CHANNELS = [
+  CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL,
+  CODE_REPOSITORY_GET_STATUS_CHANNEL,
+  CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL,
+  CODE_REPOSITORY_CREATE_GROUP_CHANNEL,
+  CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL,
+  CODE_REPOSITORY_MOVE_NODE_CHANNEL,
+  CODE_REPOSITORY_UPDATE_NODE_CHANNEL,
+  CODE_REPOSITORY_DELETE_NODE_CHANNEL,
+  CODE_REPOSITORY_IMPORT_FILE_CHANNEL,
+  CODE_REPOSITORY_RETRY_CHANNEL,
+  CODE_REPOSITORY_EXPORT_XML_CHANNEL,
+] as const;
 
 export interface CodeRepositoryIpcOptions {
   readonly ipcMain: IpcMain;
@@ -134,10 +149,12 @@ function isImportFileRequest(value: unknown): value is CodeRepositoryImportFileR
 export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): () => void {
   const { ipcMain, service, getWindows } = options;
   const getWorkDirectory = options.getWorkDirectory;
+  let disposeServiceListeners = (): void => {};
+  const disposer = registerIpcTransaction(ipcMain, 'code-repository', (scope) => {
 
   const invalid = (message: string) => fail(createCodeRepositoryError('invalid-tree', message, false));
 
-  ipcMain.handle(CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL, async () => {
+  scope.handle(CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL, async () => {
     const snapshot = service.getSnapshot();
     if (snapshot) return ok(snapshot);
     const status = service.getStatus();
@@ -147,9 +164,9 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     return fail(createCodeRepositoryError('not-initialized', 'Code Repository is not initialized', true));
   });
 
-  ipcMain.handle(CODE_REPOSITORY_GET_STATUS_CHANNEL, async () => service.getStatus());
+  scope.handle(CODE_REPOSITORY_GET_STATUS_CHANNEL, async () => service.getStatus());
 
-  ipcMain.handle(CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL, async (_event, request: unknown) => {
     if (!isCommitDraftRequest(request)) return invalid('Invalid commit-draft request.');
     try {
       const snapshot = await service.commitDraft(request.expectedRevision, request.root);
@@ -159,7 +176,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_CREATE_GROUP_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_CREATE_GROUP_CHANNEL, async (_event, request: unknown) => {
     if (!isCreateGroupRequest(request)) return invalid('Invalid create-group request.');
     try {
       return ok(await service.createGroup(request.parentId, request.name, request.expectedRevision));
@@ -168,7 +185,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL, async (_event, request: unknown) => {
     if (!isCreateSnippetRequest(request)) return invalid('Invalid create-snippet request.');
     try {
       return ok(await service.createSnippet(request.parentId, request.name, request.code, request.expectedRevision));
@@ -177,7 +194,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_MOVE_NODE_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_MOVE_NODE_CHANNEL, async (_event, request: unknown) => {
     if (!isMoveNodeRequest(request)) return invalid('Invalid move-node request.');
     try {
       return ok(await service.moveNode(request.nodeId, request.parentId, request.order, request.expectedRevision));
@@ -186,7 +203,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_UPDATE_NODE_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_UPDATE_NODE_CHANNEL, async (_event, request: unknown) => {
     if (!isUpdateNodeRequest(request)) return invalid('Invalid update-node request.');
     try {
       return ok(await service.updateNode(request.nodeId, request, request.expectedRevision));
@@ -195,7 +212,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_DELETE_NODE_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_DELETE_NODE_CHANNEL, async (_event, request: unknown) => {
     if (!isDeleteNodeRequest(request)) return invalid('Invalid delete-node request.');
     try {
       return ok(await service.deleteNode(request.nodeId, request.expectedRevision));
@@ -204,7 +221,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_IMPORT_FILE_CHANNEL, async (_event, request: unknown) => {
+  scope.handle(CODE_REPOSITORY_IMPORT_FILE_CHANNEL, async (_event, request: unknown) => {
     if (!isImportFileRequest(request)) return invalid('Invalid import-file request.');
     const owner = getWindows().find((window) => !window.isDestroyed());
     const dialogOptions: OpenDialogOptions = {
@@ -231,7 +248,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_RETRY_CHANNEL, async () => {
+  scope.handle(CODE_REPOSITORY_RETRY_CHANNEL, async () => {
     try {
       return ok(await service.retry());
     } catch (error) {
@@ -239,7 +256,7 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     }
   });
 
-  ipcMain.handle(CODE_REPOSITORY_EXPORT_XML_CHANNEL, async () => {
+  scope.handle(CODE_REPOSITORY_EXPORT_XML_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const dialogOptions: SaveDialogOptions = {
       title: 'Export Code Repository',
@@ -272,19 +289,13 @@ export function registerCodeRepositoryIpc(options: CodeRepositoryIpcOptions): ()
     send(CODE_REPOSITORY_CHANGED_CHANNEL, event);
   });
 
-  return () => {
+  disposeServiceListeners = () => {
     removeChanged();
-    ipcMain.removeHandler(CODE_REPOSITORY_GET_SNAPSHOT_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_GET_STATUS_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_COMMIT_DRAFT_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_CREATE_GROUP_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_CREATE_SNIPPET_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_MOVE_NODE_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_UPDATE_NODE_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_DELETE_NODE_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_IMPORT_FILE_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_EXPORT_XML_CHANNEL);
-    ipcMain.removeHandler(CODE_REPOSITORY_RETRY_CHANNEL);
+  };
+  });
+  return () => {
+    disposeServiceListeners();
+    disposer();
   };
 }
 

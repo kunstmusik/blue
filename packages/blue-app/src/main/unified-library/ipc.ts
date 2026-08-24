@@ -77,6 +77,54 @@ import {
 } from '../../shared/unified-library';
 import { UnifiedLibraryService } from './service';
 import { resolveWorkDirectoryDefaultPath } from '../work-directory';
+import { registerIpcTransaction } from '../ipc/ipc-registration';
+
+export const UNIFIED_LIBRARY_IPC_CHANNELS = [
+  UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL,
+  UNIFIED_LIBRARY_BROWSE_CHANNEL,
+  UNIFIED_LIBRARY_SEARCH_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_CHANNEL,
+  UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL,
+  UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL,
+  UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL,
+  UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL,
+  UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL,
+  UNIFIED_LIBRARY_MUTATE_CHANNEL,
+  UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
+  UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_GET_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL,
+  UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL,
+  UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
+  UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
+] as const;
 
 export interface UnifiedLibraryIpcOptions {
   readonly ipcMain: IpcMain;
@@ -95,8 +143,10 @@ function isStringRecord(value: unknown): value is Readonly<Record<string, string
 export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): () => void {
   const { ipcMain, service, getWindows } = options;
   const getWorkDirectory = options.getWorkDirectory;
-  ipcMain.handle(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL, () => service.getSnapshot());
-  ipcMain.handle(UNIFIED_LIBRARY_BROWSE_CHANNEL, (_event, request: unknown) => (
+  let disposeServiceListeners = (): void => {};
+  const disposer = registerIpcTransaction(ipcMain, 'unified-library', (scope) => {
+  scope.handle(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL, () => service.getSnapshot());
+  scope.handle(UNIFIED_LIBRARY_BROWSE_CHANNEL, (_event, request: unknown) => (
     isBrowseLibraryRequest(request)
       ? service.browseLibraries(request)
       : Promise.resolve({
@@ -104,7 +154,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library browse request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_SEARCH_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_SEARCH_CHANNEL, (_event, request: unknown) => (
     isSearchLibrariesRequest(request)
       ? service.searchLibraries(request)
       : Promise.resolve({
@@ -112,7 +162,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library search request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_PREVIEW_CHANNEL, (_event, key: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_PREVIEW_CHANNEL, (_event, key: unknown) => (
     isLibraryItemKey(key)
       ? service.getLibraryItemPreview(key)
       : Promise.resolve({
@@ -120,25 +170,25 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library preview key.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, (_event, request: unknown) => (
     isBeginLibraryDragRequest(request)
       ? service.beginLibraryDrag(request)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid drag request.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL, (_event, dragSessionId: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL, (_event, dragSessionId: unknown) => {
     if (typeof dragSessionId === 'string') service.cancelLibraryDrag(dragSessionId);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, (_event, request: unknown) => (
     isLibraryTransferPreviewRequest(request)
       ? service.previewLibraryTransfer(request)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid transfer request.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, (_event, previewToken: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, (_event, previewToken: unknown) => (
     typeof previewToken === 'string'
       ? service.applyLibraryTransfer(previewToken)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid transfer preview.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, (_event, request: unknown) => (
     isLibraryContextRequest(request)
       ? service.setLibraryContext(request)
       : {
@@ -146,8 +196,8 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library context.', false),
         }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL, () => service.clearLibraryInsertionTarget());
-  ipcMain.handle(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL, () => service.clearLibraryInsertionTarget());
+  scope.handle(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL, (_event, request: unknown) => (
     isLibraryInsertionRequest(request)
       ? service.previewLibraryInsertion(request)
       : Promise.resolve({
@@ -155,7 +205,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid insertion preview request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, (_event, request: unknown) => (
     isConfirmedLibraryInsertionRequest(request)
       ? service.applyLibraryInsertion(request)
       : Promise.resolve({
@@ -163,7 +213,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid insertion request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_MUTATE_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_MUTATE_CHANNEL, (_event, request: unknown) => (
     isUserLibraryMutation(request)
       ? service.applyLibraryMutation(request)
       : Promise.resolve({
@@ -171,7 +221,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library mutation.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, (_event, request: unknown) => (
     isPrepareLibraryMutationRequest(request)
       ? service.prepareLibraryMutation(request)
       : Promise.resolve({
@@ -179,7 +229,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library mutation preview.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, (_event, request: unknown) => (
     isCutLibraryToClipboardRequest(request)
       ? service.cutLibraryToClipboard(request)
       : Promise.resolve({
@@ -187,17 +237,17 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid Library Cut request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
     clipboard === null || isLibraryInteractionClipboard(clipboard)
       ? service.setClipboard(clipboard)
       : false
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL, (_event, clipboard: unknown) => (
     clipboard === null || isBsbCanvasClipboard(clipboard)
       ? service.setBsbClipboard(clipboard)
       : false
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
     isScoreTimelineSoundObjectRequest(request)
       ? service.captureScoreSoundObjectClipboard(request)
       : Promise.resolve({
@@ -205,7 +255,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid timeline SoundObject request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL, (_event, request: unknown) => (
     isTrackInstrumentClipboardRequest(request)
       ? service.captureTrackInstrumentClipboard(request)
       : Promise.resolve({
@@ -213,7 +263,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid Track instrument request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
     isBlueLiveSoundObjectClipboardRequest(request)
       ? service.captureBlueLiveSoundObjectClipboard(request)
       : Promise.resolve({
@@ -221,7 +271,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid Blue Live SoundObject request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, (_event, request: unknown) => (
     isScoreTimelineSoundObjectRequest(request)
       ? service.addScoreSoundObjectToProjectLibrary(request)
       : Promise.resolve({
@@ -229,7 +279,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid timeline SoundObject request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, (_event, request: unknown) => (
     isOpenLibraryEditorRequest(request)
       ? service.openLibraryItemEditor(request.key, request.pinned ?? false)
       : Promise.resolve({
@@ -237,32 +287,32 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid editor request.', false),
         })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL, (_event, sessionId: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL, (_event, sessionId: unknown) => (
     typeof sessionId === 'string'
       ? service.getLibraryEditorSession(sessionId)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid editor session.', false) }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL, (_event, request: unknown) => (
     isLibraryEditorPatchRequest(request)
       ? service.patchLibraryEditorSession(request)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid editor patch.', false) }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL, (_event, sessionId: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL, (_event, sessionId: unknown) => (
     typeof sessionId === 'string'
       ? service.saveLibraryEditorSession(sessionId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid editor session.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL, (_event, sessionId: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL, (_event, sessionId: unknown) => (
     typeof sessionId === 'string'
       ? service.revertLibraryEditorSession(sessionId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid editor session.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL, (_event, request: unknown) => (
     isLibraryEditorConflictRequest(request)
       ? service.resolveLibraryEditorConflict(request)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid conflict resolution.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL, (_event, request: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL, (_event, request: unknown) => {
     if (typeof request !== 'object' || request === null || !('sessionId' in request)) {
       return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid close request.', false) };
     }
@@ -271,27 +321,27 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.closeLibraryEditorSession(sessionId, decision)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid close request.', false) };
   });
-  ipcMain.handle(UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL, (_event, reason: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL, (_event, reason: unknown) => (
     reason === 'quit' || reason === 'closeProject' || reason === 'switchProject'
       ? service.prepareLibraryDraftShutdown(reason)
       : { reason: 'quit' as const, dirtySessionIds: [], mayContinue: false }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL, (_event, decision: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL, (_event, decision: unknown) => (
     decision === 'save' || decision === 'discard' || decision === 'cancel'
       ? service.resolveLibraryDraftShutdown(decision)
       : Promise.resolve({ mayContinue: false })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL, (_event, key: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL, (_event, key: unknown) => (
     isLibraryItemKey(key)
       ? service.getProjectLibraryUsage(key)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid project library key.', false) }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, (_event, key: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, (_event, key: unknown) => (
     isLibraryItemKey(key)
       ? service.previewProjectLibraryDelete(key)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid project library key.', false) }
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, (_event, request: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, (_event, request: unknown) => {
     if (typeof request !== 'object' || request === null) {
       return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid project delete request.', false) };
     }
@@ -300,7 +350,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.deleteProjectLibraryItem(value.key, value.confirmationToken)
       : { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid project delete request.', false) };
   });
-  ipcMain.handle(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, (_event, request: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, (_event, request: unknown) => {
     if (typeof request !== 'object' || request === null) {
       return Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Library transfer request.', false) });
     }
@@ -309,7 +359,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.copyLibraryTransferToUser(value.source, value.parentId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Library transfer request.', false) });
   });
-  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, async (_event, parentId: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL, async (_event, parentId: unknown) => {
     if (typeof parentId !== 'string' || parentId.trim().length === 0) {
       return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library folder.', false) };
     }
@@ -324,7 +374,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     if (result.canceled || !result.filePaths[0]) return null;
     return service.importInstrumentFile(parentId, result.filePaths[0]);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, async (_event, key: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL, async (_event, key: unknown) => {
     if (!isLibraryItemKey(key) || key.scope !== 'user' || key.libraryType !== 'instrument') {
       return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid Instrument Library item.', false) };
     }
@@ -341,7 +391,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     if (!targetPath.toLowerCase().endsWith('.binstr')) targetPath += '.binstr';
     return service.exportInstrumentFile(key, targetPath);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL, async () => {
+  scope.handle(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Library XML',
@@ -352,7 +402,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
     return result.canceled ? null : service.previewManualImport(result.filePaths);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL, async () => {
+  scope.handle(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Import Java Blue Configuration Directory',
@@ -366,7 +416,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       .filter((sourcePath) => fs.existsSync(sourcePath));
     return service.previewManualImport(sourcePaths);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, (_event, request: unknown) => (
+  scope.handle(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, (_event, request: unknown) => (
     typeof request === 'object'
       && request !== null
       && typeof (request as { previewToken?: unknown }).previewToken === 'string'
@@ -377,7 +427,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
         )
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid import preview.', false) })
   ));
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (event, libraryType: unknown) => {
+  scope.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (event, libraryType: unknown) => {
     if (!isLibraryType(libraryType)) return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid library type.', false) };
     const names = { instrument: 'userInstrumentLibrary.xml', udo: 'udoLibrary.xml', effect: 'effectsLibrary.xml', soundObject: 'soundObjectLibrary.xml' } as const;
     const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
@@ -409,7 +459,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     });
     return exported.ok && !exported.value ? null : exported;
   });
-  ipcMain.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async (event) => {
+  scope.handle(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL, async (event) => {
     const owner = (event.sender ? BrowserWindow.fromWebContents(event.sender) : null) ?? getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Export All Java Blue Libraries',
@@ -443,8 +493,8 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     });
     return exported.ok && !exported.value ? null : exported;
   });
-  ipcMain.handle(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL, () => service.retryRecovery());
-  ipcMain.handle(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL, async () => {
+  scope.handle(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL, () => service.retryRecovery());
+  scope.handle(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
       title: 'Restore Unified Library Backup',
@@ -455,7 +505,7 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
     return result.canceled || !result.filePaths[0] ? null : service.restoreRecoveryBackup(result.filePaths[0]);
   });
-  ipcMain.handle(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL, () => service.createFreshRecoveryDatabase());
+  scope.handle(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL, () => service.createFreshRecoveryDatabase());
 
   const send = (channel: string, payload: unknown): void => {
     for (const window of getWindows()) {
@@ -477,54 +527,15 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     send(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, session);
   });
 
-  return () => {
+  disposeServiceListeners = () => {
     removeSnapshot();
     removeChanged();
     removeContext();
     removeEditor();
-    ipcMain.removeHandler(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_BROWSE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_SEARCH_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_MUTATE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_CLIPBOARD_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_TRACK_INSTRUMENT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_CAPTURE_BLUE_LIVE_SOUND_OBJECT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_INSTRUMENT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_INSTRUMENT_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL);
+  };
+  });
+  return () => {
+    disposeServiceListeners();
+    disposer();
   };
 }
