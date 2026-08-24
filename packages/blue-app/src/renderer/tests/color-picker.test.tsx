@@ -4,9 +4,12 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
 import ColorPickerButton, {
+  ColorPickerPopover,
   computeColorPickerPosition,
 } from '../components/ColorPicker';
+import { getFloatingViewport } from '../components/floating-position-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -101,5 +104,120 @@ describe('ColorPicker', () => {
       { width: 240, height: 260 },
       { width: 800, height: 800 },
     )).toEqual({ left: 390, top: 432, placement: 'top' });
+  });
+
+  it('portals the popover into the anchor element document (floating workbench panels)', () => {
+    const popout = new JSDOM('<!doctype html><html><body><button id="anchor"></button></body></html>');
+    const popoutDoc = popout.window.document;
+    const anchorElement = popoutDoc.getElementById('anchor')!;
+
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    act(() => {
+      root.render(
+        <ColorPickerPopover
+          open
+          value="#336699"
+          anchor={{ left: 10, right: 40, top: 10, bottom: 40 }}
+          anchorElement={anchorElement}
+          onChange={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+    });
+
+    const dialogInPopout = popoutDoc.querySelector('[role="dialog"][aria-label="Color picker"]');
+    expect(dialogInPopout).toBeTruthy();
+    expect(dialogInPopout!.closest('body')).toBe(popoutDoc.body);
+    expect(document.querySelector('[role="dialog"][aria-label="Color picker"]')).toBeNull();
+
+    // Portal children are created by the popout document, so they live in a
+    // different realm from this module. Dismissal must still treat mousedowns
+    // inside the popover as internal, and must listen on the anchor document.
+    const onClose = vi.fn();
+    act(() => {
+      root.render(
+        <ColorPickerPopover
+          open
+          value="#336699"
+          anchor={{ left: 10, right: 40, top: 10, bottom: 40 }}
+          anchorElement={anchorElement}
+          onChange={vi.fn()}
+          onClose={onClose}
+        />,
+      );
+    });
+    const PopoutMouseEvent = popout.window.MouseEvent;
+    const hueSlider = dialogInPopout!.querySelector('input[aria-label="Hue"]') as HTMLElement | null;
+    expect(hueSlider).toBeTruthy();
+    act(() => {
+      hueSlider!.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => {
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => {
+      popoutDoc.body.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('binds Escape to the anchor element document (floating workbench panels)', () => {
+    const popout = new JSDOM('<!doctype html><html><body><button id="anchor"></button></body></html>');
+    const popoutDoc = popout.window.document;
+    const anchorElement = popoutDoc.getElementById('anchor')!;
+
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    const onClose = vi.fn();
+    act(() => {
+      root.render(
+        <ColorPickerPopover
+          open
+          value="#336699"
+          anchor={{ left: 10, right: 40, top: 10, bottom: 40 }}
+          anchorElement={anchorElement}
+          onChange={vi.fn()}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    const PopoutKeyboardEvent = popout.window.KeyboardEvent;
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => {
+      popoutDoc.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('measures the floating viewport against the window that owns the anchor', () => {
+    const popout = new JSDOM('<!doctype html><html><body><div id="anchor"></div></body></html>');
+    const anchor = popout.window.document.getElementById('anchor')!;
+    const view = popout.window;
+    const originalInnerWidth = Object.getOwnPropertyDescriptor(window, 'innerWidth')!;
+    const originalInnerHeight = Object.getOwnPropertyDescriptor(window, 'innerHeight')!;
+    Object.defineProperty(view, 'innerWidth', { configurable: true, value: 555 });
+    Object.defineProperty(view, 'innerHeight', { configurable: true, value: 444 });
+    try {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1920 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1080 });
+
+      const viewport = getFloatingViewport(anchor);
+      expect(viewport.width).toBe(555);
+      expect(viewport.height).toBe(444);
+    } finally {
+      Object.defineProperty(window, 'innerWidth', originalInnerWidth);
+      Object.defineProperty(window, 'innerHeight', originalInnerHeight);
+    }
   });
 });

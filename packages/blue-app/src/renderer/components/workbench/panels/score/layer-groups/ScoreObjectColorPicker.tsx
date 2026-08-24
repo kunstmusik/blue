@@ -5,7 +5,12 @@ import {
 } from '../../../../ColorPicker';
 
 export interface ScoreObjectColorPickerHandle {
-  open(initialColor: number, anchor: ColorPickerAnchorRect): void;
+  /**
+   * `anchorElement` is the timeline container the rect was measured against.
+   * Floating workbench panels live in a popout document, so the popover needs
+   * that element to render and dismiss inside the correct window.
+   */
+  open(initialColor: number, anchor: ColorPickerAnchorRect, anchorElement?: HTMLElement | null): void;
 }
 
 interface Props {
@@ -17,12 +22,14 @@ const ScoreObjectColorPicker = forwardRef<ScoreObjectColorPickerHandle, Props>(
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState('#000000');
     const [anchor, setAnchor] = useState<ColorPickerAnchorRect | null>(null);
+    const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
     const close = useCallback(() => setOpen(false), []);
 
     useImperativeHandle(ref, () => ({
-      open(initialColor, nextAnchor) {
+      open(initialColor, nextAnchor, nextAnchorElement) {
         setValue(`#${(initialColor & 0x00ffffff).toString(16).padStart(6, '0')}`);
         setAnchor(nextAnchor);
+        setAnchorElement(nextAnchorElement ?? null);
         setOpen(true);
       },
     }), []);
@@ -32,6 +39,7 @@ const ScoreObjectColorPicker = forwardRef<ScoreObjectColorPickerHandle, Props>(
         open={open}
         value={value}
         anchor={anchor}
+        anchorElement={anchorElement}
         onClose={close}
         onChange={(nextValue) => {
           setValue(nextValue);

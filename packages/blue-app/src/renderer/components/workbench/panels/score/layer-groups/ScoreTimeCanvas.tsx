@@ -312,6 +312,7 @@ export default function ScoreTimeCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const colorPickerRef = useRef<ScoreObjectColorPickerHandle>(null);
   const colorPickerAnchorRef = useRef<ColorPickerAnchorRect | null>(null);
+  const colorPickerAnchorElementRef = useRef<HTMLElement | null>(null);
   const pendingColorTargetsRef = useRef<ScoreObjectEditorTargetSnapshot[]>([]);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
   const [contextMenuOnObject, setContextMenuOnObject] = useState(false);
@@ -1217,7 +1218,7 @@ export default function ScoreTimeCanvas({
     const anchor = colorPickerAnchorRef.current;
     if (targets.length === 0 || !anchor) return;
     pendingColorTargetsRef.current = targets;
-    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor);
+    colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor, colorPickerAnchorElementRef.current);
   }, [getSelectedEntries]);
 
   const handleExport = useCallback(async () => {
@@ -1653,8 +1654,10 @@ export default function ScoreTimeCanvas({
                 top: bounds.top + hit.yOffset,
                 bottom: bounds.top + hit.yOffset + rowHeight,
               };
+              colorPickerAnchorElementRef.current = e.currentTarget as HTMLElement;
             } else {
               colorPickerAnchorRef.current = null;
+              colorPickerAnchorElementRef.current = null;
             }
             if (item && !selectedObjectIds.has(item.objectId)) {
               select(item.objectId, false, item.editorTarget);
