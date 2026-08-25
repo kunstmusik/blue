@@ -88,18 +88,16 @@ export default function AutomationLineView({
             const highlighted = directlySelected || hovered;
             const rangeSelected =
               selectionRange != null && pt.time >= rangeStart && pt.time <= rangeEnd;
-            const fill = highlighted
-              ? '#ef4444'
-              : rangeSelected
-                ? baseColor
-                : '#05070d';
+            const fill = rangeSelected
+              ? baseColor
+              : '#05070d';
             const stroke = highlighted ? '#ef4444' : lineColor;
             return (
               <circle
                 key={i}
                 cx={cx}
                 cy={cy}
-                r={highlighted ? 4 : 3.25}
+                r={3.25}
                 fill={fill}
                 stroke={stroke}
                 strokeWidth={1.5}
@@ -187,7 +185,8 @@ function ReadoutText({
     if (!g) return;
     let max = 0;
     for (const t of g.querySelectorAll('text')) {
-      const w = (t as SVGTextElement).getBBox().width;
+      const bbox = typeof (t as SVGTextElement).getBBox === 'function' ? (t as SVGTextElement).getBBox() : null;
+      const w = bbox ? bbox.width : 0;
       if (w > max) max = w;
     }
     setMeasuredWidth((prev) => (max > 0 && Math.abs(max - prev) > 0.5 ? max : prev));

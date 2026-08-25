@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 
+import React, { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
+import AutomationLineView from '../components/workbench/panels/score/automation/AutomationLineView';
+import type { AutomationParameterSnapshot } from '../../shared/project-editor';
 import {
   beatToX,
   xToBeat,
@@ -17,6 +21,16 @@ import {
   rangeEdgeNear,
   findPointNear,
 } from '../components/workbench/panels/score/automation/automation-line-utils';
+
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+class MockResizeObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
 
 const PPB = 100;
 const HEIGHT = 100;
@@ -169,5 +183,79 @@ describe('single-line point hit testing', () => {
   it('returns -1 when no point is near', () => {
     const pts = [{ time: 0, value: 0 }];
     expect(findPointNear(pts, 5, 0.5, 0, 1, HEIGHT, 8, PPB)).toBe(-1);
+  });
+});
+
+describe('AutomationLineView point rendering', () => {
+  it('renders points with dark fill, constant radius, and red outline highlight on hover', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const parent = document.createElement('div');
+    container.appendChild(parent);
+
+    // Mock getBoundingClientRect on the parent so AutomationLineView gets dimensions
+    parent.getBoundingClientRect = () => ({
+      width: 400,
+      height: 44,
+      top: 0,
+      left: 0,
+      bottom: 44,
+      right: 400,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    });
+
+    const root: Root = createRoot(parent);
+
+    const testParam: AutomationParameterSnapshot = {
+      parameterId: 'param-test',
+      name: 'Send Amount',
+      label: 'dB',
+      displayName: 'Send Amount',
+      minimum: 0,
+      maximum: 1,
+      resolutionDecimal: '-1',
+      resolution: -1,
+      curve: 'LINEAR',
+      fixedValue: 0,
+      automationEnabled: true,
+      lineColor: 0x20dd00, // green
+      sourceKind: 'instrument',
+      targetPath: ['instr 1', 'Send Amount'],
+      points: [
+        { time: 0, value: 0 },
+        { time: 4, value: 0.8 },
+      ],
+    };
+
+    // Render with point 1 hovered
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={testParam}
+          pixelsPerBeat={100}
+          active={true}
+          mode="singleLine"
+          hoveredPointIndex={1}
+        />
+      );
+    });
+
+    const circles = parent.querySelectorAll<SVGCircleElement>('circle');
+    expect(circles.length).toBe(2);
+
+    // Point 0 (unhovered): dark fill, green stroke, radius 3.25
+    expect(circles[0]!.getAttribute('fill')).toBe('#05070d');
+    expect(circles[0]!.getAttribute('stroke')).toBe('#20dd00');
+    expect(circles[0]!.getAttribute('r')).toBe('3.25');
+
+    // Point 1 (hovered): dark fill (NOT solid red), red stroke, constant radius 3.25
+    expect(circles[1]!.getAttribute('fill')).toBe('#05070d');
+    expect(circles[1]!.getAttribute('stroke')).toBe('#ef4444');
+    expect(circles[1]!.getAttribute('r')).toBe('3.25');
+
+    act(() => root.unmount());
+    container.remove();
   });
 });
