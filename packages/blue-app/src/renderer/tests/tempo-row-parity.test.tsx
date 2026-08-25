@@ -81,6 +81,7 @@ describe('TempoRegionBar', () => {
 
     const regions = Array.from(container.querySelectorAll('[title]')) as HTMLDivElement[];
     expect(regions).toHaveLength(2);
+    expect(regions[0]?.className).toContain('flex items-center');
     expect(container.textContent).toContain('♩ 60');
     expect(container.textContent).toContain('♩ 120');
     expect(regions[1]?.title).toContain('Beat: 4.00');

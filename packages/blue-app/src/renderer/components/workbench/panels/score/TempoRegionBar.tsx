@@ -106,7 +106,7 @@ export default function TempoRegionBar({
           <ContextMenu.Root key={`region-${i}`}>
             <ContextMenu.Trigger asChild>
               <div
-                className="absolute top-0 border-l"
+                className="absolute top-0 border-l flex items-center"
                 style={{
                   left: startX,
                   width: Math.max(1, width),
@@ -118,7 +118,7 @@ export default function TempoRegionBar({
               >
                 {showLabel && (
                   <span
-                    className={`absolute left-1 top-0 text-role-subheadline whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
+                    className={`relative z-10 pl-1 text-role-subheadline whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
                   >
                     {'\u2669'} {Math.round(region.tempo)}
                   </span>
