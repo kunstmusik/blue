@@ -1943,7 +1943,103 @@ function createScratchPadSnapshot(data: ScratchPadData): ScratchPadSnapshot {
 
 
 
-function buildAutomationParameterSnapshot(param: BlueDataParameter): AutomationParameterSnapshot {
+interface ParameterMetadata {
+  targetPath: string[];
+  sourceKind: AutomationTargetSourceKind;
+}
+
+function buildParameterMetadataMap(
+  arrangement: BlueDataArrangement,
+  mixer: BlueDataMixer,
+): Map<string, ParameterMetadata> {
+  const metadataMap = new Map<string, ParameterMetadata>();
+
+  for (const ia of arrangement.getArrangement()) {
+    if (!ia.instr) continue;
+    const instr = ia.instr as any;
+    if (typeof instr.getParameters !== 'function') continue;
+    const instrParams = instr.getParameters();
+    if (!instrParams || !Array.isArray(instrParams)) continue;
+    const instrId = ia.arrangementId;
+    const instrSegment = instrId.startsWith('instr ') ? instrId : `instr ${instrId}`;
+    for (const param of instrParams) {
+      if (!param) continue;
+      const paramName = param.getName() || param.getLabel() || param.getUniqueId();
+      metadataMap.set(param.getUniqueId(), {
+        targetPath: [instrSegment, paramName],
+        sourceKind: 'instrument',
+      });
+    }
+  }
+
+  function indexChannel(channel: any, channelPath: string[]) {
+    if (!channel) return;
+    const levelParam = channel.getLevelParameter?.();
+    if (levelParam) {
+      metadataMap.set(levelParam.getUniqueId(), {
+        targetPath: [...channelPath, 'Volume'],
+        sourceKind: 'mixer',
+      });
+    }
+
+    const preEffects = channel.getPreEffects?.();
+    if (preEffects && preEffects.length > 0) {
+      for (const effect of preEffects) {
+        const effectName = typeof (effect as any).getSendChannel === 'function'
+          ? `Send: ${(effect as any).getSendChannel()}`
+          : (effect.getName?.() || 'Effect');
+        const params = effect.getParameters?.() ?? [];
+        for (const param of params) {
+          if (!param) continue;
+          const paramName = param.getName() || param.getLabel() || param.getUniqueId();
+          metadataMap.set(param.getUniqueId(), {
+            targetPath: [...channelPath, 'Pre-Effects', effectName, paramName],
+            sourceKind: 'mixer',
+          });
+        }
+      }
+    }
+
+    const postEffects = channel.getPostEffects?.();
+    if (postEffects && postEffects.length > 0) {
+      for (const effect of postEffects) {
+        const effectName = typeof (effect as any).getSendChannel === 'function'
+          ? `Send: ${(effect as any).getSendChannel()}`
+          : (effect.getName?.() || 'Effect');
+        const params = effect.getParameters?.() ?? [];
+        for (const param of params) {
+          if (!param) continue;
+          const paramName = param.getName() || param.getLabel() || param.getUniqueId();
+          metadataMap.set(param.getUniqueId(), {
+            targetPath: [...channelPath, 'Post-Effects', effectName, paramName],
+            sourceKind: 'mixer',
+          });
+        }
+      }
+    }
+  }
+
+  if (mixer) {
+    for (const channel of mixer.getAllSourceChannels()) {
+      const channelName = channel.getName?.() || 'Channel';
+      indexChannel(channel, ['Mixer', channelName]);
+    }
+    for (const channel of mixer.getSubChannels()) {
+      const channelName = channel.getName?.() || 'SubChannel';
+      indexChannel(channel, ['Mixer', channelName]);
+    }
+    if (mixer.getMaster()) {
+      indexChannel(mixer.getMaster(), ['Mixer', 'Master']);
+    }
+  }
+
+  return metadataMap;
+}
+
+function buildAutomationParameterSnapshot(
+  param: BlueDataParameter,
+  metadata?: ParameterMetadata,
+): AutomationParameterSnapshot {
   const name = param.getName();
   const label = param.getLabel();
   return {
@@ -1959,8 +2055,8 @@ function buildAutomationParameterSnapshot(param: BlueDataParameter): AutomationP
     fixedValue: param.getFixedValue(),
     automationEnabled: param.isAutomationEnabled(),
     lineColor: param.getLineColor(),
-    sourceKind: 'unknown' as AutomationTargetSourceKind,
-    targetPath: [],
+    sourceKind: metadata?.sourceKind ?? resolveParameterSourceKind(param),
+    targetPath: metadata?.targetPath ?? (name ? [name] : []),
     points: param.getPoints().map((p) => ({ time: p.time, value: p.value })),
   };
 }
@@ -1983,13 +2079,15 @@ export function collectLayerAutomationSnapshot(
     paramMap.set(p.getUniqueId(), p);
   }
 
+  const metadataMap = buildParameterMetadataMap(arrangement, mixer);
+
   const resolvedParameters: AutomationParameterSnapshot[] = [];
   const missingParameterIds: string[] = [];
 
   for (const id of assignedIds) {
     const param = paramMap.get(id);
     if (param) {
-      resolvedParameters.push(buildAutomationParameterSnapshot(param));
+      resolvedParameters.push(buildAutomationParameterSnapshot(param, metadataMap.get(id)));
     } else {
       missingParameterIds.push(id);
     }

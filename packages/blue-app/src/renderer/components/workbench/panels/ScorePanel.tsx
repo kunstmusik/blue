@@ -1603,9 +1603,13 @@ function SoundLayerHeader({
               />
               <span
                 className="max-w-[70px] truncate"
-                title={selectedAutomationParameter.parameterName}
+                title={
+                  selectedAutomationParameter.targetPath && selectedAutomationParameter.targetPath.length > 0
+                    ? selectedAutomationParameter.targetPath.join(' > ')
+                    : (selectedAutomationParameter.displayName || selectedAutomationParameter.name)
+                }
               >
-                {selectedAutomationParameter.parameterName}
+                {selectedAutomationParameter.displayName || selectedAutomationParameter.name}
               </span>
               <button
                 className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"

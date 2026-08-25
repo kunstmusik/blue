@@ -6,6 +6,8 @@ import {
   Channel,
   Effect,
   Parameter,
+  BlueSynthBuilder,
+  Element,
 } from '@blue/data';
 import {
   createScoreDocumentSnapshot,
@@ -17,6 +19,53 @@ import type {
   AutomationTargetSnapshot,
   ScoreLayerSnapshot,
 } from './project-editor';
+
+function createProjectWithInstrumentParameter(): {
+  data: BlueData;
+  paramId: string;
+} {
+  const data = new BlueData();
+  const score = data.getScore();
+  score.length = 0;
+
+  const poly = new PolyObject(true);
+  poly.newLayerAt(0);
+  score.push(poly);
+
+  const xml = `<instrument type="blue.orchestra.BlueSynthBuilder">
+    <name>Synth</name>
+    <instrumentText>aout oscili &lt;chorus_mode&gt;, 440</instrumentText>
+    <graphicInterface>
+      <bsbObject type="blue.orchestra.blueSynthBuilder.BSBKnob" version="2" uniqueId="chorus-knob">
+        <objectName>chorus_mode</objectName>
+        <x>0</x><y>0</y>
+        <automationAllowed>true</automationAllowed>
+        <value>0.5</value>
+        <minimum>0</minimum>
+        <maximum>1</maximum>
+      </bsbObject>
+    </graphicInterface>
+    <parameterList>
+      <parameter uniqueId="chorus-param" name="chorus_mode" min="0.0" max="1.0" automationEnabled="true">
+        <line>
+          <linePoint x="0.0" y="0.5"/>
+          <linePoint x="1.0" y="0.5"/>
+        </line>
+      </parameter>
+    </parameterList>
+    <opcodeList/>
+  </instrument>`;
+
+  const instr = BlueSynthBuilder.loadFromXML(Element.parse(xml));
+  const arrangement = data.getArrangement();
+  arrangement.addInstrument(instr, '1');
+
+  const param = instr.getParameters()[0]!;
+  const paramId = param.getUniqueId();
+  poly[0]!.getAutomationParameters().addParameterId(paramId);
+
+  return { data, paramId };
+}
 
 function createProjectWithMixerParameter(): {
   data: BlueData;
@@ -117,6 +166,50 @@ describe('AutomationParameterSnapshot shape', () => {
     expect(typeof param.sourceKind).toBe('string');
     expect(Array.isArray(param.targetPath)).toBe(true);
     expect(Array.isArray(param.points)).toBe(true);
+  });
+
+  it('resolves targetPath for arrangement instrument parameters', () => {
+    const { data } = createProjectWithInstrumentParameter();
+    const snap = createScoreDocumentSnapshot(data);
+    const automation = snap.layerGroups[0]!.layers[0]!.automation!;
+    const param = automation.parameters[0]!;
+
+    expect(param.name).toBe('chorus_mode');
+    expect(param.targetPath).toEqual(['instr 1', 'chorus_mode']);
+    expect(param.targetPath.join(' > ')).toBe('instr 1 > chorus_mode');
+  });
+
+  it('preserves the instr prefix for named arrangement ids that start with instr', () => {
+    const { data } = createProjectWithInstrumentParameter();
+    expect(
+      data.getArrangement().updateAssignment('1', {
+        nextArrangementId: 'instrumental',
+      }),
+    ).toBe(true);
+
+    const snap = createScoreDocumentSnapshot(data);
+    const param = snap.layerGroups[0]!.layers[0]!.automation!.parameters[0]!;
+
+    expect(param.targetPath).toEqual(['instr instrumental', 'chorus_mode']);
+  });
+
+  it('resolves targetPath for mixer channel volume and effect parameters', () => {
+    const { data } = createProjectWithAssociatedTrack();
+    // Assign the track channel's level parameter and pre-effect parameter to the track layer
+    const preEffect = data.getMixer().getChannels()[0]!.getPreEffects()[0]!;
+    const preEffectParam = preEffect.getParameters()[0]!;
+    const levelParam = data.getMixer().getChannels()[0]!.getLevelParameter();
+
+    data.getScore()[0]![0]!.getAutomationParameters().addParameterId(levelParam.getUniqueId());
+    data.getScore()[0]![0]!.getAutomationParameters().addParameterId(preEffectParam.getUniqueId());
+
+    const updatedSnap = createScoreDocumentSnapshot(data);
+    const updatedAutomation = updatedSnap.layerGroups.find((g) => g.groupType === 'track')!.layers[0]!.automation!;
+    const volumeSnap = updatedAutomation.parameters.find((p) => p.parameterId === levelParam.getUniqueId())!;
+    const effectSnap = updatedAutomation.parameters.find((p) => p.parameterId === preEffectParam.getUniqueId())!;
+
+    expect(volumeSnap.targetPath).toEqual(['Mixer', 'Channel', 'Volume']);
+    expect(effectSnap.targetPath).toEqual(['Mixer', 'Channel', 'Pre-Effects', 'Pre Filter', 'cutoff']);
   });
 });
 
