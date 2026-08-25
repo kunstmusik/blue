@@ -6,6 +6,7 @@ import type {
   MixerEffectEntrySnapshot,
   MixerSendEntrySnapshot,
 } from '../../../../../shared/project-editor';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 
 type MixerPatcher = (patch: Record<string, unknown>) => void;
 
@@ -69,7 +70,7 @@ export default function EffectsChainContextMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu">
           <MenuItem
             onSelect={onAddNewEffect}
@@ -226,7 +227,7 @@ export default function EffectsChainContextMenu({
             Remove
           </MenuItem>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

@@ -4,12 +4,14 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
 import type { LibraryBrowseNode } from '../../shared/unified-library';
 import { LibraryTree } from '../components/libraries/LibraryTree';
 import { LibraryBreadcrumbs } from '../components/libraries/LibraryBreadcrumbs';
 import LibrariesPanel from '../components/workbench/panels/LibrariesPanel';
 import { isAuxiliaryInteractionTarget } from '../components/workbench/auxiliary-layout';
 import { useLibraryStore } from '../stores/library-store';
+import { HostDocumentContext } from '../hooks/use-host-document';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -212,6 +214,35 @@ describe('Libraries panel', () => {
     document.body.appendChild(outside);
     expect(isAuxiliaryInteractionTarget(outside)).toBe(false);
     act(() => { root.unmount(); });
+  });
+
+  it('hosts actions and tree context menus in a floated Library panel document', async () => {
+    const popout = new JSDOM('<!doctype html><html><body></body></html>');
+    const popoutDoc = popout.window.document;
+    const { container, root } = render(
+      <HostDocumentContext.Provider value={popoutDoc}>
+        <LibrariesPanel />
+      </HostDocumentContext.Provider>,
+    );
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    const trigger = container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement;
+    act(() => trigger.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
+    await act(async () => { await Promise.resolve(); });
+    expect(popoutDoc.body.querySelector('[role="menu"]')).toBeTruthy();
+    expect(document.body.querySelector('[role="menu"]')).toBeNull();
+
+    act(() => {
+      popoutDoc.dispatchEvent(new popout.window.KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    const instrumentRoot = container.querySelector('#library-node-root-instrument') as HTMLElement;
+    act(() => instrumentRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(popoutDoc.body.querySelector('[aria-label="Instruments commands"]')).toBeTruthy();
+    expect(document.body.querySelector('[aria-label="Instruments commands"]')).toBeNull();
+
+    act(() => { root.unmount(); });
+    popout.window.close();
   });
 
   it('restores the Library viewport after the panel is remounted', () => {

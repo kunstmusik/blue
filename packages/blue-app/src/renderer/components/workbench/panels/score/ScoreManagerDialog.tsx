@@ -19,6 +19,7 @@ import {
   type LayerRemovalPlan,
   type SelectedLayerRange,
 } from './layer-selection-utils';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 interface Props {
   score: ScoreDocumentSnapshot;
@@ -213,11 +214,12 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 <DropdownMenu.Trigger asChild>
                   <button className={btnClass} title="Add Layer Group" aria-label="Add Layer Group">+</button>
                 </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
+                <PopoutDropdownMenuPortal>
                   <DropdownMenu.Content
                     className="z-50 min-w-45 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg"
                     sideOffset={4}
                     align="start"
+                    {...portalEventIsolationProps}
                   >
                     {ADD_LAYER_GROUP_OPTIONS.map((option) => (
                       <DropdownMenu.Item
@@ -229,7 +231,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                       </DropdownMenu.Item>
                     ))}
                   </DropdownMenu.Content>
-                </DropdownMenu.Portal>
+                </PopoutDropdownMenuPortal>
               </DropdownMenu.Root>
               <button className={btnClass} onClick={handleRemoveLayerGroup} disabled={!selectedGroup} title="Remove Layer Group">-</button>
             </div>

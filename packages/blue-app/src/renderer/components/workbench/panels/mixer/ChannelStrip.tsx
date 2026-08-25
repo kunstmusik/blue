@@ -33,6 +33,7 @@ import { useLibraryStore } from '../../../../stores/library-store';
 import { useProjectStore } from '../../../../stores/project-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 
 const BLUE_MIXER_EFFECT_DRAG_MIME = 'application/x-blue-mixer-effect';
 
@@ -1019,7 +1020,7 @@ export default function ChannelStrip({
               {stripContent}
             </div>
           </ContextMenu.Trigger>
-          <ContextMenu.Portal>
+          <PopoutContextMenuPortal>
             <ContextMenu.Content className="editor-context-menu">
               <ContextMenu.Item
                 className="editor-context-menu__item"
@@ -1028,7 +1029,7 @@ export default function ChannelStrip({
                 Remove SubChannel
               </ContextMenu.Item>
             </ContextMenu.Content>
-          </ContextMenu.Portal>
+          </PopoutContextMenuPortal>
         </ContextMenu.Root>
       ) : (
         <div className="mixer-channel-strip">

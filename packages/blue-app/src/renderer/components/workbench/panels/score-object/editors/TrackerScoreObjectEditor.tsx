@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { X, ArrowUp, ArrowDown, HelpCircle } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { TrackerColumnSnapshot } from '../../../../../../shared/project-editor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 const COLUMN_TYPES = [
   { label: 'PCH', value: 0 },
@@ -180,13 +182,15 @@ function isTrackerValueValid(input: string, column: TrackerColumnSnapshot): bool
 }
 
 function ShortcutHelpModal({ onClose }: { onClose: () => void }): React.ReactElement {
+  const hostWindow = useHostDocument()?.defaultView ?? null;
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handler);
+    return () => hostWindow.removeEventListener('keydown', handler);
+  }, [onClose, hostWindow]);
 
   return (
     <div
@@ -835,6 +839,10 @@ export default function TrackerScoreObjectEditor({
   } = useScoreObjectTest(scoreDocument.target);
   const gridRef = useRef<HTMLTableElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  // Keyboard focus ('?' shortcut) must be observed in the hosting window and
+  // against the hosting document's activeElement (popout-safe).
+  const hostDocument = useHostDocument();
+  const hostWindow = hostDocument?.defaultView ?? null;
   const activeCellRef = useRef({ trackIndex: 0, columnIndex: -1, stepIndex: 0 });
   const draftCellsRef = useRef<Record<string, string>>({});
   const noteCopyBuffer = useRef<NoteSnapshot[]>([]);
@@ -857,7 +865,7 @@ export default function TrackerScoreObjectEditor({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const active = document.activeElement;
+      const active = hostDocument?.activeElement ?? null;
       if (!rootRef.current || !active || !rootRef.current.contains(active)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
@@ -865,9 +873,10 @@ export default function TrackerScoreObjectEditor({
         setShowShortcutHelp(true);
       }
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handler);
+    return () => hostWindow.removeEventListener('keydown', handler);
+  }, [hostDocument, hostWindow]);
 
   const patch = useCallback(
     (p: Record<string, unknown>) => {
@@ -1532,8 +1541,8 @@ export default function TrackerScoreObjectEditor({
                         {track.trackName}
                       </th>
                     </ContextMenu.Trigger>
-                    <ContextMenu.Portal>
-                      <ContextMenu.Content className="editor-context-menu">
+                    <PopoutContextMenuPortal>
+                      <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                         <ContextMenu.Item
                           className="editor-context-menu__item"
                           onSelect={() => handleDuplicateTrack(ti)}
@@ -1560,7 +1569,7 @@ export default function TrackerScoreObjectEditor({
                           Edit Track Properties...
                         </ContextMenu.Item>
                       </ContextMenu.Content>
-                    </ContextMenu.Portal>
+                    </PopoutContextMenuPortal>
                   </ContextMenu.Root>
                 ))}
               </tr>

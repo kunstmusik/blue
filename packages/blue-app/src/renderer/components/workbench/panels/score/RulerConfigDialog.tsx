@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TimeBase } from '@blue/data';
 import type { ScoreTimeStateSnapshot } from '../../../../../shared/project-editor';
+import { useHostDocument } from '../../../../hooks/use-host-document';
 
 const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
@@ -54,13 +55,17 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
   const [updateMarkers, setUpdateMarkers] = useState(true);
   const [markerMode, setMarkerMode] = useState<TimebaseUpdateMode>('UPDATE_ALL');
 
+  const hostWindow = useHostDocument()?.defaultView ?? null;
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    // Escape must be observed in the window hosting this dialog (popout-safe).
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handleKeyDown);
+    return () => hostWindow.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, hostWindow]);
 
   function handleOk() {
     onApply({

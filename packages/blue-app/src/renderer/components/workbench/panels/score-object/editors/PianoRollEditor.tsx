@@ -29,6 +29,8 @@ import { NoteCanvasMouseListener } from './pianoroll/NoteCanvasMouseListener';
 import type { SnapValueName } from '@blue/data';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import { isNodeLike, isEventInsidePortalPopup } from '../../../../../utils/cross-realm-dom';
 
 type Tab = 'notes' | 'properties';
 
@@ -339,6 +341,11 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
 
   const focusEditorSurface = useCallback((target: EventTarget | null) => {
     if (isEditableTarget(target)) return;
+    // Capture phase runs before any bubble-phase stopPropagation guard a
+    // portaled popup root can apply; pressing inside one of its menus (snap
+    // values, note-property popovers) must not steal focus mid-click or the
+    // submenu tears down before item clicks land.
+    if (isEventInsidePortalPopup(target)) return;
     rootRef.current?.focus();
   }, []);
 
@@ -640,8 +647,8 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
       {testOutput !== null && (
         <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
       )}
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCopySelectedNotes}>Copy</ContextMenu.Item>
           <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCutSelectedNotes}>Cut</ContextMenu.Item>
           <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePasteAtLastTarget}>Paste</ContextMenu.Item>
@@ -649,15 +656,17 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
           <ContextMenu.Item className="editor-context-menu__item" onSelect={handleRemoveSelectedNotes}>Remove</ContextMenu.Item>
           <ContextMenu.Item className="editor-context-menu__item" onSelect={() => setSelectedIndices(new Set(notes.map((_, i) => i)))}>Select All</ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable
-    || target instanceof HTMLInputElement
-    || target instanceof HTMLTextAreaElement
-    || target instanceof HTMLSelectElement;
+export function isEditableTarget(target: EventTarget | null): boolean {
+  // Structural check: popout-realm nodes fail instanceof HTMLElement.
+  const el = target as HTMLElement | null;
+  if (!isNodeLike(el)) return false;
+  return el.isContentEditable
+    || el.tagName === 'INPUT'
+    || el.tagName === 'TEXTAREA'
+    || el.tagName === 'SELECT';
 }

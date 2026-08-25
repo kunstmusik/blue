@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useHostDocument, usePortalContainer } from '../../../../../hooks/use-host-document';
+import { isNodeLike } from '../../../../../utils/cross-realm-dom';
 
 export interface EditableLinePoint {
   x: number;
@@ -326,6 +328,12 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   const [hoverPoint, setHoverPoint] = useState<PointHit | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [showPointEditor, setShowPointEditor] = useState(false);
+  // Floating workbench panels live in a popout document while sharing this
+  // renderer context; overlays and their dismissal listeners must bind to the
+  // window that hosts this canvas, not the module-global one.
+  const hostDocument = useHostDocument();
+  const hostWindow = hostDocument?.defaultView ?? null;
+  const portalContainer = usePortalContainer();
   const [pointEdits, setPointEdits] = useState<Record<string, string>>({});
 
   linesRef.current = lines;
@@ -346,13 +354,15 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   }, [locked]);
 
   useEffect(() => {
-    if (!contextMenuPosition) {
+    if ((!contextMenuPosition && !showPointEditor) || !hostDocument || !hostWindow) {
       return undefined;
     }
 
     const handleMouseDown = (event: MouseEvent) => {
       const menu = contextMenuRef.current;
-      if (menu && event.target instanceof Node && menu.contains(event.target)) {
+      // Containment must not use `instanceof Node`: portal children belong to
+      // the hosting document's realm, which differs from this module's realm.
+      if (menu && isNodeLike(event.target) && menu.contains(event.target)) {
         return;
       }
       setContextMenuPosition(null);
@@ -361,17 +371,19 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setContextMenuPosition(null);
+        setShowPointEditor(false);
+        setPointEdits({});
       }
     };
 
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('keydown', handleEscape);
+    hostWindow.addEventListener('mousedown', handleMouseDown);
+    hostWindow.addEventListener('keydown', handleEscape);
 
     return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('keydown', handleEscape);
+      hostWindow.removeEventListener('mousedown', handleMouseDown);
+      hostWindow.removeEventListener('keydown', handleEscape);
     };
-  }, [contextMenuPosition]);
+  }, [contextMenuPosition, showPointEditor, hostDocument, hostWindow]);
 
   const plotLeft = showAxes ? AXIS_PAD_L : INSET;
   const plotRight = showAxes ? AXIS_PAD_R : INSET;
@@ -844,9 +856,16 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         </svg>
       </div>
 
-      {canUseDom && contextMenuPosition && createPortal(
+      {canUseDom && contextMenuPosition && portalContainer && createPortal(
         <div
           ref={contextMenuRef}
+          // React portals bubble synthetic events up this component's tree;
+          // stop them so presses here never reach ancestor drag/selection
+          // handlers (e.g., BSB widget dragging).
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
           className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-role-body text-app-text-strong shadow-xl"
           data-auxiliary-portal="true"
           style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
@@ -872,21 +891,27 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
             Reset Line
           </button>
         </div>,
-        document.body,
+        portalContainer,
       )}
 
-      {canUseDom && hoverTooltip && createPortal(
+      {canUseDom && hoverTooltip && portalContainer && createPortal(
         <div
           className="pointer-events-none fixed z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-role-subheadline text-app-text-strong shadow-lg"
           style={{
-            left: Math.max(8, Math.min(hoverTooltip.pointX + 10, window.innerWidth - 176)),
-            top: Math.max(8, Math.min(hoverTooltip.canvasTop - 44, window.innerHeight - 44)),
+            left: Math.max(8, Math.min(
+              hoverTooltip.pointX + 10,
+              (hostWindow?.innerWidth ?? window.innerWidth) - 176,
+            )),
+            top: Math.max(8, Math.min(
+              hoverTooltip.canvasTop - 44,
+              (hostWindow?.innerHeight ?? window.innerHeight) - 44,
+            )),
           }}
         >
           <div>x: {hoverTooltip.xText}</div>
           <div>y: {hoverTooltip.yText}{hoverTooltip.ySuffix ? ` ${hoverTooltip.ySuffix}` : ''}</div>
         </div>,
-        document.body,
+        portalContainer,
       )}
 
       {showPointEditor && currentLine && (() => {

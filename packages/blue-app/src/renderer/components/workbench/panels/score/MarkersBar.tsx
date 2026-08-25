@@ -5,6 +5,7 @@ import { useProjectStore } from '../../../../stores/project-store';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
 import { snapBeatToGrid } from './snap-grid-utils';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 const AUTO_SCROLL_EDGE_THRESHOLD = 24;
 const AUTO_SCROLL_MAX_STEP = 32;
@@ -296,13 +297,13 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
           </div>
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           <ContextMenu.Item className={ctxItemClass} onSelect={handleRemove}>
             Remove
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

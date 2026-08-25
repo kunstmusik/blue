@@ -5,6 +5,7 @@ import { getWidgetDisplaySize } from './utils';
 import BsbTextLabel from './BsbTextLabel';
 import WidgetWrapper from './WidgetWrapper';
 import type { BSBWidgetComponentProps } from './widget-component-props';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
 
 type BSBDropdownWidgetProps = BSBWidgetComponentProps;
 
@@ -58,8 +59,8 @@ function BSBDropdownWidget({
             <ChevronDown size={12} className="shrink-0" />
           </button>
         </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="z-50 min-w-37.5 rounded-md border border-blue-border bg-app-surface-strong p-1 shadow-lg">
+        <PopoutDropdownMenuPortal>
+          <DropdownMenu.Content className="z-50 min-w-37.5 rounded-md border border-blue-border bg-app-surface-strong p-1 shadow-lg" {...portalEventIsolationProps}>
             {items.map((item, i) => (
               <DropdownMenu.Item
                 key={i}
@@ -71,7 +72,7 @@ function BSBDropdownWidget({
               </DropdownMenu.Item>
             ))}
           </DropdownMenu.Content>
-        </DropdownMenu.Portal>
+        </PopoutDropdownMenuPortal>
       </DropdownMenu.Root>
     </WidgetWrapper>
   );

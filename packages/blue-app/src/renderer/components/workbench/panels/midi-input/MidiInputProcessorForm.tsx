@@ -3,6 +3,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useProjectStore } from '../../../../stores/project-store';
 import type { MidiInputProcessorSnapshot, MidiScaleSnapshot } from '../../../../../shared/project-editor';
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 
 const KEY_MAPPING_OPTIONS = [
   { value: 'MIDI', label: 'MIDI' },
@@ -100,7 +101,7 @@ function ScaleSelector({
         </div>
       </ContextMenu.Trigger>
 
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="workbench-context-menu">
           <ContextMenu.Item
             className="workbench-context-menu__item"
@@ -109,7 +110,7 @@ function ScaleSelector({
             Reset (12TET)
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

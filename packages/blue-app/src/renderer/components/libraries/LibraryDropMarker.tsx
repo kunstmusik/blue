@@ -2,6 +2,7 @@ import type { LibraryExactTransferTarget } from '../../../shared/unified-library
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useId } from 'react';
 import { useLibraryDropTarget } from './use-library-drop-target';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../hooks/host-portals';
 
 export type LibraryDropZoneState = ReturnType<typeof useLibraryDropTarget>;
 
@@ -19,16 +20,17 @@ function DropContextMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content
           className="editor-context-menu z-[1000] min-w-32"
           data-auxiliary-portal="true"
+          {...portalEventIsolationProps}
         >
           <ContextMenu.Item disabled={!canPaste} className={MENU_ITEM_CLASS} onSelect={paste}>
             Paste
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

@@ -220,4 +220,55 @@ describe('ColorPicker', () => {
       Object.defineProperty(window, 'innerHeight', originalInnerHeight);
     }
   });
+
+  it('stops pointer events from bubbling to ancestors behind the popover', () => {
+    // React portals bubble synthetic events along the REACT tree: without a
+    // guard, pressing the picker's sliders/presets reaches ancestor handlers
+    // (e.g., the score canvas surface selection handlers) and selects objects
+    // sitting visually behind the popover.
+    const events: string[] = [];
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    const anchorElement = document.createElement('button');
+    document.body.appendChild(anchorElement);
+
+    function SurfaceSpy({ children }: { children: React.ReactNode }): React.ReactElement {
+      return (
+        <div
+          onMouseDown={(e) => { events.push('mousedown'); e.preventDefault(); }}
+          onMouseUp={(e) => { events.push('mouseup'); }}
+          onClick={(e) => { events.push('click'); }}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    act(() => {
+      root.render(
+        <SurfaceSpy>
+          <ColorPickerPopover
+            open
+            value="#336699"
+            anchor={{ left: 10, right: 40, top: 10, bottom: 40 }}
+            anchorElement={anchorElement}
+            onChange={vi.fn()}
+            onClose={vi.fn()}
+          />
+        </SurfaceSpy>,
+      );
+    });
+
+    const hueSlider = document.querySelector('input[aria-label="Hue"]') as HTMLElement;
+    expect(hueSlider).toBeTruthy();
+    act(() => {
+      hueSlider.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      hueSlider.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      hueSlider.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(events).toEqual([]);
+  });
 });

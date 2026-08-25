@@ -1876,6 +1876,27 @@ async function doQuit(): Promise<void> {
     unregisterDomainIpc?.();
     unregisterDomainIpc = null;
 
+    // Window layout persistence must survive domain teardown: renderer
+    // beforeunload handlers persist the FINAL workbench layout (e.g., a
+    // floated panel) via this channel while windows are closing, after the
+    // engine/service-backed handlers are already stopped. The layout handler
+    // only touches the program-settings file, so it is safe to keep alive.
+    //
+    // Late updates are DROPPED once quitting has begun: closing the popout
+    // windows makes dockview redock their groups into the main grid, which
+    // fires one last "everything docked" layout — persisting that would
+    // clobber the floated state the user quit with and un-restore it on the
+    // next launch. The in-session saves already captured the floated layout.
+    const layoutUpdateHandler = collectedIpcHandlers.get('window-layout:update');
+    const layoutGetHandler = collectedIpcHandlers.get('window-layout:get');
+    if (layoutUpdateHandler) {
+      electronIpcMain.handle('window-layout:update', (event, request) =>
+        isQuitting ? loadWindowLayoutSettings() : layoutUpdateHandler(event, request));
+    }
+    if (layoutGetHandler) {
+      electronIpcMain.handle('window-layout:get', layoutGetHandler);
+    }
+
     unregisterUnifiedLibraryIpc?.();
     unregisterUnifiedLibraryIpc = null;
     await unifiedLibraryService?.stop();

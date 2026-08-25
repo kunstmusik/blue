@@ -8,6 +8,11 @@ interface UseDocumentMouseDownOutsideOptions {
    * Document that owns the popup. Floating workbench panels live in a separate
    * popout document while sharing this renderer context, so dismissal must
    * listen on the document that actually contains the popup.
+   *
+   * Panel content MUST pass `useHostDocument()` here instead of relying on the
+   * default: omitting it binds to the main window's document, which is only
+   * correct for main-window chrome outside any Dockview panel. See
+   * docs/popout-popup-conventions.md.
    */
   targetDocument?: Document | null;
 }

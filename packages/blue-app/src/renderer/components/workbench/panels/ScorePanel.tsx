@@ -1,4 +1,7 @@
 import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from "react";
+import { toast } from 'sonner';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../hooks/host-portals';
+import { isEventInsidePortalPopup } from '../../../utils/cross-realm-dom';
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown, ChevronLeft, Plus } from "lucide-react";
 import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
@@ -773,7 +776,11 @@ export default function ScorePanel() {
                 data-library-autoscroll
                 className="score-timeline-scroll absolute inset-0 overflow-auto"
                 onScroll={handleTimelineScroll}
-                onMouseDownCapture={() => {
+                onMouseDownCapture={(e) => {
+                  // Capture phase runs before portal-internal stopPropagation
+                  // guards, so presses inside the canvases' portaled context
+                  // menus must be exempted here explicitly.
+                  if (isEventInsidePortalPopup(e.target)) return;
                   void stopAuditioning();
                 }}
                 onMouseDown={handleTimelineBackgroundMouseDown}
@@ -1124,8 +1131,8 @@ function RowHeader({
           {children}
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           <ContextMenu.CheckboxItem
             className={ctxItemClass}
             checked={rowVisibility.tempoRowVisible}
@@ -1160,7 +1167,7 @@ function RowHeader({
             Show Markers Row
           </ContextMenu.CheckboxItem>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
@@ -1210,8 +1217,8 @@ function SpacerPanel({
           )}
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => addLayer(groupId, layerCount - 1)}
@@ -1243,7 +1250,7 @@ function SpacerPanel({
             </ContextMenu.Item>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
@@ -1370,8 +1377,13 @@ function SoundLayerHeader({
 
   const dispatchAutomationPatch = (patch: ScoreAutomationPatch) => {
     void (async () => {
-      await applyProjectDocumentPatch({ score: patch });
-      await flushPendingPatches();
+      try {
+        await applyProjectDocumentPatch({ score: patch });
+        await flushPendingPatches();
+      } catch (error: unknown) {
+        console.error('[score] Failed to apply automation patch:', error);
+        toast.error(`Failed to update automation: ${error instanceof Error ? error.message : String(error)}`);
+      }
     })();
   };
 
@@ -1619,8 +1631,8 @@ function SoundLayerHeader({
           )}
          </div>
        </ContextMenu.Trigger>
-       <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+       <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           {availability.canAdd && (
             <>
               <ContextMenu.Item
@@ -1696,8 +1708,8 @@ function SoundLayerHeader({
                   <span>Layer Height</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="editor-context-menu">
+                <PopoutContextMenuPortal>
+                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
                     {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
                       <ContextMenu.Item
                         key={idx}
@@ -1711,12 +1723,12 @@ function SoundLayerHeader({
                       </ContextMenu.Item>
                     ))}
                   </ContextMenu.SubContent>
-                </ContextMenu.Portal>
+                </PopoutContextMenuPortal>
               </ContextMenu.Sub>
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
     {pendingRemovalPlan && (
       <LayerRemovalConfirmationDialog

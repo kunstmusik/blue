@@ -2,6 +2,8 @@ import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Clipboard, MousePointerClick, Trash2 } from 'lucide-react';
 import { useOutputStore } from '../../../../stores/output-store';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { useHostDocument } from '../../../../hooks/use-host-document';
 
 export default function OutputPanel() {
   const tabs = useOutputStore((s) => s.tabs);
@@ -36,9 +38,11 @@ export default function OutputPanel() {
   }, [activeTab]);
 
   // Track document selection state for auto-scroll pausing and Copy enable/disable
+  const hostDocument = useHostDocument();
   useEffect(() => {
     function handleSelectionChange() {
-      const sel = document.getSelection();
+      if (!hostDocument) return;
+      const sel = hostDocument.getSelection();
       if (!sel || sel.isCollapsed || !scrollRef.current) {
         hasSelectionRef.current = false;
         setHasSelection(false);
@@ -51,11 +55,12 @@ export default function OutputPanel() {
       setHasSelection(hasSelectionRef.current);
     }
 
-    document.addEventListener('selectionchange', handleSelectionChange);
+    if (!hostDocument) return undefined;
+    hostDocument.addEventListener('selectionchange', handleSelectionChange);
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
+      hostDocument.removeEventListener('selectionchange', handleSelectionChange);
     };
-  }, []);
+  }, [hostDocument]);
 
   // Auto-scroll to bottom when new lines arrive, unless user scrolled away or has selection
   useEffect(() => {
@@ -80,7 +85,7 @@ export default function OutputPanel() {
 
   // Context menu actions
   const handleCopy = useCallback(() => {
-    const sel = document.getSelection();
+    const sel = hostDocument?.getSelection();
     if (!sel || sel.isCollapsed) return;
     const text = sel.toString();
     if (typeof window !== 'undefined' && window.blueAPI?.writeClipboardText) {
@@ -88,18 +93,18 @@ export default function OutputPanel() {
     } else if (navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(text);
     }
-  }, []);
+  }, [hostDocument]);
 
   const handleSelectAll = useCallback(() => {
-    if (!scrollRef.current) return;
-    const range = document.createRange();
+    if (!scrollRef.current || !hostDocument) return;
+    const range = hostDocument.createRange();
     range.selectNodeContents(scrollRef.current);
-    const sel = document.getSelection();
+    const sel = hostDocument.getSelection();
     if (sel) {
       sel.removeAllRanges();
       sel.addRange(range);
     }
-  }, []);
+  }, [hostDocument]);
 
   const handleClear = useCallback(() => {
     if (activeTabId) {
@@ -178,7 +183,7 @@ export default function OutputPanel() {
           </div>
         </ContextMenu.Trigger>
 
-        <ContextMenu.Portal container={document.body}>
+        <PopoutContextMenuPortal>
           <ContextMenu.Content
             className="workbench-context-menu"
             sideOffset={6}
@@ -211,7 +216,7 @@ export default function OutputPanel() {
               Clear
             </ContextMenu.Item>
           </ContextMenu.Content>
-        </ContextMenu.Portal>
+        </PopoutContextMenuPortal>
       </ContextMenu.Root>
     </div>
   );

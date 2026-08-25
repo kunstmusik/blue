@@ -13,6 +13,7 @@ import {
   TEMPO_MIN_BPM,
   TEMPO_MAX_BPM,
 } from './tempo-map-utils';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 const BEAT_EPSILON = 0.001;
 
@@ -275,10 +276,11 @@ export default function TempoLineView({
         </div>
       </ContextMenu.Trigger>
       {enabled && rootTimelineOnly && (
-        <ContextMenu.Portal>
+        <PopoutContextMenuPortal>
           <ContextMenu.Content
             className="editor-context-menu"
             onCloseAutoFocus={() => setContextMenuTarget(null)}
+            {...portalEventIsolationProps}
           >
             {contextMenuTarget?.type === 'point' && Math.abs(points[contextMenuTarget.index]?.beat ?? 0) >= BEAT_EPSILON ? (
               <ContextMenu.Item
@@ -318,7 +320,7 @@ export default function TempoLineView({
               </>
             ) : null}
           </ContextMenu.Content>
-        </ContextMenu.Portal>
+        </PopoutContextMenuPortal>
       )}
     </ContextMenu.Root>
   );

@@ -5,6 +5,7 @@ import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { CODE_REPOSITORY_ROOT_ID, collectDescendantIds } from '@blue/data';
 import type { CodeRepositoryNode } from '@blue/data';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 
 export interface CodeRepositoryTreeMove {
   readonly dragIds: readonly string[];
@@ -72,7 +73,7 @@ function RepositoryNodeMenu({
       }}
     >
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" collisionPadding={8}>
           {isContainer && (
             <>
@@ -107,7 +108,7 @@ function RepositoryNodeMenu({
             </ContextMenu.Item>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

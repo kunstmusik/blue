@@ -6,6 +6,7 @@ import type {
   SupportedNewInstrumentType,
 } from '../../../../../shared/project-editor';
 import type { OrchestraMutationProps } from './types';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 
 interface ArrangementContextMenuProps extends OrchestraMutationProps {
   row: ArrangementRowSnapshot;
@@ -49,7 +50,7 @@ function AddInstrumentSubmenu({
         <span>Add Instrument</span>
         <ChevronRight className="w-3.5 h-3.5 opacity-60" />
       </ContextMenu.SubTrigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.SubContent
           className="editor-context-menu editor-context-menu--submenu"
           sideOffset={2}
@@ -63,7 +64,7 @@ function AddInstrumentSubmenu({
             BlueSynthBuilder
           </MenuItem>
         </ContextMenu.SubContent>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Sub>
   );
 }
@@ -90,7 +91,7 @@ export default function ArrangementContextMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" sideOffset={4}>
           <MenuItem
             onSelect={() =>
@@ -152,7 +153,7 @@ export default function ArrangementContextMenu({
             Remove
           </MenuItem>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

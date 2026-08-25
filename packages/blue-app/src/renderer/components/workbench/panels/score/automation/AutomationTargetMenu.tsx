@@ -1,6 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronRight } from 'lucide-react';
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import type {
   ScoreAutomationPatch,
   ScoreAutomationLayerRef,
@@ -12,6 +12,7 @@ import {
   classifyTargets,
   getAllTargetsFromGroups,
 } from './automation-selection-utils';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 
 interface Props {
   /** The element that opens the menu (typically the "A" button). */
@@ -29,6 +30,7 @@ export default function AutomationTargetMenu({
   onPatch,
   onClose,
 }: Props) {
+  const [open, setOpen] = useState(false);
   const safeAutomation = automation ?? {
     layerId: layerRef.layerId,
     layerKind: layerRef.layerKind,
@@ -51,21 +53,29 @@ export default function AutomationTargetMenu({
     [safeAutomation, allTargets],
   );
 
+  function dispatchPatch(patch: ScoreAutomationPatch) {
+    // Do not make menu dismissal depend on the asynchronous project-store
+    // update or canonical save. A failed save must not leave the Radix menu
+    // stranded over the score surface.
+    setOpen(false);
+    onPatch(patch);
+  }
+
   function handleSelect(target: AutomationTargetSnapshot) {
     if (target.assignmentState === 'assignedCurrentLayer') {
-      onPatch({
+      dispatchPatch({
         type: 'removeAutomationFromLayer',
         layer: layerRef,
         parameterId: target.parameterId,
       });
     } else if (target.assignmentState === 'assignedOtherLayer') {
-      onPatch({
+      dispatchPatch({
         type: 'assignAutomationToLayer',
         layer: layerRef,
         parameterId: target.parameterId,
       });
     } else {
-      onPatch({
+      dispatchPatch({
         type: 'assignAutomationToLayer',
         layer: layerRef,
         parameterId: target.parameterId,
@@ -75,7 +85,7 @@ export default function AutomationTargetMenu({
   }
 
   function handleClearAll() {
-    onPatch({
+    dispatchPatch({
       type: 'clearLayerAutomations',
       layer: layerRef,
     });
@@ -83,7 +93,7 @@ export default function AutomationTargetMenu({
 
   function handleCleanupMissing() {
     if (missing.length === 0) return;
-    onPatch({
+    dispatchPatch({
       type: 'cleanupLayerAutomation',
       layer: layerRef,
       parameterIds: missing.map((t) => t.parameterId),
@@ -91,10 +101,16 @@ export default function AutomationTargetMenu({
   }
 
   return (
-    <DropdownMenu.Root onOpenChange={(open) => { if (!open) onClose?.(); }}>
+    <DropdownMenu.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) onClose?.();
+      }}
+    >
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="editor-context-menu" sideOffset={4}>
+      <PopoutDropdownMenuPortal>
+        <DropdownMenu.Content className="editor-context-menu" sideOffset={4} {...portalEventIsolationProps}>
           {safeAutomation.targetGroups.map((group) => (
             <TargetGroupItem
               key={group.groupId}
@@ -127,7 +143,7 @@ export default function AutomationTargetMenu({
             </>
           )}
         </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+      </PopoutDropdownMenuPortal>
     </DropdownMenu.Root>
   );
 }
@@ -179,8 +195,8 @@ function TargetGroupItem({
         <span>{group.label}</span>
         <ChevronRight className="w-3.5 h-3.5 opacity-60" />
       </DropdownMenu.SubTrigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.SubContent className="editor-context-menu" sideOffset={-2} alignOffset={-4}>
+      <PopoutDropdownMenuPortal>
+        <DropdownMenu.SubContent className="editor-context-menu" sideOffset={-2} alignOffset={-4} {...portalEventIsolationProps}>
           {group.subGroups.map((sub) => (
             <TargetGroupItem key={sub.groupId} group={sub} onSelect={onSelect} depth={depth + 1} />
           ))}
@@ -188,7 +204,7 @@ function TargetGroupItem({
             <TargetItem key={target.parameterId} target={target} onSelect={onSelect} />
           ))}
         </DropdownMenu.SubContent>
-      </DropdownMenu.Portal>
+      </PopoutDropdownMenuPortal>
     </DropdownMenu.Sub>
   );
 }

@@ -10,6 +10,7 @@ import { DEFAULT_ROW_HEIGHT } from '../types';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 import PatternGridRow from './PatternGridRow';
 import {
   beatToPixelX,
@@ -261,8 +262,8 @@ export default function PatternsLayerGroupCanvas({
         </div>
       </ContextMenu.Trigger>
 
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu" data-pattern-context-menu>
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" data-pattern-context-menu {...portalEventIsolationProps}>
           <ContextMenu.Item className="editor-context-menu__item" disabled={!targetIsActive} onSelect={handleCut}>
             Cut
           </ContextMenu.Item>
@@ -280,7 +281,7 @@ export default function PatternsLayerGroupCanvas({
             Properties
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
