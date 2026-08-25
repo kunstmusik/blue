@@ -1,6 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { MoreVertical } from 'lucide-react';
 import type { LibraryType } from '../../../shared/unified-library';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../hooks/host-portals';
 
 interface LibraryActionsMenuProps {
   selectedType: LibraryType | 'all';
@@ -25,13 +26,14 @@ export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, 
           <MoreVertical size={16} aria-hidden="true" />
         </button>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <PopoutDropdownMenuPortal>
         <DropdownMenu.Content
           align="end"
           sideOffset={4}
           collisionPadding={8}
           className="editor-context-menu z-[1000] min-w-44"
           data-auxiliary-portal="true"
+          {...portalEventIsolationProps}
         >
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>Import XML…</DropdownMenu.Item>
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImportDirectory}>Import Java Configuration Directory…</DropdownMenu.Item>
@@ -43,7 +45,7 @@ export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, 
           >Export Current…</DropdownMenu.Item>
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onExportAll}>Export All…</DropdownMenu.Item>
         </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+      </PopoutDropdownMenuPortal>
     </DropdownMenu.Root>
   );
 }

@@ -1,7 +1,8 @@
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { EditorView } from '@codemirror/view';
 import { ChevronRight } from 'lucide-react';
-import React, { useMemo, type MutableRefObject, type ReactNode } from 'react';
+import React, { type MutableRefObject, type ReactNode } from 'react';
 
 import {
   copySelectionToClipboard,
@@ -29,13 +30,6 @@ interface CsoundEditorContextMenuProps {
   onAddToCodeRepository?: (selectedText: string) => void;
 }
 
-function getPortalContainer(): HTMLElement | undefined {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-
-  return document.body;
-}
 
 function isSubmenuItem(item: CsoundEditorMenuItem): item is CsoundEditorSubmenuItem {
   return item.kind === 'submenu';
@@ -75,7 +69,6 @@ function renderMenuItem(
   }
 
   if (isSubmenuItem(item)) {
-    const portalContainer = getPortalContainer();
 
     return (
       <ContextMenu.Sub key={item.id}>
@@ -87,8 +80,8 @@ function renderMenuItem(
           <span>{item.label}</span>
           <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
-        {portalContainer ? (
-          <ContextMenu.Portal container={portalContainer}>
+
+          <PopoutContextMenuPortal>
             <ContextMenu.SubContent
               className="editor-context-menu editor-context-menu--submenu"
               sideOffset={6}
@@ -96,8 +89,7 @@ function renderMenuItem(
             >
               {item.items.map((childItem) => renderMenuItem(childItem, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
             </ContextMenu.SubContent>
-          </ContextMenu.Portal>
-        ) : null}
+          </PopoutContextMenuPortal>
       </ContextMenu.Sub>
     );
   }
@@ -195,22 +187,20 @@ export default function CsoundEditorContextMenu({
   onEvaluateCode,
   onAddToCodeRepository,
 }: CsoundEditorContextMenuProps): React.ReactElement {
-  const portalContainer = useMemo(() => getPortalContainer(), []);
 
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
 
-      {portalContainer ? (
-        <ContextMenu.Portal container={portalContainer}>
+
+        <PopoutContextMenuPortal>
           <ContextMenu.Content
             className="editor-context-menu"
             sideOffset={6}
           >
             {menuItems.map((item) => renderMenuItem(item, editorViewRef, clipboardBridge, onEvaluateCode, onAddToCodeRepository))}
           </ContextMenu.Content>
-        </ContextMenu.Portal>
-      ) : null}
+        </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

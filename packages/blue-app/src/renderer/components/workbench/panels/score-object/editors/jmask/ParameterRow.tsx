@@ -16,6 +16,7 @@ import {
 } from './jmask-utils';
 import { renderGeneratorEditor } from './generator-editors';
 import { MaskEditor, QuantizerEditor, AccumulatorEditor } from './modifier-editors';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
 
 interface ParameterRowProps {
   parameter: ParameterSnapshot;
@@ -229,8 +230,8 @@ export default function ParameterRow({
         </div>
       </ContextMenu.Trigger>
 
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-[160px] rounded border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-md">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="z-50 min-w-[160px] rounded border border-app-border bg-app-menu p-1 text-role-body text-app-text shadow-md" {...portalEventIsolationProps}>
           <ContextMenu.Item
             className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
             onSelect={() => setGeneratorPickerMode('changeType')}
@@ -295,7 +296,7 @@ export default function ParameterRow({
             </ContextMenu.CheckboxItem>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
 
       {generatorPickerMode !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setGeneratorPickerMode(null)}>

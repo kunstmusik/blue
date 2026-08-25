@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import type { BsbWidgetNodeSnapshot, BsbInterfacePatch } from '../../../../../../../shared/project-editor';
 import type { BSBWidgetResizeMeta } from '../bsb-widget-meta';
 import { getWidgetDisplaySize } from './utils';
+import { PopoutContextMenuPortal, PopoutTooltipPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
 
 const HANDLE_SIZE = 5;
 
@@ -201,7 +202,7 @@ function WidgetWrapper({
       <Tooltip.Trigger asChild>
         {widgetDiv}
       </Tooltip.Trigger>
-      <Tooltip.Portal>
+      <PopoutTooltipPortal>
         <Tooltip.Content
           className="bsb-tooltip-content"
           sideOffset={4}
@@ -211,7 +212,7 @@ function WidgetWrapper({
           {tooltipText}
           <Tooltip.Arrow className="bsb-tooltip-arrow" width={10} height={5} />
         </Tooltip.Content>
-      </Tooltip.Portal>
+      </PopoutTooltipPortal>
     </Tooltip.Root>
   ) : widgetDiv;
 
@@ -229,8 +230,8 @@ function WidgetWrapper({
       <ContextMenu.Trigger asChild>
         {wrapped}
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           {hasSelection && (
             <>
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleRemove}>
@@ -266,8 +267,8 @@ function WidgetWrapper({
                   <span>Align</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="editor-context-menu">
+                <PopoutContextMenuPortal>
+                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-left')}>Left</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-right')}>Right</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-top')}>Top</ContextMenu.Item>
@@ -276,24 +277,24 @@ function WidgetWrapper({
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-center-h')}>Center Horizontal</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('align-center-v')}>Center Vertical</ContextMenu.Item>
                   </ContextMenu.SubContent>
-                </ContextMenu.Portal>
+                </PopoutContextMenuPortal>
               </ContextMenu.Sub>
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger className="editor-context-menu__item editor-context-menu__subtrigger" disabled={!canDistribute}>
                   <span>Distribute</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="editor-context-menu">
+                <PopoutContextMenuPortal>
+                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('distribute-h')}>Horizontal</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={action('distribute-v')}>Vertical</ContextMenu.Item>
                   </ContextMenu.SubContent>
-                </ContextMenu.Portal>
+                </PopoutContextMenuPortal>
               </ContextMenu.Sub>
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

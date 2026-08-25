@@ -242,4 +242,98 @@ describe('AutomationTargetMenu', () => {
       });
     }
   });
+
+  // Regression: React portals bubble synthetic events along the React tree,
+  // so presses inside this menu used to reach ancestor layer-header handlers;
+  // their focus() call tore the nested submenu down mid-click and onSelect
+  // never fired (menu stayed open, no automation assigned).
+  it('does not bubble menu-item presses to ancestor panel handlers', async () => {
+    const onPatch = vi.fn();
+    const headerMouseDown = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        root.render(
+          <div
+            data-layer-header
+            tabIndex={-1}
+            onMouseDown={(event: React.MouseEvent) => {
+              headerMouseDown(event);
+              (event.currentTarget as HTMLElement).focus();
+            }}
+          >
+            <AutomationTargetMenu
+              trigger={<button type="button">A</button>}
+              automation={{
+                ...buildAutomation(),
+                targetGroups: [{
+                  groupId: 'instrument',
+                  label: 'Instrument',
+                  subGroups: [{
+                    groupId: 'instr-a1',
+                    label: '1) Synth',
+                    subGroups: [],
+                    targets: [{
+                      parameterId: 'p-nested',
+                      label: 'Freq',
+                      sourceKind: 'instrument',
+                      automationEnabled: false,
+                      assignmentState: 'available',
+                    }],
+                  }],
+                  targets: [],
+                }],
+              }}
+              layerRef={layerRef}
+              onPatch={(patch: ScoreAutomationPatch) => onPatch(patch)}
+            />
+          </div>,
+        );
+        await Promise.resolve();
+      });
+
+      await openMenu(container);
+
+      // Open the nested arrangement submenu the way a pointer hover would.
+      const subTrigger = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
+        .find((el) => el.textContent === '1) Synth');
+      expect(subTrigger).toBeTruthy();
+      await act(async () => {
+        subTrigger!.dispatchEvent(new PointerEvent('pointermove', {
+          bubbles: true, pointerType: 'mouse', clientX: 40, clientY: 20,
+        }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+
+      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
+        .find((el) => el.textContent?.includes('Freq'));
+      expect(item).toBeTruthy();
+
+      // Real press sequence: pointerdown, mousedown, pointerup, mouseup, click.
+      await act(async () => {
+        item!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }));
+        item!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+        item!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' }));
+        item!.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }));
+        item!.click();
+        await Promise.resolve();
+      });
+
+      expect(onPatch).toHaveBeenCalledWith({
+        type: 'assignAutomationToLayer',
+        layer: layerRef,
+        parameterId: 'p-nested',
+        enableAutomation: true,
+      });
+      expect(headerMouseDown).not.toHaveBeenCalled();
+      expect(document.querySelector('[role="menu"]')).toBeNull();
+    } finally {
+      void act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
 });

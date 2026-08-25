@@ -14,6 +14,7 @@ import { GenericScore } from '@blue/data';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
+import { HostDocumentContext } from '../hooks/use-host-document';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -140,7 +141,7 @@ afterEach(() => {
 describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders no-project message without project', () => {
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     expect(container.textContent).toContain('No project loaded');
   });
@@ -148,7 +149,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders grid with project loaded', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     expect(container.textContent).toContain('Saved Sets');
     expect(container.textContent).toContain('OSC1');
@@ -189,7 +190,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders toolbar buttons', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     const buttons = container.querySelectorAll('button');
     const texts = Array.from(buttons).map((b) => b.textContent);
@@ -200,7 +201,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab renders saved sets', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     expect(container.textContent).toContain('Set A');
     expect(container.textContent).toContain('Set B');
@@ -209,7 +210,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab uses semantic roles for headings, annotations, and cell values', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const savedSetsHeading = container.querySelector('[data-blue-live-saved-sets-heading]') as HTMLElement;
@@ -244,7 +245,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     useWorkbenchStore.setState({ openPanel });
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const cell = container.querySelector(
@@ -277,7 +278,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     seedProject(makeBlueLiveSnapshot());
     useScoreSelectionStore.getState().select('prior-score-object', false);
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const emptyCell = container.querySelector(
@@ -295,7 +296,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('LiveSpaceTab omits the non-Java row/column button strip', () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     expect(container.textContent).not.toContain('+Row Top');
     expect(container.textContent).not.toContain('+Row Bottom');
@@ -308,7 +309,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('opens the Java-ordered cell context menu on the right-clicked cell', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     const menu = await openCellMenu(1, 0);
     expect(menu).not.toBeNull();
@@ -344,7 +345,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     snapshot.bins = { rows: 1, columns: 1, cells: [[null]] };
     seedProject(snapshot);
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     const menu = await openCellMenu(0, 0);
     const byLabel = (label: string) => Array.from(menu.querySelectorAll('[role="menuitem"]'))
@@ -368,7 +369,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
       serializedXml: new GenericScore().saveAsXML().toXml(),
     }]);
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     await openCellMenu(1, 0);
     const paste = Array.from(document.body.querySelectorAll('[role="menuitem"]'))
@@ -402,7 +403,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
       { ...compatible, objectId: 'score-copy-2' },
     ]);
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     let menu = await openCellMenu(1, 0);
@@ -428,7 +429,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('applies row and column commands relative to the right-clicked cell', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     await openCellMenu(1, 1);
@@ -449,7 +450,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
   it('copies a Live Space SoundObject into the shared Score and Library buffers', async () => {
     seedProject(makeBlueLiveSnapshot());
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     await openCellMenu(0, 0);
@@ -474,7 +475,7 @@ describe('Blue Live panel tab render tests (T045)', () => {
     seedProject(makeBlueLiveSnapshot());
     captureBlueLiveSoundObject.mockResolvedValueOnce(false);
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     await openCellMenu(0, 0);
@@ -677,7 +678,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
     const triggerButton = Array.from(container.querySelectorAll('button'))
       .find((button) => button.textContent === 'Trigger');
@@ -725,7 +726,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const buttons = container.querySelectorAll('button');
@@ -748,7 +749,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     // Blue Live is not running by default (status idle).
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const buttons = container.querySelectorAll('button');
@@ -763,7 +764,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     seedProject(makeBlueLiveSnapshot());
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const buttons = container.querySelectorAll('button');
@@ -793,7 +794,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     act(() => {
@@ -860,7 +861,7 @@ describe('Blue Live trigger routing tests (T049)', () => {
     useBlueLiveStore.setState({ running: true, status: 'running' });
 
     act(() => {
-      root.render(<LiveSpaceTab />);
+      root.render(<HostDocumentContext.Provider value={document}><LiveSpaceTab /></HostDocumentContext.Provider>);
     });
 
     const buttons = container.querySelectorAll('button');

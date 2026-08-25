@@ -7,6 +7,7 @@ import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import { useLibraryDropTarget } from '../../../libraries/use-library-drop-target';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 interface Props {
   groupId: string;
@@ -153,12 +154,11 @@ export default function TrackInstrumentControl({
           </button>
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content
           className="editor-context-menu"
           sideOffset={4}
-          onPointerDown={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
+          {...portalEventIsolationProps}
         >
           <ContextMenu.Label className="px-3 py-1 text-role-headline font-bold text-app-text-muted">Track Instrument</ContextMenu.Label>
           <ContextMenu.Item
@@ -173,13 +173,12 @@ export default function TrackInstrumentControl({
               <span>Use New Instrument</span>
               <ChevronRight className="w-3.5 h-3.5 opacity-60" />
             </ContextMenu.SubTrigger>
-            <ContextMenu.Portal>
+            <PopoutContextMenuPortal>
               <ContextMenu.SubContent
                 className="editor-context-menu editor-context-menu--submenu"
                 sideOffset={2}
                 alignOffset={-4}
-                onPointerDown={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
+                {...portalEventIsolationProps}
               >
                 {NEW_INSTRUMENTS.map((option) => (
                   <ContextMenu.Item
@@ -191,7 +190,7 @@ export default function TrackInstrumentControl({
                   </ContextMenu.Item>
                 ))}
               </ContextMenu.SubContent>
-            </ContextMenu.Portal>
+            </PopoutContextMenuPortal>
           </ContextMenu.Sub>
           <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
@@ -216,7 +215,7 @@ export default function TrackInstrumentControl({
             Paste
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

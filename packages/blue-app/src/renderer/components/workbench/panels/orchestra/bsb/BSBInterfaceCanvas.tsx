@@ -34,6 +34,7 @@ import {
   useBsbClipboardStore,
   type BsbCanvasClipboard,
 } from '../../../../../stores/bsb-clipboard-store';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 
 const BSB_ADDABLE_WIDGETS = [
   { type: 'BSBGroup', label: 'Group' },
@@ -729,8 +730,8 @@ function BSBInterfaceCanvas({
         {editEnabled ? (
           <ContextMenu.Root>
             <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
-            <ContextMenu.Portal>
-              <ContextMenu.Content className="editor-context-menu">
+            <PopoutContextMenuPortal>
+              <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                 <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePaste} disabled={!canPaste}>
                   Paste
                 </ContextMenu.Item>
@@ -747,13 +748,13 @@ function BSBInterfaceCanvas({
                   </ContextMenu.Item>
                 ))}
               </ContextMenu.Content>
-            </ContextMenu.Portal>
+            </PopoutContextMenuPortal>
           </ContextMenu.Root>
         ) : (
           <ContextMenu.Root>
             <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
-            <ContextMenu.Portal>
-              <ContextMenu.Content className="editor-context-menu">
+            <PopoutContextMenuPortal>
+              <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                 <ContextMenu.Item
                   className="editor-context-menu__item"
                   onSelect={() => onBsbInterfacePatch({ type: 'randomize' })}
@@ -761,7 +762,7 @@ function BSBInterfaceCanvas({
                   Randomize
                 </ContextMenu.Item>
               </ContextMenu.Content>
-            </ContextMenu.Portal>
+            </PopoutContextMenuPortal>
           </ContextMenu.Root>
         )}
       </div>

@@ -28,6 +28,8 @@ import type {
   PresetGroupSnapshot,
   PresetSnapshot,
 } from '../../../../../../shared/project-editor';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 export interface PresetsManagerDialogProps {
   presetGroup: PresetGroupSnapshot;
@@ -366,10 +368,11 @@ function PresetNode({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{row}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content
           className="editor-context-menu"
           collisionPadding={8}
+          {...portalEventIsolationProps}
         >
           <ContextMenu.Item
             className="editor-context-menu__item"
@@ -438,7 +441,7 @@ function PresetNode({
             Rename
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
@@ -478,17 +481,21 @@ export default function PresetsManagerDialog({
     return () => observer.disconnect();
   }, []);
 
+  const hostWindow = useHostDocument()?.defaultView ?? null;
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (event.target instanceof HTMLInputElement) return;
+        // Cross-realm safe check: instanceof HTMLInputElement fails for
+        // popout-realm targets.
+        if ((event.target as HTMLElement | null)?.tagName === 'INPUT') return;
         event.preventDefault();
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handleKeyDown);
+    return () => hostWindow.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, hostWindow]);
 
   const dispatch = useCallback(
     (patch: BsbInterfacePatch) => {

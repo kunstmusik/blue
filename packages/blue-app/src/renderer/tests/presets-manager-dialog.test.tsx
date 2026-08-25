@@ -11,6 +11,7 @@ import PresetsManagerDialog, {
   buildPresetTree,
 } from '../components/workbench/panels/orchestra/bsb/PresetsManagerDialog';
 import { applyBsbInterfacePatchToSnapshot } from '../stores/project-store';
+import { HostDocumentContext } from '../hooks/use-host-document';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -167,11 +168,13 @@ describe('PresetsManagerDialog', () => {
 
     act(() => {
       root?.render(
-        <PresetsManagerDialog
-          presetGroup={createPresetGroup()}
-          onBsbInterfacePatch={onPatch}
-          onClose={onClose}
-        />,
+        <HostDocumentContext.Provider value={document}>
+          <PresetsManagerDialog
+            presetGroup={createPresetGroup()}
+            onBsbInterfacePatch={onPatch}
+            onClose={onClose}
+          />,
+        </HostDocumentContext.Provider>,
       );
     });
 

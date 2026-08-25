@@ -40,6 +40,7 @@ const ScoreObjectColorPicker = forwardRef<ScoreObjectColorPickerHandle, Props>(
         value={value}
         anchor={anchor}
         anchorElement={anchorElement}
+        anchorHitTarget={null}
         onClose={close}
         onChange={(nextValue) => {
           setValue(nextValue);

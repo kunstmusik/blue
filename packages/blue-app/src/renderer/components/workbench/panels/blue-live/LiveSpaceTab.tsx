@@ -23,6 +23,9 @@ import {
 import type { LegacyBlueLiveTriggerResult } from '../../../../../shared/project-editor';
 import type { ScoreObjectClipboardEntry } from '../../../../stores/score-selection-store';
 import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { isNodeLike } from "../../../../utils/cross-realm-dom";
+import { useHostDocument } from '../../../../hooks/use-host-document';
 
 export default function LiveSpaceTab(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
@@ -231,10 +234,11 @@ export default function LiveSpaceTab(): React.ReactElement {
   ]);
 
   // Platform-appropriate Command/Ctrl+T (selected) and Command/Ctrl+Shift+T (enabled).
+  const shortcutHostDocument = useHostDocument();
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const root = rootRef.current;
-      const activeElement = document.activeElement;
+      const activeElement = shortcutHostDocument?.activeElement ?? null;
       if (!root || !activeElement || !root.contains(activeElement)) return;
       if (isEditableShortcutTarget(e.target)) return;
       const mod = e.metaKey || e.ctrlKey;
@@ -247,9 +251,11 @@ export default function LiveSpaceTab(): React.ReactElement {
         void runTrigger('selected');
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [runTrigger]);
+    const hostWindow = shortcutHostDocument?.defaultView ?? null;
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handler);
+    return () => hostWindow.removeEventListener('keydown', handler);
+  }, [runTrigger, shortcutHostDocument]);
 
   // Auto-clear transient success/empty feedback after a short delay.
   useEffect(() => {
@@ -527,7 +533,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                             {cell?.displayName || ''}
                           </div>
                         </ContextMenu.Trigger>
-                        <ContextMenu.Portal>
+                        <PopoutContextMenuPortal>
                           <ContextMenu.Content
                             className="editor-context-menu"
                             data-blue-live-cell-menu
@@ -537,7 +543,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                                 <span>Add SoundObject</span>
                                 <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                               </ContextMenu.SubTrigger>
-                              <ContextMenu.Portal>
+                              <PopoutContextMenuPortal>
                                 <ContextMenu.SubContent className="editor-context-menu">
                                   {BLUE_LIVE_SOUND_OBJECT_TYPES.map((objectType) => (
                                     <ContextMenu.Item
@@ -549,7 +555,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                                     </ContextMenu.Item>
                                   ))}
                                 </ContextMenu.SubContent>
-                              </ContextMenu.Portal>
+                              </PopoutContextMenuPortal>
                             </ContextMenu.Sub>
                             <ContextMenu.Item
                               className="editor-context-menu__item"
@@ -629,7 +635,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                               Remove Column
                             </ContextMenu.Item>
                           </ContextMenu.Content>
-                        </ContextMenu.Portal>
+                        </PopoutContextMenuPortal>
                       </ContextMenu.Root>
                     );
                   })}
@@ -643,12 +649,14 @@ export default function LiveSpaceTab(): React.ReactElement {
   );
 }
 
-function isEditableShortcutTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable
-    || target.tagName === 'INPUT'
-    || target.tagName === 'TEXTAREA'
-    || target.tagName === 'SELECT';
+export function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  // Structural check: popout-realm nodes fail instanceof HTMLElement.
+  const el = target as HTMLElement | null;
+  if (!isNodeLike(el)) return false;
+  return el.isContentEditable
+    || el.tagName === 'INPUT'
+    || el.tagName === 'TEXTAREA'
+    || el.tagName === 'SELECT';
 }
 
 const toolbarLabelStyle: React.CSSProperties = {

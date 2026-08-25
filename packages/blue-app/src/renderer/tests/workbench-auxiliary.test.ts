@@ -107,7 +107,12 @@ function createDockviewApiStub() {
   }
 
   return {
-    panels: [{ id: 'ScoreTopComponent' }],
+    panels: [
+      {
+        id: 'ScoreTopComponent',
+        group: getOrCreateGroup('g-ScoreTopComponent'),
+      },
+    ],
     get groups() {
       return Array.from(groups.values());
     },
@@ -285,6 +290,24 @@ describe('workbench auxiliary layout helpers', () => {
     expect(api.getPanel('GlobalOrchestraTopComponent')?.title).toBe('Global Orchestra');
     expect(api.getPanel('GlobalScoreTopComponent')?.title).toBe('Global Score');
     expect(api.getPanel('ProjectPropertiesTopComponent')?.title).toBe('Project Properties');
+  });
+
+  it('anchors auxiliary grid groups to a grid editor when Score is popped out', () => {
+    const api = createDockviewApiStub();
+    const state = buildDefaultWorkbenchLayout(api);
+    api.getPanel('ScoreTopComponent').group.api.location = { type: 'popout' };
+
+    const references: any[] = [];
+    const addGroup = api.addGroup;
+    api.addGroup = (options: any) => {
+      references.push(options.referencePanel);
+      return addGroup(options);
+    };
+
+    applyAuxiliaryLayout(api, state);
+
+    expect(references.at(-1)?.id).toBe('OrchestraTopComponent');
+    expect(references.at(-1)?.group.api.location.type).toBe('grid');
   });
 
   it('parses the version 5 workbench envelope and preserves per-tool metadata', () => {

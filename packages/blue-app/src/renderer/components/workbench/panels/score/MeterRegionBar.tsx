@@ -11,6 +11,7 @@ import {
   findEntryAtMeasure,
   METER_REGION_BAR_HEIGHT,
 } from './meter-map-utils';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 interface MeterRegionBarProps {
   meterMap: MeterMapSnapshot;
@@ -108,9 +109,10 @@ export default function MeterRegionBar({
               </div>
             </ContextMenu.Trigger>
             {rootTimelineOnly && (
-              <ContextMenu.Portal>
+              <PopoutContextMenuPortal>
                 <ContextMenu.Content
                   className="editor-context-menu"
+                  {...portalEventIsolationProps}
                 >
                   <ContextMenu.Item
                     className="editor-context-menu__item"
@@ -130,7 +132,7 @@ export default function MeterRegionBar({
                     </>
                   )}
                 </ContextMenu.Content>
-              </ContextMenu.Portal>
+              </PopoutContextMenuPortal>
             )}
           </ContextMenu.Root>
         );

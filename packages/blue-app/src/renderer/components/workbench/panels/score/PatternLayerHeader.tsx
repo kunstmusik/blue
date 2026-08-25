@@ -20,6 +20,7 @@ import {
   type LayerRemovalPlan,
   type VisibleLayerRef,
 } from './layer-selection-utils';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 interface Props {
   layer: PatternLayerSnapshot;
@@ -239,8 +240,8 @@ export default function PatternLayerHeader({
           </div>
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu" data-pattern-layer-context-menu>
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" data-pattern-layer-context-menu {...portalEventIsolationProps}>
           <ContextMenu.Item className={menuItemClass} onSelect={selectSource}>
             Edit Sound Object
           </ContextMenu.Item>
@@ -315,7 +316,7 @@ export default function PatternLayerHeader({
             <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-50" />
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
     {pendingRemovalPlan && (
       <LayerRemovalConfirmationDialog

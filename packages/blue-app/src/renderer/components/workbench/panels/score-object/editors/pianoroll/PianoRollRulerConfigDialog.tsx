@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TIME_DISPLAY_OPTIONS } from './types';
+import { useHostDocument } from '../../../../../../hooks/use-host-document';
 
 const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
@@ -32,13 +33,16 @@ export default function PianoRollRulerConfigDialog({
   const [secondaryRulerEnabled, setSecondaryRulerEnabled] = useState(initialSecondaryRulerEnabled);
   const [secondaryTimeDisplay, setSecondaryTimeDisplay] = useState(initialSecondaryTimeDisplay);
 
+  const hostWindow = useHostDocument()?.defaultView ?? null;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', handleKeyDown);
+    return () => hostWindow.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, hostWindow]);
 
   const handleOk = () => {
     onApply({

@@ -12,6 +12,7 @@ import {
   findExistingPointNearBeat,
   TEMPO_REGION_BAR_HEIGHT,
 } from './tempo-map-utils';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 const BEAT_EPSILON = 0.001;
 
@@ -143,9 +144,10 @@ export default function TempoRegionBar({
               </div>
             </ContextMenu.Trigger>
             {enabled && rootTimelineOnly && (
-              <ContextMenu.Portal>
+              <PopoutContextMenuPortal>
                 <ContextMenu.Content
                   className="editor-context-menu"
+                  {...portalEventIsolationProps}
                 >
                   <ContextMenu.Item
                     className="editor-context-menu__item"
@@ -180,7 +182,7 @@ export default function TempoRegionBar({
                     </>
                   )}
                 </ContextMenu.Content>
-              </ContextMenu.Portal>
+              </PopoutContextMenuPortal>
             )}
           </ContextMenu.Root>
         );

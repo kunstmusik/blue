@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
-import type { DockviewApi, DockviewGroupPanel, IDockviewPanel } from 'dockview';
+import type {
+  DockviewApi,
+  DockviewGroupPanel,
+  IDockviewPanel,
+  SerializedDockview,
+  SerializedPopoutGroup,
+} from 'dockview';
 import {
   applyAuxiliaryLayout,
   type AuxiliaryDockedSizeSnapshot,
@@ -89,7 +95,7 @@ interface WorkbenchActions {
   closeGroup: (panelId: string) => void;
   isPanelOpen: (panelId: string) => boolean;
   saveLayout: () => string | null;
-  loadLayout: (json: string | null, workAreas?: DisplayWorkArea[]) => void;
+  loadLayout: (json: string | null, workAreas?: DisplayWorkArea[]) => Promise<void>;
   syncAuxiliaryLayout: () => void;
   minimizeAuxiliaryGroup: (groupInstanceId: string) => void;
   maximizeAuxiliaryGroup: (groupInstanceId: string) => void;
@@ -217,6 +223,274 @@ export function findLibraryEditorPanelsToClose(
 
 export function hasRestoredStartupEditorPanel(api: Pick<DockviewApi, 'getPanel'>): boolean {
   return getDefaultEditorPanels().some((descriptor) => api.getPanel(descriptor.id) !== undefined);
+}
+
+/** Compact "which panels are where" summary for restore diagnostics. */
+function describePopoutAssignment(api: Pick<DockviewApi, 'groups'>): {
+  popoutPanelIds: string[];
+  gridPanelIds: string[];
+} {
+  const popoutPanelIds: string[] = [];
+  const gridPanelIds: string[] = [];
+  for (const group of api.groups) {
+    const destination =
+      group.api.location.type === 'popout' ? popoutPanelIds : gridPanelIds;
+    for (const panel of group.panels) destination.push(panel.id);
+  }
+  return { popoutPanelIds: popoutPanelIds.sort(), gridPanelIds: gridPanelIds.sort() };
+}
+
+/**
+ * Panel ids that the serialized snapshot placed in popout groups.
+ *
+ * Tolerant collector: dockview's serialized group shape has shifted across
+ * versions (`data.views`, `panels` record, `panels` array), so read all of
+ * them rather than trusting one shape.
+ */
+export function collectExpectedPopoutPanelIds(dockview: unknown): Set<string> {
+  const expected = new Set<string>();
+  const popoutGroups = (dockview as { popoutGroups?: unknown } | null)?.popoutGroups;
+  if (!Array.isArray(popoutGroups)) return expected;
+  for (const entry of popoutGroups) {
+    for (const id of collectSerializedGroupPanelIds(
+      (entry as { data?: unknown } | null)?.data,
+    )) expected.add(id);
+  }
+  return expected;
+}
+
+function collectSerializedGroupPanelIds(data: unknown): string[] {
+  const group = data as { views?: unknown; panels?: unknown } | null;
+  if (Array.isArray(group?.views)) {
+    return group.views.filter((id): id is string => typeof id === 'string');
+  }
+  if (Array.isArray(group?.panels)) {
+    return group.panels.filter((id): id is string => typeof id === 'string');
+  }
+  if (group?.panels && typeof group.panels === 'object') {
+    return Object.keys(group.panels as Record<string, unknown>);
+  }
+  return [];
+}
+
+type SerializedGroupData = SerializedPopoutGroup['data'];
+type SerializedGridNode = {
+  type: 'leaf' | 'branch';
+  data: SerializedGroupData | SerializedGridNode[];
+  visible?: boolean;
+};
+type SerializedGridLeaf = SerializedGridNode & {
+  type: 'leaf';
+  data: SerializedGroupData;
+};
+
+export interface PreparedPopoutRestoreIntent {
+  serializedGroupId: string;
+  gridReferenceGroupId?: string;
+  panelIds: string[];
+  position: SerializedPopoutGroup['position'];
+  url?: string;
+}
+
+function collectSerializedGridLeaves(
+  node: SerializedGridNode,
+  leaves: SerializedGridLeaf[] = [],
+): SerializedGridLeaf[] {
+  if (node.type === 'branch' && Array.isArray(node.data)) {
+    for (const child of node.data) collectSerializedGridLeaves(child, leaves);
+  } else if (node.type === 'leaf' && !Array.isArray(node.data)) {
+    leaves.push(node as SerializedGridLeaf);
+  }
+  return leaves;
+}
+
+/**
+ * Converts Dockview's asynchronous popout snapshot into a fully docked layout
+ * plus explicit popout intents. Dockview 5.2 incorrectly resolves the saved
+ * `gridReferenceGroup` through `getPanel()`, so using its fromJSON popout path
+ * can move the complete editor group into a Score-only popout.
+ */
+export function prepareDockviewForExplicitPopoutRestore(
+  dockview: SerializedDockview,
+  floatingOrigins: Record<string, DockingOrigin>,
+): { layout: SerializedDockview; intents: PreparedPopoutRestoreIntent[] } {
+  const layout = JSON.parse(JSON.stringify(dockview)) as SerializedDockview;
+  const serializedPopouts = layout.popoutGroups ?? [];
+  delete layout.popoutGroups;
+
+  const gridLeaves = collectSerializedGridLeaves(
+    layout.grid.root as unknown as SerializedGridNode,
+  );
+  const gridGroups = gridLeaves.map((leaf) => leaf.data);
+  const gridPanelIds = new Set(gridGroups.flatMap((group) => group.views));
+  const intents = serializedPopouts.map((popout) => ({
+    serializedGroupId: popout.data.id,
+    ...(popout.gridReferenceGroup
+      ? { gridReferenceGroupId: popout.gridReferenceGroup }
+      : {}),
+    panelIds: collectSerializedGroupPanelIds(popout.data),
+    position: popout.position,
+    ...(popout.url ? { url: popout.url } : {}),
+  }));
+
+  for (const intent of intents) {
+    const origin = floatingOrigins[intent.serializedGroupId];
+    const targetGroupId = origin?.originGroupId ?? intent.gridReferenceGroupId;
+    const targetLeaf =
+      gridLeaves.find((leaf) => leaf.data.id === targetGroupId) ??
+      gridLeaves.find((leaf) =>
+        leaf.data.views.some((id) => !isAuxiliaryPanelId(id)),
+      ) ??
+      gridLeaves[0];
+    if (!targetLeaf) {
+      throw new Error('Saved popout has no docked group to restore into');
+    }
+    const target = targetLeaf.data;
+
+    const missingPanelIds = intent.panelIds.filter((id) => !gridPanelIds.has(id));
+    const originIndex = origin?.originIndex;
+    const insertAt = Number.isFinite(originIndex)
+      ? Math.max(0, Math.min(originIndex!, target.views.length))
+      : target.views.length;
+    target.views.splice(insertAt, 0, ...missingPanelIds);
+    for (const panelId of missingPanelIds) gridPanelIds.add(panelId);
+    targetLeaf.visible = true;
+    if (!target.activeView && target.views.length > 0) {
+      target.activeView = target.views[0];
+    }
+  }
+
+  return { layout, intents };
+}
+
+/** Recreates each prepared popout through Dockview's public, awaited API. */
+export async function restorePreparedPopoutGroups(
+  api: DockviewApi,
+  intents: PreparedPopoutRestoreIntent[],
+): Promise<Record<string, string>> {
+  const restoredGroupIds: Record<string, string> = {};
+
+  for (const intent of intents) {
+    const panels = intent.panelIds.map((id) => api.getPanel(id));
+    if (panels.some((panel) => !panel)) {
+      throw new Error('Saved popout panel was not restored into the docked layout');
+    }
+
+    const restoredPanels = panels as IDockviewPanel[];
+    const sourceGroup = restoredPanels[0]!.group as DockviewGroupPanel;
+    if (restoredPanels.some((panel) => panel.group !== sourceGroup)) {
+      throw new Error('Saved popout panels did not restore into one source group');
+    }
+    if (
+      restoredPanels.length > 1 &&
+      sourceGroup.panels.some((panel) => !intent.panelIds.includes(panel.id))
+    ) {
+      throw new Error('Saved float group contains panels outside its serialized intent');
+    }
+
+    const itemToPopout = restoredPanels.length === 1 ? restoredPanels[0]! : sourceGroup;
+    const popoutGuard = createPopoutOpenGuard(api);
+    let opened = false;
+    try {
+      opened = await api.addPopoutGroup(itemToPopout, {
+        popoutUrl: intent.url ?? 'popout.html',
+        position: intent.position ?? undefined,
+        onDidOpen: popoutGuard.onDidOpen,
+      });
+    } finally {
+      popoutGuard.complete(opened);
+    }
+    if (!opened) throw new Error('Saved popout window failed to open');
+
+    const popoutGroup = api.getPanel(intent.panelIds[0]!)?.group as
+      | DockviewGroupPanel
+      | undefined;
+    const actualPanelIds = popoutGroup?.panels.map((panel) => panel.id).sort() ?? [];
+    if (
+      popoutGroup?.api.location.type !== 'popout' ||
+      actualPanelIds.join('\0') !== [...intent.panelIds].sort().join('\0')
+    ) {
+      throw new Error('Restored popout contents do not match the serialized intent');
+    }
+    restoredGroupIds[intent.serializedGroupId] = popoutGroup.id;
+  }
+
+  return restoredGroupIds;
+}
+
+function remapRestoredFloatingOrigins(
+  origins: Record<string, DockingOrigin>,
+  restoredGroupIds: Record<string, string>,
+): Record<string, DockingOrigin> {
+  const remapped = { ...origins };
+  for (const [serializedGroupId, restoredGroupId] of Object.entries(
+    restoredGroupIds,
+  )) {
+    const origin = remapped[serializedGroupId];
+    if (!origin || serializedGroupId === restoredGroupId) continue;
+    remapped[restoredGroupId] = origin;
+    delete remapped[serializedGroupId];
+  }
+  return remapped;
+}
+
+/**
+ * Restore-intent enforcement: after dockview's async popout restoration, a
+ * popout group must contain only panels the snapshot serialized as popped
+ * out. Anything else (mis-assigned by a stale or partially corrupted
+ * snapshot) is moved back to the first non-popout group so the main window
+ * regains its docked editors. Idempotent; safe to run multiple times.
+ */
+export function enforcePopoutPanelIntent(
+  api: Pick<DockviewApi, 'groups'>,
+  expectedPopoutPanelIds: ReadonlySet<string>,
+): void {
+  const target = api.groups.find((group) => group.api.location.type !== 'popout');
+  for (const group of [...api.groups]) {
+    if (group.api.location.type !== 'popout') continue;
+    for (const panel of [...group.panels]) {
+      if (expectedPopoutPanelIds.has(panel.id)) continue;
+      if (!target || target === group) continue;
+      try {
+        panel.api.moveTo({ group: target });
+      } catch {
+        // Dockview may refuse a move if the group is already tearing down.
+      }
+    }
+  }
+}
+
+/**
+ * Clears the dockview grid without choking on popout groups.
+ *
+ * A popout group's grid element lives in the popout window's document, so a
+ * plain `api.clear()` can throw "Invalid grid element" for it (e.g., a
+ * restored-but-unhydrated popout). Closing the popout group through its own
+ * group api first routes removal through dockview's window-close path, which
+ * disposes the window and detaches the grid element correctly. Any group that
+ * still refuses removal is skipped rather than blocking layout recovery.
+ */
+export function clearDockviewSafely(api: Pick<DockviewApi, 'groups' | 'clear' | 'removeGroup'>): void {
+  for (const group of [...api.groups]) {
+    if (group.api.location.type === 'popout') {
+      try {
+        group.api.close();
+      } catch {
+        // Best effort: the window-close path may already be tearing down.
+      }
+    }
+  }
+  try {
+    api.clear();
+  } catch {
+    for (const group of [...api.groups]) {
+      try {
+        api.removeGroup(group);
+      } catch {
+        // Unrecoverable grid element; leave it for dockview's own cleanup.
+      }
+    }
+  }
 }
 
 function getAuxiliaryPresentation(
@@ -651,9 +925,10 @@ function refreshPopoutGroupLayout(group: DockviewGroupPanel): void {
   }
 }
 
-function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
+export function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
   let popoutWindow: Window | undefined;
   let completed = false;
+  let reloadTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
   let closeTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
   const hasDockviewContainer = () => {
@@ -668,30 +943,39 @@ function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
     onDidOpen: ({ window: openedWindow }) => {
       popoutWindow = openedWindow;
 
-      globalThis.setTimeout(() => {
+      const reloadAfterNavigation = () => {
         if (completed || openedWindow.closed || hasDockviewContainer()) {
           return;
         }
 
         try {
-          if (openedWindow.document.readyState !== 'loading') {
+          // Electron initially exposes an about:blank proxy while navigation
+          // to popout.html is still being attached. Reloading that proxy can
+          // cancel the real navigation and leave Dockview waiting forever.
+          if (!/popout\.html$/.test(openedWindow.location.pathname)) {
+            reloadTimer = globalThis.setTimeout(reloadAfterNavigation, 50);
+          } else if (openedWindow.document.readyState !== 'loading') {
             openedWindow.location.reload();
           }
         } catch {
           // If the window handle is no longer usable, the timeout below will
           // close it or no-op.
         }
-      }, 0);
+      };
+      reloadTimer = globalThis.setTimeout(reloadAfterNavigation, 50);
 
       closeTimer = globalThis.setTimeout(() => {
         if (!completed && !hasDockviewContainer()) {
           closePopoutWindow(popoutWindow);
           cleanupEmptyPopoutGroups(api);
         }
-      }, 2500);
+      }, 10_000);
     },
     complete: (opened) => {
       completed = true;
+      if (reloadTimer !== undefined) {
+        globalThis.clearTimeout(reloadTimer);
+      }
       if (closeTimer !== undefined) {
         globalThis.clearTimeout(closeTimer);
       }
@@ -719,6 +1003,16 @@ function getAddMarkerTargetBeat(): number {
     }).displayBeat;
   }
   return project.transport.renderStartTime;
+}
+
+// Incremented per loadLayout call so an asynchronous popout restore cannot
+// publish state after a newer reset or restore has superseded it.
+let workbenchLoadSequence = 0;
+
+/** Lets React StrictMode dispose its first Dockview instance before hydration. */
+export async function waitForCurrentWorkbenchApi(api: DockviewApi): Promise<boolean> {
+  await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 0));
+  return useWorkbenchStore.getState().api === api;
 }
 
 export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((set, get) => ({
@@ -1014,11 +1308,12 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     );
   },
 
-  loadLayout: (json, workAreas) => {
+  loadLayout: async (json, workAreas) => {
     const { api } = get();
     if (!api) return;
 
-    api.clear();
+    const loadToken = ++workbenchLoadSequence;
+    clearDockviewSafely(api);
     const parsed = parseStoredWorkbenchLayout(json);
 
     if (parsed.dockview) {
@@ -1046,22 +1341,74 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
           parsed.dockview as unknown as Record<string, unknown>,
           validWorkAreas.length > 0 ? validWorkAreas : [viewportArea],
         ) as unknown as typeof parsed.dockview;
-        api.fromJSON(safeDockview);
+        const prepared = prepareDockviewForExplicitPopoutRestore(
+          safeDockview,
+          parsed.floatingOrigins ?? {},
+        );
+        const expectedPopoutPanelIds = new Set(
+          prepared.intents.flatMap((intent) => intent.panelIds),
+        );
+        api.fromJSON(prepared.layout);
+
+        let restoredFloatingOrigins = parsed.floatingOrigins ?? {};
+        if (prepared.intents.length > 0) {
+          try {
+            const restoredGroupIds = await restorePreparedPopoutGroups(
+              api,
+              prepared.intents,
+            );
+            if (loadToken !== workbenchLoadSequence) return;
+            restoredFloatingOrigins = remapRestoredFloatingOrigins(
+              restoredFloatingOrigins,
+              restoredGroupIds,
+            );
+          } catch (error) {
+            if (loadToken !== workbenchLoadSequence) return;
+            console.error(
+              '[workbench-restore] popout failed; keeping panels docked',
+              error,
+            );
+            clearDockviewSafely(api);
+            api.fromJSON(prepared.layout);
+            expectedPopoutPanelIds.clear();
+            restoredFloatingOrigins = {};
+          }
+        }
+
         for (const candidate of findLibraryEditorPanelsToClose(api, null)) {
           api.removePanel(candidate);
         }
         for (const group of api.groups) {
           if (group.api.location.type === 'popout') {
             registerFloatingRendererWindow(group);
+            refreshPopoutGroupLayout(group);
           }
         }
         cleanupEmptyPopoutGroups(api);
+
+        // Dockview has finished attaching the restored windows. Enforce the
+        // serialized assignment once at that real lifecycle boundary.
+        const before = describePopoutAssignment(api);
+        enforcePopoutPanelIntent(api, expectedPopoutPanelIds);
+        cleanupEmptyPopoutGroups(api);
+        const after = describePopoutAssignment(api);
+        if (before.popoutPanelIds.join('\0') !== after.popoutPanelIds.join('\0')) {
+          console.error(
+            '[workbench-restore] corrected popout assignment',
+            JSON.stringify({
+              expectedPopoutPanelIds: [...expectedPopoutPanelIds].sort(),
+              before,
+              after,
+              popoutGroups: (parsed.dockview as { popoutGroups?: unknown }).popoutGroups,
+            }),
+          );
+        }
 
         // A persisted workbench without any primary editor is an incomplete
         // snapshot, not a usable user layout. This can occur when a prior
         // startup persisted Dockview before initial hydration completed.
         if (!hasRestoredStartupEditorPanel(api)) {
-          api.clear();
+          clearDockviewSafely(api);
           set({
             auxiliary: buildDefaultWorkbenchLayout(api),
             floatingOrigins: {},
@@ -1072,12 +1419,17 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
 
         set({
           auxiliary: applyAuxiliaryLayout(api, parsed.auxiliary),
-          floatingOrigins: parsed.floatingOrigins ?? {},
+          floatingOrigins: restoredFloatingOrigins,
           closedPanelOrigins: parsed.closedPanelOrigins ?? {},
         });
         return;
-      } catch {
-        api.clear();
+      } catch (error) {
+        if (loadToken !== workbenchLoadSequence) return;
+        console.error(
+          '[workbench-restore] layout failed; resetting defaults',
+          error instanceof Error ? (error.stack ?? error.message) : error,
+        );
+        clearDockviewSafely(api);
       }
     }
 

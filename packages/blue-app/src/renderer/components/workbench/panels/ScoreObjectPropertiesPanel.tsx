@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useScoreSelectionStore } from '../../../stores/score-selection-store';
 import { useProjectStore } from '../../../stores/project-store';
 import type {
@@ -101,6 +101,8 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
   const liveSharedProperties = useScoreSelectionStore((s) => s.liveSharedProperties) ?? {};
   const [document, setDocument] = useState<ScoreObjectEditorDocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const documentRef = useRef<ScoreObjectEditorDocumentSnapshot | null>(null);
+  documentRef.current = document;
 
   const selectedObjectId = useMemo(() => {
     if (selectedObjectIds.size !== 1) return null;
@@ -140,21 +142,27 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    flushPendingPatches().then(() => {
-      if (cancelled) return;
-      return window.blueAPI.getScoreObjectEditorDocument({ target: propertiesTarget }).then((doc) => {
+    const retainCurrentDocument = documentRef.current !== null
+      && sameTarget(documentRef.current.target, propertiesTarget);
+    if (!retainCurrentDocument) setLoading(true);
+    void flushPendingPatches()
+      .then(() => window.blueAPI.getScoreObjectEditorDocument({ target: propertiesTarget }))
+      .then((doc) => {
         if (!cancelled) {
           setDocument(doc);
           setLoading(false);
         }
-      }).catch(() => {
+      })
+      .catch((error: unknown) => {
         if (!cancelled) {
-          setDocument(null);
+          // A refresh for the same object should not tear down an active
+          // editor (notably its color picker) just because the canonical
+          // request failed. Initial loads still fail closed to the empty state.
+          if (!retainCurrentDocument) setDocument(null);
           setLoading(false);
+          console.error('[score-properties] Failed to load editor document:', error);
         }
       });
-    });
     return () => { cancelled = true; };
   }, [loaded, selectedObjectId, propertiesTargetKey, primaryTimeDisplay, meterMap, flushPendingPatches]);
 
@@ -196,10 +204,10 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
 
   const handlePatch = useCallback((patch: ScorePatch): void => {
     applyProjectDocumentPatch({ score: patch });
-    if (document) {
-      setDocument(applyPatchToDocument(document, patch));
-    }
-  }, [applyProjectDocumentPatch, document]);
+    setDocument((currentDocument) => (
+      currentDocument ? applyPatchToDocument(currentDocument, patch) : currentDocument
+    ));
+  }, [applyProjectDocumentPatch]);
 
   if (!loaded) {
     return <EmptyState message="No project loaded" />;

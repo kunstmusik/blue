@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import type { NodeRendererProps, NodeApi } from 'react-arborist';
 import { BlueTree } from '../../../tree/BlueTree';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -81,7 +82,7 @@ function CategoryMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" collisionPadding={8}>
           <ContextMenu.Item
             className="editor-context-menu__item"
@@ -133,7 +134,7 @@ function CategoryMenu({
             Import from File
           </ContextMenu.Item>
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
@@ -153,7 +154,7 @@ function EffectMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" collisionPadding={8}>
           <ContextMenu.Item
             className="editor-context-menu__item"
@@ -193,7 +194,7 @@ function EffectMenu({
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

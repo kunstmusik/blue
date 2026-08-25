@@ -21,6 +21,7 @@ import {
   type ScoreInsertionLocation,
 } from '../../../../../../shared/unified-library';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import { useFreezeOperationStore } from '../../../../../stores/freeze-operation-store';
 import { snapValueToBeats } from '@blue/data';
@@ -1760,8 +1761,8 @@ export default function ScoreTimeCanvas({
         </div>
       </ContextMenu.Trigger>
 
-      <ContextMenu.Portal>
-        <ContextMenu.Content className={menuClass}>
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className={menuClass} {...portalEventIsolationProps}>
           {contextMenuOnObject && selectedObjectIds.size > 0 ? (
             <ObjectContextMenu
               menuItemClass={menuItemClass}
@@ -1815,7 +1816,7 @@ export default function ScoreTimeCanvas({
             />
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
       {showShiftDialog && (
         <ShiftObjectsDialog
           onConfirm={handleConfirmShift}
@@ -1926,13 +1927,13 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
           <span>Align</span>
           <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
-        <ContextMenu.Portal>
-          <ContextMenu.SubContent className={subMenuClass}>
+        <PopoutContextMenuPortal>
+          <ContextMenu.SubContent className={subMenuClass} {...portalEventIsolationProps}>
             <ContextMenu.Item className={menuItemClass} onSelect={onAlignLeft}>Align Left</ContextMenu.Item>
             <ContextMenu.Item className={menuItemClass} onSelect={onAlignCenter}>Align Center</ContextMenu.Item>
             <ContextMenu.Item className={menuItemClass} onSelect={onAlignRight}>Align Right</ContextMenu.Item>
           </ContextMenu.SubContent>
-        </ContextMenu.Portal>
+        </PopoutContextMenuPortal>
       </ContextMenu.Sub>
       <ContextMenu.Item className={menuItemClass} onSelect={onShift}>
         Shift…
@@ -2022,8 +2023,8 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
           <span>Add SoundObject</span>
           <ChevronRight className="w-3.5 h-3.5 opacity-60" />
         </ContextMenu.SubTrigger>
-        <ContextMenu.Portal>
-          <ContextMenu.SubContent className="editor-context-menu">
+        <PopoutContextMenuPortal>
+          <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
             {addSobjTypes.map((t) => (
               <ContextMenu.Item
                 key={t.name}
@@ -2034,7 +2035,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
               </ContextMenu.Item>
             ))}
           </ContextMenu.SubContent>
-        </ContextMenu.Portal>
+        </PopoutContextMenuPortal>
       </ContextMenu.Sub>
       <ContextMenu.Separator className={sepClass} />
       {(libraryClipboardAvailable || libraryBsbAvailable || clipboard.length > 0) && (

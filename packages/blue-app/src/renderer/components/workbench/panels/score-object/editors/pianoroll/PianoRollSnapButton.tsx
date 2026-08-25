@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { SnapValueName } from '@blue/data';
 import { getSnapValue } from '@blue/data';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
 
 interface PianoRollSnapButtonProps {
   snapEnabled: boolean;
@@ -57,11 +58,12 @@ export default function PianoRollSnapButton({
             <ChevronDown className="w-3 h-3" />
           </button>
         </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
+        <PopoutDropdownMenuPortal>
           <DropdownMenu.Content
             className={menuClass}
             sideOffset={4}
             align="start"
+            {...portalEventIsolationProps}
           >
             {SNAP_GROUPS.slice(0, 2).map((group) => (
               <SnapSubmenu
@@ -94,7 +96,7 @@ export default function PianoRollSnapButton({
               onChangeSnapValue={onChangeSnapValue}
             />
           </DropdownMenu.Content>
-        </DropdownMenu.Portal>
+        </PopoutDropdownMenuPortal>
       </DropdownMenu.Root>
     </div>
   );
@@ -117,8 +119,8 @@ function SnapSubmenu({
         {label}
         <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
       </DropdownMenu.SubTrigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.SubContent className={menuClass} sideOffset={-2} alignOffset={-4}>
+      <PopoutDropdownMenuPortal>
+        <DropdownMenu.SubContent className={menuClass} sideOffset={-2} alignOffset={-4} {...portalEventIsolationProps}>
           {values.map((value) => (
             <SnapItem
               key={value}
@@ -128,7 +130,7 @@ function SnapSubmenu({
             />
           ))}
         </DropdownMenu.SubContent>
-      </DropdownMenu.Portal>
+      </PopoutDropdownMenuPortal>
     </DropdownMenu.Sub>
   );
 }

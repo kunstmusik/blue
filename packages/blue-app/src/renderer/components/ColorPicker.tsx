@@ -10,6 +10,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useDocumentMouseDownOutside } from '../hooks/use-document-mousedown-outside';
+import { useHostDocument } from '../hooks/use-host-document';
+import { isNodeLike } from '../utils/cross-realm-dom';
 import {
   COLOR_PICKER_MARGIN,
   COLOR_PICKER_SIZE,
@@ -24,18 +26,6 @@ import { getFloatingViewport } from './floating-position-utils';
 
 export { computeColorPickerPosition } from './color-picker-utils';
 export type { ColorPickerAnchorRect } from './color-picker-utils';
-
-/**
- * Cross-realm Node check. Portal children are created by the container's own
- * document, and Dockview popout documents use a different JS realm from this
- * module, so `instanceof Node` fails for exactly the nodes this component must
- * recognize. Structural duck-typing works across realms.
- */
-function isNodeLike(target: EventTarget | null): target is Node {
-  return target != null
-    && typeof (target as Node).nodeType === 'number'
-    && typeof (target as Node).contains === 'function';
-}
 
 const PRESET_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6',
@@ -93,7 +83,15 @@ interface ColorPickerPopoverProps {
   open: boolean;
   value: string;
   anchor: ColorPickerAnchorRect | null;
+  /** Element used to resolve the hosting document (and, by default, hit containment). */
   anchorElement?: HTMLElement | null;
+  /**
+   * Element treated as "inside the picker" for dismissal. Defaults to
+   * `anchorElement`. Canvas callers pass the timeline container as
+   * `anchorElement` (document resolution) but `null` here — the whole
+   * timeline must NOT count as inside the picker.
+   */
+  anchorHitTarget?: HTMLElement | null;
   onChange: (value: string) => void;
   onClose: () => void;
 }
@@ -103,6 +101,7 @@ export function ColorPickerPopover({
   value,
   anchor,
   anchorElement,
+  anchorHitTarget,
   onChange,
   onClose,
 }: ColorPickerPopoverProps): ReactElement | null {
@@ -117,10 +116,12 @@ export function ColorPickerPopover({
   const hsl = hexToHsl(normalizedValue);
   // Floating workbench panels live in a popout document while sharing this
   // renderer context; the popover must render, listen, and dismiss within the
-  // document that contains its anchor, not the main window's document. Node
-  // SSR environments have no document; the popover renders nothing there.
+  // document that contains its anchor, not the main window's document. The
+  // anchor's own document is authoritative; the panel-provided host document
+  // is the fallback. Node/SSR environments have no document: render nothing.
+  const contextHostDocument = useHostDocument({ fallbackToGlobal: true });
   const popoverDocument: Document | null = anchorElement?.ownerDocument
-    ?? (typeof document === 'undefined' ? null : document);
+    ?? contextHostDocument;
 
   useEffect(() => setDraftHex(normalizedValue), [normalizedValue]);
 
@@ -147,10 +148,11 @@ export function ColorPickerPopover({
   // the anchor's own document, whose realm differs from this module's in
   // floating workbench popouts, so cross-realm nodes fail that check and any
   // mousedown inside the popover would be misread as an outside dismissal.
+  const hitTarget = anchorHitTarget !== undefined ? anchorHitTarget : anchorElement;
   const isInside = useCallback((target: EventTarget | null) => (
     isNodeLike(target)
-      && (popoverRef.current?.contains(target) === true || anchorElement?.contains(target) === true)
-  ), [anchorElement]);
+      && (popoverRef.current?.contains(target) === true || hitTarget?.contains(target) === true)
+  ), [hitTarget]);
   useDocumentMouseDownOutside({ enabled: open, isInside, onMouseDownOutside: onClose, targetDocument: popoverDocument });
 
   useEffect(() => {
@@ -174,6 +176,14 @@ export function ColorPickerPopover({
       role="dialog"
       aria-label="Color picker"
       data-placement={position.placement}
+      // React portals bubble synthetic events along the React tree; without
+      // these guards, presses inside the picker reach ancestor handlers such
+      // as the score canvas surface selection/double-click handlers and act
+      // on objects visually behind the popover.
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
       className="fixed z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-body text-app-text shadow-xl"
       style={{ left: position.left, top: position.top }}
     >

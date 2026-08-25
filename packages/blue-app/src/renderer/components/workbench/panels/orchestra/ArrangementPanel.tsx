@@ -16,6 +16,7 @@ import {
 } from '../../../../../shared/unified-library';
 import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
+import { useHostDocument } from '../../../../hooks/use-host-document';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import ArrangementContextMenu from './ArrangementContextMenu';
@@ -24,6 +25,7 @@ import type { ArrangementPanelProps } from './types';
 import { LibraryDropZone, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { useProjectLibraryNodes } from '../../../libraries/use-project-library-nodes';
+import { isNodeLike } from '../../../../utils/cross-realm-dom';
 
 const INSTRUMENT_TYPES: Array<{ type: SupportedNewInstrumentType; label: string }> = [
   { type: 'generic', label: 'Generic Instrument' },
@@ -56,6 +58,7 @@ function ArrangementPanel({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addBtnRef = useRef<HTMLButtonElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
+  const hostDocument = useHostDocument();
 
   const columns = useMemo(
     () =>
@@ -222,7 +225,8 @@ function ArrangementPanel({
   }, []);
 
   const isAddMenuTarget = useCallback((target: EventTarget | null) => {
-    if (!(target instanceof Node)) {
+    // Realm-safe: popout-realm nodes fail `instanceof Node` from this module.
+    if (!isNodeLike(target)) {
       return false;
     }
 
@@ -236,6 +240,7 @@ function ArrangementPanel({
     enabled: addMenuOpen,
     isInside: isAddMenuTarget,
     onMouseDownOutside: () => setAddMenuOpen(false),
+    targetDocument: hostDocument,
   });
 
   return (

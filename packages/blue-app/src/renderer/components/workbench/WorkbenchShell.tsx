@@ -33,7 +33,10 @@ import {
   getAuxiliaryEdgeFromGroupElement,
 } from './auxiliary-drag';
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
-import { useWorkbenchStore } from '../../stores/workbench-store';
+import {
+  useWorkbenchStore,
+  waitForCurrentWorkbenchApi,
+} from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
 import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
@@ -224,9 +227,13 @@ export default function WorkbenchShell() {
       setApi(event.api);
 
       void (async () => {
+        if (!(await waitForCurrentWorkbenchApi(event.api))) return;
+        const isCurrentApi = () => useWorkbenchStore.getState().api === event.api;
+
         const layoutStore = useLayoutSettingsStore.getState();
         if (!layoutStore.layout) {
           await layoutStore.load();
+          if (!isCurrentApi()) return;
         }
 
         const blueAPI =
@@ -246,6 +253,7 @@ export default function WorkbenchShell() {
           // Keep the renderer viewport fallback when the main process is
           // unavailable during tests or early startup.
         }
+        if (!isCurrentApi()) return;
 
         // Prefer the canonical app-wide workbench layout; fall back to legacy
         // localStorage so existing users see their saved workspace on first
@@ -258,12 +266,13 @@ export default function WorkbenchShell() {
             return null;
           }
         })();
-        useWorkbenchStore
+        await useWorkbenchStore
           .getState()
           .loadLayout(
             selectWorkbenchLayout(layoutSnapshot, fallbackLegacyLayout),
             displayWorkAreas,
           );
+        if (!isCurrentApi()) return;
         removeLegacyWelcomePanel(event.api);
         useWorkbenchStore.getState().syncAuxiliaryLayout();
 

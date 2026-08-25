@@ -1114,9 +1114,9 @@ function getLiveAuxiliaryGroup(
 function getAnchorPanel(api: DockviewApi): IDockviewPanel | undefined {
   for (const descriptor of getDefaultEditorPanels()) {
     const panel = api.getPanel(descriptor.id);
-    if (panel) return panel;
+    if (panel?.group.api.location.type === 'grid') return panel;
   }
-  return api.panels[0];
+  return api.panels.find((panel) => panel.group.api.location.type === 'grid');
 }
 
 function focusDockviewPanel(api: DockviewApi, panelId: string) {

@@ -78,6 +78,11 @@ runtime behavior.
 ## UI and typography guidance
 
 - Before choosing or changing typography in any UI work, consult `docs/typography.md`.
+- Popups (menus, popovers, tooltips, dialogs) rendered from workbench panel
+  content MUST follow `docs/popout-popup-conventions.md`: portal into, position
+  against, and take dismissal input from the panel's hosting window
+  (`useHostDocument`/`Popout*Portal` wrappers), with realm-safe target checks
+  (`isNodeLike`/`containsNode`), never global `document`/`window`.
 - Use only the approved seven semantic typography roles (`text-role-*` / `--text-role-*`). Never
   introduce raw font sizes, default Tailwind numeric text scales, or arbitrary `text-[Npx]` sizes
   for application-owned UI.

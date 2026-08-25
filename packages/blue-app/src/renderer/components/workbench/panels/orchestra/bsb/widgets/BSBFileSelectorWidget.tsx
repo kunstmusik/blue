@@ -1,4 +1,5 @@
 import React from 'react';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../../hooks/host-portals';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import WidgetWrapper from './WidgetWrapper';
 import { getWidgetDisplaySize } from './utils';
@@ -114,8 +115,8 @@ function BSBFileSelectorWidget({
             </button>
           </div>
         </ContextMenu.Trigger>
-        <ContextMenu.Portal>
-          <ContextMenu.Content className="editor-context-menu">
+        <PopoutContextMenuPortal>
+          <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
             <ContextMenu.Item className="editor-context-menu__item" onSelect={() => { void openBrowseDialog(); }}>
               Browse...
             </ContextMenu.Item>
@@ -126,7 +127,7 @@ function BSBFileSelectorWidget({
               Copy to Media Folder
             </ContextMenu.Item>
           </ContextMenu.Content>
-        </ContextMenu.Portal>
+        </PopoutContextMenuPortal>
       </ContextMenu.Root>
     </WidgetWrapper>
   );

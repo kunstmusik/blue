@@ -8,6 +8,8 @@ import {
 } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
 import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
+import { containsNode } from '../../../../../utils/cross-realm-dom';
 import NoteProcessorCodeModal from './NoteProcessorCodeModal';
 
 const CATALOG = getNoteProcessorCatalog();
@@ -47,27 +49,31 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
   const addMenuRef = React.useRef<HTMLDivElement>(null);
   const importMenuRef = React.useRef<HTMLDivElement>(null);
 
+  const hostDocument = useHostDocument();
+
   React.useEffect(() => {
     if (!showAddMenu) return;
     const handler = (e: MouseEvent) => {
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+      if (addMenuRef.current && !containsNode(addMenuRef.current, e.target)) {
         setShowAddMenu(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showAddMenu]);
+    if (!hostDocument) return undefined;
+    hostDocument.addEventListener('mousedown', handler);
+    return () => hostDocument.removeEventListener('mousedown', handler);
+  }, [showAddMenu, hostDocument]);
 
   React.useEffect(() => {
     if (!showImportMenu) return;
     const handler = (e: MouseEvent) => {
-      if (importMenuRef.current && !importMenuRef.current.contains(e.target as Node)) {
+      if (importMenuRef.current && !containsNode(importMenuRef.current, e.target)) {
         setShowImportMenu(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showImportMenu]);
+    if (!hostDocument) return undefined;
+    hostDocument.addEventListener('mousedown', handler);
+    return () => hostDocument.removeEventListener('mousedown', handler);
+  }, [showImportMenu, hostDocument]);
 
   const commit = useCallback((updated: NoteProcessorChainSnapshot) => {
     setLocal(updated);

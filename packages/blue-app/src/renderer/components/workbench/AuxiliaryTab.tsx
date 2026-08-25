@@ -341,6 +341,10 @@ function WorkbenchTabMenu({ props }: { props: IDockviewPanelHeaderProps }) {
         </div>
       </ContextMenu.Trigger>
 
+      {/* Tab renderers mount outside DockviewPanel's HostDocumentContext
+          provider, so the dockview panel API is the authoritative host window
+          source here. Panel CONTENT must instead use PopoutContextMenuPortal
+          (see docs/popout-popup-conventions.md). */}
       <ContextMenu.Portal container={props.api.getWindow().document.body}>
         <ContextMenu.Content className="workbench-context-menu" sideOffset={6} align="start">
           {commandState.commands.map((command, index) => {

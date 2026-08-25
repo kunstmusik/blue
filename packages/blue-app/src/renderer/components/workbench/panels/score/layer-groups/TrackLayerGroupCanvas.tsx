@@ -57,6 +57,7 @@ import {
 import { getAudioFileDuration, subscribeAudioFileDuration } from './audio-file-duration-cache';
 import ScoreObjectColorPicker, { type ScoreObjectColorPickerHandle } from './ScoreObjectColorPicker';
 import type { ColorPickerAnchorRect } from '../../../../ColorPicker';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../../hooks/host-portals';
 
 interface Props {
   group: TrackLayerGroupSnapshot;
@@ -1486,8 +1487,8 @@ export default function TrackLayerGroupCanvas({
           )}
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="editor-context-menu">
+      <PopoutContextMenuPortal>
+        <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
           {fadeContextMenu ? (
             AUDIO_FADE_TYPE_OPTIONS.map((option) => (
               <ContextMenu.Item key={option.value} className="editor-context-menu__item" onSelect={() => handleFadeTypeSelect(option.value)}>
@@ -1511,13 +1512,13 @@ export default function TrackLayerGroupCanvas({
                   <span>Align</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="editor-context-menu">
+                <PopoutContextMenuPortal>
+                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('left')}>Align Left</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('center')}>Align Center</ContextMenu.Item>
                     <ContextMenu.Item className="editor-context-menu__item" onSelect={() => handleAlign('right')}>Align Right</ContextMenu.Item>
                   </ContextMenu.SubContent>
-                </ContextMenu.Portal>
+                </PopoutContextMenuPortal>
               </ContextMenu.Sub>
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleShift}>Shift…</ContextMenu.Item>
               <ContextMenu.Item className="editor-context-menu__item" disabled={!canSetObjectiveDuration} onSelect={handleSetSubjectiveToObjective}>
@@ -1546,8 +1547,8 @@ export default function TrackLayerGroupCanvas({
                   <span>Add SoundObject</span>
                   <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                 </ContextMenu.SubTrigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="editor-context-menu">
+                <PopoutContextMenuPortal>
+                  <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
                     {TRACK_SOUND_OBJECT_TYPES.map((objectType) => (
                       <ContextMenu.Item
                         key={objectType}
@@ -1558,7 +1559,7 @@ export default function TrackLayerGroupCanvas({
                       </ContextMenu.Item>
                     ))}
                   </ContextMenu.SubContent>
-                </ContextMenu.Portal>
+                </PopoutContextMenuPortal>
               </ContextMenu.Sub>
               <ContextMenu.Item className="editor-context-menu__item" onSelect={() => addTrackItem('AudioClip', contextMenuPos?.xBeats ?? 0, contextMenuPos?.layerIndex ?? 0)}>
                 Add AudioClip
@@ -1576,7 +1577,7 @@ export default function TrackLayerGroupCanvas({
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
       {showShiftDialog && (
         <ShiftObjectsDialog
           onConfirm={handleConfirmShift}

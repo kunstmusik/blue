@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 interface NoteProcessorCodeModalProps {
   title?: string;
@@ -22,6 +23,7 @@ export default function NoteProcessorCodeModal({
     onClose();
   }, [localCode, onSave, onClose]);
 
+  const hostWindow = useHostDocument()?.defaultView ?? null;
   useEffect(() => {
     const onWindowKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -32,9 +34,10 @@ export default function NoteProcessorCodeModal({
         handleSave();
       }
     };
-    window.addEventListener('keydown', onWindowKeyDown);
-    return () => window.removeEventListener('keydown', onWindowKeyDown);
-  }, [onClose, handleSave]);
+    if (!hostWindow) return undefined;
+    hostWindow.addEventListener('keydown', onWindowKeyDown);
+    return () => hostWindow.removeEventListener('keydown', onWindowKeyDown);
+  }, [onClose, handleSave, hostWindow]);
 
   return (
     <div

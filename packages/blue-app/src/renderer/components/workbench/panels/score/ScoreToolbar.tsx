@@ -3,6 +3,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data';
 import type { ScorePathSegment } from './types';
 import type { NoteProcessorChainSnapshot } from '../../../../../shared/project-editor';
+import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
@@ -103,11 +104,12 @@ export default function ScoreToolbar({
                       )}
                     </button>
                   </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
+                  <PopoutDropdownMenuPortal>
                     <DropdownMenu.Content
                       className="min-w-[160px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
                       sideOffset={4}
                       align="start"
+                      {...portalEventIsolationProps}
                     >
                       <DropdownMenu.Item
                         className="flex items-center gap-2 rounded-sm px-3 py-1 text-role-callout text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight"
@@ -122,7 +124,7 @@ export default function ScoreToolbar({
                         )}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
+                  </PopoutDropdownMenuPortal>
                 </DropdownMenu.Root>
               )}
             </span>
@@ -159,11 +161,12 @@ export default function ScoreToolbar({
               <ChevronDown className="w-3 h-3" />
             </button>
           </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
+          <PopoutDropdownMenuPortal>
             <DropdownMenu.Content
               className="min-w-[140px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
               sideOffset={4}
               align="start"
+              {...portalEventIsolationProps}
             >
               {SNAP_GROUPS.map((group) => (
                 <DropdownMenu.Sub key={group.label}>
@@ -171,11 +174,12 @@ export default function ScoreToolbar({
                     {group.label}
                     <ChevronRight className="w-3.5 h-3.5 opacity-60 ml-2" />
                   </DropdownMenu.SubTrigger>
-                  <DropdownMenu.Portal>
+                  <PopoutDropdownMenuPortal>
                     <DropdownMenu.SubContent
                       className="min-w-[120px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
                       sideOffset={-2}
                       alignOffset={-4}
+                      {...portalEventIsolationProps}
                     >
                       {group.values.map((name) => {
                         const def = getSnapValue(name);
@@ -194,7 +198,7 @@ export default function ScoreToolbar({
                         );
                       })}
                     </DropdownMenu.SubContent>
-                  </DropdownMenu.Portal>
+                  </PopoutDropdownMenuPortal>
                 </DropdownMenu.Sub>
               ))}
               <DropdownMenu.Separator className="my-1 h-px bg-app-border/30" />
@@ -209,7 +213,7 @@ export default function ScoreToolbar({
                 Auto
               </DropdownMenu.Item>
             </DropdownMenu.Content>
-          </DropdownMenu.Portal>
+          </PopoutDropdownMenuPortal>
         </DropdownMenu.Root>
       </div>
 

@@ -25,6 +25,7 @@ import {
 } from './file-manager-tree-state';
 import { FileManagerBreadcrumb } from './FileManagerBreadcrumb';
 import { FileManagerRootRenameDialog } from './FileManagerRootRenameDialog';
+import { PopoutContextMenuPortal } from '../../../../../hooks/host-portals';
 
 export { resetFileManagerTreeSessionState, type FileTreeNode, type BreadcrumbSegment };
 
@@ -68,7 +69,7 @@ function DirectoryNodeMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content className="editor-context-menu" collisionPadding={8}>
           {actionState.refreshFolder && actions && (
             <ContextMenu.Item
@@ -106,7 +107,7 @@ function DirectoryNodeMenu({
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }

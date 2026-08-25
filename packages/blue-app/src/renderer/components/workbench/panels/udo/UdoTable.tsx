@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, ChevronRight, Import, Plus } from 'lucide-react';
+import { PopoutContextMenuPortal, PopoutDropdownMenuPortal } from '../../../../hooks/host-portals';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type {
@@ -164,7 +165,7 @@ export default function UdoTable({
               <ChevronDown size={12} />
             </button>
           </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
+          <PopoutDropdownMenuPortal>
             <DropdownMenu.Content
               className="editor-context-menu"
               align="start"
@@ -182,7 +183,7 @@ export default function UdoTable({
                 Csound UDO (.udo/.orc/.csd)
               </DropdownMenu.Item>
             </DropdownMenu.Content>
-          </DropdownMenu.Portal>
+          </PopoutDropdownMenuPortal>
         </DropdownMenu.Root>
       </div>
 
@@ -263,7 +264,7 @@ export default function UdoTable({
                       </tr>
                       </ProjectLibraryDragSource>
                     </ContextMenu.Trigger>
-                    <ContextMenu.Portal>
+                    <PopoutContextMenuPortal>
                       <ContextMenu.Content className="editor-context-menu">
                         <MenuItem disabled={!canMoveUp} onSelect={onMoveSelectionUp}>
                           Push Up
@@ -293,7 +294,7 @@ export default function UdoTable({
                             <span>Export</span>
                             <ChevronRight className="w-3.5 h-3.5 opacity-60" />
                           </ContextMenu.SubTrigger>
-                          <ContextMenu.Portal>
+                          <PopoutContextMenuPortal>
                             <ContextMenu.SubContent className="editor-context-menu">
                               <ContextMenu.Item
                                 className="editor-context-menu__item"
@@ -310,14 +311,14 @@ export default function UdoTable({
                                 Csound UDO (.udo)
                               </ContextMenu.Item>
                             </ContextMenu.SubContent>
-                          </ContextMenu.Portal>
+                          </PopoutContextMenuPortal>
                         </ContextMenu.Sub>
                         <ContextMenu.Separator className="editor-context-menu__separator" />
                         <MenuItem disabled={!hasSelection} onSelect={onRemoveSelection}>
                           Remove
                         </MenuItem>
                       </ContextMenu.Content>
-                    </ContextMenu.Portal>
+                    </PopoutContextMenuPortal>
                   </ContextMenu.Root>
                 );
                 return (

@@ -4,6 +4,7 @@ import {
   type LibraryBrowseNode,
   type LibraryInteractionClipboard,
 } from '../../../shared/unified-library';
+import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../hooks/host-portals';
 
 interface LibraryContextMenuProps {
   node: LibraryBrowseNode;
@@ -57,12 +58,13 @@ export function LibraryContextMenu({
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <PopoutContextMenuPortal>
         <ContextMenu.Content
           aria-label={`${node.displayName} commands`}
           className="editor-context-menu z-[1000] min-w-40"
           collisionPadding={8}
           data-auxiliary-portal="true"
+          {...portalEventIsolationProps}
         >
           {canContainChildren && userOwned && onCreateFolder && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCreateFolder(node)}>Create Folder…</ContextMenu.Item>
@@ -115,7 +117,7 @@ export function LibraryContextMenu({
             </>
           )}
         </ContextMenu.Content>
-      </ContextMenu.Portal>
+      </PopoutContextMenuPortal>
     </ContextMenu.Root>
   );
 }
