@@ -1602,7 +1602,8 @@ function SoundLayerHeader({
                 onChange={handleAutomationColorChange}
               />
               <span
-                className="max-w-[70px] truncate"
+                data-automation-parameter-name
+                className="flex-1 min-w-0 truncate"
                 title={
                   selectedAutomationParameter.targetPath && selectedAutomationParameter.targetPath.length > 0
                     ? selectedAutomationParameter.targetPath.join(' > ')
@@ -1612,7 +1613,7 @@ function SoundLayerHeader({
                 {selectedAutomationParameter.displayName || selectedAutomationParameter.name}
               </span>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
                 title="Previous Parameter"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1622,7 +1623,7 @@ function SoundLayerHeader({
                 <ChevronLeft className="h-2.5 w-2.5" />
               </button>
               <button
-                className="w-3.5 h-3.5 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
+                className="w-3.5 h-3.5 shrink-0 bg-blue-surface/40 hover:bg-blue-surface/80 rounded border border-blue-border/30 flex items-center justify-center text-role-callout"
                 title="Next Parameter"
                 onClick={(e) => {
                   e.stopPropagation();

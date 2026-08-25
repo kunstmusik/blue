@@ -138,10 +138,20 @@ describe('SoundLayerHeader automation parameter display and tooltip', () => {
     const header = container.querySelector<HTMLElement>('[data-layer-id="sound-layer-0"]')!;
     expect(header).toBeTruthy();
 
-    const paramSpan = header.querySelector<HTMLSpanElement>('span.max-w-\\[70px\\]')!;
+    const paramSpan = header.querySelector<HTMLSpanElement>('[data-automation-parameter-name]')!;
     expect(paramSpan).toBeTruthy();
     expect(paramSpan.textContent).toBe('chorus_mode');
     expect(paramSpan.getAttribute('title')).toBe('instr 1 > chorus_mode');
+    expect(paramSpan.className).toContain('flex-1');
+    expect(paramSpan.className).toContain('min-w-0');
+    expect(paramSpan.className).toContain('truncate');
+
+    const prevButton = header.querySelector<HTMLButtonElement>('button[title="Previous Parameter"]')!;
+    const nextButton = header.querySelector<HTMLButtonElement>('button[title="Next Parameter"]')!;
+    expect(prevButton).toBeTruthy();
+    expect(nextButton).toBeTruthy();
+    expect(prevButton.className).toContain('shrink-0');
+    expect(nextButton.className).toContain('shrink-0');
   });
 
   it('renders the parameter name and path tooltip for mixer parameters', () => {
@@ -170,7 +180,7 @@ describe('SoundLayerHeader automation parameter display and tooltip', () => {
     });
 
     const header = container.querySelector<HTMLElement>('[data-layer-id="sound-layer-0"]')!;
-    const paramSpan = header.querySelector<HTMLSpanElement>('span.max-w-\\[70px\\]')!;
+    const paramSpan = header.querySelector<HTMLSpanElement>('[data-automation-parameter-name]')!;
     expect(paramSpan).toBeTruthy();
     expect(paramSpan.textContent).toBe('dB');
     expect(paramSpan.getAttribute('title')).toBe('Mixer > Master > Volume');
@@ -202,7 +212,7 @@ describe('SoundLayerHeader automation parameter display and tooltip', () => {
     });
 
     const header = container.querySelector<HTMLElement>('[data-layer-id="sound-layer-0"]')!;
-    const paramSpan = header.querySelector<HTMLSpanElement>('span.max-w-\\[70px\\]')!;
+    const paramSpan = header.querySelector<HTMLSpanElement>('[data-automation-parameter-name]')!;
     expect(paramSpan).toBeTruthy();
     expect(paramSpan.textContent).toBe('Cutoff Freq');
     expect(paramSpan.getAttribute('title')).toBe('Cutoff Freq');
