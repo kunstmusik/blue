@@ -214,6 +214,47 @@ describe('assignAutomationToLayer patch', () => {
     expect(automation.selectedParameterId).toBe(secondParamId);
   });
 
+  it('assigns distinct sequential LineColors to multiple parameters on a layer regardless of alphabetical sort order', () => {
+    const { data, layerRef } = createProjectWithParameter();
+
+    // Create 3 parameters on mixer channels with names that sort out-of-order alphabetically
+    const mixer = data.getMixer();
+    const chZ = new Channel();
+    chZ.setName('Zebra');
+    const chA = new Channel();
+    chA.setName('Alpha');
+    const chM = new Channel();
+    chM.setName('Middle');
+    mixer.getChannels().push(chZ, chA, chM);
+
+    const paramZId = chZ.getLevelParameter().getUniqueId();
+    const paramAId = chA.getLevelParameter().getUniqueId();
+    const paramMId = chM.getLevelParameter().getUniqueId();
+
+    // Assign Zebra first (first param on layer -> color index 0: 0x20dd00 green)
+    applyProjectDocumentPatch(data, {
+      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramZId },
+    });
+
+    // Assign Alpha second (sorts before Zebra, but is 2nd on layer -> color index 1: 0x0000ff blue)
+    applyProjectDocumentPatch(data, {
+      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramAId },
+    });
+
+    // Assign Middle third (3rd on layer -> color index 2: 0xffa500 orange)
+    applyProjectDocumentPatch(data, {
+      score: { type: 'assignAutomationToLayer', layer: layerRef, parameterId: paramMId },
+    });
+
+    const paramZ = chZ.getLevelParameter();
+    const paramA = chA.getLevelParameter();
+    const paramM = chM.getLevelParameter();
+
+    expect(paramZ.getLineColor()).toBe(0x20dd00); // 1st color in LineColors
+    expect(paramA.getLineColor()).toBe(0x0000ff); // 2nd color in LineColors
+    expect(paramM.getLineColor()).toBe(0xffa500); // 3rd color in LineColors
+  });
+
   it('resolves the target layer by group id when the root group index has changed', () => {
     const { data, paramId, targetGroupId, layerRef } = createProjectWithTwoGroupsAndParameter();
     const score = data.getScore();

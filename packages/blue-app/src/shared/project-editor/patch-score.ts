@@ -1523,7 +1523,10 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
 
       removeAutomationParameterFromAllLayers(data, patch.parameterId);
 
-      if (!paramList.contains(patch.parameterId)) {
+      const isNewToLayer = !paramList.contains(patch.parameterId);
+      const existingCount = paramList.size();
+
+      if (isNewToLayer) {
         paramList.addParameterId(patch.parameterId);
       }
       paramList.setSelectedParameter(patch.parameterId);
@@ -1534,8 +1537,10 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
           param.setAutomationEnabled(true);
         }
         seedDefaultAutomationPoint(param);
-        const lineColors = new LineColors();
-        param.setLineColor(lineColors.getColor(paramList.getIds().indexOf(patch.parameterId)));
+        if (isNewToLayer) {
+          const lineColors = new LineColors();
+          param.setLineColor(lineColors.getColor(existingCount));
+        }
       }
       return true;
     }
