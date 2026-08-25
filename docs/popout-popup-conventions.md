@@ -25,8 +25,11 @@ Any popup surface rendered from panel content MUST:
    - Radix: use the wrappers from `renderer/hooks/host-portals.tsx` —
      `<PopoutContextMenuPortal>`, `<PopoutDropdownMenuPortal>`,
      `<PopoutTooltipPortal>` — instead of bare `<X.Portal>`.
-   - Manual `createPortal`: portal into `useHostDocument()?.body` (render
-     nothing when null).
+   - Positioned hand-rolled surfaces (pointer menus, tooltips, SVG/canvas
+     readouts): use the host-surface module
+     (`renderer/components/host-surface/`) instead of positioning manually.
+   - Other manual `createPortal`: portal into `useHostDocument()?.body`
+     (render nothing when null).
 2. **Position against the host viewport.** Use the anchor element's
    `ownerDocument.defaultView.innerWidth/innerHeight` (or the host document's)
    for clamping — never global `window`.
@@ -74,11 +77,32 @@ when NO provider exists, because such callers always render in the main window.
   render nothing). `usePortalContainer()` returns its `body`.
 - Contract details: `specs/089-fix-popout-portals/contracts/host-document-mechanism.md`.
 
+## Hand-rolled positioned surfaces (spec 090)
+
+Context menus at pointer coordinates, tooltips, and SVG/canvas readouts MUST
+use the shared host-surface module (`renderer/components/host-surface/`:
+`useHostSurface` + `HostSurfacePortal`) rather than hand-positioning:
+
+- accepts an element, a live rectangle, or a pointer-point anchor;
+- portals into the host body, measures, and collision-positions
+  (flip/shift/constrained height) against the HOST viewport via
+  `@floating-ui/dom` (a direct dependency);
+- follows moved anchors at most once per rendered frame; `menu` kinds close
+  on host-viewport scroll instead, and scrolling inside the surface never
+  dismisses;
+- owns host-window Escape/outside-pointer dismissal, event isolation, and
+  cleanup on close/float/unmount.
+
+Radix surfaces keep their `Popout*Portal` wrappers and their own popper; do
+NOT route them through the host-surface module. Contract details:
+`specs/090-host-floating-surfaces/contracts/host-surface-module.md`.
+
 ## Reference examples
 
 - Portal wrapper usage: `panels/score/layer-groups/PatternsLayerGroupCanvas.tsx`
-- Manual portals + host-window dismissal + viewport clamping:
-  `panels/shared/line-editor/EditableLineCanvas.tsx`
+- Host-surface module consumers (pointer menu, tooltip, point readout):
+  `panels/shared/line-editor/EditableLineCanvas.tsx` and
+  `panels/score/automation/AutomationLineView.tsx`
 - Escape routing in a dialog: `panels/score/RulerConfigDialog.tsx`
 - Cross-realm containment guard: `panels/orchestra/ArrangementPanel.tsx`
   (`isAddMenuTarget`) and `utils/cross-realm-dom.ts`

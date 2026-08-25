@@ -1,10 +1,12 @@
-import { useMemo, useRef, useEffect, useLayoutEffect, useState, type MouseEvent } from 'react';
+import { useMemo, useRef, useEffect, useState, type MouseEvent } from 'react';
 import type { AutomationParameterSnapshot } from '../../../../../../shared/project-editor';
 import {
   beatToX,
   valueToY,
   formatAutomationDouble,
 } from './automation-line-utils';
+import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../../host-surface/use-host-surface';
 
 interface Props {
   parameter: AutomationParameterSnapshot;
@@ -30,8 +32,8 @@ export default function AutomationLineView({
   onPointContextMenu,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const [height, setHeight] = useState(0);
-  const [width, setWidth] = useState(0);
 
   useEffect(() => {
     const el = containerRef.current?.parentElement;
@@ -39,12 +41,10 @@ export default function AutomationLineView({
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setHeight(entry.contentRect.height);
-        setWidth(entry.contentRect.width);
       }
     });
     observer.observe(el);
     setHeight(el.getBoundingClientRect().height);
-    setWidth(el.getBoundingClientRect().width);
     return () => observer.disconnect();
   }, []);
 
@@ -55,6 +55,36 @@ export default function AutomationLineView({
   const showPoints = mode === 'multiLine' || (mode === 'singleLine' && active);
   const interactive = mode === 'singleLine' && active;
 
+  // On-curve readout (spec 090): the annotation keeps Java Blue's
+  // drawPointInformation content and edge flip, but renders through the
+  // host-surface portal so it escapes the row's overflow clipping (FR-002)
+  // and follows the point during drags (FR-005). Hover takes priority over
+  // click-selection, mirroring Java's mouseMoved-driven selectedPoint.
+  const showReadout = mode === 'singleLine' && active;
+  const readoutPointIndex = hoveredPointIndex ?? selectedPointIndex;
+  const readoutPoint = showReadout
+    ? (readoutPointIndex == null ? null : points[readoutPointIndex] ?? null)
+    : null;
+  const readoutXText = readoutPoint != null ? `x: ${formatAutomationDouble(readoutPoint.time)}` : '';
+  const readoutYText = readoutPoint != null
+    ? `y: ${formatAutomationDouble(readoutPoint.value)}${parameter.label.length > 0 ? ` ${parameter.label}` : ''}`
+    : '';
+  const readoutAnchor = readoutPoint != null
+    ? {
+        type: 'rect' as const,
+        getRect: () => {
+          const rect = svgRef.current?.getBoundingClientRect();
+          const px = (rect?.left ?? 0) + beatToX(readoutPoint.time, pixelsPerBeat);
+          const py = (rect?.top ?? 0) + valueToY(readoutPoint.value, minimum, maximum, height);
+          return { left: px, right: px, top: py, bottom: py };
+        },
+      }
+    : null;
+  const readoutSurface = useHostSurface(readoutAnchor, {
+    kind: 'readout',
+    gap: 7, // Java's pointRadius(4) + offset(3) clearance beside the point
+  });
+
   const pathD = useMemo(() => {
     return buildAutomationLinePath(parameter, pixelsPerBeat, height);
   }, [points, pixelsPerBeat, height, minimum, maximum, parameter.resolution]);
@@ -63,15 +93,12 @@ export default function AutomationLineView({
 
   const rangeStart = selectionRange ? Math.min(selectionRange.startBeat, selectionRange.endBeat) : 0;
   const rangeEnd = selectionRange ? Math.max(selectionRange.startBeat, selectionRange.endBeat) : 0;
-  // Hover takes priority over click-selection for the on-curve readout, matching
-  // Java Blue's ParameterLinePanel where selectedPoint is driven by mouseMoved.
-  const readoutPointIndex = hoveredPointIndex ?? selectedPointIndex;
-  const readoutPoint = readoutPointIndex == null ? null : points[readoutPointIndex] ?? null;
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
       {height > 0 && (
         <svg
+          ref={svgRef}
           style={{ width: '100%', height, overflow: 'visible' }}
         >
           <path
@@ -108,133 +135,24 @@ export default function AutomationLineView({
               />
             );
           })}
-          {mode === 'singleLine' && active && readoutPoint != null && (
-            <ReadoutText
-              point={readoutPoint}
-              label={parameter.label}
-              minimum={minimum}
-              maximum={maximum}
-              height={height}
-              width={width}
-              pixelsPerBeat={pixelsPerBeat}
-            />
-          )}
         </svg>
       )}
+      {mode === 'singleLine' && active && readoutPoint != null && (
+        <HostSurfacePortal
+          session={readoutSurface}
+          interactive={false}
+          className="z-50 px-[3px] py-[3px] font-mono text-role-subheadline text-white"
+          style={{
+            background: 'rgba(5, 7, 13, 0.82)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
+            borderRadius: 2,
+          }}
+        >
+          <div>{readoutXText}</div>
+          <div>{readoutYText}</div>
+        </HostSurfacePortal>
+      )}
     </div>
-  );
-}
-
-/**
- * On-curve point detail readout, mirroring Java Blue's
- * `ParameterLinePanel.drawPointInformation`. Draws two short text lines
- * (`x:` time, `y:` value + optional parameter label) next to the point, flipping
- * left/up when the box would overflow the canvas.
- *
- * Java draws pure-white text with no backing box: `LineCanvas` sits on a solid
- * black backdrop so white-on-black is high-contrast, but `ParameterLinePanel`
- * has no backdrop and is effectively illegible. Here the canvas is not
- * uniformly dark, so we draw a solid dark backing box behind the white text to
- * guarantee contrast in any theme (matching LineCanvas's effective look).
- */
-function ReadoutText({
-  point,
-  label,
-  minimum,
-  maximum,
-  height,
-  width,
-  pixelsPerBeat,
-}: {
-  point: { time: number; value: number };
-  label: string;
-  minimum: number;
-  maximum: number;
-  height: number;
-  width: number;
-  pixelsPerBeat: number;
-}) {
-  const groupRef = useRef<SVGGElement>(null);
-  const [measuredWidth, setMeasuredWidth] = useState(0);
-
-  const px = beatToX(point.time, pixelsPerBeat);
-  const py = valueToY(point.value, minimum, maximum, height);
-
-  const xText = `x: ${formatAutomationDouble(point.time)}`;
-  let yText = `y: ${formatAutomationDouble(point.value)}`;
-  if (label.length > 0) {
-    yText += ` ${label}`;
-  }
-
-  // Box sizing: 3px inner padding around the text plus a 3px offset gap so the
-  // box sits clear of the point/cursor instead of under it.
-  const fontSize = 11;
-  const pad = 3;
-  const offset = 3;
-  const pointRadius = 4;
-  const lineHeight = 14;
-  const ascent = 9;
-  const descent = 3;
-
-  // Measure the actual rendered text width so the box hugs the content.
-  // A per-character estimate is inaccurate for proportional fonts (and variable
-  // parameter labels), which left a large gap on the right. Falls back to an
-  // estimate on the first paint before the layout effect has run.
-  useLayoutEffect(() => {
-    const g = groupRef.current;
-    if (!g) return;
-    let max = 0;
-    for (const t of g.querySelectorAll('text')) {
-      const bbox = typeof (t as SVGTextElement).getBBox === 'function' ? (t as SVGTextElement).getBBox() : null;
-      const w = bbox ? bbox.width : 0;
-      if (w > max) max = w;
-    }
-    setMeasuredWidth((prev) => (max > 0 && Math.abs(max - prev) > 0.5 ? max : prev));
-  }, [xText, yText]);
-
-  const textWidth = measuredWidth > 0
-    ? measuredWidth
-    : Math.max(xText.length, yText.length) * 6.2;
-
-  const boxWidth = Math.ceil(textWidth) + pad * 2;
-  // top pad + first ascent + baseline gap + second line descent + bottom pad
-  const boxHeight = pad + ascent + lineHeight + descent + pad;
-
-  // Place the box to the lower-right of the point with an offset gap, flipping
-  // left/up when it would overflow the canvas.
-  let boxX = px + pointRadius + offset;
-  let boxY = py + pointRadius + offset;
-  if (boxX + boxWidth > width) {
-    boxX = px - pointRadius - offset - boxWidth;
-  }
-  if (boxY + boxHeight > height) {
-    boxY = py - pointRadius - offset - boxHeight;
-  }
-
-  const textX = boxX + pad;
-  const baseline1 = boxY + pad + ascent;
-  const baseline2 = baseline1 + lineHeight;
-
-  return (
-    <g ref={groupRef}>
-      <rect
-        x={boxX}
-        y={boxY}
-        width={boxWidth}
-        height={boxHeight}
-        rx={2}
-        ry={2}
-        fill="rgba(5, 7, 13, 0.82)"
-        stroke="rgba(255, 255, 255, 0.14)"
-        strokeWidth={1}
-      />
-      <text x={textX} y={baseline1} fill="#ffffff" className="text-role-subheadline" style={{ fontSize: 'var(--text-role-subheadline)' }}>
-        {xText}
-      </text>
-      <text x={textX} y={baseline2} fill="#ffffff" className="text-role-subheadline" style={{ fontSize: 'var(--text-role-subheadline)' }}>
-        {yText}
-      </text>
-    </g>
   );
 }
 

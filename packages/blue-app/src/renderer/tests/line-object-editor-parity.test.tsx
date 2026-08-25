@@ -8,6 +8,7 @@ import BSBLineObjectWidget from '../components/workbench/panels/orchestra/bsb/wi
 import LineObjectEditor from '../components/workbench/panels/score-object/editors/LineObjectEditor';
 import ZakLineObjectEditor from '../components/workbench/panels/score-object/editors/ZakLineObjectEditor';
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
+import { HostDocumentContext } from '../hooks/use-host-document';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -65,7 +66,13 @@ function renderEditor(element: React.ReactElement): { container: HTMLDivElement;
   const root = createRoot(container);
 
   act(() => {
-    root.render(element);
+    // These editors are workbench panel content in production; supply the
+    // docked-case host document their popups bind to (spec 090).
+    root.render(
+      <HostDocumentContext.Provider value={document}>
+        {element}
+      </HostDocumentContext.Provider>,
+    );
   });
 
   return {

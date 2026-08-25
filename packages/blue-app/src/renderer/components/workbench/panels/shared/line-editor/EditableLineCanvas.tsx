@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { useHostDocument, usePortalContainer } from '../../../../../hooks/use-host-document';
-import { isNodeLike } from '../../../../../utils/cross-realm-dom';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
+import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../../host-surface/use-host-surface';
 
 export interface EditableLinePoint {
   x: number;
@@ -319,9 +319,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
 }: EditableLineCanvasProps<TLine>): React.ReactElement {
   const activeLineIndex = selectedLineIndex >= 0 && selectedLineIndex < lines.length ? selectedLineIndex : 0;
   const currentLine = lines[activeLineIndex] ?? null;
-  const canUseDom = typeof document !== 'undefined';
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const linesRef = useRef(lines);
   const selectedLineIndexRef = useRef(activeLineIndex);
   const dragRef = useRef<PointHit | null>(null);
@@ -333,8 +331,17 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   // window that hosts this canvas, not the module-global one.
   const hostDocument = useHostDocument();
   const hostWindow = hostDocument?.defaultView ?? null;
-  const portalContainer = usePortalContainer();
   const [pointEdits, setPointEdits] = useState<Record<string, string>>({});
+  // Context menu runs on the shared host-surface policy: host-realm portal,
+  // measured flip/shift inside the host viewport, host-bound dismissal, and
+  // close-on-host-scroll (spec FR-003/FR-005/FR-006).
+  const menuAnchor = contextMenuPosition
+    ? { type: 'point' as const, x: contextMenuPosition.x, y: contextMenuPosition.y }
+    : null;
+  const menuSurface = useHostSurface(menuAnchor, {
+    kind: 'menu',
+    onDismiss: () => setContextMenuPosition(null),
+  });
 
   linesRef.current = lines;
   selectedLineIndexRef.current = activeLineIndex;
@@ -354,36 +361,23 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   }, [locked]);
 
   useEffect(() => {
-    if ((!contextMenuPosition && !showPointEditor) || !hostDocument || !hostWindow) {
+    if (!showPointEditor || !hostWindow) {
       return undefined;
     }
 
-    const handleMouseDown = (event: MouseEvent) => {
-      const menu = contextMenuRef.current;
-      // Containment must not use `instanceof Node`: portal children belong to
-      // the hosting document's realm, which differs from this module's realm.
-      if (menu && isNodeLike(event.target) && menu.contains(event.target)) {
-        return;
-      }
-      setContextMenuPosition(null);
-    };
-
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setContextMenuPosition(null);
         setShowPointEditor(false);
         setPointEdits({});
       }
     };
 
-    hostWindow.addEventListener('mousedown', handleMouseDown);
     hostWindow.addEventListener('keydown', handleEscape);
 
     return () => {
-      hostWindow.removeEventListener('mousedown', handleMouseDown);
       hostWindow.removeEventListener('keydown', handleEscape);
     };
-  }, [contextMenuPosition, showPointEditor, hostDocument, hostWindow]);
+  }, [showPointEditor, hostWindow]);
 
   const plotLeft = showAxes ? AXIS_PAD_L : INSET;
   const plotRight = showAxes ? AXIS_PAD_R : INSET;
@@ -682,12 +676,28 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     });
     return {
       pointX: rect.left + insetX + (point.x * drawableWidth),
-      canvasTop: rect.top,
+      pointY: rect.top + insetY + pointValueToCanvasY(line, point.y, drawableHeight),
       xText: formattedTooltip?.xText ?? point.x.toFixed(4),
       yText: formattedTooltip?.yText ?? point.y.toFixed(4),
       ySuffix: formattedTooltip?.ySuffix ?? null,
     };
   }, [canvasHeight, canvasWidth, hoverPoint, lines, plotBottom, plotLeft, plotRight, plotTop, tooltipFormatter]);
+
+  // Tooltip rides the same host-surface policy as the menu: measured size
+  // (no hard-coded dimensions), flip/shift inside the host viewport, and
+  // anchor-following during point drags (spec FR-003/FR-005, SC-001).
+  const tooltipAnchor = hoverTooltip
+    ? {
+        type: 'rect' as const,
+        getRect: () => ({
+          left: hoverTooltip.pointX,
+          right: hoverTooltip.pointX,
+          top: hoverTooltip.pointY,
+          bottom: hoverTooltip.pointY,
+        }),
+      }
+    : null;
+  const tooltipSurface = useHostSurface(tooltipAnchor, { kind: 'tooltip', gap: 10, placement: 'top' });
 
   const axisTicks = 4;
   const axisMin = currentLine ? lineMinimum(currentLine) : 0;
@@ -856,62 +866,42 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         </svg>
       </div>
 
-      {canUseDom && contextMenuPosition && portalContainer && createPortal(
-        <div
-          ref={contextMenuRef}
-          // React portals bubble synthetic events up this component's tree;
-          // stop them so presses here never reach ancestor drag/selection
-          // handlers (e.g., BSB widget dragging).
-          onMouseDown={(e) => e.stopPropagation()}
-          onMouseUp={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-role-body text-app-text-strong shadow-xl"
-          data-auxiliary-portal="true"
-          style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
-        >
-          <button
-            type="button"
-            className="block w-full px-3 py-1 text-left hover:bg-app-hover"
-            onClick={() => {
-              setContextMenuPosition(null);
-              openPointEditor();
-            }}
-          >
-            Edit Points
-          </button>
-          <button
-            type="button"
-            className="block w-full px-3 py-1 text-left hover:bg-app-hover"
-            onClick={() => {
-              setContextMenuPosition(null);
-              resetCurrentLine();
-            }}
-          >
-            Reset Line
-          </button>
-        </div>,
-        portalContainer,
-      )}
-
-      {canUseDom && hoverTooltip && portalContainer && createPortal(
-        <div
-          className="pointer-events-none fixed z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-role-subheadline text-app-text-strong shadow-lg"
-          style={{
-            left: Math.max(8, Math.min(
-              hoverTooltip.pointX + 10,
-              (hostWindow?.innerWidth ?? window.innerWidth) - 176,
-            )),
-            top: Math.max(8, Math.min(
-              hoverTooltip.canvasTop - 44,
-              (hostWindow?.innerHeight ?? window.innerHeight) - 44,
-            )),
+      <HostSurfacePortal
+        session={menuSurface}
+        role="menu"
+        className="z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-role-body text-app-text-strong shadow-xl"
+      >
+        <button
+          type="button"
+          className="block w-full px-3 py-1 text-left hover:bg-app-hover"
+          onClick={() => {
+            setContextMenuPosition(null);
+            openPointEditor();
           }}
+        >
+          Edit Points
+        </button>
+        <button
+          type="button"
+          className="block w-full px-3 py-1 text-left hover:bg-app-hover"
+          onClick={() => {
+            setContextMenuPosition(null);
+            resetCurrentLine();
+          }}
+        >
+          Reset Line
+        </button>
+      </HostSurfacePortal>
+
+      {hoverTooltip && (
+        <HostSurfacePortal
+          session={tooltipSurface}
+          interactive={false}
+          className="z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-role-subheadline text-app-text-strong shadow-lg"
         >
           <div>x: {hoverTooltip.xText}</div>
           <div>y: {hoverTooltip.yText}{hoverTooltip.ySuffix ? ` ${hoverTooltip.ySuffix}` : ''}</div>
-        </div>,
-        portalContainer,
+        </HostSurfacePortal>
       )}
 
       {showPointEditor && currentLine && (() => {

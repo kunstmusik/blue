@@ -60,6 +60,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.41.1
         version: 6.41.1
+      '@floating-ui/dom':
+        specifier: ^1.7.6
+        version: 1.7.6
       '@fontsource/roboto':
         specifier: ^5.2.10
         version: 5.2.10

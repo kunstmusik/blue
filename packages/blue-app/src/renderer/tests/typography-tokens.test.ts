@@ -134,7 +134,9 @@ describe('Typography Tokens and System Contracts', () => {
     expect(knobSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
     expect(knobSource).toContain('const VALUE_HEIGHT = 16;');
     expect(valuePanelSource).toContain("lineHeight: 'var(--text-role-callout--line-height)'");
-    expect(automationSource).toContain('className="text-role-subheadline"');
+    // Spec 090: the readout moved from SVG <text> to a host-surface DOM
+    // annotation; it must still use the subheadline annotation role.
+    expect(automationSource).toContain('font-mono text-role-subheadline text-white');
   });
 
   describe('resolveTypographyRoleFont', () => {
