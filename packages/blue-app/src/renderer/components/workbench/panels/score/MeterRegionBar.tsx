@@ -91,7 +91,7 @@ export default function MeterRegionBar({
           <ContextMenu.Root key={`meter-region-${i}`}>
             <ContextMenu.Trigger asChild>
               <div
-                className="absolute top-0 border-l"
+                className="absolute top-0 border-l flex items-center"
                 style={{
                   left: startX,
                   width: Math.max(1, width),
@@ -102,7 +102,7 @@ export default function MeterRegionBar({
                 title={formatMeterTooltip(region.entry)}
               >
                 {showLabel && (
-                  <span className="absolute left-1 top-0 text-role-subheadline text-white whitespace-nowrap">
+                  <span className="pl-1 text-role-subheadline text-white whitespace-nowrap">
                     {region.label}
                   </span>
                 )}

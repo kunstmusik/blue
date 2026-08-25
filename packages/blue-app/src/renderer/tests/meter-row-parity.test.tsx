@@ -99,6 +99,8 @@ describe('MeterRegionBar rendering', () => {
 
   it('renders labels for each meter entry', () => {
     const { container } = renderMeterBar({ meterMap: MIXED_METER_MAP });
+    const regionDivs = container.querySelectorAll('[title*="Measure"]');
+    expect(regionDivs[0]?.className).toContain('flex items-center');
     expect(container.innerHTML).toContain('4/4');
     expect(container.innerHTML).toContain('3/4');
     expect(container.innerHTML).toContain('7/8');
