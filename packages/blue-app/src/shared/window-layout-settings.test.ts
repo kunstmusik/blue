@@ -278,7 +278,7 @@ describe('window-layout-settings mergeWindowLayoutSettings', () => {
           controlledPane: 'first',
           sizePx: 240,
         },
-        'orchestra.library': {
+        'score.main': {
           orientation: 'horizontal',
           controlledPane: 'first',
           sizePx: -10,
@@ -286,7 +286,7 @@ describe('window-layout-settings mergeWindowLayoutSettings', () => {
       },
     });
     expect(merged.splits['orchestra.outer']).toBeDefined();
-    expect(merged.splits['orchestra.library']).toBeUndefined();
+    expect(merged.splits['score.main']).toBeUndefined();
   });
 
   it('ignores unknown split identity keys', () => {
@@ -557,12 +557,12 @@ describe('window-layout-settings invalid value preservation (T056)', () => {
 
     const withBad = applyWindowLayoutUpdate(withGood, {
       type: 'split-location',
-      splitId: 'orchestra.library',
+      splitId: 'score.main',
       location: { orientation: 'horizontal', controlledPane: 'first', sizePx: -50 },
     }, fixedNow);
 
     expect(withBad.splits['orchestra.outer']).toBeDefined();
-    expect(withBad.splits['orchestra.library']).toBeUndefined();
+    expect(withBad.splits['score.main']).toBeUndefined();
   });
 
   it('drops an unknown split identity key during merge', () => {

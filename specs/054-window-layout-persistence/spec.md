@@ -7,6 +7,16 @@
 
 **Reference Review**: Java Blue and current Electron storage findings are summarized in [research.md](research.md).
 
+## Release Compatibility
+
+This feature is still pre-release and has not shipped in Blue 3.0.0. Before that
+release, the active `SplitId` set may change without a backward-compatibility
+reader; removed pre-release split IDs are intentionally not accepted or migrated.
+No migration is required in this pre-release change. Once 3.0.0 is released, a
+follow-up versioned migration must handle settings written by pre-3.0 builds
+before compatibility is promised for later layout-schema changes. After 3.0.0,
+removing or renaming a persisted split ID requires migration first.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Restore Window Size And Location (Priority: P1)

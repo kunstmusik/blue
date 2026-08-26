@@ -48,7 +48,7 @@ git diff --check
 
 1. Start with no saved layout state.
 2. Open workbench properties/output auxiliary groups and verify side/bottom controlled panes default to 200px.
-3. Open representative split editors: Orchestra, UDO workspace, BSB interface, Piano Roll, LineObject, ZakLineObject, and PatternObject where fixture data allows.
+3. Open representative split editors: Orchestra, UDO workspace, BSB interface, Piano Roll, LineObject, ZakLineObject, PatternObject, and SoundFont Viewer where fixture data allows.
 4. Verify each user-adjustable split starts at 200px unless a documented parity/minimum-size exception applies; the BSB interface right property pane should default to 250px.
 5. Move each splitter to a distinct pixel size.
 6. Restart the app or reopen the editor.

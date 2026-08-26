@@ -19,17 +19,15 @@ import {
 
 const EXPECTED_EDITOR_SPLIT_IDS: SplitId[] = [
   'orchestra.outer',
-  'orchestra.library',
+  'score.main',
   'udo.workspace.outer',
-  'udo.workspace.editor',
   'bsb.interface.properties',
-  'effects-library.main',
   'piano-roll.field-editor',
   'line-object.lines',
   'zak-line-object.lines',
   'pattern-object.layers',
   'pattern-object.score',
-  'score.main',
+  'soundfont-viewer.tables',
 ];
 
 describe('editor split identities', () => {

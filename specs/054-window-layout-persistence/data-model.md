@@ -78,29 +78,26 @@
 
 **Purpose**: Stable identity for one user-adjustable split control.
 
-**Initial identity examples**:
-- `workbench.aux.left`
-- `workbench.aux.right`
-- `workbench.aux.bottom`
+**Current active identities**:
 - `orchestra.outer`
-- `orchestra.library`
 - `score.main`
 - `udo.workspace.outer`
-- `udo.workspace.editor`
 - `bsb.interface.properties`
-- `effects-library.main`
 - `piano-roll.field-editor`
 - `line-object.lines`
 - `zak-line-object.lines`
 - `pattern-object.layers`
 - `pattern-object.score`
+- `soundfont-viewer.tables`
 
 **Rules**:
-- Identity names must remain stable across app launches.
+- Identity names must remain stable across app launches after the 3.0.0 release.
 - Split identities must describe the persistent UI role, not the current component instance id.
-- `workbench.aux.left`, `workbench.aux.right`, and `workbench.aux.bottom` describe auxiliary edge sizes whose current persistence is embedded in `workbench.serializedLayout`; the names remain reserved if those edge sizes are later extracted into the top-level `splits` map.
-- `udo.workspace.editor` is reserved for a future nested adjustable UDO editor split. The current UDO workspace persists only `udo.workspace.outer`.
+- Auxiliary left/right/bottom edge sizes remain embedded in `workbench.serializedLayout`; `workbench.aux.left`, `workbench.aux.right`, and `workbench.aux.bottom` are not current top-level split identities.
+- `udo.workspace.editor` is not a current top-level split identity; the current UDO workspace persists only `udo.workspace.outer`.
+- `orchestra.library` and `effects-library.main` were pre-release identities removed before 3.0.0 and are intentionally not accepted by the current parser.
 - `bsb.interface.properties` controls the second/right property pane and defaults to 250px as the documented Java Blue parity exception.
+- No migration is required in this pre-release change. Once 3.0.0 is released, add a versioned migration for settings written by pre-3.0 builds, including handling for removed split identities.
 
 ## Entity: SplitLocationSnapshot
 

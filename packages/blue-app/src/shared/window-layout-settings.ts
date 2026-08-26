@@ -43,21 +43,16 @@ export const WINDOW_IDENTITIES: readonly WindowId[] = [
 ];
 
 export type SplitId =
-  | 'workbench.aux.left'
-  | 'workbench.aux.right'
-  | 'workbench.aux.bottom'
   | 'orchestra.outer'
-  | 'orchestra.library'
   | 'score.main'
   | 'udo.workspace.outer'
-  | 'udo.workspace.editor'
   | 'bsb.interface.properties'
-  | 'effects-library.main'
   | 'piano-roll.field-editor'
   | 'line-object.lines'
   | 'zak-line-object.lines'
   | 'pattern-object.layers'
-  | 'pattern-object.score';
+  | 'pattern-object.score'
+  | 'soundfont-viewer.tables';
 
 export const DEFAULT_SPLIT_SIZE_PX = 200;
 export const BSB_PROPERTY_SPLIT_SIZE_PX = 250;
@@ -451,20 +446,15 @@ export function applyLegacyLayoutMigration(
 
 function isSplitId(value: string): value is SplitId {
   return (
-    value === 'workbench.aux.left' ||
-    value === 'workbench.aux.right' ||
-    value === 'workbench.aux.bottom' ||
     value === 'orchestra.outer' ||
-    value === 'orchestra.library' ||
     value === 'score.main' ||
     value === 'udo.workspace.outer' ||
-    value === 'udo.workspace.editor' ||
     value === 'bsb.interface.properties' ||
-    value === 'effects-library.main' ||
     value === 'piano-roll.field-editor' ||
     value === 'line-object.lines' ||
     value === 'zak-line-object.lines' ||
     value === 'pattern-object.layers' ||
-    value === 'pattern-object.score'
+    value === 'pattern-object.score' ||
+    value === 'soundfont-viewer.tables'
   );
 }

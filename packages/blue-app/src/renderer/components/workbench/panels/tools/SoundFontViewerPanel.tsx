@@ -5,12 +5,12 @@ import {
   ListMusic,
   Music2,
 } from 'lucide-react';
-import type { SoundFontInfo } from '../../../../shared/soundfont-viewer';
+import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../shared/window-layout-settings';
+import type { SoundFontInfo } from '../../../../../shared/soundfont-viewer';
 import { subscribePendingSoundFontFile } from './soundfont-viewer-bus';
+import SplitPane from '../orchestra/SplitPane';
 
 const WIDE_PANEL_BREAKPOINT = 640;
-const MIN_SPLIT_RATIO = 0.25;
-const MAX_SPLIT_RATIO = 0.75;
 
 const SECONDARY_BUTTON_CLASS =
   'inline-flex shrink-0 items-center justify-center gap-1.5 rounded border border-app-border/40 bg-app-surface px-2.5 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover hover:text-app-text-bright disabled:cursor-not-allowed disabled:opacity-50';
@@ -70,13 +70,8 @@ function getDroppedFilePath(event: React.DragEvent<HTMLElement>): string | null 
   }
 }
 
-function clampSplitRatio(value: number): number {
-  return Math.min(MAX_SPLIT_RATIO, Math.max(MIN_SPLIT_RATIO, value));
-}
-
 export default function SoundFontViewerPanel(): React.ReactElement {
   const panelRef = useRef<HTMLDivElement>(null);
-  const tableAreaRef = useRef<HTMLDivElement>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [info, setInfo] = useState<SoundFontInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +79,6 @@ export default function SoundFontViewerPanel(): React.ReactElement {
   const [isChoosing, setIsChoosing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isWide, setIsWide] = useState(false);
-  const [splitRatio, setSplitRatio] = useState(0.5);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -184,45 +178,6 @@ export default function SoundFontViewerPanel(): React.ReactElement {
     }
   }, []);
 
-  const handleSplitterPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const tableArea = tableAreaRef.current;
-    if (!tableArea) return;
-
-    const startPosition = isWide ? event.clientX : event.clientY;
-    const bounds = tableArea.getBoundingClientRect();
-    const total = isWide ? bounds.width : bounds.height;
-    if (total <= 0) return;
-
-    const startRatio = splitRatio;
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      const position = isWide ? moveEvent.clientX : moveEvent.clientY;
-      setSplitRatio(clampSplitRatio(startRatio + ((position - startPosition) / total)));
-    };
-    const handlePointerUp = () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-  }, [isWide, splitRatio]);
-
-  const handleSplitterKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    const decrement = isWide ? event.key === 'ArrowLeft' : event.key === 'ArrowUp';
-    const increment = isWide ? event.key === 'ArrowRight' : event.key === 'ArrowDown';
-    if (event.key === 'Home') {
-      event.preventDefault();
-      setSplitRatio(MIN_SPLIT_RATIO);
-    } else if (event.key === 'End') {
-      event.preventDefault();
-      setSplitRatio(MAX_SPLIT_RATIO);
-    } else if (decrement || increment) {
-      event.preventDefault();
-      setSplitRatio((ratio) => clampSplitRatio(ratio + (increment ? 0.05 : -0.05)));
-    }
-  }, [isWide]);
-
   const instrumentRows = info?.instruments.map((instrument) => [
     String(instrument.number),
     instrument.name,
@@ -292,52 +247,42 @@ export default function SoundFontViewerPanel(): React.ReactElement {
         <div className="mx-3 mt-3 shrink-0 text-role-callout text-app-accent">Reading SoundFont metadata…</div>
       )}
 
-      <div
-        ref={tableAreaRef}
-        className={`flex min-h-0 flex-1 gap-2 p-2 ${isWide ? 'flex-row' : 'flex-col'}`}
-      >
-        <div
-          className="min-h-0 min-w-0 shrink-0"
-          style={isWide ? { width: `${splitRatio * 100}%` } : { height: `${splitRatio * 100}%` }}
-        >
-          <SoundFontTable
-            title="Instruments"
-            count={info?.instruments.length ?? 0}
-            icon={<Music2 size={13} />}
-            headers={['#', 'Instrument']}
-            rows={instrumentRows}
-            emptyMessage={info ? 'No instruments reported.' : 'Choose a SoundFont to inspect.'}
-          />
-        </div>
-
-        <div
-          data-soundfont-splitter="true"
-          role="separator"
-          tabIndex={0}
-          aria-label="Resize instrument and preset panels"
-          aria-orientation={isWide ? 'vertical' : 'horizontal'}
-          aria-valuemin={25}
-          aria-valuemax={75}
-          aria-valuenow={Math.round(splitRatio * 100)}
-          className={`group flex shrink-0 items-center justify-center rounded text-app-border transition-colors hover:text-app-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent ${
-            isWide ? 'w-2 cursor-col-resize' : 'h-2 cursor-row-resize'
-          }`}
-          onPointerDown={handleSplitterPointerDown}
-          onKeyDown={handleSplitterKeyDown}
-        >
-          <span className={isWide ? 'h-8 w-px bg-current' : 'h-px w-8 bg-current'} />
-        </div>
-
-        <div className="min-h-0 min-w-0 flex-1">
-          <SoundFontTable
-            title="Presets"
-            count={info?.presets.length ?? 0}
-            icon={<ListMusic size={13} />}
-            headers={['#', 'Preset', 'Bank', 'Preset #']}
-            rows={presetRows}
-            emptyMessage={info ? 'No presets reported.' : 'Choose a SoundFont to inspect.'}
-          />
-        </div>
+      <div className="flex min-h-0 flex-1 p-2">
+        <SplitPane
+          orientation={isWide ? 'horizontal' : 'vertical'}
+          ariaLabel="Resize instrument and preset panels"
+          splitId="soundfont-viewer.tables"
+          controlledPane="first"
+          defaultSizePx={DEFAULT_SPLIT_SIZE_PX}
+          minFirstSize={140}
+          minSecondSize={140}
+          className="h-full w-full"
+          firstClassName="min-h-0 min-w-0"
+          secondClassName="min-h-0 min-w-0"
+          separatorProps={{
+            'data-soundfont-splitter': 'true',
+          } as React.ButtonHTMLAttributes<HTMLButtonElement>}
+          first={
+            <SoundFontTable
+              title="Instruments"
+              count={info?.instruments.length ?? 0}
+              icon={<Music2 size={13} />}
+              headers={['#', 'Instrument']}
+              rows={instrumentRows}
+              emptyMessage={info ? 'No instruments reported.' : 'Choose a SoundFont to inspect.'}
+            />
+          }
+          second={
+            <SoundFontTable
+              title="Presets"
+              count={info?.presets.length ?? 0}
+              icon={<ListMusic size={13} />}
+              headers={['#', 'Preset', 'Bank', 'Preset #']}
+              rows={presetRows}
+              emptyMessage={info ? 'No presets reported.' : 'Choose a SoundFont to inspect.'}
+            />
+          }
+        />
       </div>
 
     </div>

@@ -288,17 +288,15 @@ describe('window-layout-store round-trip for every identity', () => {
   it('round-trips every split identity through save/load', () => {
     const splitIds: SplitId[] = [
       'orchestra.outer',
-      'orchestra.library',
       'score.main',
       'udo.workspace.outer',
-      'udo.workspace.editor',
       'bsb.interface.properties',
-      'effects-library.main',
       'piano-roll.field-editor',
       'line-object.lines',
       'zak-line-object.lines',
       'pattern-object.layers',
       'pattern-object.score',
+      'soundfont-viewer.tables',
     ];
 
     for (const splitId of splitIds) {
@@ -352,13 +350,13 @@ describe('window-layout-store invalid-value preservation', () => {
     });
     updateWindowLayout({
       type: 'split-location',
-      splitId: 'orchestra.library',
+      splitId: 'score.main',
       location: { orientation: 'horizontal', controlledPane: 'first', sizePx: -10 },
     });
 
     const reloaded = loadWindowLayoutSettings();
     expect(reloaded.splits['orchestra.outer']?.sizePx).toBe(250);
-    expect(reloaded.splits['orchestra.library']).toBeUndefined();
+    expect(reloaded.splits['score.main']).toBeUndefined();
   });
 
   it('drops an unknown split identity key', () => {

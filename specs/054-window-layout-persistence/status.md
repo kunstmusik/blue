@@ -26,7 +26,7 @@ All 6 phases plus Phase 7 polish are complete. Review findings have been address
 ### Phase 4: US2 — Split Persistence
 - `SplitPane` extended with `splitId`, `controlledPane`, `defaultSizePx` props; debounced save; display-only clamping.
 - Auxiliary left/right/bottom defaults changed from 360/228 to 200px.
-- All split call sites converted: Orchestra, Score, UDO, Effects Library, BSB, Piano Roll, LineObject, ZakLineObject, PatternObject.
+- All split call sites converted: Orchestra, Score, UDO, BSB, Piano Roll, SoundFont Viewer, LineObject, ZakLineObject, and PatternObject.
 - BSB property pane controls the right-side pane at 250px to match Java Blue's documented parity exception.
 - Legacy `blue-settings.windowBounds` and `blue-workbench-layout` migrate once into the app-wide settings store, including copied values and migration markers.
 
@@ -36,10 +36,11 @@ All 6 phases plus Phase 7 polish are complete. Review findings have been address
 - Workbench layout, split locations, and window state all return to defaults.
 
 ### Phase 6: US4 — FR-025 Coverage
-- Round-trip tests for all 4 window identities and 12 split identities.
+- Round-trip tests for all 4 window identities and 10 active split identities.
 - Invalid-value preservation: bad window-state, bad split, unknown split key all drop cleanly.
 - Reset preserves unrelated settings (enginePath, recentFiles, audioDriver, etc.).
 - Legacy migration idempotence and renderer-to-main migration payload persistence verified.
+- Pre-3.0 split identity removals are intentional because the layout schema has not shipped; no migration is required in this change, but a versioned migration for pre-3.0 settings is required after 3.0.0 is released.
 
 ## Validation
 
@@ -54,5 +55,6 @@ All 6 phases plus Phase 7 polish are complete. Review findings have been address
 
 - Effect editor/interface instances use type-level identities; per-instance owner keys may be needed later.
 - Multi-monitor hot-plug scenarios not explicitly tested.
+- Add and test the pre-3.0 split-settings migration after the 3.0.0 release, before promising compatibility for a later layout-schema change.
 
 Spec 054 is closed. Future work should use a follow-up spec for per-instance secondary window identities or deeper multi-monitor hot-plug behavior.

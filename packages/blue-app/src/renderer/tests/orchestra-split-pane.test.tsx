@@ -206,6 +206,46 @@ describe('SplitPane persistence contract', () => {
       vi.useRealTimers();
     }
   });
+
+  it('exposes the controlled pixel range and visible focus affordance', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize instruments and presets"
+            splitId="soundfont-viewer.tables"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>instruments</div>}
+            second={<div>presets</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+      expect(separator.getAttribute('aria-valuemin')).toBe('140');
+      expect(separator.getAttribute('aria-valuemax')).toBe('660');
+      expect(separator.getAttribute('aria-valuenow')).toBe('200');
+      expect(separator.className).toContain('focus-visible:ring-1');
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
 });
 
 describe('SplitPane legacy SSR render', () => {

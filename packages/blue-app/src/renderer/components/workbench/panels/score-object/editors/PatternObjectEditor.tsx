@@ -3,12 +3,11 @@ import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
-import { useLayoutSettingsStore } from '../../../../../stores/layout-settings-store';
+import SplitPane from '../../orchestra/SplitPane';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
 
 const PATTERN_LAYERS_SPLIT_ID = 'pattern-object.layers' as const;
 const PATTERN_SCORE_SPLIT_ID = 'pattern-object.score' as const;
-const SAVE_DEBOUNCE_MS = 150;
 
 interface PatternSnapshot {
   patternName: string;
@@ -201,35 +200,7 @@ export default function PatternObjectEditor({
   };
   const numSteps = beats * subDivisions;
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const savedSplitY = useLayoutSettingsStore((s) =>
-    s.layout?.splits?.[PATTERN_LAYERS_SPLIT_ID]?.sizePx,
-  );
-  const savedSplitX = useLayoutSettingsStore((s) =>
-    s.layout?.splits?.[PATTERN_SCORE_SPLIT_ID]?.sizePx,
-  );
-  const [splitY, setSplitY] = useState<number>(
-    Number.isFinite(savedSplitY) ? (savedSplitY as number) : DEFAULT_SPLIT_SIZE_PX,
-  );
-  const [splitX, setSplitX] = useState<number>(
-    Number.isFinite(savedSplitX) ? (savedSplitX as number) : DEFAULT_SPLIT_SIZE_PX,
-  );
-  const saveYSplitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveXSplitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (Number.isFinite(savedSplitY)) setSplitY(savedSplitY as number);
-  }, [savedSplitY]);
-
-  useEffect(() => {
-    if (Number.isFinite(savedSplitX)) setSplitX(savedSplitX as number);
-  }, [savedSplitX]);
-
-  useEffect(() => () => {
-    if (saveYSplitTimer.current) clearTimeout(saveYSplitTimer.current);
-    if (saveXSplitTimer.current) clearTimeout(saveXSplitTimer.current);
-  }, []);
-  const draggingSplitY = useRef(false);
-  const draggingSplitX = useRef(false);
   const {
     testing,
     testOutput,
@@ -354,65 +325,6 @@ export default function PatternObjectEditor({
     setSelectedIdx(selectedIdx + 1);
   }, [patterns, selectedIdx, patch]);
 
-  const handleSplitYDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    draggingSplitY.current = true;
-    const parent = (e.target as HTMLElement).closest('.pattern-root') as HTMLElement;
-    const onMove = (ev: MouseEvent) => {
-      if (!draggingSplitY.current || !parent) return;
-      const rect = parent.getBoundingClientRect();
-      const next = Math.max(60, Math.min(rect.height - 60, ev.clientY - rect.top));
-      setSplitY(next);
-
-      if (saveYSplitTimer.current) clearTimeout(saveYSplitTimer.current);
-      saveYSplitTimer.current = setTimeout(() => {
-        void useLayoutSettingsStore.getState().updateSplitLocation(PATTERN_LAYERS_SPLIT_ID, {
-          orientation: 'horizontal',
-          controlledPane: 'first',
-          sizePx: Math.round(next),
-        });
-        saveYSplitTimer.current = null;
-      }, SAVE_DEBOUNCE_MS);
-    };
-    const onUp = () => {
-      draggingSplitY.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, []);
-
-  const handleSplitXDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    draggingSplitX.current = true;
-    const onMove = (ev: MouseEvent) => {
-      if (!draggingSplitX.current) return;
-      const parent = (e.target as HTMLElement).closest('.pattern-top') as HTMLElement;
-      if (!parent) return;
-      const rect = parent.getBoundingClientRect();
-      const next = Math.max(80, Math.min(300, ev.clientX - rect.left));
-      setSplitX(next);
-
-      if (saveXSplitTimer.current) clearTimeout(saveXSplitTimer.current);
-      saveXSplitTimer.current = setTimeout(() => {
-        void useLayoutSettingsStore.getState().updateSplitLocation(PATTERN_SCORE_SPLIT_ID, {
-          orientation: 'horizontal',
-          controlledPane: 'first',
-          sizePx: Math.round(next),
-        });
-        saveXSplitTimer.current = null;
-      }, SAVE_DEBOUNCE_MS);
-    };
-    const onUp = () => {
-      draggingSplitX.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, []);
-
   const selectedPattern = patterns[selectedIdx] ?? null;
 
   return (
@@ -458,200 +370,205 @@ export default function PatternObjectEditor({
         </div>
       )}
 
-      <div
-        className="pattern-top flex shrink-0 overflow-hidden"
-        style={{ height: splitY }}
-      >
-        <div
-          className="flex flex-col shrink-0 border-r border-blue-border overflow-hidden"
-          style={{ width: splitX }}
-        >
-          <div
-            className="flex items-center shrink-0 border-b border-blue-border bg-blue-bg/60"
-            style={{ height: CELL }}
-          >
-            <div
-              className="flex items-center px-1 border-r border-blue-border/40"
-              style={{ width: splitX - 28 }}
-            >
-              <span className="text-role-subheadline text-blue-muted font-medium">
-                Name
-              </span>
-            </div>
-            <div className="flex items-center justify-center" style={{ width: 28 }}>
-              <span className="text-role-subheadline text-blue-muted font-medium">M</span>
-            </div>
-          </div>
+      <div className="flex-1 min-h-0">
+        <SplitPane
+          orientation="vertical"
+          ariaLabel="Pattern grid and score text splitter"
+          splitId={PATTERN_LAYERS_SPLIT_ID}
+          controlledPane="first"
+          defaultSizePx={DEFAULT_SPLIT_SIZE_PX}
+          minFirstSize={60}
+          minSecondSize={50}
+          className="h-full"
+          firstClassName="flex flex-col min-h-0"
+          secondClassName="flex flex-col min-h-[50px] overflow-hidden"
+          first={
+            <SplitPane
+              orientation="horizontal"
+              ariaLabel="Pattern list and pattern canvas splitter"
+              splitId={PATTERN_SCORE_SPLIT_ID}
+              controlledPane="first"
+              defaultSizePx={DEFAULT_SPLIT_SIZE_PX}
+              minFirstSize={80}
+              minSecondSize={100}
+              className="h-full"
+              firstClassName="flex flex-col border-r border-blue-border overflow-hidden"
+              secondClassName="flex flex-col min-w-0 overflow-hidden"
+              first={
+                <div className="flex flex-col h-full overflow-hidden">
+                  <div
+                    className="flex items-center shrink-0 border-b border-blue-border bg-blue-bg/60"
+                    style={{ height: CELL }}
+                  >
+                    <div className="flex-1 min-w-0 flex items-center px-1 border-r border-blue-border/40">
+                      <span className="text-role-subheadline text-blue-muted font-medium">
+                        Name
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center shrink-0" style={{ width: 28 }}>
+                      <span className="text-role-subheadline text-blue-muted font-medium">M</span>
+                    </div>
+                  </div>
 
-          <div className="flex-1 overflow-auto">
-            {patterns.map((pat, pi) => (
-              <div
-                key={pi}
-                className={`flex items-center shrink-0 border-b border-blue-border/20 cursor-pointer ${
-                  pi === selectedIdx
-                    ? 'bg-blue-accent/15'
-                    : ''
-                }`}
-                style={{
-                  height: CELL,
-                  backgroundColor:
-                    pi === selectedIdx
-                      ? undefined
-                      : pi % 2 === 0
-                        ? INACTIVE_EVEN
-                        : INACTIVE_ODD,
-                }}
-                onClick={() => setSelectedIdx(pi)}
-              >
-                <div
-                  className="flex items-center px-1 border-r border-blue-border/20"
-                  style={{ width: splitX - 28 }}
-                >
+                  <div className="flex-1 overflow-auto">
+                    {patterns.map((pat, pi) => (
+                      <div
+                        key={pi}
+                        className={`flex items-center shrink-0 border-b border-blue-border/20 cursor-pointer ${
+                          pi === selectedIdx
+                            ? 'bg-blue-accent/15'
+                            : ''
+                        }`}
+                        style={{
+                          height: CELL,
+                          backgroundColor:
+                            pi === selectedIdx
+                              ? undefined
+                              : pi % 2 === 0
+                                ? INACTIVE_EVEN
+                                : INACTIVE_ODD,
+                        }}
+                        onClick={() => setSelectedIdx(pi)}
+                      >
+                        <div className="flex-1 min-w-0 flex items-center px-1 border-r border-blue-border/20">
+                          <input
+                            type="text"
+                            className="w-full bg-transparent text-role-body text-gray-200 focus:outline-none focus:text-white"
+                            value={pat.patternName}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handlePatternNameChange(pi, e.target.value);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            spellCheck={false}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center shrink-0" style={{ width: 28 }}>
+                          <button
+                            className={`w-4 h-4 text-role-subheadline rounded border shrink-0 flex items-center justify-center ${
+                              pat.muted
+                                ? 'bg-red-800/70 border-red-600 text-red-200'
+                                : 'border-blue-border/40 text-blue-muted/40'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              patch({ toggleMute: pi });
+                            }}
+                            title="Mute"
+                          >
+                            M
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center shrink-0 border-t border-blue-border bg-blue-bg/40">
+                    <button
+                      className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+                      onClick={handlePushUp}
+                      title="Push Up"
+                      aria-label="Push Up"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+                      onClick={handlePushDown}
+                      title="Push Down"
+                      aria-label="Push Down"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
+                      onClick={handleAddPattern}
+                      title="Add Pattern"
+                      aria-label="Add Pattern"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30"
+                      onClick={handleRemovePattern}
+                      title="Remove Pattern"
+                      aria-label="Remove Pattern"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              }
+              second={
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                  <div
+                    className="shrink-0 flex border-b border-blue-border bg-blue-bg/60 overflow-hidden"
+                    style={{ height: CELL }}
+                  >
+                    {Array.from({ length: beats }, (_, beat) => (
+                      <div key={beat} className="flex shrink-0">
+                        <div
+                          className="flex items-center px-0.5 text-role-subheadline text-gray-400 border-r border-blue-border/40"
+                          style={{
+                            width: subDivisions * CELL,
+                            height: CELL,
+                            borderLeft: '1px solid #888',
+                          }}
+                        >
+                          {beat + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex-1 overflow-auto">
+                    <PatternCanvas
+                      patterns={patterns}
+                      numSteps={numSteps}
+                      subDivisions={subDivisions}
+                      onToggle={handleToggleStep}
+                      onSet={handleSetStep}
+                    />
+                  </div>
+                </div>
+              }
+            />
+          }
+          second={
+            selectedPattern ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1 border-b border-blue-border bg-blue-bg/30 shrink-0">
+                  <span className="text-role-body text-blue-muted font-medium">
+                    Pattern Score
+                  </span>
                   <input
                     type="text"
-                    className="w-full bg-transparent text-role-body text-gray-200 focus:outline-none focus:text-white"
-                    value={pat.patternName}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handlePatternNameChange(pi, e.target.value);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    spellCheck={false}
+                    className="w-28 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                    value={selectedPattern.patternName}
+                    onChange={(e) =>
+                      handlePatternNameChange(selectedIdx, e.target.value)
+                    }
                   />
                 </div>
-                <div className="flex items-center justify-center" style={{ width: 28 }}>
-                  <button
-                    className={`w-4 h-4 text-role-subheadline rounded border shrink-0 flex items-center justify-center ${
-                      pat.muted
-                        ? 'bg-red-800/70 border-red-600 text-red-200'
-                        : 'border-blue-border/40 text-blue-muted/40'
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      patch({ toggleMute: pi });
-                    }}
-                    title="Mute"
-                  >
-                    M
-                  </button>
-                </div>
+                <textarea
+                  className="flex-1 w-full resize-none bg-app-bg px-3 py-1.5 font-mono text-role-body text-app-text focus:outline-none"
+                  value={selectedPattern.patternScore}
+                  onChange={(e) =>
+                    handlePatternScoreChange(selectedIdx, e.target.value)
+                  }
+                  placeholder="i1 <START> <DUR> ..."
+                  spellCheck={false}
+                />
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-role-body text-blue-muted">
+                {patterns.length === 0
+                  ? 'No patterns — click + to add one'
+                  : 'Select a pattern layer to edit its score'}
               </div>
-            ))}
-          </div>
-
-          <div className="flex items-center shrink-0 border-t border-blue-border bg-blue-bg/40">
-            <button
-              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
-              onClick={handlePushUp}
-              title="Push Up"
-              aria-label="Push Up"
-            >
-              <ChevronUp className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
-              onClick={handlePushDown}
-              title="Push Down"
-              aria-label="Push Down"
-            >
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30 border-r border-blue-border/30"
-              onClick={handleAddPattern}
-              title="Add Pattern"
-              aria-label="Add Pattern"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="flex flex-1 items-center justify-center py-1 text-role-body text-blue-muted hover:bg-blue-border/30"
-              onClick={handleRemovePattern}
-              title="Remove Pattern"
-              aria-label="Remove Pattern"
-            >
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          className="w-1 cursor-col-resize bg-blue-border/40 hover:bg-blue-accent/40 shrink-0"
-          onMouseDown={handleSplitXDown}
+            )
+          }
         />
-
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div
-            className="shrink-0 flex border-b border-blue-border bg-blue-bg/60 overflow-hidden"
-            style={{ height: CELL }}
-          >
-            {Array.from({ length: beats }, (_, beat) => (
-              <div key={beat} className="flex shrink-0">
-                <div
-                  className="flex items-center px-0.5 text-role-subheadline text-gray-400 border-r border-blue-border/40"
-                  style={{
-                    width: subDivisions * CELL,
-                    height: CELL,
-                    borderLeft: '1px solid #888',
-                  }}
-                >
-                  {beat + 1}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex-1 overflow-auto">
-            <PatternCanvas
-              patterns={patterns}
-              numSteps={numSteps}
-              subDivisions={subDivisions}
-              onToggle={handleToggleStep}
-              onSet={handleSetStep}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="h-1 cursor-row-resize bg-blue-border/40 hover:bg-blue-accent/40 shrink-0"
-        onMouseDown={handleSplitYDown}
-      />
-
-      <div className="flex-1 flex flex-col min-h-[50px] overflow-hidden">
-        {selectedPattern ? (
-          <>
-            <div className="flex items-center gap-2 px-3 py-1 border-b border-blue-border bg-blue-bg/30 shrink-0">
-              <span className="text-role-body text-blue-muted font-medium">
-                Pattern Score
-              </span>
-              <input
-                type="text"
-                className="w-28 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-                value={selectedPattern.patternName}
-                onChange={(e) =>
-                  handlePatternNameChange(selectedIdx, e.target.value)
-                }
-              />
-
-            </div>
-            <textarea
-              className="flex-1 w-full resize-none bg-app-bg px-3 py-1.5 font-mono text-role-body text-app-text focus:outline-none"
-              value={selectedPattern.patternScore}
-              onChange={(e) =>
-                handlePatternScoreChange(selectedIdx, e.target.value)
-              }
-              placeholder="i1 <START> <DUR> ..."
-              spellCheck={false}
-            />
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-role-body text-blue-muted">
-            {patterns.length === 0
-              ? 'No patterns — click + to add one'
-              : 'Select a pattern layer to edit its score'}
-          </div>
-        )}
       </div>
       {testOutput !== null && (
         <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />

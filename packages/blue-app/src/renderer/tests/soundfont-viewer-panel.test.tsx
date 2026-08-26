@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SoundFontViewerPanel from '../components/workbench/panels/tools/SoundFontViewerPanel';
 import { emitPendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
+import { DEFAULT_SPLIT_SIZE_PX } from '../../shared/window-layout-settings';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -211,5 +212,31 @@ describe('SoundFont Viewer panel', () => {
     });
 
     expect(container!.querySelector('[data-soundfont-splitter]')?.getAttribute('aria-orientation')).toBe('vertical');
+  });
+
+  it('uses the shared 200px default for the table splitter', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 700,
+      height: 500,
+      top: 0,
+      right: 700,
+      bottom: 500,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root!.render(<SoundFontViewerPanel />);
+      });
+
+      expect(
+        container!.querySelector('[data-soundfont-splitter]')?.getAttribute('aria-valuenow'),
+      ).toBe(String(DEFAULT_SPLIT_SIZE_PX));
+    } finally {
+      rectSpy.mockRestore();
+    }
   });
 });

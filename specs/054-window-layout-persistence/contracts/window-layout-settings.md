@@ -75,7 +75,11 @@ type WindowLayoutUpdateRequest =
 
 Most side and bottom controlled panes default to 200px. `bsb.interface.properties` is a documented Java Blue parity exception: it controls the second/right property pane and defaults to 250px.
 
-`workbench.aux.left`, `workbench.aux.right`, and `workbench.aux.bottom` are reserved split identities for auxiliary edge sizes, but their current runtime persistence is embedded in `workbench.serializedLayout`. `udo.workspace.editor` is reserved for a future nested adjustable UDO editor split; the current UDO workspace persists `udo.workspace.outer`.
+Auxiliary left/right/bottom edge sizes remain embedded in `workbench.serializedLayout`, and `udo.workspace.editor` is not currently persisted as a top-level split. The current `SplitId` contract contains only active split controls, including `soundfont-viewer.tables`.
+
+### Release Compatibility
+
+This layout schema is pre-release and has not shipped in Blue 3.0.0. The removed pre-release identities `orchestra.library` and `effects-library.main`, along with the reserved auxiliary/UDO identities above, are intentionally not accepted by the current parser. No migration is required in this pre-release change. Once 3.0.0 is released, a follow-up versioned migration must handle settings written by pre-3.0 builds before compatibility is promised for later layout-schema changes. After 3.0.0, persisted split identities must not be removed or renamed without migration.
 
 ### Reset Windows Semantics
 

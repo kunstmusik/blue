@@ -18,6 +18,8 @@ interface SplitPaneProps {
   className?: string;
   firstClassName?: string;
   secondClassName?: string;
+  separatorClassName?: string;
+  separatorProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   /**
    * Legacy ratio-based initial split (0..1). Ignored when `splitId` is set.
    */
@@ -64,6 +66,8 @@ export default function SplitPane({
   className,
   firstClassName,
   secondClassName,
+  separatorClassName,
+  separatorProps,
   initialSplit = 0.5,
   minFirstSize = 240,
   minSecondSize = 240,
@@ -135,6 +139,14 @@ export default function SplitPane({
   const availableSize = Math.max(containerSize - HANDLE_SIZE, 0);
   const maxFirstSize = Math.max(0, availableSize - minSecondSize);
   const minFirstBound = Math.max(0, Math.min(minFirstSize, maxFirstSize));
+  const controlledMin =
+    controlledPane === 'first'
+      ? minFirstBound
+      : Math.max(0, availableSize - maxFirstSize);
+  const controlledMax =
+    controlledPane === 'first'
+      ? maxFirstSize
+      : Math.max(0, availableSize - minFirstSize);
 
   // Choose the rendered first-pane size:
   //  - When splitId is set, derive from the persisted controlled-pane size and
@@ -142,11 +154,11 @@ export default function SplitPane({
   //  - Otherwise fall back to the legacy ratio behavior.
   let firstSize: number;
   if (splitId) {
-    const isControlledFirst = controlledPane === 'first';
-    const controlledMax = isControlledFirst ? maxFirstSize : Math.max(0, availableSize - minFirstSize);
-    const controlledMin = isControlledFirst ? minFirstBound : Math.max(0, availableSize - maxFirstSize);
     const clampedControlled = clampSplitSizePx(controlledSizePx, controlledMin, controlledMax);
-    firstSize = isControlledFirst ? clampedControlled : Math.max(0, availableSize - clampedControlled);
+    firstSize =
+      controlledPane === 'first'
+        ? clampedControlled
+        : Math.max(0, availableSize - clampedControlled);
     if (availableSize <= 0) firstSize = 0;
   } else {
     firstSize =
@@ -253,8 +265,6 @@ export default function SplitPane({
       const clampedFirstSize = clampSplitSizePx(nextFirstSize, minFirstBound, maxFirstSize);
       const nextControlled =
         controlledPane === 'first' ? clampedFirstSize : Math.max(0, availableSize - clampedFirstSize);
-      const controlledMax = controlledPane === 'first' ? maxFirstSize : Math.max(0, availableSize - minFirstSize);
-      const controlledMin = controlledPane === 'first' ? minFirstBound : Math.max(0, availableSize - maxFirstSize);
       const clampedControlledSize = clampSplitSizePx(nextControlled, controlledMin, controlledMax);
       setControlledSizePx(clampedControlledSize);
       persistControlledSize(clampedControlledSize);
@@ -291,6 +301,11 @@ export default function SplitPane({
     .filter(Boolean)
     .join(' ');
 
+  const accessibleControlledSize =
+    controlledPane === 'first' ? firstSize : Math.max(0, availableSize - firstSize);
+  const accessibleControlledMin = Math.min(controlledMin, controlledMax);
+  const accessibleControlledMax = Math.max(controlledMin, controlledMax);
+
   const paneClasses = 'min-h-0 min-w-0 overflow-hidden';
   const firstPaneStyle =
     orientation === 'horizontal'
@@ -298,7 +313,7 @@ export default function SplitPane({
       : { height: `${firstSize}px` };
 
   const handleClasses = [
-    'group flex flex-none items-center justify-center border-blue-border bg-app-surface-strong transition-colors hover:bg-app-hover',
+    'group flex flex-none items-center justify-center border-blue-border bg-app-surface-strong transition-colors hover:bg-app-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-app-accent',
     orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize',
   ]
     .filter(Boolean)
@@ -325,11 +340,15 @@ export default function SplitPane({
         {first}
       </div>
       <button
+        {...separatorProps}
         type="button"
         role="separator"
         aria-label={ariaLabel}
         aria-orientation={orientation === 'horizontal' ? 'vertical' : 'horizontal'}
-        className={handleClasses}
+        aria-valuemin={Math.round(accessibleControlledMin)}
+        aria-valuemax={Math.round(accessibleControlledMax)}
+        aria-valuenow={Math.round(accessibleControlledSize)}
+        className={[handleClasses, separatorClassName].filter(Boolean).join(' ')}
         onKeyDown={handleKeyDown}
         onPointerDown={startDrag}
       >

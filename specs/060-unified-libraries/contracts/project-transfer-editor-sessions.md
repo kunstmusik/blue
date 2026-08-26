@@ -371,7 +371,7 @@ Stable identity remains unchanged. All panels/breadcrumbs update from a change e
 
 `SoundObjectLibraryTopComponent` and `LibrariesTopComponent` are separate valid panel identities and may coexist. Stored layouts preserve both IDs across Dockview panels, auxiliary lists/active IDs, minimized/slide-out state, floating origins, and closed origins. The former migration that rewrote SoundObject Library to Libraries is retired; legacy Java-parity layout IDs now resolve to the restored project panel.
 
-Legacy `open-effects-library` commands route to the new panel without target mode. Legacy split keys `effects-library.main` and `orchestra.library` remain parseable for settings downgrade/migration safety but no longer create separate permanent library UI. Dynamic editor restoration uses stable parameters and safe missing states.
+Legacy `open-effects-library` commands route to the new panel without target mode. The pre-release split keys `effects-library.main` and `orchestra.library` were removed before Blue 3.0.0 and are intentionally not accepted by the current settings parser. No migration is required in this pre-release change; once 3.0.0 is released, a follow-up versioned migration must handle settings written by pre-3.0 builds. Dynamic editor restoration uses stable parameters and safe missing states.
 
 ## No-Project Workbench Contract
 

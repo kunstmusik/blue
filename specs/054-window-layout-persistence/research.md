@@ -12,6 +12,17 @@
   - `blue/ui/core/mixer/EffectsLibraryDialog.java`, `blue/ui/core/udo/EmbeddedOpcodeListPanel.java`, and several Blue Share panes also use 200px split defaults.
 - One known exception is `BSBInterfaceEditor.java`, which sets the edit/property split to `width - 250` when edit controls are visible. The Electron feature should default to 200px unless planning documents a specific parity or minimum-size exception.
 
+## Pre-3.0 Split Identity Compatibility
+
+The app-wide split settings schema is still pre-release and has not shipped in
+Blue 3.0.0. The active `SplitId` set may therefore change before that release;
+the removed pre-release identities are intentionally not retained only for
+backward compatibility. No migration is required in this pre-release change.
+Once 3.0.0 is released, add a versioned migration for settings written by
+pre-3.0 builds and define handling for any removed or renamed split identity.
+After 3.0.0, persisted split identities are stable and require migration before
+removal or rename.
+
 ## Current Electron Findings
 
 - App-wide program settings already exist in `packages/blue-app/src/shared/program-settings.ts` and are saved by `packages/blue-app/src/main/program-settings-store.ts` to `program-settings.json` under Electron user data.
