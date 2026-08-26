@@ -23,6 +23,8 @@ interface PianoRollCanvasProps {
   pchGenerationMethod: number;
   listener: NoteCanvasMouseListener;
   canvasRef: React.RefObject<HTMLDivElement | null>;
+  /** Viewport width floor so grid layers reach the right edge on short scores. */
+  minWidth?: number;
 }
 
 export default function PianoRollCanvas({
@@ -39,6 +41,7 @@ export default function PianoRollCanvas({
   pchGenerationMethod,
   listener,
   canvasRef,
+  minWidth,
 }: PianoRollCanvasProps): React.ReactElement {
   const isMidi = pchGenerationMethod === GENERATE_MIDI;
   const numDegrees = isMidi ? 12 : (scale.ratios.length || 12);
@@ -48,7 +51,9 @@ export default function PianoRollCanvas({
   const displayNotes = previewNotes ?? notes;
 
   const maxStart = displayNotes.reduce((max, n) => Math.max(max, n.start + n.duration), durationBeats);
-  const canvasWidth = Math.max(maxStart * pixelSecond + 200, 800);
+  // Grid layers keep drawing to the viewport edge even when the scored
+  // duration is shorter than the visible pane.
+  const canvasWidth = Math.max(maxStart * pixelSecond + 200, minWidth ?? 0, 800);
 
   const pitchToY = useCallback((octave: number, scaleDegree: number): number => {
     if (isMidi) {
@@ -169,7 +174,7 @@ export default function PianoRollCanvas({
             top: line.y,
             width: canvasWidth,
             height: 1,
-            backgroundColor: line.isOctave ? 'rgba(100,150,255,0.2)' : 'rgba(255,255,255,0.05)',
+            backgroundColor: line.isOctave ? 'rgba(160,198,255,0.55)' : 'rgba(255,255,255,0.12)',
           }}
         />
       ))}
@@ -181,7 +186,7 @@ export default function PianoRollCanvas({
             left: line.x,
             width: 1,
             height: canvasHeight,
-            backgroundColor: line.isBoundary ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+            backgroundColor: line.isBoundary ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.12)',
           }}
         />
       ))}

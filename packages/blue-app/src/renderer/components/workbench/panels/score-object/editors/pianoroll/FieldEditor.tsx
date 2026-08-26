@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { PopoutTooltipPortal } from '../../../../../../hooks/host-portals';
 import type { NoteSnapshot, ScaleSnapshot, FieldDefSnapshot } from './types';
 
 interface FieldEditorProps {
@@ -10,6 +12,8 @@ interface FieldEditorProps {
   pixelSecond: number;
   noteHeight: number;
   width: number;
+  snapEnabled: boolean;
+  snapBeats: number;
   onSelectionChange: (indices: Set<number>) => void;
   onCommitFieldEdit: (noteIndices: number[], fieldIndex: number, values: number[]) => void;
 }
@@ -25,6 +29,18 @@ const VERTICAL_PADDING = 5;
 const HORIZONTAL_PADDING = 3;
 const PIN_SIZE = 6;
 const PIN_RADIUS = PIN_SIZE / 2;
+const EDGE_SNAP_PX = 1.5;
+
+// Value-lane grid mirrors REAPER's velocity lane: four major divisions
+// (quarter marks), each refined by power-of-two subdivision until cells get
+// too thin to stay legible.
+const GRID_QUARTERS = 4;
+const GRID_MIN_CELL_PX = 12;
+const GRID_MAX_DOUBLINGS = 6;
+
+function formatFieldValue(value: number, fieldType: FieldDefSnapshot['fieldType']): string {
+  return fieldType === 'DISCRETE' ? String(Math.round(value)) : Number(value).toPrecision(3);
+}
 
 export default function FieldEditor({
   notes,
@@ -35,6 +51,8 @@ export default function FieldEditor({
   pixelSecond,
   noteHeight,
   width,
+  snapEnabled,
+  snapBeats,
   onSelectionChange,
   onCommitFieldEdit,
 }: FieldEditorProps): React.ReactElement {
@@ -51,6 +69,7 @@ export default function FieldEditor({
   } | null>(null);
   const [editorHeight, setEditorHeight] = useState(100);
   const [draftValues, setDraftValues] = useState<Map<number, number> | null>(null);
+  const [grabbedNoteIndex, setGrabbedNoteIndex] = useState<number | null>(null);
 
   const yScale = useMemo(() => {
     if (!fieldDef) return { min: 0, max: 1, range: 1 };
@@ -70,8 +89,14 @@ export default function FieldEditor({
 
   const yToValue = useCallback((y: number, height: number): number => {
     if (yScale.range <= 0) return yScale.min;
+    const bottomPad = height - VERTICAL_PADDING;
+    // Pointer positions land on pixel boundaries, so without a snap zone the
+    // extremes are only reachable at exactly one sub-pixel row (e.g. AMP
+    // topping out at 0.997 instead of 1).
+    if (y <= VERTICAL_PADDING + EDGE_SNAP_PX) return yScale.max;
+    if (y >= bottomPad - EDGE_SNAP_PX) return yScale.min;
     const usableHeight = Math.max(1, height - (VERTICAL_PADDING * 2));
-    const clampedY = Math.max(VERTICAL_PADDING, Math.min(height - VERTICAL_PADDING, y));
+    const clampedY = Math.max(VERTICAL_PADDING, Math.min(bottomPad, y));
     const ratio = 1 - ((clampedY - VERTICAL_PADDING) / usableHeight);
     return yScale.min + (ratio * yScale.range);
   }, [yScale]);
@@ -95,6 +120,33 @@ export default function FieldEditor({
       };
     });
   }, [notes, selectedIndices, pixelSecond, fieldDef, fieldIndex, draftValues]);
+
+  const laneGridLines = useMemo(() => {
+    if (!fieldDef || fieldIndex < 0 || yScale.range <= 0) return [];
+    const usable = Math.max(1, editorHeight - (VERTICAL_PADDING * 2));
+    let cells = GRID_QUARTERS;
+    for (let doubling = 0; doubling < GRID_MAX_DOUBLINGS; doubling += 1) {
+      if (usable / (cells * 2) < GRID_MIN_CELL_PX) break;
+      cells *= 2;
+    }
+    const quarterStep = cells / GRID_QUARTERS;
+    return Array.from({ length: cells + 1 }, (_, row) => ({
+      y: valueToY(yScale.min + ((row / cells) * yScale.range), editorHeight),
+      major: row % quarterStep === 0,
+    }));
+  }, [fieldDef, fieldIndex, yScale, editorHeight, valueToY]);
+
+  const laneSnapLines = useMemo(() => {
+    if (!snapEnabled || snapBeats <= 0) return [];
+    const lines: Array<{ x: number; isBar: boolean }> = [];
+    const maxBeat = width / pixelSecond;
+    for (let b = 0; b <= maxBeat; b += snapBeats) {
+      const isBeat = Math.abs(b - Math.round(b)) < 0.001;
+      const isBar = isBeat && Math.round(b) % 4 === 0;
+      lines.push({ x: b * pixelSecond + HORIZONTAL_PADDING, isBar });
+    }
+    return lines;
+  }, [snapEnabled, snapBeats, pixelSecond, width]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -158,15 +210,16 @@ export default function FieldEditor({
       originalValues,
       currentValues: originalValues,
     };
+    setGrabbedNoteIndex(pin.noteIndex);
     e.preventDefault();
   }, [fieldDef, fieldIndex, editorHeight, pins, selectedIndices, onSelectionChange, notes, valueToY, yToValue]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const applyPointerPosition = useCallback((clientY: number) => {
     const drag = dragRef.current;
     if (!drag) return;
     const rect = rootRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const mouseValue = yToValue(e.clientY - rect.top, editorHeight);
+    const mouseValue = yToValue(clientY - rect.top, editorHeight);
     const valueDelta = mouseValue - drag.startValue;
     const draft = new Map<number, number>();
     const currentValues = drag.noteIndices.map((noteIndex, i) => {
@@ -176,76 +229,119 @@ export default function FieldEditor({
     });
     drag.currentValues = currentValues;
     setDraftValues(draft);
-    e.preventDefault();
   }, [editorHeight, normalizeValue, yToValue]);
 
-  const handleMouseUp = useCallback(() => {
+  const endDrag = useCallback(() => {
     const drag = dragRef.current;
     if (!drag) return;
     onCommitFieldEdit(drag.noteIndices, drag.fieldIndex, drag.currentValues);
     dragRef.current = null;
     setDraftValues(null);
+    setGrabbedNoteIndex(null);
   }, [onCommitFieldEdit]);
+
+  // Track moves and release on the window so a pin drag keeps working when
+  // the pointer leaves the field lane (or the panel's scroll container)
+  // before the button is released.
+  useEffect(() => {
+    if (grabbedNoteIndex === null) return;
+    const handleMouseMove = (e: MouseEvent) => applyPointerPosition(e.clientY);
+    const handleMouseUp = () => endDrag();
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [grabbedNoteIndex, applyPointerPosition, endDrag]);
 
   if (!fieldDef) {
     return (
       <div
-        className="h-full bg-app-bg"
+        className="h-full bg-app-canvas"
         style={{ width }}
       />
     );
   }
 
   const bottomY = editorHeight - VERTICAL_PADDING;
-  const yMin = valueToY(yScale.min, editorHeight);
-  const yMax = valueToY(yScale.max, editorHeight);
 
   return (
-    <div
-      ref={rootRef}
-      className="relative h-full overflow-hidden bg-app-bg"
-      style={{ width: width + HORIZONTAL_PADDING }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {pins.map((pin) => {
-        const pinY = valueToY(pin.value, editorHeight);
-        return (
-          <React.Fragment key={`field-pin-${pin.noteIndex}`}>
-            <div
-              className="absolute"
-              style={{
-                left: pin.x,
-                top: pinY,
-                width: 1,
-                height: Math.max(0, bottomY - pinY),
-                backgroundColor: pin.selected ? 'rgba(200,200,200,0.3)' : 'rgba(80,80,80,0.3)',
-              }}
-            />
-            <div
-              className="absolute rounded-full"
-              style={{
-                left: pin.x - PIN_RADIUS,
-                top: pinY - PIN_RADIUS,
-                width: PIN_SIZE,
-                height: PIN_SIZE,
-                backgroundColor: pin.selected ? '#fff' : '#888',
-                border: `1px solid ${pin.selected ? '#ccc' : '#555'}`,
-                cursor: 'ns-resize',
-              }}
-            />
-          </React.Fragment>
-        );
-      })}
+    <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>
+      <div
+        ref={rootRef}
+        className="relative h-full overflow-hidden"
+        onMouseDown={handleMouseDown}
+        onMouseMove={(e) => applyPointerPosition(e.clientY)}
+        onMouseUp={endDrag}
+      >
+        {laneSnapLines.map((line, i) => (
+          <div
+            key={`lane-snap-${i}`}
+            className="absolute top-0 bottom-0"
+            style={{
+              left: line.x,
+              width: 1,
+              backgroundColor: line.isBar ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
+            }}
+          />
+        ))}
 
-      <div className="absolute left-0 right-0 border-t border-dashed border-white/10" style={{ top: yMax }} />
-      <div className="absolute left-0 right-0 border-t border-dashed border-white/10" style={{ top: yMin }} />
+        {laneGridLines.map((line, i) => (
+          <div
+            key={`lane-grid-${i}`}
+            className="absolute left-0 right-0"
+            style={{
+              top: line.y,
+              height: 1,
+              backgroundColor: line.major ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
+            }}
+          />
+        ))}
 
-      <div className="absolute bottom-1 right-2 text-role-subheadline text-blue-muted/40 select-none">
-        {fieldDef.fieldName}: {fieldDef.minValue}..{fieldDef.maxValue}
+        {pins.map((pin) => {
+          const pinY = valueToY(pin.value, editorHeight);
+          return (
+            // Java Pin paints a gray ring over a dark fill (white when
+            // selected); the ring is the visible affordance on the dark lane.
+            <Tooltip.Root
+              key={`field-pin-${pin.noteIndex}`}
+              open={grabbedNoteIndex === pin.noteIndex || undefined}
+            >
+              <div
+                className="absolute"
+                style={{
+                  left: pin.x,
+                  top: pinY,
+                  width: 1,
+                  height: Math.max(0, bottomY - pinY),
+                  backgroundColor: pin.selected ? 'rgba(200,200,200,0.45)' : 'rgba(136,136,136,0.45)',
+                }}
+              />
+              <Tooltip.Trigger asChild>
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    left: pin.x - PIN_RADIUS,
+                    top: pinY - PIN_RADIUS,
+                    width: PIN_SIZE,
+                    height: PIN_SIZE,
+                    backgroundColor: pin.selected ? 'var(--color-app-text-strong)' : 'var(--color-app-canvas)',
+                    border: `1px solid ${pin.selected ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)'}`,
+                    cursor: 'ns-resize',
+                  }}
+                />
+              </Tooltip.Trigger>
+              <PopoutTooltipPortal>
+                <Tooltip.Content className="bsb-tooltip-content" side="top" sideOffset={4} align="center">
+                  {fieldDef.fieldName}: {formatFieldValue(pin.value, fieldDef.fieldType)}
+                  <Tooltip.Arrow className="bsb-tooltip-arrow" width={10} height={5} />
+                </Tooltip.Content>
+              </PopoutTooltipPortal>
+            </Tooltip.Root>
+          );
+        })}
       </div>
-    </div>
+    </Tooltip.Provider>
   );
 }

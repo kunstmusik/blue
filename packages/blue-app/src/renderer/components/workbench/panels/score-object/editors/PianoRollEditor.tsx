@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { FieldDefSnapshot, NoteData, PianoRollPayload } from './pianoroll/types';
@@ -81,6 +81,25 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
   const canvasRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const centeredTargetRef = useRef<string | null>(null);
+  const laneViewportRef = useRef<HTMLDivElement>(null);
+  const [rollViewportWidth, setRollViewportWidth] = useState(0);
+  const [laneViewportWidth, setLaneViewportWidth] = useState(0);
+
+  // Measured in a layout effect so grid layers sized to the viewport are
+  // already wide enough on first paint.
+  useLayoutEffect(() => {
+    if (activeTab !== 'notes') return;
+    const update = () => {
+      setRollViewportWidth(scrollRef.current?.clientWidth ?? 0);
+      setLaneViewportWidth(laneViewportRef.current?.clientWidth ?? 0);
+    };
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(update);
+    if (scrollRef.current) observer.observe(scrollRef.current);
+    if (laneViewportRef.current) observer.observe(laneViewportRef.current);
+    return () => observer.disconnect();
+  }, [activeTab]);
 
   const clipboard = usePianoRollClipboardStore((s) => s.clipboard);
   const setClipboard = usePianoRollClipboardStore((s) => s.setClipboard);
@@ -466,6 +485,10 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
 
   const maxStart = notes.reduce((max, n) => Math.max(max, n.start + n.duration), durationBeats);
   const canvasWidth = Math.max(maxStart * pixelSecond + 200, 800);
+  // Grids keep drawing to the pane edge even when the score is shorter than
+  // the visible viewport.
+  const rollContentWidth = Math.max(canvasWidth, rollViewportWidth);
+  const laneContentWidth = Math.max(canvasWidth, laneViewportWidth);
   const handleCanvasScroll = useCallback(() => {
     setScrollLeft(scrollRef.current?.scrollLeft ?? 0);
     setScrollTop(scrollRef.current?.scrollTop ?? 0);
@@ -479,7 +502,7 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
       <ContextMenu.Trigger asChild>
         <div
           ref={rootRef}
-          className="flex flex-col h-full bg-blue-bg select-none"
+          className="flex flex-col h-full bg-blue-bg select-none focus:outline-none"
           tabIndex={0}
           onKeyDown={handleEditorKeyDown}
           onMouseDownCapture={(e) => focusEditorSurface(e.target)}
@@ -547,12 +570,12 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                     <div className="flex shrink-0 border-b border-blue-border/30 bg-app-surface-strong" style={{ height: rulerHeight }}>
                       <div className="shrink-0 border-r border-blue-border/25" style={{ width: PITCH_HEADER_WIDTH, height: rulerHeight }} />
                       <div className="relative min-w-0 flex-1 overflow-hidden" style={{ height: rulerHeight }}>
-                        <div
-                          className="absolute left-0 top-0"
-                          style={{ width: canvasWidth, transform: `translateX(${-scrollLeft}px)` }}
-                        >
-                          <TimeBar
-                            canvasWidth={canvasWidth}
+                      <div
+                        className="absolute left-0 top-0"
+                        style={{ width: rollContentWidth, transform: `translateX(${-scrollLeft}px)` }}
+                      >
+                        <TimeBar
+                          canvasWidth={rollContentWidth}
                             pixelSecond={pixelSecond}
                             primaryTimeDisplay={effectivePrimaryTimeDisplay}
                             secondaryTimeDisplay={effectiveSecondaryTimeDisplay}
@@ -588,6 +611,7 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                           pchGenerationMethod={pchGenerationMethod}
                           listener={listenerRef.current!}
                           canvasRef={canvasRef}
+                          minWidth={rollViewportWidth}
                         />
                       </div>
                     </div>
@@ -602,10 +626,10 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                         onSelectField={setSelectedFieldDef}
                       />
                     </div>
-                    <div className="relative h-full flex-1 overflow-hidden">
+                    <div className="relative h-full flex-1 overflow-hidden bg-app-canvas" ref={laneViewportRef}>
                       <div
                         className="absolute inset-y-0 left-0"
-                        style={{ width: canvasWidth, transform: `translateX(${-scrollLeft}px)` }}
+                        style={{ width: laneContentWidth, transform: `translateX(${-scrollLeft}px)` }}
                       >
                         <FieldEditor
                           notes={notes}
@@ -615,7 +639,9 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                           fieldIndex={selectedFieldIndex}
                           pixelSecond={pixelSecond}
                           noteHeight={noteHeight}
-                          width={canvasWidth}
+                          width={laneContentWidth}
+                          snapEnabled={snapEnabled}
+                          snapBeats={snapBeats}
                           onSelectionChange={setSelectedIndices}
                           onCommitFieldEdit={handleCommitFieldValues}
                         />
