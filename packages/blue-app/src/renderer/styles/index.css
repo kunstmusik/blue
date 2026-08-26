@@ -85,6 +85,22 @@
     font-size: var(--text-role-body);
     line-height: var(--text-role-body--line-height);
   }
+
+  /* Editor shells and panel roots carry tabindex so keyboard shortcuts keep
+     working after clicks; the UA outline that follows them around (rendered
+     with the OS accent color) is visual noise. Native form controls do not
+     set the attribute and keep their own styled focus indicators. */
+  [tabindex]:focus,
+  [tabindex]:focus-visible {
+    outline: none;
+  }
+
+  /* Splitter handles are buttons used as panel chrome; hover already signals
+     interactivity, and the system-accent ring reads as noise here too. */
+  button[role='separator']:focus,
+  button[role='separator']:focus-visible {
+    outline: none;
+  }
 }
 
 @layer components {
