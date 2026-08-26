@@ -5,6 +5,7 @@ import {
   BLUE_INSPECTOR_INPUT_CLASS,
   BLUE_INSPECTOR_TIME_BASE_SELECT_CLASS,
 } from '../shared/compactFieldStyles';
+import { AppSelect } from '../../../AppSelect';
 
 export type { TimeConversionContext };
 
@@ -61,16 +62,13 @@ export default function TimeUnitEditor({ valueBeats, timeBase, timeContext, dura
 
   return (
     <div className="flex flex-col gap-0.5">
-      <select
+      <AppSelect
         className={BLUE_INSPECTOR_TIME_BASE_SELECT_CLASS}
         value={activeBase}
         disabled={disabled}
-        onChange={(e) => handleBaseChange(e.target.value)}
-      >
-        {TIME_BASE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        onValueChange={handleBaseChange}
+        options={TIME_BASE_OPTIONS}
+      />
       <input
         ref={inputRef}
         type="text"

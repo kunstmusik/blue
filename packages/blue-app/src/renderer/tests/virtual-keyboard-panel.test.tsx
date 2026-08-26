@@ -13,6 +13,7 @@ import {
   _installVirtualKeyboardRouter,
 } from '../hooks/use-midi-input-service';
 import { MidiNoteRouter } from '../services/midi-note-router';
+import { chooseAppSelectOption } from './app-select-test-utils';
 
 declare global {
   interface Window {
@@ -234,9 +235,9 @@ describe('VirtualKeyboardPanel', () => {
 describe('VirtualKeyboardPanel MIDI routing control (Spec 067)', () => {
   it('defaults to Focused Target routing mode', () => {
     const { container, root } = renderPanel();
-    const select = container.querySelector('select') as HTMLSelectElement | null;
+    const select = container.querySelector('[role="combobox"]') as HTMLButtonElement | null;
     expect(select).toBeTruthy();
-    expect(select?.value).toBe('focus');
+    expect(select?.textContent).toContain('Focused Target');
     act(() => root.unmount());
     container.remove();
   });
@@ -259,13 +260,10 @@ describe('VirtualKeyboardPanel MIDI routing control (Spec 067)', () => {
     container.remove();
   });
 
-  it('switches to Direct Channel mode and shows the one-based channel selector', () => {
+  it('switches to Direct Channel mode and shows the one-based channel selector', async () => {
     const { container, root } = renderPanel();
-    const select = container.querySelector('select') as HTMLSelectElement;
-    act(() => {
-      select.value = 'channel';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const select = container.querySelector('[role="combobox"]') as HTMLButtonElement;
+    await chooseAppSelectOption(select, 'Direct Channel');
     const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
     expect(channelInput).toBeTruthy();
     expect(channelInput?.value).toBe('1');
@@ -296,15 +294,12 @@ describe('Virtual Keyboard Direct Channel compatibility (Spec 067 US3)', () => {
     });
   });
 
-  it('shows the one-based channel selector only in Direct Channel mode', () => {
+  it('shows the one-based channel selector only in Direct Channel mode', async () => {
     const { container, root } = renderPanel();
     // Focus mode (default): no channel input.
     expect(container.querySelector('input[type="number"][min="1"]')).toBeNull();
-    const select = container.querySelector('select') as HTMLSelectElement;
-    act(() => {
-      select.value = 'channel';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const select = container.querySelector('[role="combobox"]') as HTMLButtonElement;
+    await chooseAppSelectOption(select, 'Direct Channel');
     // Channel mode: channel input appears with one-based display.
     const channelInput = container.querySelector('input[type="number"][min="1"]') as HTMLInputElement;
     expect(channelInput).toBeTruthy();

@@ -9,6 +9,7 @@ import { createDefaultBlueX7Voice, decodeSingleVoice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../shared/project-editor';
 import BlueX7Editor from '../components/workbench/panels/orchestra/BlueX7Editor';
 import { BlueX7Editor as BlueX7EditorComponent } from '../components/instruments/blue-x7-editor';
+import { chooseAppSelectOption } from './app-select-test-utils';
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   default: ({ value, onChange }: { value: string; onChange?: (text: string) => void }) => (
@@ -150,13 +151,11 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     expect(onInstrumentPatch).toHaveBeenCalledWith({ enabled: false });
   });
 
-  it('dispatches Common parameter updates and operator enables', () => {
+  it('dispatches Common parameter updates and operator enables', async () => {
     renderEditor();
 
-    const algSelect = container?.querySelector('#bluex7-algorithm') as HTMLSelectElement;
-    act(() => {
-      setInputValue(algSelect, '5');
-    });
+    const algSelect = container?.querySelector('#bluex7-algorithm') as HTMLButtonElement;
+    await chooseAppSelectOption(algSelect, 'Algorithm 5');
     expect(lastPatch?.blueX7).toEqual({
       type: 'setCommonField',
       field: 'algorithm',
@@ -238,7 +237,7 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     });
   });
 
-  it('dispatches LFO parameter updates', () => {
+  it('dispatches LFO parameter updates', async () => {
     renderEditor();
 
     const speedInput = container?.querySelector('#bluex7-lfo-speed') as HTMLInputElement;
@@ -261,10 +260,8 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
       value: 20,
     });
 
-    const waveSelect = container?.querySelector('#bluex7-lfo-wave') as HTMLSelectElement;
-    act(() => {
-      setInputValue(waveSelect, '4'); // Sine
-    });
+    const waveSelect = container?.querySelector('#bluex7-lfo-wave') as HTMLButtonElement;
+    await chooseAppSelectOption(waveSelect, 'Sine');
     expect(lastPatch?.blueX7).toEqual({
       type: 'setLfoField',
       field: 'wave',

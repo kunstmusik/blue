@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { LibraryActionsMenu } from '../components/libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../components/libraries/LibraryImportDialog';
+import { chooseAppSelectOption } from './app-select-test-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -36,7 +37,7 @@ describe('library interchange UI', () => {
     container.remove();
   });
 
-  it('keeps import blocked until every ambiguous folder has an explicit destination', () => {
+  it('keeps import blocked until every ambiguous folder has an explicit destination', async () => {
     const onImport = vi.fn();
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -56,11 +57,8 @@ describe('library interchange UI', () => {
     }} onImport={onImport} onCancel={vi.fn()} />));
     const importButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Import')!;
     expect(importButton.disabled).toBe(true);
-    const select = container.querySelector('select')!;
-    act(() => {
-      select.value = 'folder-b';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const select = container.querySelector<HTMLElement>('[role="combobox"]')!;
+    await chooseAppSelectOption(select, 'UDO Library / B / Shared');
     expect(importButton.disabled).toBe(false);
     act(() => importButton.click());
     expect(onImport).toHaveBeenCalledWith({ 'hash:0': 'folder-b' });

@@ -34,6 +34,7 @@ import { useProjectStore } from '../../../../stores/project-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { AppSelect } from '../../../AppSelect';
 
 const BLUE_MIXER_EFFECT_DRAG_MIME = 'application/x-blue-mixer-effect';
 
@@ -594,10 +595,9 @@ function SendEditorDialog({
         <div className="mixer-send-editor__header">Edit Send</div>
         <label className="mixer-send-editor__field">
           <span>Send Channel</span>
-          <select
+          <AppSelect
             value={send.sendChannel}
-            onChange={(e) => {
-              const target = e.target.value;
+            onValueChange={(target) => {
               const issue = validateSendTarget(mixer, channelId, target);
               if (issue && issue.severity === 'error') return;
               onPatch({
@@ -608,11 +608,8 @@ function SendEditorDialog({
                 patch: { sendChannel: target },
               });
             }}
-          >
-            {sendTargets.map((ch) => (
-              <option key={ch.id} value={ch.name}>{ch.name}</option>
-            ))}
-          </select>
+            options={sendTargets.map((channel) => ({ value: channel.name, label: channel.name }))}
+          />
         </label>
         <label className="mixer-send-editor__field">
           <span>Amount</span>
@@ -779,8 +776,7 @@ export default function ChannelStrip({
   }, [channel.id, levelInput, onPatch]);
 
   const handleOutChannelChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const target = e.target.value;
+    (target: string) => {
       const issue = validateOutputTarget(mixer, channel.id, target);
       if (issue && issue.severity === 'error') return;
       onPatch({ type: 'updateChannel', channelId: channel.id, patch: { outChannel: target } });
@@ -992,15 +988,12 @@ export default function ChannelStrip({
       {!isMaster && (
         <div className="mixer-output-section">
           <div className="mixer-output-label">Output</div>
-          <select
+          <AppSelect
             className="mixer-output-select"
             value={channel.outChannel}
-            onChange={handleOutChannelChange}
-          >
-            {validOutputTargets.map((ch) => (
-              <option key={ch.id} value={ch.name}>{ch.name}</option>
-            ))}
-          </select>
+            onValueChange={handleOutChannelChange}
+            options={validOutputTargets.map((target) => ({ value: target.name, label: target.name }))}
+          />
           {outputRoutingWarning && (
             <div className="mixer-routing-warning" title={outputRoutingWarning.message}>
               ⚠

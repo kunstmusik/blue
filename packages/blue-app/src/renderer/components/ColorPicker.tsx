@@ -4,25 +4,19 @@ import {
   type RefObject,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { useDocumentMouseDownOutside } from '../hooks/use-document-mousedown-outside';
 import { useHostDocument } from '../hooks/use-host-document';
-import { isNodeLike } from '../utils/cross-realm-dom';
+import { HostSurfacePortal } from './host-surface/HostSurfacePortal';
+import { useHostSurface } from './host-surface/use-host-surface';
 import {
   COLOR_PICKER_MARGIN,
-  COLOR_PICKER_SIZE,
-  computeColorPickerPosition,
   hexToHsl,
   hslToHex,
   normalizeHex,
   type ColorPickerAnchorRect,
-  type ColorPickerPosition,
 } from './color-picker-utils';
-import { getFloatingViewport } from './floating-position-utils';
 
 export { computeColorPickerPosition } from './color-picker-utils';
 export type { ColorPickerAnchorRect } from './color-picker-utils';
@@ -105,14 +99,8 @@ export function ColorPickerPopover({
   onChange,
   onClose,
 }: ColorPickerPopoverProps): ReactElement | null {
-  const popoverRef = useRef<HTMLDivElement>(null);
   const normalizedValue = normalizeHex(value);
   const [draftHex, setDraftHex] = useState(normalizedValue);
-  const [position, setPosition] = useState<ColorPickerPosition>(() => ({
-    left: COLOR_PICKER_MARGIN,
-    top: COLOR_PICKER_MARGIN,
-    placement: 'bottom',
-  }));
   const hsl = hexToHsl(normalizedValue);
   // Floating workbench panels live in a popout document while sharing this
   // renderer context; the popover must render, listen, and dismiss within the
@@ -123,46 +111,31 @@ export function ColorPickerPopover({
   const popoverDocument: Document | null = anchorElement?.ownerDocument
     ?? contextHostDocument;
 
+  // Canvas callers pass `anchorHitTarget === null`: the whole timeline must
+  // NOT count as inside the picker, so a plain rect anchor positions the
+  // popover and every press outside it (canvas included) dismisses. Other
+  // callers anchor to their trigger element, whose presses toggle the
+  // picker instead of dismissing it.
+  const rectAnchor = anchor
+    ? {
+        type: 'rect' as const,
+        getRect: () => ({ left: anchor.left, top: anchor.top, right: anchor.right, bottom: anchor.bottom }),
+      }
+    : null;
+  const surfaceAnchor = open && anchorHitTarget !== null && anchorElement
+    ? { type: 'element' as const, element: anchorElement }
+    : open && rectAnchor
+      ? rectAnchor
+      : null;
+  const surface = useHostSurface(surfaceAnchor, {
+    kind: 'popover',
+    gap: COLOR_PICKER_MARGIN,
+    align: 'center',
+    hostDocument: popoverDocument,
+    onDismiss: () => onClose(),
+  });
+
   useEffect(() => setDraftHex(normalizedValue), [normalizedValue]);
-
-  useLayoutEffect(() => {
-    if (!open || !anchor || !popoverDocument) return;
-    const bounds = popoverRef.current?.getBoundingClientRect();
-    const viewport = anchorElement
-      ? getFloatingViewport(anchorElement)
-      : {
-          width: popoverDocument.defaultView?.innerWidth ?? COLOR_PICKER_SIZE.width,
-          height: popoverDocument.defaultView?.innerHeight ?? COLOR_PICKER_SIZE.height,
-        };
-    setPosition(computeColorPickerPosition(
-      anchor,
-      {
-        width: bounds && bounds.width > 0 ? bounds.width : COLOR_PICKER_SIZE.width,
-        height: bounds && bounds.height > 0 ? bounds.height : COLOR_PICKER_SIZE.height,
-      },
-      viewport,
-    ));
-  }, [anchor, anchorElement, open, popoverDocument]);
-
-  // Containment must not use `instanceof Node`: portal children are created by
-  // the anchor's own document, whose realm differs from this module's in
-  // floating workbench popouts, so cross-realm nodes fail that check and any
-  // mousedown inside the popover would be misread as an outside dismissal.
-  const hitTarget = anchorHitTarget !== undefined ? anchorHitTarget : anchorElement;
-  const isInside = useCallback((target: EventTarget | null) => (
-    isNodeLike(target)
-      && (popoverRef.current?.contains(target) === true || hitTarget?.contains(target) === true)
-  ), [hitTarget]);
-  useDocumentMouseDownOutside({ enabled: open, isInside, onMouseDownOutside: onClose, targetDocument: popoverDocument });
-
-  useEffect(() => {
-    if (!open || !popoverDocument) return;
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
-    };
-    popoverDocument.addEventListener('keydown', handleKeyDown);
-    return () => popoverDocument.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, open, popoverDocument]);
 
   if (!open || !anchor || !popoverDocument) return null;
 
@@ -170,22 +143,12 @@ export function ColorPickerPopover({
     onChange(hslToHex(next.h ?? hsl.h, next.s ?? hsl.s, next.l ?? hsl.l));
   };
 
-  return createPortal(
-    <div
-      ref={popoverRef}
+  return (
+    <HostSurfacePortal
+      session={surface}
       role="dialog"
-      aria-label="Color picker"
-      data-placement={position.placement}
-      // React portals bubble synthetic events along the React tree; without
-      // these guards, presses inside the picker reach ancestor handlers such
-      // as the score canvas surface selection/double-click handlers and act
-      // on objects visually behind the popover.
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-      className="fixed z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-body text-app-text shadow-xl"
-      style={{ left: position.left, top: position.top }}
+      ariaLabel="Color picker"
+      className="z-[10000] w-60 rounded-md border border-app-border bg-app-menu p-3 text-role-body text-app-text shadow-xl"
     >
       <div className="mb-3 h-9 rounded border border-app-border" style={{ backgroundColor: normalizedValue }} />
       <PresetPalette onChange={onChange} />
@@ -208,8 +171,7 @@ export function ColorPickerPopover({
           onBlur={() => setDraftHex(normalizedValue)}
         />
       </label>
-    </div>,
-    popoverDocument.body,
+    </HostSurfacePortal>
   );
 }
 

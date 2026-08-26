@@ -18,6 +18,7 @@ import {
 } from '../../shared/line-editor/EditableLineCanvas';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { AppSelect } from '../../../../AppSelect';
 
 type SoundTabId = 'interface' | 'automation' | 'code' | 'udo' | 'comments';
 
@@ -396,22 +397,15 @@ function SoundAutomationPanel({
       </div>
       <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-role-body text-app-text">
         <span className="text-app-text-soft">Automations</span>
-        <select
+        <AppSelect
           className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
           value={selectedParamId ?? ''}
-          onChange={(event) => setSelectedParamId(event.target.value)}
+          onValueChange={setSelectedParamId}
           disabled={lines.length === 0}
-        >
-          {lines.length === 0 ? (
-            <option value="">No automations enabled</option>
-          ) : (
-            lines.map((line) => (
-              <option key={line.parameterId} value={line.parameterId}>
-                {line.displayName}
-              </option>
-            ))
-          )}
-        </select>
+          options={lines.length === 0
+            ? [{ value: '', label: 'No automations enabled' }]
+            : lines.map((line) => ({ value: line.parameterId, label: line.displayName }))}
+        />
         {selectedParameter && (
           <label className="flex items-center gap-1 text-app-text-soft" title="Exact Java decimal resolution">
             <span>Resolution</span>

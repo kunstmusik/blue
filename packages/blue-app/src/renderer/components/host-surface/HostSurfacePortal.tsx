@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { portalEventIsolationProps } from '../../hooks/host-portals';
 import type { HostSurfaceSession } from './use-host-surface';
@@ -10,9 +10,13 @@ interface HostSurfacePortalProps {
   /** Accessibility role; `menu`/`tooltip` values also exempt the surface's
    * targets in ancestor capture handlers via `isEventInsidePortalPopup`. */
   role?: string;
+  /** Accessibility label for the surface root. */
+  ariaLabel?: string;
   /** false for informational surfaces (tooltips, readouts) that must never
    * take pointer input (spec Story 2.4). Default true. */
   interactive?: boolean;
+  /** Key handling on the surface root — e.g. nested-surface Escape rules. */
+  onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
   children: ReactNode;
 }
 
@@ -27,7 +31,9 @@ export function HostSurfacePortal({
   className,
   style,
   role,
+  ariaLabel,
   interactive = true,
+  onKeyDown,
   children,
 }: HostSurfacePortalProps): React.ReactElement | null {
   const container = session.hostDocument?.body ?? null;
@@ -48,10 +54,12 @@ export function HostSurfacePortal({
     <div
       ref={session.setSurfaceElement}
       role={role}
+      aria-label={ariaLabel}
       data-host-surface="true"
       data-placement={placement?.placement}
       className={className}
       style={{ ...positioned, ...style }}
+      onKeyDown={onKeyDown}
       {...portalEventIsolationProps}
     >
       {children}

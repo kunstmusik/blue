@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import * as Select from '@radix-ui/react-select';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { usePortalContainer } from './use-host-document';
 
@@ -49,6 +50,11 @@ export function PopoutContextMenuPortal({ children }: { children?: ReactNode }) 
 export function PopoutDropdownMenuPortal({ children }: { children?: ReactNode }) {
   const container = usePortalContainer();
   return <DropdownMenu.Portal container={container}>{children}</DropdownMenu.Portal>;
+}
+
+export function PopoutSelectPortal({ children }: { children?: ReactNode }) {
+  const container = usePortalContainer();
+  return <Select.Portal container={container}>{children}</Select.Portal>;
 }
 
 export function PopoutTooltipPortal({ children }: { children?: ReactNode }) {

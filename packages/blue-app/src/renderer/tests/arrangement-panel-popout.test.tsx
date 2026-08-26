@@ -93,7 +93,7 @@ describe('ArrangementPanel popout dismissal', () => {
     act(() => {
       addButton.dispatchEvent(new PopoutMouseEvent('click', { bubbles: true, cancelable: true }));
     });
-    const openMenu = () => host.querySelector<HTMLElement>('div.absolute.top-full');
+    const openMenu = () => popoutDoc.body.querySelector<HTMLElement>('[data-host-surface]');
     expect(openMenu()).toBeTruthy();
 
     await act(async () => {

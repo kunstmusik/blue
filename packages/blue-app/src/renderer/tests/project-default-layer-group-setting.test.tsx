@@ -5,13 +5,14 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ProjectDefaultsSettings from '../components/settings/ProjectDefaultsSettings';
 import { createDefaultProjectDefaultsSettings } from '../../shared/program-settings';
+import { chooseAppSelectOption, getAppSelectOptionLabels } from './app-select-test-utils';
 
 describe('Project Defaults default layer group selector', () => {
   afterEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('renders Track as the default and emits SoundObject changes', () => {
+  it('renders Track as the default and emits SoundObject changes', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -22,17 +23,14 @@ describe('Project Defaults default layer group selector', () => {
       root.render(<ProjectDefaultsSettings settings={settings} onChange={onChange} />);
     });
 
-    const selector = container.querySelector('select') as HTMLSelectElement | null;
-    expect(selector?.value).toBe('TRACK');
-    expect(Array.from(selector?.options ?? [], (option) => option.textContent)).toEqual([
+    const selector = container.querySelector('[role="combobox"]') as HTMLButtonElement | null;
+    expect(selector?.textContent).toContain('Track Layer');
+    expect(await getAppSelectOptionLabels(selector!)).toEqual([
       'Track Layer',
       'SoundObject Layer',
     ]);
 
-    act(() => {
-      selector!.value = 'SOUND_OBJECT';
-      selector!.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await chooseAppSelectOption(selector!, 'SoundObject Layer');
     expect(onChange).toHaveBeenCalledWith({
       ...settings,
       defaultLayerGroupType: 'SOUND_OBJECT',

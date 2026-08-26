@@ -5,6 +5,7 @@ import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import type { CodeRepositoryNode } from '@blue/data';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import { createBasicTextEditorMenuItems } from '../editors/csound-editor-menu';
+import { AppSelect } from '../../../AppSelect';
 
 const PRIMARY_BUTTON_CLASS =
   'rounded border border-app-border/40 bg-app-accent/20 px-4 py-1.5 text-role-body font-medium text-app-text hover:bg-app-accent/30 active:bg-app-accent/40 transition-colors disabled:opacity-40';
@@ -176,19 +177,14 @@ export default function AddToCodeRepositoryDialog({
             <label htmlFor="code-repository-destination" className="mb-1 block text-role-body text-app-text-muted">
               Destination Group
             </label>
-            <select
+            <AppSelect
               id="code-repository-destination"
               name="codeRepositoryDestination"
               className="mb-3 rounded border border-app-border/30 bg-app-field px-2 py-1 text-role-body text-app-text outline-none focus:border-app-border/60"
               value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={setParentId}
+              options={groups.map((group) => ({ value: group.id, label: group.label }))}
+            />
 
             <div className="mb-1 text-role-body text-app-text-muted">ORC Code</div>
             <div className="min-h-0 flex-1">

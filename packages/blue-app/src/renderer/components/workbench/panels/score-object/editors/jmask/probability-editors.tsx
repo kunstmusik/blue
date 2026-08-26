@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
+import { AppSelect } from '../../../../../AppSelect';
 
 type OnChange = (gen: GeneratorSnapshot) => void;
 
@@ -12,13 +13,12 @@ function SelectInput({ label, value, options, onChange }: {
   return (
     <div className="flex items-center gap-2">
       <label className="shrink-0 text-role-body text-gray-300">{label}</label>
-      <select
+      <AppSelect
         className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
         value={value}
-        onChange={e => onChange(parseInt(e.target.value, 10))}
-      >
-        {options.map((opt, i) => <option key={i} value={i}>{opt}</option>)}
-      </select>
+        onValueChange={value => onChange(parseInt(value, 10))}
+        options={options.map((option, optionValue) => ({ value: optionValue, label: option }))}
+      />
     </div>
   );
 }
@@ -33,14 +33,15 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
-          onChange={e => onTableToggle(e.target.value === '1')}
-        >
-          <option value={0}>{label} (Constant)</option>
-          <option value={1}>{label} (Table)</option>
-        </select>
+          onValueChange={value => onTableToggle(value === '1')}
+          options={[
+            { value: 0, label: `${label} (Constant)` },
+            { value: 1, label: `${label} (Table)` },
+          ]}
+        />
         {!tableEnabled && (
           <CommitNumberInput value={constantValue} step={0.1} onChange={onConstantChange} />
         )}

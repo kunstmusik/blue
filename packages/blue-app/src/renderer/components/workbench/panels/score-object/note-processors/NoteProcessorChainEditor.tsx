@@ -8,8 +8,8 @@ import {
 } from '@blue/data';
 import type { NoteProcessorDefinition } from '@blue/data';
 import { useNoteProcessorClipboardStore } from '../../../../../stores/note-processor-clipboard-store';
-import { useHostDocument } from '../../../../../hooks/use-host-document';
-import { containsNode } from '../../../../../utils/cross-realm-dom';
+import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../../host-surface/use-host-surface';
 import NoteProcessorCodeModal from './NoteProcessorCodeModal';
 
 const CATALOG = getNoteProcessorCatalog();
@@ -46,34 +46,28 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
   const [showImportMenu, setShowImportMenu] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveName, setSaveName] = useState('');
-  const addMenuRef = React.useRef<HTMLDivElement>(null);
-  const importMenuRef = React.useRef<HTMLDivElement>(null);
+  const [addButton, setAddButton] = useState<HTMLButtonElement | null>(null);
+  const [importButton, setImportButton] = useState<HTMLButtonElement | null>(null);
 
-  const hostDocument = useHostDocument();
-
-  React.useEffect(() => {
-    if (!showAddMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (addMenuRef.current && !containsNode(addMenuRef.current, e.target)) {
-        setShowAddMenu(false);
-      }
-    };
-    if (!hostDocument) return undefined;
-    hostDocument.addEventListener('mousedown', handler);
-    return () => hostDocument.removeEventListener('mousedown', handler);
-  }, [showAddMenu, hostDocument]);
-
-  React.useEffect(() => {
-    if (!showImportMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (importMenuRef.current && !containsNode(importMenuRef.current, e.target)) {
-        setShowImportMenu(false);
-      }
-    };
-    if (!hostDocument) return undefined;
-    hostDocument.addEventListener('mousedown', handler);
-    return () => hostDocument.removeEventListener('mousedown', handler);
-  }, [showImportMenu, hostDocument]);
+  // Both dropdowns ride the shared host-surface policy (spec 090): portaled
+  // into the hosting window, viewport-derived max height instead of a fixed
+  // cap, host-bound dismissal, and close-on-host-scroll.
+  const addAnchor = showAddMenu && addButton
+    ? { type: 'element' as const, element: addButton }
+    : null;
+  const addMenuSurface = useHostSurface(addAnchor, {
+    kind: 'menu',
+    gap: 4,
+    onDismiss: () => setShowAddMenu(false),
+  });
+  const importAnchor = showImportMenu && importButton
+    ? { type: 'element' as const, element: importButton }
+    : null;
+  const importMenuSurface = useHostSurface(importAnchor, {
+    kind: 'menu',
+    gap: 4,
+    onDismiss: () => setShowImportMenu(false),
+  });
 
   const commit = useCallback((updated: NoteProcessorChainSnapshot) => {
     setLocal(updated);
@@ -201,26 +195,29 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1 flex-wrap">
-        <div className="relative" ref={addMenuRef}>
+        <div>
           <button
+            ref={setAddButton}
             className={BTN}
-            onClick={() => setShowAddMenu(!showAddMenu)}
+            onClick={() => setShowAddMenu((open) => !open)}
           >
             + Add
           </button>
-          {showAddMenu && (
-            <div className="absolute left-0 top-full z-50 mt-1 bg-blue-bg border border-blue-border rounded shadow-lg max-h-48 overflow-y-auto min-w-[160px]">
-              {CATALOG.map((def) => (
-                <button
-                  key={def.type}
-                  className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
-                  onClick={() => handleAdd(def)}
-                >
-                  {def.displayName}
-                </button>
-              ))}
-            </div>
-          )}
+          <HostSurfacePortal
+            session={addMenuSurface}
+            role="menu"
+            className="z-50 rounded border border-blue-border bg-blue-bg shadow-lg min-w-[160px]"
+          >
+            {CATALOG.map((def) => (
+              <button
+                key={def.type}
+                className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
+                onClick={() => handleAdd(def)}
+              >
+                {def.displayName}
+              </button>
+            ))}
+          </HostSurfacePortal>
         </div>
         <button className={BTN} disabled={!hasSelection} onClick={handleRemove}>Remove</button>
         <button className={BTN} disabled={selectedIdx <= 0} onClick={handleMoveUp}>Up</button>
@@ -230,26 +227,29 @@ export default function NoteProcessorChainEditor({ chain, onCommit, namedChainNa
         <button className={BTN} disabled={!clipboard} onClick={handlePaste}>Paste</button>
         <button className={BTN} disabled={local.processors.length === 0} onClick={handleClear}>Clear</button>
         {namedChainNames && namedChainNames.length > 0 && onImportNamedChain && (
-          <div className="relative" ref={importMenuRef}>
+          <div>
             <button
+              ref={setImportButton}
               className={BTN}
-              onClick={() => setShowImportMenu(!showImportMenu)}
+              onClick={() => setShowImportMenu((open) => !open)}
             >
               Import
             </button>
-            {showImportMenu && (
-              <div className="absolute left-0 top-full z-50 mt-1 bg-blue-bg border border-blue-border rounded shadow-lg max-h-48 overflow-y-auto min-w-[140px]">
-                {namedChainNames.map((name) => (
-                  <button
-                    key={name}
-                    className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
-                    onClick={() => handleImport(name)}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <HostSurfacePortal
+              session={importMenuSurface}
+              role="menu"
+              className="z-50 rounded border border-blue-border bg-blue-bg shadow-lg min-w-[140px]"
+            >
+              {namedChainNames.map((name) => (
+                <button
+                  key={name}
+                  className="block w-full text-left px-2 py-1 text-role-body text-gray-200 hover:bg-blue-border/40"
+                  onClick={() => handleImport(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </HostSurfacePortal>
           </div>
         )}
         {onSaveNamedChain && (

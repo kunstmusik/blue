@@ -4,6 +4,7 @@ import { Play } from 'lucide-react';
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
 import type { JavaBlueCsoundCompletionOptions } from '../editors/editor-adapter-types';
+import { AppSelect } from '../../../AppSelect';
 
 interface UdoEditorProps {
   udo: UdoDefinitionSnapshot | null;
@@ -50,8 +51,8 @@ export default function UdoEditor({
   );
 
   const handleStyleChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      onConvertStyle(event.target.value as 'CLASSIC' | 'MODERN');
+    (value: string) => {
+      onConvertStyle(value as 'CLASSIC' | 'MODERN');
     },
     [onConvertStyle],
   );
@@ -122,14 +123,15 @@ export default function UdoEditor({
             <label className="mb-1 block text-role-body uppercase tracking-wider text-app-text-subtle">
               Style
             </label>
-            <select
+            <AppSelect
               value={udo.style}
-              onChange={handleStyleChange}
+              onValueChange={handleStyleChange}
+              options={[
+                { value: 'CLASSIC', label: 'Classic' },
+                { value: 'MODERN', label: 'Modern' },
+              ]}
               className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text-strong focus:border-app-accent focus:outline-none"
-            >
-              <option value="CLASSIC">Classic</option>
-              <option value="MODERN">Modern</option>
-            </select>
+            />
           </div>
           <button
             type="button"

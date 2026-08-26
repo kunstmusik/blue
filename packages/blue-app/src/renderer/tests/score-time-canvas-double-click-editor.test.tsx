@@ -190,7 +190,11 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
     expect(openPanel).not.toHaveBeenCalled();
   });
 
-  it('selects a right-clicked SoundObject and applies successive picker colors', () => {
+  it('selects a right-clicked SoundObject and applies successive picker colors', async () => {
+    for (const element of [document.documentElement, document.body]) {
+      Object.defineProperty(element, 'clientWidth', { configurable: true, get: () => 1024 });
+      Object.defineProperty(element, 'clientHeight', { configurable: true, get: () => 768 });
+    }
     const item = soundItem('a', 0, 0);
     render(item);
 
@@ -206,6 +210,9 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.value = '#123456';
       input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
     });
 
     const picker = document.querySelector<HTMLElement>('[role="dialog"]')!;

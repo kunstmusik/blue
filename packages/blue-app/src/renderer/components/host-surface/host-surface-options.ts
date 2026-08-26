@@ -55,6 +55,14 @@ export type HostSurfaceSide = 'top' | 'bottom' | 'left' | 'right';
 
 export interface HostSurfaceOptions {
   kind: HostSurfaceKind;
+  /**
+   * Explicit hosting document override. When provided (including `null`),
+   * it replaces the panel-context document — for components whose host is
+   * resolved from an anchor element's `ownerDocument` rather than the
+   * surrounding panel (e.g. the color picker). Undefined = use
+   * `useHostDocument()` context.
+   */
+  hostDocument?: Document | null;
   /** Space between anchor and surface. Default 8. */
   gap?: number;
   /** Space kept inside the host viewport. Default 8. */

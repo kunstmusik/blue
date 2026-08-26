@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import type { GeneratorSnapshot, MaskSnapshot, QuantizerSnapshot, AccumulatorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
+import { AppSelect } from '../../../../../AppSelect';
 
 function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, onConstantChange, onTableToggle, onTableChange }: {
   label: string; constantValue: number; tableEnabled: boolean;
@@ -13,14 +14,15 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
-          onChange={e => onTableToggle(e.target.value === '1')}
-        >
-          <option value={0}>{label} (Constant)</option>
-          <option value={1}>{label} (Table)</option>
-        </select>
+          onValueChange={value => onTableToggle(value === '1')}
+          options={[
+            { value: 0, label: `${label} (Constant)` },
+            { value: 1, label: `${label} (Table)` },
+          ]}
+        />
         {!tableEnabled && (
           <CommitNumberInput value={constantValue} step={0.1} onChange={onConstantChange} />
         )}
@@ -141,13 +143,12 @@ export function AccumulatorEditor({ accumulator, duration, onChange }: {
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
         <span className="text-role-headline text-gray-300 font-bold">Accumulator</span>
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={mode}
-          onChange={e => update({ mode: parseInt(e.target.value, 10) })}
-        >
-          {ACCUMULATOR_MODES.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
+          onValueChange={value => update({ mode: parseInt(value, 10) })}
+          options={ACCUMULATOR_MODES.map((label, value) => ({ value, label }))}
+        />
       </div>
       <ConstantOrTable
         label="High Value" constantValue={high} tableEnabled={highTableEnabled}

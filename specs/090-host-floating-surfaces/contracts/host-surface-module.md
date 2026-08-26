@@ -16,11 +16,13 @@ type HostSurfaceKind = 'menu' | 'tooltip' | 'readout' | 'popover';
 
 interface HostSurfaceOptions {
   kind: HostSurfaceKind;
+  /** Explicit hosting document override (undefined = panel context). */
+  hostDocument?: Document | null;
   gap?: number;              // default 8 — space between anchor and surface
   margin?: number;           // default 8 — space kept inside the host viewport
   align?: 'start' | 'center' | 'end';
   closeOnHostScroll?: boolean; // default: true for 'menu', false otherwise
-  onDismiss?: (reason: 'escape' | 'outside-pointer' | 'host-scroll' | 'host-unmount') => void;
+  onDismiss?: (reason: 'escape' | 'outside-pointer' | 'host-scroll' | 'host-unmount' | 'caller') => void;
 }
 ```
 
@@ -58,7 +60,10 @@ function useHostSurface(
    pointer/wheel events whose target is inside the surface never dismiss (FR-005).
 5. **Dismissal**: Escape and outside-pointer listeners attach to the host document/window only;
    equivalent input from any other document is ignored (FR-006). Target classification uses
-   `isNodeLike`/`containsNode` from `utils/cross-realm-dom.ts`.
+   `isNodeLike`/`containsNode` from `utils/cross-realm-dom.ts`. Pointer input inside the surface
+   or inside an `element` anchor's subtree never dismisses — the trigger toggles an
+   element-anchored surface through its own handler (mirrors Radix trigger/DismissableLayer
+   coordination).
 6. **Event isolation**: the portal root spreads the existing `portalEventIsolationProps` semantics
    so interactive surfaces never activate React ancestor handlers (selection, focus, drag,
    audition) behind them (FR-007, `docs/popout-popup-conventions.md`).

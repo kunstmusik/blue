@@ -4,6 +4,7 @@ import { useProjectStore } from '../../../../stores/project-store';
 import type { MidiInputProcessorSnapshot, MidiScaleSnapshot } from '../../../../../shared/project-editor';
 import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { AppSelect } from '../../../AppSelect';
 
 const KEY_MAPPING_OPTIONS = [
   { value: 'MIDI', label: 'MIDI' },
@@ -174,17 +175,14 @@ export default function MidiInputProcessorForm({
   return (
     <div className="flex flex-col gap-3">
       <FormRow label="Key Mapping">
-        <select
+        <AppSelect
           className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.keyMapping}
-          onChange={(e) => {
-            void applyPatch({ midiInput: { type: 'updateKeyMapping', value: e.target.value } });
+          onValueChange={(value) => {
+            void applyPatch({ midiInput: { type: 'updateKeyMapping', value } });
           }}
-        >
-          {keyOptions.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          options={keyOptions}
+        />
       </FormRow>
 
       <FormRow label="Scale">
@@ -209,17 +207,14 @@ export default function MidiInputProcessorForm({
       <div className="my-1 border-t border-blue-border/60" />
 
       <FormRow label="Vel Mapping">
-        <select
+        <AppSelect
           className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 outline-none focus:border-blue-accent"
           value={midiInput.velocityMapping}
-          onChange={(e) => {
-            void applyPatch({ midiInput: { type: 'updateVelocityMapping', value: e.target.value } });
+          onValueChange={(value) => {
+            void applyPatch({ midiInput: { type: 'updateVelocityMapping', value } });
           }}
-        >
-          {velocityOptions.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          options={velocityOptions}
+        />
       </FormRow>
 
       <FormRow label="Constant">

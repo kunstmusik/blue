@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TIME_DISPLAY_OPTIONS } from './types';
 import { useHostDocument } from '../../../../../../hooks/use-host-document';
+import { AppSelect } from '../../../../../AppSelect';
 
 const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
@@ -83,16 +84,13 @@ export default function PianoRollRulerConfigDialog({
               <div className="text-role-headline font-bold text-blue-text">Primary Ruler</div>
               <div className="flex items-center gap-2">
                 <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
-                <select
+                <AppSelect
                   className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer disabled:opacity-50"
                   value={primaryTimeDisplay}
-                  onChange={(e) => setPrimaryTimeDisplay(e.target.value)}
+                  onValueChange={setPrimaryTimeDisplay}
+                  options={TIME_DISPLAY_OPTIONS}
                   disabled={useGlobalRuler}
-                >
-                  {TIME_DISPLAY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -110,16 +108,13 @@ export default function PianoRollRulerConfigDialog({
               </label>
               <div className="flex items-center gap-2">
                 <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
-                <select
+                <AppSelect
                   className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer disabled:opacity-50"
                   value={secondaryTimeDisplay}
-                  onChange={(e) => setSecondaryTimeDisplay(e.target.value)}
+                  onValueChange={setSecondaryTimeDisplay}
+                  options={TIME_DISPLAY_OPTIONS}
                   disabled={useGlobalRuler || !secondaryRulerEnabled}
-                >
-                  {TIME_DISPLAY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
           </fieldset>

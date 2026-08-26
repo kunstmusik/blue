@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { TableSnapshot } from './jmask-utils';
 import CommitNumberInput from './CommitNumberInput';
 import { resolveTypographyRoleFont } from '../../../../../../lib/typography';
+import { AppSelect } from '../../../../../AppSelect';
 
 const TABLE_INTERPOLATION_TYPES = ['Off', 'On', 'Cosine'];
 const CANVAS_H = 100;
@@ -216,8 +217,8 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
     setSelectedPoint(hit);
   }, [dragIdx, findHit]);
 
-  const handleInterpolationTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange({ ...structuredClone(table), interpolationType: parseInt(e.target.value, 10) });
+  const handleInterpolationTypeChange = useCallback((value: string) => {
+    onChange({ ...structuredClone(table), interpolationType: parseInt(value, 10) });
   }, [table, onChange]);
 
   const handleInterpolationCommit = useCallback((v: number) => {
@@ -251,15 +252,12 @@ export default function TableEditor({ table, duration, onChange, minMaxEnabled =
       </div>
       <div className="flex items-center gap-2 text-role-body text-gray-300">
         <label className="shrink-0">Interp</label>
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={interpolationType}
-          onChange={handleInterpolationTypeChange}
-        >
-          {TABLE_INTERPOLATION_TYPES.map((label, i) => (
-            <option key={i} value={i}>{label}</option>
-          ))}
-        </select>
+          onValueChange={handleInterpolationTypeChange}
+          options={TABLE_INTERPOLATION_TYPES.map((label, value) => ({ value, label }))}
+        />
         <CommitNumberInput
           value={interpolation}
           step={0.1}

@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArrangementRowSnapshot } from '../../shared/project-editor';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
+import { HostDocumentContext } from '../hooks/use-host-document';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -51,14 +52,16 @@ afterEach(() => {
 describe('ArrangementPanel', () => {
   it('closes the add menu on outside mouse down', () => {
     const rendered = renderRoot(
-      <ArrangementPanel
-        projectSessionId={1}
-        projectRevision={1}
-        rows={ROWS}
-        selectedAssignmentId={null}
-        onSelectAssignment={vi.fn()}
-        onOrchestraPatch={vi.fn()}
-      />, 
+      <HostDocumentContext.Provider value={document}>
+        <ArrangementPanel
+          projectSessionId={1}
+          projectRevision={1}
+          rows={ROWS}
+          selectedAssignmentId={null}
+          onSelectAssignment={vi.fn()}
+          onOrchestraPatch={vi.fn()}
+        />
+      </HostDocumentContext.Provider>,
     );
 
     try {
@@ -71,13 +74,14 @@ describe('ArrangementPanel', () => {
         addButton?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       });
 
-      expect(rendered.container.textContent).toContain('Generic Instrument');
+      // The menu portals into the hosting document body (spec 090).
+      expect(document.body.textContent).toContain('Generic Instrument');
 
       act(() => {
         document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
       });
 
-      expect(rendered.container.textContent).not.toContain('Generic Instrument');
+      expect(document.body.textContent).not.toContain('Generic Instrument');
     } finally {
       rendered.unmount();
     }

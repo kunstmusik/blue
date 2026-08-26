@@ -1,6 +1,7 @@
 import React from 'react';
 import type { BlueX7Lfo } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
+import { AppSelect } from '../../AppSelect';
 
 export interface LfoPanelProps {
   lfo: BlueX7Lfo;
@@ -31,8 +32,8 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
     };
   };
 
-  const handleWaveChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = parseInt(e.target.value, 10);
+  const handleWaveChange = (value: string) => {
+    const val = parseInt(value, 10);
     onApplyPatch(`Change LFO Waveform to ${LFO_WAVEFORMS[val]?.label ?? val}`, {
       type: 'setLfoField',
       field: 'wave',
@@ -129,19 +130,14 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
           <label htmlFor="bluex7-lfo-wave" className="text-role-body text-blue-muted">
             Waveform
           </label>
-          <select
+          <AppSelect
             id="bluex7-lfo-wave"
             aria-label="LFO Waveform"
             value={lfo.wave}
-            onChange={handleWaveChange}
+            onValueChange={handleWaveChange}
+            options={LFO_WAVEFORMS}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-          >
-            {LFO_WAVEFORMS.map((wf) => (
-              <option key={wf.value} value={wf.value}>
-                {wf.label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* Key Sync */}

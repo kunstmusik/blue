@@ -4,6 +4,7 @@ import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from './CommitNumberInput';
 import { renderProbabilitySubEditor } from './probability-editors';
+import { AppSelect } from '../../../../../AppSelect';
 
 type OnChange = (gen: GeneratorSnapshot) => void;
 
@@ -17,14 +18,15 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
-          onChange={e => onTableToggle(e.target.value === '1')}
-        >
-          <option value={0}>{label} (Constant)</option>
-          <option value={1}>{label} (Table)</option>
-        </select>
+          onValueChange={value => onTableToggle(value === '1')}
+          options={[
+            { value: 0, label: `${label} (Constant)` },
+            { value: 1, label: `${label} (Table)` },
+          ]}
+        />
         {!tableEnabled && (
           <CommitNumberInput value={constantValue} step={0.1} onChange={onConstantChange} />
         )}
@@ -116,13 +118,12 @@ export function ItemListEditor({ gen, onChange }: { gen: GeneratorSnapshot; onCh
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
         <span className="text-role-headline text-gray-300 font-bold">Item List</span>
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={listType}
-          onChange={e => update({ listType: parseInt(e.target.value, 10) })}
-        >
-          {ITEM_LIST_MODES.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
+          onValueChange={value => update({ listType: parseInt(value, 10) })}
+          options={ITEM_LIST_MODES.map((label, value) => ({ value, label }))}
+        />
       </div>
       <div className="max-h-24 overflow-auto border border-blue-border bg-black">
         <table className="w-full text-role-body">
@@ -188,13 +189,12 @@ export function OscillatorEditor({ gen, onChange, duration }: { gen: GeneratorSn
     <div className="flex flex-col gap-1 px-2 py-1.5">
       <div className="flex items-center gap-2">
         <span className="text-role-headline text-gray-300 font-bold">Oscillator</span>
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={oscillatorType}
-          onChange={e => update({ oscillatorType: parseInt(e.target.value, 10) })}
-        >
-          {OSCILLATOR_FUNCTIONS.map((f, i) => <option key={i} value={i}>{f}</option>)}
-        </select>
+          onValueChange={value => update({ oscillatorType: parseInt(value, 10) })}
+          options={OSCILLATOR_FUNCTIONS.map((label, value) => ({ value, label }))}
+        />
       </div>
       <div className="flex items-center gap-3">
         <CommitNumberField label="Initial Phase" value={phaseInit} step={0.01} min={0} max={1} onChange={v => update({ phaseInit: v })} />
@@ -233,15 +233,15 @@ export function ProbabilityEditor({ gen, onChange, duration }: { gen: GeneratorS
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 px-2 py-1">
         <span className="text-role-headline text-gray-300 font-bold">Probability</span>
-        <select
+        <AppSelect
           className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={selectedIndex}
-          onChange={e => update({ selectedIndex: parseInt(e.target.value, 10) })}
-        >
-          {generators.map((g, i) => (
-            <option key={i} value={i}>{typeof g.kind === 'string' ? g.kind : PROBABILITY_NAMES[i] ?? `Type ${i}`}</option>
-          ))}
-        </select>
+          onValueChange={value => update({ selectedIndex: parseInt(value, 10) })}
+          options={generators.map((generator, index) => ({
+            value: index,
+            label: typeof generator.kind === 'string' ? generator.kind : PROBABILITY_NAMES[index] ?? `Type ${index}`,
+          }))}
+        />
       </div>
       {selectedGen && renderProbabilitySubEditor(
         selectedGen,

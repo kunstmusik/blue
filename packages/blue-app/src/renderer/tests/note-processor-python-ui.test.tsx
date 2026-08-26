@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
+import { HostDocumentContext } from '../hooks/use-host-document';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -61,10 +62,12 @@ describe('PythonProcessor Add/Edit UI', () => {
 
     act(() => {
       root.render(
-        <NoteProcessorChainEditor
-          chain={initialChain}
-          onCommit={onCommit}
-        />,
+        <HostDocumentContext.Provider value={document}>
+          <NoteProcessorChainEditor
+            chain={initialChain}
+            onCommit={onCommit}
+          />
+        </HostDocumentContext.Provider>,
       );
     });
 
@@ -74,7 +77,8 @@ describe('PythonProcessor Add/Edit UI', () => {
     });
 
     // Click PythonProcessor from dropdown
-    const pythonAddBtn = findButton(container, 'PythonProcessor');
+    // The menu portals into the hosting document body (spec 090).
+    const pythonAddBtn = findButton(document.body, 'PythonProcessor');
     expect(pythonAddBtn).toBeDefined();
 
     act(() => {

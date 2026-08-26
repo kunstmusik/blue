@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import type { BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { EnvelopeEditor } from './envelope-editor';
+import { AppSelect } from '../../AppSelect';
 
 export interface OperatorPanelProps {
   operators: [
@@ -70,8 +71,8 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   };
 
   const handleSelectFieldChange = (field: keyof BlueX7Operator, label: string) => {
-    return (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const val = parseInt(e.target.value, 10);
+    return (value: string) => {
+      const val = parseInt(value, 10);
       onApplyPatch(`Change Op ${selectedOpIndex + 1} ${label} to ${val}`, {
         type: 'setOperatorField',
         operatorIndex: selectedOpIndex,
@@ -197,16 +198,17 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <label htmlFor="bluex7-op-mode" className="text-role-body text-blue-muted">
               Mode
             </label>
-            <select
+            <AppSelect
               id="bluex7-op-mode"
               aria-label="Operator Mode"
               value={currentOp.mode}
-              onChange={handleSelectFieldChange('mode', 'Mode')}
+              onValueChange={handleSelectFieldChange('mode', 'Mode')}
+              options={[
+                { value: 0, label: 'Ratio (Freq)' },
+                { value: 1, label: 'Fixed (Hz)' },
+              ]}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-            >
-              <option value={0}>Ratio (Freq)</option>
-              <option value={1}>Fixed (Hz)</option>
-            </select>
+            />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -367,19 +369,14 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <label htmlFor="bluex7-op-curve-left" className="text-role-body text-blue-muted">
                 Curve Left
               </label>
-              <select
+              <AppSelect
                 id="bluex7-op-curve-left"
                 aria-label="Curve Left"
                 value={currentOp.curveLeft}
-                onChange={handleSelectFieldChange('curveLeft', 'Curve Left')}
+                onValueChange={handleSelectFieldChange('curveLeft', 'Curve Left')}
+                options={CURVE_TYPES}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-              >
-                {CURVE_TYPES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -402,19 +399,14 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <label htmlFor="bluex7-op-curve-right" className="text-role-body text-blue-muted">
                 Curve Right
               </label>
-              <select
+              <AppSelect
                 id="bluex7-op-curve-right"
                 aria-label="Curve Right"
                 value={currentOp.curveRight}
-                onChange={handleSelectFieldChange('curveRight', 'Curve Right')}
+                onValueChange={handleSelectFieldChange('curveRight', 'Curve Right')}
+                options={CURVE_TYPES}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-              >
-                {CURVE_TYPES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="flex flex-col gap-1">

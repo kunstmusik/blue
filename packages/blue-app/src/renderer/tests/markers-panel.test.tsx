@@ -5,6 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MarkersPanel from '../components/workbench/panels/MarkersPanel';
+import { chooseAppSelectOption } from './app-select-test-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -114,7 +115,7 @@ describe('MarkersPanel', () => {
     tree.unmount();
   });
 
-  it('commits label on Enter and time on blur', () => {
+  it('commits label on Enter and time on blur', async () => {
     const tree = renderPanel();
     const labelInput = tree.container.querySelectorAll('input')[1] as HTMLInputElement;
 
@@ -134,11 +135,8 @@ describe('MarkersPanel', () => {
       },
     });
 
-    const timeBaseSelect = tree.container.querySelector('select') as HTMLSelectElement;
-
-    act(() => {
-      setSelectValue(timeBaseSelect, 'SECONDS');
-    });
+    const timeBaseSelect = tree.container.querySelector('[role="combobox"]') as HTMLButtonElement;
+    await chooseAppSelectOption(timeBaseSelect, 'SECONDS');
 
     expect(mockProjectState.applyProjectDocumentPatch).toHaveBeenCalledWith({
       score: {

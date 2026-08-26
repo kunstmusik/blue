@@ -14,6 +14,7 @@ import { toUdoCompletionDefinitions } from '../workbench/panels/editors/udo-comp
 import UdoWorkspacePanel from '../workbench/panels/udo/UdoWorkspacePanel';
 import { useUdoCallbacks } from '../../hooks/use-udo-callbacks';
 import { cloneUdoSnapshot, formatUdoListAsOpcodeText } from '../workbench/panels/udo/udo-snapshot-utils';
+import { AppSelect } from '../AppSelect';
 
 type EffectEditorTab = 'interface' | 'code' | 'udo' | 'comments';
 
@@ -193,14 +194,15 @@ export default function EffectEditorPanel({
         </label>
         <label className="flex items-center gap-1 text-role-body text-app-text-muted">
           Style
-          <select
+          <AppSelect
             value={snapshot.style}
-            onChange={(event) => handleStyleChange(event.target.value as 'CLASSIC' | 'MODERN')}
+            onValueChange={(value) => handleStyleChange(value as 'CLASSIC' | 'MODERN')}
+            options={[
+              { value: 'CLASSIC', label: 'Classic' },
+              { value: 'MODERN', label: 'Modern' },
+            ]}
             className="rounded border border-app-border bg-app-input px-1.5 py-1 text-role-body text-app-text-strong outline-none focus:border-app-accent"
-          >
-            <option value="CLASSIC">Classic</option>
-            <option value="MODERN">Modern</option>
-          </select>
+          />
         </label>
       </div>
 

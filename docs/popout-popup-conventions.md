@@ -97,15 +97,32 @@ Radix surfaces keep their `Popout*Portal` wrappers and their own popper; do
 NOT route them through the host-surface module. Contract details:
 `specs/090-host-floating-surfaces/contracts/host-surface-module.md`.
 
+### Selection controls
+
+Application-owned single-choice fields MUST use `components/AppSelect.tsx`
+instead of native `<select>` elements or one-off menu implementations.
+`AppSelect` centralizes the Blue trigger/item styling, keyboard and typeahead
+semantics, viewport collision constraints, and host-window portaling through
+`PopoutSelectPortal`. Searchable pickers may keep a purpose-built filtered
+list, but should use the same app menu tokens and host-surface policy.
+
 ## Reference examples
 
 - Portal wrapper usage: `panels/score/layer-groups/PatternsLayerGroupCanvas.tsx`
-- Host-surface module consumers (pointer menu, tooltip, point readout):
-  `panels/shared/line-editor/EditableLineCanvas.tsx` and
-  `panels/score/automation/AutomationLineView.tsx`
+- Reusable selection control: `components/AppSelect.tsx`
+- Host-surface module consumers (pointer menu, tooltip, point readout,
+  button-anchored dropdowns, popovers):
+  `panels/shared/line-editor/EditableLineCanvas.tsx`,
+  `panels/score/automation/AutomationLineView.tsx`,
+  `panels/score-object/note-processors/NoteProcessorChainEditor.tsx`,
+  `panels/orchestra/ArrangementPanel.tsx`,
+  `panels/score-object/editors/JMaskEditor.tsx`,
+  `panels/orchestra/bsb/FontChooserDialog.tsx`, and `ColorPicker.tsx`
+  (which resolves its host from the anchor element via the module's
+  `hostDocument` override)
 - Escape routing in a dialog: `panels/score/RulerConfigDialog.tsx`
-- Cross-realm containment guard: `panels/orchestra/ArrangementPanel.tsx`
-  (`isAddMenuTarget`) and `utils/cross-realm-dom.ts`
+- Cross-realm containment guards: `components/host-surface/use-host-surface.ts`
+  and `utils/cross-realm-dom.ts`
 - Bubble-phase isolation: `hooks/host-portals.tsx`
 - Capture-phase exemption: `panels/ScorePanel.tsx` and
   `panels/score-object/editors/PianoRollEditor.tsx`

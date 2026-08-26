@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ManualLibraryImportPreview } from '../../../shared/unified-library';
+import { AppSelect } from '../AppSelect';
 
 interface LibraryImportDialogProps {
   preview: ManualLibraryImportPreview;
@@ -31,20 +32,22 @@ export function LibraryImportDialog({ preview, onImport, onCancel }: LibraryImpo
               {source.folderConflicts.map((conflict) => (
                 <label key={conflict.conflictId} className="mt-2 block text-role-callout">
                   Destination for {conflict.sourceBreadcrumb.join(' / ')}
-                  <select
+                  <AppSelect
                     aria-label={`Destination for ${conflict.sourceBreadcrumb.join(' / ')}`}
                     value={folderSelections[conflict.conflictId] ?? ''}
-                    onChange={(event) => setFolderSelections((current) => ({
+                    onValueChange={(value) => setFolderSelections((current) => ({
                       ...current,
-                      [conflict.conflictId]: event.currentTarget.value,
+                      [conflict.conflictId]: value,
                     }))}
+                    options={[
+                      { value: '', label: 'Choose a folder…' },
+                      ...conflict.candidates.map((candidate) => ({
+                        value: candidate.nodeId,
+                        label: candidate.breadcrumb.join(' / '),
+                      })),
+                    ]}
                     className="mt-1 w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body"
-                  >
-                    <option value="">Choose a folder…</option>
-                    {conflict.candidates.map((candidate) => (
-                      <option key={candidate.nodeId} value={candidate.nodeId}>{candidate.breadcrumb.join(' / ')}</option>
-                    ))}
-                  </select>
+                  />
                 </label>
               ))}
             </li>

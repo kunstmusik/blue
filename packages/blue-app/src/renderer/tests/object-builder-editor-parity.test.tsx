@@ -8,6 +8,7 @@ import type { ScoreObjectEditorDocumentSnapshot } from '../../shared/project-edi
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 import ObjectBuilderScoreObjectEditor from '../components/workbench/panels/score-object/editors/ObjectBuilderScoreObjectEditor';
 import { resolveEditorComponent } from '../components/workbench/panels/score-object/editor-registry';
+import { chooseAppSelectOption, getAppSelectOptionLabels } from './app-select-test-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -169,20 +170,16 @@ describe('ObjectBuilder editor parity', () => {
       container.querySelector<HTMLButtonElement>('[data-object-builder-tab="code"]')?.click();
     });
 
-    const language = container.querySelector<HTMLSelectElement>('[aria-label="ObjectBuilder language"]');
+    const language = container.querySelector<HTMLButtonElement>('[aria-label="ObjectBuilder language"]');
     const commandLine = container.querySelector<HTMLInputElement>('[aria-label="ObjectBuilder command line"]');
     const codeEditor = container.querySelector<HTMLTextAreaElement>('[aria-label="ObjectBuilder code"]');
-    expect(Array.from(language?.options ?? []).map((option) => option.value)).toEqual([
-      'PYTHON', 'JAVASCRIPT', 'CLOJURE', 'EXTERNAL',
+    expect(await getAppSelectOptionLabels(language!)).toEqual([
+      'Python', 'JavaScript', 'Clojure', 'External',
     ]);
     expect(commandLine?.disabled).toBe(true);
     expect(codeEditor?.dataset.bsbKeys).toBe('amp');
 
-    await act(async () => {
-      if (!language) return;
-      language.value = 'EXTERNAL';
-      language.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await chooseAppSelectOption(language!, 'External');
 
     expect(onPatch).toHaveBeenCalledWith(expect.objectContaining({
       type: 'updateTypeSpecificEditor',

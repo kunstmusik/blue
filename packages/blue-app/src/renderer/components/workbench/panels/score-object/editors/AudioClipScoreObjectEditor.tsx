@@ -12,6 +12,7 @@ import {
   BLUE_INSPECTOR_INPUT_CLASS,
   BLUE_INSPECTOR_ROW_CLASS,
 } from '../../shared/compactFieldStyles';
+import { AppSelect } from '../../../../AppSelect';
 
 const INPUT_CLASS = BLUE_INSPECTOR_INPUT_CLASS;
 const FADE_TYPE_OPTIONS = [
@@ -362,15 +363,12 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
         </FieldRow>
 
         <FieldRow label="Fade In Type">
-          <select
+          <AppSelect
             className={INPUT_CLASS}
             value={editor.fadeInType}
-            onChange={(e) => handleFadeInTypeChange(e.target.value)}
-          >
-            {FADE_TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            onValueChange={handleFadeInTypeChange}
+            options={FADE_TYPE_OPTIONS}
+          />
         </FieldRow>
 
         <FieldRow label="Fade Out (s)">
@@ -386,15 +384,12 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
         </FieldRow>
 
         <FieldRow label="Fade Out Type">
-          <select
+          <AppSelect
             className={INPUT_CLASS}
             value={editor.fadeOutType}
-            onChange={(e) => handleFadeOutTypeChange(e.target.value)}
-          >
-            {FADE_TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            onValueChange={handleFadeOutTypeChange}
+            options={FADE_TYPE_OPTIONS}
+          />
         </FieldRow>
 
         <FieldRow label="Looping">

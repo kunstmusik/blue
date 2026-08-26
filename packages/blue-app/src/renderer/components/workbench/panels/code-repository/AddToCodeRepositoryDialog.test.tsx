@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { chooseAppSelectOption } from '../../../../tests/app-select-test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import AddToCodeRepositoryDialog from './AddToCodeRepositoryDialog';
@@ -101,12 +102,11 @@ describe('AddToCodeRepositoryDialog', () => {
       ),
     );
     const name = container.querySelector<HTMLInputElement>('#code-repository-snippet-name')!;
-    const destination = container.querySelector<HTMLSelectElement>('#code-repository-destination')!;
+    const destination = container.querySelector<HTMLButtonElement>('#code-repository-destination')!;
     await act(async () => {
       changeInput(name, '  Duplicate name  ');
-      destination.value = 'nested-group';
-      destination.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    await chooseAppSelectOption(destination, 'Nested');
     await act(async () => {
       [...container.querySelectorAll<HTMLButtonElement>('button')]
         .find((button) => button.textContent === 'Add')!

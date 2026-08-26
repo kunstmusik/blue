@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultRealtimeRenderSettings, type RealtimeRenderSettingsSnapshot } from '../../shared/program-settings';
 import RealtimeRenderSettings from '../components/settings/RealtimeRenderSettings';
+import { getAppSelectOptionLabels } from './app-select-test-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -261,7 +262,8 @@ describe('RealtimeRenderSettings engine controls', () => {
       csoundLibraryPath: null,
       midiModule: 'portmidi',
     });
-    expect(container.textContent).toContain('pa_bl');
+    const moduleTriggers = container.querySelectorAll<HTMLElement>('[role="combobox"]');
+    expect(await getAppSelectOptionLabels(moduleTriggers[0]!)).toContain('PortAudio - Blocking (pa_bl)');
     expect(Array.from(container.querySelectorAll('button')).some((button) => button.textContent === 'Rescan Audio Devices')).toBe(true);
     expect(Array.from(container.querySelectorAll('button')).some((button) => button.textContent === 'Rescan MIDI Devices')).toBe(true);
     const audioInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]');
@@ -286,15 +288,15 @@ describe('RealtimeRenderSettings engine controls', () => {
     render('blue-engine', vi.fn(), vi.fn(), { audioDriver: 'auhal', midiDriver: 'coremidi' });
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
 
-    const selects = container.querySelectorAll<HTMLSelectElement>('select');
-    expect(Array.from(selects[0]?.options ?? []).map((option) => [option.value, option.textContent])).toEqual([
-      ['auhal', 'CoreAudio (auhal)'],
-      ['pa_bl', 'PortAudio - Blocking (pa_bl)'],
-      ['third-party-backend', 'third-party-backend'],
+    const selects = container.querySelectorAll<HTMLElement>('[role="combobox"]');
+    expect(await getAppSelectOptionLabels(selects[0]!)).toEqual([
+      'CoreAudio (auhal)',
+      'PortAudio - Blocking (pa_bl)',
+      'third-party-backend',
     ]);
-    expect(Array.from(selects[1]?.options ?? []).map((option) => [option.value, option.textContent])).toEqual([
-      ['coremidi', 'CoreMIDI (coremidi)'],
-      ['portmidi', 'PortMIDI (portmidi)'],
+    expect(await getAppSelectOptionLabels(selects[1]!)).toEqual([
+      'CoreMIDI (coremidi)',
+      'PortMIDI (portmidi)',
     ]);
   });
 
@@ -362,7 +364,7 @@ describe('RealtimeRenderSettings engine controls', () => {
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
     expect(container.textContent).toContain('saved audio module is currently unavailable');
     expect(container.textContent).toContain('Audio module is unavailable');
-    expect(container.querySelector('option[value="auhal"]')).toBeTruthy();
+    expect(container.querySelector<HTMLElement>('[role="combobox"]')?.textContent).toContain('CoreAudio (auhal)');
   });
 
   it('keeps device fields editable when defaults are disabled and exposes default entries', () => {
@@ -378,8 +380,8 @@ describe('RealtimeRenderSettings engine controls', () => {
     expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-in"]')?.disabled).toBe(false);
     expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-out"]')?.disabled).toBe(false);
     expect(container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-midi-in"]')?.disabled).toBe(false);
-    expect(container.querySelector<HTMLSelectElement>('select')?.disabled).toBe(false);
-    expect(container.querySelectorAll<HTMLSelectElement>('select')[1]?.disabled).toBe(false);
+    expect(container.querySelector<HTMLButtonElement>('[role="combobox"]')?.disabled).toBe(false);
+    expect(container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')[1]?.disabled).toBe(false);
     const audioOutInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-out"]');
     const audioInInput = container.querySelector<HTMLInputElement>('input[aria-controls="runtime-devices-audio-in"]');
     act(() => audioOutInput?.click());

@@ -52,6 +52,7 @@
     "@nextjournal/lang-clojure": "^1.0.0",
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-select": "^2.3.7",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",

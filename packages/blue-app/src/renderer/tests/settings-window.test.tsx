@@ -49,7 +49,7 @@ let root: Root;
 beforeEach(() => {
   vi.clearAllMocks();
   settingsCloseRequest = null;
-  (globalThis as any).window = { blueAPI: mockBlueAPI };
+  (window as typeof window & { blueAPI: typeof mockBlueAPI }).blueAPI = mockBlueAPI;
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);

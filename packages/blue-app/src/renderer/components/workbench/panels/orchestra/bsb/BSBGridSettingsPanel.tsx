@@ -3,6 +3,7 @@ import type {
   GridSettingsSnapshot,
   BsbInterfacePatch,
 } from '../../../../../../shared/project-editor';
+import { AppSelect } from '../../../../AppSelect';
 
 interface BSBGridSettingsPanelProps {
   gridSettings: GridSettingsSnapshot;
@@ -25,18 +26,19 @@ export default function BSBGridSettingsPanel({
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">
         <label className="text-role-body text-app-text-muted">Grid Style</label>
-        <select
+        <AppSelect
           className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-role-body text-app-text outline-none focus:border-app-accent"
           value={gridSettings.gridStyle}
-          onChange={(e) => {
-            const v = e.target.value as 'NONE' | 'DOT' | 'LINE';
+          onValueChange={(value) => {
+            const v = value as 'NONE' | 'DOT' | 'LINE';
             update({ gridStyle: v, enabled: v !== 'NONE' });
           }}
-        >
-          <option value="DOT">Dot</option>
-          <option value="LINE">Line</option>
-          <option value="NONE">None</option>
-        </select>
+          options={[
+            { value: 'DOT', label: 'Dot' },
+            { value: 'LINE', label: 'Line' },
+            { value: 'NONE', label: 'None' },
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-[80px_1fr] items-center gap-2">

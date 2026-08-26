@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-25
 
-**Status**: Draft
+**Status**: Complete
 
 **Input**: User description: "Make context menus and tooltips visibly render across docked and floated Blue panels through a generalized in-window solution. Record the popup-clipping research, avoid native context menus, and avoid transparent overlay windows."
 
@@ -15,6 +15,8 @@
 - Q: How should the in-scope surface set be defined so SC-001's "100% of in-scope" edge-position matrix is testable? → A: Name a concrete acceptance set in the spec (score-canvas context menus, line-editor tooltip and context menu, automation point readout); the category rule still governs all other workbench surfaces and the full inventory is enumerated during planning.
 - Q: When the host viewport scrolls while a popup is open, what should each surface type do? → A: Context menus close on host scroll (scrolling inside the menu's own content does not dismiss it); tooltips and readouts follow their anchor per Story 2.
 - Q: Should the spec add a measurable performance criterion for anchor-following placement updates? → A: Yes — during continuous anchor motion (point drags, active scrolling), an open tooltip/readout performs at most one placement update per rendered frame, and stops updating when closed or unmounted.
+- Q: Should application-owned single-choice fields remain native or use a shared control? → A: Use one reusable `AppSelect` backed by Radix Select for consistent Blue styling, keyboard/typeahead semantics, viewport constraints, and host-window portaling. Searchable pickers such as the font-family list may retain their filtered-list interaction while following the same visual and host-surface conventions.
+- Q: Is the full manual Electron matrix required for closeout after automated and targeted manual validation? → A: The project owner accepted the performed manual testing as sufficient on 2026-08-25; the complete matrix was not executed and this limitation is recorded in the closeout evidence.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -89,6 +91,7 @@ When a panel is floated, re-docked, closed, or unmounted while a popup is open, 
 - **FR-011**: The system MUST render no popup content and MUST attach no popup listeners when there is no usable host DOM.
 - **FR-012**: The feature MUST NOT introduce native operating-system context menus or transparent overlay windows as part of the generalized solution.
 - **FR-013**: The feature MUST NOT modify `.blue` project XML, generated CSD data, or persistent project state; popup state remains disposable interaction state and project edits continue through existing document-bridge contracts.
+- **FR-014**: Application-owned single-choice fields MUST use the reusable `AppSelect` control rather than native `<select>` elements or one-off choice menus, preserving each field's value coercion, disabled state, empty-option behavior, keyboard/typeahead semantics, and hosting-window portal behavior.
 
 ### Existing Behavior & Data Compatibility *(mandatory when applicable)*
 
@@ -114,13 +117,21 @@ When a panel is floated, re-docked, closed, or unmounted while a popup is open, 
 - **SC-005**: The automation point readout remains readable at the smallest supported host-panel sizes without reducing application-owned text below the approved typography floor.
 - **SC-006**: No native context-menu surface or transparent overlay window is created by the feature, and no project XML or persistent project state changes as a result of popup placement.
 - **SC-007**: During continuous anchor motion such as point drags or active scrolling, an open tooltip or readout performs at most one placement update per rendered frame, and no placement updates occur after the surface closes or its host unmounts.
+- **SC-008**: The renderer application source contains zero native `<select>` declarations; focused `AppSelect` coverage and affected consumer regressions pass in the complete renderer suite.
 
 ## Assumptions
 
 - The primary product goal is reliable visibility within the active Electron window, including visibility outside internal scroll and row clipping regions.
 - Crossing the outer OS window boundary is not required for this feature; if that becomes a requirement later, it will be specified separately.
 - Existing Radix surfaces remain the source of menu and tooltip semantics where they already provide the required behavior; the generalized policy governs their host document and event handling.
-- In-scope surfaces are workbench-panel context menus, tooltips, popovers, and automation/line-editor readouts rendered from docked or floated panel content; unrelated system-owned Settings-window surfaces are excluded. The named acceptance set for edge-position validation is: score-canvas context menus, the line-editor tooltip and context menu, and the automation point readout. All other workbench surfaces follow the same category rule; the full surface inventory is enumerated during planning.
-- The separate Settings window is not treated as a Dockview popout and remains governed by its own window-local behavior.
+- In-scope host-surface behavior covers workbench-panel context menus, tooltips, popovers, and automation/line-editor readouts rendered from docked or floated panel content. The named acceptance set for edge-position validation is: score-canvas context menus, the line-editor tooltip and context menu, and the automation point readout. All other workbench surfaces follow the same category rule; the full surface inventory is enumerated during planning.
+- The reusable `AppSelect` consistency extension applies application-wide, including Settings. The separate Settings window is still not treated as a Dockview popout: `AppSelect` uses the portal container's main-window fallback there, while workbench callers resolve their actual panel host document.
 - Application-owned popup text follows the existing semantic typography roles and readability floor; project-authored typography remains canonical project data.
 - Validation will use the existing two-document popup test pattern plus focused Electron/manual acceptance for actual docked and floated windows.
+
+## Closeout
+
+- Implementation and documentation completed on 2026-08-25.
+- Automated validation: 396 renderer test files passed; 3,744 tests passed and 2 were skipped. The renderer build, repository lint, and `git diff --check` passed.
+- The application-source audit found zero native `<select>` declarations after migrating 41 controls across 29 files to `AppSelect`.
+- The project owner performed targeted manual testing and accepted the observed docked/floated behavior as sufficient for closeout. The complete `quickstart.md` manual matrix was not executed.

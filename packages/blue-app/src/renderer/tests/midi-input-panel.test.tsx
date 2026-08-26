@@ -68,13 +68,11 @@ describe('MidiInputPanel', () => {
 
     const { container, root } = renderPanel();
 
-    const selects = container.querySelectorAll('select');
+    const selects = container.querySelectorAll('[role="combobox"]');
     expect(selects.length).toBeGreaterThanOrEqual(2);
 
-    const keySelect = selects[0] as HTMLSelectElement;
-    const velSelect = selects[1] as HTMLSelectElement;
-    expect(keySelect.value).toBe('TUNING_CPS');
-    expect(velSelect.value).toBe('AMP_0DBFS');
+    expect(selects[0]?.textContent).toContain('Tuning - CPS');
+    expect(selects[1]?.textContent).toContain('Amp (0dbfs = 1)');
 
     const inputs = container.querySelectorAll('input[type="text"], input:not([type])');
     const constantInputs = Array.from(inputs).filter(
@@ -123,7 +121,8 @@ describe('MidiInputPanel', () => {
     expect(scaleInput).toBeTruthy();
     expect(scaleInput?.value).toBe('12TET');
 
-    const dotButton = container.querySelector('button') as HTMLButtonElement | null;
+    const dotButton = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === '...') ?? null;
     expect(dotButton).toBeTruthy();
     expect(dotButton?.textContent?.trim()).toBe('...');
 

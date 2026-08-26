@@ -7,6 +7,7 @@ import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultBlueX7Voice, decodeSingleVoice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../shared/project-editor';
+import { chooseAppSelectOption } from './app-select-test-utils';
 import BlueX7Editor from '../components/workbench/panels/orchestra/BlueX7Editor';
 import { BlueX7Editor as BlueX7EditorComponent } from '../components/instruments/blue-x7-editor';
 
@@ -115,7 +116,7 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(redoBtn.disabled).toBe(true);
   });
 
-  it('enables undo after parameter edits and restores prior voice state on undo', () => {
+  it('enables undo after parameter edits and restores prior voice state on undo', async () => {
     const voice = createDefaultBlueX7Voice();
     voice.common.algorithm = 19;
     const instrument: BlueX7InstrumentSnapshot = {
@@ -129,10 +130,8 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
 
     renderEditor(instrument);
 
-    const algSelect = container?.querySelector('#bluex7-algorithm') as HTMLSelectElement;
-    act(() => {
-      setInputValue(algSelect, '5');
-    });
+    const algSelect = container?.querySelector('#bluex7-algorithm') as HTMLButtonElement;
+    await chooseAppSelectOption(algSelect, 'Algorithm 5');
 
     const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
     const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;

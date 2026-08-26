@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
+import { AppSelect, type AppSelectOption } from '../AppSelect';
 
 const FIELD_CONTAINER_CLASS = 'mb-4';
 const FIELD_LABEL_CLASS = 'mb-1 block text-role-body font-medium text-app-text-muted';
@@ -57,7 +58,7 @@ export default function SettingsField({
   );
 }
 
-interface SettingsSelectFieldProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'onChange' | 'value'> {
+interface SettingsSelectFieldProps {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
@@ -65,6 +66,12 @@ interface SettingsSelectFieldProps extends Omit<React.SelectHTMLAttributes<HTMLS
   containerClassName?: string;
   selectClassName?: string;
   children: React.ReactNode;
+  disabled?: boolean;
+  id?: string;
+  name?: string;
+  required?: boolean;
+  form?: string;
+  'aria-label'?: string;
 }
 
 export function SettingsSelectField({
@@ -77,18 +84,27 @@ export function SettingsSelectField({
   children,
   ...selectProps
 }: SettingsSelectFieldProps): React.ReactElement {
+  const options = React.Children.toArray(children).flatMap((child): AppSelectOption[] => {
+    if (!React.isValidElement<{ value?: string | number; disabled?: boolean; children?: React.ReactNode }>(child)) {
+      return [];
+    }
+    const optionValue = child.props.value;
+    return optionValue === undefined
+      ? []
+      : [{ value: optionValue, label: child.props.children, disabled: child.props.disabled }];
+  });
+
   return (
     <div className={cn(FIELD_CONTAINER_CLASS, containerClassName)}>
       <label className={FIELD_LABEL_CLASS}>{label}</label>
       {description ? <div className={FIELD_DESCRIPTION_CLASS}>{description}</div> : null}
-      <select
+      <AppSelect
         {...selectProps}
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        onValueChange={onChange}
+        options={options}
         className={cn(FIELD_SELECT_CLASS, selectClassName)}
-      >
-        {children}
-      </select>
+      />
     </div>
   );
 }

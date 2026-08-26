@@ -2,6 +2,7 @@ import React from 'react';
 import type { BlueX7Common } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
+import { AppSelect } from '../../AppSelect';
 
 export interface CommonPanelProps {
   common: BlueX7Common;
@@ -20,8 +21,8 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
 }) => {
   const displayTranspose = common.keyTranspose - 24;
 
-  const handleAlgorithmChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = parseInt(e.target.value, 10);
+  const handleAlgorithmChange = (value: string) => {
+    const val = parseInt(value, 10);
     onApplyPatch(`Change Algorithm to ${val}`, {
       type: 'setCommonField',
       field: 'algorithm',
@@ -103,19 +104,17 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 Algorithm (1–32)
               </label>
               <div className="flex items-center gap-1">
-                <select
+                <AppSelect
                   id="bluex7-algorithm"
                   aria-label="Algorithm"
                   value={common.algorithm}
-                  onChange={handleAlgorithmChange}
+                  onValueChange={handleAlgorithmChange}
+                  options={Array.from({ length: 32 }, (_, index) => ({
+                    value: index + 1,
+                    label: `Algorithm ${index + 1}`,
+                  }))}
                   className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
-                >
-                  {Array.from({ length: 32 }, (_, i) => i + 1).map((alg) => (
-                    <option key={alg} value={alg}>
-                      Algorithm {alg}
-                    </option>
-                  ))}
-                </select>
+                />
                 {onOpenAlgorithmModal && (
                   <button
                     type="button"

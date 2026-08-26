@@ -20,6 +20,7 @@ import {
   releaseAllVirtualKeyboardSources,
   routeVirtualKeyboardNote,
 } from '../../../hooks/use-midi-input-service';
+import { AppSelect } from '../../AppSelect';
 
 function clampMidiNote(note: number): number {
   return Math.min(127, Math.max(0, Math.trunc(note)));
@@ -199,15 +200,16 @@ export default function VirtualKeyboardPanel(): ReactElement {
       <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-role-body">
         <label className="flex items-center gap-1.5 text-app-text" title="Routing mode applies to hardware MIDI and the Virtual Keyboard">
           <span className="text-role-body text-blue-muted">Routing</span>
-          <select
+          <AppSelect
             className="rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-role-body text-app-text outline-none focus:border-blue-accent"
             value={routingMode}
-            onChange={(e) => setRoutingMode(e.target.value === 'channel' ? 'channel' : 'focus')}
+            onValueChange={(value) => setRoutingMode(value === 'channel' ? 'channel' : 'focus')}
+            options={[
+              { value: 'focus', label: 'Focused Target' },
+              { value: 'channel', label: 'Direct Channel' },
+            ]}
             aria-label="MIDI routing mode"
-          >
-            <option value="focus">Focused Target</option>
-            <option value="channel">Direct Channel</option>
-          </select>
+          />
         </label>
 
         {routingMode === 'focus' ? (

@@ -10,6 +10,7 @@ import { LibraryBreadcrumbs } from '../components/libraries/LibraryBreadcrumbs';
 import { LibraryEditorToolbar } from '../components/libraries/LibraryEditorToolbar';
 import { LibrarySessionDialog } from '../components/libraries/LibrarySessionDialog';
 import { LibraryControlledEditor } from '../components/libraries/editor-registry';
+import { chooseAppSelectOption } from './app-select-test-utils';
 import { EffectLibraryEditor } from '../components/libraries/editors/EffectLibraryEditor';
 import { InstrumentLibraryEditor } from '../components/libraries/editors/InstrumentLibraryEditor';
 import { SoundObjectLibraryEditor } from '../components/libraries/editors/SoundObjectLibraryEditor';
@@ -657,7 +658,7 @@ describe('library editor UDO isolation (US5, T030)', () => {
     act(() => root.unmount());
   });
 
-  it('renders and dispatches patches for BlueX7 library drafts', () => {
+  it('renders and dispatches patches for BlueX7 library drafts', async () => {
     const onPatch = vi.fn();
     const voice = createDefaultBlueX7Voice();
     voice.common.algorithm = 11;
@@ -696,12 +697,8 @@ describe('library editor UDO isolation (US5, T030)', () => {
     expect(container.textContent).toContain('Common & Algorithms');
 
     // Edit algorithm
-    const algSelect = container.querySelector('#bluex7-algorithm') as HTMLSelectElement;
-    act(() => {
-      algSelect.value = '7';
-      algSelect.dispatchEvent(new Event('input', { bubbles: true }));
-      algSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const algSelect = container.querySelector('#bluex7-algorithm') as HTMLButtonElement;
+    await chooseAppSelectOption(algSelect, 'Algorithm 7');
 
     expect(onPatch).toHaveBeenCalledWith(
       expect.objectContaining({

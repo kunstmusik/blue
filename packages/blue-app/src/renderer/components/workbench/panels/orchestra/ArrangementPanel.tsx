@@ -14,9 +14,7 @@ import {
   getAvailableNumericArrangementId,
   getLibraryTransferSourceType,
 } from '../../../../../shared/unified-library';
-import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
-import { useHostDocument } from '../../../../hooks/use-host-document';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useMidiRoutingStore } from '../../../../stores/midi-routing-store';
 import ArrangementContextMenu from './ArrangementContextMenu';
@@ -25,7 +23,8 @@ import type { ArrangementPanelProps } from './types';
 import { LibraryDropZone, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 import { useProjectLibraryNodes } from '../../../libraries/use-project-library-nodes';
-import { isNodeLike } from '../../../../utils/cross-realm-dom';
+import { HostSurfacePortal } from '../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../host-surface/use-host-surface';
 
 const INSTRUMENT_TYPES: Array<{ type: SupportedNewInstrumentType; label: string }> = [
   { type: 'generic', label: 'Generic Instrument' },
@@ -56,9 +55,19 @@ function ArrangementPanel({
     'projectOwned', 'instrument', projectSessionId, projectRevision,
   );
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const addBtnRef = useRef<HTMLButtonElement>(null);
-  const addMenuRef = useRef<HTMLDivElement>(null);
-  const hostDocument = useHostDocument();
+  const [addButton, setAddButton] = useState<HTMLButtonElement | null>(null);
+  // The + Add dropdown rides the shared host-surface policy (spec 090):
+  // portaled into the hosting window, viewport-aware placement, host-bound
+  // dismissal with the trigger exempt, and close-on-host-scroll.
+  const addAnchor = addMenuOpen && addButton
+    ? { type: 'element' as const, element: addButton }
+    : null;
+  const addMenuSurface = useHostSurface(addAnchor, {
+    kind: 'menu',
+    gap: 4,
+    align: 'end',
+    onDismiss: () => setAddMenuOpen(false),
+  });
 
   const columns = useMemo(
     () =>
@@ -224,25 +233,6 @@ function ArrangementPanel({
     }
   }, []);
 
-  const isAddMenuTarget = useCallback((target: EventTarget | null) => {
-    // Realm-safe: popout-realm nodes fail `instanceof Node` from this module.
-    if (!isNodeLike(target)) {
-      return false;
-    }
-
-    return Boolean(
-      addMenuRef.current?.contains(target)
-      || addBtnRef.current?.contains(target),
-    );
-  }, []);
-
-  useDocumentMouseDownOutside({
-    enabled: addMenuOpen,
-    isInside: isAddMenuTarget,
-    onMouseDownOutside: () => setAddMenuOpen(false),
-    targetDocument: hostDocument,
-  });
-
   return (
     <section
       className="flex h-full min-h-0 flex-col bg-app-surface-raised text-app-text"
@@ -258,31 +248,30 @@ function ArrangementPanel({
             {selectedAssignmentId && !selectedRowStillExists ? ' · selection cleared' : ''}
           </div>
         </div>
-        <div className="relative">
+        <div>
           <button
-            ref={addBtnRef}
+            ref={setAddButton}
             type="button"
             className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-role-body text-app-text-strong transition-colors hover:border-app-accent"
-            onClick={() => setAddMenuOpen(!addMenuOpen)}
+            onClick={() => setAddMenuOpen((open) => !open)}
           >
             + Add
           </button>
-          {addMenuOpen && (
-            <div
-              ref={addMenuRef}
-              className="absolute right-0 top-full z-20 mt-1 min-w-45 rounded border border-app-border bg-app-menu py-1 shadow-lg"
-            >
-              {INSTRUMENT_TYPES.map(({ type, label }) => (
-                <button
-                  key={type}
-                  className="w-full px-3 py-1.5 text-left text-role-body text-app-text-strong hover:bg-app-accent/20"
-                  onClick={() => addInstrument(type)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
+          <HostSurfacePortal
+            session={addMenuSurface}
+            role="menu"
+            className="z-20 min-w-45 rounded border border-app-border bg-app-menu py-1 shadow-lg"
+          >
+            {INSTRUMENT_TYPES.map(({ type, label }) => (
+              <button
+                key={type}
+                className="w-full px-3 py-1.5 text-left text-role-body text-app-text-strong hover:bg-app-accent/20"
+                onClick={() => addInstrument(type)}
+              >
+                {label}
+              </button>
+            ))}
+          </HostSurfacePortal>
         </div>
       </div>
 

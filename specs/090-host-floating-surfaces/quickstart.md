@@ -8,6 +8,15 @@ Assumptions). Contracts: [host-surface module](contracts/host-surface-module.md)
 [Radix integration](contracts/radix-surface-integration.md),
 [readout parity](contracts/automation-readout-parity.md).
 
+## Closeout record (2026-08-25)
+
+- Automated gates passed: 396 test files, 3,744 tests passed, 2 skipped; renderer build, lint, and
+  `git diff --check` passed.
+- The project owner performed targeted manual testing and accepted the observed behavior as
+  sufficient for closeout. The complete matrix below was not executed.
+- The reusable-select extension additionally passed a zero-occurrence application-source audit for
+  native `<select>` declarations and focused host-document/selection regression coverage.
+
 ## Prerequisites
 
 - Dependencies installed (`pnpm install` from repo root)

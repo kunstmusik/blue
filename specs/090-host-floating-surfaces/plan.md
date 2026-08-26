@@ -23,9 +23,9 @@ No native menus, no overlay windows, no persistence changes.
 **Language/Version**: TypeScript (strict mode), React 19, Electron 35.
 
 **Primary Dependencies**: `dockview` 5 (panel floating/popout), Radix UI
-(`react-context-menu`, `react-dropdown-menu`, `react-tooltip` — already direct dependencies),
-`@floating-ui/dom` (to be **added as a direct dependency**; today it only exists transitively
-through Radix), `@rgrove/parse-xml` untouched.
+(`react-context-menu`, `react-dropdown-menu`, `react-tooltip` — already direct dependencies;
+`@radix-ui/react-select` added directly for the reusable application choice control),
+`@floating-ui/dom` (added as a direct dependency), `@rgrove/parse-xml` untouched.
 
 **Storage**: N/A — popup open/anchor/placement/dismissal state is renderer-owned disposable
 interaction state. No `.blue` XML, settings, or IPC persistence changes (spec FR-013).
@@ -50,7 +50,9 @@ use `text-role-subheadline`. Popups from panel content follow `docs/popout-popup
 line-editor tooltip and context menu, and the automation point readout; the category rule governs
 all other workbench surfaces, whose inventory is enumerated during implementation. Smallest
 supported host-panel size for validation is pinned to **240 × 160 CSS px** (plan decision resolving
-the deferred clarification for SC-005).
+the deferred clarification for SC-005). A closeout extension standardizes application-owned
+single-choice fields on `AppSelect`: 41 native controls across 29 files, including Settings-window
+fields, while preserving the Settings window's separate main-window hosting model.
 
 ## Constitution Check
 
@@ -107,10 +109,15 @@ packages/blue-app/src/renderer/
 │   │   ├── use-host-surface.ts              # anchor descriptor -> placement/lifecycle hook
 │   │   ├── HostSurfacePortal.tsx             # host-body portal + event isolation + dismissal
 │   │   └── host-surface-options.ts           # typed options (kind, gap, margin, closeOnHostScroll…)
-│   ├── floating-position-utils.ts           # EXISTING seam; unchanged for ColorPicker/Settings consumers
+│   ├── AppSelect.tsx                         # reusable Radix choice control + host-aware portal
+│   ├── ColorPicker.tsx                      # consumer: anchor-resolved popover
+│   ├── floating-position-utils.ts           # LEGACY seam; Settings-window consumer only
 │   └── workbench/panels/
 │       ├── shared/line-editor/EditableLineCanvas.tsx      # consumer: tooltip + context menu
-│       └── score/automation/AutomationLineView.tsx        # consumer: point readout
+│       ├── score/automation/AutomationLineView.tsx        # consumer: point readout
+│       ├── score-object/note-processors/NoteProcessorChainEditor.tsx # consumer: dropdowns
+│       ├── score-object/editors/JMaskEditor.tsx           # consumer: visibility menu
+│       └── orchestra/                                     # consumers: add + font dropdowns
 ├── hooks/
 │   ├── host-portals.tsx                     # EXISTING Radix Popout*Portal wrappers + isolation props
 │   └── use-host-document.ts                 # EXISTING host document resolution
@@ -128,10 +135,20 @@ packages/blue-app/src/renderer/
 **Structure Decision**: The feature stays entirely inside the `@blue/app` renderer. The new
 `components/host-surface/` module deepens the existing SPEC 089 seams (`hooks/use-host-document.ts`,
 `hooks/host-portals.tsx`, `utils/cross-realm-dom.ts`) rather than adding a package or layer:
-`floating-position-utils.ts` is intentionally left as-is for its current consumers (ColorPicker,
-Settings `RuntimeDeviceField`), because the new module needs measured-size collision, virtual
-anchors, and anchor-following updates those callers never asked for. Consolidating those callers
-onto the new module is a follow-up, not part of this feature.
+`floating-position-utils.ts` is intentionally left for its Settings consumer
+(`RuntimeDeviceField`, out of scope by spec assumption). A post-implementation review
+(2026-08-25, tasks T025–T030) migrated the remaining panel-content hand-rolled surfaces onto
+the module — the line-editor consumers and automation readout from the original scope, plus the
+NoteProcessorChainEditor dropdowns, Arrangement "+ Add", JMask parameter visibility, the BSB font
+chooser, and the color picker (whose `anchorElement.ownerDocument` resolution is preserved via a
+`hostDocument` override option).
+
+The later reusable-select extension is adjacent to, but broader than, the original host-surface
+acceptance set. `AppSelect` uses `PopoutSelectPortal` for panel-hosted fields and the established
+global-document fallback for the separate Settings window. This does not bring Settings into the
+Dockview lifecycle scope; it only gives its single-choice fields the same application styling and
+interaction semantics. The searchable font-family picker remains purpose-built because filtering
+is part of its contract, while the font-style field uses `AppSelect`.
 
 ## Key Design Decisions
 
@@ -163,11 +180,23 @@ onto the new module is a follow-up, not part of this feature.
    (used by JSDOM viewports and manual acceptance for SC-005/SC-007); keyboard parity (arrows,
    Enter, Escape, focus restoration in floated windows) is explicit verification work, not an
    assumption under FR-010.
+7. **One application choice control.** `AppSelect` wraps Radix Select, portals through the hosting
+   document, and owns Blue trigger/item styling, keyboard/typeahead behavior, collision limits,
+   disabled options, and empty-value encoding. Callers retain domain-specific string/number
+   coercion. Searchable pickers remain specialized rather than overloading this interface.
 
 ## Complexity Tracking
 
-No constitution violations. The one dependency addition (`@floating-ui/dom`) resolves a
-demonstrated need (measured collision + auto-update across realms) with the simplest design that
-preserves existing contracts; the rejected compliant alternative — extending
+No constitution violations. The dependency additions (`@floating-ui/dom` and
+`@radix-ui/react-select`) resolve demonstrated placement and application-control consistency needs.
+`@floating-ui/dom` provides measured collision and auto-update behavior across realms with the
+simplest design that preserves existing contracts; the rejected compliant alternative — extending
 `floating-position-utils.ts` by hand — would re-implement Floating UI's flip/shift/size/autoUpdate
 pipeline inside the repository and permanently diverge from Radix's positioning math.
+
+## Closeout
+
+All implementation and convergence tasks are complete. Automated validation passed with 396 test
+files and 3,744 passing tests (2 skipped), plus a clean renderer build, lint run, and whitespace
+check. The project owner accepted targeted manual testing as sufficient on 2026-08-25; the full
+Electron quickstart matrix was not run, and that limitation is recorded rather than inferred away.

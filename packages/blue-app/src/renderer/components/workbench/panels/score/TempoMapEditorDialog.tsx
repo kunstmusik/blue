@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoPointSnapshot, TempoMapPatch, TimeConversionContext } from '../../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time/time-unit-logic';
+import { AppSelect } from '../../../AppSelect';
 
 interface TempoMapEditorDialogProps {
   tempoMap: TempoMapSnapshot;
@@ -298,15 +299,12 @@ export default function TempoMapEditorDialog({
                 return (
                   <tr key={i} className="border-t border-app-border/10">
                     <td className="py-1 pr-2">
-                      <select
+                      <AppSelect
                         className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-role-body text-app-text outline-none focus:border-app-border/60"
                         value={row.timeBase}
-                        onChange={(e) => handleTimeBaseChange(i, e.target.value)}
-                      >
-                        {TIME_BASE_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
+                        onValueChange={(value) => handleTimeBaseChange(i, value)}
+                        options={TIME_BASE_OPTIONS}
+                      />
                     </td>
                     <td className="py-1 pr-2">
                       <input

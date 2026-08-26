@@ -605,6 +605,10 @@ describe('Track layer timeline gestures', () => {
   });
 
   it('applies successive picker colors to every selected Track SoundObject', async () => {
+    for (const element of [document.documentElement, document.body]) {
+      Object.defineProperty(element, 'clientWidth', { configurable: true, get: () => 1024 });
+      Object.defineProperty(element, 'clientHeight', { configurable: true, get: () => 768 });
+    }
     const group = makeTrackGroup([
       makeItem('track-object', 1, 1),
       makeItem('track-object-2', 3, 1),

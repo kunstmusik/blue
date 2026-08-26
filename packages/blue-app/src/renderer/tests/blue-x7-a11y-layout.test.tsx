@@ -75,7 +75,7 @@ describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
     expect(container?.querySelector('button[aria-label="Redo BlueX7 edit"]')).not.toBeNull();
 
     // Common panel
-    expect(container?.querySelector('select[aria-label="Algorithm"]')).not.toBeNull();
+    expect(container?.querySelector('[role="combobox"][aria-label="Algorithm"]')).not.toBeNull();
     expect(container?.querySelector('input[aria-label="Feedback"]')).not.toBeNull();
     expect(container?.querySelector('input[aria-label="Key Transpose"]')).not.toBeNull();
 

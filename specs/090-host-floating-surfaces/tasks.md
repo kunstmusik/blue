@@ -123,8 +123,29 @@ cannot omit verification merely because the feature specification does not reque
 - [X] T020 [P] Update `docs/popout-popup-conventions.md` to name the host-surface module as the canonical path for hand-rolled (non-Radix) surfaces, linking specs/090-host-floating-surfaces/contracts/host-surface-module.md
 - [X] T021 [P] Confirm `docs/typography.md` needs no change: readout adopted the existing `text-role-subheadline` role and no role/metric/ownership boundary moved (AGENTS.md typography guidance)
 - [X] T022 Audit constitution compliance for the finished feature: `@blue/data`, `src/main/`, `src/preload/`, and all IPC/engine/Java-runtime surfaces untouched; popup state remains disposable renderer state with no new persistence (constitution I/III/IV; FR-013)
-- [ ] T023 Run the manual Electron acceptance in `specs/090-host-floating-surfaces/quickstart.md` end to end (docked + floated, including the 240 × 160 px floor and keyboard parity §D)
+- [X] T023 Close manual acceptance with project-owner approval after targeted testing; the full `specs/090-host-floating-surfaces/quickstart.md` matrix was not executed, and the accepted limitation is recorded in the spec and quickstart (docked + floated, 240 × 160 px floor, and keyboard parity §D)
 - [X] T024 Run full validation from the repository root: `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build:renderer`, `pnpm lint`, `git diff --check`
+
+---
+
+## Phase 7: Follow-up Surface Migrations (post-implementation review, 2026-08-25)
+
+**Purpose**: A post-review audit of hand-rolled positioned surfaces in panel
+content found more consumers of the pre-090 patterns (fixed height caps,
+`absolute top-full` dropdowns, the legacy `floating-position-utils` seam).
+These migrations bring them under the same host-surface policy.
+
+- [X] T025 Add a `hostDocument` override option to the host-surface module in `packages/blue-app/src/renderer/components/host-surface/` so components that resolve their hosting document from an anchor element (not the panel context alone) can use the shared policy; record it in `specs/090-host-floating-surfaces/contracts/host-surface-module.md`
+- [X] T026 [P] Migrate the Arrangement "+ Add" instrument dropdown in `packages/blue-app/src/renderer/components/workbench/panels/orchestra/ArrangementPanel.tsx` from the hand-rolled `absolute top-full` menu to the host-surface module (element anchor, align end, replaces the `useDocumentMouseDownOutside` trigger/menu containment guard)
+- [X] T027 [P] Migrate the JMask "Parameter Visibility" dropdown in `packages/blue-app/src/renderer/components/workbench/panels/score-object/editors/JMaskEditor.tsx` to the host-surface module (element anchor; gains host-bound dismissal it previously lacked)
+- [X] T028 [P] Migrate the font chooser dropdown in `packages/blue-app/src/renderer/components/workbench/panels/orchestra/bsb/FontChooserDialog.tsx` to the host-surface module (element anchor; replaces the `max-h-48` wrapper cap while keeping the filter input and its designed internal scroll list; the dropdown swallows Escape so the surrounding modal stays open)
+- [X] T029 Migrate the color picker popover in `packages/blue-app/src/renderer/components/ColorPicker.tsx` from the legacy `floating-position-utils` positioning seam to the host-surface module, preserving its public API (`anchor` rect, `anchorElement`, `anchorHitTarget`, position exports) and document-resolution precedence (`anchorElement.ownerDocument` first); after this, `floating-position-utils.ts` serves only the Settings-window runtime-device list, which is out of scope by spec
+- [X] T030 Extend regression coverage for the migrated surfaces (arrangement add menu, JMask visibility popup, font chooser dropdown, color picker) using the existing two-document patterns in `packages/blue-app/src/renderer/tests/`, then run `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build:renderer`, `pnpm lint`, `git diff --check`
+
+Exempt after audit (documented reasons): Settings-window surfaces (own realm,
+spec assumption), menu-bar chrome (main-window only), Dockview tab renderers
+(`AuxiliaryTab` already targets `api.getWindow()`), and scrollable dialog
+bodies (content areas, not popups).
 
 ---
 
@@ -209,3 +230,10 @@ Task: "T015 Port automation readout in packages/blue-app/src/renderer/components
 - Reproduction tasks (T007, T012, T013, T017) must fail before their implementation task runs
 - Commit after each task or logical group
 - Stop at any checkpoint to validate the story independently
+
+---
+
+## Phase 8: Convergence
+
+- [X] T031 Record project-owner acceptance of targeted manual testing in `specs/090-host-floating-surfaces/spec.md` and `quickstart.md`, explicitly noting that the complete docked/floated, 240 × 160 px, lifecycle, cross-window dismissal, and keyboard matrix was not executed per SC-001, SC-003, SC-005, and T023
+- [X] T032 Review and document the approved reusable `AppSelect` extension and 41-control application-wide migration, explicitly delimiting the Settings-window rationale and acceptance coverage relative to the named host-surface scope per plan: Scale/Scope and spec: Assumptions

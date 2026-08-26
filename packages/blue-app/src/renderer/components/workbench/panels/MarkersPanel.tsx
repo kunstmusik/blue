@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useProjectStore } from '../../../stores/project-store';
 import type { MarkerSnapshot, TimeConversionContext } from '../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../time/time-unit-logic';
+import { AppSelect } from '../../AppSelect';
 
 export default function MarkersPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
@@ -163,15 +164,12 @@ function MarkerRow({
   return (
     <tr className="border-b border-blue-border/10 align-top hover:bg-blue-surface/40">
       <td className="px-2 py-1.5">
-        <select
+        <AppSelect
           className="w-full rounded border border-blue-border/40 bg-blue-surface/80 px-1.5 py-1 text-role-body text-blue-text focus:border-blue-accent focus:outline-none"
           value={draftTimeBase}
-          onChange={(e) => handleTimeBaseChange(e.target.value)}
-        >
-          {TIME_BASE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.value}</option>
-          ))}
-        </select>
+          onValueChange={handleTimeBaseChange}
+          options={TIME_BASE_OPTIONS.map((option) => ({ value: option.value, label: option.value }))}
+        />
       </td>
       <td className="px-2 py-1.5">
         <input

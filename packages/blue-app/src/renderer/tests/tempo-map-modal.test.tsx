@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TempoMapPatch, TempoMapSnapshot, TimeConversionContext } from '../../shared/project-editor';
 import TempoMapEditorDialog from '../components/workbench/panels/score/TempoMapEditorDialog';
+import { chooseAppSelectOption } from './app-select-test-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -310,14 +311,12 @@ describe('TempoMapEditorDialog', () => {
     });
   });
 
-  it('allows each tempo point to use its own time unit', () => {
+  it('allows each tempo point to use its own time unit', async () => {
     const { container, onCommit } = renderDialog();
-    const selects = Array.from(container.querySelectorAll('select')) as HTMLSelectElement[];
+    const selects = Array.from(container.querySelectorAll('[role="combobox"]')) as HTMLButtonElement[];
     const startInputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[];
 
-    act(() => {
-      setSelectValue(selects[1]!, 'BBF');
-    });
+    await chooseAppSelectOption(selects[1]!, 'BBF (Bar.Beat.Fraction, hundredths)');
 
     expect(startInputs[1]!.value).toBe('2.1.00');
 

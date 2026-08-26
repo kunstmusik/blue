@@ -8,6 +8,7 @@ import GeneratedScoreModal from './GeneratedScoreModal';
 import JavaScriptRuntimeStatusIndicator from './JavaScriptRuntimeStatusIndicator';
 import JythonRuntimeStatusIndicator from './JythonRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { AppSelect } from '../../../../AppSelect';
 
 type ObjectBuilderLanguage = 'PYTHON' | 'JAVASCRIPT' | 'CLOJURE' | 'EXTERNAL';
 type ObjectBuilderTab = 'interface' | 'code' | 'comments';
@@ -131,17 +132,18 @@ export default function ObjectBuilderScoreObjectEditor({
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-blue-border px-3 py-1">
               <label className="flex items-center gap-1 text-role-body text-gray-300">
                 Language
-                <select
+                <AppSelect
                   aria-label="ObjectBuilder language"
                   className="rounded border border-blue-border bg-app-surface px-1 py-0.5"
                   value={languageType}
-                  onChange={(event) => { patch({ languageType: event.target.value }); }}
-                >
-                  <option value="PYTHON">Python</option>
-                  <option value="JAVASCRIPT">JavaScript</option>
-                  <option value="CLOJURE">Clojure</option>
-                  <option value="EXTERNAL">External</option>
-                </select>
+                  onValueChange={(value) => { patch({ languageType: value }); }}
+                  options={[
+                    { value: 'PYTHON', label: 'Python' },
+                    { value: 'JAVASCRIPT', label: 'JavaScript' },
+                    { value: 'CLOJURE', label: 'Clojure' },
+                    { value: 'EXTERNAL', label: 'External' },
+                  ]}
+                />
               </label>
               <label className="flex min-w-48 flex-1 items-center gap-1 text-role-body text-gray-300">
                 Command Line

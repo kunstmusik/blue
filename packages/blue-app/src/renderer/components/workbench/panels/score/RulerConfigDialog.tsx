@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TimeBase } from '@blue/data';
 import type { ScoreTimeStateSnapshot } from '../../../../../shared/project-editor';
 import { useHostDocument } from '../../../../hooks/use-host-document';
+import { AppSelect } from '../../../AppSelect';
 
 const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-role-body text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
@@ -96,15 +97,12 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
             <legend className="text-role-headline font-bold text-blue-text">Primary Ruler</legend>
             <div className="flex items-center gap-2">
               <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
-              <select
+              <AppSelect
                 className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer"
                 value={primaryTimeDisplay}
-                onChange={(e) => setPrimaryTimeDisplay(e.target.value)}
-              >
-                {TIME_DISPLAY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+                onValueChange={setPrimaryTimeDisplay}
+                options={TIME_DISPLAY_OPTIONS}
+              />
             </div>
           </fieldset>
 
@@ -197,15 +195,12 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
             {secondaryRulerEnabled && (
               <div className="flex items-center gap-2">
                 <label className="text-role-body text-blue-muted w-16 shrink-0">Format:</label>
-                <select
+                <AppSelect
                   className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer"
                   value={secondaryTimeDisplay}
-                  onChange={(e) => setSecondaryTimeDisplay(e.target.value)}
-                >
-                  {TIME_DISPLAY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  onValueChange={setSecondaryTimeDisplay}
+                  options={TIME_DISPLAY_OPTIONS}
+                />
               </div>
             )}
           </fieldset>
@@ -215,15 +210,12 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
             <legend className="text-role-headline font-bold text-blue-text">SMPTE Settings</legend>
             <div className="flex items-center gap-2">
               <label className="text-role-body text-blue-muted w-16 shrink-0">Frame Rate:</label>
-              <select
+              <AppSelect
                 className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-role-body text-blue-text cursor-pointer"
                 value={smpteFrameRate}
-                onChange={(e) => setSmpteFrameRate(Number(e.target.value))}
-              >
-                {SMPTE_FRAME_RATES.map((rate) => (
-                  <option key={rate.value} value={rate.value}>{rate.label}</option>
-                ))}
-              </select>
+                onValueChange={(value) => setSmpteFrameRate(Number(value))}
+                options={SMPTE_FRAME_RATES}
+              />
             </div>
           </fieldset>
 

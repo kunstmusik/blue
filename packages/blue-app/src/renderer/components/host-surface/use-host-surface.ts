@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { computePosition, flip, offset, shift, size } from '@floating-ui/dom';
+import { computePosition, flip, offset, shift, size, type Placement } from '@floating-ui/dom';
 import { useHostDocument } from '../../hooks/use-host-document';
-import { isNodeLike } from '../../utils/cross-realm-dom';
+import { containsNode, isNodeLike } from '../../utils/cross-realm-dom';
 import {
   DEFAULT_SURFACE_GAP,
   DEFAULT_SURFACE_MARGIN,
@@ -27,7 +27,16 @@ export interface HostSurfaceSession {
 }
 
 interface FloatingReference {
-  getBoundingClientRect: () => HostAnchorRect;
+  getBoundingClientRect: () => {
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  };
   ownerDocument?: Document | null;
 }
 
@@ -49,6 +58,8 @@ function toFloatingReference(
     getBoundingClientRect: () => {
       const rect = getRect();
       return {
+        x: rect.left,
+        y: rect.top,
         left: rect.left,
         top: rect.top,
         right: rect.right,
@@ -77,7 +88,12 @@ export function useHostSurface(
   anchor: HostSurfaceAnchor | null,
   options: HostSurfaceOptions,
 ): HostSurfaceSession {
-  const hostDocument = useHostDocument();
+  const contextHostDocument = useHostDocument();
+  // An explicit hostDocument (even null) overrides the panel context for
+  // components that resolve their host from an anchor element's realm.
+  const hostDocument = options.hostDocument !== undefined
+    ? options.hostDocument
+    : contextHostDocument;
   const hostWindow = hostDocument?.defaultView ?? null;
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -92,7 +108,7 @@ export function useHostSurface(
   const dismissedRef = useRef(false);
   const pendingRef = useRef(false);
   const frameHandleRef = useRef<number | null>(null);
-  const timerHandleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerHandleRef = useRef<number | null>(null);
   const generationRef = useRef(0);
 
   const [phase, setPhase] = useState<HostSurfacePhase>('closed');
@@ -122,6 +138,9 @@ export function useHostSurface(
     const gap = opts.gap ?? DEFAULT_SURFACE_GAP;
     const margin = opts.margin ?? DEFAULT_SURFACE_MARGIN;
     const align = opts.align ?? 'start';
+    const side = preferredSide(opts);
+    // Floating UI expresses centered alignment as the bare side placement.
+    const placement: Placement = align === 'center' ? side : `${side}-${align}`;
     const generation = ++generationRef.current;
     // This floating-ui version delivers size constraints only through the
     // `apply` callback (middlewareData.size stays empty); capture the last
@@ -130,7 +149,7 @@ export function useHostSurface(
 
     void computePosition(toFloatingReference(currentAnchor, doc), element, {
       strategy: 'fixed',
-      placement: `${preferredSide(opts)}-${align}`,
+      placement,
       middleware: [
         offset(gap),
         flip({ padding: margin }),
@@ -265,6 +284,13 @@ export function useHostSurface(
       const element = surfaceElRef.current;
       return element != null && isNodeLike(target) && element.contains(target);
     };
+    // The trigger toggles an element-anchored surface itself; presses on the
+    // anchor are not "outside" (mirrors Radix trigger/DismissableLayer
+    // coordination, where the trigger click closes via its own handler).
+    const isInsideAnchor = (target: EventTarget | null): boolean => {
+      const anchor = anchorRef.current;
+      return anchor?.type === 'element' && containsNode(anchor.element, target);
+    };
 
     const handleKeyDown = (event: Event) => {
       if ((event as KeyboardEvent).key === 'Escape') {
@@ -272,7 +298,7 @@ export function useHostSurface(
       }
     };
     const handlePointerDown = (event: Event) => {
-      if (!isInsideSurface(event.target)) {
+      if (!isInsideSurface(event.target) && !isInsideAnchor(event.target)) {
         dismiss('outside-pointer');
       }
     };
@@ -292,18 +318,22 @@ export function useHostSurface(
     };
 
     hostWindow.addEventListener('keydown', handleKeyDown);
+    // Document-level too: keydown dispatched at the document (or synthetic
+    // non-bubbling test events) never reaches the window listener.
+    hostDocument.addEventListener('keydown', handleKeyDown);
     hostWindow.addEventListener('mousedown', handlePointerDown);
     hostWindow.addEventListener('pointerdown', handlePointerDown);
     hostWindow.addEventListener('scroll', handleScroll, true);
     hostWindow.addEventListener('resize', handleResize);
     return () => {
       hostWindow.removeEventListener('keydown', handleKeyDown);
+      hostDocument.removeEventListener('keydown', handleKeyDown);
       hostWindow.removeEventListener('mousedown', handlePointerDown);
       hostWindow.removeEventListener('pointerdown', handlePointerDown);
       hostWindow.removeEventListener('scroll', handleScroll, true);
       hostWindow.removeEventListener('resize', handleResize);
     };
-  }, [phase, hostWindow, dismiss, scheduleUpdate]);
+  }, [phase, hostDocument, hostWindow, dismiss, scheduleUpdate]);
 
   const setSurfaceElement = useCallback((element: HTMLElement | null) => {
     surfaceElRef.current = element;

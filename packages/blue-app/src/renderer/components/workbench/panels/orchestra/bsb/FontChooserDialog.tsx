@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import { AppSelect } from '../../../../AppSelect';
 
 export interface FontChoice {
   name: string;
@@ -19,8 +22,9 @@ let cachedFontFamilies: string[] | null = null;
 async function getSystemFontFamilies(): Promise<string[]> {
   if (cachedFontFamilies) return cachedFontFamilies;
   try {
-    if (typeof window !== 'undefined' && typeof window.queryLocalFonts === 'function') {
-      const fonts = await window.queryLocalFonts();
+    const localWindow = window as Window & { queryLocalFonts?: () => Promise<Array<{ family: string }>> };
+    if (typeof window !== 'undefined' && typeof localWindow.queryLocalFonts === 'function') {
+      const fonts = await localWindow.queryLocalFonts();
       const families = [...new Set(fonts.map(f => f.family))];
       const sorted = families.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
       if (!sorted.includes('Roboto')) {
@@ -55,8 +59,21 @@ export default function FontChooserDialog({
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [filter, setFilter] = useState('');
+  const [dropdownButton, setDropdownButton] = useState<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  // Font dropdown on the shared host-surface policy (spec 090): portaled
+  // into the hosting window with viewport-aware height (replacing the fixed
+  // max-h-48 wrapper cap); the filter input's designed internal scroll list
+  // stays, and Escape inside the dropdown closes only the dropdown.
+  const dropdownAnchor = dropdownOpen && dropdownButton
+    ? { type: 'element' as const, element: dropdownButton }
+    : null;
+  const dropdownSurface = useHostSurface(dropdownAnchor, {
+    kind: 'menu',
+    gap: 4,
+    onDismiss: () => setDropdownOpen(false),
+  });
 
   useEffect(() => {
     if (open) {
@@ -88,8 +105,7 @@ export default function FontChooserDialog({
 
   const fontWeight = style === 1 || style === 3 ? 'bold' : 'normal';
   const fontStyleStr = style === 2 || style === 3 ? 'italic' : 'normal';
-  const displayStyle = STYLE_OPTIONS.find(s => s.value === style)?.label ?? 'Plain';
-
+  const displayStyle = STYLE_OPTIONS.find((option) => option.value === style)?.label ?? 'Plain';
   const filtered = filter
     ? fontFamilies.filter(f => f.toLowerCase().includes(filter.toLowerCase()))
     : fontFamilies;
@@ -110,18 +126,41 @@ export default function FontChooserDialog({
         <div className="grid grid-cols-[1fr_80px_100px] gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-role-body uppercase tracking-wider text-app-text-muted">Font</label>
-            <div className="relative">
+            <div>
               <button
+                ref={setDropdownButton}
                 className="flex w-full items-center justify-between rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-left text-role-body text-app-text-strong outline-none hover:border-app-accent focus:border-app-accent"
-                onClick={() => { setDropdownOpen(!dropdownOpen); setFilter(''); }}
+                aria-haspopup="menu"
+                aria-expanded={dropdownOpen}
+                onClick={() => {
+                  setDropdownOpen((openState) => !openState);
+                  setFilter('');
+                }}
               >
                 <span className="truncate" style={{ fontFamily: `'${name}', sans-serif` }}>{name}</span>
                 <ChevronDown className="ml-1 h-3.5 w-3.5 text-app-text-muted" />
               </button>
-              {dropdownOpen && (
-                <div className="absolute left-0 top-full z-10 mt-1 flex max-h-48 w-full flex-col rounded border border-app-border bg-app-surface-raised shadow-lg">
+              <HostSurfacePortal
+                session={dropdownSurface}
+                role="menu"
+                className="z-50 flex flex-col rounded border border-app-border bg-app-surface-raised shadow-lg"
+                style={{
+                  width: 'max-content',
+                  minWidth: dropdownButton?.getBoundingClientRect().width || 240,
+                  maxWidth: 'calc(100vw - 16px)',
+                }}
+                onKeyDown={(event) => {
+                  // Nested-surface rule: Escape closes the dropdown only, not
+                  // the surrounding dialog (synthetic propagation would reach
+                  // the overlay's handler through the React tree).
+                  if (event.key === 'Escape') {
+                    event.stopPropagation();
+                    setDropdownOpen(false);
+                  }
+                }}
+              >
                   <input
-                    className="border-b border-app-border bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none placeholder:text-app-text-muted"
+                    className="w-full border-b border-app-border bg-transparent px-2 py-1 text-role-body text-app-text-strong outline-none placeholder:text-app-text-muted"
                     placeholder="Filter fonts..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
@@ -145,7 +184,7 @@ export default function FontChooserDialog({
                       <button
                         key={f}
                         className={
-                          'w-full px-2 py-1 text-left text-role-body outline-none ' +
+                          'w-full whitespace-nowrap px-2 py-1 text-left text-role-body outline-none ' +
                           (f === name
                             ? 'bg-app-accent/30 text-app-text-strong'
                             : 'text-app-text-strong hover:bg-app-accent/20')
@@ -160,8 +199,7 @@ export default function FontChooserDialog({
                       <div className="px-2 py-2 text-role-body text-app-text-muted">No matching fonts</div>
                     )}
                   </div>
-                </div>
-              )}
+              </HostSurfacePortal>
             </div>
           </div>
 
@@ -183,15 +221,16 @@ export default function FontChooserDialog({
 
           <div className="flex flex-col gap-1">
             <label className="text-role-body uppercase tracking-wider text-app-text-muted">Style</label>
-            <select
-              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-role-body text-app-text-strong outline-none focus:border-app-accent"
+            <AppSelect
+              aria-label="Font style"
+              className="w-full bg-app-surface-raised py-1.5"
               value={style}
-              onChange={(e) => setStyle(parseInt(e.target.value, 10))}
-            >
-              {STYLE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+              options={STYLE_OPTIONS}
+              onValueChange={(value) => {
+                setStyle(Number(value));
+                setDropdownOpen(false);
+              }}
+            />
           </div>
         </div>
 

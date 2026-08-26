@@ -221,6 +221,26 @@ describe('host-surface lifecycle', () => {
     expect(surfaceCount(popoutDoc, document)).toBe(0);
   });
 
+  it('does not dismiss an element-anchored surface for presses on its anchor (trigger toggles)', async () => {
+    const trigger = popoutDoc.createElement('button');
+    popoutDoc.body.appendChild(trigger);
+    await openSurface('menu', { type: 'element', element: trigger });
+
+    act(() => {
+      trigger.dispatchEvent(new PopoutMouseEvent('pointerdown', { bubbles: true }));
+      trigger.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(surfaceCount(popoutDoc)).toBe(1);
+    expect(dismissals).toHaveLength(0);
+
+    // A press elsewhere in the host document still dismisses.
+    act(() => {
+      popoutDoc.body.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
+    });
+    expect(dismissals).toContain('outside-pointer');
+    expect(surfaceCount(popoutDoc, document)).toBe(0);
+  });
+
   it('leaves no orphaned DOM and reports host-unmount on unmount (FR-011, SC-003)', async () => {
     await openSurface('popover');
     expect(surfaceCount(popoutDoc)).toBe(1);

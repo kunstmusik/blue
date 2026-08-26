@@ -78,7 +78,7 @@ describe('panel dialogs and inline menus in a floated (popout) panel', () => {
     act(() => {
       addButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
-    const openMenu = () => host.querySelector<HTMLElement>('div.relative > div.absolute');
+    const openMenu = () => popoutDoc.body.querySelector<HTMLElement>('[data-host-surface]');
     expect(openMenu()).toBeTruthy();
 
     // Listener attaches in an effect; flush before asserting dismissal routing.

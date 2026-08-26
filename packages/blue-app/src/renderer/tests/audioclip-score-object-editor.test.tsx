@@ -169,7 +169,7 @@ describe('AudioClipScoreObjectEditor — Component UI and Parity', () => {
     expect(loopingInput.checked).toBe(true);
 
     // Fade Types selects
-    const selects = container!.querySelectorAll('select');
+    const selects = container!.querySelectorAll('[role="combobox"]');
     expect(selects.length).toBeGreaterThanOrEqual(2);
 
     // Parity: Extraneous "Channels" and "Audio Duration" bottom rows should NOT exist

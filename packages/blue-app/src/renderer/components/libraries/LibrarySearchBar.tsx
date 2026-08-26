@@ -1,4 +1,5 @@
 import type { LibraryType } from '../../../shared/unified-library';
+import { AppSelect } from '../AppSelect';
 
 interface LibrarySearchBarProps {
   query: string;
@@ -20,18 +21,19 @@ export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactEleme
       />
         <label className="min-w-0">
           <span className="sr-only">Type</span>
-          <select
+          <AppSelect
             aria-label="Library type"
             className="h-full w-full min-w-0 rounded border border-app-border bg-app-bg px-1 text-role-body text-app-text"
             value={props.typeFilter}
-            onChange={(event) => props.onTypeFilterChange(event.target.value as LibraryType | 'all')}
-          >
-            <option value="all">All types</option>
-            <option value="instrument">Instruments</option>
-            <option value="udo">UDOs</option>
-            <option value="soundObject">SoundObjects</option>
-            <option value="effect">Effects</option>
-          </select>
+            onValueChange={(value) => props.onTypeFilterChange(value as LibraryType | 'all')}
+            options={[
+              { value: 'all', label: 'All types' },
+              { value: 'instrument', label: 'Instruments' },
+              { value: 'udo', label: 'UDOs' },
+              { value: 'soundObject', label: 'SoundObjects' },
+              { value: 'effect', label: 'Effects' },
+            ]}
+          />
         </label>
     </div>
   );

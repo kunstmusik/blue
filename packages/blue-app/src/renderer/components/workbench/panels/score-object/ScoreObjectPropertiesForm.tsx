@@ -13,6 +13,7 @@ import {
 import TimeUnitEditor from './TimeUnitEditor';
 import NoteProcessorChainEditor from './note-processors/NoteProcessorChainEditor';
 import ColorPickerButton from '../../../ColorPicker';
+import { AppSelect } from '../../../AppSelect';
 
 interface ScoreObjectPropertiesFormProps {
   document: ScoreObjectEditorDocumentSnapshot;
@@ -89,16 +90,13 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
 
 function SelectInput({ value, options, onChange, disabled }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void; disabled?: boolean }): React.ReactElement {
   return (
-    <select
+    <AppSelect
       className={BLUE_INSPECTOR_INPUT_CLASS}
       value={value}
       disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+      onValueChange={onChange}
+      options={options}
+    />
   );
 }
 

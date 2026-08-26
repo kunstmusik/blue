@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { X } from 'lucide-react';
 import type { FieldDefSnapshot } from './types';
+import { AppSelect } from '../../../../../AppSelect';
 
 interface FieldDefinitionsEditorProps {
   fieldDefinitions: FieldDefSnapshot[];
@@ -45,13 +46,14 @@ export default function FieldDefinitionsEditor({
                   />
                 </td>
                 <td className="py-0.5 px-1">
-                  <select className="bg-transparent text-gray-200 focus:outline-none"
+                  <AppSelect className="bg-transparent text-gray-200 focus:outline-none"
                     value={fd.fieldType}
-                    onChange={(e) => onPatch({ updateFieldDef: { index, fieldType: e.target.value } })}
-                  >
-                    <option value="CONTINUOUS">Continuous</option>
-                    <option value="DISCRETE">Discrete</option>
-                  </select>
+                    onValueChange={(value) => onPatch({ updateFieldDef: { index, fieldType: value } })}
+                    options={[
+                      { value: 'CONTINUOUS', label: 'Continuous' },
+                      { value: 'DISCRETE', label: 'Discrete' },
+                    ]}
+                  />
                 </td>
                 <td className="py-0.5 px-1">
                   <input type="number" className="w-12 bg-transparent text-gray-200 focus:outline-none"

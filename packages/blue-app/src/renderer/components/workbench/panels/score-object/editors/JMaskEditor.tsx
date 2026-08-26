@@ -8,6 +8,8 @@ import ParameterRow from './jmask/ParameterRow';
 import CommitNumberInput from './jmask/CommitNumberInput';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
+import { useHostSurface } from '../../../../host-surface/use-host-surface';
 
 export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
@@ -18,6 +20,18 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
   const parameters = useMemo(() => getParameters(field), [field]);
   const duration = document.shared.subjectiveDuration.value;
   const [showVisibilityPopup, setShowVisibilityPopup] = useState(false);
+  const [visibilityButton, setVisibilityButton] = useState<HTMLButtonElement | null>(null);
+  // Parameter-visibility popup on the shared host-surface policy (spec 090):
+  // portaled into the hosting window with host-bound dismissal, which this
+  // popup previously lacked entirely.
+  const visibilityAnchor = showVisibilityPopup && visibilityButton
+    ? { type: 'element' as const, element: visibilityButton }
+    : null;
+  const visibilitySurface = useHostSurface(visibilityAnchor, {
+    kind: 'menu',
+    gap: 4,
+    onDismiss: () => setShowVisibilityPopup(false),
+  });
 
   const {
     testing,
@@ -91,36 +105,39 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
     <div ref={testRef} className="flex h-full flex-col bg-blue-bg" tabIndex={-1}>
       <div className="flex shrink-0 items-center gap-2 border-b border-app-border bg-app-surface-strong px-2 py-1">
         <span className="text-role-headline font-bold text-app-text">JMask</span>
-        <div className="relative">
+        <div>
           <button
+            ref={setVisibilityButton}
             type="button"
             className="flex h-4 w-4 items-center justify-center rounded text-role-callout text-app-text-muted hover:bg-blue-border"
-            onClick={() => setShowVisibilityPopup(p => !p)}
+            onClick={() => setShowVisibilityPopup((open) => !open)}
             title="Parameter Visibility"
             aria-label="Parameter Visibility"
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
-          {showVisibilityPopup && (
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded border border-blue-border bg-app-menu py-1 shadow-xl">
-              {parameters.map((p, i) => {
-                const pName = typeof p.name === 'string' && p.name ? p.name : '';
-                const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
-                const isVisible = p.visible !== false;
-                return (
-                  <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-role-body text-app-text hover:bg-blue-accent/20">
-                    <input
-                      type="checkbox"
-                      checked={isVisible}
-                      onChange={() => handleVisibilityToggle(i, !isVisible)}
-                      className="rounded border border-blue-border"
-                    />
-                    {itemLabel}
-                  </label>
-                );
-              })}
-            </div>
-          )}
+          <HostSurfacePortal
+            session={visibilitySurface}
+            role="menu"
+            className="z-50 min-w-[200px] rounded border border-blue-border bg-app-menu py-1 shadow-xl"
+          >
+            {parameters.map((p, i) => {
+              const pName = typeof p.name === 'string' && p.name ? p.name : '';
+              const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
+              const isVisible = p.visible !== false;
+              return (
+                <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-role-body text-app-text hover:bg-blue-accent/20">
+                  <input
+                    type="checkbox"
+                    checked={isVisible}
+                    onChange={() => handleVisibilityToggle(i, !isVisible)}
+                    className="rounded border border-blue-border"
+                  />
+                  {itemLabel}
+                </label>
+              );
+            })}
+          </HostSurfacePortal>
         </div>
         <div className="flex-1" />
         <label className="flex items-center gap-1 text-role-body text-gray-300">
