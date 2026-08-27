@@ -115,4 +115,19 @@ describe('StartupLifecycle', () => {
     }
     expect(shutdown).not.toContain('rollbackFailedStartup');
   });
+
+  it('reuses one lazy factory-manifest provider across Open Example actions', () => {
+    const source = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
+    const providerDeclaration = source.indexOf(
+      'const exampleFactoryManifestProvider = createFactoryManifestProvider()',
+    );
+    const openExampleDeclaration = source.indexOf('async function openExampleProject()');
+    const openExampleEnd = source.indexOf('async function importCsdFile()', openExampleDeclaration);
+    const openExampleSource = source.slice(openExampleDeclaration, openExampleEnd);
+
+    expect(providerDeclaration).toBeGreaterThan(-1);
+    expect(providerDeclaration).toBeLessThan(openExampleDeclaration);
+    expect(openExampleSource).toContain('manifestProvider: exampleFactoryManifestProvider');
+    expect(openExampleSource).not.toContain('createFactoryManifestProvider()');
+  });
 });

@@ -94,8 +94,18 @@ import {
 } from './blue-live-trigger-controller';
 import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
-import { resolveExampleProjectPath } from './example-project-path';
+import {
+  resolveExampleLibraryPickerSelection,
+  resolveExampleProjectPath,
+} from './example-project-path';
 import { isSameProjectPathIdentity } from './project-path';
+import { createExampleLibraryService, type ExampleLibraryInspection } from './example-library/service';
+import { createFactoryManifestProvider } from './example-library/manifest';
+import {
+  formatExampleConflictDetail,
+  runOpenExampleProjectFlow,
+  type UpdateOfferChoice,
+} from './open-example-project-flow';
 import {
   resolveReplacementSaveDecision,
   runProjectFileReplacement,
@@ -355,6 +365,7 @@ import {
 } from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
+const exampleFactoryManifestProvider = createFactoryManifestProvider();
 const projectSession = new ProjectSession();
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
@@ -2068,31 +2079,301 @@ async function openFilePath(filePath: string): Promise<boolean> {
 }
 
 /**
- * Opens the bundled examples directory in a file picker (Java Blue's "Open
- * Example Project"). The resolved examples directory seeds the dialog; the
- * selected `.blue` file is handed to the accepted-target replacement flow,
- * so replacement decisions appear only after a selection is accepted.
+ * Opens an example through the user-owned example library (spec
+ * 091-factory-examples). Packaged examples are immutable factory input: this
+ * action lazily creates/updates the per-user copy when needed, shows the
+ * picker from Blue-owned content, and routes the selected `.blue` file
+ * through the accepted-target replacement flow. Created only on invocation —
+ * never at startup (FR-002).
  */
 async function openExampleProject(): Promise<boolean> {
   if (!mainWindow) return false;
-  if (!(await canReplaceProjectWhileRenderActive())) return false;
+  const win = mainWindow;
 
-  const resolution = resolveExampleProjectPath({
+  const factoryResolution = resolveExampleProjectPath({
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
     resourcesPath: process.resourcesPath,
   });
+  const libraryRoot = path.join(app.getPath('userData'), 'examples');
+  const currentContentRoot = path.join(libraryRoot, 'current', 'content');
 
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Open Example Project',
-    defaultPath: resolution.exists ? resolution.examplesPath : getConfiguredWorkDirectory(),
-    filters: [{ name: 'Blue Project', extensions: ['blue'] }],
-    properties: ['openFile'],
+  const libraryService = createExampleLibraryService({
+    libraryRoot,
+    manifestProvider: exampleFactoryManifestProvider,
+    getFactoryRoot: async () =>
+      factoryResolution.exists ? factoryResolution.examplesPath : null,
   });
 
-  if (result.canceled || result.filePaths.length === 0) return false;
+  let lastInspection: ExampleLibraryInspection | null = null;
 
-  return openProjectFile(result.filePaths[0]);
+  async function askNativeDecision(
+    request: Parameters<typeof showNativeConfirmation>[1],
+  ): Promise<string> {
+    const result = await showNativeConfirmation(win, request);
+    return result.outcome === 'selected' ? result.actionId : 'cancel';
+  }
+
+  function showLibraryError(message: string): void {
+    dialog.showErrorBox('Examples', message);
+  }
+
+  const prepared = await runOpenExampleProjectFlow<BlueData>({
+    preflight: () => canReplaceProjectWhileRenderActive(),
+    runRecoveryAndInspect: async () => {
+      const outcome = await libraryService.inspect();
+      if (!outcome.ok) {
+        return {
+          ok: false as const,
+          kind: 'inspection-blocked' as const,
+          diagnostic: outcome.message,
+        };
+      }
+      if (
+        outcome.value.status === 'invalid-user-library'
+        || outcome.value.status === 'unavailable'
+      ) {
+        return {
+          ok: false as const,
+          kind: 'inspection-blocked' as const,
+          diagnostic:
+            outcome.value.status === 'unavailable'
+              ? outcome.value.diagnostic
+              : `${outcome.value.diagnostic} Nothing was modified.`,
+        };
+      }
+      lastInspection = outcome.value;
+      return { ok: true as const, inspection: outcome.value };
+    },
+    prepareFirstUseCopy: async () => {
+      const inspection = lastInspection;
+      if (inspection === null || inspection.status !== 'needs-initialization') {
+        return {
+          ok: false,
+          code: 'conflict',
+          message: 'The example library changed while preparing the copy.',
+          retryable: true,
+        };
+      }
+      const copy = await libraryService.prepareInitialCopy(inspection.factory);
+      if (!copy.ok) {
+        return {
+          ok: false,
+          code: copy.code,
+          message: copy.message,
+          retryable: copy.retryable,
+        };
+      }
+      return { ok: true, candidate: copy.value };
+    },
+    prepareUpdateCandidate: async () => {
+      const outcome = await libraryService.prepareUpdate();
+      if (!outcome.ok) {
+        return {
+          ok: false,
+          code: outcome.code,
+          message: outcome.message,
+          retryable: outcome.retryable,
+        };
+      }
+      return { ok: true, candidate: outcome.value };
+    },
+    recordKeepCurrentDecline: async () => {
+      const inspection = lastInspection;
+      if (inspection === null || inspection.status !== 'update-available') {
+        return { ok: false, message: 'No example update is currently available.', retryable: false };
+      }
+      const outcome = await libraryService.recordDeclinedRevision(
+        inspection.current.state,
+        inspection.factory.revision,
+      );
+      return outcome.ok
+        ? { ok: true }
+        : { ok: false, message: outcome.message, retryable: outcome.retryable };
+    },
+    commitCandidateOrNull: async (candidate) => {
+      if (candidate === null) return { ok: true };
+      const committed = await libraryService.commit(candidate);
+      return committed.ok
+        ? { ok: true }
+        : { ok: false, message: committed.message, retryable: committed.retryable };
+    },
+    discardCandidate: async (candidate) => {
+      if (candidate !== null) await libraryService.abort(candidate);
+    },
+
+    chooseFirstUseCopy: async () => {
+      const decision = await askNativeDecision({
+        id: 'open-example-first-use',
+        type: 'question',
+        title: 'Open Example Project',
+        message:
+          'Blue examples ship with the application and stay untouched. Create your own writable copy so you can edit and render them?',
+        detail:
+          'Your copy lives in your Blue user data. The packaged examples are never modified.',
+        actions: [
+          { id: 'copy-and-open', label: 'Copy and Open' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'copy-and-open',
+        cancelActionId: 'cancel',
+      });
+      return decision === 'copy-and-open';
+    },
+
+    chooseForUpdateOffer: async (): Promise<UpdateOfferChoice> => {
+      const raw = await askNativeDecision({
+        id: 'open-example-update-offer',
+        type: 'question',
+        title: 'Example Updates Available',
+        message:
+          'The examples bundled with this version of Blue differ from your example library.',
+        detail:
+          'Update refreshes examples you have not modified. Your edited files, new files, and deletions are always kept.',
+        actions: [
+          { id: 'update-and-open', label: 'Update and Open' },
+          { id: 'keep-current-and-open', label: 'Keep Current and Open', role: 'secondary' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'update-and-open',
+        cancelActionId: 'cancel',
+      });
+      if (
+        raw === 'update-and-open'
+        || raw === 'keep-current-and-open'
+      ) {
+        return raw;
+      }
+      return 'cancel';
+    },
+
+    chooseContinueDespiteUpdateConflicts: async (report) => {
+      const decision = await askNativeDecision({
+        id: 'open-example-update-conflicts',
+        type: 'warning',
+        title: 'Examples Kept As-Is',
+        message:
+          'Some updated examples conflict with your own changes. Your versions are kept.',
+        detail: formatExampleConflictDetail(report),
+        actions: [
+          { id: 'continue', label: 'Continue' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'continue',
+        cancelActionId: 'cancel',
+      });
+      return decision === 'continue';
+    },
+
+    chooseOpenCurrentExamplesWithoutUpdateCheck: async () => {
+      const decision = await askNativeDecision({
+        id: 'open-example-factory-unavailable',
+        type: 'question',
+        title: 'Open Example Project',
+        message: 'Opening your existing example library without checking for updates.',
+        detail: 'The packaged examples on this installation could not be read.',
+        actions: [
+          { id: 'open-current', label: 'Open Current Examples' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'open-current',
+        cancelActionId: 'cancel',
+      });
+      return decision === 'open-current';
+    },
+
+    // Spec edge case: never modify an open example's file underneath the
+    // user. When the active project lives inside the current library, run
+    // its existing save/discard/cancel protection before the library swap.
+    ensureActiveProjectSafeBeforeLibrarySwap: () => {
+      if (!hasLoadedProject()) return true;
+      const activeFilePath = getCurrentFilePath();
+      if (!activeFilePath) return true;
+      const relative = path.relative(currentContentRoot, activeFilePath);
+      const activeProjectIsLibraryExample =
+        relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+      if (!activeProjectIsLibraryExample) return true;
+      return confirmSaveBeforeReplace();
+    },
+
+    showProjectPicker: (defaultRoot) =>
+      dialog
+        .showOpenDialog(win, {
+          title: 'Open Example Project',
+          defaultPath: defaultRoot,
+          filters: [{ name: 'Blue Project', extensions: ['blue'] }],
+          properties: ['openFile'],
+        })
+        .then((result) => (result.canceled ? null : (result.filePaths[0] ?? null))),
+
+    resolvePickerSelection: (selectedPath, offeredRoot) =>
+      resolveExampleLibraryPickerSelection(
+        selectedPath,
+        offeredRoot,
+        currentContentRoot,
+      ),
+
+    loadProjectFromFile: async (filePath) => {
+      try {
+        const xml = fs.readFileSync(filePath, 'utf8');
+        const project = await BlueData.loadFromString(xml);
+        return { ok: true, project };
+      } catch (err) {
+        return {
+          ok: false,
+          message: err instanceof Error ? err.message : String(err),
+        };
+      }
+    },
+
+    isSameFileAsCurrent: (finalContentPath) =>
+      hasLoadedProject() && isCurrentProjectFilePath(finalContentPath),
+    confirmLibraryDraftTransition: () => confirmLibraryDraftTransition('switchProject'),
+    confirmSaveBeforeReplace: () => confirmSaveBeforeReplace(),
+    getCurrentContentRoot: () => currentContentRoot,
+
+    installParsedProject: (project, finalContentPath) =>
+      installProjectData(project as BlueData, finalContentPath),
+
+    reportBlockedLibrary: (diagnostic) => {
+      showLibraryError(diagnostic);
+    },
+    reportRejectedSelection: () => {
+      showLibraryError(
+        'Examples open from your Blue example library. Pick a .blue project from the offered folder. To open a project elsewhere, use Open Project.',
+      );
+    },
+    reportPreparationFailure: async (message, retryable) => {
+      if (!retryable) {
+        showLibraryError(message);
+        return false;
+      }
+      const decision = await askNativeDecision({
+        id: 'open-example-library-failure',
+        type: 'error',
+        title: 'Example Library Problem',
+        message,
+        detail: 'You can try again; nothing in your projects or bundled examples was changed.',
+        actions: [
+          { id: 'retry', label: 'Try Again' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'retry',
+        cancelActionId: 'cancel',
+      });
+      return decision === 'retry';
+    },
+    reportProjectLoadFailure: (message) => {
+      showLibraryError(`Could not open the selected example:\n${message}`);
+    },
+    reportPostCommitInstallFailure: (message) => {
+      showLibraryError(
+        `The example library was updated, but opening the example failed:\n${message}`,
+      );
+    },
+  });
+
+  return prepared.status === 'committed';
 }
 
 async function importCsdFile(): Promise<boolean> {
