@@ -84,6 +84,7 @@ export class Score extends Array<LayerGroup<Layer>> {
         const runtimeId = compileData.addInstrument(renderInstrument);
         compileData.addInstrSourceId(renderInstrument, track.getUniqueId());
         compileData.setTrackInstrumentId(track.getUniqueId(), runtimeId);
+        compileData.setTrackRootGroupId(track.getUniqueId(), layerGroup.getUniqueId());
       }
     }
   }

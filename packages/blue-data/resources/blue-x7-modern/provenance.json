@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "scripts/generate-blue-x7-modern-orchestra.mjs",
+    "version": 1,
+    "packageScript": "generate:blue-x7"
+  },
+  "precursor": {
+    "role": "Transient precursor work; not a runtime or build dependency of blue-electron.",
+    "path": "~/work/csound/dx7-emulation",
+    "commit": "0482f608cae693516321fa7c3f1ccef31e6ee5e4",
+    "reviewedReport": {
+      "file": "blue_integration_report.md",
+      "sha256": "b3c4f7b38cdf7cf5931d2b552a2416082fd1055f5109bdbb015bfa256d804e47",
+      "trackedInPrecursor": false
+    }
+  },
+  "baseline": {
+    "file": "packages/blue-data/resources/blue-x7-modern/bluex7.orc",
+    "sha256": "2523caebbae4d28cba134a14b3a9f59d6647ebfaf3728d3dfba87de0f4732dda",
+    "importedOn": "2026-08-27",
+    "note": "Byte-for-byte import of the reviewed precursor orchestra. Recorded even after subsequent Blue-maintained edits change the current digest."
+  },
+  "current": {
+    "orchestra": {
+      "file": "packages/blue-data/resources/blue-x7-modern/bluex7.orc",
+      "sha256": "2b51ee5de9679b251767cbd266b46128147020e23e59a01064e842eb3e65b165"
+    },
+    "generatedModule": {
+      "file": "packages/blue-data/src/instruments/blue-x7/modern-orchestra.generated.ts",
+      "sha256": "e3384068df63e5dafbd3dcf2c2f3ad8dc1a5e0086d02b274c91ce3e1d47fa304"
+    }
+  },
+  "blueModifications": [
+    {
+      "summary": "Blue-maintained header: replaced the precursor generator banner with Blue ownership, provenance pointers, the calibration and release-safety documentation, and the applicable msfa attribution notices.",
+      "files": [
+        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
+      ]
+    },
+    {
+      "summary": "Added the corpus-wide output calibration giBlueX7OutputCalibration = 0.75, applied at the module output after the per-carrier scale. Established by rendering the default and loudest-voice corpus across all 32 algorithms at velocity 127 (uncalibrated worst peak 1.1892); keeps all corpus renders below the 0dbfs ceiling without per-voice gain.",
+      "files": [
+        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
+      ]
+    },
+    {
+      "summary": "Live-capable active-note adaptation (Spec 092 US2): bluex7_voice gained kLiveVoice/kLiveMask/kLiveHold inputs. While not held, the UDO re-derives active-note-capable state per control cycle from the live projection (operator frequencies, detune, keyboard scaling, output/velocity sensitivity, envelope rates and levels for current and future stages without replaying completed stages, feedback, LFO speed/delay/depths/wave, pitch-modulation sensitivity, pitch-EG rates and levels, key transpose, live operator mask). Algorithm, oscillator key sync, and LFO key sync remain next-note (captured at note initialization from the transport table). Hold=1 reproduces the previous init-time-only behavior exactly (locked by the unchanged reference render hash).",
+      "files": [
+        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
+      ]
+    },
+    {
+      "summary": "Extended the public-interface documentation for the new live inputs and the staged whole-voice publication contract.",
+      "files": [
+        "packages/blue-data/resources/blue-x7-modern/bluex7.orc"
+      ]
+    }
+  ],
+  "attribution": {
+    "incorporated": [
+      {
+        "project": "Google Mobile Synthesis FM (msfa)",
+        "relationship": "Lookup tables in the orchestra's giDx7* arrays are transcribed exactly from the msfa sources (velocity curve, keyboard level scaling, EG level LUT, pitch EG rate/level tables, pitch modulation sensitivity table).",
+        "license": "Apache-2.0",
+        "licenseFile": "LICENSES/Apache-2.0.txt",
+        "copyright": "Copyright 2012 Google Inc."
+      }
+    ],
+    "reconstructed": [
+      {
+        "project": "hether repository (no longer available)",
+        "relationship": "Amplitude-modulation sensitivity values {0, 0.238, 0.461, 1.0} reconstructed as cited in the precursor's implementation report; msfa does not implement AM.",
+        "license": "unavailable"
+      }
+    ],
+    "referenceOnly": [
+      {
+        "project": "Dexed",
+        "relationship": "Behavioral cross-check of msfa-oriented DX7 behavior; no expression imported.",
+        "license": "GPL-3.0"
+      },
+      {
+        "project": "Russell Pinkston DX7 emulation patches and legacy Blue BlueX7 orchestra (with credits to Jeff Harrington's DX72SCO and JSynthLib)",
+        "relationship": "Behavioral reference for the legacy BlueX7 renderer that this module replaces; no expression from these sources is part of the modern module.",
+        "license": "see legacy Blue sources"
+      }
+    ]
+  },
+  "license": {
+    "projectLicense": "GPL-2.0-or-later",
+    "blueModificationOwnership": "Blue-maintained modifications to the imported orchestra are Copyright (C) Steven Yi and licensed with the blue-electron repository under GPL-2.0-or-later.",
+    "thirdPartyLicenseFiles": [
+      "LICENSES/Apache-2.0.txt"
+    ]
+  }
+}

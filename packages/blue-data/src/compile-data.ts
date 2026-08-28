@@ -24,6 +24,32 @@ export type CompiledMidiInstrumentTarget =
 		runtimeInstrumentId: number | string;
 	};
 
+/**
+ * Compiled BlueX7 binding — disposable per-render routing for one arrangement
+ * or Track BlueX7 owner (Spec 092). All names/ids derive from compilation
+ * allocation, never instrument display names. Channels are keyed by the
+ * stable semantic catalog name, not the snapshot's uniqueId: render snapshot
+ * deep copies regenerate Parameter identities, so the semantic name is the
+ * deterministic cross-copy equivalent the runtime resolves through.
+ * Bindings live in the render-scoped compilation-variable registry: a new
+ * CompileData (fresh render/engine rebuild) or reset() invalidates every
+ * binding. Bindings are never serialized into `.blue` XML.
+ */
+export interface CompiledBlueX7Binding {
+	/** Stable location identity (never a display name). */
+	ownerIdentity: string;
+	runtimeInstrumentId: string | number;
+	/** Semantic parameter key -> compiled automation channel (gk_blue_autoN). */
+	parameterChannels: ReadonlyMap<string, string>;
+	holdChannel: string;
+	commitChannel: string;
+	/** The two per-instance transport ftable ids. */
+	transportTableIds: readonly [number, number];
+}
+
+/** Render-scoped registry key for compiled BlueX7 bindings. */
+export const BLUE_X7_BINDINGS_KEY = Symbol('blueX7.bindings');
+
 export class CompileData {
   private arrangement: Arrangement;
   private tables: Tables;
@@ -176,7 +202,15 @@ export class CompileData {
     this.compileMap.set(`track-instrument:${trackId}`, instrumentId);
   }
 
-  getTrackInstrumentId(trackId: string): number | string | undefined {
+  /** Record the TrackLayerGroup that owns a Track render instrument. */
+  setTrackRootGroupId(trackId: string, rootGroupId: string): void {
+    this.compileMap.set(`track-root-group:${trackId}`, rootGroupId);
+  }
+
+  getTrackRootGroupId(trackId: string): string | undefined {
+    const value = this.compileMap.get(`track-root-group:${trackId}`);
+    return typeof value === 'string' ? value : undefined;
+  }  getTrackInstrumentId(trackId: string): number | string | undefined {
     const value = this.compileMap.get(`track-instrument:${trackId}`);
     return typeof value === 'number' || typeof value === 'string' ? value : undefined;
   }
@@ -191,6 +225,96 @@ export class CompileData {
       }
     }
     return result;
+  }
+
+  /**
+   * Register (or replace) the compiled BlueX7 binding for one owner identity.
+   * Rebuilding the same owner replaces its previous binding; other owners are
+   * untouched.
+   */
+  registerBlueX7Binding(binding: CompiledBlueX7Binding): void {
+    const registry = this.blueX7BindingRegistry();
+    registry.set(binding.ownerIdentity, binding);
+  }
+
+  getBlueX7Binding(ownerIdentity: string): CompiledBlueX7Binding | undefined {
+    return this.blueX7BindingRegistry().get(ownerIdentity);
+  }
+
+  /** All registered bindings in registration order (diagnostics only). */
+  getBlueX7Bindings(): CompiledBlueX7Binding[] {
+    return [...this.blueX7BindingRegistry().values()];
+  }
+
+  private blueX7BindingRegistry(): Map<string, CompiledBlueX7Binding> {
+    const existing = this.compileMap.get(BLUE_X7_BINDINGS_KEY);
+    if (existing instanceof Map) {
+      return existing;
+    }
+    const registry = new Map<string, CompiledBlueX7Binding>();
+    this.compileMap.set(BLUE_X7_BINDINGS_KEY, registry);
+    return registry;
+  }
+
+  /**
+   * Register compiled BlueX7 bindings for every BlueX7 render instrument
+   * after table allocation and Parameter naming. Owner identities follow the
+   * project parameter catalog (`arrangement:<id>` / `track:<rootGroup>:<track>`),
+   * never display names. Safe to call once per generated performance.
+   */
+  registerBlueX7CompiledBindings(): void {
+    for (const ia of this.arrangement.getArrangement()) {
+      if (!ia.enabled || !ia.instr) continue;
+      const anyInstr = ia.instr as {
+        getBlueX7TransportTableIds?: () => readonly [number, number] | null;
+        getBlueX7HoldChannel?: () => string;
+        getBlueX7CommitChannel?: () => string;
+        getParameters?: () => Parameter[];
+      };
+      if (typeof anyInstr.getBlueX7TransportTableIds !== 'function') continue;
+      const transportTableIds = anyInstr.getBlueX7TransportTableIds();
+      if (!transportTableIds) continue;
+      const holdChannel =
+        typeof anyInstr.getBlueX7HoldChannel === 'function'
+          ? anyInstr.getBlueX7HoldChannel()
+          : `bx7h${transportTableIds[0]}`;
+      const commitChannel =
+        typeof anyInstr.getBlueX7CommitChannel === 'function'
+          ? anyInstr.getBlueX7CommitChannel()
+          : `bx7c${transportTableIds[0]}`;
+
+      const sourceId = this.instrSourceId.get(ia.instr);
+      let ownerIdentity: string;
+      let runtimeInstrumentId: string | number;
+      if (sourceId !== undefined) {
+        const rootGroupId = this.getTrackRootGroupId(sourceId) ?? '';
+        ownerIdentity = `track:${rootGroupId}:${sourceId}`;
+        runtimeInstrumentId = this.getTrackInstrumentId(sourceId) ?? ia.arrangementId;
+      } else {
+        ownerIdentity = `arrangement:${ia.arrangementId}`;
+        runtimeInstrumentId = ia.arrangementId;
+      }
+
+      const parameterChannels = new Map<string, string>();
+      if (typeof anyInstr.getParameters === 'function') {
+        for (const parameter of anyInstr.getParameters() ?? []) {
+          const channel = parameter.getCompilationVarName();
+          const semanticKey = parameter.getName();
+          if (channel && semanticKey) {
+            parameterChannels.set(semanticKey, channel);
+          }
+        }
+      }
+
+      this.registerBlueX7Binding({
+        ownerIdentity,
+        runtimeInstrumentId,
+        parameterChannels,
+        holdChannel,
+        commitChannel,
+        transportTableIds,
+      });
+    }
   }
 
   /**

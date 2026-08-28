@@ -105,9 +105,14 @@ describe('runtime instrument parity', () => {
 
     const voice = createDefaultBlueX7Voice();
     const preview = generateBlueX7Preview(voice, 'PackageTest');
-    expect(preview.tables).toContain('; [BLUEX7] - START STATIC TABLES');
-    expect(preview.body).toContain('aout =');
+    expect(preview.tables).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: PackageTest');
+    expect(preview.body).toContain('aout = bluex7_voice(');
     expect(preview.bindings.emitted.length).toBeGreaterThan(0);
-    expect(preview.bindings.notEmitted.length).toBeGreaterThan(0);
+    // every modern sound-relevant field is reported; only the nonsynthesized
+    // name bytes remain "not emitted" (FR-029)
+    expect(preview.bindings.emitted).toHaveLength(152);
+    expect(preview.bindings.notEmitted).toEqual([
+      'voice-name bytes 145..154 (deterministic, nonsynthesized; not Parameters)',
+    ]);
   });
 });

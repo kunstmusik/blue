@@ -1,24 +1,25 @@
 import { Element } from '../serialization/xml-reader';
 import { Instrument } from './instrument';
 import { Tables } from '../tables';
-import { ALGORITHM_ORCHESTRAS } from './blue-x7/algorithm-orchestra';
+import type { CompileData } from '../compile-data';
+import { Parameter } from '../automation/parameter';
+import { ParameterList } from '../automation/parameter-list';
+import { parseJavaDecimal } from '../automation/java-decimal';
+import {
+  BLUE_X7_PARAMETER_DESCRIPTORS,
+  getBlueX7Descriptor,
+  quantizeBlueX7DescriptorValue,
+  readBlueX7VoiceValue,
+  writeBlueX7VoiceValue,
+} from './blue-x7/parameter-catalog';
+import { buildBlueX7VoiceTransport } from './blue-x7/voice-transport';
+import { BLUE_X7_MODERN_ORCHESTRA } from './blue-x7/modern-orchestra.generated';
 
-export const BLUEX7_HAS_BEEN_COMPILED = 'blueX7.hasStaticTablesBeenCompiled';
-export const BLUEX7_STATIC_TABLES = 'blueX7.staticTables';
-
-export interface BlueX7StaticTables {
-  sineTable: number;
-  outputAmpTable: number;
-  rateScaleTable: number;
-  egRateRiseLvlTable: number;
-  egRateRisePercentageTable: number;
-  egRateDecayLvlTable: number;
-  egRateDecayPercentageTable: number;
-  egLevelPeakTable: number;
-  velAmpTable: number;
-  velSensitivityTable: number;
-  feedbackScaleTable: number;
-}
+/**
+ * Render-scoped key marking that the shared modern synthesis module has been
+ * emitted once into a generated performance (Spec 092).
+ */
+export const BLUEX7_MODERN_MODULE_KEY = 'blueX7.modernModuleEmitted';
 
 export interface BlueX7PreviewResult {
   tables: string;
@@ -309,136 +310,183 @@ export function cloneBlueX7Voice(voice: BlueX7Voice): BlueX7Voice {
   };
 }
 
-export function generateFTableForOperator(op: BlueX7Operator, tableNum: number): string {
-  const parts = [
-    `f ${tableNum} 0 32 -2`,
-    op.outputLevel,
-    op.velocitySensitivity,
-    op.envelope[0].rate,
-    op.envelope[1].rate,
-    op.envelope[2].rate,
-    op.envelope[3].rate,
-    op.envelope[0].level,
-    op.envelope[1].level,
-    op.envelope[2].level,
-    op.envelope[3].level,
-    op.modulationAmplitude,
-    op.mode,
-    1,
-    op.detune,
-    op.keyboardRateScaling,
-    '0 \n',
-  ];
-  return parts.join(' ');
+// ---------------------------------------------------------------------------
+// Parameter catalog reconciliation (Spec 092)
+// ---------------------------------------------------------------------------
+
+const BLUE_X7_INTEGER_RESOLUTION_PARSED = parseJavaDecimal('1');
+if (!BLUE_X7_INTEGER_RESOLUTION_PARSED.ok) {
+  throw new Error('BlueX7: failed to parse integer resolution');
+}
+const BLUE_X7_INTEGER_RESOLUTION = BLUE_X7_INTEGER_RESOLUTION_PARSED.value;
+
+/** Model field names -> semantic catalog keys for the shared projections. */
+const OPERATOR_FIELD_TO_KEY_SUFFIX: Record<string, string> = {
+  mode: 'oscillatorMode',
+  sync: '__shared_sync',
+  freqCoarse: 'frequencyCoarse',
+  freqFine: 'frequencyFine',
+  detune: 'detune',
+  breakpoint: 'breakpoint',
+  curveLeft: 'curveLeft',
+  curveRight: 'curveRight',
+  depthLeft: 'depthLeft',
+  depthRight: 'depthRight',
+  keyboardRateScaling: 'keyboardRateScaling',
+  outputLevel: 'outputLevel',
+  velocitySensitivity: 'velocitySensitivity',
+  modulationAmplitude: 'amplitudeModulationSensitivity',
+  modulationPitch: '__shared_pms',
+};
+
+const COMMON_FIELD_TO_KEY: Record<string, string> = {
+  algorithm: 'common.algorithm',
+  feedback: 'common.feedback',
+  keyTranspose: 'common.transpose',
+};
+
+const LFO_FIELD_TO_KEY: Record<string, string> = {
+  speed: 'lfo.speed',
+  delay: 'lfo.delay',
+  pitchModulationDepth: 'lfo.pitchModulationDepth',
+  amplitudeModulationDepth: 'lfo.amplitudeModulationDepth',
+  wave: 'lfo.wave',
+  sync: 'lfo.sync',
+};
+
+function quantizedVoiceValue(voice: BlueX7Voice, key: string): number {
+  const descriptor = getBlueX7Descriptor(key);
+  const raw = readBlueX7VoiceValue(voice, key);
+  if (!descriptor || raw === undefined) {
+    return 0;
+  }
+  return quantizeBlueX7DescriptorValue(descriptor, raw) ?? 0;
 }
 
 /**
- * Replace only the first occurrence of `search`, matching Java Blue's
- * `TextUtilities.replace` (single indexOf-based replacement). Java BlueX7
- * generation depends on this: tokens such as "p12" also occur inside later
- * identifiers (e.g. "imap128") and trailing comments, which Java leaves
- * untouched.
+ * Create the canonical 151-Parameter projection of one voice (fresh IDs).
  */
-function replaceFirst(text: string, search: string, replacement: string): string {
-  const pos = text.indexOf(search);
-  if (pos === -1) {
-    return text;
-  }
-  return text.substring(0, pos) + replacement + text.substring(pos + search.length);
+export function createBlueX7Parameters(voice: BlueX7Voice): ParameterList {
+  return reconcileBlueX7Parameters(voice);
 }
 
-function makeCsound7Compatible(text: string): string {
-  // The Java DX7 resources use `continue` as a label. Csound 7 reserves that
-  // token, so rename only this label/reference pair at the generated-ORC
-  // boundary while leaving the Java source resource unchanged.
-  return text
-    .replace(/\bigoto[ \t]+continue\b/g, 'igoto continue_')
-    .replace(/^continue:[ \t]*$/gm, 'continue_:');
-}
-
-export function generateBlueX7InstrumentBody(
+/**
+ * Reconcile the persisted Parameter list against the immutable catalog for
+ * one voice. Persisted Parameters are matched by semantic name in catalog
+ * order; the first occurrence wins and later duplicates are dropped. Reused
+ * Parameters keep their uniqueId, automation state, curve, points, and line
+ * color while catalog-owned metadata and the canonical fixed value are
+ * refreshed from the voice. Legacy lists without parameters get all 151
+ * entries with fresh identities. The voice always wins: a malformed
+ * persisted Parameter is repaired, never the canonical voice.
+ */
+export function reconcileBlueX7Parameters(
   voice: BlueX7Voice,
-  staticTables: BlueX7StaticTables,
-  operatorTableNums: number[],
-): string {
-  const rawOrc = ALGORITHM_ORCHESTRAS[voice.common.algorithm];
-  if (rawOrc === undefined) {
-    // Java Blue fails to load dx7<alg>.orc for out-of-range algorithms and
-    // returns an empty instrument body; preserve that behavior.
-    return '';
+  persisted?: ParameterList,
+): ParameterList {
+  const byName = new Map<string, Parameter[]>();
+  if (persisted) {
+    for (const parameter of persisted) {
+      const name = parameter.getName();
+      if (!name) {
+        continue; // malformed metadata cannot own a catalog identity
+      }
+      const list = byName.get(name);
+      if (list) {
+        list.push(parameter);
+      } else {
+        byName.set(name, [parameter]);
+      }
+    }
   }
 
-  const credits = `; Instrument derived from Russell Pinkston's DX7 emulation patches
-; Code from Jeff Harrington's DX72SCO consulted in building BlueX7
-; as well as the JSynthLib project
-`;
-
-  let instrText = credits + rawOrc;
-  const instrIdx = instrText.indexOf('instr');
-  const newlineAfterInstr = instrText.indexOf('\n', instrIdx);
-  const endinIdx = instrText.indexOf('endin');
-  if (newlineAfterInstr !== -1 && endinIdx !== -1) {
-    instrText = instrText.substring(newlineAfterInstr + 1, endinIdx - 1);
+  const result = new ParameterList();
+  for (const descriptor of BLUE_X7_PARAMETER_DESCRIPTORS) {
+    const candidates = byName.get(descriptor.key);
+    const reused = candidates?.shift();
+    if (candidates && candidates.length === 0) {
+      byName.delete(descriptor.key);
+    }
+    const parameter = reused ?? new Parameter();
+    parameter.setName(descriptor.key);
+    parameter.setLabel(descriptor.label);
+    // Catalog bounds never change across versions; truncate snaps any
+    // malformed persisted points back into the domain without rescaling.
+    parameter.setMinimum(descriptor.minimum, true);
+    parameter.setMaximum(descriptor.maximum, true);
+    parameter.setResolutionDecimal(BLUE_X7_INTEGER_RESOLUTION);
+    parameter.setFixedValue(quantizedVoiceValue(voice, descriptor.key));
+    result.push(parameter);
   }
-  instrText = makeCsound7Compatible(instrText);
+  return result;
+}
 
-  // Java Blue uses TextUtilities.replace (first occurrence only) for every
-  // substitution below; replaceFirst preserves that exact semantics.
-  instrText = replaceFirst(instrText, 'abs(p3)', 'idur');
-  instrText = replaceFirst(instrText, 'ihold', 'idur \t= abs(p3) \np3 = p3 + 4');
-  instrText = replaceFirst(instrText, 'cpspch(p4)', '(p4 < 15 ? cpspch(p4) : p4)');
-  instrText = replaceFirst(instrText, 'octpch(p4)', '(p4 < 15 ? octpch(p4) : p4)');
-
-  /* Static FTable Swap */
-  instrText = replaceFirst(instrText, 'p16', String(staticTables.outputAmpTable));
-  instrText = replaceFirst(instrText, 'p17', '5000');
-  instrText = replaceFirst(instrText, 'p18', String(staticTables.rateScaleTable));
-  instrText = replaceFirst(instrText, 'p19', String(staticTables.egLevelPeakTable));
-  instrText = replaceFirst(instrText, 'p20', String(staticTables.egRateRiseLvlTable));
-  instrText = replaceFirst(instrText, 'p21', String(staticTables.egRateDecayLvlTable));
-  instrText = replaceFirst(instrText, 'p22', String(staticTables.velSensitivityTable));
-  instrText = replaceFirst(instrText, 'p23', String(staticTables.velAmpTable));
-  instrText = replaceFirst(instrText, 'p24', String(staticTables.feedbackScaleTable));
-
-  /* Swapping other values */
-  instrText = replaceFirst(instrText, 'p25', String(voice.common.feedback));
-
-  for (let i = 0; i < 6; i++) {
-    instrText = replaceFirst(instrText, `p${i + 10}`, String(operatorTableNums[i] ?? (12 + i)));
+/**
+ * One widget edit: write the voice field and the matching Parameter fixed
+ * value together. Unknown keys and non-finite values fail without any
+ * mutation. Returns whether the edit was applied.
+ */
+export function applyBlueX7FixedValue(
+  voice: BlueX7Voice,
+  parameters: ParameterList,
+  key: string,
+  value: number,
+): boolean {
+  if (!writeBlueX7VoiceValue(voice, key, value)) {
+    return false;
   }
-
-  const pos = instrText.lastIndexOf('out');
-  if (pos !== -1) {
-    instrText = instrText.substring(0, pos) + 'aout = ' + instrText.substring(pos + 7);
+  const quantized = readBlueX7VoiceValue(voice, key);
+  if (quantized === undefined) {
+    return false;
   }
+  for (const parameter of parameters) {
+    if (parameter.getName() === key) {
+      parameter.setFixedValue(quantized);
+      return true;
+    }
+  }
+  return false;
+}
 
-  instrText += '\n' + (voice.csoundPostCode ?? '');
-  return instrText;
+/**
+ * Whole-voice replacement: adopt the complete replacement voice and refresh
+ * every Parameter fixed value while retaining Parameter identities, curves,
+ * points, enabled states, resolutions, and line colors.
+ */
+export function replaceBlueX7VoiceFixedValues(
+  voice: BlueX7Voice,
+  parameters: ParameterList,
+  replacement: BlueX7Voice,
+): void {
+  const next = cloneBlueX7Voice(replacement);
+  voice.common = next.common;
+  voice.lfo = next.lfo;
+  voice.operators = next.operators;
+  voice.pitchEnvelope = next.pitchEnvelope;
+  voice.csoundPostCode = next.csoundPostCode;
+  for (const parameter of parameters) {
+    const value = readBlueX7VoiceValue(voice, parameter.getName());
+    if (value !== undefined) {
+      parameter.setFixedValue(value);
+    }
+  }
 }
 
 export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: string[] } {
+  const emitted = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor) => {
+    const updateClass =
+      descriptor.updateClass === 'next-note' ? 'next-note' : 'active-note';
+    const target =
+      descriptor.transport.kind === 'voice'
+        ? `transport slot ${descriptor.transport.slot}`
+        : `operator mask bit ${descriptor.transport.operator - 1}`;
+    return `${descriptor.key} (${descriptor.label}) -> ${target} [${updateClass}]`;
+  });
+  emitted.push('csoundPostCode (appended verbatim after the module aout)');
   return {
-    emitted: [
-      'common.algorithm (selects ORC topology template)',
-      'common.feedback (p25 index in feedback table)',
-      'operators[1..6].outputLevel (table index 0)',
-      'operators[1..6].velocitySensitivity (table index 1)',
-      'operators[1..6].envelope R1..R4 / L1..L4 (table indices 2..9)',
-      'operators[1..6].modulationAmplitude (table index 10)',
-      'operators[1..6].mode (table index 11)',
-      'operators[1..6].detune (table index 13)',
-      'operators[1..6].keyboardRateScaling (table index 14)',
-      'csoundPostCode (appended verbatim to instrument body)',
-    ],
+    emitted,
     notEmitted: [
-      'common.keyTranspose (stored in XML; not referenced in Pinkston ORC)',
-      'common.operatorEnabled (stored in XML; ORC topology does not branch on enables)',
-      'operators[1..6].sync (stored in XML; not referenced in Pinkston ORC)',
-      'operators[1..6].freqCoarse / freqFine (handled via score p4; table value is fixed to 1)',
-      'operators[1..6].breakpoint / depthLeft / depthRight / curveLeft / curveRight (stored in XML; not in ORC)',
-      'operators[1..6].modulationPitch (stored in XML; not in ORC)',
-      'lfo (speed, delay, PMD, AMD, wave, sync stored in XML; not in Pinkston ORC)',
-      'pitchEnvelope (stored in XML; PEG not in Pinkston ORC)',
+      'voice-name bytes 145..154 (deterministic, nonsynthesized; not Parameters)',
     ],
   };
 }
@@ -473,6 +521,7 @@ function updateOrAddChildText(parent: Element, tag: string, text: string): Eleme
 
 export class BlueX7 extends Instrument {
   private _voice: BlueX7Voice;
+  private _parameters: ParameterList;
   private _sourceXmlTemplate?: Element;
   public operatorTableNums: number[] | null = null;
 
@@ -484,11 +533,17 @@ export class BlueX7 extends Instrument {
       this._enabled = other._enabled;
       this._comment = other._comment;
       this._voice = cloneBlueX7Voice(other._voice);
+      // A new ownership boundary regenerates all Parameter identities.
+      this._parameters = reconcileBlueX7Parameters(
+        this._voice,
+        other._parameters.deepCopy(),
+      );
       if (other._sourceXmlTemplate) {
         this._sourceXmlTemplate = Element.parse(other._sourceXmlTemplate.toXml());
       }
     } else {
       this._voice = createDefaultBlueX7Voice();
+      this._parameters = createBlueX7Parameters(this._voice);
     }
   }
 
@@ -496,26 +551,59 @@ export class BlueX7 extends Instrument {
     return this._voice;
   }
 
+  getParameters(): Parameter[] {
+    return [...this._parameters];
+  }
+
+  /**
+   * One widget edit: update the voice field and the matching fixed Parameter
+   * value together. Returns whether the edit was applied.
+   */
+  applyFixedValue(key: string, value: number): boolean {
+    return applyBlueX7FixedValue(this._voice, this._parameters, key, value);
+  }
+
+  /** Refresh catalog Parameter fixed values from the current voice. */
+  private syncFixedValues(keys: string[]): void {
+    for (const key of keys) {
+      const value = quantizedVoiceValue(this._voice, key);
+      for (const parameter of this._parameters) {
+        if (parameter.getName() === key) {
+          parameter.setFixedValue(value);
+        }
+      }
+    }
+  }
+
   setVoice(voice: BlueX7Voice): void {
-    this._voice = cloneBlueX7Voice(voice);
+    replaceBlueX7VoiceFixedValues(this._voice, this._parameters, voice);
   }
 
   replaceVoice(voice: BlueX7Voice): void {
-    this._voice = cloneBlueX7Voice(voice);
+    replaceBlueX7VoiceFixedValues(this._voice, this._parameters, voice);
   }
 
   setCommonField<K extends keyof BlueX7Common>(field: K, value: BlueX7Common[K]): void {
     this._voice.common[field] = value;
+    const key = COMMON_FIELD_TO_KEY[field as string];
+    if (key) {
+      this.syncFixedValues([key]);
+    }
   }
 
   setOperatorEnabled(index: number, enabled: boolean): void {
     if (index >= 0 && index < 6) {
       this._voice.common.operatorEnabled[index] = enabled;
+      this.syncFixedValues([`operator.${index + 1}.enabled`]);
     }
   }
 
   setLfoField<K extends keyof BlueX7Lfo>(field: K, value: BlueX7Lfo[K]): void {
     this._voice.lfo[field] = value;
+    const key = LFO_FIELD_TO_KEY[field as string];
+    if (key) {
+      this.syncFixedValues([key]);
+    }
   }
 
   setOperatorField<K extends keyof BlueX7Operator>(
@@ -525,6 +613,14 @@ export class BlueX7 extends Instrument {
   ): void {
     if (operatorIndex >= 0 && operatorIndex < 6) {
       this._voice.operators[operatorIndex][field] = value;
+      const suffix = OPERATOR_FIELD_TO_KEY_SUFFIX[field as string];
+      if (suffix === '__shared_sync') {
+        this.syncFixedValues(['common.oscillatorKeySync']);
+      } else if (suffix === '__shared_pms') {
+        this.syncFixedValues(['lfo.pitchModulationSensitivity']);
+      } else if (suffix) {
+        this.syncFixedValues([`operator.${operatorIndex + 1}.${suffix}`]);
+      }
     }
   }
 
@@ -532,12 +628,14 @@ export class BlueX7 extends Instrument {
     for (let i = 0; i < 6; i++) {
       this._voice.operators[i].sync = value;
     }
+    this.syncFixedValues(['common.oscillatorKeySync']);
   }
 
   setSharedPitchModulationSensitivity(value: number): void {
     for (let i = 0; i < 6; i++) {
       this._voice.operators[i].modulationPitch = value;
     }
+    this.syncFixedValues(['lfo.pitchModulationSensitivity']);
   }
 
   setOperatorEnvelopePoint(
@@ -547,12 +645,20 @@ export class BlueX7 extends Instrument {
   ): void {
     if (operatorIndex >= 0 && operatorIndex < 6 && stageIndex >= 0 && stageIndex < 4) {
       this._voice.operators[operatorIndex].envelope[stageIndex] = { ...point };
+      this.syncFixedValues([
+        `operator.${operatorIndex + 1}.envelope.${stageIndex + 1}.rate`,
+        `operator.${operatorIndex + 1}.envelope.${stageIndex + 1}.level`,
+      ]);
     }
   }
 
   setPitchEnvelopePoint(stageIndex: number, point: EnvelopePoint): void {
     if (stageIndex >= 0 && stageIndex < 4) {
       this._voice.pitchEnvelope[stageIndex] = { ...point };
+      this.syncFixedValues([
+        `pitchEnvelope.${stageIndex + 1}.rate`,
+        `pitchEnvelope.${stageIndex + 1}.level`,
+      ]);
     }
   }
 
@@ -568,61 +674,26 @@ export class BlueX7 extends Instrument {
     return true;
   }
 
+  /**
+   * Allocate this instance's independent transport tables: the main table
+   * read by the synthesis module and its staging pair (used for atomic
+   * whole-voice publication). Numbers come from the shared render Tables, so
+   * every arrangement/Track owner is collision-free.
+   */
   override generateFTables(tables: Tables): void {
+    const transport = buildBlueX7VoiceTransport(
+      this._voice,
+      this._voice.common.operatorEnabled,
+    );
+    this._operatorMask = transport.operatorMask;
+    const mainTable = tables.getOpenFTableNumber();
+    const stagingTable = tables.getOpenFTableNumber();
+    this._transportTableIds = [mainTable, stagingTable];
+
     const buffer: string[] = [];
-    let staticTables = tables.getCompilationVariable(BLUEX7_STATIC_TABLES) as BlueX7StaticTables | undefined;
-
-    if (!staticTables) {
-      tables.setCompilationVariable(BLUEX7_HAS_BEEN_COMPILED, true);
-
-      staticTables = {
-        sineTable: tables.getOpenFTableNumber(),
-        outputAmpTable: tables.getOpenFTableNumber(),
-        rateScaleTable: tables.getOpenFTableNumber(),
-        egRateRiseLvlTable: tables.getOpenFTableNumber(),
-        egRateRisePercentageTable: tables.getOpenFTableNumber(),
-        egRateDecayLvlTable: tables.getOpenFTableNumber(),
-        egRateDecayPercentageTable: tables.getOpenFTableNumber(),
-        egLevelPeakTable: tables.getOpenFTableNumber(),
-        velAmpTable: tables.getOpenFTableNumber(),
-        velSensitivityTable: tables.getOpenFTableNumber(),
-        feedbackScaleTable: tables.getOpenFTableNumber(),
-      };
-      tables.setCompilationVariable(BLUEX7_STATIC_TABLES, staticTables);
-
-      buffer.push('; [BLUEX7] - START STATIC TABLES; sine wave');
-      buffer.push(`f${staticTables.sineTable}     0       512     10      1`);
-      buffer.push('; operator output level to amp scale function (data from Chowning/Bristow)');
-      buffer.push(`f${staticTables.outputAmpTable}     0       128     7       0       10      .003    10      .013       10      .031    10      .079    10      .188    10      .446       5       .690    5       1.068   5       1.639   5       2.512       5       3.894   5       6.029   5       9.263   4       13.119       29      13.119`);
-      buffer.push('; rate scaling function');
-      buffer.push(`f${staticTables.rateScaleTable}     0       128     7       0       128     1`);
-      buffer.push('; eg rate rise function for lvl change between 0 and 99 (data from Opcode)');
-      buffer.push(`f${staticTables.egRateRiseLvlTable}     0       128     -7      38      5       22.8    5       12      5       7.5     5       4.8     5       2.7     5       1.8     5       1.3       8       .737    3       .615    3       .505    3       .409    3       .321    6       .080    6       .055    2       .032    3       .024       3       .018    3       .014    3       .011    3       .008    3       .008    3       .007    3       .005    3       .003    32      .003`);
-      buffer.push('; eg rate rise percentage function');
-      buffer.push(`f${staticTables.egRateRisePercentageTable}     0       128     -7      .00001  31      .00001  4       .02     5       .06     10      .14     10      .24     10      .35     10      .50       10      .70     5       .86     4       1.0     29      1.0`);
-      buffer.push('; eg rate decay function for lvl change between 0 and 99');
-      buffer.push(`f${staticTables.egRateDecayLvlTable}     0       128     -7      318     4       181     5       115     5       63      5       39.7    5       20      5       11.2    5       7       8       5.66    3       3.98    6       1.99    3       1.34    3       .99     3       .71     5       .41     3       .15     3       .081       3       .068    3       .047    3       .037    3       .025    3       .02     3       .013    3       .008    36      .008`);
-      buffer.push('; eg rate decay percentage function');
-      buffer.push(`f${staticTables.egRateDecayPercentageTable}     0       128     -7      .00001  10      .25     10      .35     10     .43     10      .52     10      .59     10      .70     10      .77     10      .84     10      .92     9       1.0     29      1.0`);
-      buffer.push('; eg level to peak deviation mapping function (index in radians = Index / 2PI)');
-      buffer.push(`f${staticTables.egLevelPeakTable}     0       128     -7      0       10      .000477 10      .002     10      .00493  10      .01257  10      .02992  10      .07098     5       .10981  5       .16997  5       .260855 5       .39979     5       .61974  5       .95954  5       1.47425 4       2.08795     29      2.08795`);
-      buffer.push('; velocity to amp factor mapping function (rough guess)');
-      buffer.push(`f${staticTables.velAmpTable}     0       129     9       .25     1       0`);
-      buffer.push('; velocity sensitivity scaling function');
-      buffer.push(`f${staticTables.velSensitivityTable}     0       8       -7      0       8       1`);
-      buffer.push('; feedback scaling function');
-      buffer.push(`f${staticTables.feedbackScaleTable}     0       8       -7      0       8       7`);
-      buffer.push('; [BLUEX7] - END STATIC TABLES\n');
-    }
-
-    this._staticTables = staticTables;
-    buffer.push(`; FTABLES FOR BLUEX7 INSTRUMENT: ${this.getName()}`);
-
-    this.operatorTableNums = [];
-    for (let i = 0; i < 6; i++) {
-      const tableNum = tables.getOpenFTableNumber();
-      this.operatorTableNums.push(tableNum);
-      buffer.push(generateFTableForOperator(this._voice.operators[i], tableNum));
+    buffer.push(`; FTABLES FOR BLUEX7 MODERN TRANSPORT: ${this.getName()}`);
+    for (const tableNum of [mainTable, stagingTable]) {
+      buffer.push(`f ${tableNum} 0 256 -2 ${transport.voice.join(' ')}`);
     }
     buffer.push('');
 
@@ -631,27 +702,137 @@ export class BlueX7 extends Instrument {
     tables.setTables(currentTables ? `${currentTables}\n${joined}` : joined);
   }
 
-  private _staticTables: BlueX7StaticTables | null = null;
+  private _transportTableIds: readonly [number, number] | null = null;
+  private _operatorMask = 63;
 
-  override generateInstrument(): string {
-    const staticTables = this._staticTables ?? {
-      sineTable: 1,
-      outputAmpTable: 2,
-      rateScaleTable: 3,
-      egRateRiseLvlTable: 4,
-      egRateRisePercentageTable: 5,
-      egRateDecayLvlTable: 6,
-      egRateDecayPercentageTable: 7,
-      egLevelPeakTable: 8,
-      velAmpTable: 9,
-      velSensitivityTable: 10,
-      feedbackScaleTable: 11,
-    };
-    return generateBlueX7InstrumentBody(
-      this._voice,
-      staticTables,
-      this.operatorTableNums ?? [12, 13, 14, 15, 16, 17],
-    );
+  /** Render-scoped transport table pair; null until generateFTables runs. */
+  getBlueX7TransportTableIds(): readonly [number, number] | null {
+    return this._transportTableIds;
+  }
+
+  /**
+   * Emit the shared modern synthesis module once per render. Distinct BlueX7
+   * objects share the immutable module text through the CompileData registry;
+   * a fresh render emits it again.
+   */
+  override generateGlobalOrc(compileData?: CompileData): string | null {
+    if (!compileData) {
+      return null;
+    }
+    if (compileData.getCompilationVariable(BLUEX7_MODERN_MODULE_KEY)) {
+      return null;
+    }
+    compileData.setCompilationVariable(BLUEX7_MODERN_MODULE_KEY, true);
+    return BLUE_X7_MODERN_ORCHESTRA;
+  }
+
+  /**
+   * Hold channel for staged whole-voice publication. Derived from this
+   * instance's main transport table number, which is unique per render, so
+   * the name is collision-free and within the engine channel-name limit.
+   */
+  getBlueX7HoldChannel(): string {
+    return `bx7h${this._transportTableIds?.[0] ?? 100}`;
+  }
+
+  /** Commit-generation channel paired with the hold channel. */
+  getBlueX7CommitChannel(): string {
+    return `bx7c${this._transportTableIds?.[0] ?? 100}`;
+  }
+
+  /**
+   * Emit the Blue host wrapper. With the instrument's 151 Parameters
+   * (catalog order, compilation variable names assigned), the wrapper is
+   * live-capable: per control cycle it publishes the parameter channels
+   * into kLiveVoice and the transport table while the hold channel is 0,
+   * freezes observation while held, and fully republishes plus advances its
+   * commit generation at the control boundary where a hold releases. The
+   * static fallback (preview, no parameters) freezes the hold at 1.
+   */
+  override generateInstrument(parameters?: Parameter[]): string {
+    // The CSD build always allocates transport tables via generateFTables;
+    // a bare generateInstrument (no prior allocation) falls back to a
+    // conventional table number so the wrapper text stays renderable.
+    const tableNum = this._transportTableIds?.[0] ?? 100;
+    const header = [
+      `; BlueX7 modern renderer host wrapper: ${this.getName()}`,
+      `; Blue pitch convention: p4 < 15 is a pch value, otherwise Hz.`,
+      'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
+      `iBlueX7OperatorMask = ${this._operatorMask}`,
+      'iBlueX7GateSeconds = abs(p3)',
+    ];
+
+    const liveParameters =
+      Array.isArray(parameters) &&
+      parameters.length === BLUE_X7_PARAMETER_DESCRIPTORS.length &&
+      parameters.every(
+        (parameter) =>
+          typeof parameter.getCompilationVarName === 'function' &&
+          parameter.getCompilationVarName(),
+      );
+
+    if (!liveParameters) {
+      return [
+        ...header,
+        'kBlueX7StaticVoice[] init 155',
+        `kBlueX7StaticMask init ${this._operatorMask}`,
+        'kBlueX7StaticHold init 1',
+        `aout = bluex7_voice(iBlueX7MidiNote, p5, ${tableNum}, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7StaticVoice, kBlueX7StaticMask, kBlueX7StaticHold)`,
+        this._voice.csoundPostCode ?? '',
+        '',
+      ].join('\n');
+    }
+
+    const voiceSlotLines = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => {
+      if (descriptor.transport.kind !== 'voice') {
+        return null;
+      }
+      return `kLiveVoice[${descriptor.transport.slot}] = ${parameters![index].getCompilationVarName()!}`;
+    }).filter((line): line is string => line !== null);
+
+    const enableMaskExpression = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => {
+      if (descriptor.transport.kind !== 'operator-enable') {
+        return null;
+      }
+      return { bit: descriptor.transport.operator - 1, varName: parameters![index].getCompilationVarName()! };
+    })
+      .filter((entry): entry is { bit: number; varName: string } => entry !== null)
+      .sort((a, b) => a.bit - b.bit)
+      .map((entry) => (entry.bit === 0 ? entry.varName : `${2 ** entry.bit} * ${entry.varName}`))
+      .join(' + ');
+
+    return [
+      ...header,
+      `; live transport: hold channel ${this.getBlueX7HoldChannel()}, commit ${this.getBlueX7CommitChannel()}`,
+      `kBlueX7Hold chnget "${this.getBlueX7HoldChannel()}"`,
+      'kLiveVoice[] init 155',
+      `kLiveMask init ${this._operatorMask}`,
+      'kBlueX7HoldPrev init 0',
+      'kBlueX7Gen init 0',
+      'if (kBlueX7Hold == 0) then',
+      ...voiceSlotLines,
+      `kLiveMask = ${enableMaskExpression}`,
+      'kBlueX7Idx = 0',
+      `while kBlueX7Idx < 145 do`,
+      `  tabw kLiveVoice[kBlueX7Idx], kBlueX7Idx, ${tableNum}`,
+      '  kBlueX7Idx += 1',
+      'od',
+      'endif',
+      'if (kBlueX7HoldPrev == 1 && kBlueX7Hold == 0) then',
+      '  ; one complete republication at a single control boundary',
+      '  kBlueX7Full = 0',
+      `  while kBlueX7Full < 155 do`,
+      `    tabw kLiveVoice[kBlueX7Full], kBlueX7Full, ${tableNum}`,
+      '    kBlueX7Full += 1',
+      '  od',
+      '  kBlueX7Gen = kBlueX7Gen + 1',
+      `  chnset kBlueX7Gen, "${this.getBlueX7CommitChannel()}"`,
+      'endif',
+      'kBlueX7HoldPrev = kBlueX7Hold',
+      `aout = bluex7_voice(iBlueX7MidiNote, p5, ${tableNum}, iBlueX7OperatorMask, iBlueX7GateSeconds, kLiveVoice, kLiveMask, kBlueX7Hold)`,
+      this._voice.csoundPostCode ?? '',
+      '',
+    ].join('\n');
   }
 
   saveAsXML(): Element {
@@ -754,6 +935,12 @@ export class BlueX7 extends Instrument {
 
     // csoundPostCode
     updateOrAddChildText(elem, 'csoundPostCode', this._voice.csoundPostCode);
+
+    // Additive TypeScript extension: the owning parameterList. Java Blue does
+    // not model BlueX7 Parameters and may discard this child on save; the
+    // compatible voice data remains readable (documented limitation).
+    elem.removeElements('parameterList');
+    elem.addElement(this._parameters.saveAsXML());
 
     return elem;
   }
@@ -865,6 +1052,14 @@ export class BlueX7 extends Instrument {
     if (postCode != null) {
       voice.csoundPostCode = postCode;
     }
+
+    // Reconcile the owning Parameter list: legacy XML without parameterList
+    // receives the complete 151-Parameter projection; a persisted list keeps
+    // its identities and automation content.
+    const persistedElement = data.getElement('parameterList');
+    instr._parameters = persistedElement
+      ? reconcileBlueX7Parameters(voice, ParameterList.loadFromXML(persistedElement))
+      : createBlueX7Parameters(voice);
 
     return instr;
   }

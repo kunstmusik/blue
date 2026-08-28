@@ -23,6 +23,152 @@ export const CMD_GET_CHANNEL = 0x11;
 export const CMD_CREATE_CHANNEL = 0x12;
 export const CMD_GET_SHM_NAME = 0x13;
 
+// Batch channel commands (batch-channels-v1). Allocated from the channel
+// range without changing existing values.
+export const CMD_BATCH_SET_CHANNELS = 0x14;
+export const CMD_BATCH_GET_CHANNELS = 0x15;
+
+/**
+ * Client-side batch bound: one BlueX7 owns exactly 151 Parameters, so the
+ * BlueX7 caller never needs a larger batch. The engine may accept more.
+ */
+export const MAX_BATCH_CHANNELS = 151;
+
+/**
+ * Channel names must fit the engine's existing shared-memory bridge field
+ * (CHANNEL_NAME_SIZE 64, null-terminated), so at most 63 UTF-8 bytes.
+ */
+export const MAX_BATCH_NAME_BYTES = 63;
+
+export interface BatchChannelEntry {
+  name: string;
+  value: number;
+}
+
+function validateBatchName(name: string): Buffer {
+  if (typeof name !== 'string' || name.length === 0) {
+    throw new RangeError('Batch channel name must be a non-empty string');
+  }
+  if (name.includes('\0')) {
+    throw new RangeError('Batch channel name must not contain NUL');
+  }
+  const nameBuf = Buffer.from(name, 'utf-8');
+  if (nameBuf.length > MAX_BATCH_NAME_BYTES) {
+    throw new RangeError(
+      `Batch channel name exceeds the engine channel-name limit (${MAX_BATCH_NAME_BYTES} bytes)`,
+    );
+  }
+  return nameBuf;
+}
+
+/**
+ * Encode a batch channel set command. The payload is validated in full
+ * before allocation: count bounds, non-empty NUL-free names within the
+ * engine name limit, finite values, and no duplicate names.
+ *
+ * Payload format:
+ *   count:u16 LE
+ *   repeat count times: nameLength:u16 LE + name:utf8[nameLength] + value:f64 LE
+ */
+export function encodeSetChannels(entries: readonly BatchChannelEntry[]): Buffer {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    throw new RangeError('Batch channel set requires at least one entry');
+  }
+  if (entries.length > MAX_BATCH_CHANNELS) {
+    throw new RangeError(`Batch channel set exceeds ${MAX_BATCH_CHANNELS} entries`);
+  }
+
+  const parts: Buffer[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (typeof entry.value !== 'number' || !Number.isFinite(entry.value)) {
+      throw new RangeError('Batch channel values must be finite');
+    }
+    if (seen.has(entry.name)) {
+      throw new RangeError(`Batch channel set contains duplicate name: ${entry.name}`);
+    }
+    seen.add(entry.name);
+    const nameBuf = validateBatchName(entry.name);
+    const entryBuf = Buffer.alloc(2 + nameBuf.length + 8);
+    entryBuf.writeUInt16LE(nameBuf.length, 0);
+    nameBuf.copy(entryBuf, 2);
+    entryBuf.writeDoubleLE(entry.value, 2 + nameBuf.length);
+    parts.push(entryBuf);
+  }
+
+  const header = Buffer.alloc(2);
+  header.writeUInt16LE(entries.length, 0);
+  const payload = Buffer.concat([header, ...parts]);
+
+  const buf = Buffer.alloc(5 + payload.length);
+  buf.writeUInt8(CMD_BATCH_SET_CHANNELS, 0);
+  buf.writeUInt32LE(payload.length, 1);
+  payload.copy(buf, 5);
+  return buf;
+}
+
+/**
+ * Encode a batch channel get command (name-only entries).
+ *
+ * Payload format:
+ *   count:u16 LE
+ *   repeat count times: nameLength:u16 LE + name:utf8[nameLength]
+ */
+export function encodeGetChannels(names: readonly string[]): Buffer {
+  if (!Array.isArray(names) || names.length === 0) {
+    throw new RangeError('Batch channel get requires at least one name');
+  }
+  if (names.length > MAX_BATCH_CHANNELS) {
+    throw new RangeError(`Batch channel get exceeds ${MAX_BATCH_CHANNELS} entries`);
+  }
+
+  const parts: Buffer[] = [];
+  const seen = new Set<string>();
+  for (const name of names) {
+    if (seen.has(name)) {
+      throw new RangeError(`Batch channel get contains duplicate name: ${name}`);
+    }
+    seen.add(name);
+    const nameBuf = validateBatchName(name);
+    const entryBuf = Buffer.alloc(2 + nameBuf.length);
+    entryBuf.writeUInt16LE(nameBuf.length, 0);
+    nameBuf.copy(entryBuf, 2);
+    parts.push(entryBuf);
+  }
+
+  const header = Buffer.alloc(2);
+  header.writeUInt16LE(names.length, 0);
+  const payload = Buffer.concat([header, ...parts]);
+
+  const buf = Buffer.alloc(5 + payload.length);
+  buf.writeUInt8(CMD_BATCH_GET_CHANNELS, 0);
+  buf.writeUInt32LE(payload.length, 1);
+  payload.copy(buf, 5);
+  return buf;
+}
+
+/**
+ * Decode a successful batch get response payload.
+ *
+ * Payload format: count:u16 LE + count times value:f64 LE
+ * Values correspond exactly to request order. Truncated payloads, count
+ * mismatches, or trailing bytes throw RangeError (no partial value list).
+ */
+export function decodeBatchChannelValues(payload: Buffer): number[] {
+  if (!Buffer.isBuffer(payload) || payload.length < 2) {
+    throw new RangeError('Batch channel values payload is truncated');
+  }
+  const count = payload.readUInt16LE(0);
+  if (payload.length !== 2 + count * 8) {
+    throw new RangeError('Batch channel values payload length does not match count');
+  }
+  const values: number[] = [];
+  for (let i = 0; i < count; i++) {
+    values.push(payload.readDoubleLE(2 + i * 8));
+  }
+  return values;
+}
+
 // Automation commands
 export const CMD_CREATE_AUTOMATION = 0x20;
 export const CMD_UPDATE_AUTOMATION = 0x21;

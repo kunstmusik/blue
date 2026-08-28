@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Element } from './serialization/xml-reader';
 import { Arrangement } from './arrangement';
 import { Channel } from './mixer/channel';
-import { CompileData } from './compile-data';
+import { BLUE_X7_BINDINGS_KEY, CompileData } from './compile-data';
 import { Instrument } from './instruments/instrument';
 import { Parameter } from './automation/parameter';
 import { Tables } from './tables';
@@ -150,5 +150,85 @@ describe('CompileData', () => {
     expect(compileData.getOriginalParameters()).toHaveLength(0);
     expect(compileData.getStringChannels()).toHaveLength(0);
     expect(compileData.isMixerEnabled()).toBe(false);
+  });
+});
+
+describe('CompiledBlueX7Binding registry (Spec 092)', () => {
+  function makeBinding(ownerIdentity: string, runtimeInstrumentId: string | number) {
+    return {
+      ownerIdentity,
+      runtimeInstrumentId,
+      parameterChannels: new Map([
+        [`param-${ownerIdentity}-a`, 'gk_blue_auto0'],
+        [`param-${ownerIdentity}-b`, 'gk_blue_auto1'],
+      ]),
+      holdChannel: `gk_blue_x7_hold_${ownerIdentity}`,
+      commitChannel: `gk_blue_x7_commit_${ownerIdentity}`,
+      transportTableIds: [100, 101] as const,
+    };
+  }
+
+  it('registers and resolves bindings by stable owner identity', () => {
+    const cd = new CompileData();
+    cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
+    cd.registerBlueX7Binding(makeBinding('track:g1:t1', 2));
+
+    expect(cd.getBlueX7Binding('arrangement:1')?.runtimeInstrumentId).toBe('1');
+    expect(cd.getBlueX7Binding('track:g1:t1')?.runtimeInstrumentId).toBe(2);
+    expect(cd.getBlueX7Binding('missing')).toBeUndefined();
+  });
+
+  it('resolves Parameter-ID channel lookups per owner', () => {
+    const cd = new CompileData();
+    cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
+    cd.registerBlueX7Binding(makeBinding('arrangement:2', '2'));
+
+    const first = cd.getBlueX7Binding('arrangement:1')!;
+    expect(first.parameterChannels.get('param-arrangement:1-a')).toBe('gk_blue_auto0');
+    expect(first.parameterChannels.get('param-arrangement:2-a')).toBeUndefined();
+    const second = cd.getBlueX7Binding('arrangement:2')!;
+    expect(second.parameterChannels.get('param-arrangement:2-a')).toBe('gk_blue_auto0');
+  });
+
+  it('gives each owner distinct hold/commit controls and replaces only its own binding', () => {
+    const cd = new CompileData();
+    cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
+    cd.registerBlueX7Binding(makeBinding('arrangement:2', '2'));
+
+    const first = cd.getBlueX7Binding('arrangement:1')!;
+    const second = cd.getBlueX7Binding('arrangement:2')!;
+    expect(first.holdChannel).not.toBe(second.holdChannel);
+    expect(first.commitChannel).not.toBe(second.commitChannel);
+    expect(first.holdChannel).not.toBe(first.commitChannel);
+
+    const rebuilt = makeBinding('arrangement:1', '9');
+    cd.registerBlueX7Binding(rebuilt);
+    expect(cd.getBlueX7Binding('arrangement:1')?.runtimeInstrumentId).toBe('9');
+    expect(cd.getBlueX7Binding('arrangement:2')?.runtimeInstrumentId).toBe('2');
+    expect(cd.getBlueX7Bindings()).toHaveLength(2);
+  });
+
+  it('keeps bindings render-scoped: fresh CompileData and reset() invalidate them', () => {
+    const cd = new CompileData();
+    cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
+    expect(cd.getBlueX7Binding('arrangement:1')).toBeDefined();
+
+    cd.reset();
+    expect(cd.getBlueX7Binding('arrangement:1')).toBeUndefined();
+    expect(cd.getBlueX7Bindings()).toHaveLength(0);
+
+    const fresh = new CompileData();
+    expect(fresh.getBlueX7Binding('arrangement:1')).toBeUndefined();
+  });
+
+  it('does not leak bindings into persisted XML or runtime-global state', () => {
+    const cd = new CompileData();
+    cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
+    expect(cd.getCompilationVariable(BLUE_X7_BINDINGS_KEY)).toBeInstanceOf(Map);
+    // a second CompileData never observes another render's registry
+    const other = new CompileData();
+    other.registerBlueX7Binding(makeBinding('arrangement:1', '2'));
+    expect(cd.getBlueX7Binding('arrangement:1')?.runtimeInstrumentId).toBe('1');
+    expect(other.getBlueX7Binding('arrangement:1')?.runtimeInstrumentId).toBe('2');
   });
 });

@@ -6,6 +6,7 @@ import {
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
   OWNER_LIVENESS_FEATURE,
+  BATCH_CHANNELS_FEATURE,
   decodeEngineCapabilities,
   decodeEngineCapabilitiesJson,
   hasEngineFeature,
@@ -37,6 +38,14 @@ describe('engine capabilities decoder', () => {
 
   it('exposes the exact-decimal automation capability', () => {
     expect(hasEngineFeature(validCapabilities, AUTOMATION_DECIMAL_FEATURE)).toBe(true);
+  });
+
+  it('recognizes the batch-channels feature and rejects old-engine capability sets for batch commands', () => {
+    const withBatch = { ...validCapabilities, features: [BATCH_CHANNELS_FEATURE] };
+    expect(hasEngineFeature(withBatch, BATCH_CHANNELS_FEATURE)).toBe(true);
+    // an old engine without the feature must not negotiate batch commands
+    const legacyEngine = { ...validCapabilities, features: ['engine-state-v1'] };
+    expect(hasEngineFeature(legacyEngine, BATCH_CHANNELS_FEATURE)).toBe(false);
   });
 
   it.each([

@@ -36,8 +36,13 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
     this._comment = comment ?? '';
   }
 
-  /** Generate global orchestra code (common to all instances). */
-  generateGlobalOrc(): string | null {
+  /**
+   * Generate global orchestra code (common to all instances). The
+   * CompileData is the render-scoped context: instruments that own
+   * shared module text (like the modern BlueX7 synthesis module) register
+   * it once per render through its compilation-variable registry.
+   */
+  generateGlobalOrc(_compileData?: CompileData): string | null {
     return null;
   }
 

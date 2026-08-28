@@ -285,7 +285,7 @@ export class Arrangement {
       if (!ia.enabled) continue;
       if (!ia.instr) continue; // Skip unresolved instrument references
       if (seenInstruments.has(ia.instr)) continue;
-      const globalOrc = ia.instr.generateGlobalOrc();
+      const globalOrc = ia.instr.generateGlobalOrc(compileData);
       if (globalOrc) {
         const assignmentId = compileData.getInstrSourceId(ia.instr) ?? ia.arrangementId;
         buffer.push(this.replaceInstrumentId(assignmentId, globalOrc));

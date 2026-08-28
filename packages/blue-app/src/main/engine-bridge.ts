@@ -1168,6 +1168,36 @@ export class EngineBridge {
     return 0;
   }
 
+  /**
+   * Session-aware batch channel set: all-or-error on the current engine
+   * session only. An unsupported runtime (older engine without the
+   * batch-channels capability) surfaces as a failed result, never a silent
+   * fallback to unbounded per-channel writes.
+   */
+  async setChannels(
+    entries: readonly { name: string; value: number }[],
+  ): Promise<{ ok: boolean; message: string }> {
+    const client = this.activeSession?.getClient();
+    if (!client) {
+      return { ok: false, message: 'no-active-engine-session' };
+    }
+    return client.setChannels(entries);
+  }
+
+  /**
+   * Session-aware batch channel get: values in request order, no partial
+   * results. Fails closed when no session is active.
+   */
+  async getChannels(
+    names: readonly string[],
+  ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }> {
+    const client = this.activeSession?.getClient();
+    if (!client) {
+      return { ok: false, message: 'no-active-engine-session' };
+    }
+    return client.getChannels(names);
+  }
+
   getClient(): EngineClient | null {
     return this.activeSession?.getClient() ?? null;
   }

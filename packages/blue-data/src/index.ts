@@ -4,6 +4,7 @@ export type { BlueDataObject, BlueDataObjectStatic } from './blue-data-object';
 export type { DeepCopyable } from './deep-copyable';
 export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
+export type { CompiledBlueX7Binding } from './compile-data';
 export type { CompiledMidiInstrumentTarget } from './compile-data';
 export {
 	getJavaRuntimeClient,
@@ -64,9 +65,26 @@ export {
   cloneBlueX7Voice,
   generateBlueX7Preview,
   getBlueX7BindingReport,
-  generateBlueX7InstrumentBody,
-  generateFTableForOperator,
+  createBlueX7Parameters,
+  reconcileBlueX7Parameters,
+  applyBlueX7FixedValue,
+  replaceBlueX7VoiceFixedValues,
 } from './instruments/blue-x7';
+export {
+  BLUE_X7_PARAMETER_DESCRIPTORS,
+  getBlueX7Descriptor,
+  quantizeBlueX7DescriptorValue,
+  readBlueX7VoiceValue,
+  writeBlueX7VoiceValue,
+} from './instruments/blue-x7/parameter-catalog';
+export type {
+  BlueX7ParameterDescriptor,
+  BlueX7ParameterGroup,
+  BlueX7ParameterKind,
+  BlueX7UpdateClass,
+} from './instruments/blue-x7/parameter-catalog';
+export { buildBlueX7VoiceTransport } from './instruments/blue-x7/voice-transport';
+export type { BlueX7VoiceTransport } from './instruments/blue-x7/voice-transport';
 export {
   getSysexType,
   getBankVoiceNames,
@@ -86,7 +104,6 @@ export type {
   BlueX7Lfo,
   BlueX7Operator,
   BlueX7Voice,
-  BlueX7StaticTables,
   BlueX7PreviewResult,
 } from './instruments/blue-x7';
 export { BlueSynthBuilder } from './instruments/blue-synth-builder';
@@ -314,6 +331,16 @@ export { ParameterIdList } from './automation/parameter-id-list';
 export { ParameterNameManager } from './automation/parameter-name-manager';
 export { ParameterTimeManager } from './automation/parameter-time-manager';
 export { ParameterHelper } from './automation/parameter-helper';
+export {
+  getProjectParameterCatalog,
+  getArrangementOwnerParameters,
+  getTrackOwnerParameters,
+  getMixerOwnerParameters,
+} from './automation/project-parameter-catalog';
+export type {
+  ProjectParameterEntry,
+  ProjectParameterOwnerKind,
+} from './automation/project-parameter-catalog';
 export {
   parseJavaDecimal,
   normalizeLegacyResolution,

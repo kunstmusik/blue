@@ -14,6 +14,8 @@ export const CSOUND_PERFORMANCE_FEATURE = 'csound-performance-v1';
 export const AUTOMATION_DECIMAL_FEATURE = 'automation-decimal-v1';
 /** Declared by engines supporting the native owner lifetime monitor. */
 export const OWNER_LIVENESS_FEATURE = 'owner-liveness-v1';
+/** Declared by engines supporting bounded batch channel set/get commands. */
+export const BATCH_CHANNELS_FEATURE = 'batch-channels-v1';
 
 export interface EngineCapabilities {
   schemaVersion: 1;

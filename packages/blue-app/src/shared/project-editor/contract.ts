@@ -2425,3 +2425,151 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
   > & {
     missingAudioAssets?: MissingAudioAssetsSession;
   };
+
+// ─── BlueX7 runtime targets and results (Spec 092) ──────────────────────────
+// Serializable contracts for live BlueX7 control, atomic complete-voice
+// updates, and effective-value readback. Durable project patches remain the
+// canonical owner; these messages are validated low-latency accelerators and
+// disposable readback. Routing identity is always owner identity plus
+// Parameter id — never display name, list position, or cached instrument
+// number.
+
+/** Track-owned instrument location. `projectSessionId` is the owning open
+ * project's session; `rootGroupId`/`trackId` are stable score identities. */
+export interface BlueX7TrackOwnerTarget {
+  projectSessionId: number;
+  rootGroupId: string;
+  trackId: string;
+}
+
+/**
+ * Exactly one branch must be present. Display name, list index, instrument
+ * number cached by the renderer, and Parameter name alone are invalid
+ * routing identities.
+ */
+export type BlueX7RuntimeTarget =
+  | { assignmentId: string; track?: never }
+  | { assignmentId?: never; track: BlueX7TrackOwnerTarget };
+
+export interface BlueX7ParameterValuePair {
+  parameterId: string;
+  value: number;
+}
+
+/** Live single-control gesture accelerator (see the authority matrix in the
+ * runtime contract; automation remains authoritative when enabled). */
+export interface BlueX7RealtimeControlUpdate {
+  target: BlueX7RuntimeTarget;
+  projectSessionId: number;
+  parameterId: string;
+  semanticKey: string;
+  value: number;
+  expectedProjectRevision?: number;
+}
+
+/**
+ * Multi-Parameter runtime update. `fixed-delta` holds nothing; for
+ * `complete-voice`, main writes hold -> complete batch -> commit at one
+ * control boundary so listeners observe old-or-new whole voices only.
+ */
+export interface BlueX7RuntimeUpdateBatch {
+  projectSessionId: number;
+  owner: BlueX7RuntimeTarget;
+  expectedProjectRevision?: number;
+  mode: 'fixed-delta' | 'complete-voice';
+  values: BlueX7ParameterValuePair[];
+}
+
+/** Effective-value readback request; only visible controls for open editors. */
+export interface BlueX7EffectiveValuesRequest {
+  target: BlueX7RuntimeTarget;
+  projectSessionId: number;
+  parameterIds: string[];
+}
+
+export type BlueX7EffectiveValuesResult =
+  | {
+      ok: true;
+      projectSessionId: number;
+      ownerIdentity: string;
+      engineSequence: number;
+      values: BlueX7ParameterValuePair[];
+    }
+  | {
+      ok: false;
+      reason:
+        | 'not-playing'
+        | 'stale-session'
+        | 'owner-not-found'
+        | 'binding-not-found'
+        | 'channel-unavailable';
+    };
+
+const BLUE_X7_IS_RECORD = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const BLUE_X7_NON_EMPTY = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const BLUE_X7_SESSION_ID = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0;
+
+/** Validate a runtime target: exactly one owner branch, well-formed ids. */
+export function isBlueX7RuntimeTarget(value: unknown): value is BlueX7RuntimeTarget {
+  if (!BLUE_X7_IS_RECORD(value)) {
+    return false;
+  }
+  const hasAssignment = 'assignmentId' in value;
+  const hasTrack = 'track' in value;
+  if (hasAssignment === hasTrack) {
+    return false; // exactly one branch must be present
+  }
+  if (hasAssignment) {
+    return BLUE_X7_NON_EMPTY(value.assignmentId);
+  }
+  const track = value.track;
+  return (
+    BLUE_X7_IS_RECORD(track) &&
+    BLUE_X7_SESSION_ID(track.projectSessionId) &&
+    BLUE_X7_NON_EMPTY(track.rootGroupId) &&
+    BLUE_X7_NON_EMPTY(track.trackId)
+  );
+}
+
+/** Validate a live single-control intent: valid target, ids, finite value. */
+export function isBlueX7RealtimeControlUpdate(value: unknown): value is BlueX7RealtimeControlUpdate {
+  if (!BLUE_X7_IS_RECORD(value)) {
+    return false;
+  }
+  if (
+    !isBlueX7RuntimeTarget(value.target) ||
+    !BLUE_X7_SESSION_ID(value.projectSessionId) ||
+    !BLUE_X7_NON_EMPTY(value.parameterId) ||
+    !BLUE_X7_NON_EMPTY(value.semanticKey) ||
+    typeof value.value !== 'number' ||
+    !Number.isFinite(value.value)
+  ) {
+    return false;
+  }
+  return (
+    value.expectedProjectRevision === undefined ||
+    (typeof value.expectedProjectRevision === 'number' &&
+      Number.isInteger(value.expectedProjectRevision) &&
+      value.expectedProjectRevision >= 0)
+  );
+}
+
+/** Validate a readback request: valid target, bounded visible-controls list. */
+export function isBlueX7EffectiveValuesRequest(value: unknown): value is BlueX7EffectiveValuesRequest {
+  if (!BLUE_X7_IS_RECORD(value)) {
+    return false;
+  }
+  return (
+    isBlueX7RuntimeTarget(value.target) &&
+    BLUE_X7_SESSION_ID(value.projectSessionId) &&
+    Array.isArray(value.parameterIds) &&
+    value.parameterIds.length > 0 &&
+    value.parameterIds.length <= 151 &&
+    value.parameterIds.every((id) => BLUE_X7_NON_EMPTY(id))
+  );
+}

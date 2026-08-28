@@ -125,6 +125,7 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
 
     appendFtgenTableNumbers(globalOrc, clonedTables);
     clonedArrangement.generateFTables(clonedTables);
+    compileData.registerBlueX7CompiledBindings();
 
     const ftables = clonedTables.getAllTables();
 
@@ -370,6 +371,7 @@ export async function buildStandardCSDAsync(
 
     appendFtgenTableNumbers(globalOrc, clonedTables);
     clonedArrangement.generateFTables(clonedTables);
+    compileData.registerBlueX7CompiledBindings();
 
     const ftables = clonedTables.getAllTables();
 
@@ -607,6 +609,9 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
     if (runtimeInitStatements) {
       appendGlobalOrc(`${runtimeInitStatements}\n`);
     }
+
+    clonedArrangement.generateFTables(clonedTables);
+    compileData.registerBlueX7CompiledBindings();
 
     const ftables = clonedTables.getAllTables();
     const parameterMap = buildParameterMap(blueData, clonedArrangement);

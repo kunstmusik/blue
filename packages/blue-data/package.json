@@ -24,6 +24,7 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && pnpm build:esm && pnpm build:cjs",
+    "generate:blue-x7": "node scripts/generate-blue-x7-modern-orchestra.mjs",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
   },

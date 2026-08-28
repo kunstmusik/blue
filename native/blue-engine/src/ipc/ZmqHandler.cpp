@@ -121,6 +121,93 @@ void appendDoubleLE(std::string& output, double value) {
     appendUint64LE(output, bits);
 }
 
+// Documented protocol maximums for batch channel commands (batch-channels-v1).
+constexpr uint16_t BATCH_MAX_CHANNELS = 256;
+constexpr uint16_t BATCH_MAX_NAME_BYTES = 63;  // fits the 64-byte shm field
+
+struct BatchChannelEntry {
+    std::string name;
+    double value = 0.0;
+};
+
+// Parse a batch payload's entries with whole-payload validation: exact
+// length, count bounds, non-empty NUL-free valid-UTF-8 names within the
+// engine channel-name limit, and (for sets) finite values. Duplicate names
+// are rejected so entry order never becomes meaning-bearing. Returns false
+// with a diagnostic instead of applying any write.
+bool parseBatchChannelPayload(
+    const std::string& payload,
+    bool withValues,
+    std::vector<BatchChannelEntry>& entries,
+    std::string& errorMessage) {
+    if (payload.size() < 2) {
+        errorMessage = "BATCH payload truncated before count";
+        return false;
+    }
+    const size_t count = static_cast<size_t>(static_cast<unsigned char>(payload[0]))
+        | (static_cast<size_t>(static_cast<unsigned char>(payload[1])) << 8);
+    if (count == 0 || count > BATCH_MAX_CHANNELS) {
+        errorMessage = "BATCH channel count out of bounds";
+        return false;
+    }
+    size_t offset = 2;
+    std::vector<std::string> seen;
+    seen.reserve(count);
+    for (size_t index = 0; index < count; ++index) {
+        if (offset + 2 > payload.size()) {
+            errorMessage = "BATCH payload truncated in entry header";
+            return false;
+        }
+        const size_t nameLength = static_cast<size_t>(static_cast<unsigned char>(payload[offset]))
+            | (static_cast<size_t>(static_cast<unsigned char>(payload[offset + 1])) << 8);
+        offset += 2;
+        if (nameLength == 0 || nameLength > BATCH_MAX_NAME_BYTES) {
+            errorMessage = "BATCH channel name length out of bounds";
+            return false;
+        }
+        if (offset + nameLength > payload.size()) {
+            errorMessage = "BATCH payload truncated in channel name";
+            return false;
+        }
+        BatchChannelEntry entry;
+        entry.name.assign(payload, offset, nameLength);
+        offset += nameLength;
+        if (entry.name.find('\0') != std::string::npos) {
+            errorMessage = "BATCH channel name contains NUL";
+            return false;
+        }
+        if (!isValidUtf8(entry.name)) {
+            errorMessage = "BATCH channel name is not valid UTF-8";
+            return false;
+        }
+        for (const auto& previous : seen) {
+            if (previous == entry.name) {
+                errorMessage = "BATCH payload contains duplicate channel name";
+                return false;
+            }
+        }
+        seen.push_back(entry.name);
+        if (withValues) {
+            if (offset + sizeof(double) > payload.size()) {
+                errorMessage = "BATCH payload truncated in channel value";
+                return false;
+            }
+            entry.value = readDoubleLE(payload.data() + offset);
+            offset += sizeof(double);
+            if (!std::isfinite(entry.value)) {
+                errorMessage = "BATCH channel value must be finite";
+                return false;
+            }
+        }
+        entries.push_back(std::move(entry));
+    }
+    if (offset != payload.size()) {
+        errorMessage = "BATCH payload has trailing bytes";
+        return false;
+    }
+    return true;
+}
+
 }  // namespace
 
 ZmqHandler::ZmqHandler(CsoundEngine& engine, SharedMemory& shm)
@@ -351,6 +438,57 @@ bool ZmqHandler::processOne() {
             case Command::GET_SHM_NAME:
                 resp = Response::ok(shm_.getName());
                 break;
+
+            case Command::BATCH_SET_CHANNELS: {
+                // Whole-payload validation happens before any write so the
+                // command is all-or-error at the protocol boundary.
+                std::vector<BatchChannelEntry> entries;
+                std::string errorMessage;
+                if (!parseBatchChannelPayload(req.payload, true, entries, errorMessage)) {
+                    resp = Response::error(errorMessage);
+                    break;
+                }
+                bool applied = true;
+                for (const auto& entry : entries) {
+                    if (!engine_.setChannel(entry.name, entry.value)) {
+                        resp = Response::error(engine_.getLastError());
+                        applied = false;
+                        break;
+                    }
+                }
+                if (applied) {
+                    resp = Response::ok();
+                }
+                break;
+            }
+
+            case Command::BATCH_GET_CHANNELS: {
+                std::vector<BatchChannelEntry> entries;
+                std::string errorMessage;
+                if (!parseBatchChannelPayload(req.payload, false, entries, errorMessage)) {
+                    resp = Response::error(errorMessage);
+                    break;
+                }
+                std::string payload;
+                payload.reserve(2 + entries.size() * sizeof(double));
+                payload.push_back(static_cast<char>(entries.size() & 0xffu));
+                payload.push_back(static_cast<char>((entries.size() >> 8) & 0xffu));
+                for (const auto& entry : entries) {
+                    double value = 0.0;
+                    if (!engine_.getChannel(entry.name, value)) {
+                        // No partial value list: one unavailable channel
+                        // fails the whole batch.
+                        resp = Response::error(engine_.getLastError());
+                        payload.clear();
+                        break;
+                    }
+                    appendDoubleLE(payload, value);
+                }
+                if (!payload.empty()) {
+                    resp = Response::ok(payload);
+                }
+                break;
+            }
 
             // Automation commands (protocol version 2: exact decimal text)
             case Command::CREATE_AUTOMATION:

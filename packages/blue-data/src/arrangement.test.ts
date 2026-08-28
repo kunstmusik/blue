@@ -5,6 +5,9 @@ import { GenericInstrument } from './instruments/generic-instrument';
 import { JavaScriptInstrument } from './instruments/javascript-instrument';
 import { Tables } from './tables';
 import { CompileData } from './compile-data';
+import { Score } from './score/score';
+import { TrackLayerGroup } from './score/track/track-layer-group';
+import { Track } from './score/track/track';
 
 class FtableInstrument extends GenericInstrument {
   override generateFTables(tables: unknown): void {
@@ -115,5 +118,70 @@ describe('Arrangement', () => {
     arrangement.generateFTables(tables);
 
     expect(tables.getCompilationVariable('called')).toBe(true);
+  });
+});
+
+describe('compile-once global orchestra seam (Spec 092)', () => {
+  class CompileOnceInstrument extends GenericInstrument {
+    readonly ownerIdentity: string;
+
+    constructor(ownerIdentity: string) {
+      super();
+      this.setName(`CompileOnce ${ownerIdentity}`);
+      this.ownerIdentity = ownerIdentity;
+    }
+
+    override generateGlobalOrc(compileData?: CompileData): string | null {
+      if (!compileData) {
+        return null;
+      }
+      const moduleKey = 'test.sharedModule';
+      if (compileData.getCompilationVariable(moduleKey)) {
+        return null;
+      }
+      compileData.setCompilationVariable(moduleKey, true);
+      return '; SHARED MODULE';
+    }
+  }
+
+  it('emits the shared module once across distinct instrument objects', () => {
+    const arrangement = new Arrangement();
+    arrangement.addInstrumentAtEnd(new CompileOnceInstrument('a'));
+    arrangement.addInstrumentAtEnd(new CompileOnceInstrument('b'));
+
+    const compileData = new CompileData(arrangement, new Tables(), true);
+    const globalOrc = compileData.getArrangement().generateGlobalOrc(compileData);
+    expect(globalOrc.match(/SHARED MODULE/g)).toHaveLength(1);
+  });
+
+  it('registers shared resources for arrangement and prepared Track instruments in one render', () => {
+    const arrangement = new Arrangement();
+    arrangement.addInstrumentAtEnd(new CompileOnceInstrument('a'));
+
+    const score = new Score();
+    const group = new TrackLayerGroup();
+    const track = new Track();
+    track.setInstrument(new CompileOnceInstrument('track-a'));
+    group.push(track);
+    score.push(group);
+
+    const compileData = new CompileData(arrangement, new Tables(), true);
+    score.prepareTrackInstruments(compileData);
+    const globalOrc = compileData.getArrangement().generateGlobalOrc(compileData);
+    expect(globalOrc.match(/SHARED MODULE/g)).toHaveLength(1);
+    // the Track render instrument participates in the same render registry
+    expect(compileData.getTrackInstrumentId(track.getUniqueId())).toBeDefined();
+  });
+
+  it('keeps render contexts independent: a new CompileData emits the module again', () => {
+    const arrangement = new Arrangement();
+    arrangement.addInstrumentAtEnd(new CompileOnceInstrument('a'));
+
+    const first = new CompileData(arrangement, new Tables(), true);
+    expect(first.getArrangement().generateGlobalOrc(first)).toContain('SHARED MODULE');
+
+    const second = new CompileData(arrangement, new Tables(), true);
+    expect(second.getCompilationVariable('test.sharedModule')).toBeUndefined();
+    expect(second.getArrangement().generateGlobalOrc(second)).toContain('SHARED MODULE');
   });
 });

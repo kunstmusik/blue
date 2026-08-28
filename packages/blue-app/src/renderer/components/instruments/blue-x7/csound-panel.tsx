@@ -145,7 +145,7 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
 
           <div className="rounded border border-blue-border bg-blue-bg/40 p-2.5 space-y-1.5">
             <span className="text-role-headline font-bold text-amber-400 block">
-              ⚠ Preserved But Dormant in Csound Engine
+              Not Synthesized (Outside Parameter Scope)
             </span>
             <ul className="text-role-callout text-blue-muted space-y-1 list-disc list-inside">
               {preview?.bindings.notEmitted.map((item, idx) => (

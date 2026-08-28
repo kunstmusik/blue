@@ -212,6 +212,140 @@ void testMutationReclaimsRetiredSnapshots(
 
 }  // namespace
 
+// ---- batch channel commands (batch-channels-v1) ----
+
+void appendUint16LE(std::string& payload, uint16_t value) {
+    payload.push_back(static_cast<char>(value & 0xffu));
+    payload.push_back(static_cast<char>((value >> 8) & 0xffu));
+}
+
+std::string makeBatchSetPayload(
+    const std::vector<std::pair<std::string, double>>& entries) {
+    std::string payload;
+    appendUint16LE(payload, static_cast<uint16_t>(entries.size()));
+    for (const auto& entry : entries) {
+        appendUint16LE(payload, static_cast<uint16_t>(entry.first.size()));
+        payload.append(entry.first);
+        payload.append(reinterpret_cast<const char*>(&entry.second), sizeof(double));
+    }
+    return payload;
+}
+
+std::string makeBatchGetPayload(const std::vector<std::string>& names) {
+    std::string payload;
+    appendUint16LE(payload, static_cast<uint16_t>(names.size()));
+    for (const auto& name : names) {
+        appendUint16LE(payload, static_cast<uint16_t>(name.size()));
+        payload.append(name);
+    }
+    return payload;
+}
+
+void testBatchChannelCommands(
+    blue::CsoundEngine& engine,
+    blue::ZmqHandler& handler,
+    const std::string& controlEndpoint) {
+    // This harness never creates a Csound instance, so a fully valid batch
+    // must still fail with the explicit not-created diagnostic (the
+    // destroyed/not-created engine contract case). Success and ordering are
+    // covered by the real-Csound channel bridge test.
+    auto notCreatedSet = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_SET_CHANNELS,
+        makeBatchSetPayload({{"bx7-a", 1.5}, {"bx7-b", -2.25}})));
+    expect(notCreatedSet.transportOk && notCreatedSet.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch set without a created engine is an explicit error");
+    expect(notCreatedSet.payload.find("Engine not created") != std::string::npos,
+           "batch set reports the not-created engine diagnostic");
+
+    auto notCreatedGet = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload({"bx7-a", "bx7-b"})));
+    expect(notCreatedGet.transportOk && notCreatedGet.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch get without a created engine is an explicit error");
+
+    // validation happens before engine access: a rejected batch never
+    // reaches the engine path
+    auto rejectBeforeEngine = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload({})));
+    expect(rejectBeforeEngine.payload.find("Engine not created") == std::string::npos,
+           "invalid batches are rejected before engine access");
+
+    // validation-before-write: a bad entry leaves earlier values untouched
+    std::string badPayload = makeBatchSetPayload({{"bx7-keep", 7.0}, {"bx7-bad", 1.0}});
+    badPayload[badPayload.size() - 1] = static_cast<char>(0x7f); // NaN bit pattern
+    badPayload[badPayload.size() - 2] |= static_cast<char>(0xf8);
+    auto setInvalidValue = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_SET_CHANNELS, badPayload));
+    expect(setInvalidValue.transportOk && setInvalidValue.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch set rejects non-finite values");
+
+    auto verifyKeep = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::GET_CHANNEL, std::string("bx7-keep\0", 9)));
+    expect(verifyKeep.transportOk && verifyKeep.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "rejected batch set applied no writes");
+
+    // duplicates, NUL, empty, oversized, truncated, trailing
+    auto setDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_SET_CHANNELS,
+        makeBatchSetPayload({{"bx7-dup", 1.0}, {"bx7-dup", 2.0}})));
+    expect(setDuplicate.transportOk && setDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch set rejects duplicate names");
+
+    auto getDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload({"bx7-dup", "bx7-dup"})));
+    expect(getDuplicate.transportOk && getDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch get rejects duplicate names");
+
+    std::string nulName = makeBatchGetPayload({"ok"});
+    // replace name with embedded NUL: "a\0b"
+    std::string nulPayload;
+    appendUint16LE(nulPayload, 1);
+    appendUint16LE(nulPayload, 3);
+    nulPayload.append(std::string("a\0b", 3));
+    auto getNul = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS, nulPayload));
+    expect(getNul.transportOk && getNul.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch names reject embedded NUL");
+
+    auto getEmpty = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload({})));
+    expect(getEmpty.transportOk && getEmpty.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch rejects empty count");
+
+    std::string longName(64, 'x');
+    auto getTooLong = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload({longName})));
+    expect(getTooLong.transportOk && getTooLong.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch rejects names beyond the engine channel-name limit");
+
+    std::string truncated = makeBatchGetPayload({"bx7-a", "bx7-b"});
+    truncated.resize(truncated.size() - 3);
+    auto getTruncated = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS, truncated));
+    expect(getTruncated.transportOk && getTruncated.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch rejects truncated payloads");
+
+    std::string trailing = makeBatchGetPayload({"bx7-a"});
+    trailing.push_back('\x00');
+    auto getTrailing = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS, trailing));
+    expect(getTrailing.transportOk && getTrailing.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch rejects trailing payload bytes");
+
+    std::string badUtf8;
+    appendUint16LE(badUtf8, 1);
+    appendUint16LE(badUtf8, 2);
+    badUtf8.append("\xc0\xaf", 2);
+    auto getBadUtf8 = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS, badUtf8));
+    expect(getBadUtf8.transportOk && getBadUtf8.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch names must be valid UTF-8");
+}
+
 int main() {
     const auto& corpus = blue::parity::FixtureCorpus::load(BLUE_ENGINE_PARITY_FIXTURES_DIR);
     expect(corpus.manifest().schemaVersion == 1, "fixture corpus loads from build dir");
@@ -328,6 +462,8 @@ int main() {
     expect(deleteWithTrailingBytes.transportOk
                && deleteWithTrailingBytes.status == static_cast<uint8_t>(blue::Status::ERROR),
            "name-only commands reject trailing bytes");
+
+    testBatchChannelCommands(engine, handler, controlEndpoint);
 
     if (g_failures == 0) {
         std::printf("test_automation_protocol: all tests passed\n");

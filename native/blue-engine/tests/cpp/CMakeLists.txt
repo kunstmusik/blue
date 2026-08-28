@@ -126,6 +126,8 @@ add_executable(test_channel_bridge
     test_channel_bridge.cpp
     ${CMAKE_SOURCE_DIR}/src/engine/CsoundEngine.cpp
     ${CMAKE_SOURCE_DIR}/src/ipc/SharedMemory.cpp
+    ${CMAKE_SOURCE_DIR}/src/ipc/ZmqHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/protocol/Capabilities.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundLoader.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/automation/JavaBigDecimal.cpp
@@ -133,7 +135,7 @@ add_executable(test_channel_bridge
     ${CMAKE_SOURCE_DIR}/src/automation/AutomationManager.cpp
 )
 target_include_directories(test_channel_bridge PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(test_channel_bridge PRIVATE Boost::boost)
+target_link_libraries(test_channel_bridge PRIVATE Boost::boost libzmq-static)
 set_target_properties(test_channel_bridge PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 if(UNIX AND NOT APPLE)
     target_link_libraries(test_channel_bridge PRIVATE dl)

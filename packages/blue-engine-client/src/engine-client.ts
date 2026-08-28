@@ -8,8 +8,10 @@ import { Request, Subscriber } from 'zeromq';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
   AUTOMATION_DECIMAL_FEATURE,
+  BATCH_CHANNELS_FEATURE,
   decodeEngineCapabilitiesJson,
   EngineCapabilities,
+  hasEngineFeature,
 } from './capabilities';
 import {
   encodeSetChannel,
@@ -38,6 +40,12 @@ import {
   CMD_SET_CHANNEL,
   CMD_GET_CHANNEL,
   CMD_GET_SHM_NAME,
+  CMD_BATCH_SET_CHANNELS,
+  CMD_BATCH_GET_CHANNELS,
+  encodeSetChannels,
+  encodeGetChannels,
+  decodeBatchChannelValues,
+  BatchChannelEntry,
   CMD_CREATE_AUTOMATION,
   CMD_UPDATE_AUTOMATION,
   CMD_DELETE_AUTOMATION,
@@ -431,6 +439,68 @@ export class EngineClient {
    */
   async getShmName(): Promise<{ ok: boolean; message: string }> {
     return this.sendRaw(CMD_GET_SHM_NAME);
+  }
+
+  /**
+   * The batch-channel capability must be accepted by the handshake before
+   * any batch command is sent; an older engine yields an explicit
+   * unsupported-runtime diagnostic instead of a silent fallback.
+   */
+  private batchChannelsGuard(): { ok: true } | { ok: false; message: string } {
+    if (!this.verifiedCapabilities) {
+      return { ok: false, message: 'Batch channels require a completed capability handshake' };
+    }
+    if (!hasEngineFeature(this.verifiedCapabilities, BATCH_CHANNELS_FEATURE)) {
+      return { ok: false, message: `Blue Engine is missing required capability: ${BATCH_CHANNELS_FEATURE}` };
+    }
+    return { ok: true };
+  }
+
+  /**
+   * Set multiple channels in one all-or-error round trip.
+   * The engine validates the entire payload before applying any write.
+   */
+  async setChannels(
+    entries: readonly BatchChannelEntry[],
+  ): Promise<{ ok: boolean; message: string }> {
+    if (!this.socket) {
+      throw new Error('EngineClient not connected.');
+    }
+    const guard = this.batchChannelsGuard();
+    if (!guard.ok) {
+      return guard;
+    }
+    const data = encodeSetChannels(entries);
+    return this.sendRaw(CMD_BATCH_SET_CHANNELS, data);
+  }
+
+  /**
+   * Get multiple channel values in request order. Missing channels return
+   * an error result with no partial value list.
+   */
+  async getChannels(
+    names: readonly string[],
+  ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }> {
+    if (!this.socket) {
+      throw new Error('EngineClient not connected.');
+    }
+    const guard = this.batchChannelsGuard();
+    if (!guard.ok) {
+      return guard;
+    }
+    const data = encodeGetChannels(names);
+    const resp = await this.sendRaw(CMD_BATCH_GET_CHANNELS, data);
+    if (!resp.ok) {
+      return { ok: false, message: resp.message };
+    }
+    try {
+      return { ok: true, values: decodeBatchChannelValues(resp.payload) };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   // ─── Automation Commands ───

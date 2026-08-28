@@ -7,7 +7,6 @@ import {
   BlueX7,
   createDefaultBlueX7Voice,
   generateBlueX7Preview,
-  generateBlueX7InstrumentBody,
   getBlueX7BindingReport,
 } from './blue-x7';
 
@@ -164,125 +163,288 @@ describe('BlueX7', () => {
     expect(savedXml).toContain('<algorithm>7</algorithm>');
   });
 
-  it('allocates 11 static tables once and 6 operator tables per BlueX7 instance', () => {
+  it('allocates independent transport table pairs per BlueX7 instance', () => {
     const tables = new Tables();
 
     const instr1 = new BlueX7();
     instr1.setName('Lead');
     instr1.generateFTables(tables);
-
-    const tablesText1 = tables.getTables();
-    expect(tablesText1).toContain('; [BLUEX7] - START STATIC TABLES; sine wave');
-    expect(tablesText1).toContain('; [BLUEX7] - END STATIC TABLES');
-    expect(tablesText1).toContain('; FTABLES FOR BLUEX7 INSTRUMENT: Lead');
-    expect(instr1.operatorTableNums).toEqual([12, 13, 14, 15, 16, 17]);
-
     const instr2 = new BlueX7();
     instr2.setName('Bass');
     instr2.generateFTables(tables);
 
-    const tablesText2 = tables.getTables();
-    // Static tables not duplicated
-    const staticCount = (tablesText2.match(/; \[BLUEX7\] - START STATIC TABLES/g) || []).length;
-    expect(staticCount).toBe(1);
-    expect(tablesText2).toContain('; FTABLES FOR BLUEX7 INSTRUMENT: Bass');
-    expect(instr2.operatorTableNums).toEqual([18, 19, 20, 21, 22, 23]);
+    expect(instr1.getBlueX7TransportTableIds()).not.toBeNull();
+    expect(instr2.getBlueX7TransportTableIds()).not.toBeNull();
+    const [main1, staging1] = instr1.getBlueX7TransportTableIds()!;
+    const [main2, staging2] = instr2.getBlueX7TransportTableIds()!;
+    expect(new Set([main1, staging1, main2, staging2]).size).toBe(4);
+
+    const tablesText = tables.getTables();
+    expect(tablesText).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: Lead');
+    expect(tablesText).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: Bass');
+    // one 256-slot GEN02 transport table per allocation
+    expect((tablesText.match(/ 0 256 -2 /g) || []).length).toBe(4);
   });
 
-  it('generates Csound instrument body with p-field substitutions, out rewrite, and post-code for algorithm 1, 19, and 32', () => {
+  it('writes the complete 155-value transport snapshot into its table', () => {
+    const tables = new Tables();
+    const instr = new BlueX7();
+    instr.getVoice().common.algorithm = 19;
+    instr.getVoice().common.operatorEnabled = [true, true, false, true, true, true];
+    instr.generateFTables(tables);
+
+    const [mainTable] = instr.getBlueX7TransportTableIds()!;
+    const tablesText = tables.getTables();
+    const line = tablesText
+      .split('\n')
+      .find((l) => l.startsWith(`f ${mainTable} `));
+    expect(line).toBeDefined();
+    const values = line!.split(/\s+/).slice(5).map(Number);
+    expect(values.length).toBe(155);
+    // algorithm 19 -> slot 134 = 18; mask bit 2 cleared
+    expect(values[134]).toBe(18);
+    // detune -3 of logical operator 1 -> slot 105+20 = 125 holds -3 + 7 = 4
+    expect(values[125]).toBe(4);
+    // name bytes zero
+    expect(values.slice(145).every((v) => v === 0)).toBe(true);
+  });
+
+  it('generates the modern host wrapper with Blue pitch, velocity, gate, and post code', () => {
     for (const alg of [1, 19, 32]) {
       const voice = createDefaultBlueX7Voice();
       voice.common.algorithm = alg;
-      voice.common.feedback = 5;
-      voice.csoundPostCode = 'outs aout * 0.8, aout * 0.8';
+      voice.csoundPostCode = 'blueMixerOut aout, aout';
 
       const preview = generateBlueX7Preview(voice, `Alg_${alg}`);
-      expect(preview.tables).toContain('; [BLUEX7] - START STATIC TABLES');
-      expect(preview.tables).toContain(`; FTABLES FOR BLUEX7 INSTRUMENT: Alg_${alg}`);
-      expect(preview.body).toContain('idur \t= abs(p3) \np3 = p3 + 4');
-      expect(preview.body).toContain('(p4 < 15 ? cpspch(p4) : p4)');
-      expect(preview.body).toContain('aout =');
-      expect(preview.body).toContain('outs aout * 0.8, aout * 0.8');
+      expect(preview.tables).toContain(`; FTABLES FOR BLUEX7 MODERN TRANSPORT: Alg_${alg}`);
+      expect(preview.body).toContain(
+        'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
+      );
+      expect(preview.body).toContain('iBlueX7GateSeconds = abs(p3)');
+      expect(preview.body).toContain('iBlueX7OperatorMask = 63');
+      expect(preview.body).toMatch(
+        /aout = bluex7_voice\(iBlueX7MidiNote, p5, \d+, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7StaticVoice, kBlueX7StaticMask, kBlueX7StaticHold\)/,
+      );
+      // post code arrives after the module output at the same user-visible stage
+      const aoutIndex = preview.body.indexOf('aout = bluex7_voice');
+      const postIndex = preview.body.indexOf('blueMixerOut aout, aout');
+      expect(postIndex).toBeGreaterThan(aoutIndex);
     }
+  });
 
+  it('reports every catalog field as emitted with its update class and no dormant-field claims', () => {
     const report = getBlueX7BindingReport();
-    expect(report.emitted).toContain('common.algorithm (selects ORC topology template)');
-    expect(report.emitted).toContain('csoundPostCode (appended verbatim to instrument body)');
-    expect(report.notEmitted).toContain('common.keyTranspose (stored in XML; not referenced in Pinkston ORC)');
-    expect(report.notEmitted).toContain('lfo (speed, delay, PMD, AMD, wave, sync stored in XML; not in Pinkston ORC)');
+    expect(report.emitted).toHaveLength(152); // 151 parameters + post code
+    expect(report.emitted.join('\n')).toContain('common.algorithm');
+    expect(report.emitted.join('\n')).toContain('[next-note]');
+    expect(report.emitted.join('\n')).toContain('[active-note]');
+    expect(report.emitted).toContain('csoundPostCode (appended verbatim after the module aout)');
+    expect(report.notEmitted).toHaveLength(1); // only the nonsynthesized name bytes
+    expect(report.notEmitted[0]).toContain('voice-name bytes');
   });
 
-  it('renames the Java resource label that became reserved in Csound 7', () => {
-    const voice = createDefaultBlueX7Voice();
-    const body = generateBlueX7Preview(voice).body;
-
-    expect(body).toContain('igoto continue_');
-    expect(body).toContain('continue_:');
-    expect(body).not.toContain('igoto continue\n');
-    expect(body).not.toContain('\ncontinue:\n');
+  it('emits the shared modern module once per render and bakes out-of-range algorithms safely', () => {
+    const instr = new BlueX7();
+    instr.getVoice().common.algorithm = 40; // corrupt algorithm clamps to 32 at transport
+    const tables = new Tables();
+    instr.generateFTables(tables);
+    const [mainTable] = instr.getBlueX7TransportTableIds()!;
+    const line = tables.getTables()
+      .split('\n')
+      .find((l) => l.startsWith(`f ${mainTable} `));
+    const values = line!.split(/\s+/).slice(5).map(Number);
+    expect(values[134]).toBe(31); // clamped to algorithm 32, 0-based
+    // the wrapper still renders (the module owns all 32 topologies)
+    expect(instr.generateInstrument()).toContain('bluex7_voice');
   });
 
-  it('substitutes only the first occurrence of each token, matching Java TextUtilities.replace semantics', () => {
-    // Java Blue's TextUtilities.replace performs a single indexOf-based
-    // replacement. Tokens "p12" and "p25" each occur twice in the extracted
-    // ORC body: once in code and once inside the identifier "imap128" or the
-    // trailing comment ";0 <= p25 <= 7". Java replaces only the code
-    // occurrence; the TS port must not rename identifiers or rewrite
-    // comments.
-    const voice = createDefaultBlueX7Voice();
-    voice.common.algorithm = 19;
-    voice.common.feedback = 5;
+  it('owns exactly 151 catalog parameters with voice-derived fixed values', () => {
+    const instr = new BlueX7();
+    const params = instr.getParameters();
+    expect(params).toHaveLength(151);
+    const names = new Set(params.map((p) => p.getName()));
+    expect(names.size).toBe(151);
+    expect(names).toContain('common.algorithm');
+    expect(names).toContain('operator.1.outputLevel');
 
-    const body = generateBlueX7InstrumentBody(
-      voice,
-      {
-        sineTable: 1,
-        outputAmpTable: 2,
-        rateScaleTable: 3,
-        egRateRiseLvlTable: 4,
-        egRateRisePercentageTable: 5,
-        egRateDecayLvlTable: 6,
-        egRateDecayPercentageTable: 7,
-        egLevelPeakTable: 8,
-        velAmpTable: 9,
-        velSensitivityTable: 10,
-        feedbackScaleTable: 11,
-      },
-      [12, 13, 14, 15, 16, 17],
+    const algorithm = params.find((p) => p.getName() === 'common.algorithm')!;
+    expect(algorithm.getMinimum()).toBe(1);
+    expect(algorithm.getMaximum()).toBe(32);
+    expect(algorithm.getResolution()).toBe(1);
+    expect(algorithm.getFixedValue()).toBe(19);
+    expect(algorithm.getLabel()).toBe('Algorithm');
+
+    const outputLevel = params.find((p) => p.getName() === 'operator.1.outputLevel')!;
+    expect(outputLevel.getFixedValue()).toBe(99);
+  });
+
+  it('migrates legacy XML without parameterList without changing the voice', () => {
+    const original = new BlueX7();
+    original.setName('Legacy');
+    original.getVoice().common.algorithm = 7;
+    original.getVoice().operators[2].outputLevel = 42;
+    const legacyElement = Element.parse(original.saveAsXML().toXml());
+    legacyElement.removeElements('parameterList');
+
+    const loaded = BlueX7.loadFromXML(legacyElement);
+    expect(loaded.getParameters()).toHaveLength(151);
+    expect(loaded.getVoice().common.algorithm).toBe(7);
+    expect(loaded.getVoice().operators[2].outputLevel).toBe(42);
+    expect(
+      loaded.getParameters().find((p) => p.getName() === 'operator.3.outputLevel')!.getFixedValue(),
+    ).toBe(42);
+  });
+
+  it('retains identities and automation content across same-owner save/reopen', () => {
+    const instr = new BlueX7();
+    const param = instr.getParameters().find((p) => p.getName() === 'common.feedback')!;
+    param.setAutomationEnabled(true);
+    param.setPoints([{ time: 0, value: 2 }, { time: 4, value: 5 }]);
+    param.setLineColor(-12345);
+
+    const reloaded = BlueX7.loadFromXML(Element.parse(instr.saveAsXML().toXml()));
+    const retained = reloaded.getParameters().find((p) => p.getName() === 'common.feedback')!;
+    expect(retained.getUniqueId()).toBe(param.getUniqueId());
+    expect(retained.isAutomationEnabled()).toBe(true);
+    expect(retained.getPoints()).toEqual([{ time: 0, value: 2 }, { time: 4, value: 5 }]);
+    expect(retained.getLineColor()).toBe(-12345);
+    // identities are stable for every parameter on reopen
+    const before = new Map(instr.getParameters().map((p) => [p.getName(), p.getUniqueId()]));
+    for (const p of reloaded.getParameters()) {
+      expect(before.get(p.getName())).toBe(p.getUniqueId());
+    }
+  });
+
+  it('repairs malformed and duplicate persisted metadata deterministically', () => {
+    const instr = new BlueX7();
+    const xml = instr.saveAsXML().toXml();
+    const elem = Element.parse(xml);
+    const list = elem.getElement('parameterList')!;
+    // duplicate: two parameters named common.feedback; the first wins
+    const duplicate = Element.parse(list.getElements('parameter').next().toXml());
+    list.addElement(duplicate);
+    // malformed: a parameter without a name
+    const malformed = Element.parse(list.getElements('parameter').next().toXml());
+    malformed.setAttribute('name', '');
+    list.addElement(malformed);
+
+    const loaded = BlueX7.loadFromXML(elem);
+    const params = loaded.getParameters();
+    expect(params).toHaveLength(151);
+    const feedbacks = params.filter((p) => p.getName() === 'common.feedback');
+    expect(feedbacks).toHaveLength(1);
+    expect(feedbacks[0].getUniqueId()).toBe(
+      instr.getParameters().find((p) => p.getName() === 'common.feedback')!.getUniqueId(),
     );
-
-    // "p12" inside the imap128 identifier must survive untouched
-    expect(body).toContain('imap128');
-    expect(body).not.toMatch(/ima1[0-9]+8\s*=/);
-    // the feedback value must not be substituted into the trailing comment
-    expect(body).toContain(';0 <= p25 <= 7 (feedbk)');
-    expect(body).not.toContain(';0 <= 5 <= 7');
-    // the code occurrence of p25 IS substituted with the feedback value
-    expect(body).toMatch(/ifeed\s+table\s+5,ifeedfn/);
   });
 
-  it('returns an empty instrument body for out-of-range algorithms, matching Java resource-load failure', () => {
-    const voice = createDefaultBlueX7Voice();
-    voice.common.algorithm = 40;
+  it('regenerates all parameter identities at a new ownership boundary', () => {
+    const instr = new BlueX7();
+    const param = instr.getParameters().find((p) => p.getName() === 'lfo.speed')!;
+    param.setAutomationEnabled(true);
+    param.setPoints([{ time: 1, value: 10 }]);
 
-    const body = generateBlueX7InstrumentBody(
-      voice,
-      {
-        sineTable: 1,
-        outputAmpTable: 2,
-        rateScaleTable: 3,
-        egRateRiseLvlTable: 4,
-        egRateRisePercentageTable: 5,
-        egRateDecayLvlTable: 6,
-        egRateDecayPercentageTable: 7,
-        egLevelPeakTable: 8,
-        velAmpTable: 9,
-        velSensitivityTable: 10,
-        feedbackScaleTable: 11,
-      },
-      [12, 13, 14, 15, 16, 17],
-    );
+    const copy = instr.deepCopy();
+    const beforeIds = instr.getParameters().map((p) => p.getUniqueId());
+    const afterIds = copy.getParameters().map((p) => p.getUniqueId());
+    expect(afterIds).toHaveLength(151);
+    expect(new Set(afterIds).size).toBe(151);
+    for (const id of afterIds) {
+      expect(beforeIds).not.toContain(id);
+    }
+    // content is preserved across the copy
+    const copiedParam = copy.getParameters().find((p) => p.getName() === 'lfo.speed')!;
+    expect(copiedParam.isAutomationEnabled()).toBe(true);
+    expect(copiedParam.getPoints()).toEqual([{ time: 1, value: 10 }]);
+    expect(copiedParam.getFixedValue()).toBe(param.getFixedValue());
+  });
 
-    expect(body).toBe('');
+  it('reads shared values from logical operator 1 while preserving mixed XML', () => {
+    const instr = new BlueX7();
+    instr.getVoice().operators[0].sync = 1;
+    instr.getVoice().operators[1].sync = 0;
+    instr.getVoice().operators[0].modulationPitch = 5;
+    instr.getVoice().operators[3].modulationPitch = 2;
+
+    const reloaded = BlueX7.loadFromXML(Element.parse(instr.saveAsXML().toXml()));
+    expect(
+      reloaded.getParameters().find((p) => p.getName() === 'common.oscillatorKeySync')!.getFixedValue(),
+    ).toBe(1);
+    expect(
+      reloaded.getParameters().find((p) => p.getName() === 'lfo.pitchModulationSensitivity')!.getFixedValue(),
+    ).toBe(5);
+    // legacy mixed voice values remain unnormalized in XML
+    const saved = Element.parse(reloaded.saveAsXML().toXml());
+    const ops = saved.getElements('operator').toArray();
+    expect(ops[0].getTextString('sync')).toBe('1');
+    expect(ops[1].getTextString('sync')).toBe('0');
+    expect(ops[0].getTextString('modulationPitch')).toBe('5');
+    expect(ops[3].getTextString('modulationPitch')).toBe('2');
+  });
+
+  it('replaces fixed values whole-voice while retaining identities and curves', () => {
+    const instr = new BlueX7();
+    const feedbackParam = instr.getParameters().find((p) => p.getName() === 'common.feedback')!;
+    const speedParam = instr.getParameters().find((p) => p.getName() === 'lfo.speed')!;
+    feedbackParam.setAutomationEnabled(true);
+    feedbackParam.setPoints([{ time: 0, value: 1 }, { time: 2, value: 7 }]);
+    const beforeIds = instr.getParameters().map((p) => p.getUniqueId());
+
+    const replacement = createDefaultBlueX7Voice();
+    replacement.common.feedback = 3;
+    replacement.lfo.speed = 77;
+    replacement.common.algorithm = 5;
+    instr.replaceVoice(replacement);
+
+    expect(instr.getVoice().common.feedback).toBe(3);
+    expect(instr.getVoice().lfo.speed).toBe(77);
+    expect(feedbackParam.getFixedValue()).toBe(3);
+    expect(speedParam.getFixedValue()).toBe(77);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'common.algorithm')!.getFixedValue(),
+    ).toBe(5);
+    // identities and automation content retained
+    expect(instr.getParameters().map((p) => p.getUniqueId())).toEqual(beforeIds);
+    expect(feedbackParam.isAutomationEnabled()).toBe(true);
+    expect(feedbackParam.getPoints()).toEqual([{ time: 0, value: 1 }, { time: 2, value: 7 }]);
+  });
+
+  it('updates voice and fixed value together on widget edits', () => {
+    const instr = new BlueX7();
+    instr.setOperatorField(2, 'outputLevel', 55);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'operator.3.outputLevel')!.getFixedValue(),
+    ).toBe(55);
+    instr.setCommonField('algorithm', 9);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'common.algorithm')!.getFixedValue(),
+    ).toBe(9);
+    instr.setSharedOscillatorSync(0);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'common.oscillatorKeySync')!.getFixedValue(),
+    ).toBe(0);
+    expect(instr.getVoice().operators.every((op) => op.sync === 0)).toBe(true);
+    instr.setOperatorEnvelopePoint(4, 1, { rate: 33, level: 44 });
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'operator.5.envelope.2.rate')!.getFixedValue(),
+    ).toBe(33);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'operator.5.envelope.2.level')!.getFixedValue(),
+    ).toBe(44);
+    instr.setOperatorEnabled(0, false);
+    expect(
+      instr.getParameters().find((p) => p.getName() === 'operator.1.enabled')!.getFixedValue(),
+    ).toBe(0);
+  });
+
+  it('preserves unknown XML content across load/save', () => {
+    const instr = new BlueX7();
+    const elem = Element.parse(instr.saveAsXML().toXml());
+    elem.addElement('legacyEditorBookmark').setText('keep-me');
+
+    const reloaded = BlueX7.loadFromXML(elem);
+    const saved = Element.parse(reloaded.saveAsXML().toXml());
+    const bookmark = saved.getElements('legacyEditorBookmark').next();
+    expect(bookmark.getTextString()).toBe('keep-me');
   });
 });

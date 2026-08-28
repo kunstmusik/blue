@@ -25,6 +25,14 @@ enum class Command : uint8_t {
     CREATE_CHANNEL  = 0x12,  // payload: name\0 + double initial (8 bytes)
     GET_SHM_NAME    = 0x13,  // no payload, response: shm name string
 
+    // Batch channel commands (feature batch-channels-v1). Allocated from the
+    // channel range without changing existing values.
+    // SET payload: count(u16) + per entry: nameLength(u16) + name(utf8) + value(f64)
+    // GET payload: count(u16) + per entry: nameLength(u16) + name(utf8)
+    // GET success response payload: count(u16) + values in request order
+    BATCH_SET_CHANNELS = 0x14,
+    BATCH_GET_CHANNELS = 0x15,
+
     // Automation commands (protocol version 2: exact decimal resolution)
     CREATE_AUTOMATION  = 0x20,  // payload: channel_name\0 + curve(1B) + enabled(1B) + resolutionLength(4B) + resolution(canonical ASCII) + n_points(4B) + points
     UPDATE_AUTOMATION  = 0x21,  // payload: same as CREATE_AUTOMATION

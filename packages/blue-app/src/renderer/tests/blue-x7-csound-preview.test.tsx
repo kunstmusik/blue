@@ -108,10 +108,16 @@ describe('CsoundPanel & Live Csound Preview', () => {
     const tablesPreview = container?.querySelector('[data-testid="csound-tables-preview"]');
     const bodyPreview = container?.querySelector('[data-testid="csound-body-preview"]');
 
-    expect(tablesPreview?.textContent).toContain('; [BLUEX7] - START STATIC TABLES; sine wave');
-    expect(tablesPreview?.textContent).toContain('; FTABLES FOR BLUEX7 INSTRUMENT: FM_Lead');
-    expect(bodyPreview?.textContent).toContain('aout =');
-    expect(bodyPreview?.textContent).toContain('idur \t= abs(p3) \np3 = p3 + 4');
+    // the modern renderer: per-instance transport snapshot, not legacy tables
+    expect(tablesPreview?.textContent).toContain(
+      '; FTABLES FOR BLUEX7 MODERN TRANSPORT: FM_Lead',
+    );
+    expect(tablesPreview?.textContent).toContain(' 0 256 -2 ');
+    expect(bodyPreview?.textContent).toContain(
+      'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
+    );
+    expect(bodyPreview?.textContent).toContain('aout = bluex7_voice(');
+    expect(bodyPreview?.textContent).toContain('iBlueX7GateSeconds = abs(p3)');
   });
 
   it('renders truthful binding diagnostics report distinguishing emitted vs dormant parameters', () => {
@@ -137,11 +143,22 @@ describe('CsoundPanel & Live Csound Preview', () => {
     });
 
     const bindingsPanel = container?.querySelector('[data-testid="bluex7-bindings-tab"]');
+    // every modern sound-relevant field is reported with its update class
     expect(bindingsPanel?.textContent).toContain('Emitted Synthesis Parameters');
-    expect(bindingsPanel?.textContent).toContain('Preserved But Dormant in Csound Engine');
     expect(bindingsPanel?.textContent).toContain('common.algorithm');
-    expect(bindingsPanel?.textContent).toContain('common.keyTranspose');
-    expect(bindingsPanel?.textContent).toContain('pitchEnvelope');
+    expect(bindingsPanel?.textContent).toContain('[next-note]');
+    expect(bindingsPanel?.textContent).toContain('common.oscillatorKeySync');
+    expect(bindingsPanel?.textContent).toContain('lfo.sync');
+    expect(bindingsPanel?.textContent).toContain('operator.1.outputLevel');
+    expect(bindingsPanel?.textContent).toContain('pitchEnvelope.4.level');
+    expect(bindingsPanel?.textContent).toContain('[active-note]');
+    // legacy dormant-field claims are rejected: key transpose participates via
+    // transport slot 144 and only the nonsynthesized name bytes are reported
+    expect(bindingsPanel?.textContent).toContain('common.transpose');
+    expect(bindingsPanel?.textContent).toContain('Not Synthesized (Outside Parameter Scope)');
+    expect(bindingsPanel?.textContent).toContain('voice-name bytes');
+    expect(bindingsPanel?.textContent).not.toContain('Dormant');
+    expect(bindingsPanel?.textContent).not.toContain('not referenced in Pinkston ORC');
   });
 
   it('refreshes the preview after the final edit within the 500ms FR-018 budget', async () => {
