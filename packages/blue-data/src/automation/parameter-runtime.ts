@@ -27,8 +27,23 @@ export function getEngineAutomationPoints(
   renderStartTime: number,
   tempoMap?: TempoMap | null,
 ): AutomationPoint[] {
-  return parameter.getPoints().map((point) => ({
-    time: automationPointToEngineSeconds(point.time, renderStartTime, tempoMap),
-    value: point.value,
-  }));
+  const points = parameter.getPoints();
+  if (points.length === 0) {
+    return [];
+  }
+
+  const projected: AutomationPoint[] = [{
+    time: 0,
+    value: parameter.getValue(renderStartTime),
+  }];
+  for (const point of points) {
+    if (point.time <= renderStartTime) {
+      continue;
+    }
+    projected.push({
+      time: automationPointToEngineSeconds(point.time, renderStartTime, tempoMap),
+      value: point.value,
+    });
+  }
+  return projected;
 }

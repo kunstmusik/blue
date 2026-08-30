@@ -15,6 +15,7 @@ import * as fs from 'fs';
 
 import {
   BlueData,
+  BlueX7,
   Effect,
   PolyObject,
   Send,
@@ -86,6 +87,19 @@ import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
+import {
+  clearActiveBlueX7Bindings,
+  createBlueX7RuntimeEnvironment,
+  invalidateActiveBlueX7Binding,
+  setActiveBlueX7Bindings,
+  syncBlueX7InstrumentPatchToRuntime,
+  type BlueX7EngineSyncDeps,
+} from './blue-x7-engine-sync';
+import { requestBlueX7EffectiveValues } from './blue-x7-runtime-sync';
+import {
+  isBlueX7EffectiveValuesRequest,
+  type BlueX7EffectiveValuesRequest,
+} from '../shared/project-editor/contract';
 import { BlueLiveEngineSession, type BlueLiveStatusSnapshot } from './blue-live-engine';
 import {
   BlueLiveTriggerController,
@@ -1738,6 +1752,7 @@ function createWindow(): void {
   });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
+    clearActiveBlueX7Bindings();
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
       return;
@@ -3421,6 +3436,9 @@ async function startPlayback(
       : data.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
     const csd = render.csdText;
     const parameters = render.parameters;
+    // Spec 092: keep this render's compiled BlueX7 bindings for live sync;
+    // they are disposable and replaced at the next playback start.
+    setActiveBlueX7Bindings(render.blueX7Bindings);
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
       data.getArrangement(),
       data.getMixer(),
@@ -3635,7 +3653,9 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
   }
 
   if (blueLiveSession.isRunning()) {
-    return blueLiveSession.stop();
+    const stopped = await blueLiveSession.stop();
+    if (!engineBridge?.isCurrentlyPlaying()) clearActiveBlueX7Bindings();
+    return stopped;
   }
 
   // Start/recompile is a runtime lifecycle change, not a project edit: do not
@@ -3687,6 +3707,7 @@ async function blueLiveToggle(): Promise<ReturnType<BlueLiveEngineSession['start
     }
   }
 
+  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
   return startSnapshot!;
 }
 
@@ -3697,6 +3718,7 @@ async function blueLiveRecompile(): Promise<void> {
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(getCurrentData(), getCurrentProjectRevision(), getCurrentProjectDirectory(), javaScriptSession ?? undefined);
+  if (blueLiveSession.isRunning()) setActiveBlueX7Bindings(blueLiveSession.getBlueX7Bindings());
 }
 
 async function blueLiveAllNotesOff(): Promise<void> {
@@ -4650,18 +4672,42 @@ function syncActiveRuntimeChannel(name: string, value: number): Promise<void> {
   return syncRuntimeChannel(name, value, engineBridge, blueLiveSession);
 }
 
+function getBlueX7EngineSyncDeps(): BlueX7EngineSyncDeps {
+  return {
+    getData: getCurrentData,
+    getSessionId: getCurrentProjectSessionId,
+    getRevision: getCurrentProjectRevision,
+    isPlaying: () => !!(engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()),
+    writeChannels: async (entries) => {
+      const writes: Promise<{ ok: boolean; message: string }>[] = [];
+      if (engineBridge?.isCurrentlyPlaying()) writes.push(engineBridge.setChannels(entries));
+      if (blueLiveSession?.isRunning()) writes.push(blueLiveSession.setChannels(entries));
+      if (writes.length === 0) return { ok: false, message: 'no-active-engine-session' };
+      const results = await Promise.all(writes);
+      const failure = results.find((result) => !result.ok);
+      return failure ?? { ok: true, message: 'OK' };
+    },
+    readChannels: (names) => {
+      if (engineBridge?.isCurrentlyPlaying()) return engineBridge.getChannels(names);
+      if (blueLiveSession?.isRunning()) return blueLiveSession.getChannels(names);
+      return Promise.resolve({ ok: false as const, message: 'no-active-engine-session' });
+    },
+  };
+}
+
 async function syncEngineWithProjectPatch(
   data: BlueData,
   patch: ProjectDocumentPatch,
   scoreAutomationParameterIds: Set<string> = new Set(),
 ) {
-  if (engineBridge?.isCurrentlyPlaying() && scoreAutomationParameterIds.size > 0) {
-    await syncScoreAutomationParametersToEngine(
-      data,
-      scoreAutomationParameterIds,
-      engineBridge,
-      buildAutomationRuntimeTimingContext(data),
-    );
+  if (scoreAutomationParameterIds.size > 0) {
+    const timing = buildAutomationRuntimeTimingContext(data);
+    if (engineBridge?.isCurrentlyPlaying()) {
+      await syncScoreAutomationParametersToEngine(data, scoreAutomationParameterIds, engineBridge, timing);
+    }
+    if (blueLiveSession?.isRunning()) {
+      await syncScoreAutomationParametersToEngine(data, scoreAutomationParameterIds, blueLiveSession, timing);
+    }
   }
 
   if (engineBridge?.isCurrentlyPlaying() && patch.mixer) {
@@ -4673,7 +4719,7 @@ async function syncEngineWithProjectPatch(
         const levelParam = channel.getLevelParameter();
         const varName = levelParam.getCompilationVarName();
         if (varName && mixerPatch.patch.level !== undefined) {
-          await engineBridge.setChannel(varName, mixerPatch.patch.level);
+          await syncActiveRuntimeChannel(varName, mixerPatch.patch.level);
         }
       }
     }
@@ -4692,11 +4738,34 @@ async function syncEngineWithProjectPatch(
           syncActiveRuntimeChannel,
         );
       }
+      if (instrument instanceof BlueX7) {
+        await syncBlueX7InstrumentPatchToRuntime(
+          getBlueX7EngineSyncDeps(),
+          data,
+          `arrangement:${orchestraPatch.assignmentId}`,
+          orchestraPatch.patch,
+        );
+      }
     }
   }
 
   const scorePatch = patch.score;
   if (scorePatch?.type === 'updateTrackInstrument') {
+    if (data.getScore().some(
+      (candidate): candidate is TrackLayerGroup => (
+        candidate instanceof TrackLayerGroup
+        && candidate.getUniqueId() === scorePatch.track.rootGroupId
+      ),
+    )) {
+      await syncBlueX7InstrumentPatchToRuntime(
+        getBlueX7EngineSyncDeps(),
+        data,
+        `track:${scorePatch.track.rootGroupId}:${scorePatch.track.trackId}`,
+        scorePatch.patch,
+      ).catch((error) => {
+        console.error('[main] BlueX7 Track instrument runtime sync failed:', error);
+      });
+    }
     const group = data.getScore().find(
       (candidate): candidate is TrackLayerGroup => (
         candidate instanceof TrackLayerGroup
@@ -4735,6 +4804,7 @@ async function commitProjectDocumentPatchBatch(
   let anyCanonicalMutation = false;
 
   for (const patch of patches) {
+    const blueX7BindingsToInvalidate = collectBlueX7BindingsToInvalidate(getCurrentData(), patch);
     const clojureDependenciesChanged = patch.clojureProject
       ? clojureProjectPatchChangesRuntimeDependencies(getCurrentData(), patch.clojureProject)
       : false;
@@ -4748,6 +4818,9 @@ async function commitProjectDocumentPatchBatch(
     });
     if (changed) {
       anyCanonicalMutation = true;
+      for (const ownerIdentity of blueX7BindingsToInvalidate) {
+        invalidateActiveBlueX7Binding(ownerIdentity);
+      }
       for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
         scoreAutomationParameterIds.add(id);
       }
@@ -4784,9 +4857,77 @@ async function commitProjectDocumentPatchBatch(
   return receipt;
 }
 
+function collectBlueX7BindingsToInvalidate(
+  data: BlueData,
+  patch: ProjectDocumentPatch,
+): Set<string> {
+  const owners = new Set<string>();
+  const orchestraPatch = patch.orchestra;
+  if (orchestraPatch) {
+    if (
+      orchestraPatch.type === 'removeAssignment'
+      || orchestraPatch.type === 'replaceInstrument'
+      || orchestraPatch.type === 'convertGenericToBsb'
+      || orchestraPatch.type === 'updateAssignment'
+      || (orchestraPatch.type === 'updateInstrument' && orchestraPatch.patch.enabled !== undefined)
+    ) {
+      owners.add(`arrangement:${orchestraPatch.assignmentId}`);
+    }
+  }
+
+  const scorePatch = patch.score;
+  if (!scorePatch) return owners;
+  if (
+    scorePatch.type === 'createTrackInstrument'
+    || scorePatch.type === 'replaceTrackInstrument'
+    || scorePatch.type === 'clearTrackInstrument'
+    || (scorePatch.type === 'updateTrackInstrument' && scorePatch.patch.enabled !== undefined)
+  ) {
+    owners.add(`track:${scorePatch.track.rootGroupId}:${scorePatch.track.trackId}`);
+  }
+  const addTrackGroup = (groupId: string, start = 0, end = Number.POSITIVE_INFINITY): void => {
+    const group = data.getScore().find(
+      (candidate): candidate is TrackLayerGroup => (
+        candidate instanceof TrackLayerGroup && candidate.getUniqueId() === groupId
+      ),
+    );
+    if (!group) return;
+    for (let index = start; index <= Math.min(end, group.length - 1); index += 1) {
+      const track = group[index];
+      if (track) owners.add(`track:${groupId}:${track.getUniqueId()}`);
+    }
+  };
+  if (scorePatch.type === 'removeLayerGroup') {
+    addTrackGroup(scorePatch.groupId);
+  } else if (scorePatch.type === 'removeLayer') {
+    addTrackGroup(scorePatch.groupId, scorePatch.layerIndex, scorePatch.layerIndex);
+  } else if (scorePatch.type === 'removeLayerRanges') {
+    for (const range of scorePatch.ranges) {
+      addTrackGroup(range.groupId, range.startIndex, range.endIndex);
+    }
+  }
+  return owners;
+}
+
 ipcRegistration.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
   return commitProjectDocumentPatchBatch(patches);
 });
+
+// Spec 092: visible-only effective-value readback for open BlueX7 editors.
+// Fails closed for stale sessions, stopped playback, and missing owners;
+// never mutates canonical project state.
+ipcRegistration.handle(
+  'blue-x7-effective-values',
+  async (_event, request: unknown) => {
+    if (!isBlueX7EffectiveValuesRequest(request)) {
+      return { ok: false, reason: 'channel-unavailable' } as const;
+    }
+    return requestBlueX7EffectiveValues(
+      createBlueX7RuntimeEnvironment(getBlueX7EngineSyncDeps()),
+      request as BlueX7EffectiveValuesRequest,
+    );
+  },
+);
 
 ipcRegistration.handle('read-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
   try {

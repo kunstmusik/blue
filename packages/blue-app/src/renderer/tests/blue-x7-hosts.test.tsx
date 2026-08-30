@@ -19,6 +19,16 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+function setInputValue(input: HTMLInputElement, value: string): void {
+  const tracker = (input as HTMLInputElement & { _valueTracker?: { setValue: (next: string) => void } })
+    ._valueTracker;
+  tracker?.setValue('');
+  const descriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+  descriptor?.set?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
@@ -128,5 +138,63 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     expect(container?.querySelector('[data-testid="blue-x7-editor"]')).not.toBeNull();
     expect(container?.querySelector('[data-testid="bluex7-lfo-panel"]')).not.toBeNull();
     expect(container?.querySelector('[data-testid="bluex7-peg-panel"]')).not.toBeNull();
+  });
+
+  it('keeps two duplicate-name editors ordered, visible, and undo-isolated during rapid edits', () => {
+    const first = createSnapshot('Duplicate BlueX7');
+    first.assignmentId = 'owner-a';
+    first.voice.common.feedback = 1;
+    const second = createSnapshot('Duplicate BlueX7');
+    second.assignmentId = 'owner-b';
+    second.voice.common.feedback = 6;
+    const patches: Array<{ owner: string; patch: InstrumentPatch }> = [];
+
+    act(() => {
+      root?.render(
+        <>
+          <section data-owner="owner-a">
+            <InstrumentEditorPanel
+              instrument={first}
+              projectUdos={[]}
+              onOrchestraPatch={(patch) => patches.push({ owner: 'owner-a', patch: patch.patch! })}
+            />
+          </section>
+          <section data-owner="owner-b">
+            <InstrumentEditorPanel
+              instrument={second}
+              projectUdos={[]}
+              onOrchestraPatch={(patch) => patches.push({ owner: 'owner-b', patch: patch.patch! })}
+            />
+          </section>
+        </>,
+      );
+    });
+
+    const editorA = container!.querySelector('[data-owner="owner-a"]')!;
+    const editorB = container!.querySelector('[data-owner="owner-b"]')!;
+    expect((editorA.querySelector('[aria-label="Feedback"]') as HTMLInputElement).value).toBe('1');
+    expect((editorB.querySelector('[aria-label="Feedback"]') as HTMLInputElement).value).toBe('6');
+    expect(container!.querySelectorAll('input[value="Duplicate BlueX7"]')).toHaveLength(2);
+
+    act(() => {
+      for (let index = 0; index < 20; index += 1) {
+        setInputValue(editorA.querySelector('[aria-label="Feedback"]') as HTMLInputElement, String(index % 8));
+        setInputValue(editorB.querySelector('[aria-label="Feedback"]') as HTMLInputElement, String(7 - (index % 8)));
+      }
+    });
+    expect(patches).toHaveLength(40);
+    expect(patches.map((entry) => entry.owner)).toEqual(
+      Array.from({ length: 20 }, () => ['owner-a', 'owner-b']).flat(),
+    );
+
+    act(() => {
+      (editorA.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).click();
+    });
+    expect(patches.at(-1)).toMatchObject({
+      owner: 'owner-a',
+      patch: { blueX7: { type: 'replaceVoice' } },
+    });
+    expect((editorB.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled)
+      .toBe(false);
   });
 });

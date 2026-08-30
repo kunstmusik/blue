@@ -162,9 +162,11 @@ describe('CompiledBlueX7Binding registry (Spec 092)', () => {
         [`param-${ownerIdentity}-a`, 'gk_blue_auto0'],
         [`param-${ownerIdentity}-b`, 'gk_blue_auto1'],
       ]),
-      holdChannel: `gk_blue_x7_hold_${ownerIdentity}`,
-      commitChannel: `gk_blue_x7_commit_${ownerIdentity}`,
-      transportTableIds: [100, 101] as const,
+      directGlobalChannels: new Map([
+        [`param-${ownerIdentity}-a`, 'gk_blue_auto0'],
+        [`param-${ownerIdentity}-b`, 'gk_blue_auto1'],
+      ]),
+      domainEpoch: `gk_blue_x7_epoch_${ownerIdentity.replace(/[^A-Za-z0-9]/g, '_')}`,
     };
   }
 
@@ -190,16 +192,14 @@ describe('CompiledBlueX7Binding registry (Spec 092)', () => {
     expect(second.parameterChannels.get('param-arrangement:2-a')).toBe('gk_blue_auto0');
   });
 
-  it('gives each owner distinct hold/commit controls and replaces only its own binding', () => {
+  it('gives each owner a distinct domain epoch and replaces only its own binding', () => {
     const cd = new CompileData();
     cd.registerBlueX7Binding(makeBinding('arrangement:1', '1'));
     cd.registerBlueX7Binding(makeBinding('arrangement:2', '2'));
 
     const first = cd.getBlueX7Binding('arrangement:1')!;
     const second = cd.getBlueX7Binding('arrangement:2')!;
-    expect(first.holdChannel).not.toBe(second.holdChannel);
-    expect(first.commitChannel).not.toBe(second.commitChannel);
-    expect(first.holdChannel).not.toBe(first.commitChannel);
+    expect(first.domainEpoch).not.toBe(second.domainEpoch);
 
     const rebuilt = makeBinding('arrangement:1', '9');
     cd.registerBlueX7Binding(rebuilt);

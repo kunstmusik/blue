@@ -66,9 +66,9 @@ describe('project parameter catalog', () => {
 
     // owner labels and chooser paths carry display names
     const bassEntry = catalog.find((e) => e.ownerKind === 'track-instrument')!;
-    expect(bassEntry.ownerLabel).toBe('Track Bass');
+    expect(bassEntry.ownerLabel).toBe('Track Layer Group / Track Bass');
     expect(bassEntry.path).toEqual(['Track Layer Group', 'Track Bass']);
-    expect(catalog.find((e) => e.ownerIdentity === `arrangement:${lead.arrangementId}`)!.ownerLabel).toBe('Lead');
+    expect(catalog.find((e) => e.ownerIdentity === `arrangement:${lead.arrangementId}`)!.ownerLabel).toBe(`${lead.arrangementId}) Lead`);
   });
 
   it('keeps same-named instruments identity-distinct', () => {

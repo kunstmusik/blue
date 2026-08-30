@@ -7,6 +7,8 @@ import * as path from 'node:path';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 import { BlueX7, createDefaultBlueX7Voice } from '../blue-x7';
 import { buildBlueX7VoiceTransport } from './voice-transport';
+import { generateBlueX7Target } from './csound-target-generator';
+import { BLUE_X7_PARAMETER_DESCRIPTORS, readBlueX7VoiceValue } from './parameter-catalog';
 import { BlueData } from '../../blue-data';
 import { Arrangement } from '../../arrangement';
 
@@ -35,15 +37,15 @@ interface RenderResult {
 
 function buildTransportText(
   voice = createDefaultBlueX7Voice(),
-  tableNum = 100,
   operatorMask?: number,
-): { text: string; mask: number } {
+): { text: string; mask: number; voice: readonly number[] } {
   const mask =
     operatorMask ??
     buildBlueX7VoiceTransport(voice, voice.common.operatorEnabled).operatorMask;
   const transport = buildBlueX7VoiceTransport(voice, voice.common.operatorEnabled);
-  const text = `f ${tableNum} 0 256 -2 ${transport.voice.join(' ')}`;
-  return { text, mask };
+  // Retain the helper name for the score fixtures, but the modern target is
+  // direct-global/array based and publishes no ftable.
+  return { text: '', mask, voice: transport.voice };
 }
 
 function renderCsound(
@@ -55,7 +57,7 @@ function renderCsound(
   const orcPath = path.join(dir, 'render.orc');
   const scoPath = path.join(dir, 'render.sco');
   const wavPath = path.join(dir, 'render.wav');
-  fs.writeFileSync(orcPath, orcText);
+  fs.writeFileSync(orcPath, `sr = ${SR}\nksmps = ${KSMPS}\nnchnls = 1\n${orcText}`);
   fs.writeFileSync(scoPath, scoText);
   execFileSync(
     'csound',
@@ -96,16 +98,11 @@ function renderCsound(
   return { samples, dataBytes };
 }
 
-function hostWrapperOrc(tableNum: number, maskExpr: string): string {
+function hostWrapperOrc(voice: readonly number[], mask: number): string {
+  const target = generateBlueX7Target({ voice, operatorMask: mask });
   return `${BLUE_X7_MODERN_ORCHESTRA}
 instr 1
-  iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))
-  iBlueX7OperatorMask = ${maskExpr}
-  kLiveVoice[] init 155
-  kLiveMask init ${maskExpr}
-  kLiveHold init 1
-  aout = bluex7_voice(iBlueX7MidiNote, p5, ${tableNum}, iBlueX7OperatorMask, abs(p3), kLiveVoice, kLiveMask, kLiveHold)
-  outc aout
+${target}  outc aout
 endin`;
 }
 
@@ -125,6 +122,28 @@ function peakOf(samples: Float64Array): number {
   return peak;
 }
 
+function maxControlBoundaryDiscontinuityRatio(
+  samples: Float64Array,
+  startSample: number,
+  endSample: number,
+): number {
+  let maximum = 0;
+  const firstBoundary = Math.ceil(startSample / KSMPS) * KSMPS;
+  for (let boundary = firstBoundary; boundary < endSample; boundary += KSMPS) {
+    const boundaryJump = Math.abs(samples[boundary] - samples[boundary - 1]);
+    let neighboringJump = 0;
+    for (let sample = Math.max(1, boundary - 8); sample <= Math.min(samples.length - 1, boundary + 8); sample++) {
+      if (sample === boundary) continue;
+      neighboringJump = Math.max(
+        neighboringJump,
+        Math.abs(samples[sample] - samples[sample - 1]),
+      );
+    }
+    maximum = Math.max(maximum, boundaryJump / Math.max(neighboringJump, 1e-15));
+  }
+  return maximum;
+}
+
 describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
   const scratchRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'bluex7-render-'));
   let scratchIndex = 0;
@@ -140,10 +159,10 @@ describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
     for (let algorithm = 1; algorithm <= 32; algorithm++) {
       const voice = createDefaultBlueX7Voice();
       voice.common.algorithm = algorithm;
-      const { text, mask } = buildTransportText(voice);
+      const { text, mask, voice: transportVoice } = buildTransportText(voice);
       const dir = scratch();
       const { samples } = renderCsound(
-        hostWrapperOrc(100, String(mask)),
+        hostWrapperOrc(transportVoice, mask),
         `${text}\ni1 0 2 8.09 127`,
         dir,
         2.5,
@@ -155,14 +174,14 @@ describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
       peaks.push(peak);
     }
     // one corpus-wide calibration: no voice-specific gain adjustments
-    expect(Math.max(...peaks)).toBeCloseTo(0.8919, 3);
+    expect(Math.max(...peaks)).toBeCloseTo(0.8901, 3);
   }, 600_000);
 
   it('renders silence for a zero operator mask', () => {
-    const { text } = buildTransportText();
+    const { text, voice: transportVoice } = buildTransportText();
     const dir = scratch();
     const { samples } = renderCsound(
-      hostWrapperOrc(100, '0'),
+      hostWrapperOrc(transportVoice, 0),
       `${text}\ni1 0 1 8.09 127`,
       dir,
       1.5,
@@ -179,11 +198,11 @@ describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
     for (const op of voice.operators) {
       op.envelope[3] = { rate: 0, level: 0 };
     }
-    const { text, mask } = buildTransportText(voice);
+    const { text, mask, voice: transportVoice } = buildTransportText(voice);
     const dir = scratch();
     const renderSeconds = 20;
     const { samples } = renderCsound(
-      hostWrapperOrc(100, String(mask)),
+      hostWrapperOrc(transportVoice, mask),
       `${text}\ni1 0 1 8.09 127`,
       dir,
       renderSeconds,
@@ -200,40 +219,108 @@ describe.skipIf(!hasCsound)('modern BlueX7 Csound renders', () => {
     expect(peakOf(samples.subarray(midStart, midStart + SR))).toBeGreaterThan(0.001);
   }, 60_000);
 
-  it('adapts active-note edits during a sounding note when not held', () => {
-    // Drive the module the way the live host wrapper does: channels feed
-    // kLiveVoice each control cycle while kLiveHold is 0. Silencing every
-    // operator output level mid-note must silence the output; with the
-    // same values published it must match the static render bit-for-bit.
+  it('interpolates fast release gains across control blocks like msfa', () => {
     const voice = createDefaultBlueX7Voice();
-    const { text, mask } = buildTransportText(voice);
+    voice.common.algorithm = 32; // six carriers expose every operator gain edge
+    const releaseRates = [90, 90, 82, 90, 90, 90];
+    for (const [index, operator] of voice.operators.entries()) {
+      operator.outputLevel = 94;
+      operator.envelope = [
+        { rate: 99, level: 99 },
+        { rate: 80, level: 99 },
+        { rate: 22, level: 99 },
+        { rate: releaseRates[index], level: 0 },
+      ];
+    }
+    const { text, mask, voice: transportVoice } = buildTransportText(voice);
+    const uninterruptedOrc = hostWrapperOrc(transportVoice, mask).replace(
+      'kAudioActive = kCarrierAudible',
+      'kAudioActive = 1',
+    );
+    const { samples } = renderCsound(
+      uninterruptedOrc,
+      `${text}\ni1 0 1 8.00 104`,
+      scratch(),
+      1.2,
+    );
+
+    // Ignore the key-off block itself and the later inaudible parking edge.
+    // Within the audible release, a k-boundary must look like the surrounding
+    // waveform rather than a held-gain step.
+    const ratio = maxControlBoundaryDiscontinuityRatio(
+      samples,
+      SR + KSMPS * 2,
+      Math.floor(1.035 * SR),
+    );
+    expect(ratio).toBeLessThan(1.2);
+
+    const { samples: parkedSamples } = renderCsound(
+      hostWrapperOrc(transportVoice, mask),
+      `${text}\ni1 0 1 8.00 104`,
+      scratch(),
+      1.2,
+    );
+    let finalAudibleSample = parkedSamples.length - 1;
+    while (finalAudibleSample >= 0 && parkedSamples[finalAudibleSample] === 0) {
+      finalAudibleSample--;
+    }
+    expect(finalAudibleSample).toBeGreaterThan(SR);
+    expect(Math.abs(parkedSamples[finalAudibleSample])).toBeLessThan(5e-5);
+    expect(parkedSamples[finalAudibleSample + 1]).toBe(0);
+    expect(BLUE_X7_MODERN_ORCHESTRA).toContain('aG1 interp kGain[0]');
+    expect(BLUE_X7_MODERN_ORCHESTRA).toContain(
+      'kPreviousGain[kCarrierOp] > 0.0001',
+    );
+  }, 60_000);
+
+  it('keeps a nonzero-L4 carrier audible while its modulators release', () => {
+    const voice = createDefaultBlueX7Voice();
+    voice.common.algorithm = 16; // operator 1 is the only carrier
+    voice.common.feedback = 0;
+    for (const [index, operator] of voice.operators.entries()) {
+      operator.outputLevel = 99;
+      operator.envelope = [
+        { rate: 99, level: 99 },
+        { rate: 99, level: 99 },
+        { rate: 99, level: 99 },
+        { rate: index === 0 ? 99 : 0, level: index === 0 ? 99 : 0 },
+      ];
+    }
+    const { text, mask, voice: transportVoice } = buildTransportText(voice);
     const dir = scratch();
+    const { samples } = renderCsound(
+      hostWrapperOrc(transportVoice, mask),
+      `${text}\ni1 0 0.2 8.09 127`,
+      dir,
+      1,
+    );
+    expect(peakOf(samples.subarray(Math.floor(0.5 * SR), Math.floor(0.7 * SR))))
+      .toBeGreaterThan(0.001);
+  }, 60_000);
+
+  it('adapts active-note edits during a sounding note with direct globals', () => {
+    // The live target owns the i-rate next-note snapshot and updates its
+    // k-rate active projection only when a direct-global change is observed.
+    const voice = createDefaultBlueX7Voice();
+    const { text, mask, voice: transportVoice } = buildTransportText(voice);
+    const dir = scratch();
+    const target = generateBlueX7Target({ voice: transportVoice, operatorMask: mask });
+    const call = 'aout = bluex7_voice(iBlueX7MidiNote, i(p5), iBlueX7Voice, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7LiveVoice, kBlueX7LiveMask, kBlueX7Dirty)';
+    const targetWithoutCall = target.replace(`${call}\n`, '');
     const orc = `${BLUE_X7_MODERN_ORCHESTRA}
 instr 1
-  iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))
-  kLiveVoice[] init 155
-  kLiveMask init ${mask}
-  kLiveHold init 0
-  ; publish the transport table into the live projection (as the wrapper
-  ; does from parameter channels), then drop every output level at 0.5 s
-  kidx init 0
-  kcycle init 0
-  if kcycle == 0 then
-    kcycle = 1
-    kloop = 0
-    while kloop < 155 do
-      kLiveVoice[kloop] = tab:k(kloop, 100)
-      kloop += 1
-    od
-  endif
+${targetWithoutCall}
   if timeinsts() > 0.5 then
     kop = 0
     while kop < 6 do
-      kLiveVoice[105 - kop * 21 + 16] = 0
+      kBlueX7LiveVoice[105 - kop * 21 + 16] = 0
       kop += 1
     od
+    kBlueX7Dirty = 1
+  else
+    kBlueX7Dirty = 0
   endif
-  aout = bluex7_voice(iBlueX7MidiNote, p5, 100, ${mask}, abs(p3), kLiveVoice, kLiveMask, kLiveHold)
+  ${call}
   outc aout
 endin`;
     const { samples } = renderCsound(orc, `${text}\ni1 0 2 8.09 127`, dir, 2.5);
@@ -242,8 +329,57 @@ endin`;
     const midPeak = peakOf(samples.subarray(midSample, midSample + Math.floor(0.1 * SR)));
     const afterPeak = peakOf(samples.subarray(afterSample, afterSample + Math.floor(0.1 * SR)));
     // audible before the edit; after silencing every output level the peak
-    // drops below -50 dB (the msfa composed-level floor, ~-83 dB per op)
+    // drops below -50 dB once the composed levels are moved to zero
     expect(midPeak).toBeGreaterThan(0.001);
+    expect(afterPeak).toBeLessThan(0.001);
+  }, 60_000);
+
+  it('adapts the generated scalar live target without a packed operator array', () => {
+    const voice = createDefaultBlueX7Voice();
+    const { voice: transportVoice, mask } = buildTransportText(voice);
+    const parameters = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => ({
+      key: descriptor.key,
+      symbol: `gk_blue_auto${index}`,
+    }));
+    const declarations = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => {
+      const value = readBlueX7VoiceValue(voice, descriptor.key);
+      if (value === undefined) throw new Error(`missing ${descriptor.key}`);
+      return `gk_blue_auto${index} init ${value}`;
+    }).join('\n');
+    const target = generateBlueX7Target({
+      voice: transportVoice,
+      operatorMask: mask,
+      parameters,
+      layout: 'inline',
+      changeStrategy: 'epoch',
+      epochSymbol: 'gk_blue_x7_epoch',
+    });
+    expect(target).not.toContain('kBlueX7LiveOperatorState');
+    const orc = `sr = ${SR}
+ksmps = ${KSMPS}
+nchnls = 1
+0dbfs = 1
+${declarations}
+gk_blue_x7_epoch init 0
+${BLUE_X7_MODERN_ORCHESTRA}
+instr 1
+${target}
+  if timeinsts() > 0.5 then
+    gk_blue_auto35 = 0
+    gk_blue_auto57 = 0
+    gk_blue_auto79 = 0
+    gk_blue_auto101 = 0
+    gk_blue_auto123 = 0
+    gk_blue_auto145 = 0
+    gk_blue_x7_epoch = 1
+  endif
+  outc aout
+endin`;
+    const dir = scratch();
+    const { samples } = renderCsound(orc, 'i1 0 2 8.09 127', dir, 2.5);
+    const beforePeak = peakOf(samples.subarray(Math.floor(0.3 * SR), Math.floor(0.4 * SR)));
+    const afterPeak = peakOf(samples.subarray(Math.floor(1.2 * SR), Math.floor(1.3 * SR)));
+    expect(beforePeak).toBeGreaterThan(0.001);
     expect(afterPeak).toBeLessThan(0.001);
   }, 60_000);
 
@@ -263,14 +399,14 @@ endin`;
     expect(carrierCount(20)).toBe(3);
     // and the routing renders distinctly for the corrected topologies
     const dir6 = scratch();
-    const { text: text6, mask } = buildTransportText(
+    const { text: text6, mask, voice: transportVoice6 } = buildTransportText(
       (() => {
         const v = createDefaultBlueX7Voice();
         v.common.algorithm = 6;
         return v;
       })(),
     );
-    const algo6 = renderCsound(hostWrapperOrc(100, String(mask)), `${text6}\ni1 0 1 8.09 127`, dir6, 1.5);
+    const algo6 = renderCsound(hostWrapperOrc(transportVoice6, mask), `${text6}\ni1 0 1 8.09 127`, dir6, 1.5);
     expect(peakOf(algo6.samples)).toBeGreaterThan(0.001);
   }, 60_000);
 
@@ -288,8 +424,14 @@ endin`;
     const csdText = data.toCSD();
     expect(csdText).toContain('opcode bluex7_voice(');
     // the live wrapper was emitted: parameters were assigned during compile
-    expect(csdText).toContain('kBlueX7Hold chnget "');
-    expect(csdText).toContain('aout = bluex7_voice(iBlueX7MidiNote, p5,');
+    expect(csdText).toContain('kBlueX7EpochSeen init -1');
+    expect(csdText).not.toContain('kBlueX7Hold');
+    expect(csdText).not.toContain('kBlueX7LiveVoice');
+    expect(csdText).not.toContain('kBlueX7LiveOperatorState');
+    expect(csdText).toContain('kBlueX7LiveOutputLevelSeen[] init 6');
+    expect(csdText).not.toContain('tabw');
+    expect(csdText).not.toContain('chnget');
+    expect(csdText).toContain('aout = aOut');
 
     const dir = scratch();
     const csdPath = path.join(dir, 'live.csd');
@@ -335,10 +477,10 @@ endin`;
   }, 120_000);
 
   it('locks the accepted modern reference render hash', () => {
-    const { text, mask } = buildTransportText();
+    const { text, mask, voice: transportVoice } = buildTransportText();
     const dir = scratch();
     const { dataBytes } = renderCsound(
-      hostWrapperOrc(100, String(mask)),
+      hostWrapperOrc(transportVoice, mask),
       `${text}\ni1 0 2 8.09 127`,
       dir,
       2.5,
@@ -347,6 +489,9 @@ endin`;
     // Accepted reference: default voice, algorithm 19, A4=440, sr=44100,
     // ksmps=64, 0dbfs=1, csound 7 double samples. A changed hash requires
     // explicit review of the calibration or module change.
-    expect(hash).toBe('f7332a5a769e4906af86a62d2d1e6ab272892fdcff8a796baac8cfb7baa85296');
+    // Re-locked 2026-08-29 after matching msfa's gain[0]/gain[1] behavior:
+    // every operator gain now ramps across its 64-sample block, and carrier
+    // parking retains the final transition block before reaching zero.
+    expect(hash).toBe('82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6');
   }, 60_000);
 });

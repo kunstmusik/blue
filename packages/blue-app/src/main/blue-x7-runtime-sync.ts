@@ -1,7 +1,7 @@
 /**
  * BlueX7 runtime synchronization (Spec 092, US2/US4).
  *
- * Routes live BlueX7 control intents, staged whole-voice batches, and
+ * Routes live BlueX7 control intents and complete whole-voice batches, and
  * effective-value readback to exactly one arrangement or Track owner while
  * keeping BlueData canonical and automation authoritative. Every step is
  * fail-closed: a stale session, removed owner, missing binding, ID/key
@@ -187,16 +187,15 @@ export async function applyBlueX7LiveUpdate(
 }
 
 export interface BlueX7CompleteVoiceStep {
-  label: 'hold' | 'values' | 'release';
+  label: 'batch';
   entries: { name: string; value: number }[];
 }
 
 /**
- * Plan a staged whole-voice update: hold observation, then the complete
- * validated 151-value channel set, then release with the commit generation
- * advanced by the wrapper. The canonical project mutation must already have
- * succeeded before this plans anything; engine failure never rolls project
- * data back.
+ * Plan one complete whole-voice update. The canonical project mutation must
+ * already have succeeded before this plans anything; the engine validates and
+ * enqueues the complete set as one performance-thread batch, so no Csound
+ * reader can observe a partially published voice.
  */
 export function planBlueX7CompleteVoiceBatch(
   env: BlueX7RuntimeEnvironment,
@@ -271,19 +270,14 @@ export function planBlueX7CompleteVoiceBatch(
   return {
     status: 'ok',
     ownerIdentity: owner.ownerIdentity,
-    steps: [
-      { label: 'hold', entries: [{ name: binding.holdChannel, value: 1 }] },
-      { label: 'values', entries: channelEntries },
-      { label: 'release', entries: [{ name: binding.holdChannel, value: 0 }] },
-    ],
+    steps: [{ label: 'batch', entries: channelEntries }],
   };
 }
 
 /**
- * Apply a staged whole-voice batch in strict hold -> values -> release
- * order. Failure before release reports a recoverable diagnostic and makes
- * a best effort to clear the hold so the previously committed voice stays
- * effective; canonical project data is never rolled back.
+ * Apply a complete whole-voice batch with one engine request. If the request
+ * is rejected, no channel is changed; canonical project data is never rolled
+ * back because the engine state is disposable.
  */
 export async function applyBlueX7CompleteVoiceBatch(
   env: BlueX7RuntimeEnvironment,
@@ -294,18 +288,9 @@ export async function applyBlueX7CompleteVoiceBatch(
     return { ok: false, reason: plan.reason, message: plan.message };
   }
   const { steps, ownerIdentity } = plan;
-  for (const step of steps) {
-    const result = await env.writeChannels(step.entries);
-    if (!result.ok) {
-      if (step.label !== 'release') {
-        // Best effort: clear the hold so the old committed voice stays
-        // effective and the instance is not left frozen.
-        await env
-          .writeChannels([{ name: steps[0].entries[0]?.name ?? '', value: 0 }])
-          .catch(() => undefined);
-      }
-      return { ok: false, reason: 'engine-write-failed', message: result.message };
-    }
+  const result = await env.writeChannels(steps[0].entries);
+  if (!result.ok) {
+    return { ok: false, reason: 'engine-write-failed', message: result.message };
   }
   return { ok: true, ownerIdentity };
 }

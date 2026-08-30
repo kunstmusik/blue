@@ -96,14 +96,14 @@ export function getArrangementOwnerParameters(
     const params = collectInstrumentParameters(ia.instr);
     if (!params) continue;
     const ownerIdentity = `arrangement:${ia.arrangementId}`;
-    const ownerLabel = ia.instr.getName();
+    const ownerLabel = `${ia.arrangementId}) ${ia.instr.getName()}`;
     for (const parameter of params) {
       entries.push({
         ownerKind: 'arrangement-instrument',
         ownerIdentity,
         ownerLabel,
         parameter,
-        path: [ownerLabel],
+        path: [ia.instr.getName()],
       });
     }
   }
@@ -124,14 +124,14 @@ export function getTrackOwnerParameters(score: Score): ProjectParameterEntry[] {
       const params = collectInstrumentParameters(instrument);
       if (!params) continue;
       const ownerIdentity = `track:${layerGroup.getUniqueId()}:${track.getUniqueId()}`;
-      const ownerLabel = track.getName();
+      const ownerLabel = `${layerGroup.getName()} / ${track.getName()}`;
       for (const parameter of params) {
         entries.push({
           ownerKind: 'track-instrument',
           ownerIdentity,
           ownerLabel,
           parameter,
-          path: [layerGroup.getName(), ownerLabel],
+          path: [layerGroup.getName(), track.getName()],
         });
       }
     }

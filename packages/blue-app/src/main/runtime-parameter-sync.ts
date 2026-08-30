@@ -1,5 +1,9 @@
-import { ParameterHelper, TrackLayerGroup } from '@blue/data';
-import type { Arrangement, Instrument, Mixer, Parameter, Score } from '@blue/data';
+import {
+  getArrangementOwnerParameters,
+  getMixerOwnerParameters,
+  getTrackOwnerParameters,
+} from '@blue/data';
+import type { Arrangement, Mixer, Parameter, Score } from '@blue/data';
 
 export interface RuntimeParameterSyncResult {
   liveCount: number;
@@ -12,12 +16,10 @@ export function syncCompiledRuntimeParameterNames(
   compiledParameters?: Parameter[],
   score?: Score,
 ): RuntimeParameterSyncResult {
-  const arrangementParameters = collectArrangementParameters(arrangement);
-  const arrangementAndMixerParameters = ParameterHelper.getAllParameters(arrangement, mixer);
   const liveParameters = [
-    ...arrangementParameters,
-    ...collectTrackParameters(score),
-    ...arrangementAndMixerParameters.slice(arrangementParameters.length),
+    ...getArrangementOwnerParameters(arrangement).map((entry) => entry.parameter),
+    ...(score ? getTrackOwnerParameters(score).map((entry) => entry.parameter) : []),
+    ...getMixerOwnerParameters(mixer),
   ];
 
   for (const parameter of liveParameters) {
@@ -43,35 +45,4 @@ export function syncCompiledRuntimeParameterNames(
     liveCount: liveParameters.length,
     compiledCount,
   };
-}
-
-function collectTrackParameters(score?: Score): Parameter[] {
-  const parameters: Parameter[] = [];
-  if (!score) return parameters;
-
-  for (const layerGroup of score) {
-    if (!(layerGroup instanceof TrackLayerGroup)) continue;
-    for (const track of layerGroup) {
-      const instrument = track.getInstrument();
-      if (!instrument?.isEnabled()) continue;
-      parameters.push(...getInstrumentParameters(instrument));
-    }
-  }
-  return parameters;
-}
-
-function collectArrangementParameters(arrangement: Arrangement): Parameter[] {
-  const parameters: Parameter[] = [];
-  for (const assignment of arrangement.getArrangement()) {
-    if (!assignment.enabled || !assignment.instr) continue;
-    parameters.push(...getInstrumentParameters(assignment.instr));
-  }
-  return parameters;
-}
-
-function getInstrumentParameters(instrument: Instrument): Parameter[] {
-  const automatable = instrument as Instrument & { getParameters?: () => Parameter[] };
-  return typeof automatable.getParameters === 'function'
-    ? automatable.getParameters()
-    : [];
 }

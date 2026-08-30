@@ -12,29 +12,28 @@
 ; only: Dexed, legacy Blue/Pinkston DX7 renderers.
 ;
 ; Public interface:
-;   aOut = bluex7_voice(iMidiNote, iVelocity, iPresetTable,
+;   aOut = bluex7_voice(iMidiNote, iVelocity, iVoice[],
 ;                       iOperatorMask, iGateSeconds,
-;                       kLiveVoice[], kLiveMask, kLiveHold)
+;                       kLiveVoice[], kLiveMask, kLiveDirty)
 ;
 ;   iMidiNote     MIDI note number; fractional values are supported
 ;   iVelocity     1..127 (values <= 0 retain the research engine's
 ;                 fallback velocity of 100)
-;   iPresetTable  ftable containing the 155-value unpacked DX7 voice
+;   iVoice        i-rate 155-slot unpacked DX7 voice captured by the
+;                 instance-specialized host target
 ;   iOperatorMask bits 0..5 enable operators 1..6; 63 enables all
 ;                 (initial capture; live enables flow through kLiveMask)
 ;   iGateSeconds  positive gate duration of the containing note
-;   kLiveVoice    k-rate 155-slot transport projection maintained by the
-;                 host wrapper from the instrument's parameter channels
+;   kLiveVoice    k-rate 155-slot active-note projection refreshed by the
+;                 host target only when one of its direct globals changes
 ;   kLiveMask     live operator-enable bits (active-note)
-;   kLiveHold     1 freezes observation during staged whole-voice
-;                 publication; 0 enables live active-note adaptation.
-;                 A static wrapper holds this at 1, preserving the
-;                 init-time-only behavior.
+;   kLiveDirty    1 requests one active-note derivation pass; 0 skips it.
 ;
 ; The caller owns note-format conversion, output gain, panning/effects,
-; mixer routing, and persistent preset state. The preset table is a compiled
-; transport snapshot. A 256-point GEN02 table is convenient; only 0..144 are
-; read by the engine and the standard voice-name bytes occupy 145..154.
+; mixer routing, and persistent preset state. The generated target supplies
+; the 155-value voice directly as an i-rate array; no live transport table is
+; needed. Slots 145..154 are reserved for standard voice-name bytes and are
+; not read by the synthesis implementation.
 ;
 ; Preset layout (unpacked DX7/SysEx order):
 ;   0..125   six 21-value operator blocks, operator 6 through operator 1
@@ -220,6 +219,21 @@ giDx7Carriers[] fillarray 2, 1, 3, 0, 0, 0, 0,
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_01(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -227,24 +241,24 @@ opcode dx7_algo_01(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -261,14 +275,29 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_02(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
   aOp2 init 0
   kPh2 init iPh0[1]
   kFbD1 init 0
@@ -276,16 +305,16 @@ opcode dx7_algo_02(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp2 = kGain[1] * sin(6.283185307179586 * (kPh2 + kFbIn))
+    kOp2 = aG2[kindx] * sin(6.283185307179586 * (kPh2 + kFbIn))
     aOp2[kindx] = kOp2
-    kPh2 += kDph[1]
+    kPh2 += kD2
     kPh2 -= floor(kPh2)
     kFbD2 = kFbD1
     kFbD1 = kOp2
     kindx += 1
   od
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -302,6 +331,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_03(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -309,24 +353,24 @@ opcode dx7_algo_03(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp4
 endop
 
@@ -343,6 +387,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_04(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   aOp5 init 0
@@ -354,28 +413,28 @@ opcode dx7_algo_04(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
-    kOp5 = kGain[4] * sin(6.283185307179586 * (kPh5 + kOp6))
+    kOp5 = aG5[kindx] * sin(6.283185307179586 * (kPh5 + kOp6))
     aOp5[kindx] = kOp5
-    kPh5 += kDph[4]
+    kPh5 += kD5
     kPh5 -= floor(kPh5)
-    kOp4 = kGain[3] * sin(6.283185307179586 * (kPh4 + kOp5))
+    kOp4 = aG4[kindx] * sin(6.283185307179586 * (kPh4 + kOp5))
     aOp4[kindx] = kOp4
-    kPh4 += kDph[3]
+    kPh4 += kD4
     kPh4 -= floor(kPh4)
     kFbD2 = kFbD1
     kFbD1 = kOp4
     kindx += 1
   od
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp4
 endop
 
@@ -392,6 +451,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_05(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -399,24 +473,24 @@ opcode dx7_algo_05(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3 + aOp5
 endop
 
@@ -433,6 +507,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_06(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   aOp5 init 0
@@ -442,26 +531,26 @@ opcode dx7_algo_06(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
-    kOp5 = kGain[4] * sin(6.283185307179586 * (kPh5 + kOp6))
+    kOp5 = aG5[kindx] * sin(6.283185307179586 * (kPh5 + kOp6))
     aOp5[kindx] = kOp5
-    kPh5 += kDph[4]
+    kPh5 += kD5
     kPh5 -= floor(kPh5)
     kFbD2 = kFbD1
     kFbD1 = kOp5
     kindx += 1
   od
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3 + aOp5
 endop
 
@@ -478,6 +567,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_07(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -485,24 +589,24 @@ opcode dx7_algo_07(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -519,10 +623,25 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_08(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
   aOp4 init 0
   kPh4 init iPh0[3]
   kFbD1 init 0
@@ -530,20 +649,20 @@ opcode dx7_algo_08(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp4 = kGain[3] * sin(6.283185307179586 * (kPh4 + kFbIn))
+    kOp4 = aG4[kindx] * sin(6.283185307179586 * (kPh4 + kFbIn))
     aOp4[kindx] = kOp4
-    kPh4 += kDph[3]
+    kPh4 += kD4
     kPh4 -= floor(kPh4)
     kFbD2 = kFbD1
     kFbD1 = kOp4
     kindx += 1
   od
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -560,14 +679,29 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_09(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp5 + aOp4))
   aOp2 init 0
   kPh2 init iPh0[1]
   kFbD1 init 0
@@ -575,16 +709,16 @@ opcode dx7_algo_09(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp2 = kGain[1] * sin(6.283185307179586 * (kPh2 + kFbIn))
+    kOp2 = aG2[kindx] * sin(6.283185307179586 * (kPh2 + kFbIn))
     aOp2[kindx] = kOp2
-    kPh2 += kDph[1]
+    kPh2 += kD2
     kPh2 -= floor(kPh2)
     kFbD2 = kFbD1
     kFbD1 = kOp2
     kindx += 1
   od
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -601,12 +735,27 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_10(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
   aOp3 init 0
   kPh3 init iPh0[2]
   kFbD1 init 0
@@ -614,18 +763,18 @@ opcode dx7_algo_10(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp3 = kGain[2] * sin(6.283185307179586 * (kPh3 + kFbIn))
+    kOp3 = aG3[kindx] * sin(6.283185307179586 * (kPh3 + kFbIn))
     aOp3[kindx] = kOp3
-    kPh3 += kDph[2]
+    kPh3 += kD3
     kPh3 -= floor(kPh3)
     kFbD2 = kFbD1
     kFbD1 = kOp3
     kindx += 1
   od
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp4
 endop
 
@@ -642,6 +791,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_11(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -649,24 +813,24 @@ opcode dx7_algo_11(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp4
 endop
 
@@ -683,14 +847,29 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_12(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp6 + aOp5 + aOp4))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp6 + aOp5 + aOp4))
   aOp2 init 0
   kPh2 init iPh0[1]
   kFbD1 init 0
@@ -698,16 +877,16 @@ opcode dx7_algo_12(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp2 = kGain[1] * sin(6.283185307179586 * (kPh2 + kFbIn))
+    kOp2 = aG2[kindx] * sin(6.283185307179586 * (kPh2 + kFbIn))
     aOp2[kindx] = kOp2
-    kPh2 += kDph[1]
+    kPh2 += kD2
     kPh2 -= floor(kPh2)
     kFbD2 = kFbD1
     kFbD1 = kOp2
     kindx += 1
   od
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -724,6 +903,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_13(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -731,24 +925,24 @@ opcode dx7_algo_13(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp6 + aOp5 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp6 + aOp5 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -765,6 +959,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_14(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -772,24 +981,24 @@ opcode dx7_algo_14(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -806,14 +1015,29 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_15(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
   aOp2 init 0
   kPh2 init iPh0[1]
   kFbD1 init 0
@@ -821,16 +1045,16 @@ opcode dx7_algo_15(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp2 = kGain[1] * sin(6.283185307179586 * (kPh2 + kFbIn))
+    kOp2 = aG2[kindx] * sin(6.283185307179586 * (kPh2 + kFbIn))
     aOp2[kindx] = kOp2
-    kPh2 += kDph[1]
+    kPh2 += kD2
     kPh2 -= floor(kPh2)
     kFbD2 = kFbD1
     kFbD1 = kOp2
     kindx += 1
   od
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3
 endop
 
@@ -847,6 +1071,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_16(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -854,24 +1093,24 @@ opcode dx7_algo_16(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp5 + aOp3 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp5 + aOp3 + aOp2))
   xout aOp1
 endop
 
@@ -888,14 +1127,29 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_17(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
   aOp2 init 0
   kPh2 init iPh0[1]
   kFbD1 init 0
@@ -903,16 +1157,16 @@ opcode dx7_algo_17(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp2 = kGain[1] * sin(6.283185307179586 * (kPh2 + kFbIn))
+    kOp2 = aG2[kindx] * sin(6.283185307179586 * (kPh2 + kFbIn))
     aOp2[kindx] = kOp2
-    kPh2 += kDph[1]
+    kPh2 += kD2
     kPh2 -= floor(kPh2)
     kFbD2 = kFbD1
     kFbD1 = kOp2
     kindx += 1
   od
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp5 + aOp3 + aOp2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp5 + aOp3 + aOp2))
   xout aOp1
 endop
 
@@ -929,12 +1183,27 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_18(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
   aOp3 init 0
   kPh3 init iPh0[2]
   kFbD1 init 0
@@ -942,18 +1211,18 @@ opcode dx7_algo_18(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp3 = kGain[2] * sin(6.283185307179586 * (kPh3 + kFbIn))
+    kOp3 = aG3[kindx] * sin(6.283185307179586 * (kPh3 + kFbIn))
     aOp3[kindx] = kOp3
-    kPh3 += kDph[2]
+    kPh3 += kD3
     kPh3 -= floor(kPh3)
     kFbD2 = kFbD1
     kFbD1 = kOp3
     kindx += 1
   od
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp4 + aOp3 + aOp2))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp4 + aOp3 + aOp2))
   xout aOp1
 endop
 
@@ -970,6 +1239,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_19(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -977,24 +1261,24 @@ opcode dx7_algo_19(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp4 + aOp5
 endop
 
@@ -1011,12 +1295,27 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_20(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
   aOp3 init 0
   kPh3 init iPh0[2]
   kFbD1 init 0
@@ -1024,18 +1323,18 @@ opcode dx7_algo_20(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp3 = kGain[2] * sin(6.283185307179586 * (kPh3 + kFbIn))
+    kOp3 = aG3[kindx] * sin(6.283185307179586 * (kPh3 + kFbIn))
     aOp3[kindx] = kOp3
-    kPh3 += kDph[2]
+    kPh3 += kD3
     kPh3 -= floor(kPh3)
     kFbD2 = kFbD1
     kFbD1 = kOp3
     kindx += 1
   od
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp3))
   xout aOp1 + aOp2 + aOp4
 endop
 
@@ -1052,12 +1351,27 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_21(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
   aOp3 init 0
   kPh3 init iPh0[2]
   kFbD1 init 0
@@ -1065,18 +1379,18 @@ opcode dx7_algo_21(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp3 = kGain[2] * sin(6.283185307179586 * (kPh3 + kFbIn))
+    kOp3 = aG3[kindx] * sin(6.283185307179586 * (kPh3 + kFbIn))
     aOp3[kindx] = kOp3
-    kPh3 += kDph[2]
+    kPh3 += kD3
     kPh3 -= floor(kPh3)
     kFbD2 = kFbD1
     kFbD1 = kOp3
     kindx += 1
   od
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp3))
   xout aOp1 + aOp2 + aOp4 + aOp5
 endop
 
@@ -1093,6 +1407,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_22(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1100,24 +1429,24 @@ opcode dx7_algo_22(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp6))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp6))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3 + aOp4 + aOp5
 endop
 
@@ -1134,6 +1463,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_23(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1141,24 +1485,24 @@ opcode dx7_algo_23(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp4 + aOp5
 endop
 
@@ -1175,6 +1519,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_24(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1182,24 +1541,24 @@ opcode dx7_algo_24(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp6))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp6))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp4 + aOp5
 endop
 
@@ -1216,6 +1575,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_25(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1223,24 +1597,24 @@ opcode dx7_algo_25(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp4 + aOp5
 endop
 
@@ -1257,6 +1631,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_26(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1264,24 +1653,24 @@ opcode dx7_algo_26(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp4
 endop
 
@@ -1298,12 +1687,27 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_27(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp6 + aOp5))
   aOp3 init 0
   kPh3 init iPh0[2]
   kFbD1 init 0
@@ -1311,18 +1715,18 @@ opcode dx7_algo_27(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp3 = kGain[2] * sin(6.283185307179586 * (kPh3 + kFbIn))
+    kOp3 = aG3[kindx] * sin(6.283185307179586 * (kPh3 + kFbIn))
     aOp3[kindx] = kOp3
-    kPh3 += kDph[2]
+    kPh3 += kD3
     kPh3 -= floor(kPh3)
     kFbD2 = kFbD1
     kFbD1 = kOp3
     kindx += 1
   od
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2 + aOp3))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2 + aOp3))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp4
 endop
 
@@ -1339,8 +1743,23 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_28(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
   aOp5 init 0
   kPh5 init iPh0[4]
   kFbD1 init 0
@@ -1348,22 +1767,22 @@ opcode dx7_algo_28(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp5 = kGain[4] * sin(6.283185307179586 * (kPh5 + kFbIn))
+    kOp5 = aG5[kindx] * sin(6.283185307179586 * (kPh5 + kFbIn))
     aOp5[kindx] = kOp5
-    kPh5 += kDph[4]
+    kPh5 += kD5
     kPh5 -= floor(kPh5)
     kFbD2 = kFbD1
     kFbD1 = kOp5
     kindx += 1
   od
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1 + aOp2))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1 + aOp2))
   xout aOp1 + aOp3 + aOp6
 endop
 
@@ -1380,6 +1799,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_29(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1387,24 +1821,24 @@ opcode dx7_algo_29(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp5
 endop
 
@@ -1421,8 +1855,23 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_30(kGain[], kDph[], iPh0[], kFbAmt):a
-  aPh6 = phasor(kDph[5] * sr, iPh0[5])
-  aOp6 = kGain[5] * sin(6.283185307179586 * (aPh6))
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
+  aPh6 = phasor(kD6 * sr, iPh0[5])
+  aOp6 = aG6 * sin(6.283185307179586 * (aPh6))
   aOp5 init 0
   kPh5 init iPh0[4]
   kFbD1 init 0
@@ -1430,22 +1879,22 @@ opcode dx7_algo_30(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp5 = kGain[4] * sin(6.283185307179586 * (kPh5 + kFbIn))
+    kOp5 = aG5[kindx] * sin(6.283185307179586 * (kPh5 + kFbIn))
     aOp5[kindx] = kOp5
-    kPh5 += kDph[4]
+    kPh5 += kD5
     kPh5 -= floor(kPh5)
     kFbD2 = kFbD1
     kFbD1 = kOp5
     kindx += 1
   od
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4 + aOp5))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3 + aOp4))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4 + aOp5))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3 + aOp4))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp6
 endop
 
@@ -1462,6 +1911,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_31(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1469,24 +1933,24 @@ opcode dx7_algo_31(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5 + aOp6))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5 + aOp6))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp4 + aOp5
 endop
 
@@ -1503,6 +1967,21 @@ endop
  * @return Unnormalized sum of carrier outputs
  */
 opcode dx7_algo_32(kGain[], kDph[], iPh0[], kFbAmt):a
+  ; Match msfa gain[0]/gain[1] behavior by interpolating each operator
+  ; gain across the current audio block. Feedback loops index the ramp at
+  ; the current sample; vectorized operators consume it directly.
+  aG1 interp kGain[0]
+  aG2 interp kGain[1]
+  aG3 interp kGain[2]
+  aG4 interp kGain[3]
+  aG5 interp kGain[4]
+  aG6 interp kGain[5]
+  kD1 = kDph[0]
+  kD2 = kDph[1]
+  kD3 = kDph[2]
+  kD4 = kDph[3]
+  kD5 = kDph[4]
+  kD6 = kDph[5]
   aOp6 init 0
   kPh6 init iPh0[5]
   kFbD1 init 0
@@ -1510,24 +1989,24 @@ opcode dx7_algo_32(kGain[], kDph[], iPh0[], kFbAmt):a
   kindx = 0
   while kindx < ksmps do
     kFbIn = kFbAmt * (kFbD1 + kFbD2) * 0.5
-    kOp6 = kGain[5] * sin(6.283185307179586 * (kPh6 + kFbIn))
+    kOp6 = aG6[kindx] * sin(6.283185307179586 * (kPh6 + kFbIn))
     aOp6[kindx] = kOp6
-    kPh6 += kDph[5]
+    kPh6 += kD6
     kPh6 -= floor(kPh6)
     kFbD2 = kFbD1
     kFbD1 = kOp6
     kindx += 1
   od
-  aPh5 = phasor(kDph[4] * sr, iPh0[4])
-  aOp5 = kGain[4] * sin(6.283185307179586 * (aPh5))
-  aPh4 = phasor(kDph[3] * sr, iPh0[3])
-  aOp4 = kGain[3] * sin(6.283185307179586 * (aPh4))
-  aPh3 = phasor(kDph[2] * sr, iPh0[2])
-  aOp3 = kGain[2] * sin(6.283185307179586 * (aPh3))
-  aPh2 = phasor(kDph[1] * sr, iPh0[1])
-  aOp2 = kGain[1] * sin(6.283185307179586 * (aPh2))
-  aPh1 = phasor(kDph[0] * sr, iPh0[0])
-  aOp1 = kGain[0] * sin(6.283185307179586 * (aPh1))
+  aPh5 = phasor(kD5 * sr, iPh0[4])
+  aOp5 = aG5 * sin(6.283185307179586 * (aPh5))
+  aPh4 = phasor(kD4 * sr, iPh0[3])
+  aOp4 = aG4 * sin(6.283185307179586 * (aPh4))
+  aPh3 = phasor(kD3 * sr, iPh0[2])
+  aOp3 = aG3 * sin(6.283185307179586 * (aPh3))
+  aPh2 = phasor(kD2 * sr, iPh0[1])
+  aOp2 = aG2 * sin(6.283185307179586 * (aPh2))
+  aPh1 = phasor(kD1 * sr, iPh0[0])
+  aOp1 = aG1 * sin(6.283185307179586 * (aPh1))
   xout aOp1 + aOp2 + aOp3 + aOp4 + aOp5 + aOp6
 endop
 
@@ -1615,47 +2094,43 @@ opcode dx7_render_algorithm(iAlgo, kGain[], kDph[], iPh0[], kFbAmt):a
 endop
 
 /**
- * Render one BlueX7 note from a DX7-layout transport table with live
+ * Render one BlueX7 note from a direct i-rate DX7-layout voice with live
  * active-note adaptation (Blue Spec 092).
  *
- * The host wrapper keeps kLiveVoice (the 155-slot transport projection of
- * the current parameter channels) current while kLiveHold is 0 and freezes
- * it during staged whole-voice publication. While kLiveHold is 0, this UDO
- * re-derives every active-note-capable value per control cycle without
- * replaying completed envelope stages: operator frequencies, detune,
- * keyboard scaling, output/velocity sensitivity, envelope rates and levels
- * for the current and future stages, feedback, LFO speed/delay/depths/wave,
- * pitch-modulation sensitivity, pitch-EG rates and levels, key transpose,
- * and the operator-enable mask. Algorithm, oscillator key sync, and LFO key
- * sync are next-note: the wrapper publishes them into the transport table
- * and each note captures them once at initialization.
+ * A compatibility host wrapper may refresh kLiveVoice from direct parameter
+ * globals only when a domain-local change guard fires. When kLiveDirty is 1,
+ * this UDO re-derives the active fields supplied by that wrapper without
+ * replaying completed envelope stages. The production generated inline target
+ * uses a smaller scalar active set (feedback, LFO depths, output levels, and
+ * enables) and keeps all other catalog fields as note-start snapshots; this
+ * UDO remains the shared comparison/fallback implementation for broader live
+ * descriptor sets.
  *
- * A static wrapper freezes kLiveHold at 1, which reproduces the original
+ * A static wrapper leaves kLiveDirty at 0, which reproduces the original
  * init-time-only behavior exactly.
  *
  * This UDO extends the containing note for the preset's release tail and may
  * turn that note off after all six envelopes freeze. The containing
  * instrument duration must describe the same gate interval as iGateSeconds.
  */
-opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeconds, kLiveVoice[], kLiveMask, kLiveHold):a
+opcode bluex7_voice(iMidiNote, iVelocity, iVoice[], iOperatorMask, iGateSeconds, kLiveVoice[], kLiveMask, kLiveDirty):a
   iNote = iMidiNote
   iVel = (iVelocity <= 0 ? 100 : min:i(iVelocity, 127))
-  iVtab = iPresetTable
   iOpMask = int(iOperatorMask)
   iOpMask = (iOpMask < 0 ? 0 : (iOpMask > 63 ? 63 : iOpMask))
   iDuration = abs(iGateSeconds)
 
   ; ---------------- common voice parameters ----------------------
-  iAlgo    = tabi(134, iVtab)
-  iFbRaw   = tabi(135, iVtab)
-  iLfoSpd  = tabi(137, iVtab)
-  iLfoDly  = tabi(138, iVtab)
-  iPmd     = tabi(139, iVtab)
-  iAmd     = tabi(140, iVtab)
-  iLfoSync = tabi(141, iVtab)
-  iLfoWave = tabi(142, iVtab)
-  iPms     = tabi(143, iVtab)
-  iKt      = tabi(144, iVtab) - 24          ; key transpose, semitones
+  iAlgo    = iVoice[134]
+  iFbRaw   = iVoice[135]
+  iLfoSpd  = iVoice[137]
+  iLfoDly  = iVoice[138]
+  iPmd     = iVoice[139]
+  iAmd      = iVoice[140]
+  iLfoSync = iVoice[141]
+  iLfoWave = iVoice[142]
+  iPms     = iVoice[143]
+  iKt      = iVoice[144] - 24          ; key transpose, semitones
   iNoteT   = iNote + iKt                    ; transposed note drives
                                             ; frequency, KLS and KRS
 
@@ -1663,13 +2138,19 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   iVelVal  = giDx7VelTab[int(iVel / 2)] - 239
 
   ; ---------------- k-rate mirrors of i-rate globals -------------
-  ; The state machines need k-indexable lookup tables.
-  kLevLut[] = giDx7LevelLut
-  kPegLvlT[] = giDx7PegLevel
-  kPegRateT[] = giDx7PegRate
-  kExpScale[] = giDx7ExpScale
-  kPmsTab[] = giDx7PmsTab
-  kAmsTab[] = giDx7AmsTab
+  ; The state machines need k-indexable lookup tables. The gi tables are
+  ; constant for the whole performance, so the copies run once per note;
+  ; re-copying six arrays every k-cycle is measurable interpreter work.
+  kMirrorInit init 0
+  if kMirrorInit == 0 then
+    kLevLut[] = giDx7LevelLut
+    kPegLvlT[] = giDx7PegLevel
+    kPegRateT[] = giDx7PegRate
+    kExpScale[] = giDx7ExpScale
+    kPmsTab[] = giDx7PmsTab
+    kAmsTab[] = giDx7AmsTab
+    kMirrorInit = 1
+  endif
 
   ; ---------------- per-op parameters ----------------------------
   ; read at i-rate into i-arrays, then mirrored to k-arrays for the
@@ -1678,6 +2159,8 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   iFbaseA[] init 6        ; base frequency Hz (before detune/PEG/LFO)
   iDetFA[]  init 6        ; detune multiplier
   iOlmA[]   init 6        ; composed OL microsteps (OL + KLS + velocity)
+  iOlmVelA[] init 6       ; velocity contribution to composed OL
+  iOlmScaleA[] init 6     ; keyboard-level-scaling contribution in OL units
   iQrsA[]   init 6        ; KRS delta in qrate units
   iAmsIA[]  init 6
   iEnabledA[] init 6
@@ -1699,10 +2182,10 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   iop = 0
   while iop < 6 do
     io = 105 - iop * 21              ; op1 block lives at 105..125
-    imode   = tabi(io + 17, iVtab)
-    icoarse = tabi(io + 18, iVtab)
-    ifine   = tabi(io + 19, iVtab)
-    idet    = tabi(io + 20, iVtab)             ; raw 0..14, 7 = center
+    imode   = iVoice[io + 17]
+    icoarse = iVoice[io + 18]
+    ifine   = iVoice[io + 19]
+    idet    = iVoice[io + 20]             ; raw 0..14, 7 = center
     ; base frequency (dx7note.cc osc_freq, converted to Hz)
     if imode == 0 then
       iratio = (icoarse == 0 ? 0.5 : icoarse) * (1 + ifine / 100)
@@ -1713,11 +2196,11 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
       iDetFA[iop]  = (idet > 7 ? 2 ^ ((idet - 7) * 13457 / 16777216.0) : 1)
     endif
     ; keyboard level scaling (dx7note.cc ScaleLevel/ScaleCurve)
-    ibp    = tabi(io + 8, iVtab)
-    idl    = tabi(io + 9, iVtab)
-    idr    = tabi(io + 10, iVtab)
-    icl    = tabi(io + 11, iVtab)
-    icr    = tabi(io + 12, iVtab)
+    ibp    = iVoice[io + 8]
+    idl    = iVoice[io + 9]
+    idr    = iVoice[io + 10]
+    icl    = iVoice[io + 11]
+    icr    = iVoice[io + 12]
     ioff   = iNoteT - ibp - 17
     igroup = (ioff >= 0 ? int(ioff / 3) : int(-ioff / 3))
     idepth = (ioff >= 0 ? idr : idl)
@@ -1730,20 +2213,22 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
     endif
     iscale = (icurve < 2 ? -iscale : iscale)
     ; composed output level in microsteps (dx7note.cc init)
-    isol  = tabi(io + 16, iVtab)
+    isol  = iVoice[io + 16]
     isol  = (isol >= 20 ? 28 + isol : giDx7LevelLut[isol])
     iol   = isol + iscale
     iol   = (iol > 127 ? 127 : iol)
     iol   = iol * 32
-    ikvs  = tabi(io + 15, iVtab)
+    ikvs  = iVoice[io + 15]
     ivelm = floor((ikvs * iVelVal + 7) / 8) * 16
+    iOlmVelA[iop] = ivelm
     ivelm += iol
+    iOlmScaleA[iop] = iscale
     iOlmA[iop] = (ivelm < 0 ? 0 : ivelm)
-    iamsx = tabi(io + 14, iVtab)
+    iamsx = iVoice[io + 14]
     iamsx = (iamsx > 3 ? 3 : iamsx)
     iAmsIA[iop] = giDx7AmsTab[iamsx]
     ; keyboard rate scaling (dx7note.cc ScaleRate)
-    ikrs_s = tabi(io + 13, iVtab)
+    ikrs_s = iVoice[io + 13]
     ixr    = int(iNoteT / 3) - 7
     ixr    = (ixr < 0 ? 0 : ixr)
     ixr    = (ixr > 31 ? 31 : ixr)
@@ -1788,8 +2273,8 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
     io = 105 - iop * 21
     iseg = 0
     while iseg < 4 do
-      iEgLA[iop * 4 + iseg] = tabi(io + 4 + iseg, iVtab)
-      iEgRA[iop * 4 + iseg] = tabi(io + iseg, iVtab)
+      iEgLA[iop * 4 + iseg] = iVoice[io + 4 + iseg]
+      iEgRA[iop * 4 + iseg] = iVoice[io + iseg]
       iseg += 1
     od
     ; hardware truth: EG starts at the composed L4 level (see header)
@@ -1826,15 +2311,15 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   xtratim iTailCap + 0.05   ; extend the containing note for release
 
   ; ---------------- pitch EG state (pitchenv.cc) -----------------
-  iPegL4    = giDx7PegLevel[tabi(133, iVtab)]
-  iPegR4    = giDx7PegRate[tabi(129, iVtab)]
+  iPegL4    = giDx7PegLevel[iVoice[133]]
+  iPegR4    = giDx7PegRate[iVoice[129]]
   iPegL0   = iPegL4 * 524288
-  iPegT0   = giDx7PegLevel[tabi(130, iVtab)] * 524288
+  iPegT0   = giDx7PegLevel[iVoice[130]] * 524288
   kPegLevel init iPegL0                                ; start at L4
   kPegIx    init 0
   kPegTgt   init iPegT0
   kPegRis   init (iPegT0 > iPegL0 ? 1 : 0)
-  kPegInc   init giDx7PegRate[tabi(126, iVtab)] * ksmps * 16777216 / (21.3 * sr)
+  kPegInc   init giDx7PegRate[iVoice[126]] * ksmps * 16777216 / (21.3 * sr)
   kPegAdvance init 0
   kPegL4Live  = iPegL4
   kPegR4Live  = iPegR4
@@ -1874,11 +2359,12 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
 
   ; ---------------- k-rate working state --------------------------
   kGain[]   init 6
+  kPreviousGain[] init 6
   kDph[]    init 6
-  kAmdRed[] init 6
   kGate     init 1
   kReleased init 0
   kDidInit  init 0
+  kAudioActive init 1
 
 
   ; ================================================================
@@ -1895,14 +2381,14 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   endif
 
   ; ----------------------------------------------------------------
-  ; live active-note adaptation (kLiveHold == 0)
+  ; live active-note adaptation (kLiveDirty == 1)
   ;
-  ; Re-derives active-note-capable state from kLiveVoice without
-  ; replaying completed envelope stages. Next-note fields (algorithm,
-  ; oscillator key sync, LFO key sync) are intentionally not read here:
-  ; notes captured them at initialization from the transport table.
+  ; Re-derives the compatibility target's active-note state from kLiveVoice
+  ; without replaying completed envelope stages. Next-note fields are
+  ; intentionally not read here: notes captured them at initialization from
+  ; the direct i-rate voice.
   ; ----------------------------------------------------------------
-  if kLiveHold == 0 then
+  if kLiveDirty == 1 then
     kNoteT = iNote + (kLiveVoice[144] - 24)
 
     kfbr = kLiveVoice[135]
@@ -1978,7 +2464,16 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
       kvs = kLiveVoice[kio + 15]
       kvelm = floor((kvs * iVelVal + 7) / 8) * 16
       kvelm += kiol
-      kOlm[kop] = (kvelm < 0 ? 0 : kvelm)
+       ; Preserve the envelope's relative stage progress while moving the
+       ; composed output level. kEgLevel is stored in the same 16-bit
+       ; fractional units as kOlm, so shifting it here makes an active
+       ; output-level edit audible immediately instead of waiting for the
+       ; next envelope target to converge.
+       kOldOlm = kOlm[kop]
+       kOlm[kop] = (kvelm < 0 ? 0 : kvelm)
+       kEgLevel[kop] += (kOlm[kop] - kOldOlm) * 65536
+       kEgLevel[kop] = (kEgLevel[kop] < 16 * 65536 ? 16 * 65536 : kEgLevel[kop])
+       kEgLevel[kop] = (kEgLevel[kop] > 285212672 ? 285212672 : kEgLevel[kop])
       ; amplitude modulation sensitivity
       kamsx = kLiveVoice[kio + 14]
       kamsx = (kamsx > 3 ? 3 : kamsx)
@@ -2073,8 +2568,12 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   ; --- pitch amounts ---------------------------------------------
   kPegSemis = kPegLevel * 0.375 / 524288
   kLfoOct   = kPmd * 2.578125 * kPmsVal * kDelayEnv * kLfoN / 65536
+  ; per-k-cycle invariants shared by all six operators
+  kPegLfo   = kPegSemis / 12 + kLfoOct
+  kAmdScale = kAmdPeak * 32 * kDelayEnv * max:k(0, kLfoN)
 
   ; --- amp EG per-op update (env.cc getsample, once per block) ---
+  kAllFrozen = 0
   kop = 0
   while kop < 6 do
     if kEgIx[kop] < 3 || (kEgIx[kop] < 4 && kGate == 0) then
@@ -2117,19 +2616,55 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
         endif
       endif
     endif
-    ; amplitude modulation: transient OL reduction (approximate)
-    kAmdRed[kop] = kAmdPeak * 32 * kDelayEnv * max:k(0, kLfoN) * kAmsI[kop]
+    ; amplitude modulation: transient OL reduction (approximate);
+    ; kAmdScale keeps the original left-to-right factor association
+    kAmdRedL = kAmdScale * kAmsI[kop]
+    ; Retain both block endpoints exactly as msfa does. The selected
+    ; algorithm interpolates from kPreviousGain to kGain sample-by-sample.
+    kPreviousGain[kop] = kGain[kop]
     ; op gain from the composed level, log2 domain
-    kGain[kop] = kEnabled[kop] * 2 ^ ((kEgLevel[kop] - kAmdRed[kop] * 65536) / 16777216 - 14)
-    ; per-block phase increment (freq constant within block, like hardware)
-    if kMode[kop] == 0 then
-      kF = kFbase[kop] * kDetF[kop] * 2 ^ (kPegSemis / 12 + kLfoOct)
-    else
-      kF = kFbase[kop] * kDetF[kop]
-    endif
-    kDph[kop] = kF / sr
+    kGain[kop] = kEnabled[kop] * 2 ^ ((kEgLevel[kop] - kAmdRedL * 65536) / 16777216 - 14)
+    kAllFrozen += (kEgIx[kop] >= 4 ? 1 : 0)
     kop += 1
   od
+
+  ; ---------------- inaudible-release fast path ------------------
+  ; Continue the envelope/liveness state machine for every release note,
+  ; but avoid the six-operator audio topology once every enabled carrier is
+  ; below the audibility bound. FM/modulation operators cannot increase a
+  ; carrier's bounded amplitude, and the composed envelope floor itself is
+  ; 2^(16*65536/2^24 - 14) = 2^-13.9375 ~= 6.4e-5 per carrier, so the bound
+  ; must sit ABOVE that floor or fully-released notes never trip this path
+  ; and burn full DSP until the capped tail ends. With the 1e-4 bound the
+  ; worst skipped output is ncar * 1e-4 * (0.5/ncar) * 0.75 ~= -88 dBFS.
+  ; Render the transition block while either endpoint remains audible, just
+  ; like msfa's gain1/gain2 threshold check. A live edit that raises a carrier
+  ; above the bound automatically resumes the topology on this same block.
+  kCarrierAudible = 0
+  kcarrier = 0
+  while kcarrier < iNcar do
+    kCarrierOp = giDx7Carriers[iCb + 1 + kcarrier] - 1
+    if kCarrierOp >= 0 && (kGain[kCarrierOp] > 0.0001 || kPreviousGain[kCarrierOp] > 0.0001) then
+      kCarrierAudible = 1
+    endif
+    kcarrier += 1
+  od
+  kAudioActive = kCarrierAudible
+  if kAudioActive == 1 then
+    ; Park frequency derivation with the topology. A carrier gain edit that
+    ; resumes audio computes current phase increments on this same block.
+    kPitchMul = 2 ^ kPegLfo
+    kop = 0
+    while kop < 6 do
+      if kMode[kop] == 0 then
+        kF = kFbase[kop] * kDetF[kop] * kPitchMul
+      else
+        kF = kFbase[kop] * kDetF[kop]
+      endif
+      kDph[kop] = kF / sr
+      kop += 1
+    od
+  endif
 
   ; --- pitch EG update (pitchenv.cc, linear in pitchtab units) ---
   if kPegIx < 3 || (kPegIx < 4 && kGate == 0) then
@@ -2150,9 +2685,9 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   if kPegAdvance == 1 && kPegIx < 4 then
     kPegIx += 1
     if kPegIx < 4 then
-      kPegTgt = kPegLvlT[tab:k(130 + kPegIx, iVtab)] * 524288
+      kPegTgt = kPegLvlT[kLiveVoice[130 + kPegIx]] * 524288
       kPegRis = (kPegTgt > kPegLevel ? 1 : 0)
-      kPegInc = kPegRateT[tab:k(126 + kPegIx, iVtab)] * ksmps * 16777216 / (21.3 * sr)
+      kPegInc = kPegRateT[kLiveVoice[126 + kPegIx]] * ksmps * 16777216 / (21.3 * sr)
     endif
     kPegAdvance = 0
   endif
@@ -2160,17 +2695,15 @@ opcode bluex7_voice(iMidiNote, iVelocity, iPresetTable, iOperatorMask, iGateSeco
   ; ================================================================
   ; static, vectorized algorithm topology
   ; ================================================================
-  aOut = dx7_render_algorithm(iAlgo, kGain, kDph, iPh0A, kFbAmt)
+  if kAudioActive == 1 then
+    aOut = dx7_render_algorithm(iAlgo, kGain, kDph, iPh0A, kFbAmt)
+  else
+    aOut = 0
+  endif
   aOut *= iOutScale
   aOut *= giBlueX7OutputCalibration
 
   ; ---------------- note lifetime --------------------------------
-  kAllFrozen = 0
-  kop = 0
-  while kop < 6 do
-    kAllFrozen += (kEgIx[kop] >= 4 ? 1 : 0)
-    kop += 1
-  od
   kElapsed = timeinsts()
   if kElapsed > iDuration && (kAllFrozen == 6 || kElapsed > iDuration + iTailCap) then
     turnoff

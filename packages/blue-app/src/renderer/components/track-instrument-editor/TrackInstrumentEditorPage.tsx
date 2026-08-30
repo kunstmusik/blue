@@ -9,6 +9,8 @@ import {
 } from '../../../shared/project-editor';
 import InstrumentEditorPanel from '../workbench/panels/orchestra/InstrumentEditorPanel';
 import { useLibraryStore } from '../../stores/library-store';
+import { usePlaybackStore } from '../../stores/playback-store';
+import { useBlueLiveStore } from '../../stores/blue-live-store';
 import {
   mergePendingInstrumentPatch,
   toInstrumentPatch,
@@ -69,6 +71,8 @@ function projectSnapshotToTrackInstrument(
 }
 
 export default function TrackInstrumentEditorPage(): React.ReactElement {
+  const playbackRunning = usePlaybackStore((state) => state.isPlaying);
+  const blueLiveRunning = useBlueLiveStore((state) => state.running);
   const parsedRequest = useMemo(parseRequestFromLocation, []);
   const [snapshot, setSnapshot] = useState<TrackInstrumentEditorSnapshot | null>(null);
   const [error, setError] = useState<string | null>(parsedRequest ? null : 'Missing Track instrument editor request');
@@ -234,6 +238,17 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
         instrument={snapshot.instrument}
         projectUdos={snapshot.projectUdos}
         onOrchestraPatch={applyPatch}
+        blueX7Runtime={snapshot.instrument.type === 'blueX7' ? {
+          target: {
+            track: {
+              projectSessionId: snapshot.track.projectSessionId,
+              rootGroupId: snapshot.track.rootGroupId,
+              trackId: snapshot.track.trackId,
+            },
+          },
+          projectSessionId: snapshot.track.projectSessionId,
+          enabled: playbackRunning || blueLiveRunning,
+        } : undefined}
         embeddedUdoTarget={{
           projectSessionId: snapshot.track.projectSessionId,
           projectRevision: snapshot.track.projectRevision,

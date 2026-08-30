@@ -3,11 +3,23 @@ import type { BlueX7Common } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
 import { AppSelect } from '../../AppSelect';
+import { NextNoteBadge } from './next-note-badge';
+import { blueX7WidgetDomain } from './catalog-domains';
+
+const ALGORITHM_DOMAIN = blueX7WidgetDomain('common.algorithm');
+const TRANSPOSE_DOMAIN = blueX7WidgetDomain('common.transpose');
+// The widget shows transpose as centered semitones (stored 0..48 → −24..+24).
+const TRANSPOSE_SEMITONE_MIN = TRANSPOSE_DOMAIN.min - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
+const TRANSPOSE_SEMITONE_MAX = TRANSPOSE_DOMAIN.max - (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
+const TRANSPOSE_CENTER_OFFSET = (TRANSPOSE_DOMAIN.min + TRANSPOSE_DOMAIN.max) / 2;
+const FEEDBACK_DOMAIN = blueX7WidgetDomain('common.feedback');
+const SHARED_PMS_DOMAIN = blueX7WidgetDomain('lfo.pitchModulationSensitivity');
 
 export interface CommonPanelProps {
   common: BlueX7Common;
   sharedSync?: number | 'mixed';
   sharedPms?: number | 'mixed';
+  effectiveValues?: ReadonlyMap<string, number>;
   onApplyPatch: (description: string, patch: BlueX7Patch) => void;
   onOpenAlgorithmModal?: () => void;
 }
@@ -16,10 +28,25 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   common,
   sharedSync,
   sharedPms,
+  effectiveValues,
   onApplyPatch,
   onOpenAlgorithmModal,
 }) => {
-  const displayTranspose = common.keyTranspose - 24;
+  const effective = (key: string, fallback: number): number => effectiveValues?.get(key) ?? fallback;
+  const displayedAlgorithm = effective('common.algorithm', common.algorithm);
+  const displayTranspose = effective('common.transpose', common.keyTranspose) - 24;
+  const displayedFeedback = effective('common.feedback', common.feedback);
+  const displayedSync = effective(
+    'common.oscillatorKeySync',
+    typeof sharedSync === 'number' ? sharedSync : 0,
+  );
+  const displayedPms = effective(
+    'lfo.pitchModulationSensitivity',
+    typeof sharedPms === 'number' ? sharedPms : 0,
+  );
+  const displayedOperatorEnabled = common.operatorEnabled.map((enabled, index) => (
+    effective(`operator.${index + 1}.enabled`, enabled ? 1 : 0) >= 0.5
+  ));
 
   const handleAlgorithmChange = (value: string) => {
     const val = parseInt(value, 10);
@@ -33,11 +60,11 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   const handleTransposeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const semitones = parseInt(e.target.value, 10);
     if (!Number.isNaN(semitones)) {
-      const clamped = Math.max(-24, Math.min(24, semitones));
+      const clamped = Math.max(TRANSPOSE_SEMITONE_MIN, Math.min(TRANSPOSE_SEMITONE_MAX, semitones));
       onApplyPatch(`Change Key Transpose to ${clamped}`, {
         type: 'setCommonField',
         field: 'keyTranspose',
-        value: clamped + 24,
+        value: clamped + TRANSPOSE_CENTER_OFFSET,
       });
     }
   };
@@ -45,7 +72,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     if (!Number.isNaN(val)) {
-      const clamped = Math.max(0, Math.min(7, val));
+      const clamped = Math.max(FEEDBACK_DOMAIN.min, Math.min(FEEDBACK_DOMAIN.max, val));
       onApplyPatch(`Change Feedback to ${clamped}`, {
         type: 'setCommonField',
         field: 'feedback',
@@ -74,7 +101,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
   const handleSharedPmsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     if (!Number.isNaN(val)) {
-      const clamped = Math.max(0, Math.min(7, val));
+      const clamped = Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
       onApplyPatch(`Set All PMS to ${clamped}`, {
         type: 'setSharedPitchModulationSensitivity',
         value: clamped,
@@ -90,8 +117,8 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
 
       <div className="flex min-w-0 flex-col sm:flex-row gap-4 items-start">
         <AlgorithmTopology
-          algorithm={common.algorithm}
-          operatorEnabled={common.operatorEnabled}
+          algorithm={displayedAlgorithm}
+          operatorEnabled={displayedOperatorEnabled}
           onToggleOperator={handleOperatorToggle}
           onOpenModal={onOpenAlgorithmModal}
         />
@@ -101,17 +128,17 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
             {/* Algorithm selector */}
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-algorithm" className="text-role-body text-blue-muted">
-                Algorithm (1–32)
+                Algorithm ({ALGORITHM_DOMAIN.min}–{ALGORITHM_DOMAIN.max}) <NextNoteBadge semanticKey="common.algorithm" />
               </label>
               <div className="flex items-center gap-1">
                 <AppSelect
                   id="bluex7-algorithm"
                   aria-label="Algorithm"
-                  value={common.algorithm}
+                  value={displayedAlgorithm}
                   onValueChange={handleAlgorithmChange}
-                  options={Array.from({ length: 32 }, (_, index) => ({
-                    value: index + 1,
-                    label: `Algorithm ${index + 1}`,
+                  options={Array.from({ length: ALGORITHM_DOMAIN.max - ALGORITHM_DOMAIN.min + 1 }, (_, index) => ({
+                    value: ALGORITHM_DOMAIN.min + index,
+                    label: `Algorithm ${ALGORITHM_DOMAIN.min + index}`,
                   }))}
                   className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 />
@@ -138,8 +165,8 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 id="bluex7-key-transpose"
                 aria-label="Key Transpose"
                 type="number"
-                min={-24}
-                max={24}
+                min={TRANSPOSE_SEMITONE_MIN}
+                max={TRANSPOSE_SEMITONE_MAX}
                 value={displayTranspose}
                 onChange={handleTransposeChange}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -149,15 +176,15 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
             {/* Feedback */}
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-feedback" className="text-role-body text-blue-muted">
-                Feedback (0–7)
+                Feedback ({FEEDBACK_DOMAIN.min}–{FEEDBACK_DOMAIN.max})
               </label>
               <input
                 id="bluex7-feedback"
                 aria-label="Feedback"
                 type="number"
-                min={0}
-                max={7}
-                value={common.feedback}
+                min={FEEDBACK_DOMAIN.min}
+                max={FEEDBACK_DOMAIN.max}
+                value={displayedFeedback}
                 onChange={handleFeedbackChange}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
@@ -171,14 +198,14 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   <input
                     type="checkbox"
                     aria-label="Shared Oscillator Sync"
-                    checked={sharedSync === 1}
+                    checked={displayedSync === 1}
                     ref={(el) => {
                       if (el) el.indeterminate = sharedSync === 'mixed';
                     }}
                     onChange={handleSharedSyncToggle}
                     className="rounded border-blue-border"
                   />
-                  Sync
+                  Sync <NextNoteBadge semanticKey="common.oscillatorKeySync" />
                 </label>
                 <div className="flex items-center gap-1">
                   <label htmlFor="bluex7-shared-pms" className="text-role-body text-blue-muted">
@@ -188,10 +215,10 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     id="bluex7-shared-pms"
                     aria-label="Shared Pitch Modulation Sensitivity"
                     type="number"
-                    min={0}
-                    max={7}
-                    placeholder={sharedPms === 'mixed' ? 'mixed' : undefined}
-                    value={typeof sharedPms === 'number' ? sharedPms : ''}
+                    min={SHARED_PMS_DOMAIN.min}
+                    max={SHARED_PMS_DOMAIN.max}
+                    placeholder={sharedPms === 'mixed' && !effectiveValues?.has('lfo.pitchModulationSensitivity') ? 'mixed' : undefined}
+                    value={effectiveValues?.has('lfo.pitchModulationSensitivity') || typeof sharedPms === 'number' ? displayedPms : ''}
                     onChange={handleSharedPmsChange}
                     className="w-14 rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                   />
@@ -207,7 +234,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
         <span className="text-role-body text-blue-muted">Operator Output Enables (1–6)</span>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 6 }, (_, i) => {
-            const isEnabled = common.operatorEnabled[i] ?? true;
+            const isEnabled = displayedOperatorEnabled[i] ?? true;
             return (
               <button
                 key={i}

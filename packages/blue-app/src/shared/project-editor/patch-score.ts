@@ -97,7 +97,7 @@ import {
 } from '@blue/data';
 import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
-import { ParameterHelper } from '@blue/data';
+import { getProjectParameterCatalog } from '@blue/data';
 import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
@@ -1199,8 +1199,9 @@ function resolveAutomationLayerRef(data: BlueData, ref: ScoreAutomationLayerRef)
 }
 
 function findParameterById(data: BlueData, parameterId: string): BlueDataParameter | null {
-  const allParams = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
-  return allParams.find(p => p.getUniqueId() === parameterId) ?? null;
+  return getProjectParameterCatalog(data)
+    .find((entry) => entry.parameter.getUniqueId() === parameterId)
+    ?.parameter ?? null;
 }
 
 function removeAutomationParameterFromGroup(
@@ -1652,8 +1653,9 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
       const layer = resolveAutomationLayerRef(data, patch.layer);
       if (!layer) return false;
       const paramList = layer.getAutomationParameters();
-      const allParams = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
-      const validIds = new Set(allParams.map(p => p.getUniqueId()));
+      const validIds = new Set(
+        getProjectParameterCatalog(data).map((entry) => entry.parameter.getUniqueId()),
+      );
       const idsToRemove = patch.parameterIds
         ? patch.parameterIds.filter(id => !validIds.has(id))
         : paramList.getIds().filter(id => !validIds.has(id));

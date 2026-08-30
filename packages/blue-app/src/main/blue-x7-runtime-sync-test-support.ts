@@ -2,7 +2,7 @@
  * Test support for BlueX7 runtime-sync tests: builds real BlueData fixtures
  * (arrangement and Track-owned BlueX7 instruments with duplicate display
  * names) and produces real compiled bindings through the @blue/data compile
- * path (transport tables, parameter channels, hold/commit names).
+ * path (direct-global parameter channels and per-instance epochs).
  */
 import {
   Arrangement,

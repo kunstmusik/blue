@@ -304,5 +304,14 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(dispatchedPatches[1].blueX7).toEqual({ type: 'replaceVoice', voice });
     // A second undo must be impossible: the import was one step
     expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
+
+    // Redo reapplies the same complete imported voice as one patch.
+    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    expect(redoBtn.disabled).toBe(false);
+    act(() => {
+      clickElement(redoBtn);
+    });
+    expect(dispatchedPatches).toHaveLength(3);
+    expect(dispatchedPatches[2].blueX7).toEqual({ type: 'replaceVoice', voice: importedVoice });
   });
 });

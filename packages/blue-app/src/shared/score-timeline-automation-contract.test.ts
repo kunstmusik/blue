@@ -7,6 +7,7 @@ import {
   Effect,
   Parameter,
   BlueSynthBuilder,
+  BlueX7,
   Element,
 } from '@blue/data';
 import {
@@ -254,6 +255,163 @@ describe('AutomationTargetGroupSnapshot shape', () => {
     expect(
       ['available', 'assignedCurrentLayer', 'assignedOtherLayer', 'missing'].includes(target.assignmentState),
     ).toBe(true);
+  });
+});
+
+describe('BlueX7 owner-aware automation targets (Spec 092 US3)', () => {
+  function flatten(groups: AutomationTargetGroupSnapshot[]): AutomationTargetSnapshot[] {
+    return groups.flatMap((group) => [
+      ...group.targets,
+      ...flatten(group.subGroups),
+    ]);
+  }
+
+  it('exposes 151 nested targets for arrangement and owning Track locations', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject(true);
+    poly.newLayerAt(0);
+    data.getScore().push(poly);
+
+    const arrangementX7 = new BlueX7();
+    arrangementX7.setName('Duplicate X7');
+    data.getArrangement().addInstrument(arrangementX7, '7');
+
+    const trackGroup = new TrackLayerGroup();
+    trackGroup.setName('Audio Group');
+    trackGroup.setUniqueId('x7-group');
+    const track = trackGroup.newLayerAt(0);
+    track.setName('Duplicate X7');
+    track.setUniqueId('x7-track');
+    const trackX7 = new BlueX7();
+    trackX7.setName('Duplicate X7');
+    track.setInstrument(trackX7);
+    data.getScore().push(trackGroup);
+
+    const snapshot = createScoreDocumentSnapshot(data);
+    const arrangementAutomation = snapshot.layerGroups[0]!.layers[0]!.automation!;
+    const trackAutomation = snapshot.layerGroups[1]!.layers[0]!.automation!;
+    const arrangementTargets = flatten(arrangementAutomation.targetGroups)
+      .filter((target) => target.ownerIdentity === 'arrangement:7');
+    const trackTargets = flatten(trackAutomation.targetGroups)
+      .filter((target) => target.ownerIdentity === 'track:x7-group:x7-track');
+
+    expect(arrangementTargets).toHaveLength(151);
+    expect(trackTargets).toHaveLength(151);
+    expect(new Set(arrangementTargets.map((target) => target.parameterId)).size).toBe(151);
+    expect(new Set(trackTargets.map((target) => target.parameterId)).size).toBe(151);
+    expect(arrangementTargets[0]!.locationLabel).toContain('7) Duplicate X7');
+    expect(trackTargets[0]!.locationLabel).toBe('Audio Group / Duplicate X7');
+    expect(snapshot.layerGroups[1]!.layers[0]!.instrument?.snapshot).toMatchObject({
+      ownerIdentity: 'track:x7-group:x7-track',
+    });
+    expect(new Set(arrangementTargets.map((target) => target.updateClass)))
+      .toEqual(new Set(['active-note', 'next-note']));
+
+    const arrangementOwnerGroup = arrangementAutomation.targetGroups
+      .find((group) => group.groupId === 'instrument')!
+      .subGroups.find((group) => group.groupId === 'instr-7')!;
+    expect(arrangementOwnerGroup.subGroups.map((group) => group.label)).toEqual([
+      'Common',
+      'LFO',
+      'Pitch Envelope',
+      'Operator 1',
+      'Operator 2',
+      'Operator 3',
+      'Operator 4',
+      'Operator 5',
+      'Operator 6',
+    ]);
+  });
+
+  it('disambiguates at least four same-named BlueX7 instances with unique location labels (SC-009)', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject(true);
+    poly.newLayerAt(0);
+    data.getScore().push(poly);
+
+    // Four arrangement BlueX7 instruments sharing one display name.
+    for (const id of ['7', '8', '9', '10']) {
+      const arrangementX7 = new BlueX7();
+      arrangementX7.setName('Duplicate X7');
+      data.getArrangement().addInstrument(arrangementX7, id);
+    }
+
+    // Two Track-owned BlueX7 instruments also sharing that display name; the
+    // owning Tracks keep distinct names, so each Track's location label
+    // identifies its own same-named instrument.
+    const trackGroup = new TrackLayerGroup();
+    trackGroup.setName('Audio Group');
+    trackGroup.setUniqueId('x7-group');
+    const trackNames = { 'x7-track-a': 'Lead Track', 'x7-track-b': 'Bass Track' } as const;
+    for (const trackId of ['x7-track-a', 'x7-track-b'] as const) {
+      const track = trackGroup.newLayerAt(trackGroup.length);
+      track.setName(trackNames[trackId]);
+      track.setUniqueId(trackId);
+      const trackX7 = new BlueX7();
+      trackX7.setName('Duplicate X7');
+      track.setInstrument(trackX7);
+    }
+    data.getScore().push(trackGroup);
+
+    const snapshot = createScoreDocumentSnapshot(data);
+
+    // The arrangement chooser exposes all four same-named owners, each with
+    // the complete 151-target catalog and a pairwise-distinct location label.
+    const arrangementAutomation = snapshot.layerGroups[0]!.layers[0]!.automation!;
+    const arrangementOwnerIds = ['arrangement:7', 'arrangement:8', 'arrangement:9', 'arrangement:10'];
+    const arrangementTargetsById = new Map(
+      arrangementOwnerIds.map((ownerIdentity) => [
+        ownerIdentity,
+        flatten(arrangementAutomation.targetGroups).filter(
+          (target) => target.ownerIdentity === ownerIdentity,
+        ),
+      ]),
+    );
+    for (const ownerIdentity of arrangementOwnerIds) {
+      expect(arrangementTargetsById.get(ownerIdentity), ownerIdentity).toHaveLength(151);
+      expect(
+        new Set(arrangementTargetsById.get(ownerIdentity)!.map((target) => target.parameterId)).size,
+      ).toBe(151);
+    }
+    const arrangementLabels = arrangementOwnerIds.map(
+      (ownerIdentity) => arrangementTargetsById.get(ownerIdentity)![0]!.locationLabel,
+    );
+    expect(new Set(arrangementLabels).size).toBe(4);
+    expect(arrangementLabels[0]).toContain('7) Duplicate X7');
+    expect(arrangementLabels[3]).toContain('10) Duplicate X7');
+
+    // Each Track's own automation exposes its own BlueX7 only — never another
+    // Track's targets — and the two Track labels also stay distinct.
+    const trackLayerA = snapshot.layerGroups[1]!.layers[0]!.automation!;
+    const trackLayerB = snapshot.layerGroups[1]!.layers[1]!.automation!;
+    const trackATargets = flatten(trackLayerA.targetGroups).filter(
+      (target) => target.ownerIdentity === 'track:x7-group:x7-track-a',
+    );
+    const trackBTargets = flatten(trackLayerB.targetGroups).filter(
+      (target) => target.ownerIdentity === 'track:x7-group:x7-track-b',
+    );
+    expect(trackATargets).toHaveLength(151);
+    expect(trackBTargets).toHaveLength(151);
+    expect(
+      flatten(trackLayerA.targetGroups).some(
+        (target) => target.ownerIdentity === 'track:x7-group:x7-track-b',
+      ),
+    ).toBe(false);
+    expect(
+      flatten(trackLayerB.targetGroups).some(
+        (target) => target.ownerIdentity === 'track:x7-group:x7-track-a',
+      ),
+    ).toBe(false);
+    expect(trackATargets[0]!.locationLabel).not.toBe(trackBTargets[0]!.locationLabel);
+    // Across all six same-named BlueX7 instances the disambiguators never collide.
+    const allLabels = [
+      ...arrangementLabels,
+      trackATargets[0]!.locationLabel,
+      trackBTargets[0]!.locationLabel,
+    ];
+    expect(new Set(allLabels).size).toBe(6);
   });
 });
 

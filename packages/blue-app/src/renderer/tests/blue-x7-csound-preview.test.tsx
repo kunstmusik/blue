@@ -2,8 +2,10 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createDefaultBlueX7Voice } from '@blue/data';
+import { BlueX7, Element, createDefaultBlueX7Voice } from '@blue/data';
 import { CsoundPanel } from '../components/instruments/blue-x7/csound-panel';
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
@@ -108,16 +110,16 @@ describe('CsoundPanel & Live Csound Preview', () => {
     const tablesPreview = container?.querySelector('[data-testid="csound-tables-preview"]');
     const bodyPreview = container?.querySelector('[data-testid="csound-body-preview"]');
 
-    // the modern renderer: per-instance transport snapshot, not legacy tables
-    expect(tablesPreview?.textContent).toContain(
-      '; FTABLES FOR BLUEX7 MODERN TRANSPORT: FM_Lead',
-    );
-    expect(tablesPreview?.textContent).toContain(' 0 256 -2 ');
+    // the modern renderer: static array target in the preview, with no live
+    // transport ftable publication in the preview path
+    expect(tablesPreview?.textContent).toBe('');
     expect(bodyPreview?.textContent).toContain(
       'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
     );
     expect(bodyPreview?.textContent).toContain('aout = bluex7_voice(');
     expect(bodyPreview?.textContent).toContain('iBlueX7GateSeconds = abs(p3)');
+    expect(bodyPreview?.textContent).not.toContain('tabw');
+    expect(bodyPreview?.textContent).not.toContain('chnget');
   });
 
   it('renders truthful binding diagnostics report distinguishing emitted vs dormant parameters', () => {
@@ -153,7 +155,8 @@ describe('CsoundPanel & Live Csound Preview', () => {
     expect(bindingsPanel?.textContent).toContain('pitchEnvelope.4.level');
     expect(bindingsPanel?.textContent).toContain('[active-note]');
     // legacy dormant-field claims are rejected: key transpose participates via
-    // transport slot 144 and only the nonsynthesized name bytes are reported
+    // the direct-global voice-slot mapping and only nonsynthesized name bytes
+    // are reported
     expect(bindingsPanel?.textContent).toContain('common.transpose');
     expect(bindingsPanel?.textContent).toContain('Not Synthesized (Outside Parameter Scope)');
     expect(bindingsPanel?.textContent).toContain('voice-name bytes');
@@ -212,5 +215,47 @@ describe('CsoundPanel & Live Csound Preview', () => {
     });
     expect(bodyPreview()).toContain('outs aout * 0.5, aout * 0.5');
     expect(bodyPreview()).not.toContain('blueMixerOut aout, aout');
+  });
+
+  it('reports modern active/next-note bindings after reopening a legacy fixture', () => {
+    const fixture = readFileSync(
+      join(__dirname, '../../../../blue-data/src/instruments/blue-x7/test-fixtures/java-default.blue.xml'),
+      'utf8',
+    );
+    const migrated = BlueX7.loadFromXML(Element.parse(fixture));
+    const reopened = BlueX7.loadFromXML(Element.parse(migrated.saveAsXML().toXml()));
+
+    act(() => {
+      root?.render(
+        <CsoundPanel
+          voice={reopened.getVoice()}
+          instrumentName="Migrated_Java_X7"
+          onApplyPatch={onApplyPatch}
+        />,
+      );
+    });
+
+    const previewTab = container?.querySelector('button[aria-label="Csound Preview Tab"]') as HTMLButtonElement;
+    act(() => {
+      previewTab.click();
+      vi.advanceTimersByTime(100);
+    });
+    // Live values are exported through direct globals; the generated target
+    // does not publish a per-voice transport table in the preview.
+    expect(container?.querySelector('[data-testid="csound-tables-preview"]')?.textContent)
+      .toBe('');
+    expect(container?.querySelector('[data-testid="csound-body-preview"]')?.textContent)
+      .toContain('bluex7_voice(');
+
+    const bindingsTab = container?.querySelector('button[aria-label="Csound Bindings Tab"]') as HTMLButtonElement;
+    act(() => {
+      bindingsTab.click();
+      vi.advanceTimersByTime(100);
+    });
+    const report = container?.querySelector('[data-testid="bluex7-bindings-tab"]')?.textContent ?? '';
+    expect(report).toContain('[active-note]');
+    expect(report).toContain('[next-note]');
+    expect(report).not.toContain('stored-only');
+    expect(report).not.toContain('Dormant');
   });
 });

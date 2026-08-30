@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-27
 
-**Status**: Draft
+**Status**: Complete
 
 **Input**: User description: "Review `~/work/csound/dx7-emulation/bluex7_integration_report.md`. Create a branch and a spec for integrating the work in dx7-emulation `bluex.orc` into this project's BlueX7. Integrate the Parameter system so widget values can be modified and automated with real-time updates. Account for the resulting UI-to-engine mapping and for multiple BlueX7 instruments in one project."
 
@@ -16,7 +16,7 @@
 
 *Answers recorded from the recommendations documented in [research.md](research.md) during an unattended clarification pass; amend any bullet here if the project owner decides differently.*
 
-- Q: Is algorithm switching (with oscillator key sync and LFO key sync) next-note or active-note? → A: Next-note: algorithm, oscillator key sync, and LFO key sync apply from the next triggered note; all other sound controls update active notes.
+- Q: Which BlueX7 controls must remain active-note capable? → A: The low-cost live set is feedback, LFO pitch/amplitude depth, each operator output level, and each operator enable (15 descriptors). Algorithm, transpose, LFO timing/wave/sensitivity, pitch-envelope values, and all other operator controls are next-note snapshots (136 descriptors); this keeps note topology and per-operator derivation out of the hot path.
 - Q: What deterministic rule resolves mixed legacy per-operator values for the editor-shared oscillator key sync and pitch modulation sensitivity controls? → A: Logical operator 1's stored value is the effective value; editing the shared control writes the new value to all six per-operator values as one undoable project mutation.
 - Q: Do SysEx import and whole-voice replacement retain existing automation curves? → A: Yes: Parameter identities, automation assignments, and existing curves are retained; only fixed values change, in the same atomic operation as the voice.
 - Q: How many concurrent BlueX7 instances must be supported? → A: No hard cap; the four-instance project in SC-004 (two arrangement, two Track-owned) is the validated concurrency floor.
@@ -56,7 +56,7 @@ A sound designer changes BlueX7 controls while playback or Blue Live is running 
 1. **Given** automation is disabled for a parameter, **When** the user changes its widget during active playback, **Then** the canonical project value and the selected BlueX7's engine value update within the real-time response target without affecting another instrument.
 2. **Given** an active note and a parameter defined as active-note capable, **When** its widget changes, **Then** the sounding note reflects the new value without retriggering or recompiling the project.
 3. **Given** a parameter whose musical meaning begins at note initialization, **When** it changes during playback, **Then** the next note uses the new value without recompilation and the editor clearly identifies that next-note behavior.
-4. **Given** an operator or pitch-envelope stage is already progressing, **When** its current or future rate/level changes, **Then** the remaining envelope follows the new setting without replaying completed stages.
+4. **Given** an operator envelope stage is already progressing, **When** a next-note envelope rate/level changes, **Then** the current note keeps its stage history and the next triggered note uses the new snapshot without a restart.
 5. **Given** automation is actively controlling a parameter, **When** the editor is open, **Then** its widget displays the effective automated value without rewriting the stored automation curve or fixed value.
 6. **Given** automation is active and the user edits the corresponding widget, **When** playback continues, **Then** automation remains authoritative; the UI does not present a transient manual value as though it had replaced the curve.
 
@@ -147,7 +147,7 @@ A composer opens a Java-created or earlier TypeScript Blue project, keeps all Bl
 - **FR-010**: While real-time playback or Blue Live is active, fixed-value widget edits MUST reach the intended compiled Parameter without stopping or recompiling the session.
 - **FR-011**: Active-note-capable changes MUST affect sounding notes within 100 milliseconds of the final input event at the 95th percentile on a supported development machine.
 - **FR-012**: Note-initialization changes MUST affect the next triggered note without a project recompile and MUST be identified as next-note behavior wherever the user edits or automates them.
-- **FR-013**: Mid-envelope edits MUST update the current or remaining stage behavior without restarting already completed stages; release updates MUST not create stuck notes.
+- **FR-013**: Active-note edits to the live control set MUST preserve note/envelope continuity; next-note envelope and topology edits MUST leave an already sounding note's completed and current stages unchanged, apply to the next triggered note, and MUST NOT create stuck releases.
 - **FR-014**: When automation is active, an open BlueX7 editor MUST display effective engine-driven values at least 20 times per second while keeping canonical fixed values and automation points unchanged.
 - **FR-015**: The automation chooser MUST expose all BlueX7 Parameters in nested, comprehensible groups and MUST disambiguate instruments that share the same display name.
 - **FR-016**: Arrangement-owned BlueX7 Parameters MUST be available through the existing instrument automation workflow, and Track-owned BlueX7 Parameters MUST be available to their owning Track's automation workflow.
@@ -169,13 +169,14 @@ A composer opens a Java-created or earlier TypeScript Blue project, keeps all Bl
 - **FR-032**: The feature MUST include focused multi-instance checks spanning at least two arrangement BlueX7 instruments and two Track-owned BlueX7 instruments under concurrent notes, live edits, automation, copy, save, reopen, and engine rebuild.
 - **FR-033**: Known modern-renderer limitations—such as note-start-only sync behavior, per-note rather than globally shared LFO behavior, approximate amplitude modulation, and modern rather than legacy PCM behavior—MUST be documented and MUST NOT be represented as legacy parity.
 - **FR-034**: SysEx import and whole-voice replacement MUST retain Parameter identities, automation assignments, and existing automation curves; only fixed values change, applied in the same atomic operation as the voice.
+- **FR-035**: The generated live BlueX7 target MUST use the owning instance's `chnexport` globals as its live value source and MUST NOT publish a live ftable, call Parameter `chnget`, or copy the complete 155-slot voice into k-rate state. The 136 next-note descriptors MUST be captured with i-rate `i(gk_...)` snapshots; only the 15 documented active-note controls may be read on a dirty domain epoch. Any indexed state is limited to the maintained body's eight PEG snapshots and six output-level baselines (or a guarded compatibility fallback) and MUST never be refreshed every k-cycle.
 
 ### Existing Behavior & Data Compatibility *(mandatory when applicable)*
 
 - **Reference Behavior**: The reviewed `dx7-emulation/bluex7.orc` modern voice renderer and the findings established by its validation corpus are the starting synthesis reference; the corpus itself is not imported and Blue supplies its own focused tests. Java Blue's `BlueX7` model, XML, editor ranges, SysEx mapping, pitch convention, post-code stage, and legacy orchestra remain the data/workflow reference and comparison baseline.
 - **Compatibility Requirements**: Existing `.blue` XML remains canonical for voice and Parameter data. Known and unknown BlueX7 voice content must survive load/save. Existing score notes keep their pitch, velocity, gate, assignment, and routing meaning. Parameter curves retain the application's current timing and quantization semantics.
 - **Intentional Divergences**: Sound output intentionally changes from the Pinkston-derived renderer to the modern msfa/Dexed-oriented model. Algorithms 6 and 20 use the corrected modern routing. Frequency, detune, gain, velocity, envelope, feedback, oscillator, LFO/PEG, note-tail, and normalization behavior are not expected to be legacy PCM-compatible. BlueX7 Parameter metadata is a TypeScript Blue extension that older Java Blue versions may discard if they save the project; the compatible voice data must remain readable.
-- **State Ownership**: The main-process active project document owns each arrangement or Track BlueX7 voice and its Parameters, persisted in `.blue` XML. Score layers own only Parameter identity references. The engine owns disposable compiled channel names, transport tables, live automation execution, and effective-value mirrors for one performance generation. Renderer controls, polling snapshots, preview text, and editor undo history are disposable session state. Library editors own drafts until Save; copied library content receives new project identities when instantiated.
+- **State Ownership**: The main-process active project document owns each arrangement or Track BlueX7 voice and its Parameters, persisted in `.blue` XML. Score layers own only Parameter identity references. The engine owns disposable compiled channel names, generated Csound targets/domain symbols, queued runtime batches, live automation execution, and effective-value mirrors for one performance generation. Renderer controls, polling snapshots, preview text, and editor undo history are disposable session state. Library editors own drafts until Save; copied library content receives new project identities when instantiated.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -183,7 +184,7 @@ A composer opens a Java-created or earlier TypeScript Blue project, keeps all Bl
 - **BlueX7 Voice**: The canonical common, LFO, six-operator, pitch-envelope, and operator-enable values preserved in project XML.
 - **BlueX7 Parameter**: One automatable numeric or boolean projection of a voice control, with stable identity, range, resolution, fixed value, curve, points, line color, and active-note/next-note behavior.
 - **Compiled BlueX7 Target**: Disposable performance-specific routing that binds one project Parameter to one engine value for exactly one instrument instance and engine generation.
-- **Voice Transport Snapshot**: Disposable, complete engine-facing representation of one BlueX7 voice. It is derived from canonical voice and Parameter values and is never a second persistent preset.
+- **Voice Transport Snapshot**: Disposable, complete mapping/oracle representation of one BlueX7 voice. It is derived from canonical voice and Parameter values for static rendering, SysEx compatibility, and tests; live rendering consumes direct globals and does not publish this snapshot as a transport table.
 - **Automation Assignment**: A score-layer reference to a Parameter identity. Arrangement parameters follow existing instrument automation ownership; Track-instrument parameters belong to their owning Track.
 - **Effective Runtime Value**: The value currently used by the engine after fixed-value or automation authority is resolved; it may be displayed in an open editor but is not persisted as a second project value.
 
@@ -200,13 +201,14 @@ A composer opens a Java-created or earlier TypeScript Blue project, keeps all Bl
 - **SC-007**: All 32 algorithms render successfully; documented carrier routing, corrected algorithms 6 and 20, zero-mask silence, release completion, and accepted modern reference-output checks pass.
 - **SC-008**: Representative legacy Java/TypeScript projects and supported SysEx fixtures retain 100% of known voice values and preserved unknown XML after migration and reopen; intentional sonic differences are documented rather than counted as data loss.
 - **SC-009**: A user can find any BlueX7 automation target in no more than three chooser interactions, including when at least four same-named BlueX7 instances exist.
+- **SC-010**: On the supported development machine, unchanged live rendering stays within 1.20x the static renderer's CPU time, the checked dense fixture sustains at least 1.25x realtime compute throughput, and the selected generated target is output-equivalent to the shared-UDO comparison within the deterministic render tolerance.
 
 ## Assumptions
 
 - The files intended by the request are the local `blue_integration_report.md` and `bluex7.orc`; the names in the request differ from the files present in the referenced checkout.
 - The reviewed modern renderer, rather than the Pinkston-derived Java Blue orchestra, is the accepted future sound behavior. Legacy PCM preservation or a user-selectable legacy engine is outside this feature.
 - All existing numeric and boolean BlueX7 controls are automatable, yielding 151 Parameters per instance. Nonnumeric name, comment, post-processing code, editor navigation, and import state are outside the Parameter set.
-- Algorithm, oscillator key sync, and LFO key sync are classified as next-note; all other sound controls are expected to update active notes. The classification catalog is documented and tested rather than inferred by individual callers.
+- The catalog classifies exactly 15 inexpensive controls as active-note (`common.feedback`, both LFO depth controls, six operator output levels, and six operator enables); the remaining 136 sound controls are next-note snapshots. The classification is documented and tested rather than inferred by individual callers.
 - When automation is enabled, the automation curve owns the effective playback value. Direct widget edits change the canonical fixed/base value but do not silently disable or overwrite the curve; authoring automation remains a timeline operation.
 - The editor may sample effective engine values for display; those samples are disposable and must never become project mutations.
 - Adding, removing, or replacing an entire instrument while a performance is already running may still require the application's existing engine rebuild workflow. Value changes for an instrument compiled into the current performance do not.

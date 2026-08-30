@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Add bounded batch set/get operations to the versioned `@blue/engine-client` protocol so one BlueX7 editor does not require up to 151 serialized ZeroMQ round trips per update period.
+Add bounded batch set/get operations to the versioned `@blue/engine-client` protocol so one BlueX7 editor does not require up to 151 serialized ZeroMQ round trips per update period and one accepted set becomes visible to Csound at a single control boundary.
 
 ## Capability
 
@@ -22,7 +22,7 @@ repeat count times:
   value:f64 little-endian
 ```
 
-Response is ordinary status plus an optional UTF-8 diagnostic. The engine validates the entire payload, every channel name, and every finite value before applying writes. Protocol validation failure applies none. Csound-level musical atomicity remains the caller's hold/commit responsibility.
+Response is ordinary status plus an optional UTF-8 diagnostic. The engine validates the entire payload, every channel name, automation authority, and every finite value before enqueueing one immutable batch. Protocol validation failure enqueues nothing. While the engine is running, the performance thread applies every entry in that batch after one `csoundPerformKsmps` call and before the next automation/Csound cycle; IPC/ZMQ threads never call `csoundSetControlChannel` for an accepted live batch. The command succeeds only when the batch is accepted into the bounded performance queue.
 
 ### Batch get payload
 
@@ -50,6 +50,7 @@ Values correspond exactly to request order. If any channel is unavailable, the c
 - Total payload length is checked before allocation or indexing.
 - All set values must be finite.
 - Duplicate batch-set names are rejected to avoid order-dependent meaning.
+- The live batch queue has a documented bound and returns an explicit retryable/busy diagnostic rather than dropping or splitting a batch.
 - Truncated/trailing payload, count mismatch, unavailable channel, and destroyed/not-created engine are explicit errors.
 - Existing single-channel commands remain source- and wire-compatible.
 
@@ -72,6 +73,8 @@ EngineClient.getChannels(
 - Protocol encode/decode golden buffers, including non-ASCII UTF-8 names.
 - Empty, oversized, duplicate, NUL, non-finite, truncated, trailing, and count-mismatch rejection.
 - Native success and all-or-error behavior for set/get.
+- Running-engine set applies on the performance thread between two observed k-cycles; a control-boundary probe sees exactly the old or new complete batch and never a partial set.
+- Concurrent IPC submission does not call Csound setters concurrently with `csoundPerformKsmps`; queue-full and stop/rebuild races fail explicitly without splitting a batch.
 - Response ordering and exact f64 values.
 - Capability mismatch behavior.
 - Existing single-channel protocol regression suite unchanged.

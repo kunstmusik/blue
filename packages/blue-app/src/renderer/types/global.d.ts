@@ -31,6 +31,10 @@ import type {
   ScoreObjectExportResult,
   ScoreObjectImportResult,
 } from '../../shared/score-object-file';
+import type {
+  BlueX7EffectiveValuesRequest,
+  BlueX7EffectiveValuesResult,
+} from '../../shared/project-editor/contract';
 import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 import type {
   ReplConsoleCloseRequest,
@@ -391,6 +395,9 @@ declare global {
       commitProjectDocumentPatches: (
         patches: ProjectDocumentPatch[],
       ) => Promise<ProjectDocumentCommitReceipt>;
+      getBlueX7EffectiveValues: (
+        request: BlueX7EffectiveValuesRequest,
+      ) => Promise<BlueX7EffectiveValuesResult>;
       readAudioFileBytes: (filePath: string) => Promise<ArrayBuffer | null>;
       readAuthorizedAudioFileBytes: (
         filePath: string,

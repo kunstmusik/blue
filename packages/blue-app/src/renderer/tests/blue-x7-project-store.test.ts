@@ -9,7 +9,7 @@ import {
   createEmptyProjectEditorSnapshot,
   BlueX7InstrumentSnapshot,
 } from '../../shared/project-editor';
-import { createDefaultBlueX7Voice } from '@blue/data';
+import { BlueX7, createDefaultBlueX7Voice } from '@blue/data';
 
 describe('project-store — BlueX7 optimistic projection & reconciliation', () => {
   const commitProjectDocumentPatches = vi.fn();
@@ -21,6 +21,7 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
 
     const snapshot = createEmptyProjectEditorSnapshot();
     const voice = createDefaultBlueX7Voice();
+    const parameterSource = new BlueX7().getParameters();
     const x7Snapshot: BlueX7InstrumentSnapshot = {
       assignmentId: '1',
       type: 'blueX7',
@@ -30,6 +31,12 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
       voice,
       sharedOscillatorSync: 1,
       sharedPitchModulationSensitivity: 0,
+      parameters: parameterSource.map((parameter) => ({
+        parameterId: parameter.getUniqueId(),
+        semanticKey: parameter.getName(),
+        fixedValue: parameter.getFixedValue(),
+        automationEnabled: parameter.isAutomationEnabled(),
+      })),
     };
 
     snapshot.loaded = true;
@@ -103,6 +110,30 @@ describe('project-store — BlueX7 optimistic projection & reconciliation', () =
 
     const instrument2 = useProjectStore.getState().orchestra.instruments[0] as BlueX7InstrumentSnapshot;
     expect(instrument2.voice.common.operatorEnabled[2]).toBe(false);
+  });
+
+  it('optimistically updates fixed values for a full operator-enable mask patch', async () => {
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      orchestra: {
+        type: 'updateInstrument',
+        assignmentId: '1',
+        patch: {
+          blueX7: {
+            type: 'setCommonField',
+            field: 'operatorEnabled',
+            value: [false, true, false, true, false, true],
+          },
+        },
+      },
+    });
+
+    const instrument = useProjectStore.getState().orchestra.instruments[0] as BlueX7InstrumentSnapshot;
+    expect(instrument.voice.common.operatorEnabled).toEqual([false, true, false, true, false, true]);
+    expect(
+      instrument.parameters
+        ?.filter((parameter) => parameter.semanticKey.endsWith('.enabled'))
+        .map((parameter) => parameter.fixedValue),
+    ).toEqual([0, 1, 0, 1, 0, 1]);
   });
 
   it('creates a complete default BlueX7 arrangement snapshot', async () => {

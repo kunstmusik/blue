@@ -237,6 +237,17 @@ function TargetItem({
         }}
       />
       <span className="flex-1">{target.label}</span>
+      {target.updateClass === 'next-note' && (
+        <span
+          className="rounded border border-amber-500/50 px-1 text-role-callout text-amber-200"
+          title="Applies from the next triggered note"
+        >
+          next note
+        </span>
+      )}
+      {target.locationLabel && (
+        <span className="editor-context-menu__shortcut">{target.locationLabel}</span>
+      )}
       {target.ownerLayerName && (
         <span className="editor-context-menu__shortcut">({target.ownerLayerName})</span>
       )}

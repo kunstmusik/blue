@@ -3,6 +3,8 @@ import type { BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { EnvelopeEditor } from './envelope-editor';
 import { AppSelect } from '../../AppSelect';
+import { NextNoteBadge } from './next-note-badge';
+import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 export interface OperatorPanelProps {
   operators: [
@@ -16,6 +18,8 @@ export interface OperatorPanelProps {
   operatorEnabled: [boolean, boolean, boolean, boolean, boolean, boolean];
   sharedSync?: number | 'mixed';
   sharedPms?: number | 'mixed';
+  effectiveValues?: ReadonlyMap<string, number>;
+  onVisibleOperatorChange?: (operatorIndex: number) => void;
   onApplyPatch: (description: string, patch: BlueX7Patch) => void;
 }
 
@@ -26,15 +30,25 @@ const CURVE_TYPES = [
   { value: 3, label: '+LIN' },
 ];
 
+const SHARED_PMS_DOMAIN = blueX7WidgetDomain('lfo.pitchModulationSensitivity');
+
 export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   operators,
   operatorEnabled,
   sharedSync,
   sharedPms,
+  effectiveValues,
+  onVisibleOperatorChange,
   onApplyPatch,
 }) => {
   const [selectedOpIndex, setSelectedOpIndex] = useState<number>(0);
   const currentOp = operators[selectedOpIndex] ?? operators[0];
+  const operatorKey = (suffix: string): string => `operator.${selectedOpIndex + 1}.${suffix}`;
+  const effective = (key: string, fallback: number): number => effectiveValues?.get(key) ?? fallback;
+  const effectiveOperator = (suffix: string, fallback: number): number => effective(operatorKey(suffix), fallback);
+  // Widget bounds resolve through the selected operator's catalog descriptor
+  // so the numeric editors can never drift from patch validation.
+  const domainOf = (semanticKey: string): BlueX7WidgetDomain => blueX7WidgetDomain(operatorKey(semanticKey));
 
   // Envelope gestures (pointer drags, arrow-key edits) update a working stage
   // point during the gesture and dispatch exactly one patch on commit, so a
@@ -55,11 +69,11 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     setGestureStage(null);
   };
 
-  const handleFieldChange = (field: keyof BlueX7Operator, label: string, min: number, max: number) => {
+  const handleFieldChange = (field: keyof BlueX7Operator, label: string, domain: BlueX7WidgetDomain) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value, 10);
       if (!Number.isNaN(val)) {
-        const clamped = Math.max(min, Math.min(max, val));
+        const clamped = Math.max(domain.min, Math.min(domain.max, val));
         onApplyPatch(`Change Op ${selectedOpIndex + 1} ${label} to ${clamped}`, {
           type: 'setOperatorField',
           operatorIndex: selectedOpIndex,
@@ -94,7 +108,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   const handlePitchModulationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     if (!Number.isNaN(val)) {
-      const clamped = Math.max(0, Math.min(7, val));
+      const clamped = Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
       onApplyPatch(`Set All PMS to ${clamped}`, {
         type: 'setSharedPitchModulationSensitivity',
         value: clamped,
@@ -102,14 +116,20 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
     }
   };
 
-  const displayedSync = typeof sharedSync === 'number' ? sharedSync : currentOp.sync;
-  const displayedPms = typeof sharedPms === 'number' ? sharedPms : currentOp.modulationPitch;
+  const displayedSync = effective(
+    'common.oscillatorKeySync',
+    typeof sharedSync === 'number' ? sharedSync : currentOp.sync,
+  );
+  const displayedPms = effective(
+    'lfo.pitchModulationSensitivity',
+    typeof sharedPms === 'number' ? sharedPms : currentOp.modulationPitch,
+  );
 
-  const handleEnvelopePointChange = (stage: number, rateOrLevel: 'rate' | 'level', min: number, max: number) => {
+  const handleEnvelopePointChange = (stage: number, rateOrLevel: 'rate' | 'level', domain: BlueX7WidgetDomain) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value, 10);
       if (!Number.isNaN(val)) {
-        const clamped = Math.max(min, Math.min(max, val));
+        const clamped = Math.max(domain.min, Math.min(domain.max, val));
         const currentPt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
         const nextPt = {
           ...currentPt,
@@ -176,6 +196,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 onClick={() => {
                   cancelEnvelopeGesture();
                   setSelectedOpIndex(i);
+                  onVisibleOperatorChange?.(i);
                 }}
                 className={`rounded px-3 py-1 text-role-body font-medium transition-colors ${
                   isSelected
@@ -201,7 +222,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
             <AppSelect
               id="bluex7-op-mode"
               aria-label="Operator Mode"
-              value={currentOp.mode}
+              value={effectiveOperator('oscillatorMode', currentOp.mode)}
               onValueChange={handleSelectFieldChange('mode', 'Mode')}
               options={[
                 { value: 0, label: 'Ratio (Freq)' },
@@ -213,48 +234,48 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-coarse" className="text-role-body text-blue-muted">
-              Freq Coarse (0–31)
+              Freq Coarse ({domainOf('frequencyCoarse').min}–{domainOf('frequencyCoarse').max})
             </label>
             <input
               id="bluex7-op-coarse"
               aria-label="Frequency Coarse"
               type="number"
-              min={0}
-              max={31}
-              value={currentOp.freqCoarse}
-              onChange={handleFieldChange('freqCoarse', 'Freq Coarse', 0, 31)}
+              min={domainOf('frequencyCoarse').min}
+              max={domainOf('frequencyCoarse').max}
+              value={effectiveOperator('frequencyCoarse', currentOp.freqCoarse)}
+              onChange={handleFieldChange('freqCoarse', 'Freq Coarse', domainOf('frequencyCoarse'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-fine" className="text-role-body text-blue-muted">
-              Freq Fine (0–99)
+              Freq Fine ({domainOf('frequencyFine').min}–{domainOf('frequencyFine').max})
             </label>
             <input
               id="bluex7-op-fine"
               aria-label="Frequency Fine"
               type="number"
-              min={0}
-              max={99}
-              value={currentOp.freqFine}
-              onChange={handleFieldChange('freqFine', 'Freq Fine', 0, 99)}
+              min={domainOf('frequencyFine').min}
+              max={domainOf('frequencyFine').max}
+              value={effectiveOperator('frequencyFine', currentOp.freqFine)}
+              onChange={handleFieldChange('freqFine', 'Freq Fine', domainOf('frequencyFine'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-detune" className="text-role-body text-blue-muted">
-              Detune (-7..+7)
+              Detune ({domainOf('detune').min}..+{domainOf('detune').max})
             </label>
             <input
               id="bluex7-op-detune"
               aria-label="Detune"
               type="number"
-              min={-7}
-              max={7}
-              value={currentOp.detune}
-              onChange={handleFieldChange('detune', 'Detune', -7, 7)}
+              min={domainOf('detune').min}
+              max={domainOf('detune').max}
+              value={effectiveOperator('detune', currentOp.detune)}
+              onChange={handleFieldChange('detune', 'Detune', domainOf('detune'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
@@ -267,12 +288,12 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 aria-label="Operator Oscillator Sync"
                 checked={displayedSync === 1}
                 ref={(el) => {
-                  if (el) el.indeterminate = sharedSync === 'mixed';
+                  if (el) el.indeterminate = sharedSync === 'mixed' && !effectiveValues?.has('common.oscillatorKeySync');
                 }}
                 onChange={handleSyncToggle}
                 className="rounded border-blue-border"
               />
-              Sync
+              Sync <NextNoteBadge semanticKey="common.oscillatorKeySync" />
             </label>
           </div>
         </div>
@@ -281,64 +302,64 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-output-level" className="text-role-body text-blue-muted">
-              Output Level (0–99)
+              Output Level ({domainOf('outputLevel').min}–{domainOf('outputLevel').max})
             </label>
             <input
               id="bluex7-op-output-level"
               aria-label="Output Level"
               type="number"
-              min={0}
-              max={99}
-              value={currentOp.outputLevel}
-              onChange={handleFieldChange('outputLevel', 'Output Level', 0, 99)}
+              min={domainOf('outputLevel').min}
+              max={domainOf('outputLevel').max}
+              value={effectiveOperator('outputLevel', currentOp.outputLevel)}
+              onChange={handleFieldChange('outputLevel', 'Output Level', domainOf('outputLevel'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-velocity-sens" className="text-role-body text-blue-muted">
-              Velocity Sens (0–7)
+              Velocity Sens ({domainOf('velocitySensitivity').min}–{domainOf('velocitySensitivity').max})
             </label>
             <input
               id="bluex7-op-velocity-sens"
               aria-label="Velocity Sensitivity"
               type="number"
-              min={0}
-              max={7}
-              value={currentOp.velocitySensitivity}
-              onChange={handleFieldChange('velocitySensitivity', 'Velocity Sensitivity', 0, 7)}
+              min={domainOf('velocitySensitivity').min}
+              max={domainOf('velocitySensitivity').max}
+              value={effectiveOperator('velocitySensitivity', currentOp.velocitySensitivity)}
+              onChange={handleFieldChange('velocitySensitivity', 'Velocity Sensitivity', domainOf('velocitySensitivity'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-ams" className="text-role-body text-blue-muted">
-              AM Sensitivity (0–3)
+              AM Sensitivity ({domainOf('amplitudeModulationSensitivity').min}–{domainOf('amplitudeModulationSensitivity').max})
             </label>
             <input
               id="bluex7-op-ams"
               aria-label="Amplitude Modulation Sensitivity"
               type="number"
-              min={0}
-              max={3}
-              value={currentOp.modulationAmplitude}
-              onChange={handleFieldChange('modulationAmplitude', 'AM Sensitivity', 0, 3)}
+              min={domainOf('amplitudeModulationSensitivity').min}
+              max={domainOf('amplitudeModulationSensitivity').max}
+              value={effectiveOperator('amplitudeModulationSensitivity', currentOp.modulationAmplitude)}
+              onChange={handleFieldChange('modulationAmplitude', 'AM Sensitivity', domainOf('amplitudeModulationSensitivity'))}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="bluex7-op-pms" className="text-role-body text-blue-muted">
-              PM Sensitivity (0–7)
+              PM Sensitivity ({SHARED_PMS_DOMAIN.min}–{SHARED_PMS_DOMAIN.max})
             </label>
             <input
               id="bluex7-op-pms"
               aria-label="Pitch Modulation Sensitivity"
               type="number"
-              min={0}
-              max={7}
+              min={SHARED_PMS_DOMAIN.min}
+              max={SHARED_PMS_DOMAIN.max}
               value={displayedPms}
-              placeholder={sharedPms === 'mixed' ? 'mixed' : undefined}
+              placeholder={sharedPms === 'mixed' && !effectiveValues?.has('lfo.pitchModulationSensitivity') ? 'mixed' : undefined}
               onChange={handlePitchModulationChange}
               className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
             />
@@ -351,16 +372,16 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-op-breakpoint" className="text-role-body text-blue-muted">
-                Breakpoint (0–99)
+                Breakpoint ({domainOf('breakpoint').min}–{domainOf('breakpoint').max})
               </label>
               <input
                 id="bluex7-op-breakpoint"
                 aria-label="Breakpoint"
                 type="number"
-                min={0}
-                max={99}
-                value={currentOp.breakpoint}
-                onChange={handleFieldChange('breakpoint', 'Breakpoint', 0, 99)}
+                min={domainOf('breakpoint').min}
+                max={domainOf('breakpoint').max}
+                value={effectiveOperator('breakpoint', currentOp.breakpoint)}
+                onChange={handleFieldChange('breakpoint', 'Breakpoint', domainOf('breakpoint'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
@@ -372,7 +393,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <AppSelect
                 id="bluex7-op-curve-left"
                 aria-label="Curve Left"
-                value={currentOp.curveLeft}
+                value={effectiveOperator('curveLeft', currentOp.curveLeft)}
                 onValueChange={handleSelectFieldChange('curveLeft', 'Curve Left')}
                 options={CURVE_TYPES}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -381,16 +402,16 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-op-depth-left" className="text-role-body text-blue-muted">
-                Depth Left (0–99)
+                Depth Left ({domainOf('depthLeft').min}–{domainOf('depthLeft').max})
               </label>
               <input
                 id="bluex7-op-depth-left"
                 aria-label="Depth Left"
                 type="number"
-                min={0}
-                max={99}
-                value={currentOp.depthLeft}
-                onChange={handleFieldChange('depthLeft', 'Depth Left', 0, 99)}
+                min={domainOf('depthLeft').min}
+                max={domainOf('depthLeft').max}
+                value={effectiveOperator('depthLeft', currentOp.depthLeft)}
+                onChange={handleFieldChange('depthLeft', 'Depth Left', domainOf('depthLeft'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
@@ -402,7 +423,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               <AppSelect
                 id="bluex7-op-curve-right"
                 aria-label="Curve Right"
-                value={currentOp.curveRight}
+                value={effectiveOperator('curveRight', currentOp.curveRight)}
                 onValueChange={handleSelectFieldChange('curveRight', 'Curve Right')}
                 options={CURVE_TYPES}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -411,32 +432,32 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-op-depth-right" className="text-role-body text-blue-muted">
-                Depth Right (0–99)
+                Depth Right ({domainOf('depthRight').min}–{domainOf('depthRight').max})
               </label>
               <input
                 id="bluex7-op-depth-right"
                 aria-label="Depth Right"
                 type="number"
-                min={0}
-                max={99}
-                value={currentOp.depthRight}
-                onChange={handleFieldChange('depthRight', 'Depth Right', 0, 99)}
+                min={domainOf('depthRight').min}
+                max={domainOf('depthRight').max}
+                value={effectiveOperator('depthRight', currentOp.depthRight)}
+                onChange={handleFieldChange('depthRight', 'Depth Right', domainOf('depthRight'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
 
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-op-krs" className="text-role-body text-blue-muted">
-                Rate Scaling (0–7)
+                Rate Scaling ({domainOf('keyboardRateScaling').min}–{domainOf('keyboardRateScaling').max})
               </label>
               <input
                 id="bluex7-op-krs"
                 aria-label="Keyboard Rate Scaling"
                 type="number"
-                min={0}
-                max={7}
-                value={currentOp.keyboardRateScaling}
-                onChange={handleFieldChange('keyboardRateScaling', 'Rate Scaling', 0, 7)}
+                min={domainOf('keyboardRateScaling').min}
+                max={domainOf('keyboardRateScaling').max}
+                value={effectiveOperator('keyboardRateScaling', currentOp.keyboardRateScaling)}
+                onChange={handleFieldChange('keyboardRateScaling', 'Rate Scaling', domainOf('keyboardRateScaling'))}
                 className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
               />
             </div>
@@ -462,7 +483,9 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
         {/* 4-Stage Envelope Numeric Editor */}
         <div className="rounded border border-blue-border/50 bg-blue-bg/40 p-2 space-y-2">
-          <span className="text-role-headline font-bold text-gray-300">Envelope (Rates & Levels 0–99)</span>
+          <span className="text-role-headline font-bold text-gray-300">
+            Envelope (Rates & Levels {domainOf('envelope.1.rate').min}–{domainOf('envelope.1.rate').max})
+          </span>
           <div className="grid grid-cols-4 gap-3">
             {[0, 1, 2, 3].map((stage) => {
               const pt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
@@ -478,10 +501,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         id={`bluex7-op-r${stage + 1}`}
                         aria-label={`Operator Rate ${stage + 1}`}
                         type="number"
-                        min={0}
-                        max={99}
-                        value={pt.rate}
-                        onChange={handleEnvelopePointChange(stage, 'rate', 0, 99)}
+                        min={domainOf(`envelope.${stage + 1}.rate`).min}
+                        max={domainOf(`envelope.${stage + 1}.rate`).max}
+                        value={effectiveOperator(`envelope.${stage + 1}.rate`, pt.rate)}
+                        onChange={handleEnvelopePointChange(stage, 'rate', domainOf(`envelope.${stage + 1}.rate`))}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />
                     </div>
@@ -493,10 +516,10 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         id={`bluex7-op-l${stage + 1}`}
                         aria-label={`Operator Level ${stage + 1}`}
                         type="number"
-                        min={0}
-                        max={99}
-                        value={pt.level}
-                        onChange={handleEnvelopePointChange(stage, 'level', 0, 99)}
+                        min={domainOf(`envelope.${stage + 1}.level`).min}
+                        max={domainOf(`envelope.${stage + 1}.level`).max}
+                        value={effectiveOperator(`envelope.${stage + 1}.level`, pt.level)}
+                        onChange={handleEnvelopePointChange(stage, 'level', domainOf(`envelope.${stage + 1}.level`))}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />
                     </div>

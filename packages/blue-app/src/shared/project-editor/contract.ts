@@ -5,6 +5,7 @@ import {
   BlueSynthBuilder,
   BlueX7,
   cloneBlueX7Voice,
+  getBlueX7Descriptor,
   BSBGroup,
   BSBWidget,
   BSBXYController,
@@ -282,6 +283,10 @@ export interface AutomationTargetSnapshot {
   sourceKind: AutomationTargetSourceKind;
   automationEnabled: boolean;
   assignmentState: AutomationAssignmentState;
+  semanticKey?: string;
+  ownerIdentity?: string;
+  locationLabel?: string;
+  updateClass?: 'active-note' | 'next-note';
   ownerLayerId?: string;
   ownerLayerName?: string;
 }
@@ -1957,38 +1962,77 @@ export type BlueX7Patch =
 const inRange = (value: unknown, min: number, max: number): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 
-const BLUE_X7_OPERATOR_FIELD_RANGES: Partial<Record<keyof BlueX7Operator, [number, number]>> = {
-  mode: [0, 1],
-  sync: [0, 1],
-  freqCoarse: [0, 31],
-  freqFine: [0, 99],
-  detune: [-7, 7],
-  breakpoint: [0, 99],
-  curveLeft: [0, 3],
-  curveRight: [0, 3],
-  depthLeft: [0, 99],
-  depthRight: [0, 99],
-  keyboardRateScaling: [0, 7],
-  outputLevel: [0, 99],
-  velocitySensitivity: [0, 7],
-  modulationAmplitude: [0, 3],
-  modulationPitch: [0, 7],
-};
+/**
+ * BlueX7 patch-field domains are derived from the authoritative parameter
+ * catalog (Spec 092) so editor widgets, patch validation, the automation
+ * chooser, and engine quantization share one source of truth. The
+ * field→semantic-key maps below are the only hand-maintained link between
+ * voice field names and catalog descriptors; an unmapped or renamed catalog
+ * key fails loudly at module load rather than silently validating nothing.
+ */
+function catalogFieldRange(key: string): readonly [number, number] {
+  const descriptor = getBlueX7Descriptor(key);
+  if (!descriptor) {
+    throw new Error(`BlueX7 parameter catalog is missing descriptor '${key}'`);
+  }
+  return [descriptor.minimum, descriptor.maximum];
+}
 
-const BLUE_X7_LFO_FIELD_RANGES: Partial<Record<keyof BlueX7Lfo, [number, number]>> = {
-  speed: [0, 99],
-  delay: [0, 99],
-  pitchModulationDepth: [0, 99],
-  amplitudeModulationDepth: [0, 99],
-  wave: [0, 5],
-  sync: [0, 1],
-};
+function deriveFieldRanges<TField extends string>(
+  catalogKeys: Readonly<Partial<Record<TField, string>>>,
+): Partial<Record<TField, readonly [number, number]>> {
+  const ranges: Partial<Record<TField, readonly [number, number]>> = {};
+  for (const field of Object.keys(catalogKeys) as TField[]) {
+    ranges[field] = catalogFieldRange(catalogKeys[field] as string);
+  }
+  return ranges;
+}
 
-const BLUE_X7_COMMON_FIELD_RANGES: Partial<Record<keyof BlueX7Common, [number, number]>> = {
-  keyTranspose: [0, 48],
-  algorithm: [1, 32],
-  feedback: [0, 7],
-};
+const BLUE_X7_OPERATOR_FIELD_RANGES = deriveFieldRanges<keyof BlueX7Operator>({
+  mode: 'operator.1.oscillatorMode',
+  // The per-operator sync and pitch-modulation fields back the editor-shared
+  // controls, whose domains live on the shared catalog descriptors.
+  sync: 'common.oscillatorKeySync',
+  freqCoarse: 'operator.1.frequencyCoarse',
+  freqFine: 'operator.1.frequencyFine',
+  detune: 'operator.1.detune',
+  breakpoint: 'operator.1.breakpoint',
+  curveLeft: 'operator.1.curveLeft',
+  curveRight: 'operator.1.curveRight',
+  depthLeft: 'operator.1.depthLeft',
+  depthRight: 'operator.1.depthRight',
+  keyboardRateScaling: 'operator.1.keyboardRateScaling',
+  outputLevel: 'operator.1.outputLevel',
+  velocitySensitivity: 'operator.1.velocitySensitivity',
+  modulationAmplitude: 'operator.1.amplitudeModulationSensitivity',
+  modulationPitch: 'lfo.pitchModulationSensitivity',
+});
+
+const BLUE_X7_LFO_FIELD_RANGES = deriveFieldRanges<keyof BlueX7Lfo>({
+  speed: 'lfo.speed',
+  delay: 'lfo.delay',
+  pitchModulationDepth: 'lfo.pitchModulationDepth',
+  amplitudeModulationDepth: 'lfo.amplitudeModulationDepth',
+  wave: 'lfo.wave',
+  sync: 'lfo.sync',
+});
+
+const BLUE_X7_COMMON_FIELD_RANGES = deriveFieldRanges<keyof BlueX7Common>({
+  keyTranspose: 'common.transpose',
+  algorithm: 'common.algorithm',
+  feedback: 'common.feedback',
+});
+
+const BLUE_X7_SHARED_SYNC_RANGE = catalogFieldRange('common.oscillatorKeySync');
+const BLUE_X7_SHARED_PMS_RANGE = catalogFieldRange('lfo.pitchModulationSensitivity');
+const BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES = {
+  rate: catalogFieldRange('operator.1.envelope.1.rate'),
+  level: catalogFieldRange('operator.1.envelope.1.level'),
+} as const;
+const BLUE_X7_PITCH_ENVELOPE_POINT_RANGES = {
+  rate: catalogFieldRange('pitchEnvelope.1.rate'),
+  level: catalogFieldRange('pitchEnvelope.1.level'),
+} as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -2102,23 +2146,23 @@ export function isValidBlueX7Patch(patch: BlueX7Patch): boolean {
       return range ? inRange(patch.value, range[0], range[1]) : false;
     }
     case 'setSharedOscillatorSync':
-      return inRange(patch.value, 0, 1);
+      return inRange(patch.value, BLUE_X7_SHARED_SYNC_RANGE[0], BLUE_X7_SHARED_SYNC_RANGE[1]);
     case 'setSharedPitchModulationSensitivity':
-      return inRange(patch.value, 0, 7);
+      return inRange(patch.value, BLUE_X7_SHARED_PMS_RANGE[0], BLUE_X7_SHARED_PMS_RANGE[1]);
     case 'setOperatorEnvelopePoint':
       return (
         inRange(patch.operatorIndex, 0, 5) &&
         inRange(patch.stageIndex, 0, 3) &&
         isRecord(patch.point) &&
-        inRange(patch.point.rate, 0, 99) &&
-        inRange(patch.point.level, 0, 99)
+        inRange(patch.point.rate, BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[0], BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.rate[1]) &&
+        inRange(patch.point.level, BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[0], BLUE_X7_OPERATOR_ENVELOPE_POINT_RANGES.level[1])
       );
     case 'setPitchEnvelopePoint':
       return (
         inRange(patch.stageIndex, 0, 3) &&
         isRecord(patch.point) &&
-        inRange(patch.point.rate, 0, 99) &&
-        inRange(patch.point.level, 0, 99)
+        inRange(patch.point.rate, BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[0], BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.rate[1]) &&
+        inRange(patch.point.level, BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[0], BLUE_X7_PITCH_ENVELOPE_POINT_RANGES.level[1])
       );
     case 'setCsoundPostCode':
       return typeof patch.text === 'string';
@@ -2131,9 +2175,24 @@ export function isValidBlueX7Patch(patch: BlueX7Patch): boolean {
 
 export interface BlueX7InstrumentSnapshot extends InstrumentSnapshotBase {
   type: 'blueX7';
+  /** Stable runtime owner identity; never derived from the display name. */
+  ownerIdentity?: string;
   voice: BlueX7Voice;
   sharedOscillatorSync?: number | 'mixed';
   sharedPitchModulationSensitivity?: number | 'mixed';
+  /** Durable Parameter identity plus display authority for live readback. */
+  parameters?: BlueX7ParameterSnapshot[];
+}
+
+export interface BlueX7ParameterSnapshot {
+  parameterId: string;
+  semanticKey: string;
+  fixedValue: number;
+  automationEnabled: boolean;
+  label?: string;
+  curve?: string;
+  lineColor?: number;
+  points?: AutomationPointSnapshot[];
 }
 
 export interface BlueSynthBuilderInstrumentSnapshot extends InstrumentSnapshotBase {

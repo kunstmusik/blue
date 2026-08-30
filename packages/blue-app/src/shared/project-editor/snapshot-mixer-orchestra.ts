@@ -331,8 +331,10 @@ import {
   buildWidgetTreeSnapshotFromGraphicInterface,
 } from './bsb-widgets';
 import {
+  getArrangementInstrumentOwnerIdentity,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  getTrackInstrumentOwnerIdentity,
 } from './identity';
 
 let nextClojureLibraryEntrySnapshotId = 1;
@@ -849,6 +851,7 @@ export function createInstrumentSnapshot(
   assignmentId: string,
   instrument: Instrument | undefined,
   enabled = true,
+  ownerIdentity?: string,
 ): InstrumentSnapshot {
   if (instrument instanceof GenericInstrument) {
     return {
@@ -902,12 +905,23 @@ export function createInstrumentSnapshot(
     return {
       assignmentId,
       type: 'blueX7',
+      ownerIdentity,
       name: instrument.getName(),
       enabled,
       comment: instrument.getComment(),
       voice: cloneBlueX7Voice(voice),
       sharedOscillatorSync: allSameSync ? syncs[0] : 'mixed',
       sharedPitchModulationSensitivity: allSamePms ? pmss[0] : 'mixed',
+      parameters: instrument.getParameters().map((parameter) => ({
+        parameterId: parameter.getUniqueId(),
+        semanticKey: parameter.getName(),
+        fixedValue: parameter.getFixedValue(),
+        automationEnabled: parameter.isAutomationEnabled(),
+        label: parameter.getLabel(),
+        curve: parameter.getCurve(),
+        lineColor: parameter.getLineColor(),
+        points: parameter.getPoints().map((point) => ({ ...point })),
+      })),
     };
   }
 
@@ -967,7 +981,12 @@ export function createTrackInstrumentEditorSnapshot(
         ...request.track,
         trackId: track.getUniqueId(),
       },
-      instrument: createInstrumentSnapshot(track.getUniqueId(), instrument, instrument.isEnabled()),
+      instrument: createInstrumentSnapshot(
+        track.getUniqueId(),
+        instrument,
+        instrument.isEnabled(),
+        getTrackInstrumentOwnerIdentity(group.getUniqueId(), track.getUniqueId()),
+      ),
       projectUdos: createProjectUdoListSnapshot(data),
     };
   }
@@ -995,6 +1014,7 @@ export function createOrchestraSnapshot(data: BlueData): OrchestraSnapshot {
         assignment.arrangementId,
         assignment.instr,
         assignment.enabled,
+        getArrangementInstrumentOwnerIdentity(assignment.arrangementId),
       ),
     );
   }
@@ -1091,6 +1111,31 @@ export function createInstrumentFromSnapshot(snapshot: InstrumentSnapshot): Inst
   } else if (snapshot.type === 'blueX7') {
     if (snapshot.voice && instrument instanceof BlueX7) {
       instrument.setVoice(snapshot.voice);
+      const parameterSnapshots = new Map(
+        snapshot.parameters?.map((parameter) => [parameter.semanticKey, parameter]) ?? [],
+      );
+      for (const parameter of instrument.getParameters()) {
+        const parameterSnapshot = parameterSnapshots.get(parameter.getName());
+        if (!parameterSnapshot) continue;
+        if (parameterSnapshot.label !== undefined) parameter.setLabel(parameterSnapshot.label);
+        if (
+          parameterSnapshot.curve !== undefined
+          && parameterSnapshot.curve in BlueDataAutomationCurve
+        ) {
+          parameter.setCurve(
+            BlueDataAutomationCurve[
+              parameterSnapshot.curve as keyof typeof BlueDataAutomationCurve
+            ],
+          );
+        }
+        if (parameterSnapshot.lineColor !== undefined) {
+          parameter.setLineColor(parameterSnapshot.lineColor);
+        }
+        if (parameterSnapshot.points) {
+          parameter.setPoints(parameterSnapshot.points.map((point) => ({ ...point })));
+        }
+        parameter.setAutomationEnabled(parameterSnapshot.automationEnabled);
+      }
     }
   }
 

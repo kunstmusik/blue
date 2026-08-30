@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import type { InstrumentSnapshot, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
+import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/contract';
 import BlueSynthBuilderEditor from './BlueSynthBuilderEditor';
 import BlueX7Editor from './BlueX7Editor';
 import GenericInstrumentEditor from './GenericInstrumentEditor';
@@ -15,6 +16,11 @@ interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   /** Explicit host-owned project scope; library hosts pass an empty list. */
   projectUdos: readonly UdoDefinitionSnapshot[];
   embeddedUdoTarget?: UdoLibraryDropTarget;
+  blueX7Runtime?: {
+    target: BlueX7RuntimeTarget;
+    projectSessionId: number;
+    enabled: boolean;
+  };
 }
 
 const EditorSurface = React.memo(function EditorSurface({
@@ -22,10 +28,12 @@ const EditorSurface = React.memo(function EditorSurface({
   projectUdos,
   onOrchestraPatch,
   embeddedUdoTarget,
+  blueX7Runtime,
 }: {
   instrument: InstrumentSnapshot;
   projectUdos: readonly UdoDefinitionSnapshot[];
   embeddedUdoTarget?: UdoLibraryDropTarget;
+  blueX7Runtime?: InstrumentEditorPanelProps['blueX7Runtime'];
 } & OrchestraMutationProps): React.ReactElement {
   const dispatchInstrumentPatch = useCallback(
     (patch: InstrumentPatch) =>
@@ -74,6 +82,7 @@ const EditorSurface = React.memo(function EditorSurface({
           instrument={instrument}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
+          effectiveValues={blueX7Runtime}
         />
       );
     case 'blueSynthBuilder':
@@ -106,6 +115,7 @@ function InstrumentEditorPanel({
   onOrchestraPatch,
   projectUdos,
   embeddedUdoTarget,
+  blueX7Runtime,
 }: InstrumentEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
@@ -177,6 +187,7 @@ function InstrumentEditorPanel({
             projectUdos={projectUdos}
             onOrchestraPatch={onOrchestraPatch}
             embeddedUdoTarget={embeddedUdoTarget}
+            blueX7Runtime={blueX7Runtime}
           />
         </div>
         <div

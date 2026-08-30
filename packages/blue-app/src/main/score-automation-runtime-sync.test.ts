@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   BlueData,
+  BlueX7,
   Channel,
   PolyObject,
+  TrackLayerGroup,
 } from '@blue/data';
 import { AutomationCurveCode } from '@blue/engine-client';
 import { EngineBridge } from './engine-bridge';
@@ -139,6 +141,37 @@ function lastPoints(call: unknown[]): Array<{ time: number; value: number }> {
 }
 
 describe('EngineBridge automation sync', () => {
+  it('resolves arrangement and Track BlueX7 Parameters through the owner-aware catalog', async () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const arrangementX7 = new BlueX7();
+    data.getArrangement().addInstrument(arrangementX7, '11');
+    const group = new TrackLayerGroup();
+    group.setUniqueId('group-x7');
+    const track = group.newLayerAt(0);
+    track.setUniqueId('track-x7');
+    const trackX7 = new BlueX7();
+    trackX7.setEnabled(true);
+    track.setInstrument(trackX7);
+    data.getScore().push(group);
+    const arrangementParameter = arrangementX7.getParameters()[0]!;
+    const trackParameter = (track.getInstrument() as BlueX7).getParameters()[0]!;
+    const syncAutomationParameter = vi.fn();
+
+    await syncScoreAutomationParametersToEngine(
+      data,
+      [arrangementParameter.getUniqueId(), trackParameter.getUniqueId()],
+      { syncAutomationParameter },
+      timing,
+    );
+
+    expect(syncAutomationParameter.mock.calls.map((call) => call[0])).toEqual([
+      arrangementParameter,
+      trackParameter,
+    ]);
+    expect(syncAutomationParameter).toHaveBeenCalledTimes(2);
+  });
+
   it('moveAutomationPoint sends updateAutomation with converted engine seconds', async () => {
     const project = createRuntimeProject();
     const param = project.params[0]!;
@@ -238,6 +271,84 @@ describe('EngineBridge automation sync', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('reprojects automation at seek, loop restart, and resume/rebuild origins', async () => {
+    const project = createRuntimeProject();
+    const param = project.params[0]!;
+    enableAutomation(param, [
+      { time: 0, value: 0.1 },
+      { time: 8, value: 0.9 },
+    ]);
+
+    await project.bridge.syncAutomationParameter(param, {
+      ...timing,
+      renderStartTime: 4,
+    }, { coalesce: false });
+    await project.bridge.syncAutomationParameter(param, {
+      ...timing,
+      renderStartTime: 0,
+    }, { coalesce: false });
+
+    expect(lastPoints(project.client.updateAutomation.mock.calls[0]!)).toEqual([
+      { time: 0, value: 0.5 },
+      { time: 4, value: 0.9 },
+    ]);
+    expect(lastPoints(project.client.updateAutomation.mock.calls[1]!)).toEqual([
+      { time: 0, value: 0.1 },
+      { time: 8, value: 0.9 },
+    ]);
+  });
+
+  it('resynchronizes authority and fixed values across pause and resume-from-origin cycles (FR-017)', async () => {
+    const project = createRuntimeProject(2);
+    const automated = project.params[0]!;
+    const fixed = project.params[1]!;
+    enableAutomation(automated, [
+      { time: 0, value: 0.1 },
+      { time: 8, value: 0.9 },
+    ]);
+
+    // Playing from the start: the curve is registered against the full timeline.
+    await project.bridge.syncAutomationParameter(
+      automated,
+      { ...timing, renderStartTime: 0 },
+      { coalesce: false },
+    );
+    project.client.updateAutomation.mockClear();
+    project.client.setChannel.mockClear();
+
+    // Paused: the user edits fixed values. The automated curve stays
+    // authoritative for playback; the fixed edit is canonical only.
+    automated.setFixedValue(0.55);
+    fixed.setFixedValue(0.25);
+
+    // Resume from a later origin: the timing context is rebuilt from the
+    // live project with the advanced render start and both parameters resync.
+    const resumeTiming = { ...timing, renderStartTime: 4 };
+    await project.bridge.syncAutomationParameter(automated, resumeTiming, { coalesce: false });
+    await project.bridge.syncAutomationParameter(fixed, resumeTiming, { coalesce: false });
+
+    // The automated curve is reprojected to the resume origin and automation
+    // remains authoritative: no fixed write lands on its channel.
+    expect(lastPoints(project.client.updateAutomation.mock.calls[0]!)).toEqual([
+      { time: 0, value: 0.5 },
+      { time: 4, value: 0.9 },
+    ]);
+    expect(project.client.setChannel).not.toHaveBeenCalledWith('gk_blue_auto0', expect.any(Number));
+    // The fixed-only channel is restored from its paused canonical edit.
+    expect(project.client.setChannel).toHaveBeenCalledWith('gk_blue_auto1', 0.25);
+
+    // A second pause removes the automation; the next resume must clear the
+    // stale engine curve and surface the fixed value edited underneath it.
+    automated.setAutomationEnabled(false);
+    project.client.updateAutomation.mockClear();
+    project.client.setChannel.mockClear();
+    project.client.deleteAutomation.mockClear();
+    await project.bridge.syncAutomationParameter(automated, resumeTiming, { coalesce: false });
+    expect(project.client.deleteAutomation).toHaveBeenCalledWith('gk_blue_auto0');
+    expect(project.client.setChannel).toHaveBeenCalledWith('gk_blue_auto0', 0.55);
+    expect(project.client.updateAutomation).not.toHaveBeenCalled();
   });
 
   it('insertAutomationPoint, deleteAutomationPoint, and setAutomationPoints send updated point arrays', async () => {

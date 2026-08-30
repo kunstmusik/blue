@@ -1,5 +1,8 @@
 import React, { useRef, useState, useCallback } from 'react';
 import type { BlueX7EnvelopePoint } from '@blue/data';
+import { blueX7WidgetDomain } from './catalog-domains';
+
+const ENVELOPE_LEVEL_DOMAIN = blueX7WidgetDomain('operator.1.envelope.1.level');
 
 export interface EnvelopeEditorProps {
   envelope: [
@@ -211,8 +214,8 @@ export const EnvelopeEditor: React.FC<EnvelopeEditorProps> = ({
                   role="slider"
                   aria-label={`Stage ${stageIndex + 1} Handle (Rate: ${current.rate}, Level: ${current.level})`}
                   aria-valuenow={current.level}
-                  aria-valuemin={0}
-                  aria-valuemax={99}
+                  aria-valuemin={ENVELOPE_LEVEL_DOMAIN.min}
+                  aria-valuemax={ENVELOPE_LEVEL_DOMAIN.max}
                   data-testid={`envelope-handle-${stageIndex}`}
                   onPointerDown={handlePointerDown(stageIndex)}
                   onPointerMove={handlePointerMove(stageIndex)}

@@ -2,9 +2,19 @@ import React from 'react';
 import type { BlueX7Lfo } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AppSelect } from '../../AppSelect';
+import { NextNoteBadge } from './next-note-badge';
+import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
+
+const LFO_FIELD_DOMAINS = {
+  speed: blueX7WidgetDomain('lfo.speed'),
+  delay: blueX7WidgetDomain('lfo.delay'),
+  pitchModulationDepth: blueX7WidgetDomain('lfo.pitchModulationDepth'),
+  amplitudeModulationDepth: blueX7WidgetDomain('lfo.amplitudeModulationDepth'),
+} as const;
 
 export interface LfoPanelProps {
   lfo: BlueX7Lfo;
+  effectiveValues?: ReadonlyMap<string, number>;
   onApplyPatch: (description: string, patch: BlueX7Patch) => void;
 }
 
@@ -17,12 +27,13 @@ const LFO_WAVEFORMS = [
   { value: 5, label: 'Sample & Hold' },
 ];
 
-export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
-  const handleFieldChange = (field: keyof BlueX7Lfo, label: string, min: number, max: number) => {
+export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onApplyPatch }) => {
+  const effective = (key: string, fallback: number): number => effectiveValues?.get(key) ?? fallback;
+  const handleFieldChange = (field: keyof BlueX7Lfo, label: string, domain: BlueX7WidgetDomain) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value, 10);
       if (!Number.isNaN(val)) {
-        const clamped = Math.max(min, Math.min(max, val));
+        const clamped = Math.max(domain.min, Math.min(domain.max, val));
         onApplyPatch(`Change LFO ${label} to ${clamped}`, {
           type: 'setLfoField',
           field,
@@ -60,16 +71,16 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
         {/* Speed */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-speed" className="text-role-body text-blue-muted">
-            Speed (0–99)
+            Speed ({LFO_FIELD_DOMAINS.speed.min}–{LFO_FIELD_DOMAINS.speed.max})
           </label>
           <input
             id="bluex7-lfo-speed"
             aria-label="LFO Speed"
             type="number"
-            min={0}
-            max={99}
-            value={lfo.speed}
-            onChange={handleFieldChange('speed', 'Speed', 0, 99)}
+            min={LFO_FIELD_DOMAINS.speed.min}
+            max={LFO_FIELD_DOMAINS.speed.max}
+            value={effective('lfo.speed', lfo.speed)}
+            onChange={handleFieldChange('speed', 'Speed', LFO_FIELD_DOMAINS.speed)}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
@@ -77,16 +88,16 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
         {/* Delay */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-delay" className="text-role-body text-blue-muted">
-            Delay (0–99)
+            Delay ({LFO_FIELD_DOMAINS.delay.min}–{LFO_FIELD_DOMAINS.delay.max})
           </label>
           <input
             id="bluex7-lfo-delay"
             aria-label="LFO Delay"
             type="number"
-            min={0}
-            max={99}
-            value={lfo.delay}
-            onChange={handleFieldChange('delay', 'Delay', 0, 99)}
+            min={LFO_FIELD_DOMAINS.delay.min}
+            max={LFO_FIELD_DOMAINS.delay.max}
+            value={effective('lfo.delay', lfo.delay)}
+            onChange={handleFieldChange('delay', 'Delay', LFO_FIELD_DOMAINS.delay)}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
@@ -94,16 +105,16 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
         {/* PMD */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-pmd" className="text-role-body text-blue-muted">
-            PMD (0–99)
+            PMD ({LFO_FIELD_DOMAINS.pitchModulationDepth.min}–{LFO_FIELD_DOMAINS.pitchModulationDepth.max})
           </label>
           <input
             id="bluex7-lfo-pmd"
             aria-label="LFO Pitch Modulation Depth"
             type="number"
-            min={0}
-            max={99}
-            value={lfo.pitchModulationDepth}
-            onChange={handleFieldChange('pitchModulationDepth', 'PMD', 0, 99)}
+            min={LFO_FIELD_DOMAINS.pitchModulationDepth.min}
+            max={LFO_FIELD_DOMAINS.pitchModulationDepth.max}
+            value={effective('lfo.pitchModulationDepth', lfo.pitchModulationDepth)}
+            onChange={handleFieldChange('pitchModulationDepth', 'PMD', LFO_FIELD_DOMAINS.pitchModulationDepth)}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
@@ -111,16 +122,16 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
         {/* AMD */}
         <div className="flex flex-col gap-1">
           <label htmlFor="bluex7-lfo-amd" className="text-role-body text-blue-muted">
-            AMD (0–99)
+            AMD ({LFO_FIELD_DOMAINS.amplitudeModulationDepth.min}–{LFO_FIELD_DOMAINS.amplitudeModulationDepth.max})
           </label>
           <input
             id="bluex7-lfo-amd"
             aria-label="LFO Amplitude Modulation Depth"
             type="number"
-            min={0}
-            max={99}
-            value={lfo.amplitudeModulationDepth}
-            onChange={handleFieldChange('amplitudeModulationDepth', 'AMD', 0, 99)}
+            min={LFO_FIELD_DOMAINS.amplitudeModulationDepth.min}
+            max={LFO_FIELD_DOMAINS.amplitudeModulationDepth.max}
+            value={effective('lfo.amplitudeModulationDepth', lfo.amplitudeModulationDepth)}
+            onChange={handleFieldChange('amplitudeModulationDepth', 'AMD', LFO_FIELD_DOMAINS.amplitudeModulationDepth)}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         </div>
@@ -133,7 +144,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
           <AppSelect
             id="bluex7-lfo-wave"
             aria-label="LFO Waveform"
-            value={lfo.wave}
+            value={effective('lfo.wave', lfo.wave)}
             onValueChange={handleWaveChange}
             options={LFO_WAVEFORMS}
             className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
@@ -147,11 +158,11 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, onApplyPatch }) => {
             <input
               type="checkbox"
               aria-label="LFO Sync"
-              checked={lfo.sync === 1}
+              checked={effective('lfo.sync', lfo.sync) === 1}
               onChange={handleSyncToggle}
               className="rounded border-blue-border"
             />
-            Key Sync
+            Key Sync <NextNoteBadge semanticKey="lfo.sync" />
           </label>
         </div>
       </div>

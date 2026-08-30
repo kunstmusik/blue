@@ -16,15 +16,34 @@
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import * as path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const PACKAGE_ROOT = join(SCRIPT_DIR, '..');
-const RESOURCE_DIR = join(PACKAGE_ROOT, 'resources', 'blue-x7-modern');
-const ORC_PATH = join(RESOURCE_DIR, 'bluex7.orc');
-const PROVENANCE_PATH = join(RESOURCE_DIR, 'provenance.json');
-const GENERATED_PATH = join(PACKAGE_ROOT, 'src', 'instruments', 'blue-x7', 'modern-orchestra.generated.ts');
+/** Resolve native filesystem paths without rewriting separators globally. */
+export function resolveBundlerPaths(scriptFilePath, pathApi = path) {
+  const scriptDir = pathApi.dirname(scriptFilePath);
+  const packageRoot = pathApi.join(scriptDir, '..');
+  const resourceDir = pathApi.join(packageRoot, 'resources', 'blue-x7-modern');
+  return {
+    packageRoot,
+    resourceDir,
+    orcPath: pathApi.join(resourceDir, 'bluex7.orc'),
+    provenancePath: pathApi.join(resourceDir, 'provenance.json'),
+    generatedPath: pathApi.join(
+      packageRoot,
+      'src',
+      'instruments',
+      'blue-x7',
+      'modern-orchestra.generated.ts',
+    ),
+  };
+}
+
+const {
+  orcPath: ORC_PATH,
+  provenancePath: PROVENANCE_PATH,
+  generatedPath: GENERATED_PATH,
+} = resolveBundlerPaths(fileURLToPath(import.meta.url));
 
 /** Escape Csound text for a TypeScript template literal. */
 export function escapeOrcForTemplateLiteral(text) {

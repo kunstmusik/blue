@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron';
 import { EngineBridge, EngineOutputCallback } from './engine-bridge';
-import type { BlueData, JavaScriptSession } from '@blue/data';
-import type { CompiledMidiInstrumentTarget } from '@blue/data';
+import type { BlueData, JavaScriptSession, Parameter } from '@blue/data';
+import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from '@blue/data';
 import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
@@ -76,6 +76,7 @@ export class BlueLiveEngineSession {
    * completes successfully and after cleanup; resolves focus-routing targets.
    */
   private targetCatalog: CompiledMidiTargetCatalog | null = null;
+  private blueX7Bindings: readonly CompiledBlueX7Binding[] = [];
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
   private engineStateUnsubscribe: (() => void) | null = null;
   private awaitingTerminalState = false;
@@ -445,6 +446,7 @@ export class BlueLiveEngineSession {
         return this.getSnapshot();
       }
       this.targetCatalog = targetCatalog;
+      this.blueX7Bindings = csd.blueX7Bindings;
       this.beginTerminalStateMonitoring();
       this.setStatus('running', 'Blue Live running');
       return this.getSnapshot();
@@ -617,6 +619,34 @@ export class BlueLiveEngineSession {
     await this.bridge.setChannel(name, value);
   }
 
+  async setChannels(
+    entries: readonly { name: string; value: number }[],
+  ): Promise<{ ok: boolean; message: string }> {
+    if (this.status !== 'running' || !this.bridge) {
+      return { ok: false, message: 'no-active-blue-live-session' };
+    }
+    return this.bridge.setChannels(entries);
+  }
+
+  async getChannels(
+    names: readonly string[],
+  ): Promise<{ ok: true; values: number[] } | { ok: false; message: string }> {
+    if (this.status !== 'running' || !this.bridge) {
+      return { ok: false, message: 'no-active-blue-live-session' };
+    }
+    return this.bridge.getChannels(names);
+  }
+
+  async syncAutomationParameter(
+    parameter: Parameter,
+    automationTiming?: Parameters<EngineBridge['syncAutomationParameter']>[1],
+  ): Promise<void> {
+    if (this.status !== 'running' || !this.bridge) {
+      return;
+    }
+    await this.bridge.syncAutomationParameter(parameter, automationTiming);
+  }
+
   async triggerNote(
     request: BlueLiveNoteTriggerRequest,
   ): Promise<BlueLiveNoteTriggerResult> {
@@ -670,6 +700,10 @@ export class BlueLiveEngineSession {
     return this.getSnapshot();
   }
 
+  getBlueX7Bindings(): readonly CompiledBlueX7Binding[] {
+    return this.blueX7Bindings;
+  }
+
   private async cleanup(): Promise<void> {
     if (this.cleanupPromise) {
       return this.cleanupPromise;
@@ -679,6 +713,7 @@ export class BlueLiveEngineSession {
       this.clearStateMonitoring();
       this.namedInstrumentNumbers.clear();
       this.targetCatalog = null;
+      this.blueX7Bindings = [];
       this.projectData = null;
       if (this.bridge) {
         const bridge = this.bridge;

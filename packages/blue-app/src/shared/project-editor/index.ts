@@ -4,6 +4,8 @@ export {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   assignLayerSelectionId,
+  getArrangementInstrumentOwnerIdentity,
+  getTrackInstrumentOwnerIdentity,
 } from './identity';
 
 export {

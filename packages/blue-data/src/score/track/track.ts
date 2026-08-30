@@ -1,6 +1,7 @@
 import { Instrument } from '../../instruments/instrument';
 import { loadInstrumentFromXML } from '../../instruments/instrument-registry';
 import { ParameterIdList } from '../../automation/parameter-id-list';
+import type { Parameter } from '../../automation/parameter';
 import { CompileData } from '../../compile-data';
 import { NoteList } from '../../sound-objects/note-list';
 import type { SoundObject } from '../../sound-objects/sound-object';
@@ -40,6 +41,38 @@ interface TrackGenerationPlan {
   readonly clips: AudioClip[];
 }
 
+function getInstrumentParameters(instrument: Instrument | null): Parameter[] {
+  if (!instrument) return [];
+  const candidate = instrument as Instrument & { getParameters?: () => Parameter[] };
+  return typeof candidate.getParameters === 'function' ? candidate.getParameters() : [];
+}
+
+function remapCopiedInstrumentParameterIds(
+  source: ParameterIdList,
+  sourceInstrument: Instrument | null,
+  copiedInstrument: Instrument | null,
+): ParameterIdList {
+  const sourceParameters = getInstrumentParameters(sourceInstrument);
+  const copiedByName = new Map(
+    getInstrumentParameters(copiedInstrument).map((parameter) => [parameter.getName(), parameter]),
+  );
+  const copiedIdBySourceId = new Map<string, string>();
+  for (const parameter of sourceParameters) {
+    const copied = copiedByName.get(parameter.getName());
+    if (copied) copiedIdBySourceId.set(parameter.getUniqueId(), copied.getUniqueId());
+  }
+
+  const remapped = new ParameterIdList();
+  for (const parameterId of source.getIds()) {
+    remapped.addParameterId(copiedIdBySourceId.get(parameterId) ?? parameterId);
+  }
+  const selectedId = source.getSelectedId();
+  if (selectedId) {
+    remapped.setSelectedParameter(copiedIdBySourceId.get(selectedId) ?? selectedId);
+  }
+  return remapped;
+}
+
 export class Track extends Array<TrackItem> implements ScoreObjectLayer<TrackItem>, AutomatableLayer {
   static readonly HEIGHT_MAX_INDEX = 9;
   static get [Symbol.species](): ArrayConstructor { return Array; }
@@ -63,9 +96,13 @@ export class Track extends Array<TrackItem> implements ScoreObjectLayer<TrackIte
       this._solo = other._solo;
       this._uniqueId = other._uniqueId;
       this._heightIndex = other._heightIndex;
-      this._automationParameters = other._automationParameters.deepCopy();
       this._npc = new NoteProcessorChain(other._npc);
       this._instrument = other._instrument?.deepCopy() ?? null;
+      this._automationParameters = remapCopiedInstrumentParameterIds(
+        other._automationParameters,
+        other._instrument,
+        this._instrument,
+      );
       this._unknownAttributes = new Map(other._unknownAttributes);
       this._unknownChildren = other._unknownChildren.map((child) => child.clone());
       for (const item of other) {

@@ -1,5 +1,5 @@
 import {
-  ParameterHelper,
+  getProjectParameterCatalog,
   PolyObject,
   TrackLayerGroup,
 } from '@blue/data';
@@ -118,8 +118,12 @@ export async function syncScoreAutomationParametersToEngine(
   bridge: AutomationRuntimeSyncBridge,
   automationTiming: AutomationRuntimeTimingContext = buildAutomationRuntimeTimingContext(data),
 ): Promise<void> {
-  const allParameters = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
-  const byId = new Map(allParameters.map((parameter) => [parameter.getUniqueId(), parameter]));
+  const byId = new Map(
+    getProjectParameterCatalog(data).map((entry) => [
+      entry.parameter.getUniqueId(),
+      entry.parameter,
+    ]),
+  );
 
   for (const parameterId of parameterIds) {
     const parameter = byId.get(parameterId);

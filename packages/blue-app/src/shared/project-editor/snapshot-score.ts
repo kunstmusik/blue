@@ -94,8 +94,10 @@ import {
   getNotes as parseScoreNotes,
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
+  getProjectParameterCatalog,
+  getBlueX7Descriptor,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer, ProjectParameterEntry } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
 import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
@@ -318,6 +320,7 @@ import {
   assignPatternLayerId,
   assignScoreObjectId,
   getScoreObjectId,
+  getTrackInstrumentOwnerIdentity,
 } from './identity';
 import {
   buildSoundAutomationParameters,
@@ -714,10 +717,8 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   const arrangement = data.getArrangement();
   const mixer = data.getMixer();
 
-  const allParameters = ParameterHelper.getAllParameters(
-    arrangement,
-    mixer,
-  );
+  const projectParameterCatalog = getProjectParameterCatalog(data);
+  const allParameters = projectParameterCatalog.map((entry) => entry.parameter);
   const assignedLayerMap = buildAssignedAutomationLayerMap(score);
 
   for (let i = 0; i < score.length; i++) {
@@ -725,9 +726,9 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
     if (!lg) continue;
 
     if (lg instanceof PolyObject) {
-      result.push(createPolyObjectGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap));
+      result.push(createPolyObjectGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap, projectParameterCatalog));
     } else if (lg instanceof TrackLayerGroup) {
-      result.push(createTrackLayerGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap));
+      result.push(createTrackLayerGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap, projectParameterCatalog));
     } else if (lg instanceof PatternsLayerGroup) {
       result.push(createPatternsLayerGroupSnapshot(lg, context));
     }
@@ -736,7 +737,7 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   return result;
 }
 
-function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, rootGroupIndex: number, allParameters: BlueDataParameter[], arrangement: BlueDataArrangement, mixer: BlueDataMixer, assignedLayerMap: Map<string, { layerId: string; layerName: string }>): PolyObjectLayerGroupSnapshot {
+function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, rootGroupIndex: number, allParameters: BlueDataParameter[], arrangement: BlueDataArrangement, mixer: BlueDataMixer, assignedLayerMap: Map<string, { layerId: string; layerName: string }>, projectParameterCatalog: readonly ProjectParameterEntry[]): PolyObjectLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
 
@@ -776,6 +777,7 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
       groupId,
       arrangement,
       mixer,
+      projectParameterCatalog,
     );
     layers.push({
       layerId,
@@ -810,6 +812,7 @@ function createTrackLayerGroupSnapshot(
   arrangement: BlueDataArrangement,
   mixer: BlueDataMixer,
   assignedLayerMap: Map<string, { layerId: string; layerName: string }>,
+  projectParameterCatalog: readonly ProjectParameterEntry[],
 ): TrackLayerGroupSnapshot {
   const groupId = lg.getUniqueId();
   const layers: TrackSnapshot[] = [];
@@ -887,6 +890,7 @@ function createTrackLayerGroupSnapshot(
       groupId,
       arrangement,
       mixer,
+      projectParameterCatalog,
     );
     const instrument = layer.getInstrument();
     const instrumentType = instrument ? getInstrumentSnapshotType(instrument) : 'unknown';
@@ -914,7 +918,12 @@ function createTrackLayerGroupSnapshot(
           supported: instrumentType !== 'unknown',
           snapshot: instrumentType === 'unknown'
             ? undefined
-            : createInstrumentSnapshot(layerId, instrument, instrument.isEnabled()),
+            : createInstrumentSnapshot(
+              layerId,
+              instrument,
+              instrument.isEnabled(),
+              getTrackInstrumentOwnerIdentity(groupId, layerId),
+            ),
         }
         : null,
     });
@@ -1951,6 +1960,7 @@ interface ParameterMetadata {
 function buildParameterMetadataMap(
   arrangement: BlueDataArrangement,
   mixer: BlueDataMixer,
+  projectParameterCatalog: readonly ProjectParameterEntry[] = [],
 ): Map<string, ParameterMetadata> {
   const metadataMap = new Map<string, ParameterMetadata>();
 
@@ -2033,6 +2043,18 @@ function buildParameterMetadataMap(
     }
   }
 
+  for (const entry of projectParameterCatalog) {
+    const parameter = entry.parameter;
+    const descriptor = getBlueX7Descriptor(parameter.getName());
+    if (!descriptor && metadataMap.has(parameter.getUniqueId())) continue;
+    metadataMap.set(parameter.getUniqueId(), {
+      targetPath: descriptor
+        ? [...entry.path, descriptor.group, descriptor.label]
+        : [...entry.path, parameter.getLabel() || parameter.getName()],
+      sourceKind: entry.ownerKind === 'mixer' ? 'mixer' : 'instrument',
+    });
+  }
+
   return metadataMap;
 }
 
@@ -2070,6 +2092,7 @@ export function collectLayerAutomationSnapshot(
   layerGroupId: string,
   arrangement: BlueDataArrangement,
   mixer: BlueDataMixer,
+  projectParameterCatalog: readonly ProjectParameterEntry[] = [],
 ): ScoreLayerAutomationSnapshot | undefined {
   const paramIdList = automatableLayer.getAutomationParameters();
   const assignedIds = paramIdList.getIds();
@@ -2079,7 +2102,7 @@ export function collectLayerAutomationSnapshot(
     paramMap.set(p.getUniqueId(), p);
   }
 
-  const metadataMap = buildParameterMetadataMap(arrangement, mixer);
+  const metadataMap = buildParameterMetadataMap(arrangement, mixer, projectParameterCatalog);
 
   const resolvedParameters: AutomationParameterSnapshot[] = [];
   const missingParameterIds: string[] = [];
@@ -2099,13 +2122,21 @@ export function collectLayerAutomationSnapshot(
     : undefined;
 
   const targetGroups = layerKind === 'track'
-    ? buildTrackAutomationTargetGroups(automatableLayer, assignedIds, assignedElsewhere, mixer)
+    ? buildTrackAutomationTargetGroups(
+      automatableLayer,
+      assignedIds,
+      assignedElsewhere,
+      mixer,
+      layerGroupId,
+      projectParameterCatalog,
+    )
     : buildAutomationTargetGroups(
       assignedIds,
       allParameters,
       assignedElsewhere,
       arrangement,
       mixer,
+      projectParameterCatalog,
     );
 
   return {
@@ -2119,16 +2150,43 @@ export function collectLayerAutomationSnapshot(
   };
 }
 
+function buildBlueX7TargetGroups(
+  entries: readonly ProjectParameterEntry[],
+  makeTarget: (parameter: BlueDataParameter) => AutomationTargetSnapshot,
+): AutomationTargetGroupSnapshot[] {
+  const groups = new Map<string, AutomationTargetGroupSnapshot>();
+  for (const entry of entries) {
+    const descriptor = getBlueX7Descriptor(entry.parameter.getName());
+    if (!descriptor) continue;
+    let group = groups.get(descriptor.group);
+    if (!group) {
+      group = {
+        groupId: `${entry.ownerIdentity}:${descriptor.group}`,
+        label: descriptor.group,
+        subGroups: [],
+        targets: [],
+      };
+      groups.set(descriptor.group, group);
+    }
+    group.targets.push(makeTarget(entry.parameter));
+  }
+  return [...groups.values()];
+}
+
 function buildAutomationTargetGroups(
   currentLayerAssignedIds: string[],
   allParameters: BlueDataParameter[],
   assignedElsewhere: Map<string, { layerId: string; layerName: string }>,
   arrangement: BlueDataArrangement,
   mixer: BlueDataMixer,
+  projectParameterCatalog: readonly ProjectParameterEntry[] = [],
 ): AutomationTargetGroupSnapshot[] {
   const rootGroups: AutomationTargetGroupSnapshot[] = [];
 
   const paramMap = new Map<string, BlueDataParameter>();
+  const catalogById = new Map(
+    projectParameterCatalog.map((entry) => [entry.parameter.getUniqueId(), entry]),
+  );
   for (const p of allParameters) {
     paramMap.set(p.getUniqueId(), p);
   }
@@ -2151,12 +2209,18 @@ function buildAutomationTargetGroups(
   function makeTarget(param: BlueDataParameter): AutomationTargetSnapshot {
     const id = param.getUniqueId();
     const { assignmentState, ownerLayerId, ownerLayerName } = getAssignmentState(id);
+    const catalogEntry = catalogById.get(id);
+    const descriptor = getBlueX7Descriptor(param.getName());
     return {
       parameterId: id,
-      label: param.getLabel() || param.getName() || id,
+      label: descriptor?.label ?? (param.getLabel() || param.getName() || id),
       sourceKind: resolveParameterSourceKind(param),
       automationEnabled: param.isAutomationEnabled(),
       assignmentState,
+      semanticKey: descriptor?.key,
+      ownerIdentity: catalogEntry?.ownerIdentity,
+      locationLabel: catalogEntry?.ownerLabel,
+      updateClass: descriptor?.updateClass,
       ownerLayerId,
       ownerLayerName,
     };
@@ -2169,17 +2233,23 @@ function buildAutomationTargetGroups(
     if (!ia.enabled || !ia.instr) continue;
     const instr = ia.instr as any;
     if (typeof instr.getParameters !== 'function') continue;
-    const instrParams = instr.getParameters();
+    const ownerIdentity = `arrangement:${ia.arrangementId}`;
+    const ownerEntries = projectParameterCatalog.filter((entry) => entry.ownerIdentity === ownerIdentity);
+    const instrParams = ownerEntries.length > 0
+      ? ownerEntries.map((entry) => entry.parameter)
+      : instr.getParameters();
     if (!instrParams || !Array.isArray(instrParams) || instrParams.length === 0) continue;
 
     const instrSubGroup: AutomationTargetGroupSnapshot = {
       groupId: `instr-${ia.arrangementId}`,
-      label: `${ia.arrangementId}) ${(ia.instr as any).getName?.() ?? 'Instrument'}`,
-      subGroups: [],
-      targets: instrParams
-        .slice()
-        .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
-        .map((p: BlueDataParameter) => makeTarget(p)),
+      label: ownerEntries[0]?.ownerLabel ?? `${ia.arrangementId}) ${(ia.instr as any).getName?.() ?? 'Instrument'}`,
+      subGroups: buildBlueX7TargetGroups(ownerEntries, makeTarget),
+      targets: ownerEntries.some((entry) => getBlueX7Descriptor(entry.parameter.getName()))
+        ? []
+        : instrParams
+          .slice()
+          .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
+          .map((p: BlueDataParameter) => makeTarget(p)),
     };
     instrGroup.subGroups.push(instrSubGroup);
   }
@@ -2223,14 +2293,12 @@ function buildTrackAutomationTargetGroups(
   currentLayerAssignedIds: string[],
   assignedElsewhere: Map<string, { layerId: string; layerName: string }>,
   mixer: BlueDataMixer,
+  layerGroupId: string,
+  projectParameterCatalog: readonly ProjectParameterEntry[] = [],
 ): AutomationTargetGroupSnapshot[] {
   const getUniqueId = (automatableLayer as unknown as { getUniqueId?: () => string }).getUniqueId;
   const trackId = typeof getUniqueId === 'function' ? getUniqueId.call(automatableLayer) : '';
   if (!trackId) return [];
-
-  const channel = mixer.getAllSourceChannels()
-    .find((candidate) => candidate.getAssociation().trim() === trackId);
-  if (!channel) return [];
 
   function getAssignmentState(id: string): {
     assignmentState: AutomationAssignmentState;
@@ -2251,19 +2319,56 @@ function buildTrackAutomationTargetGroups(
     return { assignmentState: 'available' };
   }
 
-  const channelGroup = buildChannelSubGroup(
-    channel,
-    'trackChannel',
-    getAssignmentState,
-    'mixer',
+  const result: AutomationTargetGroupSnapshot[] = [];
+  const ownerIdentity = `track:${layerGroupId}:${trackId}`;
+  const trackEntries = projectParameterCatalog.filter(
+    (entry) => entry.ownerIdentity === ownerIdentity,
   );
+  if (trackEntries.length > 0) {
+    const makeTrackTarget = (parameter: BlueDataParameter): AutomationTargetSnapshot => {
+      const id = parameter.getUniqueId();
+      const assignment = getAssignmentState(id);
+      const descriptor = getBlueX7Descriptor(parameter.getName());
+      return {
+        parameterId: id,
+        label: descriptor?.label ?? (parameter.getLabel() || parameter.getName() || id),
+        sourceKind: 'instrument',
+        automationEnabled: parameter.isAutomationEnabled(),
+        ...assignment,
+        semanticKey: descriptor?.key,
+        ownerIdentity,
+        locationLabel: trackEntries[0]?.ownerLabel,
+        updateClass: descriptor?.updateClass,
+      };
+    };
+    result.push({
+      groupId: `${ownerIdentity}:instrument`,
+      label: trackEntries[0]?.ownerLabel ?? 'Track Instrument',
+      subGroups: buildBlueX7TargetGroups(trackEntries, makeTrackTarget),
+      targets: trackEntries.some((entry) => getBlueX7Descriptor(entry.parameter.getName()))
+        ? []
+        : trackEntries.map((entry) => makeTrackTarget(entry.parameter)),
+    });
+  }
 
-  return [{
-    groupId: 'track-channel',
-    label: 'Track Channel',
-    subGroups: channelGroup.subGroups,
-    targets: channelGroup.targets,
-  }];
+  const channel = mixer.getAllSourceChannels()
+    .find((candidate) => candidate.getAssociation().trim() === trackId);
+  if (channel) {
+    const channelGroup = buildChannelSubGroup(
+      channel,
+      'trackChannel',
+      getAssignmentState,
+      'mixer',
+    );
+    result.push({
+      groupId: 'track-channel',
+      label: 'Track Channel',
+      subGroups: channelGroup.subGroups,
+      targets: channelGroup.targets,
+    });
+  }
+
+  return result;
 }
 
 function buildChannelSubGroup(

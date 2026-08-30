@@ -112,7 +112,7 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
                   data-testid="csound-tables-preview"
                   className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-body text-gray-200"
                 >
-                  {preview?.tables || '; Generating tables...'}
+                  {preview ? preview.tables : '; Generating tables...'}
                 </pre>
               </div>
               <div>
@@ -121,7 +121,7 @@ export const CsoundPanel: React.FC<CsoundPanelProps> = ({
                   data-testid="csound-body-preview"
                   className="max-h-60 overflow-y-auto rounded border border-blue-border bg-blue-bg/90 p-2 font-mono text-role-body text-gray-200"
                 >
-                  {preview?.body || '; Generating body...'}
+                  {preview ? preview.body : '; Generating body...'}
                 </pre>
               </div>
             </div>

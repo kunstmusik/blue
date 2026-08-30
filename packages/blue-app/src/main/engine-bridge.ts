@@ -936,13 +936,13 @@ export class EngineBridge {
       const varName = param.getCompilationVarName();
       if (!varName) continue;
 
-      if (param.isAutomationEnabled() && param.getPoints().length >= 2) {
+      const points = getEngineAutomationPoints(
+        param,
+        automationTiming?.renderStartTime ?? 0,
+        automationTiming?.tempoMap,
+      );
+      if (param.isAutomationEnabled() && param.getPoints().length >= 2 && points.length >= 2) {
         const curveCode = mapAutomationCurve(param.getCurve());
-        const points = getEngineAutomationPoints(
-          param,
-          automationTiming?.renderStartTime ?? 0,
-          automationTiming?.tempoMap,
-        );
 
         try {
           const resp = await client.createAutomation(
@@ -1053,7 +1053,14 @@ export class EngineBridge {
       return;
     }
 
-    const shouldAutomate = parameter.isAutomationEnabled() && parameter.getPoints().length >= 2;
+    const runtimePoints = getEngineAutomationPoints(
+      parameter,
+      automationTiming?.renderStartTime ?? 0,
+      automationTiming?.tempoMap,
+    );
+    const shouldAutomate = parameter.isAutomationEnabled()
+      && parameter.getPoints().length >= 2
+      && runtimePoints.length >= 2;
     if (shouldAutomate) {
       await this.updateOrCreateAutomation(client, parameter, varName, automationTiming);
       return;

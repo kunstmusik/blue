@@ -1,5 +1,7 @@
 import {
   BlueData,
+  BlueX7,
+  AutomationCurve,
   BSBKnob,
   BlueSynthBuilder,
   Channel,
@@ -79,6 +81,46 @@ describe('project library transfer', () => {
     expect(reopened.getArrangement().getInstrumentById(instrumentReceipt.insertedIdentity)?.getName())
       .toBe('Imported Pad');
     expect(reopened.getOpcodeList().getOpcodes().map((udo) => udo.getName())).toContain('importedFx');
+  });
+
+  it('instantiates a library BlueX7 with disjoint ids that remain stable on reopen', async () => {
+    const project = activeProject();
+    const adapter = new UnifiedLibraryProjectAdapter(project.provider);
+    const source = new BlueX7();
+    source.setName('Library BlueX7');
+    const sourceParameter = source.getParameters().find(
+      (parameter) => parameter.getName() === 'lfo.speed',
+    )!;
+    sourceParameter.setAutomationEnabled(true);
+    sourceParameter.setCurve(AutomationCurve.STEP);
+    sourceParameter.setPoints([{ time: 0, value: 12 }, { time: 3, value: 88 }]);
+    const sourceIds = new Set(source.getParameters().map((parameter) => parameter.getUniqueId()));
+
+    const receipt = adapter.applyInsertion({
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'blue-x7-library' },
+      payloadXml: source.saveAsXML().toXml(),
+      target: target('instrument', project.revision),
+      mode: 'independent',
+    });
+    const inserted = project.data.getArrangement().getInstrumentById(receipt.insertedIdentity) as BlueX7;
+    const insertedIds = inserted.getParameters().map((parameter) => parameter.getUniqueId());
+    expect(inserted).toBeInstanceOf(BlueX7);
+    expect(insertedIds.every((id) => !sourceIds.has(id))).toBe(true);
+    const insertedParameter = inserted.getParameters().find(
+      (parameter) => parameter.getName() === 'lfo.speed',
+    )!;
+    expect(insertedParameter).not.toBe(sourceParameter);
+    expect(insertedParameter.isAutomationEnabled()).toBe(true);
+    expect(insertedParameter.getCurve()).toBe(AutomationCurve.STEP);
+    expect(insertedParameter.getPoints()).toEqual(sourceParameter.getPoints());
+
+    insertedParameter.setPoints([{ time: 1, value: 50 }]);
+    expect(sourceParameter.getPoints()).toEqual([{ time: 0, value: 12 }, { time: 3, value: 88 }]);
+
+    const reopened = await BlueData.loadFromString(project.data.saveToString());
+    const reopenedInstrument = reopened.getArrangement().getInstrumentById(receipt.insertedIdentity) as BlueX7;
+    expect(reopenedInstrument.getParameters().map((parameter) => parameter.getUniqueId()))
+      .toEqual(insertedIds);
   });
 
   it('inserts at exact Orchestra/UDO positions without replacing same-name entries', () => {

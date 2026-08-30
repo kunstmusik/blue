@@ -86,6 +86,16 @@ export type {
 export { buildBlueX7VoiceTransport } from './instruments/blue-x7/voice-transport';
 export type { BlueX7VoiceTransport } from './instruments/blue-x7/voice-transport';
 export {
+  generateBlueX7Target,
+  generateBlueX7Instrument,
+  extractBlueX7VoiceBody,
+} from './instruments/blue-x7/csound-target-generator';
+export type {
+  BlueX7TargetLayout,
+  BlueX7TargetParameter,
+  BlueX7TargetOptions,
+} from './instruments/blue-x7/csound-target-generator';
+export {
   getSysexType,
   getBankVoiceNames,
   decodeSingleVoice,
@@ -326,6 +336,11 @@ export { Parameter } from './automation/parameter';
 export type { AutomationPoint } from './automation/parameter';
 export { AutomationCurve } from './automation/parameter';
 export { automationPointToEngineSeconds, getEngineAutomationPoints } from './automation/parameter-runtime';
+export {
+  appendParameterScoreJava,
+  buildParameterInitStatementJava,
+  getParameterInstrumentTextJava,
+} from './automation/csd-parameter-automation';
 export { ParameterList } from './automation/parameter-list';
 export { ParameterIdList } from './automation/parameter-id-list';
 export { ParameterNameManager } from './automation/parameter-name-manager';

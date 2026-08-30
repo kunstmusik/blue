@@ -141,6 +141,154 @@ async function clickMenuItem(label: string) {
 }
 
 describe('AutomationTargetMenu', () => {
+  it('renders BlueX7 catalog groups, location disambiguators, and next-note metadata', async () => {
+    const automation = buildAutomation();
+    automation.targetGroups = [{
+      groupId: 'instrument',
+      label: 'Instrument',
+      targets: [],
+      subGroups: [{
+        groupId: 'instr-7',
+        label: '7) Duplicate X7',
+        targets: [],
+        subGroups: [
+          {
+            groupId: 'common',
+            label: 'Common',
+            subGroups: [],
+            targets: [{
+              parameterId: 'algorithm-id',
+              label: 'Algorithm',
+              sourceKind: 'instrument',
+              automationEnabled: false,
+              assignmentState: 'available',
+              ownerIdentity: 'arrangement:7',
+              locationLabel: '7) Duplicate X7',
+              updateClass: 'next-note',
+            }],
+          },
+          {
+            groupId: 'lfo', label: 'LFO', subGroups: [], targets: [{
+              parameterId: 'lfo-id', label: 'Speed', sourceKind: 'instrument',
+              automationEnabled: false, assignmentState: 'available',
+            }],
+          },
+          {
+            groupId: 'pitch-envelope', label: 'Pitch Envelope', subGroups: [], targets: [{
+              parameterId: 'peg-id', label: 'Rate 1', sourceKind: 'instrument',
+              automationEnabled: false, assignmentState: 'available',
+            }],
+          },
+          {
+            groupId: 'operator-1', label: 'Operator 1', subGroups: [], targets: [{
+              parameterId: 'op-id', label: 'Output Level', sourceKind: 'instrument',
+              automationEnabled: false, assignmentState: 'available',
+            }],
+          },
+        ],
+      }],
+    }];
+    const { container, root } = renderMenu(automation);
+    const hoverSubmenu = async (label: string): Promise<void> => {
+      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
+        .find((candidate) => candidate.textContent?.includes(label));
+      expect(item).toBeTruthy();
+      await act(async () => {
+        item!.dispatchEvent(new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerType: 'mouse',
+          clientX: 40,
+          clientY: 20,
+        }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+    };
+    try {
+      await openMenu(container);
+      await hoverSubmenu('7) Duplicate X7');
+      expect(document.body.textContent).toContain('Common');
+      expect(document.body.textContent).toContain('LFO');
+      expect(document.body.textContent).toContain('Pitch Envelope');
+      expect(document.body.textContent).toContain('Operator 1');
+      await hoverSubmenu('Common');
+      const text = document.body.textContent ?? '';
+      expect(text).toContain('Algorithm');
+      expect(text).toContain('next note');
+      expect(text).toContain('7) Duplicate X7');
+    } finally {
+      void act(() => root.unmount());
+    }
+  });
+
+  it('disambiguates four same-named BlueX7 owners and finds a target within three interactions (SC-009)', async () => {
+    const automation = buildAutomation();
+    const ownerSubgroup = (groupId: string, label: string, parameterId: string) => ({
+      groupId,
+      label,
+      targets: [],
+      subGroups: [{
+        groupId: `${groupId}-common`,
+        label: 'Common',
+        subGroups: [],
+        targets: [{
+          parameterId,
+          label: 'Algorithm',
+          sourceKind: 'instrument',
+          automationEnabled: false,
+          assignmentState: 'available',
+          ownerIdentity: `arrangement:${groupId}`,
+          locationLabel: label,
+          updateClass: 'next-note',
+        }],
+      }],
+    });
+    automation.targetGroups = [{
+      groupId: 'instrument',
+      label: 'Instrument',
+      targets: [],
+      subGroups: [
+        ownerSubgroup('7', '7) Duplicate X7', 'a7-algorithm-id'),
+        ownerSubgroup('8', '8) Duplicate X7', 'a8-algorithm-id'),
+        ownerSubgroup('9', '9) Duplicate X7', 'a9-algorithm-id'),
+        ownerSubgroup('10', '10) Duplicate X7', 'a10-algorithm-id'),
+      ],
+    }];
+    const { container, root } = renderMenu(automation);
+    const hoverSubmenu = async (label: string): Promise<void> => {
+      const item = (Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[])
+        .find((candidate) => candidate.textContent?.includes(label));
+      expect(item, `submenu item '${label}'`).toBeTruthy();
+      await act(async () => {
+        item!.dispatchEvent(new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerType: 'mouse',
+          clientX: 40,
+          clientY: 20,
+        }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+    };
+    try {
+      // Interaction 1: open the chooser — all four same-named owners are
+      // listed with pairwise-distinct location labels.
+      await openMenu(container);
+      const menuText = getMenuText();
+      for (const label of ['7) Duplicate X7', '8) Duplicate X7', '9) Duplicate X7', '10) Duplicate X7']) {
+        expect(menuText).toContain(label);
+      }
+      // Interaction 2: open the last same-named owner's cascade.
+      await hoverSubmenu('10) Duplicate X7');
+      // Interaction 3: open its Common group — the target is now visible.
+      await hoverSubmenu('Common');
+      const text = document.body.textContent ?? '';
+      expect(text).toContain('Algorithm');
+      expect(text).toContain('next note');
+      expect(text).toContain('10) Duplicate X7');
+    } finally {
+      void act(() => root.unmount());
+    }
+  });
+
   it('shows Track channel targets directly in Pre-Effects, dB, Post-Effects order', async () => {
     const { container, root } = renderMenu(buildTrackAutomation());
     try {

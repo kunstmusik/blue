@@ -91,7 +91,13 @@ Operator mask bit `op - 1` corresponds to logical operator `op`.
 
 ## Update semantics
 
-`algorithm`, shared `oscillatorKeySync`, and `lfoKeySync` are next-note. Every other descriptor is active-note. The editor and generated binding report consume this field directly from the catalog.
+The active-note set is intentionally small: `common.feedback`, LFO
+`pitchModulationDepth` and `amplitudeModulationDepth`, six operator
+`outputLevel` values, and six operator `enabled` values (15 descriptors).
+The remaining 136 descriptors—including algorithm, transpose, LFO timing/wave/
+sensitivity, pitch-envelope values, and the other operator fields—are
+next-note snapshots. The editor and generated binding report consume this field
+directly from the catalog.
 
 ## Persistence and identities
 

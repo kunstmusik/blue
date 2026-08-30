@@ -105,8 +105,10 @@ describe('runtime instrument parity', () => {
 
     const voice = createDefaultBlueX7Voice();
     const preview = generateBlueX7Preview(voice, 'PackageTest');
-    expect(preview.tables).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: PackageTest');
+    expect(preview.tables).toBe('');
     expect(preview.body).toContain('aout = bluex7_voice(');
+    expect(preview.body).not.toContain('tabw');
+    expect(preview.body).not.toContain('chnget');
     expect(preview.bindings.emitted.length).toBeGreaterThan(0);
     // every modern sound-relevant field is reported; only the nonsynthesized
     // name bytes remain "not emitted" (FR-029)

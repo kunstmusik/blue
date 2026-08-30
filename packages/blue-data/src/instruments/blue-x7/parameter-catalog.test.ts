@@ -137,15 +137,26 @@ describe('BlueX7 parameter catalog grouping', () => {
 });
 
 describe('BlueX7 parameter catalog update classes', () => {
-  it('classifies algorithm and both key syncs as next-note and everything else active-note', () => {
+  it('keeps only low-cost expressive controls active during a note', () => {
+    const live = [
+      'common.feedback',
+      'lfo.pitchModulationDepth',
+      'lfo.amplitudeModulationDepth',
+      ...[1, 2, 3, 4, 5, 6].flatMap((operator) => [
+        `operator.${operator}.outputLevel`,
+        `operator.${operator}.enabled`,
+      ]),
+    ].sort();
     const nextNote = BLUE_X7_PARAMETER_DESCRIPTORS.filter(
       (d) => d.updateClass === 'next-note',
     );
-    expect(nextNote.map((d) => d.key).sort()).toEqual(
-      ['common.algorithm', 'common.oscillatorKeySync', 'lfo.sync'].sort(),
-    );
+    expect(BLUE_X7_PARAMETER_DESCRIPTORS
+      .filter((d) => d.updateClass === 'active-note')
+      .map((d) => d.key)
+      .sort()).toEqual(live);
+    expect(nextNote).toHaveLength(136);
     expect(BLUE_X7_PARAMETER_DESCRIPTORS.filter((d) => d.updateClass === 'active-note'))
-      .toHaveLength(148);
+      .toHaveLength(15);
   });
 });
 

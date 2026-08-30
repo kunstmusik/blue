@@ -31,6 +31,10 @@ import type {
   FrozenSoundObjectSaveCopyResult,
 } from '../shared/project-editor';
 import type {
+  BlueX7EffectiveValuesRequest,
+  BlueX7EffectiveValuesResult,
+} from '../shared/project-editor/contract';
+import type {
   ScoreObjectExportResult,
   ScoreObjectImportResult,
 } from '../shared/score-object-file';
@@ -572,6 +576,15 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('update-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
   commitProjectDocumentPatches: (patches: ProjectDocumentPatch[]) =>
     ipcRenderer.invoke('commit-project-document-patches', patches) as Promise<ProjectDocumentCommitReceipt>,
+
+    // Spec 092: visible-only BlueX7 effective-value readback. The main
+    // process fails closed for stale sessions, stopped playback, and missing
+    // owners; results are disposable display state and never mutate project
+    // snapshots.
+    getBlueX7EffectiveValues: (
+      request: BlueX7EffectiveValuesRequest,
+    ): Promise<BlueX7EffectiveValuesResult> =>
+      ipcRenderer.invoke('blue-x7-effective-values', request) as Promise<BlueX7EffectiveValuesResult>,
   readAudioFileBytes: (filePath: string) =>
     ipcRenderer.invoke('read-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   readAuthorizedAudioFileBytes: (filePath: string) =>

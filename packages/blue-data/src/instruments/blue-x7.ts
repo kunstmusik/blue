@@ -14,6 +14,10 @@ import {
 } from './blue-x7/parameter-catalog';
 import { buildBlueX7VoiceTransport } from './blue-x7/voice-transport';
 import { BLUE_X7_MODERN_ORCHESTRA } from './blue-x7/modern-orchestra.generated';
+import {
+  generateBlueX7Target,
+  type BlueX7TargetParameter,
+} from './blue-x7/csound-target-generator';
 
 /**
  * Render-scoped key marking that the shared modern synthesis module has been
@@ -478,7 +482,7 @@ export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: strin
       descriptor.updateClass === 'next-note' ? 'next-note' : 'active-note';
     const target =
       descriptor.transport.kind === 'voice'
-        ? `transport slot ${descriptor.transport.slot}`
+        ? `direct global voice slot ${descriptor.transport.slot}`
         : `operator mask bit ${descriptor.transport.operator - 1}`;
     return `${descriptor.key} (${descriptor.label}) -> ${target} [${updateClass}]`;
   });
@@ -495,16 +499,13 @@ export function generateBlueX7Preview(
   voice: BlueX7Voice,
   name = 'BlueX7',
 ): BlueX7PreviewResult {
-  const dummyTables = new Tables();
   const instr = new BlueX7();
   instr.setName(name);
   instr.setVoice(voice);
-  instr.generateFTables(dummyTables);
   const body = instr.generateInstrument();
-  const tables = dummyTables.getTables();
 
   return {
-    tables,
+    tables: '',
     body,
     bindings: getBlueX7BindingReport(),
   };
@@ -584,6 +585,14 @@ export class BlueX7 extends Instrument {
   }
 
   setCommonField<K extends keyof BlueX7Common>(field: K, value: BlueX7Common[K]): void {
+    if (field === 'operatorEnabled') {
+      const operatorEnabled = value as BlueX7Common['operatorEnabled'];
+      this._voice.common.operatorEnabled = [...operatorEnabled] as BlueX7Common['operatorEnabled'];
+      this.syncFixedValues(
+        operatorEnabled.map((_, index) => `operator.${index + 1}.enabled`),
+      );
+      return;
+    }
     this._voice.common[field] = value;
     const key = COMMON_FIELD_TO_KEY[field as string];
     if (key) {
@@ -671,44 +680,16 @@ export class BlueX7 extends Instrument {
   }
 
   hasFTable(): boolean {
-    return true;
+    return false;
   }
 
   /**
-   * Allocate this instance's independent transport tables: the main table
-   * read by the synthesis module and its staging pair (used for atomic
-   * whole-voice publication). Numbers come from the shared render Tables, so
-   * every arrangement/Track owner is collision-free.
+   * BlueX7 no longer allocates or publishes a transport ftable. The method is
+   * intentionally a no-op because the base render pipeline asks every
+   * instrument for tables; live values are read from compiled `chnexport`
+   * globals by the generated target instead.
    */
-  override generateFTables(tables: Tables): void {
-    const transport = buildBlueX7VoiceTransport(
-      this._voice,
-      this._voice.common.operatorEnabled,
-    );
-    this._operatorMask = transport.operatorMask;
-    const mainTable = tables.getOpenFTableNumber();
-    const stagingTable = tables.getOpenFTableNumber();
-    this._transportTableIds = [mainTable, stagingTable];
-
-    const buffer: string[] = [];
-    buffer.push(`; FTABLES FOR BLUEX7 MODERN TRANSPORT: ${this.getName()}`);
-    for (const tableNum of [mainTable, stagingTable]) {
-      buffer.push(`f ${tableNum} 0 256 -2 ${transport.voice.join(' ')}`);
-    }
-    buffer.push('');
-
-    const currentTables = tables.getTables();
-    const joined = buffer.join('\n');
-    tables.setTables(currentTables ? `${currentTables}\n${joined}` : joined);
-  }
-
-  private _transportTableIds: readonly [number, number] | null = null;
-  private _operatorMask = 63;
-
-  /** Render-scoped transport table pair; null until generateFTables runs. */
-  getBlueX7TransportTableIds(): readonly [number, number] | null {
-    return this._transportTableIds;
-  }
+  override generateFTables(_tables: Tables): void {}
 
   /**
    * Emit the shared modern synthesis module once per render. Distinct BlueX7
@@ -719,49 +700,58 @@ export class BlueX7 extends Instrument {
     if (!compileData) {
       return null;
     }
+    const epochDeclaration = `${this.getBlueX7EpochSymbol()} init 0`;
     if (compileData.getCompilationVariable(BLUEX7_MODERN_MODULE_KEY)) {
-      return null;
+      return epochDeclaration;
     }
     compileData.setCompilationVariable(BLUEX7_MODERN_MODULE_KEY, true);
-    return BLUE_X7_MODERN_ORCHESTRA;
+    return `${epochDeclaration}\n${BLUE_X7_MODERN_ORCHESTRA}`;
+  }
+
+  /** One per-instance epoch used by the always-on direct-global coordinator. */
+  getBlueX7EpochSymbol(): string {
+    const first = this._parameters[0]?.getCompilationVarName();
+    const suffix = first?.match(/^gk_blue_auto(\d+)$/)?.[1] ?? 'preview';
+    return `gk_blue_x7_epoch_${suffix}`;
   }
 
   /**
-   * Hold channel for staged whole-voice publication. Derived from this
-   * instance's main transport table number, which is unique per render, so
-   * the name is collision-free and within the engine channel-name limit.
+   * Observe only active-note globals once per instance and publish a scalar
+   * epoch. Next-note globals are captured by new voices and do not wake every
+   * sounding note.
    */
-  getBlueX7HoldChannel(): string {
-    return `bx7h${this._transportTableIds?.[0] ?? 100}`;
-  }
+  override generateAlwaysOnInstrument(parameters?: Parameter[]): string | null {
+    const liveParameters =
+      Array.isArray(parameters) &&
+      parameters.length === BLUE_X7_PARAMETER_DESCRIPTORS.length &&
+      parameters.every((parameter) => parameter.getCompilationVarName());
+    if (!liveParameters) return null;
 
-  /** Commit-generation channel paired with the hold channel. */
-  getBlueX7CommitChannel(): string {
-    return `bx7c${this._transportTableIds?.[0] ?? 100}`;
+    const symbols = BLUE_X7_PARAMETER_DESCRIPTORS.flatMap((descriptor, index) => {
+      if (descriptor.updateClass !== 'active-note') return [];
+      return [parameters![index].getCompilationVarName()!];
+    });
+    if (symbols.length === 0) return null;
+    const epoch = this.getBlueX7EpochSymbol();
+    return [
+      '; BlueX7 active-global change coordinator (one scan per instance)',
+      `kBlueX7CoordinatorChanged changed ${symbols.join(', ')}`,
+      'if kBlueX7CoordinatorChanged > 0 then',
+      `  ${epoch} = ${epoch} + 1`,
+      'endif',
+      '',
+    ].join('\n');
   }
 
   /**
-   * Emit the Blue host wrapper. With the instrument's 151 Parameters
-   * (catalog order, compilation variable names assigned), the wrapper is
-   * live-capable: per control cycle it publishes the parameter channels
-   * into kLiveVoice and the transport table while the hold channel is 0,
-   * freezes observation while held, and fully republishes plus advances its
-   * commit generation at the control boundary where a hold releases. The
-   * static fallback (preview, no parameters) freezes the hold at 1.
+   * Emit the instance-specialized Blue host target. With the instrument's 151
+   * Parameters (catalog order, compilation variable names assigned), the
+   * generated code captures the 136 next-note values directly from
+   * `gk_blue_autoN` at note initialization and refreshes the 15-control live
+   * set only behind the instance epoch. The static fallback uses numeric
+   * literals for preview/CSD paths.
    */
   override generateInstrument(parameters?: Parameter[]): string {
-    // The CSD build always allocates transport tables via generateFTables;
-    // a bare generateInstrument (no prior allocation) falls back to a
-    // conventional table number so the wrapper text stays renderable.
-    const tableNum = this._transportTableIds?.[0] ?? 100;
-    const header = [
-      `; BlueX7 modern renderer host wrapper: ${this.getName()}`,
-      `; Blue pitch convention: p4 < 15 is a pch value, otherwise Hz.`,
-      'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
-      `iBlueX7OperatorMask = ${this._operatorMask}`,
-      'iBlueX7GateSeconds = abs(p3)',
-    ];
-
     const liveParameters =
       Array.isArray(parameters) &&
       parameters.length === BLUE_X7_PARAMETER_DESCRIPTORS.length &&
@@ -771,68 +761,29 @@ export class BlueX7 extends Instrument {
           parameter.getCompilationVarName(),
       );
 
-    if (!liveParameters) {
-      return [
-        ...header,
-        'kBlueX7StaticVoice[] init 155',
-        `kBlueX7StaticMask init ${this._operatorMask}`,
-        'kBlueX7StaticHold init 1',
-        `aout = bluex7_voice(iBlueX7MidiNote, p5, ${tableNum}, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7StaticVoice, kBlueX7StaticMask, kBlueX7StaticHold)`,
-        this._voice.csoundPostCode ?? '',
-        '',
-      ].join('\n');
-    }
-
-    const voiceSlotLines = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => {
-      if (descriptor.transport.kind !== 'voice') {
-        return null;
-      }
-      return `kLiveVoice[${descriptor.transport.slot}] = ${parameters![index].getCompilationVarName()!}`;
-    }).filter((line): line is string => line !== null);
-
-    const enableMaskExpression = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => {
-      if (descriptor.transport.kind !== 'operator-enable') {
-        return null;
-      }
-      return { bit: descriptor.transport.operator - 1, varName: parameters![index].getCompilationVarName()! };
-    })
-      .filter((entry): entry is { bit: number; varName: string } => entry !== null)
-      .sort((a, b) => a.bit - b.bit)
-      .map((entry) => (entry.bit === 0 ? entry.varName : `${2 ** entry.bit} * ${entry.varName}`))
-      .join(' + ');
-
-    return [
-      ...header,
-      `; live transport: hold channel ${this.getBlueX7HoldChannel()}, commit ${this.getBlueX7CommitChannel()}`,
-      `kBlueX7Hold chnget "${this.getBlueX7HoldChannel()}"`,
-      'kLiveVoice[] init 155',
-      `kLiveMask init ${this._operatorMask}`,
-      'kBlueX7HoldPrev init 0',
-      'kBlueX7Gen init 0',
-      'if (kBlueX7Hold == 0) then',
-      ...voiceSlotLines,
-      `kLiveMask = ${enableMaskExpression}`,
-      'kBlueX7Idx = 0',
-      `while kBlueX7Idx < 145 do`,
-      `  tabw kLiveVoice[kBlueX7Idx], kBlueX7Idx, ${tableNum}`,
-      '  kBlueX7Idx += 1',
-      'od',
-      'endif',
-      'if (kBlueX7HoldPrev == 1 && kBlueX7Hold == 0) then',
-      '  ; one complete republication at a single control boundary',
-      '  kBlueX7Full = 0',
-      `  while kBlueX7Full < 155 do`,
-      `    tabw kLiveVoice[kBlueX7Full], kBlueX7Full, ${tableNum}`,
-      '    kBlueX7Full += 1',
-      '  od',
-      '  kBlueX7Gen = kBlueX7Gen + 1',
-      `  chnset kBlueX7Gen, "${this.getBlueX7CommitChannel()}"`,
-      'endif',
-      'kBlueX7HoldPrev = kBlueX7Hold',
-      `aout = bluex7_voice(iBlueX7MidiNote, p5, ${tableNum}, iBlueX7OperatorMask, iBlueX7GateSeconds, kLiveVoice, kLiveMask, kBlueX7Hold)`,
-      this._voice.csoundPostCode ?? '',
-      '',
-    ].join('\n');
+    const transport = buildBlueX7VoiceTransport(
+      this._voice,
+      this._voice.common.operatorEnabled,
+    );
+    const targetParameters: BlueX7TargetParameter[] | undefined = liveParameters
+      ? BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor, index) => ({
+          key: descriptor.key,
+          symbol: parameters![index].getCompilationVarName()!,
+        }))
+      : undefined;
+    const hasActiveParameters = BLUE_X7_PARAMETER_DESCRIPTORS.some(
+      (descriptor) => descriptor.updateClass === 'active-note',
+    );
+    const target = generateBlueX7Target({
+      voice: transport.voice,
+      operatorMask: transport.operatorMask,
+      parameters: targetParameters,
+      changeStrategy: targetParameters && hasActiveParameters ? 'epoch' : undefined,
+      epochSymbol: targetParameters && hasActiveParameters
+        ? this.getBlueX7EpochSymbol()
+        : undefined,
+    });
+    return `${target}${this._voice.csoundPostCode ?? ''}\n`;
   }
 
   saveAsXML(): Element {

@@ -84,7 +84,8 @@ export function useBlueX7History(
 ): UseBlueX7HistoryResult {
   const [undoStack, setUndoStack] = useState<HistoryEntry[]>([]);
   const [redoStack, setRedoStack] = useState<HistoryEntry[]>([]);
-  const lastAssignmentIdRef = useRef<string>(instrument.assignmentId);
+  const ownerIdentity = instrument.ownerIdentity ?? instrument.assignmentId;
+  const lastAssignmentIdRef = useRef<string>(ownerIdentity);
   const currentVoiceSignature = voiceSignature(instrument.voice);
   const lastVoiceSignatureRef = useRef(currentVoiceSignature);
   const expectedVoiceSignatureRef = useRef<string | null>(null);
@@ -94,8 +95,8 @@ export function useBlueX7History(
   // Local patches set the pending flag immediately before notifying the host,
   // so optimistic local updates do not erase their own history.
   useEffect(() => {
-    if (lastAssignmentIdRef.current !== instrument.assignmentId) {
-      lastAssignmentIdRef.current = instrument.assignmentId;
+    if (lastAssignmentIdRef.current !== ownerIdentity) {
+      lastAssignmentIdRef.current = ownerIdentity;
       setUndoStack([]);
       setRedoStack([]);
       expectedVoiceSignatureRef.current = null;
@@ -112,7 +113,7 @@ export function useBlueX7History(
       }
     }
     lastVoiceSignatureRef.current = currentVoiceSignature;
-  }, [currentVoiceSignature, instrument.assignmentId, instrument.voice]);
+  }, [currentVoiceSignature, instrument.voice, ownerIdentity]);
 
   const applyPatch = useCallback(
     (description: string, patch: BlueX7Patch, extraPatch?: Partial<InstrumentPatch>) => {
@@ -144,10 +145,11 @@ export function useBlueX7History(
     const entry = undoStack[undoStack.length - 1];
     setUndoStack((prevUndo) => prevUndo.slice(0, -1));
     if (instrument.voice) {
+      const currentVoice = projectedLocalVoiceRef.current ?? instrument.voice;
       setRedoStack((prevRedo) => {
         const next = [
           ...prevRedo,
-          { description: entry.description, voice: cloneBlueX7Voice(instrument.voice!) },
+          { description: entry.description, voice: cloneBlueX7Voice(currentVoice) },
         ];
         return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
       });
@@ -167,10 +169,11 @@ export function useBlueX7History(
     const entry = redoStack[redoStack.length - 1];
     setRedoStack((prevRedo) => prevRedo.slice(0, -1));
     if (instrument.voice) {
+      const currentVoice = projectedLocalVoiceRef.current ?? instrument.voice;
       setUndoStack((prevUndo) => {
         const next = [
           ...prevUndo,
-          { description: entry.description, voice: cloneBlueX7Voice(instrument.voice!) },
+          { description: entry.description, voice: cloneBlueX7Voice(currentVoice) },
         ];
         return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
       });

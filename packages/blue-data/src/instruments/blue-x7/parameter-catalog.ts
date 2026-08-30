@@ -110,7 +110,7 @@ addEntry({
   maximum: 48,
   resolution: '1',
   kind: 'continuous-integer',
-  updateClass: 'active-note',
+  updateClass: 'next-note',
   transport: { kind: 'voice', slot: 144 },
   read: (v) => v.common.keyTranspose,
   write: (v, value) => {
@@ -148,7 +148,7 @@ addEntry({
   maximum: 99,
   resolution: '1',
   kind: 'continuous-integer',
-  updateClass: 'active-note',
+  updateClass: 'next-note',
   transport: { kind: 'voice', slot: 137 },
   read: (v) => v.lfo.speed,
   write: (v, value) => {
@@ -164,7 +164,7 @@ addEntry({
   maximum: 99,
   resolution: '1',
   kind: 'continuous-integer',
-  updateClass: 'active-note',
+  updateClass: 'next-note',
   transport: { kind: 'voice', slot: 138 },
   read: (v) => v.lfo.delay,
   write: (v, value) => {
@@ -212,7 +212,7 @@ addEntry({
   maximum: 5,
   resolution: '1',
   kind: 'categorical',
-  updateClass: 'active-note',
+  updateClass: 'next-note',
   transport: { kind: 'voice', slot: 142 },
   read: (v) => v.lfo.wave,
   write: (v, value) => {
@@ -244,7 +244,7 @@ addEntry({
   maximum: 7,
   resolution: '1',
   kind: 'continuous-integer',
-  updateClass: 'active-note',
+  updateClass: 'next-note',
   transport: { kind: 'voice', slot: 143 },
   read: (v) => v.operators[0].modulationPitch,
   write: (v, value) => {
@@ -265,7 +265,7 @@ for (const stage of [1, 2, 3, 4] as const) {
     maximum: 99,
     resolution: '1',
     kind: 'continuous-integer',
-    updateClass: 'active-note',
+    updateClass: 'next-note',
     transport: { kind: 'voice', slot: 125 + stage },
     read: (v) => v.pitchEnvelope[stage - 1].rate,
     write: (v, value) => {
@@ -280,7 +280,7 @@ for (const stage of [1, 2, 3, 4] as const) {
     maximum: 99,
     resolution: '1',
     kind: 'continuous-integer',
-    updateClass: 'active-note',
+    updateClass: 'next-note',
     transport: { kind: 'voice', slot: 129 + stage },
     read: (v) => v.pitchEnvelope[stage - 1].level,
     write: (v, value) => {
@@ -423,7 +423,7 @@ for (const operator of OPERATOR_KEYS) {
       maximum: spec.maximum,
       resolution: '1',
       kind: spec.kind,
-      updateClass: 'active-note',
+      updateClass: spec.key === 'outputLevel' ? 'active-note' : 'next-note',
       transport: { kind: 'voice', slot: (6 - operator) * 21 + spec.offset },
       read: (v) => spec.read(v.operators[operator - 1]),
       write: (v, value) => {

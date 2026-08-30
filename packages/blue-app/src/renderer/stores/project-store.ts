@@ -2394,6 +2394,26 @@ function cloneInstrumentSnapshotForMutation<T extends InstrumentSnapshot>(instru
   return { ...instrument };
 }
 
+function updateBlueX7OperatorEnableParameters(
+  instrument: BlueX7InstrumentSnapshot,
+  enabled: readonly boolean[],
+): void {
+  if (!instrument.parameters || enabled.length !== 6) {
+    return;
+  }
+  instrument.parameters = instrument.parameters.map((parameter) => {
+    const match = /^operator\.([1-6])\.enabled$/.exec(parameter.semanticKey);
+    if (!match) {
+      return parameter;
+    }
+    const operatorIndex = Number(match[1]) - 1;
+    return {
+      ...parameter,
+      fixedValue: enabled[operatorIndex] ? 1 : 0,
+    };
+  });
+}
+
 function cloneArrangementRowSnapshot(row: ArrangementRowSnapshot): ArrangementRowSnapshot {
   return { ...row };
 }
@@ -2536,13 +2556,20 @@ function updateInstrumentSnapshot(
       const v = x7.voice;
       switch (p.type) {
         case 'setCommonField':
-          v.common = { ...v.common, [p.field]: p.value };
+          if (p.field === 'operatorEnabled') {
+            const enabled = p.value as [boolean, boolean, boolean, boolean, boolean, boolean];
+            v.common = { ...v.common, operatorEnabled: [...enabled] };
+            updateBlueX7OperatorEnableParameters(x7, enabled);
+          } else {
+            v.common = { ...v.common, [p.field]: p.value };
+          }
           break;
         case 'setOperatorEnabled':
           if (p.operatorIndex >= 0 && p.operatorIndex < 6) {
             const nextEnabled = [...v.common.operatorEnabled] as [boolean, boolean, boolean, boolean, boolean, boolean];
             nextEnabled[p.operatorIndex] = p.enabled;
             v.common = { ...v.common, operatorEnabled: nextEnabled };
+            updateBlueX7OperatorEnableParameters(x7, nextEnabled);
           }
           break;
         case 'setLfoField':

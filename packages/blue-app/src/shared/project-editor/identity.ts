@@ -107,6 +107,14 @@ const MIXER_CHANNEL_IDS = new WeakMap<object, string>();
 const MIXER_ENTRY_IDS = new WeakMap<object, string>();
 let nextMixerSnapshotId = 1;
 
+export function getArrangementInstrumentOwnerIdentity(assignmentId: string): string {
+  return `arrangement:${assignmentId}`;
+}
+
+export function getTrackInstrumentOwnerIdentity(rootGroupId: string, trackId: string): string {
+  return `track:${rootGroupId}:${trackId}`;
+}
+
 
 export function assignMixerSnapshotId(
   map: WeakMap<object, string>,

@@ -13,7 +13,7 @@ import { Parameter } from "../automation/parameter";
 import { Instrument } from "../instruments/instrument";
 import { GenericInstrument } from "../instruments/generic-instrument";
 import { CompileData } from "../compile-data";
-import type { CompiledMidiInstrumentTarget } from "../compile-data";
+import type { CompiledBlueX7Binding, CompiledMidiInstrumentTarget } from "../compile-data";
 import { Effect } from "../mixer/effect";
 import { EffectsChain } from "../mixer/effects-chain";
 import { Channel } from "../mixer/channel";
@@ -51,6 +51,13 @@ export type RenderCsdResult = {
   * project identity. Derived render output only; never serialized to XML.
   */
   midiInstrumentTargets: readonly CompiledMidiInstrumentTarget[];
+  /**
+   * Spec 092 disposable compiled BlueX7 bindings for this render: owner
+   * identity -> direct-global parameter channels and per-instance domain epoch.
+   * Derived render output only; never serialized to XML. Empty
+   * when the project has no BlueX7 instruments.
+   */
+  blueX7Bindings: readonly CompiledBlueX7Binding[];
 };
 
 type BlueDataCsdState = {
@@ -300,6 +307,7 @@ export function buildStandardCSD(blueData: BlueData, profile: CsdRenderProfile, 
       parameters: allParameters,
       stringChannels: allStringChannels,
       midiInstrumentTargets: [],
+      blueX7Bindings: compileData.getBlueX7Bindings(),
     };
   } catch (error) {
     generationError = error;
@@ -543,6 +551,7 @@ export async function buildStandardCSDAsync(
       parameters: allParameters,
       stringChannels: allStringChannels,
       midiInstrumentTargets: [],
+      blueX7Bindings: compileData.getBlueX7Bindings(),
     };
   } catch (error) {
     generationError = error;
@@ -714,6 +723,7 @@ export function toBlueLiveCSD(blueData: BlueData, session?: JavaScriptSession): 
       parameters: compileData.getOriginalParameters(),
       stringChannels: compileData.getStringChannels(),
       midiInstrumentTargets,
+      blueX7Bindings: compileData.getBlueX7Bindings(),
     };
   } catch (error) {
     generationError = error;
@@ -892,9 +902,10 @@ function collectAlwaysOnInstruments(blueData: BlueData,
 
     const instr = ia.instr as any;
     let compiled = "";
+    const instrParams = parameterMap.get(ia.instr);
 
     if (typeof instr.generateAlwaysOnInstrument === "function") {
-      compiled = instr.generateAlwaysOnInstrument() ?? "";
+      compiled = instr.generateAlwaysOnInstrument(instrParams) ?? "";
     }
 
     if (!compiled && typeof instr.getAlwaysOnInstrumentText === "function") {
@@ -903,7 +914,6 @@ function collectAlwaysOnInstruments(blueData: BlueData,
         continue;
       }
 
-      const instrParams = parameterMap.get(ia.instr);
       const unit = new BSBCompilationUnit();
       if (typeof instr.getGraphicInterface === "function") {
         instr.getGraphicInterface().collectReplacements(unit, instrParams);

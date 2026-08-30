@@ -18,6 +18,12 @@ import {
   compileBlueX7ProjectFixtures,
 } from './blue-x7-runtime-sync-test-support';
 import type { CompiledBlueX7Binding } from '@blue/data';
+import {
+  clearActiveBlueX7Bindings,
+  getActiveBlueX7Binding,
+  invalidateActiveBlueX7Binding,
+  setActiveBlueX7Bindings,
+} from './blue-x7-engine-sync';
 
 /** Duck-typed parameter access for instruments stored as base `Instrument`. */
 function instrParameters(instr: unknown): import('@blue/data').Parameter[] {
@@ -129,6 +135,24 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
   const data = fixture.data;
   const bindings = fixture.bindings;
 
+  it('invalidates delete/disable/replacement owners without disturbing peers and replaces on rebuild', () => {
+    const fourOwner = compileBlueX7ProjectFixtures({ arrangementInstruments: 2, trackInstruments: 2 });
+    setActiveBlueX7Bindings([...fourOwner.bindings.values()]);
+    invalidateActiveBlueX7Binding('arrangement:1');
+    expect(getActiveBlueX7Binding('arrangement:1')).toBeUndefined();
+    expect(getActiveBlueX7Binding('arrangement:2')).toBeDefined();
+    expect(getActiveBlueX7Binding(
+      `track:${fourOwner.rootGroupIds[0]}:${fourOwner.trackIds[0]}`,
+    )).toBeDefined();
+
+    setActiveBlueX7Bindings([...fourOwner.bindings.values()]);
+    expect(getActiveBlueX7Binding('arrangement:1')).toBeDefined();
+    clearActiveBlueX7Bindings();
+    expect([...fourOwner.bindings.keys()].every(
+      (ownerIdentity) => getActiveBlueX7Binding(ownerIdentity) === undefined,
+    )).toBe(true);
+  });
+
   it('resolves arrangement and Track owners by identity even with duplicate names', () => {
     const env = createEnvironment({ data, bindings, sessionId: 7 });
     const arrangementOwner = env.resolveOwner(assignmentTarget('1'));
@@ -178,6 +202,54 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     expect(env.writeLog).toHaveLength(0);
   });
 
+  it('fails closed with a recoverable diagnostic and zero writes when no compiled binding exists (FR-023)', async () => {
+    // Owner and parameters resolve, but the engine holds no compiled binding
+    // for the owner (for example an edit racing an engine rebuild). Every
+    // entry point must refuse with a recoverable diagnostic and write nothing.
+    const env = createEnvironment({ data, bindings: new Map(), sessionId: 7 });
+
+    const live = await applyBlueX7LiveUpdate(
+      env,
+      liveUpdate({ target: assignmentTarget('1'), parameterId: liveParameterId(data, 'common.feedback') }),
+    );
+    expect(live.status).toBe('error');
+    if (live.status === 'error') {
+      expect(live.reason).toBe('binding-not-found');
+      expect(live.message).toContain('arrangement:1');
+    }
+    expect(env.writeLog).toHaveLength(0);
+
+    const owner = env.resolveOwner(assignmentTarget('1'))!;
+    const batch: BlueX7RuntimeUpdateBatch = {
+      projectSessionId: 7,
+      owner: assignmentTarget('1'),
+      mode: 'complete-voice',
+      values: owner.getParameters().map((parameter) => ({
+        parameterId: parameter.getUniqueId(),
+        value: parameter.getValue(0),
+      })),
+    };
+    const applied = await applyBlueX7CompleteVoiceBatch(env, batch);
+    expect(applied.ok).toBe(false);
+    if (!applied.ok) {
+      expect(applied.reason).toBe('binding-not-found');
+      expect(applied.message).toContain('arrangement:1');
+    }
+    expect(env.writeLog).toHaveLength(0);
+
+    // Effective-value readback for an open editor fails closed the same way.
+    const readback = await requestBlueX7EffectiveValues(env, {
+      target: assignmentTarget('1'),
+      projectSessionId: 7,
+      parameterIds: [liveParameterId(data, 'common.feedback')],
+    });
+    expect(readback.ok).toBe(false);
+    if (!readback.ok) {
+      expect(readback.reason).toBe('binding-not-found');
+    }
+    expect(env.writeLog).toHaveLength(0);
+  });
+
   it('keeps automation authoritative during playback and skips engine writes while stopped', async () => {
     const feedbackParam = instrParameters(
       data.getArrangement().getArrangement()[0].instr,
@@ -204,7 +276,7 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     expect(stopped.writeLog).toHaveLength(0);
   });
 
-  it('applies whole-voice batches in hold -> values -> release order', async () => {
+  it('applies whole-voice batches as one complete engine request', async () => {
     const env = createEnvironment({ data, bindings, sessionId: 7 });
     const owner = env.resolveOwner(assignmentTarget('1'))!;
     const parameters = owner.getParameters();
@@ -220,14 +292,57 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
 
     const applied = await applyBlueX7CompleteVoiceBatch(env, batch);
     expect(applied.ok).toBe(true);
-    expect(env.writeLog).toHaveLength(3);
-    expect(env.writeLog[0]).toHaveLength(1);
-    expect(env.writeLog[0][0].value).toBe(1); // hold
-    expect(env.writeLog[1]).toHaveLength(151); // complete validated snapshot
-    expect(env.writeLog[2][0].value).toBe(0); // release
-    const holdChannel = bindings.get('arrangement:1')!.holdChannel;
-    expect(env.writeLog[0][0].name).toBe(holdChannel);
-    expect(env.writeLog[2][0].name).toBe(holdChannel);
+    expect(env.writeLog).toHaveLength(1);
+    expect(env.writeLog[0]).toHaveLength(151);
+    expect(env.writeLog[0].every((entry) => entry.name.startsWith('gk_blue_auto'))).toBe(true);
+  });
+
+  it('exposes only old or new complete snapshots across 100 whole-voice operations', async () => {
+    const env = createEnvironment({ data, bindings, sessionId: 7 });
+    const owner = env.resolveOwner(assignmentTarget('1'))!;
+    const parameters = owner.getParameters();
+    const binding = bindings.get('arrangement:1')!;
+    const channelState = new Map(
+      parameters.map((parameter) => [
+        binding.parameterChannels.get(parameter.getName())!,
+        parameter.getFixedValue(),
+      ]),
+    );
+    const oldSnapshot = parameters.map((parameter) => parameter.getFixedValue());
+    const newSnapshot = [...oldSnapshot];
+    const feedbackIndex = parameters.findIndex((parameter) => parameter.getName() === 'common.feedback');
+    newSnapshot[feedbackIndex] = oldSnapshot[feedbackIndex] === 7 ? 0 : 7;
+    const observations: number[][] = [oldSnapshot];
+    env.writeChannels = async (entries) => {
+      for (const entry of entries) {
+        channelState.set(entry.name, entry.value);
+      }
+      observations.push(parameters.map((parameter) => (
+        channelState.get(binding.parameterChannels.get(parameter.getName())!)!
+      )));
+      return { ok: true, message: '' };
+    };
+
+    for (let operation = 0; operation < 100; operation += 1) {
+      const expected = operation % 2 === 0 ? newSnapshot : oldSnapshot;
+      const result = await applyBlueX7CompleteVoiceBatch(env, {
+        projectSessionId: 7,
+        owner: assignmentTarget('1'),
+        mode: 'complete-voice',
+        values: parameters.map((parameter, index) => ({
+          parameterId: parameter.getUniqueId(),
+          value: expected[index]!,
+        })),
+      });
+      expect(result.ok).toBe(true);
+    }
+
+    expect(observations).toHaveLength(101);
+    for (const observed of observations) {
+      expect(observed).toEqual(
+        observed[feedbackIndex] === oldSnapshot[feedbackIndex] ? oldSnapshot : newSnapshot,
+      );
+    }
   });
 
   it('rejects incomplete or invalid whole-voice batches without writing', async () => {
@@ -258,13 +373,16 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     expect(env.writeLog).toHaveLength(0);
   });
 
-  it('clears the hold when a staged batch write fails mid-flight', async () => {
-    const env = createEnvironment({
-      data,
-      bindings,
-      sessionId: 7,
-      failWritesFor: ['gk_blue_auto5'],
-    });
+  it('keeps the previous voice observable when the atomic batch is rejected', async () => {
+    const env = createEnvironment({ data, bindings, sessionId: 7 });
+    const binding = bindings.get('arrangement:1')!;
+    env.writeChannels = async (entries) => {
+      env.writeLog.push([...entries]);
+      if (entries.length === 151) {
+        return { ok: false, message: 'engine rejected the complete batch' };
+      }
+      return { ok: true, message: '' };
+    };
     const owner = env.resolveOwner(assignmentTarget('1'))!;
     const parameters = owner.getParameters();
     const result = await applyBlueX7CompleteVoiceBatch(env, {
@@ -277,11 +395,13 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       })),
     });
     expect(result.ok).toBe(false);
-    // hold, values (failed), then the best-effort hold clear
-    expect(env.writeLog).toHaveLength(2);
-    const holdChannel = bindings.get('arrangement:1')!.holdChannel;
-    expect(env.writeLog[1][0].name).toBe(holdChannel);
-    expect(env.writeLog[1][0].value).toBe(0);
+    // The engine sees one immutable request; no hold/release cleanup can
+    // expose a hybrid snapshot after the request is rejected.
+    expect(env.writeLog).toHaveLength(1);
+    expect(env.writeLog[0]).toHaveLength(151);
+    expect(env.writeLog[0]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: binding.parameterChannels.get('common.algorithm') }),
+    ]));
   });
 
   it('returns explicit unavailable readback results and never crosses owners', async () => {
@@ -386,6 +506,63 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
       for (const channel of set) {
         expect(written.has(channel)).toBe(false);
       }
+    }
+
+    const ownerTargets = [
+      assignmentTarget('1'),
+      assignmentTarget('2'),
+      trackTarget(3, fourOwner.rootGroupIds[0], fourOwner.trackIds[0]),
+      trackTarget(3, fourOwner.rootGroupIds[1], fourOwner.trackIds[1]),
+    ];
+    const resolvedOwners = ownerTargets.map((target) => env2.resolveOwner(target)!);
+    for (const owner of resolvedOwners) {
+      owner.getParameters().find((parameter) => parameter.getName() === 'common.feedback')!
+        .setAutomationEnabled(true);
+    }
+    env2.writeLog.length = 0;
+    for (let index = 0; index < 600; index += 1) {
+      const ownerIndex = index % 4;
+      const owner = resolvedOwners[ownerIndex]!;
+      const automated = index % 10 === 0;
+      const semanticKey = automated ? 'common.feedback' : 'lfo.speed';
+      const parameter = owner.getParameters().find((candidate) => candidate.getName() === semanticKey)!;
+      const result = await applyBlueX7LiveUpdate(env2, liveUpdate({
+        target: ownerTargets[ownerIndex]!,
+        projectSessionId: 3,
+        parameterId: parameter.getUniqueId(),
+        semanticKey,
+        value: index % 100,
+      }));
+      expect(result.status).toBe(automated ? 'skip' : 'ok');
+      if (!automated) {
+        const expectedChannel = fourOwner.bindings.get(owner.ownerIdentity)!
+          .parameterChannels.get(semanticKey)!;
+        expect(env2.writeLog.at(-1)).toEqual([{ name: expectedChannel, value: index % 100 }]);
+      }
+    }
+    expect(env2.writeLog).toHaveLength(540);
+
+    const readValues = new Map<string, number>();
+    resolvedOwners.forEach((owner, index) => {
+      const channel = fourOwner.bindings.get(owner.ownerIdentity)!.parameterChannels.get('common.feedback')!;
+      readValues.set(channel, 20 + index);
+    });
+    const readEnv = createEnvironment({
+      data: fourOwner.data,
+      bindings: fourOwner.bindings,
+      sessionId: 3,
+      readValues,
+    });
+    for (let index = 0; index < resolvedOwners.length; index += 1) {
+      const parameter = resolvedOwners[index]!.getParameters().find(
+        (candidate) => candidate.getName() === 'common.feedback',
+      )!;
+      const result = await requestBlueX7EffectiveValues(readEnv, {
+        target: ownerTargets[index]!,
+        projectSessionId: 3,
+        parameterIds: [parameter.getUniqueId()],
+      });
+      expect(result.ok && result.values[0]!.value).toBe(20 + index);
     }
   });
 });

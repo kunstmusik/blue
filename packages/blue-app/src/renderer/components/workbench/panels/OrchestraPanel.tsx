@@ -3,6 +3,8 @@ import { getProjectDocumentRevision, useProjectStore } from '../../../stores/pro
 import ArrangementPanel from './orchestra/ArrangementPanel';
 import InstrumentEditorPanel from './orchestra/InstrumentEditorPanel';
 import SplitPane from './orchestra/SplitPane';
+import { usePlaybackStore } from '../../../stores/playback-store';
+import { useBlueLiveStore } from '../../../stores/blue-live-store';
 
 function EmptyOrchestraState(): React.ReactElement {
   return (
@@ -23,6 +25,8 @@ export default function OrchestraPanel(): React.ReactElement {
   const rows = useProjectStore((state) => state.orchestra.arrangement.rows);
   const projectUdos = useProjectStore((state) => state.projectUdos);
   const updateOrchestra = useProjectStore((state) => state.updateOrchestra);
+  const playbackRunning = usePlaybackStore((state) => state.isPlaying);
+  const blueLiveRunning = useBlueLiveStore((state) => state.running);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,6 +86,11 @@ export default function OrchestraPanel(): React.ReactElement {
             instrument={selectedInstrument}
             projectUdos={projectUdos}
             onOrchestraPatch={updateOrchestra}
+            blueX7Runtime={selectedInstrument?.type === 'blueX7' ? {
+              target: { assignmentId: selectedInstrument.assignmentId },
+              projectSessionId,
+              enabled: playbackRunning || blueLiveRunning,
+            } : undefined}
             embeddedUdoTarget={selectedInstrument ? {
               projectSessionId,
               projectRevision,

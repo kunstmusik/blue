@@ -3,6 +3,7 @@ import {
   TrackLayer,
   TrackLayerGroup,
   BlueData,
+  BlueX7,
   BlueSynthBuilder,
   BSBKnob,
   GenericInstrument,
@@ -106,5 +107,44 @@ describe('syncCompiledRuntimeParameterNames', () => {
 
     expect(sync.liveCount).toBe(sync.compiledCount);
     expect(liveParameter.getCompilationVarName()).toBe('gk_blue_auto0');
+  });
+
+  it('reconciles arrangement and Track BlueX7 names again after an engine rebuild', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const arrangementInstrument = new BlueX7();
+    data.getArrangement().addInstrument(arrangementInstrument, '4');
+    const group = new TrackLayerGroup();
+    const track = group.newLayerAt(0);
+    const source = new BlueX7();
+    source.setEnabled(true);
+    track.setInstrument(source);
+    data.getScore().push(group);
+    const trackInstrument = track.getInstrument() as BlueX7;
+
+    const firstRender = data.toRealtimePlaybackCSD();
+    const first = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      firstRender.parameters,
+      data.getScore(),
+    );
+    expect(first.liveCount).toBe(first.compiledCount);
+    expect(arrangementInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto0');
+    expect(trackInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto151');
+
+    for (const parameter of [...arrangementInstrument.getParameters(), ...trackInstrument.getParameters()]) {
+      parameter.setCompilationVarName('');
+    }
+    const rebuilt = data.toRealtimePlaybackCSD();
+    const second = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      rebuilt.parameters,
+      data.getScore(),
+    );
+    expect(second.liveCount).toBe(second.compiledCount);
+    expect(arrangementInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto0');
+    expect(trackInstrument.getParameters()[0]!.getCompilationVarName()).toBe('gk_blue_auto151');
   });
 });

@@ -12,6 +12,7 @@
 #include <cstdint>
 #endif
 #include <cstdio>
+#include <cmath>
 #include <cstring>
 #include <functional>
 #include <utility>
@@ -287,6 +288,7 @@ void CsoundEngine::destroy() {
   {
     std::lock_guard<std::mutex> lock(channelMutex_);
     pendingChannelValues_.clear();
+    pendingChannelBatches_.clear();
   }
 
   {
@@ -372,33 +374,95 @@ bool CsoundEngine::createChannel(const std::string &name, double initialValue) {
 }
 
 bool CsoundEngine::setChannel(const std::string &name, double value) {
+  return setChannels({{name, value}});
+}
+
+bool CsoundEngine::setChannels(
+    const std::vector<std::pair<std::string, double>> &entries) {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+
   if (!csound_) {
     setLastError("Engine not created");
     return false;
   }
-
-  if (name.empty()) {
-    setLastError("Channel name cannot be empty");
+  if (entries.empty()) {
+    setLastError("Batch channel set cannot be empty");
     return false;
   }
 
-  if (running_.load() && hasActiveAutomation(name)) {
-    setLastError("Cannot set automated channel during playback: " + name);
-    return false;
+  const bool running = running_.load();
+  for (size_t index = 0; index < entries.size(); ++index) {
+    const auto &[name, value] = entries[index];
+    if (name.empty()) {
+      setLastError("Channel name cannot be empty");
+      return false;
+    }
+    if (!std::isfinite(value)) {
+      setLastError("Channel value must be finite");
+      return false;
+    }
+    for (size_t previous = 0; previous < index; ++previous) {
+      if (entries[previous].first == name) {
+        setLastError("Batch payload contains duplicate channel name");
+        return false;
+      }
+    }
+    if (running && hasActiveAutomation(name)) {
+      setLastError("Cannot set automated channel during playback: " + name);
+      return false;
+    }
   }
 
-  bool hasLiveChannel = false;
+  if (running) {
+    std::lock_guard<std::mutex> channelLock(channelMutex_);
+    for (const auto &[name, value] : entries) {
+      (void)value;
+      if (controlChannels_.find(name) == controlChannels_.end()) {
+        setLastError("Channel not found: " + name);
+        return false;
+      }
+    }
+  }
+
+  // All validation, including live-channel applicability and automation
+  // authority, completes before the first value is applied or enqueued.
+  std::vector<std::pair<std::string, double>> directEntries;
+  bool queueFull = false;
   {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    pendingChannelValues_[name] = value;
-    hasLiveChannel = controlChannels_.find(name) != controlChannels_.end();
+    std::lock_guard<std::mutex> channelLock(channelMutex_);
+    if (running) {
+      queueFull = pendingChannelBatches_.size() >= kMaxPendingChannelBatches;
+      if (!queueFull) {
+        for (const auto &[name, value] : entries) {
+          pendingChannelValues_[name] = value;
+        }
+        pendingChannelBatches_.emplace_back(entries.begin(), entries.end());
+      }
+    } else {
+      for (const auto &[name, value] : entries) {
+        pendingChannelValues_[name] = value;
+        // Before the performance thread starts, applying directly preserves
+        // the existing initialization semantics. During playback all Csound
+        // setters happen in applyPendingChannelBatches() on the perform thread.
+        if (controlChannels_.find(name) != controlChannels_.end()) {
+          directEntries.emplace_back(name, value);
+        }
+      }
+    }
+  }
+  if (queueFull) {
+    setLastError("Channel batch queue is full; retry at the next control boundary");
+    return false;
+  }
+  if (!running) {
+    for (const auto &[name, value] : directEntries) {
+      CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
+    }
+    for (const auto &[name, value] : entries) {
+      mirrorChannelValue(name, value);
+    }
   }
 
-  if (hasLiveChannel) {
-    CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
-  }
-
-  mirrorChannelValue(name, value);
   clearLastError();
   return true;
 }
@@ -520,6 +584,15 @@ void CsoundEngine::joinPerformThread(bool preservePerformanceState) {
   } else {
     running_.store(false, std::memory_order_release);
     preservePerformanceState_.store(false, std::memory_order_release);
+  }
+
+  // A batch accepted immediately before stop may not have reached a perform
+  // boundary. Its latest values remain in pendingChannelValues_ and are
+  // re-applied by start()/compileOrc(); discard the stale queue envelope so
+  // an old batch cannot replay after a rebuild.
+  {
+    std::lock_guard<std::mutex> lock(channelMutex_);
+    pendingChannelBatches_.clear();
   }
 }
 
@@ -789,6 +862,14 @@ void CsoundEngine::performThread() {
 #endif
 
     const int result = CsoundLoader::csoundPerformKsmps(csound_);
+
+    // Accepted live channel batches become visible only at this boundary:
+    // Csound has completed the previous k-cycle, and the next automation /
+    // performance cycle will observe every entry from a batch together. A
+    // failed/completed perform must not apply a batch after Csound has stopped.
+    if (result == 0) {
+      applyPendingChannelBatches();
+    }
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     const auto afterPerformKsmps = Clock::now();
@@ -1295,6 +1376,38 @@ void CsoundEngine::applyPendingChannelValues() {
   for (const auto &[name, value] : valuesToApply) {
     CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
     mirrorChannelValue(name, value);
+  }
+}
+
+void CsoundEngine::applyPendingChannelBatches() {
+  std::deque<ChannelBatch> batches;
+  {
+    std::lock_guard<std::mutex> lock(channelMutex_);
+    batches.swap(pendingChannelBatches_);
+  }
+
+  for (const auto &batch : batches) {
+    bool available = true;
+    std::string missingChannel;
+    {
+      std::lock_guard<std::mutex> lock(channelMutex_);
+      for (const auto &[name, value] : batch) {
+        (void)value;
+        if (controlChannels_.find(name) == controlChannels_.end()) {
+          available = false;
+          missingChannel = name;
+          break;
+        }
+      }
+    }
+    if (!available) {
+      setLastError("Channel disappeared before queued batch application: " + missingChannel);
+      continue;
+    }
+    for (const auto &[name, value] : batch) {
+      CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
+      mirrorChannelValue(name, value);
+    }
   }
 }
 

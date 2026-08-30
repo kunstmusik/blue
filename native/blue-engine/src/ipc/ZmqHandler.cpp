@@ -448,16 +448,15 @@ bool ZmqHandler::processOne() {
                     resp = Response::error(errorMessage);
                     break;
                 }
-                bool applied = true;
+                std::vector<std::pair<std::string, double>> channelValues;
+                channelValues.reserve(entries.size());
                 for (const auto& entry : entries) {
-                    if (!engine_.setChannel(entry.name, entry.value)) {
-                        resp = Response::error(engine_.getLastError());
-                        applied = false;
-                        break;
-                    }
+                    channelValues.emplace_back(entry.name, entry.value);
                 }
-                if (applied) {
+                if (engine_.setChannels(channelValues)) {
                     resp = Response::ok();
+                } else {
+                    resp = Response::error(engine_.getLastError());
                 }
                 break;
             }

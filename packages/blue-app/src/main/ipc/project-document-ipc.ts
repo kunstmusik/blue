@@ -7,6 +7,7 @@ import {
 export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   'get-project-document',
   'commit-project-document-patches',
+  'blue-x7-effective-values',
   'update-project-document',
   'read-audio-file-bytes',
   'read-authorized-audio-file-bytes',

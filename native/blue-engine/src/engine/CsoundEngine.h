@@ -3,6 +3,7 @@
 #include "csound/CsoundTypes.h"
 #include <atomic>
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -125,6 +126,7 @@ public:
   bool readScore(const std::string &sco);
   bool createChannel(const std::string &name, double initialValue);
   bool setChannel(const std::string &name, double value);
+  bool setChannels(const std::vector<std::pair<std::string, double>> &entries);
   bool getChannel(const std::string &name, double &value);
 
   bool start();
@@ -154,6 +156,7 @@ private:
   bool rebuildControlChannelCache();
   void clearControlChannelCache();
   void applyPendingChannelValues();
+  void applyPendingChannelBatches();
   void syncSharedMemoryFromChannels();
   void syncSharedMemoryFromChannels(
       std::shared_ptr<const RuntimeChannelBindingSnapshot> &cachedBindings,
@@ -189,6 +192,9 @@ private:
   std::atomic<uint64_t> channelBindingGeneration_{1};
   std::shared_ptr<const RuntimeChannelBindingSnapshot> runtimeChannelBindings_;
   std::unordered_map<std::string, double> pendingChannelValues_;
+  using ChannelBatch = std::vector<std::pair<std::string, double>>;
+  static constexpr size_t kMaxPendingChannelBatches = 128;
+  std::deque<ChannelBatch> pendingChannelBatches_;
   mutable std::mutex stateMutex_;
   EngineLifecycleState state_ = EngineLifecycleState::EMPTY;
   EngineStopReason stopReason_ = EngineStopReason::NONE;

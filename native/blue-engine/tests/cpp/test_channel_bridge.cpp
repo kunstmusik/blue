@@ -191,11 +191,65 @@ void testBatchChannelCommandsThroughHandler(blue::CsoundEngine& engine) {
   require(a == 1.5 && b == -2.25 && c == 99.125,
           "batch get values must correspond exactly to request order");
 
+  // Once the Csound channels are live, a batch must preflight every target
+  // before applying any value. A late missing or automated channel must not
+  // leave the earlier channel changed.
+  require(batchEngine.compileOrc(R"(
+sr = 48000
+ksmps = 32
+nchnls = 2
+0dbfs = 1
+
+gk_bx7_a init 0
+gk_bx7_a chnexport "bx7-a", 3
+gk_bx7_b init 0
+gk_bx7_b chnexport "bx7-b", 3
+
+instr 1
+    aout init 0
+    out aout, aout
+endin
+)"),
+          batchEngine.getLastError());
+  auto batchStore = batchEngine.getAutomationStore();
+  require(batchStore->createAutomation(
+              "bx7-b", blue::AutomationCurve::LINEAR,
+              {{0.0, 0.0}, {5.0, 1.0}}, true, "-1", nullptr)
+              == blue::AutomationPrepareError::Ok,
+          "failed to create batch automation");
+  require(batchEngine.readScore("i1 0 5"), batchEngine.getLastError());
+  require(batchEngine.start(), batchEngine.getLastError());
+
+  auto missingLiveChannel = batchRoundTrip(
+      handler, controlEndpoint,
+      makeProtocolRequest(
+          blue::Command::BATCH_SET_CHANNELS,
+          makeBatchSetPayload({{"bx7-a", 9.0}, {"bx7-missing", 3.0}})));
+  require(missingLiveChannel.transportOk
+              && missingLiveChannel.status == static_cast<uint8_t>(blue::Status::ERROR),
+          "batch set must reject a missing live channel");
+  double unchangedValue = 0.0;
+  require(batchEngine.getChannel("bx7-a", unchangedValue), batchEngine.getLastError());
+  require(approxEqual(unchangedValue, 1.5),
+          "missing-channel rejection must not apply an earlier batch value");
+
+  auto automatedLateChannel = batchRoundTrip(
+      handler, controlEndpoint,
+      makeProtocolRequest(
+          blue::Command::BATCH_SET_CHANNELS,
+          makeBatchSetPayload({{"bx7-a", 8.0}, {"bx7-b", 4.0}})));
+  require(automatedLateChannel.transportOk
+              && automatedLateChannel.status == static_cast<uint8_t>(blue::Status::ERROR),
+          "batch set must reject a later automated channel");
+  require(batchEngine.getChannel("bx7-a", unchangedValue), batchEngine.getLastError());
+  require(approxEqual(unchangedValue, 1.5),
+          "automation rejection must not apply an earlier batch value");
+
   // single-channel commands remain wire-compatible alongside the batch pair
   double directValue = 0.0;
-  require(batchEngine.getChannel("bx7-b", directValue),
+  require(batchEngine.getChannel("bx7-a", directValue),
           batchEngine.getLastError());
-  require(approxEqual(directValue, -2.25),
+  require(approxEqual(directValue, 1.5),
           "batch-set value must be readable through GET_CHANNEL");
 
   batchEngine.stop();

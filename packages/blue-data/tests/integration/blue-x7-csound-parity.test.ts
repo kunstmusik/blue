@@ -16,8 +16,8 @@ import { BLUE_X7_PARAMETER_DESCRIPTORS } from '../../src/instruments/blue-x7/par
  * arrangement instruments:
  * - the shared modern synthesis module is emitted exactly once;
  * - the legacy per-algorithm Pinkston bodies and static tables are gone;
- * - every BlueX7 owns the 151-Parameter catalog with distinct per-instance
- *   transport table allocations;
+ * - every BlueX7 owns the 151-Parameter catalog and reads direct compiled
+ *   globals without a transport-table publication path;
  * - Blue host-boundary conventions (pitch conversion, post code, mixer
  *   accumulation) remain intact.
  */
@@ -55,17 +55,14 @@ describe('BlueX7 modern CSD generation — TimewaveCanon regression', () => {
     expect(generatedCsd.match(/opcode dx7_render_algorithm\(/g)?.length).toBe(1);
     expect(generatedCsd.match(/giBlueX7OutputCalibration init 0\.75/g)?.length).toBe(1);
 
-    // The modern module is emitted once; per-instance state is scoped to the
-    // independent transport tables (main + staging per instrument).
-    const transportTableLines = generatedCsd.match(/f \d+ 0 256 -2 [^\n]+/g) ?? [];
-    expect(transportTableLines.length).toBeGreaterThanOrEqual(6); // 3 instruments x 2 tables
-    const tableNumbers = new Set(
-      transportTableLines.map((line) => Number(line.split(/\s+/)[1])),
-    );
-    expect(tableNumbers.size).toBe(transportTableLines.length);
+    // The modern module is emitted once; live values are direct globals and
+    // no BlueX7 transport table is published or read.
+    expect(generatedCsd).not.toMatch(/f \d+ 0 256 -2 [^\n]+/g);
+    expect(generatedCsd).not.toContain('tabw');
+    expect(generatedCsd).not.toContain('chnget');
 
     // Host wrappers appear per instrument with the Blue pitch conversion and
-    // per-instance table references.
+    // direct-global voice targets.
     const wrappers = generatedCsd.match(/iBlueX7MidiNote = \(p4 < 15 \? ftom:i\(cpspch:i\(p4\)\) : ftom:i\(p4\)\)/g) ?? [];
     expect(wrappers.length).toBe(3);
 

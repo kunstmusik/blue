@@ -38,9 +38,9 @@ The current `bluex7.orc` is well suited as the synthesis core but not yet as the
 
 **Decision**: Import only the checksum-pinned `bluex7.orc` from `dx7-emulation`, record that baseline, and then maintain/adapt the Csound source in this repository. Use a small Blue-owned deterministic bundler to produce the browser-safe TypeScript artifact. Do not retain a build/runtime dependency on the precursor checkout.
 
-**Evidence**: The artifact is already self-contained and its public UDO is the useful integration boundary. Active-note Parameter behavior requires substantial Blue-specific changes, so the imported file is a starting source rather than an immutable generated deliverable.
+**Evidence**: The artifact is already self-contained and its public UDO is a useful behavioral reference interface. Active-note Parameter behavior and realtime performance require substantial Blue-specific changes, so neither the imported file nor its UDO layout is an immutable production deliverable.
 
-**Consequence**: Git history and `provenance.json` retain the exact imported digest while later edits belong to this feature. Blue CI checks the maintained `.orc` against the generated TypeScript module. The precursor generator, UDO fragments, ROM bank, demos, renders, and unrelated validation tooling are not imported.
+**Consequence**: Git history and `provenance.json` retain the exact imported digest while later edits belong to this feature. Blue CI checks the maintained behavioral source and deterministic TypeScript generator outputs. The precursor generator, UDO fragments, ROM bank, demos, renders, and unrelated validation tooling are not imported.
 
 **Attribution/license handling**: The project owner authorizes reuse of the original precursor work. The imported source still contains portions adapted or transcribed from Google MSFA (Apache-2.0) and behavior cross-checked against Dexed and legacy Blue/Pinkston sources. Preserve the applicable MSFA license/copyright notices, distinguish reference-only projects from incorporated expression, and credit the precursor and relevant projects. No ROM SysEx data is imported.
 
@@ -109,7 +109,7 @@ User labels can be friendlier (`Operator 1 / Envelope / R1`). Parameter unique I
 
 ## Decision 4: Keep voice and Parameter state synchronized without split ownership
 
-**Decision**: The BlueX7 voice remains the canonical preset shape; its Parameter list is the canonical automation/fixed-value projection. A single mutation updates both representations. The 155-value engine table is derived transport only.
+**Decision**: The BlueX7 voice remains the canonical preset shape; its Parameter list is the canonical automation/fixed-value projection. A single mutation updates both representations. The 155-value projection is derived mapping/test data only; the live target uses compiled globals directly.
 
 Rules:
 
@@ -168,7 +168,7 @@ The wrapper converts Blue's established p4 pitch into Hz and then fractional MID
 
 The existing UDO cannot make any table-backed value live because it reads all voice inputs at i-rate. The revised boundary should classify values rather than letting implementation accidents define behavior.
 
-Recommended semantics:
+Implemented semantics:
 
 | Class | Behavior |
 |---|---|
@@ -176,22 +176,22 @@ Recommended semantics:
 | Active-note discrete | Switch at a control boundary with range validation and bounded transition behavior |
 | Next-note | Update the instance immediately, but existing notes retain the state captured when they began; the next note uses the new value |
 
-Initial next-note candidates are algorithm topology, oscillator key sync, and LFO key-sync initialization. Algorithm could be made active-note only with substantially more routing-state and transition work; classifying it next-note is the simpler predictable default. Oscillator/LFO sync are intrinsically note-initialization concepts.
+The selected active-note set is deliberately limited to feedback, LFO pitch/amplitude depth, six operator output levels, and six operator-enable bits. Algorithm topology, transpose, LFO timing/wave/sensitivity, pitch-envelope values, and the remaining operator fields are next-note snapshots. This keeps topology, frequency/scaling, and envelope derivation out of every sounding-note update while retaining useful live mix/modulation edits.
 
-Envelope edits require special rules: a change to the current/future stage updates the active state machine without replaying completed stages; a changed release rate/target must also update the release-tail bound or use a safe dynamic cap.
+Envelope edits therefore affect the next triggered note. Existing notes retain their captured stage rates/levels and release-tail bound; output-level edits remain active and update the current stage target without replaying completed stages.
 
 The final classification belongs in a shared catalog used by model validation, preview labels, runtime mapping, and tests. It must not be duplicated across renderer widgets and engine code.
 
-## Decision 6: Use one shared synthesis module and per-instance transport
+## Decision 6: Use shared synthesis support and generated per-instance target code
 
-The generated UDOs and lookup arrays are immutable and should occur once per CSD. Per-instrument state should include:
+Lookup arrays and topology helpers are immutable and should occur once per CSD. TypeScript should generate each instance's complete note target after compilation variable names are assigned. Per-instrument state should include:
 
-- one independent voice transport (or double-buffered pair);
-- one independent operator mask;
-- the instance's own Parameter-to-compilation-channel bindings;
-- a commit/version value for atomic multi-field changes.
+- the instance's own Parameter-to-compilation-global bindings;
+- one generated note instrument containing those exact global names;
+- independent note and operator-mask state;
+- optional generated domain-epoch globals if the benchmark selects a per-instance change coordinator.
 
-Do not create global mutable voice arrays with unqualified names. Do not use instrument display names in Csound identifiers. Table allocation through the compilation context already provides collision-free numeric identity and is preferable to module-global counters.
+Do not create a mutable 155-slot live transport array or live transport table. Small private indexed state needed by the maintained dynamic loops is acceptable when refreshed only behind a dirty guard. Do not use instrument display names in Csound identifiers. Compilation variable allocation already provides collision-free `gk_blue_autoN` identity and is preferable to module-global counters.
 
 The existing `Arrangement.generateGlobalOrc()` deduplicates only shared object references, not equivalent content from distinct instruments. The plan therefore needs an explicit compile-once registration seam or equivalent UDO/module deduplication. Calling `generateGlobalOrc()` from every BlueX7 would duplicate global arrays and opcode names.
 
@@ -203,11 +203,12 @@ Recommended protocol:
 
 1. UI submits one canonical semantic patch (`replaceVoice`, undo, or redo).
 2. Main applies it once and derives the complete target snapshot.
-3. Runtime writes changed values into inactive/staging transport.
-4. Runtime advances one instance-scoped commit generation.
-5. Notes observe the new complete generation at a control boundary.
+3. Main sends one complete validated channel batch.
+4. Blue Engine validates and enqueues the batch without calling Csound from the IPC thread.
+5. The performance thread applies all entries between `csoundPerformKsmps` calls.
+6. Generated direct-global code observes the new complete set at the next control boundary.
 
-A double-buffered table is one viable implementation; a staging table plus versioned copy is another. The requirement is atomic observation, not a particular mechanism. Ordinary one-widget edits can use the same commit path with a one-field delta.
+The required property is atomic observation, not a Csound table. Applying the whole batch on the performance thread supplies that property at the engine seam and also avoids concurrent `csoundSetControlChannel` calls from the IPC thread. Ordinary one-widget edits use the same queued path with a one-field batch while playing.
 
 ## Decision 8: Close the Track automation gap
 
@@ -269,19 +270,67 @@ The external `check.sh` establishes parity between `bluex7.orc` and its research
 6. **Output calibration**: the research demos use different gains per preset, which is unsuitable as hidden project behavior; establish one documented integration gain and corpus ceiling.
 7. **Legacy Java round trips**: older Java Blue may discard the new Parameter list even while retaining the voice. Document this limitation and test TypeScript round trips separately.
 
+## Performance follow-up: transport and active-note scaling
+
+### Measured baseline
+
+- The generated dense-fixture segment spent about 90.2 CPU seconds in the current live path versus 27.1 CPU seconds with the live hold/transport read replaced by a fixed value, a roughly 3.3x penalty attributable to live parameter handling and repeated active-note derivation.
+- The fixture can retain about 59 simultaneous release-inclusive voices (48 piano and 11 bass). The current wrapper copies roughly 145 values and writes them back to the transport table for every active note at every control cycle, so work scales with `parameters × active notes × control cycles`.
+- An actual Blue Engine run with all 305 generated control channels advanced 228,480 samples in five wall-clock seconds with mirroring enabled and 232,064 with mirroring disabled. The roughly 1.6% difference makes channel mirroring a secondary concern, not the first optimization target.
+
+### Decision: generate direct-global target code and remove live transport
+
+**Decision**: Preserve the existing `chnexport` globals as the live Parameter representation and generate instance-specialized Csound that names those `gk_blue_autoN` variables directly. Remove both transport ftables, the generated live target's 155-slot `kLiveVoice[]` projection, the per-note catalog copy, table writes, and Parameter `chnget` reads from the live path. Retain the pure 155-slot projection only as a mapping/import/test oracle. The generated inline target captures next-note fields with `i(gk_...)` and keeps only the small state required by the maintained body for dynamic indexing.
+
+**Rationale**: `chnexport` binds the control channel to an ordinary Csound global variable, so generated direct references are the lowest-overhead value path available to orchestra code. The measured regression is not evidence that global reads are costly; it is evidence that the current wrapper copies 145 globals into every note, writes an ftable from every note, and then re-derives all live state every k-cycle. TypeScript already knows the exact compilation symbols and semantic domains, so it can emit optimal target code instead of preserving a generic array-shaped interface.
+
+**Alternatives considered**:
+
+- A central table publisher reduces the current note multiplier but retains a copy, comparison, table-write, and table-read layer that direct generated globals do not need.
+- A generic 151-argument UDO keeps one source body but creates a wide shallow interface and may add argument/array overhead; generated target code gives the caller a small semantic generator interface while hiding specialized Csound implementation.
+- Unconditionally re-reading and re-deriving all 151 controls in every note retains parameter-by-note work even though the reads themselves are cheap.
+- Recompile-on-edit or making every field next-note violates live-edit latency and note-continuity requirements.
+- Optimizing Blue Engine mirroring first addresses only the measured low-single-digit portion of the problem.
+
+### Decision: update only changed synthesis domains
+
+The TypeScript generator classifies exactly 15 controls as active-note: feedback, LFO pitch/amplitude depth, six operator output levels, and six operator enables. The other 136 controls are next-note snapshots, including algorithm, transpose, LFO timing/wave/sensitivity, pitch-envelope values, and the remaining operator fields. A per-instance coordinator scans only those 15 globals and publishes a scalar epoch; it never copies values. On a dirty epoch, the inline target reads the live scalars directly, updates six output-level deltas against note-local baselines, and leaves the eight PEG index/rate snapshots untouched. An unchanged note performs no active-state derivation.
+
+### Decision: specialize the live state instead of preserving a generic array
+
+**Decision**: Keep the compact 126-slot operator projection only as a generator fallback for a future active descriptor that truly requires dynamic indexing. For the current catalog, generate no `kLiveOperatorState[]`: use eight k-indexable PEG snapshots and six output-level baselines, with direct global reads for the remaining active controls. UDOs remain available for static and compatibility comparisons; the selected live target is generated inline from the maintained body.
+
+**Rationale**: `chnexport` globals are ordinary Csound globals, so a generated direct read avoids both channel lookup and array marshalling. Most BlueX7 controls are musically safe to apply at note initialization, and their `i(gk_...)` snapshots remove the need to keep k-rate copies alive. The remaining live controls either have scalar effects (feedback/LFO depth/enables) or can be updated from a six-entry baseline (output level). This preserves audible live response while reducing per-note memory and the amount of code executed after a coordinator epoch.
+
+**Measured follow-up**: On the local macOS arm64 build (Csound 7.0, `sr=44100`, `ksmps=64`), the dense 59-note benchmark rendered `1.181315 s` of audio. Static UDO took `1.96 s` wall time; generated inline epoch took `1.99 s`; both outputs were bit-identical (`max difference 0`). The checked-in fixture regenerated to `174,645` bytes and remained syntax-valid. These timings are machine samples, not a new universal realtime guarantee, but they confirm that the scalar target removes the prior live-state projection without adding a measurable CPU penalty to the shared-UDO comparison path.
+
+### Decision: permit generated inlining across UDO seams
+
+**Decision**: Treat the current `bluex7_voice` and topology UDO seams as provisional. The TypeScript target generator must be capable of emitting a shared-UDO target and a behaviorally identical partially or fully inlined target. The selected live form is generated inline when it removes the 155-slot live projection without exceeding the CPU budget; otherwise the maintained UDO remains available for comparison/static paths. If argument passing, array marshalling, or UDO-local state prevents the direct-global target from meeting the performance gates, inline the affected implementation into each generated instance instrument.
+
+**Rationale**: Reuse in source text is not valuable when its runtime interface requires moving or reshaping 151 controls or large per-note arrays. The deep module is the TypeScript generator, whose small semantic interface hides code layout. Csound UDOs are internal seams of that implementation and can be removed without exposing complexity to `BlueX7`, compilation callers, or tests. Immutable lookup tables may still be shared without imposing a per-note parameter-transfer interface.
+
+**Selection rule**: Measure shared-UDO and generated-inline targets with identical globals, score, `ksmps`, and output checks. If CPU differs by more than 5%, choose the faster passing target. Within 5%, prefer the smaller/easier-to-audit generated CSD. Record CSD size and compile time as secondary costs; realtime throughput is primary.
+
+**Alternatives considered**: Keeping UDOs categorically favors source compactness without measuring their Csound runtime cost. Fully inlining by default can inflate CSD size and compile time without benefit. Hand-maintaining separate UDO and inline orchestra implementations would invite behavioral drift, so both benchmark forms must come from the same TypeScript semantic fragments.
+
+### Decision: park inaudible release synthesis
+
+After publication and dirty-domain work meet the relative benchmark, add a conservative release fast path. A released note continues its k-rate envelope/liveness state and existing freeze/cap behavior, but skips the six-operator audio topology while every enabled carrier has a provably sub-audible upper bound. It must resume audio synthesis if a live edit can make the note audible again. This reduces tail cost without shortening note lifetime or changing automation semantics.
+
 ## Phase 0 resolution record
 
 The following records turn the exploratory findings above into implementation choices.
 
 ### Renderer source form and provenance
 
-**Decision**: Copy the exact reviewed `bluex7.orc` into `packages/blue-data/resources/blue-x7-modern/bluex7.orc`, record its precursor digest, and adapt it there as the canonical Blue-owned Csound source. Generate a checked-in, browser-safe TypeScript string module deterministically. Import no other precursor assets unless a later implementation finding demonstrates a specific need.
+**Decision**: Copy the exact reviewed `bluex7.orc` into `packages/blue-data/resources/blue-x7-modern/bluex7.orc` and record its precursor digest as the auditable behavioral baseline. Refactor production into compile-once immutable lookup support plus a browser-safe TypeScript target generator that emits instance-specialized orchestra code and can choose shared-UDO or generated-inline DSP layout. Import no other precursor assets unless a later implementation finding demonstrates a specific need.
 
-**Rationale**: `@blue/data` must generate CSD in browser and Node hosts without runtime filesystem access. The self-contained orchestra is sufficient as an auditable starting point, and adapting it locally avoids treating a transient research checkout as an upstream dependency. Checksums and Git history distinguish the imported baseline from later Blue integration work.
+**Rationale**: `@blue/data` must generate CSD in browser and Node hosts without runtime filesystem access. The self-contained orchestra is sufficient as an auditable starting point, but its generic `kLiveVoice[]` interface is not a required production architecture. TypeScript knows the catalog, static voice, and resolved Parameter globals at compilation, so a target generator can preserve the synthesis behavior while emitting direct specialized Csound. Checksums, deterministic generated-text tests, and Git history distinguish the imported baseline from later Blue integration work.
 
 **Current evidence**: The inspected precursor checkout is at `0482f608cae693516321fa7c3f1ccef31e6ee5e4`; `blue_integration_report.md` is untracked there. Its reviewed report and `bluex7.orc` hashes remain `b3c4f7b38cdf7cf5931d2b552a2416082fd1055f5109bdbb015bfa256d804e47` and `2523caebbae4d28cba134a14b3a9f59d6647ebfaf3728d3dfba87de0f4732dda`. The precursor's original work is authorized for import by the project owner. Locally retained MSFA reference files carry Google Apache-2.0 headers; the Blue copy must propagate applicable notices and clearly label MSFA, Dexed, legacy Blue/Pinkston, and other sources as incorporated or reference-only as appropriate.
 
-**Alternatives considered**: Runtime file loading violates the portable core and package distribution model. Copying the entire precursor repository imports unnecessary ROM, demos, renders, and tooling. Keeping the external repository as a build dependency makes ordinary builds nondeterministic and contradicts its transient role. Treating only a generated TypeScript string as source would be difficult to maintain; retaining the `.orc` plus a Blue-owned bundler preserves editability.
+**Alternatives considered**: Runtime file loading violates the portable core and package distribution model. Copying the entire precursor repository imports unnecessary ROM, demos, renders, and tooling. Keeping the external repository as a build dependency makes ordinary builds nondeterministic and contradicts its transient role. Treating one monolithic generated string as hand-edited source would be difficult to maintain; the target generator instead owns named semantic fragments and is verified against accepted renders and deterministic generated-source snapshots.
 
 ### Parameter schema and reconciliation
 
@@ -301,19 +350,19 @@ The following records turn the exploratory findings above into implementation ch
 
 ### Compile-once synthesis resources
 
-**Decision**: Pass the existing `CompileData` into instrument global-orchestra generation and register a BlueX7 module key in its compilation-variable map. Allocate per-instance mutable transport through the same render context.
+**Decision**: Pass the existing `CompileData` into instrument global-orchestra generation and register a BlueX7 support key in its compilation-variable map. Emit immutable lookup/topology support once, then invoke the TypeScript target generator after each instance's Parameter globals have been allocated.
 
-**Rationale**: `CompileData` already owns one generated performance and has a generic registry; it is the smallest deterministic seam for one shared module without process globals. Extending the base method with an optional/context argument remains compatible with zero-argument overrides.
+**Rationale**: `CompileData` already owns one generated performance, a generic registry, and the disposable `gk_blue_autoN` names. It is the smallest deterministic seam for compile-once support and instance specialization without process globals. The generator becomes a deep module: its interface is catalog bindings plus static voice context, while its implementation owns Csound declarations, direct references, domain guards, initialization, and DSP composition.
 
 **Alternatives considered**: Deduplicating by instrument object only fails distinct BlueX7 instances. A module-global boolean leaks across renders. Text-level global-orchestra deduplication is fragile. Recasting the generated module as many `OpcodeDefinition` objects does not naturally own its global arrays and generator provenance.
 
-### Active-note transport and atomic batches
+### Direct-global active-note code and atomic batches
 
-**Decision**: Use per-instance transport with hold/commit controls. Active-note fields consume validated Parameter channels at k-rate; algorithm and the two sync controls are captured at note start. Complete voice changes hold the old committed snapshot, batch-write all values, and publish one generation at a control boundary.
+**Decision**: Generate direct `gk_blue_autoN` references at the synthesis use sites. Capture the 136 next-note descriptors with `i(gk_...)` at note start, and generate a scalar epoch coordinator for the 15 active descriptors (feedback, LFO depths, output levels, and enables). Apply complete channel batches on the Blue Engine performance thread between k-cycles. The pure 155-slot mapping remains an oracle, not a live transport.
 
-**Rationale**: The reviewed UDO is i-rate today and cannot satisfy live updates unchanged. Hold/commit prevents algorithm/operator hybrids while allowing existing engine automation to remain channel-authoritative between whole-voice operations.
+**Rationale**: The reviewed UDO is i-rate today and cannot satisfy live updates unchanged, but neither an array nor a table is inherent to active-note support. Direct generated globals remove the avoidable copy path. Domain guards prevent expensive derivation from scaling with every parameter on every k-cycle. Performance-thread batch application supplies old-or-new observation for both existing and newly initialized notes while keeping automation channel-authoritative.
 
-**Alternatives considered**: Sequential channel writes expose partial voices. Recompiling on every edit misses latency and note-continuity requirements. Making all fields active-note makes algorithm topology and sync transitions costly and unpredictable. Making all fields next-note fails the explicit live-edit requirement.
+**Alternatives considered**: Sequential IPC-thread channel writes expose partial voices and race the performance thread. A committed table can mask that problem but retains redundant transport. Recompiling on every edit misses latency and note-continuity requirements. Making all fields active-note makes algorithm topology and sync transitions costly and unpredictable. Making all fields next-note fails the explicit live-edit requirement; the selected 15-control live set is the minimum measured surface that preserves useful sounding-note edits without rebuilding operator state.
 
 ### Effective-value readback and engine transport
 

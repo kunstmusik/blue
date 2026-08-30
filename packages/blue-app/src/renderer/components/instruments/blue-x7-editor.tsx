@@ -2,13 +2,16 @@ import React, { useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { BlueX7Voice } from '@blue/data';
 import {
+  BLUE_X7_PARAMETER_DESCRIPTORS,
   createDefaultBlueX7Voice,
   decodeSingleVoice,
   getBankVoiceNames,
 } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch, OrchestraMutationProps } from '../../../shared/project-editor';
+import type { BlueX7RuntimeTarget } from '../../../shared/project-editor/contract';
 import { validateBlueX7SysexReadResult } from '../../../shared/blue-x7-sysex';
 import { useBlueX7History } from './blue-x7/use-blue-x7-history';
+import { useBlueX7EffectiveValues } from './blue-x7/use-blue-x7-effective-values';
 import { CommonPanel } from './blue-x7/common-panel';
 import { LfoPanel } from './blue-x7/lfo-panel';
 import { OperatorPanel } from './blue-x7/operator-panel';
@@ -23,6 +26,18 @@ export interface BlueX7EditorProps extends OrchestraMutationProps {
   onOpenAlgorithmModal?: () => void;
   sysExActions?: React.ReactNode;
   onImportSysEx?: () => Promise<import('../../../shared/blue-x7-sysex').BlueX7SysexReadResult>;
+  /**
+   * Spec 092: when the host provides the editor's live runtime target, the
+   * editor samples engine-effective values for open-editor display. The
+   * samples are disposable display state; they never feed back into
+   * patches, fixed values, automation, or undo history.
+   */
+  effectiveValues?: {
+    target: BlueX7RuntimeTarget;
+    projectSessionId: number;
+    enabled: boolean;
+    parameterIds?: readonly string[];
+  };
 }
 
 export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
@@ -31,10 +46,12 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
   onOpenAlgorithmModal,
   sysExActions,
   onImportSysEx,
+  effectiveValues,
 }) => {
   const fallbackVoice = useMemo(() => createDefaultBlueX7Voice(), []);
   const voice = instrument.voice ?? fallbackVoice;
   const [isAlgorithmDialogOpen, setIsAlgorithmDialogOpen] = useState(false);
+  const [visibleOperatorIndex, setVisibleOperatorIndex] = useState(0);
   const [sysexModalState, setSysexModalState] = useState<SysexImportModalState>({ type: 'closed' });
   const [importError, setImportError] = useState<string | null>(null);
   const contextIdentity = instrument.assignmentId;
@@ -50,6 +67,41 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
     undo,
     redo,
   } = useBlueX7History(instrument, onInstrumentPatch);
+
+  const parameterByKey = useMemo(
+    () => new Map((instrument.parameters ?? []).map((parameter) => [parameter.semanticKey, parameter])),
+    [instrument.parameters],
+  );
+  const visibleParameterIds = useMemo(() => {
+    if (effectiveValues?.parameterIds) return effectiveValues.parameterIds;
+    const visibleKeys = new Set(
+      BLUE_X7_PARAMETER_DESCRIPTORS
+        .filter((descriptor) => (
+          !descriptor.group.startsWith('Operator ')
+          || descriptor.group === `Operator ${visibleOperatorIndex + 1}`
+        ))
+        .map((descriptor) => descriptor.key),
+    );
+    return (instrument.parameters ?? [])
+      .filter((parameter) => visibleKeys.has(parameter.semanticKey))
+      .map((parameter) => parameter.parameterId);
+  }, [effectiveValues?.parameterIds, instrument.parameters, visibleOperatorIndex]);
+
+  const effective = useBlueX7EffectiveValues({
+    target: effectiveValues?.target ?? null,
+    projectSessionId: effectiveValues?.projectSessionId ?? null,
+    parameterIds: visibleParameterIds,
+    enabled: effectiveValues?.enabled ?? false,
+  });
+  const effectiveValuesByKey = useMemo(() => {
+    const values = new Map<string, number>();
+    for (const [semanticKey, parameter] of parameterByKey) {
+      if (!parameter.automationEnabled) continue;
+      const value = effective.values.get(parameter.parameterId);
+      if (value !== undefined) values.set(semanticKey, value);
+    }
+    return values;
+  }, [effective.values, parameterByKey]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onInstrumentPatch({ name: e.target.value });
@@ -217,6 +269,25 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
         </div>
       </div>
 
+      {/* Effective-value status (Spec 092): disposable readback display. */}
+      {effectiveValues?.enabled && (
+        <div
+          className="flex items-center gap-2 rounded border border-blue-border bg-blue-surface/40 px-2.5 py-1 text-role-callout text-blue-muted"
+          data-testid="bluex7-effective-values-status"
+        >
+          {effective.unavailable ? (
+            <span data-testid="bluex7-effective-values-unavailable">
+              Engine effective values unavailable — showing canonical fixed values.
+            </span>
+          ) : (
+            <span data-testid="bluex7-effective-values-live">
+              Live engine values: {effective.values.size} control
+              {effective.values.size === 1 ? '' : 's'} (sequence {effective.engineSequence})
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Main Panels */}
       <div className="space-y-4">
         {/* Common parameters & Operator enable flags */}
@@ -224,6 +295,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           common={voice.common}
           sharedSync={instrument.sharedOscillatorSync}
           sharedPms={instrument.sharedPitchModulationSensitivity}
+          effectiveValues={effectiveValuesByKey}
           onApplyPatch={applyPatch}
           onOpenAlgorithmModal={onOpenAlgorithmModal ?? (() => setIsAlgorithmDialogOpen(true))}
         />
@@ -231,6 +303,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
         {/* LFO */}
         <LfoPanel
           lfo={voice.lfo}
+          effectiveValues={effectiveValuesByKey}
           onApplyPatch={applyPatch}
         />
 
@@ -240,6 +313,8 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           operatorEnabled={voice.common.operatorEnabled}
           sharedSync={instrument.sharedOscillatorSync}
           sharedPms={instrument.sharedPitchModulationSensitivity}
+          effectiveValues={effectiveValuesByKey}
+          onVisibleOperatorChange={setVisibleOperatorIndex}
           onApplyPatch={applyPatch}
         />
 

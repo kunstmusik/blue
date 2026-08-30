@@ -41,10 +41,10 @@ export interface CompiledBlueX7Binding {
 	runtimeInstrumentId: string | number;
 	/** Semantic parameter key -> compiled automation channel (gk_blue_autoN). */
 	parameterChannels: ReadonlyMap<string, string>;
-	holdChannel: string;
-	commitChannel: string;
-	/** The two per-instance transport ftable ids. */
-	transportTableIds: readonly [number, number];
+	/** Direct `chnexport` globals consumed by the generated target. */
+	directGlobalChannels: ReadonlyMap<string, string>;
+	/** Per-instance epoch incremented by the generated change coordinator. */
+	domainEpoch: string;
 }
 
 /** Render-scoped registry key for compiled BlueX7 bindings. */
@@ -266,22 +266,13 @@ export class CompileData {
     for (const ia of this.arrangement.getArrangement()) {
       if (!ia.enabled || !ia.instr) continue;
       const anyInstr = ia.instr as {
-        getBlueX7TransportTableIds?: () => readonly [number, number] | null;
-        getBlueX7HoldChannel?: () => string;
-        getBlueX7CommitChannel?: () => string;
+        getBlueX7EpochSymbol?: () => string;
         getParameters?: () => Parameter[];
       };
-      if (typeof anyInstr.getBlueX7TransportTableIds !== 'function') continue;
-      const transportTableIds = anyInstr.getBlueX7TransportTableIds();
-      if (!transportTableIds) continue;
-      const holdChannel =
-        typeof anyInstr.getBlueX7HoldChannel === 'function'
-          ? anyInstr.getBlueX7HoldChannel()
-          : `bx7h${transportTableIds[0]}`;
-      const commitChannel =
-        typeof anyInstr.getBlueX7CommitChannel === 'function'
-          ? anyInstr.getBlueX7CommitChannel()
-          : `bx7c${transportTableIds[0]}`;
+      if (
+        typeof anyInstr.getBlueX7EpochSymbol !== 'function' ||
+        typeof anyInstr.getParameters !== 'function'
+      ) continue;
 
       const sourceId = this.instrSourceId.get(ia.instr);
       let ownerIdentity: string;
@@ -310,9 +301,8 @@ export class CompileData {
         ownerIdentity,
         runtimeInstrumentId,
         parameterChannels,
-        holdChannel,
-        commitChannel,
-        transportTableIds,
+        directGlobalChannels: parameterChannels,
+        domainEpoch: anyInstr.getBlueX7EpochSymbol(),
       });
     }
   }

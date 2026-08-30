@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import { Element } from '../serialization/xml-reader';
-import { Tables } from '../tables';
+import { Track } from '../score/track/track';
 import {
   BlueX7,
   createDefaultBlueX7Voice,
@@ -54,6 +54,21 @@ describe('BlueX7', () => {
     expect(voice.csoundPostCode).toBe('blueMixerOut aout, aout');
   });
 
+  it('keeps all operator-enable fixed Parameters synchronized for a full-mask edit', () => {
+    const instr = new BlueX7();
+    const enabled = [false, true, false, true, false, true] as const;
+
+    instr.setCommonField('operatorEnabled', [...enabled]);
+
+    expect(instr.getVoice().common.operatorEnabled).toEqual(enabled);
+    for (const [index, expected] of enabled.entries()) {
+      const parameter = instr
+        .getParameters()
+        .find((candidate) => candidate.getName() === `operator.${index + 1}.enabled`);
+      expect(parameter?.getFixedValue()).toBe(expected ? 1 : 0);
+    }
+  });
+
   it('creates an independent deep copy', () => {
     const instr = new BlueX7();
     const copy = instr.deepCopy();
@@ -77,6 +92,7 @@ describe('BlueX7', () => {
     const fixturePath = path.join(__dirname, 'blue-x7/test-fixtures/java-default.blue.xml');
     const xmlText = fs.readFileSync(fixturePath, 'utf-8');
     const elem = Element.parse(xmlText);
+    expect(elem.getElement('parameterList')).toBeNull();
     const instr = BlueX7.loadFromXML(elem);
 
     expect(instr.getName()).toBe('untitled');
@@ -87,8 +103,12 @@ describe('BlueX7', () => {
     expect(instr.getVoice().operators[0].envelope[0]).toEqual({ rate: 81, level: 99 });
 
     const savedElem = instr.saveAsXML();
+    const firstSaveIds = instr.getParameters().map((parameter) => parameter.getUniqueId());
+    expect(new Set(firstSaveIds).size).toBe(151);
+    expect(savedElem.getElement('parameterList')).not.toBeNull();
     const reloaded = BlueX7.loadFromXML(savedElem);
     expect(reloaded.getVoice()).toEqual(instr.getVoice());
+    expect(reloaded.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(firstSaveIds);
   });
 
   it('preserves unknown root/nested attributes and extra elements in boundary fixture', () => {
@@ -105,6 +125,8 @@ describe('BlueX7', () => {
     expect(instr.getVoice().lfo.wave).toBe(5);
     expect(instr.getVoice().lfo.sync).toBe(1);
     expect(instr.getVoice().operators[0].detune).toBe(7);
+    expect(instr.getVoice().operators.map((operator) => operator.sync)).toEqual([0, 1, 0, 1, 0, 1]);
+    expect(instr.getVoice().operators.map((operator) => operator.modulationPitch)).toEqual([7, 0, 3, 0, 0, 0]);
 
     // Modify a known field and save
     instr.setCommonField('algorithm', 10);
@@ -127,6 +149,12 @@ describe('BlueX7', () => {
     // Updated fields reflect new values
     expect(savedXml).toContain('<algorithm>10</algorithm>');
     expect(savedXml).toContain('<outputLevel>88</outputLevel>');
+
+    const firstSaveIds = instr.getParameters().map((parameter) => parameter.getUniqueId());
+    const reopened = BlueX7.loadFromXML(Element.parse(savedXml));
+    expect(reopened.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(firstSaveIds);
+    expect(reopened.getVoice().operators.map((operator) => operator.sync)).toEqual([0, 1, 0, 1, 0, 1]);
+    expect(reopened.saveAsXML().toXml()).toContain('<unknownOperatorNode>custom op data</unknownOperatorNode>');
   });
 
   it('supports shared sync and PMS propagation across all 6 operators', () => {
@@ -163,50 +191,27 @@ describe('BlueX7', () => {
     expect(savedXml).toContain('<algorithm>7</algorithm>');
   });
 
-  it('allocates independent transport table pairs per BlueX7 instance', () => {
-    const tables = new Tables();
-
-    const instr1 = new BlueX7();
-    instr1.setName('Lead');
-    instr1.generateFTables(tables);
-    const instr2 = new BlueX7();
-    instr2.setName('Bass');
-    instr2.generateFTables(tables);
-
-    expect(instr1.getBlueX7TransportTableIds()).not.toBeNull();
-    expect(instr2.getBlueX7TransportTableIds()).not.toBeNull();
-    const [main1, staging1] = instr1.getBlueX7TransportTableIds()!;
-    const [main2, staging2] = instr2.getBlueX7TransportTableIds()!;
-    expect(new Set([main1, staging1, main2, staging2]).size).toBe(4);
-
-    const tablesText = tables.getTables();
-    expect(tablesText).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: Lead');
-    expect(tablesText).toContain('; FTABLES FOR BLUEX7 MODERN TRANSPORT: Bass');
-    // one 256-slot GEN02 transport table per allocation
-    expect((tablesText.match(/ 0 256 -2 /g) || []).length).toBe(4);
+  it('does not allocate a live transport table', () => {
+    const instr = new BlueX7();
+    expect(instr.hasFTable()).toBe(false);
   });
 
-  it('writes the complete 155-value transport snapshot into its table', () => {
-    const tables = new Tables();
+  it('writes the complete 155-value snapshot directly into the generated target', () => {
     const instr = new BlueX7();
     instr.getVoice().common.algorithm = 19;
     instr.getVoice().common.operatorEnabled = [true, true, false, true, true, true];
-    instr.generateFTables(tables);
-
-    const [mainTable] = instr.getBlueX7TransportTableIds()!;
-    const tablesText = tables.getTables();
-    const line = tablesText
-      .split('\n')
-      .find((l) => l.startsWith(`f ${mainTable} `));
-    expect(line).toBeDefined();
-    const values = line!.split(/\s+/).slice(5).map(Number);
-    expect(values.length).toBe(155);
+    const body = instr.generateInstrument();
     // algorithm 19 -> slot 134 = 18; mask bit 2 cleared
-    expect(values[134]).toBe(18);
+    expect(body).toContain('iBlueX7Voice[134] = 18');
     // detune -3 of logical operator 1 -> slot 105+20 = 125 holds -3 + 7 = 4
-    expect(values[125]).toBe(4);
+    expect(body).toContain('iBlueX7Voice[125] = 4');
     // name bytes zero
-    expect(values.slice(145).every((v) => v === 0)).toBe(true);
+    for (let slot = 145; slot < 155; slot += 1) {
+      expect(body).toContain(`iBlueX7Voice[${slot}] = 0`);
+    }
+    expect(body).toContain('iBlueX7OperatorMask = 59');
+    expect(body).not.toContain('tabw');
+    expect(body).not.toContain('chnget');
   });
 
   it('generates the modern host wrapper with Blue pitch, velocity, gate, and post code', () => {
@@ -216,15 +221,17 @@ describe('BlueX7', () => {
       voice.csoundPostCode = 'blueMixerOut aout, aout';
 
       const preview = generateBlueX7Preview(voice, `Alg_${alg}`);
-      expect(preview.tables).toContain(`; FTABLES FOR BLUEX7 MODERN TRANSPORT: Alg_${alg}`);
+      expect(preview.tables).toBe('');
       expect(preview.body).toContain(
         'iBlueX7MidiNote = (p4 < 15 ? ftom:i(cpspch:i(p4)) : ftom:i(p4))',
       );
       expect(preview.body).toContain('iBlueX7GateSeconds = abs(p3)');
       expect(preview.body).toContain('iBlueX7OperatorMask = 63');
       expect(preview.body).toMatch(
-        /aout = bluex7_voice\(iBlueX7MidiNote, p5, \d+, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7StaticVoice, kBlueX7StaticMask, kBlueX7StaticHold\)/,
+        /aout = bluex7_voice\(iBlueX7MidiNote, i\(p5\), iBlueX7Voice, iBlueX7OperatorMask, iBlueX7GateSeconds, kBlueX7LiveVoice, kBlueX7LiveMask, kBlueX7Dirty\)/,
       );
+      expect(preview.body).not.toContain('tabw');
+      expect(preview.body).not.toContain('chnget');
       // post code arrives after the module output at the same user-visible stage
       const aoutIndex = preview.body.indexOf('aout = bluex7_voice');
       const postIndex = preview.body.indexOf('blueMixerOut aout, aout');
@@ -243,17 +250,11 @@ describe('BlueX7', () => {
     expect(report.notEmitted[0]).toContain('voice-name bytes');
   });
 
-  it('emits the shared modern module once per render and bakes out-of-range algorithms safely', () => {
+  it('bakes out-of-range algorithms safely at the transport boundary', () => {
     const instr = new BlueX7();
     instr.getVoice().common.algorithm = 40; // corrupt algorithm clamps to 32 at transport
-    const tables = new Tables();
-    instr.generateFTables(tables);
-    const [mainTable] = instr.getBlueX7TransportTableIds()!;
-    const line = tables.getTables()
-      .split('\n')
-      .find((l) => l.startsWith(`f ${mainTable} `));
-    const values = line!.split(/\s+/).slice(5).map(Number);
-    expect(values[134]).toBe(31); // clamped to algorithm 32, 0-based
+    const body = instr.generateInstrument();
+    expect(body).toContain('iBlueX7Voice[134] = 31'); // clamped to algorithm 32, 0-based
     // the wrapper still renders (the module owns all 32 topologies)
     expect(instr.generateInstrument()).toContain('bluex7_voice');
   });
@@ -357,6 +358,27 @@ describe('BlueX7', () => {
     expect(copiedParam.isAutomationEnabled()).toBe(true);
     expect(copiedParam.getPoints()).toEqual([{ time: 1, value: 10 }]);
     expect(copiedParam.getFixedValue()).toBe(param.getFixedValue());
+  });
+
+  it('keeps reopen ids stable while paste and Track assignment create disjoint owners', () => {
+    const source = new BlueX7();
+    const sourceIds = source.getParameters().map((parameter) => parameter.getUniqueId());
+    const reopened = BlueX7.loadFromXML(Element.parse(source.saveAsXML().toXml()));
+    expect(reopened.getParameters().map((parameter) => parameter.getUniqueId())).toEqual(sourceIds);
+
+    const pasted = source.deepCopy();
+    const track = new Track();
+    track.setInstrument(source);
+    const assigned = track.getInstrument() as BlueX7;
+    const ownerIdSets = [source, pasted, assigned].map(
+      (instrument) => new Set(instrument.getParameters().map((parameter) => parameter.getUniqueId())),
+    );
+    expect(ownerIdSets.every((ids) => ids.size === 151)).toBe(true);
+    for (let left = 0; left < ownerIdSets.length; left += 1) {
+      for (let right = left + 1; right < ownerIdSets.length; right += 1) {
+        expect([...ownerIdSets[left]!].some((id) => ownerIdSets[right]!.has(id))).toBe(false);
+      }
+    }
   });
 
   it('reads shared values from logical operator 1 while preserving mixed XML', () => {

@@ -35,12 +35,12 @@ describe('parameter-runtime', () => {
     tempoMap.setEnabled(true);
 
     const parameter = new Parameter();
+    parameter.setAutomationEnabled(true);
     parameter.addPoint(0, 100);
     parameter.addPoint(8, 200);
     parameter.addPoint(16, 300);
 
     expect(getEngineAutomationPoints(parameter, 8, tempoMap)).toEqual([
-      { time: -4, value: 100 },
       { time: 0, value: 200 },
       { time: 4, value: 300 },
     ]);
