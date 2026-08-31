@@ -270,7 +270,7 @@ describe('editor-open diagnostic coordinator', () => {
     expect(run.complete('rejected')).toBe(true);
     expect(diagnostics.beginRun(runInput)).toBeNull();
     expect(resolveEditorOpenDiagnosticsDirectory('/tmp/blue-diagnostics'))
-      .toBe('/tmp/blue-diagnostics');
+      .toBe(path.resolve('/tmp/blue-diagnostics'));
     await diagnostics.dispose();
   });
 
