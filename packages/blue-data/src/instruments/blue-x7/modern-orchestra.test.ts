@@ -31,7 +31,7 @@ const ALLOWED_RESOURCE_FILES = new Set([
   'bluex7.orc',
   'ATTRIBUTION.md',
   'provenance.json',
-  path.join('LICENSES', 'Apache-2.0.txt'),
+  'LICENSES/Apache-2.0.txt',
 ]);
 
 function sha256(text: string): string {
