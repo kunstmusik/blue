@@ -67,6 +67,10 @@ interface PendingTerminalStateCandidate {
   firstSeenAt: number;
 }
 
+const STOP_COMMAND_TIMEOUT_MS = 500;
+
+type EngineStopResponse = { ok: boolean; message: string };
+
 type EngineTransport = 'tcp' | 'ipc';
 
 function resolveEngineTransport(): EngineTransport {
@@ -126,6 +130,40 @@ function isExpectedCsoundSourceError(message: string): boolean {
     'syntax error',
     'parser failure',
   ].some((marker) => normalized.includes(marker));
+}
+
+async function stopClientWithTimeout(
+  client: Pick<EngineClient, 'stop'>,
+): Promise<EngineStopResponse> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let stopRequest: Promise<EngineStopResponse>;
+  try {
+    stopRequest = Promise.resolve(client.stop()).catch((error: unknown): EngineStopResponse => ({
+      ok: false,
+      message: error instanceof Error ? error.message : String(error),
+    }));
+  } catch (error: unknown) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  try {
+    return await Promise.race([
+      stopRequest,
+      new Promise<EngineStopResponse>((resolve) => {
+        timeoutId = setTimeout(() => resolve({
+          ok: false,
+          message: `Engine stop command timed out after ${STOP_COMMAND_TIMEOUT_MS} ms`,
+        }), STOP_COMMAND_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 export type EngineOutputCallback = (text: string, type: 'stdout' | 'stderr') => void;
@@ -769,17 +807,18 @@ export class EngineBridge {
     const session = this.activeSession;
     const client = session?.getClient();
 
-    if (session && client && this.isPlaying) {
-      if (emitStatus) {
+    if (session && client && (this.isPlaying || session.isCommandAccepting())) {
+      const wasPlaying = this.isPlaying;
+      if (emitStatus && this.isPlaying) {
         this.sendPlaybackStatus('stopping', message ?? 'Stopping playback...');
       }
 
       try {
-        const resp = await client.stop();
+        const resp = await stopClientWithTimeout(client);
         console.log(`[EngineBridge] stop: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
           await this.killEngine();
-          if (emitStatus) {
+          if (emitStatus && wasPlaying) {
             this.sendPlaybackStatus('error', `Engine stop failed: ${resp.message}`);
           }
         } else if (this.terminalCleanupPromise) {
@@ -790,11 +829,13 @@ export class EngineBridge {
             throw new Error(stateResp.message || 'Engine did not reach the stopped state');
           }
           await this.finalizePlaybackFromEngine(stateResp.state, 'stop-command');
+        } else {
+          await this.killEngine();
         }
       } catch (err) {
         console.warn(`[EngineBridge] stop command error: ${err instanceof Error ? err.message : String(err)}`);
         await this.killEngine();
-        if (emitStatus) {
+        if (emitStatus && wasPlaying) {
           this.sendPlaybackStatus('error', err instanceof Error ? err.message : String(err));
         }
       }
@@ -1276,11 +1317,21 @@ export class EngineBridge {
 
   async dispose(): Promise<void> {
     this.playbackLock = false;
+    const session = this.activeSession;
+    const client = session?.getClient();
+    if (session && client && session.isCommandAccepting()) {
+      await stopClientWithTimeout(client);
+    }
     await this.killEngine();
   }
 
   async killAndWait(): Promise<void> {
     this.playbackLock = false;
+    const session = this.activeSession;
+    const client = session?.getClient();
+    if (session && client && session.isCommandAccepting()) {
+      await stopClientWithTimeout(client);
+    }
     await this.killEngine();
   }
 }

@@ -54,6 +54,7 @@ function createMockClient() {
     compileOrc: vi.fn(async () => ({ ok: true })),
     readScore: vi.fn(async () => ({ ok: true })),
     start: vi.fn(async () => ({ ok: true })),
+    stop: vi.fn(async () => ({ ok: true })),
     onEngineState: vi.fn(() => () => {}),
     getEngineState: vi.fn(async () => ({ ok: false })),
   };
@@ -67,7 +68,9 @@ function createRunningSession(opts: {
   if (opts.readScoreOk === false) {
     client.readScore.mockResolvedValue({ ok: false, message: 'engine rejected' });
   }
-  const killAndWait = vi.fn(async () => {});
+  const killAndWait = vi.fn(async () => {
+    await client.stop();
+  });
   const bridge = {
     setWorkingDirectory: vi.fn(),
     setOutputCallback: vi.fn(),
@@ -227,6 +230,16 @@ describe('BlueLiveEngineSession', () => {
     expect(startResult.running).toBe(false);
     expect(startResult.status).not.toBe('running');
     expect(session.isActive()).toBe(false);
+  });
+
+  it('delegates client stop to bridge cleanup on stop', async () => {
+    const { session, client, bridge } = createRunningSession();
+    await session.start(new BlueData(), 1);
+
+    await session.stop();
+
+    expect(client.stop).toHaveBeenCalledOnce();
+    expect(bridge.killAndWait).toHaveBeenCalledOnce();
   });
 });
 

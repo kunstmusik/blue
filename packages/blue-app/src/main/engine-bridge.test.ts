@@ -265,10 +265,10 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       settled = true;
     });
 
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(fakeClient.stop).toHaveBeenCalledOnce();
-    expect(fakeClient.getEngineState).toHaveBeenCalledOnce();
+    await vi.waitFor(() => {
+      expect(fakeClient.stop).toHaveBeenCalledOnce();
+      expect(fakeClient.getEngineState).toHaveBeenCalledOnce();
+    });
     expect(settled).toBe(false);
 
     resolveState({ ok: true, state: stoppedState, message: '' });
@@ -282,12 +282,13 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
     const child = new FakeChildProcess(999);
     const registry = new FakeProcessRegistry();
+    const fakeClient = new FakeEngineClient();
 
     const session = new EngineSession(
       { kind: 'realtime', enginePath: '/bin/blue-engine' },
       {
         spawn: () => child as any,
-        createClient: () => new FakeEngineClient() as any,
+        createClient: () => fakeClient as any,
         registerManifest: (m) => registry.registerEngineProcess(m),
         removeManifest: (p) => registry.removeEngineProcessRecord(p),
       },
@@ -302,9 +303,106 @@ describe('EngineBridge runtime selection and lifecycle', () => {
 
     await bridge.killAndWait();
 
+    expect(fakeClient.stopCallCount).toBe(1);
     expect(bridge.getClient()).toBeNull();
     expect(bridge.getActiveSession()).toBeNull();
     expect(session.getState()).toBe('exited');
+  });
+
+  it('sends client.stop when stopEngine is called on an active command-accepting session even if isPlaying is false', async () => {
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const child = new FakeChildProcess(777);
+    const registry = new FakeProcessRegistry();
+    const fakeClient = new FakeEngineClient();
+
+    const session = new EngineSession(
+      { kind: 'blue-live', enginePath: '/bin/blue-engine' },
+      {
+        spawn: () => child as any,
+        createClient: () => fakeClient as any,
+        registerManifest: (m) => registry.registerEngineProcess(m),
+        removeManifest: (p) => registry.removeEngineProcessRecord(p),
+      },
+    );
+    await session.spawn();
+    await session.awaitReady();
+
+    const internals = bridge as unknown as { activeSession: EngineSession | null; isPlaying: boolean };
+    internals.activeSession = session;
+    internals.isPlaying = false;
+
+    await bridge.stopEngine();
+
+    expect(fakeClient.stopCallCount).toBe(1);
+    expect(bridge.getClient()).toBeNull();
+    expect(session.getState()).toBe('exited');
+  });
+
+  it('reports a stop failure after killing the failed session', async () => {
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const fakeClient = new FakeEngineClient();
+    fakeClient.stopResponse = { ok: false, message: 'stop failed' };
+    const session = new EngineSession(
+      { kind: 'realtime', enginePath: '/bin/blue-engine' },
+      {
+        spawn: () => new FakeChildProcess(778) as any,
+        createClient: () => fakeClient as any,
+        registerManifest: async () => '/tmp/manifest.json',
+        removeManifest: async () => {},
+      },
+    );
+    await session.spawn();
+    await session.awaitReady();
+
+    const sendPlaybackStatus = vi.fn();
+    const internals = bridge as unknown as {
+      activeSession: EngineSession | null;
+      isPlaying: boolean;
+      sendPlaybackStatus: (status: string, message?: string) => void;
+    };
+    internals.activeSession = session;
+    internals.isPlaying = true;
+    internals.sendPlaybackStatus = sendPlaybackStatus;
+
+    await bridge.stopEngine();
+
+    expect(sendPlaybackStatus).toHaveBeenCalledWith('error', 'Engine stop failed: stop failed');
+  });
+
+  it('bounds a stuck protocol stop before hard cleanup', async () => {
+    vi.useFakeTimers();
+    try {
+      const bridge = new EngineBridge(windowStub(), 'blue-engine');
+      const child = new FakeChildProcess(779);
+      const fakeClient = new FakeEngineClient();
+      const stop = vi.fn(() => new Promise<{ ok: boolean; message: string }>(() => {}));
+      fakeClient.stop = stop as any;
+      const session = new EngineSession(
+        { kind: 'realtime', enginePath: '/bin/blue-engine' },
+        {
+          spawn: () => child as any,
+          createClient: () => fakeClient as any,
+          registerManifest: async () => '/tmp/manifest.json',
+          removeManifest: async () => {},
+        },
+      );
+      await session.spawn();
+      await session.awaitReady();
+
+      (bridge as unknown as { activeSession: EngineSession | null }).activeSession = session;
+
+      const cleanup = bridge.killAndWait();
+      await Promise.resolve();
+      expect(stop).toHaveBeenCalledOnce();
+
+      await vi.runAllTimersAsync();
+      await cleanup;
+
+      expect(child.killSignalsReceived).toContain('SIGTERM');
+      expect(session.getState()).toBe('exited');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('finalizes natural playback completion and shuts down active session cleanly', async () => {
