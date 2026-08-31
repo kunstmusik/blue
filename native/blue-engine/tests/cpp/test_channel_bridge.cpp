@@ -220,6 +220,27 @@ endin
   require(batchEngine.readScore("i1 0 5"), batchEngine.getLastError());
   require(batchEngine.start(), batchEngine.getLastError());
 
+  auto liveSet = batchRoundTrip(
+      handler, controlEndpoint,
+      makeProtocolRequest(
+          blue::Command::BATCH_SET_CHANNELS,
+          makeBatchSetPayload({{"bx7-a", 6.25}})));
+  require(liveSet.transportOk
+              && liveSet.status == static_cast<uint8_t>(blue::Status::OK),
+          "live batch set should enqueue successfully");
+  double appliedValue = 0.0;
+  bool observedLiveBatch = false;
+  for (int attempt = 0; attempt < 20; ++attempt) {
+    if (batchEngine.getChannel("bx7-a", appliedValue)
+        && approxEqual(appliedValue, 6.25)) {
+      observedLiveBatch = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+  require(observedLiveBatch,
+          "performance thread should apply the queued batch at a k-boundary");
+
   auto missingLiveChannel = batchRoundTrip(
       handler, controlEndpoint,
       makeProtocolRequest(
@@ -230,7 +251,7 @@ endin
           "batch set must reject a missing live channel");
   double unchangedValue = 0.0;
   require(batchEngine.getChannel("bx7-a", unchangedValue), batchEngine.getLastError());
-  require(approxEqual(unchangedValue, 1.5),
+  require(approxEqual(unchangedValue, 6.25),
           "missing-channel rejection must not apply an earlier batch value");
 
   auto automatedLateChannel = batchRoundTrip(
@@ -242,14 +263,14 @@ endin
               && automatedLateChannel.status == static_cast<uint8_t>(blue::Status::ERROR),
           "batch set must reject a later automated channel");
   require(batchEngine.getChannel("bx7-a", unchangedValue), batchEngine.getLastError());
-  require(approxEqual(unchangedValue, 1.5),
+  require(approxEqual(unchangedValue, 6.25),
           "automation rejection must not apply an earlier batch value");
 
   // single-channel commands remain wire-compatible alongside the batch pair
   double directValue = 0.0;
   require(batchEngine.getChannel("bx7-a", directValue),
           batchEngine.getLastError());
-  require(approxEqual(directValue, 1.5),
+  require(approxEqual(directValue, 6.25),
           "batch-set value must be readable through GET_CHANNEL");
 
   batchEngine.stop();

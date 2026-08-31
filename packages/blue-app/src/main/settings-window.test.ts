@@ -102,6 +102,7 @@ describe('settings window lifecycle', () => {
 
     expect(settingsWindow.options.parent).toBe(mainWindow);
     expect(settingsWindow.options.title).toBe('Settings');
+    expect(settingsWindow.options.backgroundColor).toBe('#1a1a2e');
     expect(settingsWindow.options.show).toBe(false);
     expect(settingsWindow.options.frame).toBe(true);
     expect(settingsWindow.options.titleBarStyle).toBe('default');

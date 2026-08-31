@@ -34,6 +34,20 @@ import type {
   BlueX7EffectiveValuesRequest,
   BlueX7EffectiveValuesResult,
 } from '../shared/project-editor/contract';
+import {
+  EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+  isEffectEditorDiagnosticMilestoneRequest,
+  isTrackInstrumentRuntimeStatus,
+  isTrackInstrumentEditorDiagnosticMilestoneRequest,
+  TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
+  type EffectEditorDiagnosticMilestoneRequest,
+  type TrackInstrumentEditorDiagnosticMilestoneRequest,
+  type TrackInstrumentRuntimeStatus,
+} from '../shared/track-instrument-editor-contract';
 import type {
   ScoreObjectExportResult,
   ScoreObjectImportResult,
@@ -562,14 +576,90 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('open-effect-editor', request) as Promise<void>,
   openEffectInterface: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('open-effect-interface', request) as Promise<void>,
+  reportEffectEditorDiagnosticMilestone: async (
+    request: EffectEditorDiagnosticMilestoneRequest,
+  ): Promise<boolean> => {
+    if (!isEffectEditorDiagnosticMilestoneRequest(request)) return false;
+    try {
+      return (await ipcRenderer.invoke(
+        EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+        request,
+      )) === true;
+    } catch {
+      return false;
+    }
+  },
   openTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('open-track-instrument-editor', request) as Promise<void>,
+  reportTrackInstrumentEditorDiagnosticMilestone: async (
+    request: TrackInstrumentEditorDiagnosticMilestoneRequest,
+  ): Promise<boolean> => {
+    if (!isTrackInstrumentEditorDiagnosticMilestoneRequest(request)) return false;
+    try {
+      return (await ipcRenderer.invoke(
+        TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+        request,
+      )) === true;
+    } catch {
+      return false;
+    }
+  },
   focusTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('focus-track-instrument-editor', request) as Promise<boolean>,
   getTrackInstrumentEditorDocument: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('get-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorSnapshot | null>,
   updateTrackInstrumentEditorDocument: (request: TrackInstrumentEditorPatchRequest) =>
     ipcRenderer.invoke('update-track-instrument-editor-document', request) as Promise<TrackInstrumentEditorPatchResult>,
+  getTrackInstrumentRuntimeStatus: async (
+    request: TrackInstrumentEditorRequest,
+  ): Promise<TrackInstrumentRuntimeStatus | null> => {
+    const status = await ipcRenderer.invoke(TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL, request);
+    return isTrackInstrumentRuntimeStatus(status) ? status : null;
+  },
+  subscribeTrackInstrumentRuntimeStatus: async (
+    request: TrackInstrumentEditorRequest,
+    callback: (status: TrackInstrumentRuntimeStatus) => void,
+  ): Promise<{
+    status: TrackInstrumentRuntimeStatus;
+    unsubscribe: () => Promise<void>;
+  } | null> => {
+    const handler = (_event: Electron.IpcRendererEvent, raw: unknown) => {
+      if (isTrackInstrumentRuntimeStatus(raw)) callback(raw);
+    };
+    ipcRenderer.on(TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL, handler);
+
+    let status: TrackInstrumentRuntimeStatus | null = null;
+    try {
+      const response: unknown = await ipcRenderer.invoke(
+        TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
+        request,
+      );
+      if (!isTrackInstrumentRuntimeStatus(response)) {
+        ipcRenderer.removeListener(TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL, handler);
+        return null;
+      }
+      status = response;
+    } catch (error) {
+      ipcRenderer.removeListener(TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL, handler);
+      throw error;
+    }
+
+    let active = true;
+    const unsubscribe = async (): Promise<void> => {
+      if (!active) return;
+      active = false;
+      ipcRenderer.removeListener(TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL, handler);
+      try {
+        await ipcRenderer.invoke(
+          TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
+          request,
+        );
+      } catch {
+        // The renderer listener is already removed when the host is closing.
+      }
+    };
+    return { status, unsubscribe };
+  },
   getEffectEditorDocument: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('get-effect-editor-document', request) as Promise<EffectEditorSnapshot | null>,
   updateEffectEditorDocument: (request: EffectEditorPatchRequest) =>

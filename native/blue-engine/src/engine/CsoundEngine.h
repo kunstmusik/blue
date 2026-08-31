@@ -1,9 +1,10 @@
 #pragma once
 
 #include "csound/CsoundTypes.h"
+#include "EditorOpenGapDiagnostics.h"
+#include "RealtimeChannelMailbox.h"
 #include <atomic>
 #include <cstdint>
-#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -128,6 +129,8 @@ public:
   bool setChannel(const std::string &name, double value);
   bool setChannels(const std::vector<std::pair<std::string, double>> &entries);
   bool getChannel(const std::string &name, double &value);
+  bool getChannels(const std::vector<std::string> &names,
+                   std::vector<double> &values);
 
   bool start();
   void stop();
@@ -149,6 +152,7 @@ public:
   std::string getLastError() const;
   EngineStateSnapshot getStateSnapshot() const;
   EnginePerformanceSummary getLastPerformanceSummary() const;
+  EngineNativeGapSummary getLastNativeGapSummary() const;
   void setStateChangeCallback(StateChangeCallback callback);
 
 private:
@@ -156,7 +160,7 @@ private:
   bool rebuildControlChannelCache();
   void clearControlChannelCache();
   void applyPendingChannelValues();
-  void applyPendingChannelBatches();
+  void consumePendingChannelBatch();
   void syncSharedMemoryFromChannels();
   void syncSharedMemoryFromChannels(
       std::shared_ptr<const RuntimeChannelBindingSnapshot> &cachedBindings,
@@ -186,15 +190,11 @@ private:
   // Automation system
   std::shared_ptr<AutomationStore> automationStore_;
   std::unique_ptr<AutomationManager> automationManager_;
-  mutable std::mutex channelMutex_;
   mutable std::mutex lifecycleMutex_;
-  std::unordered_map<std::string, ControlChannelState> controlChannels_;
   std::atomic<uint64_t> channelBindingGeneration_{1};
   std::shared_ptr<const RuntimeChannelBindingSnapshot> runtimeChannelBindings_;
   std::unordered_map<std::string, double> pendingChannelValues_;
-  using ChannelBatch = std::vector<std::pair<std::string, double>>;
-  static constexpr size_t kMaxPendingChannelBatches = 128;
-  std::deque<ChannelBatch> pendingChannelBatches_;
+  std::unique_ptr<RealtimeChannelMailbox> channelMailbox_;
   mutable std::mutex stateMutex_;
   EngineLifecycleState state_ = EngineLifecycleState::EMPTY;
   EngineStopReason stopReason_ = EngineStopReason::NONE;
@@ -204,6 +204,11 @@ private:
   std::string lastError_;
   mutable std::mutex performanceMutex_;
   EnginePerformanceSummary lastPerformanceSummary_{};
+  // Editor-open scheduling-gap diagnostics. The perform thread keeps its
+  // accumulator function-local during the run and hands a snapshot over under
+  // performanceMutex_ at performance stop; getLastNativeGapSummary() does the
+  // aggregation on the calling thread, never inside the perform loop.
+  NativeGapAccumulator nativeGapAccumulatorSnapshot_;
   uint64_t performanceWarmupCycles_ = 0;
   uint64_t performanceMeasuredCycles_ = 0;
   mutable std::mutex callbackMutex_;

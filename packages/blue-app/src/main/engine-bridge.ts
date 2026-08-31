@@ -19,6 +19,11 @@ import { broadcastToWorkbenchWindows } from './workbench-window-host';
 import type { EngineRuntimeService } from './engine-runtime';
 import type { EngineProbeErrorCode } from '../shared/engine-runtime';
 import type { EngineRecoveryFailureCategory } from '../shared/engine-recovery';
+import type {
+  EditorOpenEngineStateSampler,
+  EngineStateSample,
+} from './editor-open-diagnostics';
+import type { EngineControlTrafficObservation } from '../shared/track-instrument-editor-contract';
 import {
   hasEngineFeature,
   OWNER_LIVENESS_FEATURE,
@@ -126,6 +131,7 @@ function isExpectedCsoundSourceError(message: string): boolean {
 export type EngineOutputCallback = (text: string, type: 'stdout' | 'stderr') => void;
 export type PlaybackCompleteCallback = (stopReason: string) => void;
 export type PlaybackErrorWarningCallback = (message: string) => void;
+export type PlaybackStateChangeCallback = (running: boolean) => void;
 
 export interface EngineOperationResult {
   ok: boolean;
@@ -147,6 +153,24 @@ export interface EngineBridgeDependencies {
   allocateEndpoints?: (options: EndpointAllocationOptions) => Promise<TcpEndpointPair>;
 }
 
+export function createEngineStateSamplingAdapter(
+  getClient: () => Pick<EngineClient, 'getEngineState'> | null,
+): EditorOpenEngineStateSampler {
+  return {
+    async sampleEngineState(): Promise<EngineStateSample | null> {
+      const client = getClient();
+      if (!client) return null;
+      const response = await client.getEngineState();
+      if (!response.ok || !response.state) return null;
+      return {
+        sampleFrame: response.state.sampleFrames,
+        sampleRate: response.state.sampleRate,
+        ksmps: response.state.ksmps,
+      };
+    },
+  };
+}
+
 export class EngineBridge {
   private activeSession: EngineSession | null = null;
   private mainWindow: BrowserWindow;
@@ -161,6 +185,7 @@ export class EngineBridge {
   private outputCallback: EngineOutputCallback | null = null;
   private playbackCompleteCallback: PlaybackCompleteCallback | null = null;
   private playbackErrorWarningCallback: PlaybackErrorWarningCallback | null = null;
+  private playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
   private awaitingPlaybackTerminalState = false;
   private lastEngineStateSequence = 0;
   private pendingPolledTerminalState: PendingTerminalStateCandidate | null = null;
@@ -174,6 +199,12 @@ export class EngineBridge {
   private readonly pendingAutomationSyncs = new Map<string, PendingAutomationSync>();
   private readonly lastAutomationSyncAt = new Map<string, number>();
   private readonly bridgeDependencies: EngineBridgeDependencies;
+  private readonly controlTraffic = {
+    readCommands: 0,
+    readEntries: 0,
+    writeCommands: 0,
+    writeEntries: 0,
+  };
 
   constructor(
     mainWindow: BrowserWindow,
@@ -222,6 +253,16 @@ export class EngineBridge {
 
   setPlaybackErrorWarningCallback(cb: PlaybackErrorWarningCallback | null): void {
     this.playbackErrorWarningCallback = cb;
+  }
+
+  setPlaybackStateChangeCallback(cb: PlaybackStateChangeCallback | null): void {
+    this.playbackStateChangeCallback = cb;
+  }
+
+  private setPlayingState(running: boolean): void {
+    if (this.isPlaying === running) return;
+    this.isPlaying = running;
+    this.playbackStateChangeCallback?.(running);
   }
 
   setWorkingDirectory(directory?: string | null): void {
@@ -379,7 +420,7 @@ export class EngineBridge {
     const { status, message } = this.describeTerminalState(snapshot, source);
 
     this.terminalCleanupPromise = (async () => {
-      this.isPlaying = false;
+      this.setPlayingState(false);
       const stopReason = snapshot.stopReason ?? 'none';
       const session = this.activeSession;
       this.activeSession = null;
@@ -421,7 +462,7 @@ export class EngineBridge {
 
     this.resetPlaybackTracking();
     this.clearPendingAutomationSyncs();
-    this.isPlaying = false;
+    this.setPlayingState(false);
     this.terminalCleanupPromise = null;
     const session = this.activeSession;
     this.activeSession = null;
@@ -690,7 +731,7 @@ export class EngineBridge {
           this.resetPlaybackTracking();
           this.clearPendingAutomationSyncs();
           this.activeSession = null;
-          this.isPlaying = false;
+          this.setPlayingState(false);
 
           const cleanupResult = await session.shutdown('process-exit');
           if (cleanupResult.status === 'cleanup-failed') {
@@ -890,7 +931,7 @@ export class EngineBridge {
         };
       }
 
-      this.isPlaying = true;
+      this.setPlayingState(true);
       this.playbackSessionId += 1;
       this.awaitingPlaybackTerminalState = true;
       this.pendingPolledTerminalState = null;
@@ -1159,6 +1200,8 @@ export class EngineBridge {
   async setChannel(name: string, value: number): Promise<void> {
     const client = this.activeSession?.getClient();
     if (client) {
+      this.controlTraffic.writeCommands += 1;
+      this.controlTraffic.writeEntries += 1;
       const resp = await client.setChannel(name, value);
       if (!resp.ok) {
         console.warn(`[EngineBridge] setChannel(${name}) failed: ${resp.message}`);
@@ -1169,6 +1212,8 @@ export class EngineBridge {
   async getChannel(name: string): Promise<number> {
     const client = this.activeSession?.getClient();
     if (client) {
+      this.controlTraffic.readCommands += 1;
+      this.controlTraffic.readEntries += 1;
       const resp = await client.getChannel(name);
       if (resp.ok) return resp.value;
     }
@@ -1188,6 +1233,8 @@ export class EngineBridge {
     if (!client) {
       return { ok: false, message: 'no-active-engine-session' };
     }
+    this.controlTraffic.writeCommands += 1;
+    this.controlTraffic.writeEntries += entries.length;
     return client.setChannels(entries);
   }
 
@@ -1202,11 +1249,21 @@ export class EngineBridge {
     if (!client) {
       return { ok: false, message: 'no-active-engine-session' };
     }
+    this.controlTraffic.readCommands += 1;
+    this.controlTraffic.readEntries += names.length;
     return client.getChannels(names);
+  }
+
+  getControlTrafficSnapshot(): EngineControlTrafficObservation {
+    return { ...this.controlTraffic };
   }
 
   getClient(): EngineClient | null {
     return this.activeSession?.getClient() ?? null;
+  }
+
+  createEditorOpenStateSampler(): EditorOpenEngineStateSampler {
+    return createEngineStateSamplingAdapter(() => this.getClient());
   }
 
   getActiveSession(): EngineSession | null {

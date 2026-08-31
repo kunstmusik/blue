@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   EffectEditorRequest,
@@ -6,7 +6,15 @@ import type {
   EffectEditablePatch,
   UdoDefinitionSnapshot,
 } from '../../../shared/project-editor';
-import EffectEditorPanel from './EffectEditorPanel';
+import type { EditorMilestoneName } from '../../../shared/track-instrument-editor-contract';
+
+type LoadedEffectEditor = React.ComponentType<{
+  snapshot: EffectEditorSnapshot;
+  onPatch: (patch: EffectEditablePatch) => void;
+  onEditorUsable?: () => void;
+  initialTab?: 'interface';
+  interfaceOnly?: boolean;
+}>;
 
 function closeWindow(): void {
   window.close();
@@ -48,12 +56,35 @@ export default function EffectEditorPage(): React.ReactElement {
   const parsed = useMemo(() => parseRequestFromLocation(), []);
   const request = parsed?.request ?? null;
   const mode = parsed?.mode ?? 'edit';
+  const diagnosticsEnabled = useMemo(
+    () => new URLSearchParams(window.location.search).get('editorOpenDiagnostics') === '1',
+    [],
+  );
+  const interfaceLoadMode = useMemo(
+    () => new URLSearchParams(window.location.search).get('effectInterfaceLoad') === 'legacy'
+      ? 'legacy'
+      : 'isolated',
+    [],
+  );
   const isProjectEffect = request?.ownerType === 'project';
   const [snapshot, setSnapshot] = useState<EffectEditorSnapshot | null>(null);
   // Live project UDO projection for project effects; updated by the main
   // process when project globals change while this window stays open (US4).
   const [liveProjectUdos, setLiveProjectUdos] = useState<UdoDefinitionSnapshot[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [LoadedEditor, setLoadedEditor] = useState<LoadedEffectEditor | null>(null);
+  const editorImportStarted = useRef(false);
+  const reportedMilestones = useRef(new Set<EditorMilestoneName>());
+
+  const reportDiagnosticMilestone = useCallback((milestone: EditorMilestoneName) => {
+    if (!diagnosticsEnabled || !request || reportedMilestones.current.has(milestone)) return;
+    reportedMilestones.current.add(milestone);
+    void window.blueAPI.reportEffectEditorDiagnosticMilestone({
+      request,
+      mode,
+      milestone,
+    });
+  }, [diagnosticsEnabled, mode, request]);
 
   useEffect(() => {
     if (!request) {
@@ -72,13 +103,29 @@ export default function EffectEditorPage(): React.ReactElement {
 
       setSnapshot(loaded);
       setLiveProjectUdos(loaded.projectUdos);
+      reportDiagnosticMilestone('document-accepted');
       document.title = `${loaded.name || 'Effect'} - ${mode === 'interface' ? 'Interface' : 'Effect Editor'}`;
     });
 
     return () => {
       cancelled = true;
     };
-  }, [request, mode]);
+  }, [request, mode, reportDiagnosticMilestone]);
+
+  useEffect(() => {
+    if (!request || editorImportStarted.current) return;
+    editorImportStarted.current = true;
+    reportDiagnosticMilestone('editor-import-start');
+    const loading = mode === 'interface' && interfaceLoadMode === 'isolated'
+      ? import('./EffectInterfacePanel')
+      : import('./EffectEditorPanel');
+    void loading.then((module) => {
+      reportDiagnosticMilestone('editor-import-end');
+      setLoadedEditor(() => module.default);
+    }).catch((loadError: unknown) => {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    });
+  }, [interfaceLoadMode, mode, reportDiagnosticMilestone, request]);
 
   // Reuse the canonical project-document event. The main process routes it only
   // to project-owned effect windows; library effects never subscribe.
@@ -134,30 +181,21 @@ export default function EffectEditorPage(): React.ReactElement {
     );
   }
 
-  if (!snapshotWithLiveUdos || !request) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-app-bg text-role-body text-app-text-muted">
-        Loading effect editor...
-      </div>
-    );
-  }
-
-  if (mode === 'interface') {
-    return (
-      <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
-        <EffectEditorPanel
-          snapshot={snapshotWithLiveUdos}
-          onPatch={applyPatch}
-          initialTab="interface"
-          interfaceOnly
-        />
-      </div>
-    );
+  if (!snapshotWithLiveUdos || !request || !LoadedEditor) {
+    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
   }
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
-      <EffectEditorPanel snapshot={snapshotWithLiveUdos} onPatch={applyPatch} />
+      <LoadedEditor
+        snapshot={snapshotWithLiveUdos}
+        onPatch={applyPatch}
+        onEditorUsable={() => reportDiagnosticMilestone('editor-usable')}
+        initialTab={mode === 'interface' && interfaceLoadMode === 'legacy'
+          ? 'interface'
+          : undefined}
+        interfaceOnly={mode === 'interface' && interfaceLoadMode === 'legacy'}
+      />
     </div>
   );
 }

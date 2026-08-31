@@ -3,6 +3,7 @@ import {
   broadcastProjectDocumentUpdateToTrackInstrumentWindows,
   closeTrackInstrumentEditorWindows,
   closeTrackInstrumentEditorWindowsForGroup,
+  isTrackInstrumentEditorWebContents,
   openTrackInstrumentEditorWindow,
 } from './track-instrument-editor-window-manager';
 import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
@@ -12,7 +13,18 @@ const electronMock = vi.hoisted(() => {
 
   class MockBrowserWindow {
     readonly options: Record<string, unknown>;
-    readonly webContents = { send: vi.fn() };
+    readonly eventHandlers = new Map<string, (...args: unknown[]) => void>();
+    readonly webContents = {
+      send: vi.fn(),
+      on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+        this.eventHandlers.set(`webContents:${event}`, handler);
+        return this.webContents;
+      }),
+      once: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+        this.eventHandlers.set(`webContents:${event}`, handler);
+        return this.webContents;
+      }),
+    };
     destroyed = false;
     focus = vi.fn();
     show = vi.fn();
@@ -24,10 +36,27 @@ const electronMock = vi.hoisted(() => {
     getBounds = vi.fn(() => ({ x: 100, y: 100, width: 1000, height: 760 }));
     getNormalBounds = vi.fn(() => ({ x: 100, y: 100, width: 1000, height: 760 }));
     setBounds = vi.fn();
-    on = vi.fn((_event: string, _handler: () => void) => this);
-    once = vi.fn((_event: string, _handler: () => void) => this);
+    on = vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+      this.eventHandlers.set(event, handler);
+      return this;
+    });
+    once = vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+      this.eventHandlers.set(event, handler);
+      return this;
+    });
     removeListener = vi.fn();
-    close = vi.fn(() => { this.destroyed = true; });
+    close = vi.fn(() => {
+      this.destroyed = true;
+      this.emit('closed');
+    });
+
+    emit(event: string, ...args: unknown[]): void {
+      this.eventHandlers.get(event)?.(...args);
+    }
+
+    emitWebContents(event: string, ...args: unknown[]): void {
+      this.eventHandlers.get(`webContents:${event}`)?.(...args);
+    }
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -78,6 +107,7 @@ describe('Track instrument editor window manager', () => {
     expect(first).toBe(second);
     expect(electronMock.instances).toHaveLength(1);
     expect(electronMock.instances[0]!.options.parent).toBe(mainWindow);
+    expect(electronMock.instances[0]!.options.backgroundColor).toBe('#1a1a2e');
     expect(electronMock.instances[0]!.options.frame).toBe(true);
     expect(electronMock.instances[0]!.options.modal).toBe(false);
     expect(electronMock.instances[0]!.options.show).toBe(false);
@@ -92,6 +122,38 @@ describe('Track instrument editor window manager', () => {
       PROJECT_DOCUMENT_UPDATED_CHANNEL,
       event,
     );
+  });
+
+  it('reports cold-open milestones in order and marks diagnostic URLs', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const events: string[] = [];
+    const request = {
+      track: {
+        rootGroupId: 'group-1',
+        trackId: 'track-1',
+        projectSessionId: 3,
+        projectRevision: 4,
+      },
+    };
+
+    openTrackInstrumentEditorWindow(mainWindow, request, {
+      diagnosticsEnabled: true,
+      onLifecycle: (milestone) => events.push(milestone),
+    });
+    const editorWindow = electronMock.instances[0]!;
+
+    editorWindow.emitWebContents('did-finish-load');
+    editorWindow.emit('ready-to-show');
+
+    expect(events).toEqual([
+      'window-constructed',
+      'navigation-started',
+      'renderer-mounted',
+      'ready-to-show',
+      'shown',
+    ]);
+    expect(String(editorWindow.loadURL.mock.calls[0]?.[0]))
+      .toContain('editorOpenDiagnostics=1');
   });
 
   it('closes every editor attached to a removed Track group', () => {
@@ -120,5 +182,26 @@ describe('Track instrument editor window manager', () => {
     });
 
     expect(electronMock.instances).toHaveLength(2);
+  });
+
+  it('authorizes only active Track editor web contents', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    openTrackInstrumentEditorWindow(mainWindow, {
+      track: {
+        rootGroupId: 'group-1',
+        trackId: 'track-1',
+        projectSessionId: 3,
+        projectRevision: 4,
+      },
+    });
+
+    expect(isTrackInstrumentEditorWebContents(
+      electronMock.instances[0]!.webContents as never,
+      { track: { rootGroupId: 'group-1', trackId: 'track-1', projectSessionId: 3, projectRevision: 4 } },
+    )).toBe(true);
+    expect(isTrackInstrumentEditorWebContents(
+      electronMock.instances[0]!.webContents as never,
+      { track: { rootGroupId: 'group-2', trackId: 'track-1', projectSessionId: 3, projectRevision: 4 } },
+    )).toBe(false);
   });
 });

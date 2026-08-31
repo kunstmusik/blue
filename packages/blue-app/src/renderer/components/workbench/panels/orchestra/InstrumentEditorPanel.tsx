@@ -1,15 +1,16 @@
-import React, { useCallback, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import type { InstrumentSnapshot, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
 import type { BlueX7RuntimeTarget } from '../../../../../shared/project-editor/contract';
-import BlueSynthBuilderEditor from './BlueSynthBuilderEditor';
-import BlueX7Editor from './BlueX7Editor';
-import GenericInstrumentEditor from './GenericInstrumentEditor';
 import InstrumentCommentsPanel from './InstrumentCommentsPanel';
-import JavaScriptInstrumentEditor from './JavaScriptInstrumentEditor';
-import PythonInstrumentEditor from './PythonInstrumentEditor';
 import type { OrchestraMutationProps } from './types';
 import type { UdoLibraryDropTarget } from '../udo/UdoTable';
+
+const BlueSynthBuilderEditor = React.lazy(() => import('./BlueSynthBuilderEditor'));
+const BlueX7Editor = React.lazy(() => import('../../../instruments/blue-x7-editor'));
+const GenericInstrumentEditor = React.lazy(() => import('./GenericInstrumentEditor'));
+const JavaScriptInstrumentEditor = React.lazy(() => import('./JavaScriptInstrumentEditor'));
+const PythonInstrumentEditor = React.lazy(() => import('./PythonInstrumentEditor'));
 
 interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   instrument: InstrumentSnapshot | undefined;
@@ -20,7 +21,10 @@ interface InstrumentEditorPanelProps extends OrchestraMutationProps {
     target: BlueX7RuntimeTarget;
     projectSessionId: number;
     enabled: boolean;
+    onObservationStart?: () => void;
+    onObservationResult?: () => void;
   };
+  onEditorUsable?: () => void;
 }
 
 const EditorSurface = React.memo(function EditorSurface({
@@ -29,12 +33,18 @@ const EditorSurface = React.memo(function EditorSurface({
   onOrchestraPatch,
   embeddedUdoTarget,
   blueX7Runtime,
+  onEditorUsable,
 }: {
   instrument: InstrumentSnapshot;
   projectUdos: readonly UdoDefinitionSnapshot[];
   embeddedUdoTarget?: UdoLibraryDropTarget;
   blueX7Runtime?: InstrumentEditorPanelProps['blueX7Runtime'];
+  onEditorUsable?: () => void;
 } & OrchestraMutationProps): React.ReactElement {
+  useEffect(() => {
+    onEditorUsable?.();
+  }, [instrument.assignmentId, instrument.type, onEditorUsable]);
+
   const dispatchInstrumentPatch = useCallback(
     (patch: InstrumentPatch) =>
       onOrchestraPatch({
@@ -116,6 +126,7 @@ function InstrumentEditorPanel({
   projectUdos,
   embeddedUdoTarget,
   blueX7Runtime,
+  onEditorUsable,
 }: InstrumentEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
@@ -182,13 +193,18 @@ function InstrumentEditorPanel({
           aria-hidden={activeTab !== 'editor'}
           style={{ visibility: activeTab === 'editor' ? 'visible' : 'hidden' }}
         >
-          <EditorSurface
-            instrument={instrument}
-            projectUdos={projectUdos}
-            onOrchestraPatch={onOrchestraPatch}
-            embeddedUdoTarget={embeddedUdoTarget}
-            blueX7Runtime={blueX7Runtime}
-          />
+          <Suspense fallback={(
+            <div aria-hidden="true" className="h-full bg-blue-bg" data-instrument-editor-loading />
+          )}>
+            <EditorSurface
+              instrument={instrument}
+              projectUdos={projectUdos}
+              onOrchestraPatch={onOrchestraPatch}
+              embeddedUdoTarget={embeddedUdoTarget}
+              blueX7Runtime={blueX7Runtime}
+              onEditorUsable={onEditorUsable}
+            />
+          </Suspense>
         </div>
         <div
           className={activeTab === 'comments' ? 'relative h-full' : 'pointer-events-none absolute inset-0'}

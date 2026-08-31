@@ -7,10 +7,15 @@ import {
   type TrackInstrumentEditorRequest,
   type TrackInstrumentEditorSnapshot,
 } from '../../../shared/project-editor';
+import {
+  isNewerTrackInstrumentRuntimeStatus,
+  isDiagnosticCondition,
+  type DiagnosticCondition,
+  type EditorMilestoneName,
+  type TrackInstrumentRuntimeStatus,
+} from '../../../shared/track-instrument-editor-contract';
 import InstrumentEditorPanel from '../workbench/panels/orchestra/InstrumentEditorPanel';
 import { useLibraryStore } from '../../stores/library-store';
-import { usePlaybackStore } from '../../stores/playback-store';
-import { useBlueLiveStore } from '../../stores/blue-live-store';
 import {
   mergePendingInstrumentPatch,
   toInstrumentPatch,
@@ -19,6 +24,12 @@ import {
 function closeWindow(): void {
   window.close();
 }
+
+const INACTIVE_RUNTIME_STATUS: TrackInstrumentRuntimeStatus = {
+  sequence: 0,
+  playbackRunning: false,
+  blueLiveRunning: false,
+};
 
 function parseRequestFromLocation(): TrackInstrumentEditorRequest | null {
   const params = new URLSearchParams(window.location.search);
@@ -46,6 +57,16 @@ function parseRequestFromLocation(): TrackInstrumentEditorRequest | null {
   };
 }
 
+function isEditorOpenDiagnosticsEnabled(): boolean {
+  return new URLSearchParams(window.location.search).get('editorOpenDiagnostics') === '1';
+}
+
+function parseDiagnosticCondition(): DiagnosticCondition | null {
+  const condition = new URLSearchParams(window.location.search)
+    .get('editorOpenDiagnosticCondition');
+  return isDiagnosticCondition(condition) ? condition : null;
+}
+
 function projectSnapshotToTrackInstrument(
   request: TrackInstrumentEditorRequest,
   event: Parameters<Parameters<typeof window.blueAPI.onProjectDocumentUpdated>[0]>[0],
@@ -71,17 +92,82 @@ function projectSnapshotToTrackInstrument(
 }
 
 export default function TrackInstrumentEditorPage(): React.ReactElement {
-  const playbackRunning = usePlaybackStore((state) => state.isPlaying);
-  const blueLiveRunning = useBlueLiveStore((state) => state.running);
   const parsedRequest = useMemo(parseRequestFromLocation, []);
+  const diagnosticsEnabled = useMemo(isEditorOpenDiagnosticsEnabled, []);
+  const diagnosticCondition = useMemo(parseDiagnosticCondition, []);
+  const shouldMountEditor = diagnosticCondition !== 'minimal-shell'
+    && diagnosticCondition !== 'shell-with-snapshot';
+  const shouldInitializeLibrary = diagnosticCondition === null
+    || diagnosticCondition === 'focus-existing'
+    || diagnosticCondition === 'library-init'
+    || diagnosticCondition === 'bluex7-readback';
+  const shouldObserveRuntime = diagnosticCondition === null
+    || diagnosticCondition === 'focus-existing'
+    || diagnosticCondition === 'bluex7-readback';
   const [snapshot, setSnapshot] = useState<TrackInstrumentEditorSnapshot | null>(null);
+  const [editorUsable, setEditorUsable] = useState(false);
+  const [runtimeStatus, setRuntimeStatus] = useState<TrackInstrumentRuntimeStatus>(INACTIVE_RUNTIME_STATUS);
   const [error, setError] = useState<string | null>(parsedRequest ? null : 'Missing Track instrument editor request');
   const requestRef = useRef<TrackInstrumentEditorRequest | null>(parsedRequest);
+  const runtimeStatusSequenceRef = useRef<number | null>(null);
+  const runtimeUnsubscribeRef = useRef<(() => Promise<void>) | null>(null);
   const pendingPatchesRef = useRef<InstrumentPatch[]>([]);
   const drainingPatchesRef = useRef(false);
   const mountedRef = useRef(true);
+  const editorIdentityRef = useRef<string | null>(null);
+  const documentAcceptedRef = useRef(false);
+  const liveObservationStartedRef = useRef(false);
+  const liveObservationResultRef = useRef(false);
+
+  const reportDiagnosticMilestone = useCallback((
+    milestone: EditorMilestoneName,
+    request = requestRef.current,
+  ): void => {
+    if (!diagnosticsEnabled || !request) return;
+    const report = window.blueAPI?.reportTrackInstrumentEditorDiagnosticMilestone;
+    if (typeof report !== 'function') return;
+    void report({ request, milestone }).catch(() => undefined);
+  }, [diagnosticsEnabled]);
+
+  const handleEditorUsable = useCallback(() => {
+    reportDiagnosticMilestone('editor-import-end');
+    setEditorUsable(true);
+    reportDiagnosticMilestone('editor-usable');
+    if (!shouldInitializeLibrary) return;
+    reportDiagnosticMilestone('library-init-start');
+    void useLibraryStore.getState().initialize().then(
+      () => reportDiagnosticMilestone('library-init-end'),
+      () => reportDiagnosticMilestone('library-init-end'),
+    );
+  }, [reportDiagnosticMilestone, shouldInitializeLibrary]);
+
+  const reportLiveObservationStart = useCallback(() => {
+    if (liveObservationStartedRef.current) return;
+    liveObservationStartedRef.current = true;
+    reportDiagnosticMilestone('live-observation-start');
+  }, [reportDiagnosticMilestone]);
+
+  const reportLiveObservationResult = useCallback(() => {
+    if (liveObservationResultRef.current) return;
+    liveObservationResultRef.current = true;
+    reportDiagnosticMilestone('live-observation-first-result');
+  }, [reportDiagnosticMilestone]);
 
   const acceptSnapshot = useCallback((next: TrackInstrumentEditorSnapshot) => {
+    const nextEditorIdentity = [
+      next.track.projectSessionId,
+      next.track.rootGroupId,
+      next.track.trackId,
+      next.instrument.assignmentId,
+      next.instrument.type,
+    ].join(':');
+    if (editorIdentityRef.current !== nextEditorIdentity) {
+      editorIdentityRef.current = nextEditorIdentity;
+      documentAcceptedRef.current = false;
+      liveObservationStartedRef.current = false;
+      liveObservationResultRef.current = false;
+      setEditorUsable(false);
+    }
     const current = requestRef.current;
     if (current
       && current.track.projectSessionId === next.track.projectSessionId
@@ -93,19 +179,71 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     setSnapshot(next);
     setError(null);
     document.title = `${next.instrument.name || 'Track Instrument'} - Track Instrument Editor`;
+    if (!documentAcceptedRef.current) {
+      documentAcceptedRef.current = true;
+      reportDiagnosticMilestone('document-accepted');
+    }
+  }, [reportDiagnosticMilestone]);
+
+  const acceptRuntimeStatus = useCallback((next: TrackInstrumentRuntimeStatus) => {
+    const previous = runtimeStatusSequenceRef.current === null
+      ? null
+      : { ...INACTIVE_RUNTIME_STATUS, sequence: runtimeStatusSequenceRef.current };
+    if (!isNewerTrackInstrumentRuntimeStatus(next, previous)) return;
+    runtimeStatusSequenceRef.current = next.sequence;
+    if (mountedRef.current) setRuntimeStatus(next);
   }, []);
 
   useEffect(() => {
     mountedRef.current = true;
-    void useLibraryStore.getState().initialize();
     return () => {
       mountedRef.current = false;
+      runtimeStatusSequenceRef.current = null;
+      const unsubscribe = runtimeUnsubscribeRef.current;
+      runtimeUnsubscribeRef.current = null;
+      if (unsubscribe) void unsubscribe().catch(() => undefined);
       useLibraryStore.getState().dispose();
     };
   }, []);
 
   useEffect(() => {
-    if (!parsedRequest) return;
+    if (!parsedRequest || !shouldObserveRuntime) return;
+
+    let cancelled = false;
+    runtimeStatusSequenceRef.current = null;
+    setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
+
+    const subscribe = window.blueAPI?.subscribeTrackInstrumentRuntimeStatus;
+    if (typeof subscribe !== 'function') return;
+
+    void subscribe(parsedRequest, (next) => {
+      if (!cancelled) acceptRuntimeStatus(next);
+    }).then((subscription) => {
+      if (cancelled) {
+        if (subscription) void subscription.unsubscribe();
+        return;
+      }
+      if (!subscription) {
+        setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
+        return;
+      }
+      runtimeUnsubscribeRef.current = subscription.unsubscribe;
+      acceptRuntimeStatus(subscription.status);
+    }).catch(() => {
+      if (!cancelled) setRuntimeStatus(INACTIVE_RUNTIME_STATUS);
+    });
+
+    return () => {
+      cancelled = true;
+      runtimeStatusSequenceRef.current = null;
+      const unsubscribe = runtimeUnsubscribeRef.current;
+      runtimeUnsubscribeRef.current = null;
+      if (unsubscribe) void unsubscribe().catch(() => undefined);
+    };
+  }, [acceptRuntimeStatus, parsedRequest, shouldObserveRuntime]);
+
+  useEffect(() => {
+    if (!parsedRequest || diagnosticCondition === 'minimal-shell') return;
     let cancelled = false;
     void window.blueAPI.getTrackInstrumentEditorDocument(parsedRequest).then((loaded) => {
       if (cancelled) return;
@@ -118,7 +256,29 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [acceptSnapshot, parsedRequest]);
+  }, [acceptSnapshot, diagnosticCondition, parsedRequest]);
+
+  useEffect(() => {
+    if (!diagnosticsEnabled || !parsedRequest) return;
+    if (diagnosticCondition === 'minimal-shell') {
+      reportDiagnosticMilestone('editor-usable');
+      return;
+    }
+    if (diagnosticCondition === 'shell-with-snapshot' && snapshot) {
+      reportDiagnosticMilestone('editor-usable');
+      return;
+    }
+    if (snapshot && shouldMountEditor) {
+      reportDiagnosticMilestone('editor-import-start');
+    }
+  }, [
+    diagnosticCondition,
+    diagnosticsEnabled,
+    parsedRequest,
+    reportDiagnosticMilestone,
+    shouldMountEditor,
+    snapshot,
+  ]);
 
   useEffect(() => {
     if (!parsedRequest) return;
@@ -224,12 +384,16 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     );
   }
 
+  if (diagnosticCondition === 'minimal-shell') {
+    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
+  }
+
   if (!snapshot) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-app-bg text-role-body text-app-text-muted">
-        Loading Track instrument editor...
-      </div>
-    );
+    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
+  }
+
+  if (diagnosticCondition === 'shell-with-snapshot') {
+    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
   }
 
   return (
@@ -247,8 +411,13 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
             },
           },
           projectSessionId: snapshot.track.projectSessionId,
-          enabled: playbackRunning || blueLiveRunning,
+          enabled: shouldObserveRuntime
+            && editorUsable
+            && (runtimeStatus.playbackRunning || runtimeStatus.blueLiveRunning),
+          onObservationStart: reportLiveObservationStart,
+          onObservationResult: reportLiveObservationResult,
         } : undefined}
+        onEditorUsable={handleEditorUsable}
         embeddedUdoTarget={{
           projectSessionId: snapshot.track.projectSessionId,
           projectRevision: snapshot.track.projectRevision,

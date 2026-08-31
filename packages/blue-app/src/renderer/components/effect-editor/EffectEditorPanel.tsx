@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type {
   BlueSynthBuilderInstrumentSnapshot,
@@ -25,6 +25,7 @@ export interface EffectEditorPanelProps {
   showNameField?: boolean;
   initialTab?: EffectEditorTab;
   interfaceOnly?: boolean;
+  onEditorUsable?: () => void;
 }
 
 function buildFakeInstrumentSnapshot(
@@ -58,8 +59,13 @@ export default function EffectEditorPanel({
   showNameField = true,
   initialTab = 'interface',
   interfaceOnly = false,
+  onEditorUsable,
 }: EffectEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<EffectEditorTab>(initialTab);
+
+  useEffect(() => {
+    onEditorUsable?.();
+  }, [onEditorUsable]);
 
   const handleInstrumentPatch = useCallback(
     (patch: InstrumentPatch) => {

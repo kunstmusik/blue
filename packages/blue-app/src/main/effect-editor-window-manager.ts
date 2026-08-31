@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import type { WebContents } from 'electron';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 
@@ -11,8 +12,13 @@ import {
   attachWindowStateHandlers,
   restoreWindowState,
 } from './window-state-manager';
+import type {
+  DiagnosticCondition,
+  EditorMilestoneName,
+} from '../shared/track-instrument-editor-contract';
 
-type EffectEditorMode = 'interface' | 'edit';
+export type EffectEditorMode = 'interface' | 'edit';
+export type EffectInterfaceDiagnosticLoadMode = 'isolated' | 'legacy';
 
 interface EffectEditorKey {
   mode: EffectEditorMode;
@@ -30,7 +36,13 @@ function getWindowKey(request: EffectEditorRequest, mode: EffectEditorMode): str
   return `${mode}:${request.ownerType}:${request.effectId}`;
 }
 
-function buildEffectEditorUrl(request: EffectEditorRequest, mode: EffectEditorMode): string {
+function buildEffectEditorUrl(
+  request: EffectEditorRequest,
+  mode: EffectEditorMode,
+  diagnosticsEnabled = false,
+  diagnosticCondition?: DiagnosticCondition,
+  effectInterfaceLoadMode?: EffectInterfaceDiagnosticLoadMode,
+): string {
   const params = new URLSearchParams({
     ownerType: request.ownerType,
     effectId: request.effectId,
@@ -45,6 +57,13 @@ function buildEffectEditorUrl(request: EffectEditorRequest, mode: EffectEditorMo
 
   if (request.libraryRef) {
     params.set('libraryEffectId', request.libraryRef.libraryEffectId);
+  }
+  if (diagnosticsEnabled) params.set('editorOpenDiagnostics', '1');
+  if (diagnosticsEnabled && diagnosticCondition) {
+    params.set('editorOpenDiagnosticCondition', diagnosticCondition);
+  }
+  if (diagnosticsEnabled && mode === 'interface' && effectInterfaceLoadMode) {
+    params.set('effectInterfaceLoad', effectInterfaceLoadMode);
   }
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -65,6 +84,69 @@ export interface EffectEditorWindowOptions {
    * before the effect editor/interface renderer becomes visible (SPEC 061).
    */
   initialZoomFactor?: number;
+  onLifecycle?: (milestone: EditorMilestoneName, errorCode?: string) => void;
+  diagnosticsEnabled?: boolean;
+  diagnosticCondition?: DiagnosticCondition;
+  effectInterfaceLoadMode?: EffectInterfaceDiagnosticLoadMode;
+}
+
+function finishOpeningEffectWindow(
+  effectWindow: BrowserWindow,
+  key: string,
+  request: EffectEditorRequest,
+  mode: EffectEditorMode,
+  disposeStateHandlers: (() => void) | null,
+  options: EffectEditorWindowOptions,
+): void {
+  effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
+
+  effectWindow.once('ready-to-show', () => {
+    options.onLifecycle?.('ready-to-show');
+    if (!effectWindow.isDestroyed()) effectWindow.show();
+    if (!effectWindow.isDestroyed()) options.onLifecycle?.('shown');
+  });
+
+  let closed = false;
+  let failureReported = false;
+  const reportFailure = (errorCode: string): void => {
+    if (closed || failureReported) return;
+    failureReported = true;
+    options.onLifecycle?.('failed', errorCode);
+    if (!effectWindow.isDestroyed()) effectWindow.close();
+  };
+
+  effectWindow.webContents.once('did-finish-load', () => {
+    if (!closed) options.onLifecycle?.('renderer-mounted');
+  });
+  effectWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    if (errorCode === -3) return;
+    reportFailure(`${errorCode}:${errorDescription || 'navigation failed'}`);
+  });
+
+  effectWindow.on('closed', () => {
+    closed = true;
+    disposeStateHandlers?.();
+    if (effectEditorWindows.get(key)?.window === effectWindow) {
+      effectEditorWindows.delete(key);
+    }
+    options.onLifecycle?.('closed');
+  });
+
+  options.onLifecycle?.('window-constructed');
+  options.onLifecycle?.('navigation-started');
+  try {
+    void Promise.resolve(effectWindow.loadURL(buildEffectEditorUrl(
+      request,
+      mode,
+      options.diagnosticsEnabled,
+      options.diagnosticCondition,
+      options.effectInterfaceLoadMode,
+    ))).catch((error: unknown) => {
+      reportFailure(error instanceof Error ? error.message : String(error));
+    });
+  } catch (error: unknown) {
+    reportFailure(error instanceof Error ? error.message : String(error));
+  }
 }
 
 export function openEffectInterfaceWindow(
@@ -87,6 +169,7 @@ export function openEffectInterfaceWindow(
   }
 
   const effectWindow = new BrowserWindow({
+    backgroundColor: '#1a1a2e',
     title: 'Effect Interface',
     parent: mainWindow,
     modal: false,
@@ -115,20 +198,14 @@ export function openEffectInterfaceWindow(
   restoreWindowState(effectWindow, 'effect-interface');
   const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-interface');
 
-  effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
-
-  effectWindow.once('ready-to-show', () => {
-    if (!effectWindow.isDestroyed()) {
-      effectWindow.show();
-    }
-  });
-
-  effectWindow.on('closed', () => {
-    disposeStateHandlers?.();
-    effectEditorWindows.delete(key);
-  });
-
-  effectWindow.loadURL(buildEffectEditorUrl(request, 'interface'));
+  finishOpeningEffectWindow(
+    effectWindow,
+    key,
+    request,
+    'interface',
+    disposeStateHandlers,
+    options,
+  );
   return effectWindow;
 }
 
@@ -152,6 +229,7 @@ export function openEffectEditorWindow(
   const effectWindow = new BrowserWindow({
     width: 1100,
     height: 820,
+    backgroundColor: '#1a1a2e',
     title: 'Effect Editor',
     parent: mainWindow,
     modal: true,
@@ -173,20 +251,14 @@ export function openEffectEditorWindow(
   restoreWindowState(effectWindow, 'effect-editor');
   const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-editor');
 
-  effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
-
-  effectWindow.once('ready-to-show', () => {
-    if (!effectWindow.isDestroyed()) {
-      effectWindow.show();
-    }
-  });
-
-  effectWindow.on('closed', () => {
-    disposeStateHandlers?.();
-    effectEditorWindows.delete(key);
-  });
-
-  effectWindow.loadURL(buildEffectEditorUrl(request, 'edit'));
+  finishOpeningEffectWindow(
+    effectWindow,
+    key,
+    request,
+    'edit',
+    disposeStateHandlers,
+    options,
+  );
   return effectWindow;
 }
 
@@ -214,16 +286,31 @@ export function closeEffectEditorWindowsForOwner(ownerType: 'project' | 'library
 }
 
 export function focusEffectEditorWindow(request: EffectEditorRequest): boolean {
+  return focusEffectEditorWindowMode(request) !== null;
+}
+
+export function focusEffectEditorWindowMode(
+  request: EffectEditorRequest,
+): EffectEditorMode | null {
   for (const mode of ['edit', 'interface'] as const) {
     const key = getWindowKey(request, mode);
     const existing = effectEditorWindows.get(key);
     if (existing && !existing.window.isDestroyed()) {
       existing.window.focus();
       existing.window.show();
-      return true;
+      return mode;
     }
   }
-  return false;
+  return null;
+}
+
+export function isEffectEditorWebContents(
+  webContents: WebContents,
+  request: EffectEditorRequest,
+  mode: EffectEditorMode,
+): boolean {
+  const state = effectEditorWindows.get(getWindowKey(request, mode));
+  return Boolean(state && !state.window.isDestroyed() && state.window.webContents === webContents);
 }
 
 export function closeStaleEffectEditorWindows(

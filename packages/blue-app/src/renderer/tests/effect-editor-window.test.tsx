@@ -20,6 +20,7 @@ declare global {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
+      reportEffectEditorDiagnosticMilestone: (request: unknown) => Promise<boolean>;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
       ) => () => void;
@@ -134,6 +135,16 @@ function renderPage(): { container: HTMLDivElement; root: Root } {
   return { container, root };
 }
 
+async function flushFullEditorImport(): Promise<void> {
+  await import('../components/effect-editor/EffectEditorPanel');
+  await Promise.resolve();
+}
+
+async function flushInterfaceImport(): Promise<void> {
+  await import('../components/effect-editor/EffectInterfacePanel');
+  await Promise.resolve();
+}
+
 beforeEach(() => {
   projectDocumentUpdatedListener = null;
   const snapshot = createLoadedSnapshot();
@@ -150,6 +161,7 @@ beforeEach(() => {
       return currentSnapshot;
     }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
+    reportEffectEditorDiagnosticMilestone: vi.fn().mockResolvedValue(true),
     onProjectDocumentUpdated: vi.fn((callback) => {
       projectDocumentUpdatedListener = callback;
       return () => {
@@ -167,11 +179,36 @@ afterEach(() => {
 });
 
 describe('EffectEditorPage', () => {
+  it('starts importing immediately and keeps the pre-snapshot shell visually neutral', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1',
+    );
+    window.blueAPI.getEffectEditorDocument = vi.fn(() => new Promise(() => {}));
+
+    const { container, root } = renderPage();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'interface', milestone: 'editor-import-start' }),
+    );
+    const loadingShell = container.querySelector('div');
+    expect(loadingShell?.className).toContain('bg-app-bg');
+    expect(loadingShell?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.textContent).not.toContain('Loading');
+
+    act(() => root.unmount());
+    container.remove();
+  });
+
   it('loads the effect editor shell and shows the loaded snapshot', async () => {
     const { container, root } = renderPage();
 
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     expect(window.blueAPI.openEffectEditor).toHaveBeenCalledWith(
@@ -205,7 +242,7 @@ describe('EffectEditorPage', () => {
     const { container, root } = renderPage();
 
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     expect(container.textContent).toContain('Unable to load effect editor document');
@@ -231,7 +268,7 @@ describe('EffectEditorPage', () => {
     const { container, root } = renderPage();
 
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     const codeTab = Array.from(container.querySelectorAll('button')).find(
@@ -322,7 +359,7 @@ describe('EffectEditorPage', () => {
 
     const { container, root } = renderPage();
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     const codeTab = Array.from(container.querySelectorAll('button')).find(
@@ -378,7 +415,7 @@ describe('EffectEditorPage', () => {
   it('uses semantic typography roles for tab buttons and controls', async () => {
     const { container, root } = renderPage();
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     const buttons = Array.from(container.querySelectorAll('nav button, header button, div.flex > button'));
@@ -390,6 +427,53 @@ describe('EffectEditorPage', () => {
     act(() => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('loads the interface-only surface and reports its diagnostic milestones', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1',
+    );
+    const { container, root } = renderPage();
+
+    await act(async () => {
+      await flushInterfaceImport();
+    });
+
+    expect(container.querySelector('[data-testid="bsb-interface-editor"]')).toBeTruthy();
+    expect(container.textContent).not.toContain('Code');
+    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'interface', milestone: 'document-accepted' }),
+    );
+    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'interface', milestone: 'editor-usable' }),
+    );
+
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('can reproduce the legacy full dependency load while rendering only the interface', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1&effectInterfaceLoad=legacy',
+    );
+    const { container, root } = renderPage();
+
+    await act(async () => {
+      await flushFullEditorImport();
+    });
+
+    expect(container.querySelector('[data-testid="bsb-interface-editor"]')).toBeTruthy();
+    expect(container.textContent).not.toContain('Code');
+    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: 'interface', milestone: 'editor-import-end' }),
+    );
+
+    act(() => root.unmount());
     container.remove();
   });
 });

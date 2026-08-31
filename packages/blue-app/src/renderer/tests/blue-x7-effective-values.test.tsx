@@ -193,6 +193,33 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
   });
 
+  it('does not poll while runtime activity is inactive and clears values when it stops', async () => {
+    getBlueX7EffectiveValues.mockResolvedValue({
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [{ parameterId: 'param-a', value: 42 }],
+    });
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, { ...baseProps, enabled: false }));
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(getBlueX7EffectiveValues).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, baseProps));
+      await Promise.resolve();
+    });
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, { ...baseProps, enabled: false }));
+    });
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+  });
+
   it('reports unavailability without mutating project state or showing values', async () => {
     getBlueX7EffectiveValues.mockResolvedValue({ ok: false, reason: 'not-playing' });
     const onApplyPatch = vi.fn();
@@ -212,6 +239,84 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     expect(getBlueX7EffectiveValues).toHaveBeenCalled();
     // readback never dispatches project patches (disposable display state)
     expect(onApplyPatch).not.toHaveBeenCalled();
+  });
+
+  it('reports observation start and only the first successful result', async () => {
+    const onObservationStart = vi.fn();
+    const onObservationResult = vi.fn();
+    getBlueX7EffectiveValues.mockResolvedValue({
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [],
+    });
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, {
+        ...baseProps,
+        onObservationStart,
+        onObservationResult,
+      }));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+
+    expect(onObservationStart).toHaveBeenCalledTimes(1);
+    expect(onObservationResult).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report a successful observation for unavailable results', async () => {
+    const onObservationStart = vi.fn();
+    const onObservationResult = vi.fn();
+    getBlueX7EffectiveValues.mockResolvedValue({ ok: false, reason: 'not-playing' });
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, {
+        ...baseProps,
+        onObservationStart,
+        onObservationResult,
+      }));
+      await Promise.resolve();
+    });
+
+    expect(onObservationStart).toHaveBeenCalledTimes(1);
+    expect(onObservationResult).not.toHaveBeenCalled();
+  });
+
+  it('starts a fresh observation when the target changes', async () => {
+    const onObservationStart = vi.fn();
+    const onObservationResult = vi.fn();
+    getBlueX7EffectiveValues.mockResolvedValue({
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [],
+    });
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, {
+        ...baseProps,
+        onObservationStart,
+        onObservationResult,
+      }));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, {
+        ...baseProps,
+        target: { assignmentId: '2' },
+        onObservationStart,
+        onObservationResult,
+      }));
+      await Promise.resolve();
+    });
+
+    expect(onObservationStart).toHaveBeenCalledTimes(2);
+    expect(onObservationResult).toHaveBeenCalledTimes(2);
   });
 
   it('overlays automated engine values without dispatching a durable patch', async () => {

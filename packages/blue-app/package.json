@@ -82,6 +82,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.1.6",
+    "ajv": "8.20.0",
     "autoprefixer": "^10.4.23",
     "electron": "35.7.5",
     "electron-builder": "^26.0.36",

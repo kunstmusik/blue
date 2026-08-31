@@ -16,6 +16,7 @@ import {
   isNonnegativeInteger,
 } from '../shared/midi-input';
 import type { EngineRuntimeService } from './engine-runtime';
+import type { EngineControlTrafficObservation } from '../shared/track-instrument-editor-contract';
 
 export type BlueLiveEngineStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -26,6 +27,8 @@ export interface BlueLiveStatusSnapshot {
   sessionId: number;
   projectRevision?: number | null;
 }
+
+export type BlueLiveStateChangeCallback = (running: boolean) => void;
 
 /**
  * Spec 067 — the disposable compiled target catalog owned by one Blue Live
@@ -87,6 +90,7 @@ export class BlueLiveEngineSession {
   private startCompletion: Promise<void> | null = null;
   private lastDiagnosticReport: string | null = null;
   private lifecycleGeneration = 0;
+  private runtimeStateChangeCallback: BlueLiveStateChangeCallback | null = null;
   private readonly dependencies: BlueLiveEngineSessionDependencies;
 
   constructor(
@@ -116,9 +120,18 @@ export class BlueLiveEngineSession {
   }
 
   private setStatus(status: BlueLiveEngineStatus, message?: string): void {
+    const wasRunning = this.status === 'running';
     this.status = status;
     this.message = message ?? '';
+    const isRunning = this.status === 'running';
+    if (wasRunning !== isRunning) {
+      this.runtimeStateChangeCallback?.(isRunning);
+    }
     this.mainWindow.webContents.send('blue-live-status', this.getSnapshot());
+  }
+
+  setRuntimeStateChangeCallback(cb: BlueLiveStateChangeCallback | null): void {
+    this.runtimeStateChangeCallback = cb;
   }
 
   private isCurrentLifecycle(generation: number): boolean {
@@ -635,6 +648,15 @@ export class BlueLiveEngineSession {
       return { ok: false, message: 'no-active-blue-live-session' };
     }
     return this.bridge.getChannels(names);
+  }
+
+  getControlTrafficSnapshot(): EngineControlTrafficObservation {
+    return this.bridge?.getControlTrafficSnapshot() ?? {
+      readCommands: 0,
+      readEntries: 0,
+      writeCommands: 0,
+      writeEntries: 0,
+    };
   }
 
   async syncAutomationParameter(

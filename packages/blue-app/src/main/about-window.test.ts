@@ -87,6 +87,7 @@ describe('about window', () => {
     const window = electronMock.instances[0]!;
     window.triggerReadyToShow();
 
+    expect(window.options.backgroundColor).toBe('#1a1a2e');
     expect(window.setSize).toHaveBeenCalledWith(1408, 868);
     expect(window.center).toHaveBeenCalledTimes(1);
     expect(window.show).toHaveBeenCalledTimes(1);

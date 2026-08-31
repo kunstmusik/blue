@@ -15,6 +15,8 @@ import {
 import {
   applyProjectDocumentPatch,
   createInstrumentSnapshot,
+  createTrackInstrumentEditorSnapshot,
+  getTrackInstrumentDiagnosticKind,
   type TrackRef,
 } from './project-editor';
 
@@ -175,5 +177,25 @@ describe('Track instrument project patches', () => {
     );
     expect(copiedBsb.getOpcodeList().getOpcodes()).toHaveLength(1);
     expect(data.toCSD()).not.toContain('<gain>');
+  });
+
+  it('editor-open reads leave the canonical document and its .blue serialization untouched', () => {
+    const { data, ref } = createInstrumentProject();
+    const context = { projectSessionId: 4, projectRevision: 2 };
+    expect(applyProjectDocumentPatch(data, {
+      score: { type: 'createTrackInstrument', track: ref, instrumentType: 'blueX7' },
+    }, context)).toBe(true);
+
+    const beforeXml = data.saveToString();
+    const beforeCsd = data.toCSD();
+
+    const request = { track: { ...ref } };
+    expect(createTrackInstrumentEditorSnapshot(data, request)).not.toBeNull();
+    expect(getTrackInstrumentDiagnosticKind(data, request)).toBe('blue-x7');
+
+    // Opening/focusing an editor is a read: the canonical project content,
+    // its generated CSD, and its serialization must be byte-identical.
+    expect(data.saveToString()).toBe(beforeXml);
+    expect(data.toCSD()).toBe(beforeCsd);
   });
 });

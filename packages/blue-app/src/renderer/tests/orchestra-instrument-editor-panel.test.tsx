@@ -1,9 +1,14 @@
-import React from 'react';
+// @vitest-environment jsdom
+
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { GenericInstrumentSnapshot } from '../../shared/project-editor';
 import InstrumentEditorPanel from '../components/workbench/panels/orchestra/InstrumentEditorPanel';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';
+
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const GENERIC_INSTRUMENT: GenericInstrumentSnapshot = {
   assignmentId: '1',
@@ -17,19 +22,39 @@ const GENERIC_INSTRUMENT: GenericInstrumentSnapshot = {
 };
 
 describe('Orchestra instrument editor panel', () => {
-  it('renders the editor/comments tab shell for a selected instrument', () => {
-    const html = renderToStaticMarkup(
-      <InstrumentEditorPanel
-        instrument={GENERIC_INSTRUMENT}
-        projectUdos={[]}
-        onOrchestraPatch={vi.fn()}
-      />,
-    );
+  beforeAll(async () => {
+    await import('../components/workbench/panels/orchestra/GenericInstrumentEditor');
+  });
+
+  it('renders the editor/comments tab shell for a selected instrument', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <InstrumentEditorPanel
+          instrument={GENERIC_INSTRUMENT}
+          projectUdos={[]}
+          onOrchestraPatch={vi.fn()}
+        />,
+      );
+      for (
+        let attempt = 0;
+        attempt < 50 && container.querySelector('[data-instrument-editor-loading]');
+        attempt += 1
+      ) {
+        await new Promise((resolve) => { setTimeout(resolve, 0); });
+      }
+    });
+    const html = container.innerHTML;
 
     expect(html).toContain('Instrument Editor');
     expect(html).toContain('Comments');
     expect(html).toContain('Lead');
     expect(html).toContain('aout oscili');
+
+    root.unmount();
+    container.remove();
   });
 
   it('renders a no-selection state', () => {

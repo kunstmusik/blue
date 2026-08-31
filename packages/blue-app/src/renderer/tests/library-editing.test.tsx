@@ -689,9 +689,19 @@ describe('library editor UDO isolation (US5, T030)', () => {
 
     const container = document.createElement('div');
     const root = createRoot(container);
-    act(() => root.render(
-      <LibraryControlledEditor session={blueX7Session} onPatch={onPatch} />,
-    ));
+    await act(async () => {
+      await import('../components/instruments/blue-x7-editor');
+      root.render(
+        <LibraryControlledEditor session={blueX7Session} onPatch={onPatch} />,
+      );
+      for (
+        let attempt = 0;
+        attempt < 50 && container.querySelector('[data-instrument-editor-loading]');
+        attempt += 1
+      ) {
+        await new Promise((resolve) => { setTimeout(resolve, 0); });
+      }
+    });
 
     expect(container.querySelector('[data-testid="blue-x7-editor"]')).toBeTruthy();
     expect(container.textContent).toContain('Common & Algorithms');

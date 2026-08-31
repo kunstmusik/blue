@@ -62,6 +62,7 @@ export function openAboutWindow(
   aboutWindow = new BrowserWindow({
     width: ABOUT_BASE_CONTENT_WIDTH,
     height: ABOUT_BASE_CONTENT_HEIGHT,
+    backgroundColor: '#1a1a2e',
     center: true,
     title: 'About Blue',
     icon: options.icon,

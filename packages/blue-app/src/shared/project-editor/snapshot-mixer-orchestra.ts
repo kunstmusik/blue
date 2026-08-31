@@ -101,6 +101,7 @@ import { ParameterHelper } from '@blue/data';
 import type { SnapValueName, BlueX7Voice, BlueX7Common, BlueX7Lfo, BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
 import type { ScoreInsertionLocation } from '../unified-library';
+import type { EditorInstrumentKind } from '../track-instrument-editor-contract';
 
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from '../automation-range-math';
 import {
@@ -767,6 +768,37 @@ export function getInstrumentSnapshotType(instrument: Instrument | undefined): I
   if (instrument instanceof BlueX7) return 'blueX7';
   if (instrument instanceof BlueSynthBuilder) return 'blueSynthBuilder';
   return 'unknown';
+}
+
+/** Resolve only the Track identity and diagnostic editor category. */
+export function getTrackInstrumentDiagnosticKind(
+  data: BlueData,
+  request: TrackInstrumentEditorRequest,
+): EditorInstrumentKind | null {
+  for (const group of data.getScore()) {
+    if (!(group instanceof TrackLayerGroup) || group.getUniqueId() !== request.track.rootGroupId) {
+      continue;
+    }
+
+    const track = group.find((candidate) => candidate.getUniqueId() === request.track.trackId);
+    const instrument = track?.getInstrument();
+    if (!track || !instrument) return null;
+
+    switch (getInstrumentSnapshotType(instrument)) {
+      case 'blueSynthBuilder':
+        return 'blue-synth-builder';
+      case 'blueX7':
+        return 'blue-x7';
+      case 'generic':
+      case 'javascript':
+      case 'python':
+        return 'generic';
+      default:
+        return null;
+    }
+  }
+
+  return null;
 }
 
 export function getInstrumentSummary(instrument: Instrument | undefined): string {

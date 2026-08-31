@@ -472,16 +472,19 @@ bool ZmqHandler::processOne() {
                 payload.reserve(2 + entries.size() * sizeof(double));
                 payload.push_back(static_cast<char>(entries.size() & 0xffu));
                 payload.push_back(static_cast<char>((entries.size() >> 8) & 0xffu));
+                std::vector<std::string> channelNames;
+                channelNames.reserve(entries.size());
                 for (const auto& entry : entries) {
-                    double value = 0.0;
-                    if (!engine_.getChannel(entry.name, value)) {
-                        // No partial value list: one unavailable channel
-                        // fails the whole batch.
-                        resp = Response::error(engine_.getLastError());
-                        payload.clear();
-                        break;
+                    channelNames.push_back(entry.name);
+                }
+                std::vector<double> values;
+                if (!engine_.getChannels(channelNames, values)) {
+                    resp = Response::error(engine_.getLastError());
+                    payload.clear();
+                } else {
+                    for (const double value : values) {
+                        appendDoubleLE(payload, value);
                     }
-                    appendDoubleLE(payload, value);
                 }
                 if (!payload.empty()) {
                     resp = Response::ok(payload);

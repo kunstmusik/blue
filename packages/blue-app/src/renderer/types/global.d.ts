@@ -28,6 +28,9 @@ import type {
   FrozenSoundObjectSaveCopyResult,
 } from '../../shared/project-editor';
 import type {
+  EffectEditorDiagnosticMilestoneRequest,
+} from '../../shared/track-instrument-editor-contract';
+import type {
   ScoreObjectExportResult,
   ScoreObjectImportResult,
 } from '../../shared/score-object-file';
@@ -35,6 +38,10 @@ import type {
   BlueX7EffectiveValuesRequest,
   BlueX7EffectiveValuesResult,
 } from '../../shared/project-editor/contract';
+import type {
+  TrackInstrumentEditorDiagnosticMilestoneRequest,
+  TrackInstrumentRuntimeStatus,
+} from '../../shared/track-instrument-editor-contract';
 import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 import type {
   ReplConsoleCloseRequest,
@@ -371,9 +378,15 @@ declare global {
       openEffectInterface: (
         request: EffectEditorRequest,
       ) => Promise<void>;
+      reportEffectEditorDiagnosticMilestone: (
+        request: EffectEditorDiagnosticMilestoneRequest,
+      ) => Promise<boolean>;
       openTrackInstrumentEditor: (
         request: TrackInstrumentEditorRequest,
       ) => Promise<void>;
+      reportTrackInstrumentEditorDiagnosticMilestone: (
+        request: TrackInstrumentEditorDiagnosticMilestoneRequest,
+      ) => Promise<boolean>;
       focusTrackInstrumentEditor: (
         request: TrackInstrumentEditorRequest,
       ) => Promise<boolean>;
@@ -383,6 +396,16 @@ declare global {
       updateTrackInstrumentEditorDocument: (
         request: TrackInstrumentEditorPatchRequest,
       ) => Promise<TrackInstrumentEditorPatchResult>;
+      getTrackInstrumentRuntimeStatus: (
+        request: TrackInstrumentEditorRequest,
+      ) => Promise<TrackInstrumentRuntimeStatus | null>;
+      subscribeTrackInstrumentRuntimeStatus: (
+        request: TrackInstrumentEditorRequest,
+        callback: (status: TrackInstrumentRuntimeStatus) => void,
+      ) => Promise<{
+        status: TrackInstrumentRuntimeStatus;
+        unsubscribe: () => Promise<void>;
+      } | null>;
       getEffectEditorDocument: (
         request: EffectEditorRequest,
       ) => Promise<EffectEditorSnapshot | null>;

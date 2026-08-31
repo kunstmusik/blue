@@ -52,6 +52,7 @@ export {
   createProjectUdoListSnapshot,
   udoToSnapshot,
   createInstrumentSnapshot,
+  getTrackInstrumentDiagnosticKind,
   createTrackInstrumentEditorSnapshot,
   createOrchestraSnapshot,
   createBlueLiveProjectSnapshot,

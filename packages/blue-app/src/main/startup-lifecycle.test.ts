@@ -113,7 +113,31 @@ describe('StartupLifecycle', () => {
       expect(index, operation).toBeGreaterThan(previous);
       previous = index;
     }
+    const domainTeardown = shutdown.indexOf('unregisterDomainIpc?.()');
+    const shutdownSafeSettings = shutdown.indexOf(
+      "for (const channel of ['set-recent-files', 'get-recent-files'] as const)",
+    );
+    expect(shutdownSafeSettings).toBeGreaterThan(domainTeardown);
+    expect(shutdownSafeSettings).toBeLessThan(shutdown.indexOf('app.quit()'));
     expect(shutdown).not.toContain('rollbackFailedStartup');
+  });
+
+  it('uses the app background for native and pre-stylesheet window paint', () => {
+    const mainSource = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
+    expect(mainSource.match(/backgroundColor: '#1a1a2e'/g)).toHaveLength(2);
+
+    const rendererDirectory = path.join(__dirname, '..', 'renderer');
+    for (const entry of [
+      'index.html',
+      'about.html',
+      'settings.html',
+      'effect-editor.html',
+      'track-instrument-editor.html',
+      'popout.html',
+    ]) {
+      const html = readFileSync(path.join(rendererDirectory, entry), 'utf8');
+      expect(html, entry).toContain('#1a1a2e');
+    }
   });
 
   it('reuses one lazy factory-manifest provider across Open Example actions', () => {

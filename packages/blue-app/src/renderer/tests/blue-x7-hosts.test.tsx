@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../shared/project-editor';
 import InstrumentEditorPanel from '../components/workbench/panels/orchestra/InstrumentEditorPanel';
@@ -30,10 +30,25 @@ function setInputValue(input: HTMLInputElement, value: string): void {
 }
 
 describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
+  beforeAll(async () => {
+    await import('../components/instruments/blue-x7-editor');
+  });
+
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
   const onInstrumentPatch = vi.fn();
   const onOrchestraPatch = vi.fn();
+
+  /** Editors load through React.lazy; flush until the Suspense fallback is gone. */
+  async function flushLazyEditor(): Promise<void> {
+    for (
+      let attempt = 0;
+      attempt < 50 && container?.querySelector('[data-instrument-editor-loading]');
+      attempt += 1
+    ) {
+      await new Promise((resolve) => { setTimeout(resolve, 0); });
+    }
+  }
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -66,10 +81,10 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     voice: createDefaultBlueX7Voice(),
   });
 
-  it('renders BlueX7 in Orchestra host and routes patch mutations through onOrchestraPatch', () => {
+  it('renders BlueX7 in Orchestra host and routes patch mutations through onOrchestraPatch', async () => {
     const snapshot = createSnapshot('Orchestra BlueX7');
 
-    act(() => {
+    await act(async () => {
       root?.render(
         <InstrumentEditorPanel
           instrument={snapshot}
@@ -77,6 +92,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
           onOrchestraPatch={onOrchestraPatch}
         />,
       );
+      await flushLazyEditor();
     });
 
     expect(container?.querySelector('[data-testid="blue-x7-editor"]')).not.toBeNull();
@@ -88,11 +104,11 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     expect(nameInput.value).toBe('Orchestra BlueX7');
   });
 
-  it('renders BlueX7 in Track Instrument host with identical controls and patch dispatch', () => {
+  it('renders BlueX7 in Track Instrument host with identical controls and patch dispatch', async () => {
     const snapshot = createSnapshot('Track BlueX7');
     const onTrackOrchestraPatch = vi.fn();
 
-    act(() => {
+    await act(async () => {
       root?.render(
         <InstrumentEditorPanel
           instrument={snapshot}
@@ -100,6 +116,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
           onOrchestraPatch={onTrackOrchestraPatch}
         />,
       );
+      await flushLazyEditor();
     });
 
     expect(container?.querySelector('[data-testid="blue-x7-editor"]')).not.toBeNull();
@@ -121,11 +138,11 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     });
   });
 
-  it('renders BlueX7 in Library Draft host with identical panels and operations', () => {
+  it('renders BlueX7 in Library Draft host with identical panels and operations', async () => {
     const snapshot = createSnapshot('Library BlueX7');
     const onLibraryOrchestraPatch = vi.fn();
 
-    act(() => {
+    await act(async () => {
       root?.render(
         <InstrumentEditorPanel
           instrument={snapshot}
@@ -133,6 +150,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
           onOrchestraPatch={onLibraryOrchestraPatch}
         />,
       );
+      await flushLazyEditor();
     });
 
     expect(container?.querySelector('[data-testid="blue-x7-editor"]')).not.toBeNull();
@@ -140,7 +158,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     expect(container?.querySelector('[data-testid="bluex7-peg-panel"]')).not.toBeNull();
   });
 
-  it('keeps two duplicate-name editors ordered, visible, and undo-isolated during rapid edits', () => {
+  it('keeps two duplicate-name editors ordered, visible, and undo-isolated during rapid edits', async () => {
     const first = createSnapshot('Duplicate BlueX7');
     first.assignmentId = 'owner-a';
     first.voice.common.feedback = 1;
@@ -149,7 +167,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     second.voice.common.feedback = 6;
     const patches: Array<{ owner: string; patch: InstrumentPatch }> = [];
 
-    act(() => {
+    await act(async () => {
       root?.render(
         <>
           <section data-owner="owner-a">
@@ -168,6 +186,7 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
           </section>
         </>,
       );
+      await flushLazyEditor();
     });
 
     const editorA = container!.querySelector('[data-owner="owner-a"]')!;

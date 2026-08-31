@@ -20,6 +20,7 @@ declare global {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
+      reportEffectEditorDiagnosticMilestone: (request: unknown) => Promise<boolean>;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
       ) => () => void;
@@ -159,6 +160,11 @@ function renderPage(): { container: HTMLDivElement; root: Root } {
   return { container, root };
 }
 
+async function flushFullEditorImport(): Promise<void> {
+  await import('../components/effect-editor/EffectEditorPanel');
+  await Promise.resolve();
+}
+
 beforeEach(() => {
   window.history.replaceState(
     {},
@@ -179,6 +185,7 @@ beforeEach(() => {
       return currentSnapshot;
     }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
+    reportEffectEditorDiagnosticMilestone: vi.fn().mockResolvedValue(true),
     onProjectDocumentUpdated: vi.fn(() => () => undefined),
   };
 });
@@ -193,7 +200,7 @@ describe('project effect editor contract', () => {
     const { container, root } = renderPage();
 
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     expect(window.blueAPI.openEffectEditor).toHaveBeenCalledWith(
@@ -284,7 +291,7 @@ describe('project effect editor contract', () => {
     const { container, root } = renderPage();
 
     await act(async () => {
-      await Promise.resolve();
+      await flushFullEditorImport();
     });
 
     const toggleButton = Array.from(container.querySelectorAll('button')).find(

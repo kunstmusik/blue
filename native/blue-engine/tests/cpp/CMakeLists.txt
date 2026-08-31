@@ -97,6 +97,14 @@ if(UNIX AND NOT APPLE)
 endif()
 add_test(NAME CsoundProbeTests COMMAND test_csound_probe)
 
+add_executable(test_realtime_channel_mailbox
+    test_realtime_channel_mailbox.cpp
+)
+target_include_directories(test_realtime_channel_mailbox PRIVATE ${CMAKE_SOURCE_DIR}/src)
+set_target_properties(test_realtime_channel_mailbox PROPERTIES
+    CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+add_test(NAME RealtimeChannelMailboxTests COMMAND test_realtime_channel_mailbox)
+
 add_executable(test_csound_runtime_services
     test_csound_runtime_services.cpp
     ${CMAKE_SOURCE_DIR}/src/csound/CsoundRuntimeServices.cpp
@@ -120,6 +128,19 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(test_engine_capabilities PRIVATE dl)
 endif()
 add_test(NAME EngineCapabilitiesTests COMMAND test_engine_capabilities)
+
+if(USE_PERFORMANCE_TRACKING)
+    add_executable(test_editor_open_diagnostics
+        test_editor_open_diagnostics.cpp
+    )
+    target_include_directories(test_editor_open_diagnostics PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_compile_definitions(test_editor_open_diagnostics PRIVATE
+        BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1)
+    set_target_properties(test_editor_open_diagnostics PROPERTIES
+        CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+    add_test(NAME EditorOpenDiagnosticsTests COMMAND test_editor_open_diagnostics)
+    set_tests_properties(EditorOpenDiagnosticsTests PROPERTIES LABELS "profiling")
+endif()
 
 # Native channel bridge integration test
 add_executable(test_channel_bridge

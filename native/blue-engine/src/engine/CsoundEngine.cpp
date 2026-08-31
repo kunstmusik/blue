@@ -144,7 +144,8 @@ bool elevatePerformThreadPriority(char *errorBuffer, size_t errorBufferSize) {
 } // namespace
 
 CsoundEngine::CsoundEngine()
-    : automationStore_(std::make_shared<AutomationStore>()) {}
+    : automationStore_(std::make_shared<AutomationStore>()),
+      channelMailbox_(std::make_unique<RealtimeChannelMailbox>()) {}
 
 CsoundEngine::~CsoundEngine() { destroy(); }
 
@@ -171,6 +172,17 @@ EngineStateSnapshot CsoundEngine::getStateSnapshot() const {
 EnginePerformanceSummary CsoundEngine::getLastPerformanceSummary() const {
   std::lock_guard<std::mutex> lock(performanceMutex_);
   return lastPerformanceSummary_;
+}
+
+EngineNativeGapSummary CsoundEngine::getLastNativeGapSummary() const {
+  NativeGapAccumulator snapshot;
+  {
+    std::lock_guard<std::mutex> lock(performanceMutex_);
+    snapshot = nativeGapAccumulatorSnapshot_;
+  }
+  // Ordering and top-N selection happen here on the calling thread, never in
+  // the perform loop.
+  return snapshot.buildSummary();
 }
 
 void CsoundEngine::setStateChangeCallback(StateChangeCallback callback) {
@@ -285,11 +297,8 @@ void CsoundEngine::destroy() {
   automationManager_.reset();
   automationStore_->clear();
   sampleNumber_.store(0);
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    pendingChannelValues_.clear();
-    pendingChannelBatches_.clear();
-  }
+  pendingChannelValues_.clear();
+  channelMailbox_->reset();
 
   {
     std::lock_guard<std::mutex> lock(stateMutex_);
@@ -413,46 +422,47 @@ bool CsoundEngine::setChannels(
     }
   }
 
+  // All validation, including live-channel applicability and automation
+  // authority, completes before the first value is applied or enqueued.
+  std::vector<std::pair<std::string, double>> directEntries;
+  const auto bindings = getChannelBindings();
   if (running) {
-    std::lock_guard<std::mutex> channelLock(channelMutex_);
+    if (!bindings) {
+      setLastError("Runtime channel bindings are unavailable");
+      return false;
+    }
+    std::vector<ResolvedChannelValue> resolvedEntries;
+    resolvedEntries.reserve(entries.size());
     for (const auto &[name, value] : entries) {
-      (void)value;
-      if (controlChannels_.find(name) == controlChannels_.end()) {
+      const auto binding = bindings->controlChannels.find(name);
+      if (binding == bindings->controlChannels.end() || !binding->second.pointer) {
         setLastError("Channel not found: " + name);
         return false;
+      }
+      resolvedEntries.push_back(ResolvedChannelValue{binding->second.pointer, value});
+    }
+
+    const auto enqueueResult = channelMailbox_->enqueue(
+        bindings->bindingGeneration, resolvedEntries);
+    if (enqueueResult == RealtimeChannelMailbox::EnqueueResult::Full) {
+      setLastError("Channel batch queue is full; retry at the next control boundary");
+      return false;
+    }
+    if (enqueueResult != RealtimeChannelMailbox::EnqueueResult::Accepted) {
+      setLastError("Channel batch could not be queued");
+      return false;
+    }
+  } else {
+    for (const auto &[name, value] : entries) {
+      if (bindings && bindings->controlChannels.find(name) !=
+                          bindings->controlChannels.end()) {
+        directEntries.emplace_back(name, value);
       }
     }
   }
 
-  // All validation, including live-channel applicability and automation
-  // authority, completes before the first value is applied or enqueued.
-  std::vector<std::pair<std::string, double>> directEntries;
-  bool queueFull = false;
-  {
-    std::lock_guard<std::mutex> channelLock(channelMutex_);
-    if (running) {
-      queueFull = pendingChannelBatches_.size() >= kMaxPendingChannelBatches;
-      if (!queueFull) {
-        for (const auto &[name, value] : entries) {
-          pendingChannelValues_[name] = value;
-        }
-        pendingChannelBatches_.emplace_back(entries.begin(), entries.end());
-      }
-    } else {
-      for (const auto &[name, value] : entries) {
-        pendingChannelValues_[name] = value;
-        // Before the performance thread starts, applying directly preserves
-        // the existing initialization semantics. During playback all Csound
-        // setters happen in applyPendingChannelBatches() on the perform thread.
-        if (controlChannels_.find(name) != controlChannels_.end()) {
-          directEntries.emplace_back(name, value);
-        }
-      }
-    }
-  }
-  if (queueFull) {
-    setLastError("Channel batch queue is full; retry at the next control boundary");
-    return false;
+  for (const auto &[name, value] : entries) {
+    pendingChannelValues_[name] = value;
   }
   if (!running) {
     for (const auto &[name, value] : directEntries) {
@@ -468,40 +478,63 @@ bool CsoundEngine::setChannels(
 }
 
 bool CsoundEngine::getChannel(const std::string &name, double &value) {
+  std::vector<double> values;
+  if (!getChannels({name}, values)) {
+    return false;
+  }
+  value = values.front();
+  return true;
+}
+
+bool CsoundEngine::getChannels(const std::vector<std::string> &names,
+                               std::vector<double> &values) {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+
   if (!csound_) {
     setLastError("Engine not created");
     return false;
   }
+  if (names.empty()) {
+    setLastError("Batch channel get cannot be empty");
+    return false;
+  }
 
-  bool hasLiveChannel = false;
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    hasLiveChannel = controlChannels_.find(name) != controlChannels_.end();
-    if (!hasLiveChannel) {
-      auto pending = pendingChannelValues_.find(name);
-      if (pending != pendingChannelValues_.end()) {
-        value = pending->second;
-        return true;
+  const auto bindings = getChannelBindings();
+  std::vector<double> nextValues;
+  nextValues.reserve(names.size());
+  for (const auto &name : names) {
+    if (bindings) {
+      const auto binding = bindings->controlChannels.find(name);
+      if (binding != bindings->controlChannels.end()) {
+        if (binding->second.sharedMemoryEntry) {
+          nextValues.push_back(
+              binding->second.sharedMemoryEntry->value.load(std::memory_order_relaxed));
+          continue;
+        }
+
+        int32_t err = csound::CSOUND_SUCCESS;
+        const double value =
+            CsoundLoader::csoundGetControlChannel(csound_, name.c_str(), &err);
+        if (err == csound::CSOUND_SUCCESS) {
+          nextValues.push_back(value);
+          continue;
+        }
       }
     }
-  }
 
-  if (hasLiveChannel) {
-    int32_t err = csound::CSOUND_SUCCESS;
-    value = CsoundLoader::csoundGetControlChannel(csound_, name.c_str(), &err);
-    if (err == csound::CSOUND_SUCCESS) {
-      mirrorChannelValue(name, value);
-      return true;
+    const auto pending = pendingChannelValues_.find(name);
+    if (pending != pendingChannelValues_.end()) {
+      nextValues.push_back(pending->second);
+      continue;
     }
+
+    setLastError("Channel not found: " + name);
+    return false;
   }
 
-  if (shm_ && shm_->getChannel(name, value)) {
-    clearLastError();
-    return true;
-  }
-
-  setLastError("Channel not found: " + name);
-  return false;
+  values = std::move(nextValues);
+  clearLastError();
+  return true;
 }
 
 bool CsoundEngine::start() {
@@ -523,6 +556,7 @@ bool CsoundEngine::start() {
   // process during restart stress.
   if (performThread_.joinable()) {
     performThread_.join();
+    channelMailbox_->reset();
   }
 
   int result = CsoundLoader::csoundStart(csound_);
@@ -537,6 +571,7 @@ bool CsoundEngine::start() {
   {
     std::lock_guard<std::mutex> lock(performanceMutex_);
     lastPerformanceSummary_ = EnginePerformanceSummary{};
+    nativeGapAccumulatorSnapshot_ = NativeGapAccumulator{};
   }
 
   {
@@ -588,12 +623,9 @@ void CsoundEngine::joinPerformThread(bool preservePerformanceState) {
 
   // A batch accepted immediately before stop may not have reached a perform
   // boundary. Its latest values remain in pendingChannelValues_ and are
-  // re-applied by start()/compileOrc(); discard the stale queue envelope so
-  // an old batch cannot replay after a rebuild.
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    pendingChannelBatches_.clear();
-  }
+  // re-applied by start()/compileOrc(); discard stale pointer envelopes only
+  // after the performance thread is quiescent.
+  channelMailbox_->reset();
 }
 
 void CsoundEngine::performThread() {
@@ -630,6 +662,11 @@ void CsoundEngine::performThread() {
   constexpr uint64_t kSchedulerDeltaThresholdNs = 1000000; // 1.0ms
   constexpr size_t kSampleWindowCapacity = 4096;
   constexpr size_t kMaxBurstWindows = 16;
+
+  // Budget-relative scheduling-gap diagnostics: recording is O(1) with a
+  // fixed-capacity ring; aggregation happens at read time, off this thread.
+  NativeGapAccumulator nativeGaps;
+  nativeGaps.reset(NativeGapAccumulator::kPeriodBudgetNs(ksmps, sampleRate));
 
   uint64_t cycleCount = 0;
   uint64_t totalCycleCount = 0;
@@ -843,6 +880,7 @@ void CsoundEngine::performThread() {
         if (loopDeltaNs >= kSchedulerDeltaThresholdNs) {
           loopDeltaSpikeCount += 1;
         }
+        nativeGaps.observeCycle(localSample, true, loopDeltaNs);
       }
     }
     hasLastLoopStart = true;
@@ -868,7 +906,7 @@ void CsoundEngine::performThread() {
     // performance cycle will observe every entry from a batch together. A
     // failed/completed perform must not apply a batch after Csound has stopped.
     if (result == 0) {
-      applyPendingChannelBatches();
+      consumePendingChannelBatch();
     }
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
@@ -1267,6 +1305,14 @@ void CsoundEngine::performThread() {
           static_cast<double>(window.maxLoopDeltaNs) / 1.0e3);
     }
   }
+
+  // Performance stop: hand the raw gap observations over for off-thread
+  // aggregation. This always emits, even when no cycles were measured.
+  nativeGaps.finalize();
+  {
+    std::lock_guard<std::mutex> lock(performanceMutex_);
+    nativeGapAccumulatorSnapshot_ = nativeGaps;
+  }
 #endif
 }
 
@@ -1325,14 +1371,9 @@ bool CsoundEngine::rebuildControlChannelCache() {
 
   const uint64_t nextGen = channelBindingGeneration_.load(std::memory_order_relaxed) + 1;
   auto snapshot = std::make_shared<RuntimeChannelBindingSnapshot>(nextGen);
-  snapshot->controlChannels = newChannels;
   snapshot->mirrorBindings = std::move(newMirrorBindings);
 
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    controlChannels_.swap(newChannels);
-  }
-
+  snapshot->controlChannels = std::move(newChannels);
   std::atomic_store_explicit(
       &runtimeChannelBindings_,
       std::shared_ptr<const RuntimeChannelBindingSnapshot>(std::move(snapshot)),
@@ -1347,11 +1388,6 @@ void CsoundEngine::clearControlChannelCache() {
   const uint64_t nextGen = channelBindingGeneration_.load(std::memory_order_relaxed) + 1;
   auto emptySnapshot = std::make_shared<RuntimeChannelBindingSnapshot>(nextGen);
 
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    controlChannels_.clear();
-  }
-
   std::atomic_store_explicit(
       &runtimeChannelBindings_,
       std::shared_ptr<const RuntimeChannelBindingSnapshot>(std::move(emptySnapshot)),
@@ -1362,14 +1398,12 @@ void CsoundEngine::clearControlChannelCache() {
 
 void CsoundEngine::applyPendingChannelValues() {
   std::vector<std::pair<std::string, double>> valuesToApply;
-
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    valuesToApply.reserve(pendingChannelValues_.size());
-    for (const auto &[name, value] : pendingChannelValues_) {
-      if (controlChannels_.find(name) != controlChannels_.end()) {
-        valuesToApply.emplace_back(name, value);
-      }
+  const auto bindings = getChannelBindings();
+  valuesToApply.reserve(pendingChannelValues_.size());
+  for (const auto &[name, value] : pendingChannelValues_) {
+    if (bindings && bindings->controlChannels.find(name) !=
+                        bindings->controlChannels.end()) {
+      valuesToApply.emplace_back(name, value);
     }
   }
 
@@ -1379,36 +1413,9 @@ void CsoundEngine::applyPendingChannelValues() {
   }
 }
 
-void CsoundEngine::applyPendingChannelBatches() {
-  std::deque<ChannelBatch> batches;
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    batches.swap(pendingChannelBatches_);
-  }
-
-  for (const auto &batch : batches) {
-    bool available = true;
-    std::string missingChannel;
-    {
-      std::lock_guard<std::mutex> lock(channelMutex_);
-      for (const auto &[name, value] : batch) {
-        (void)value;
-        if (controlChannels_.find(name) == controlChannels_.end()) {
-          available = false;
-          missingChannel = name;
-          break;
-        }
-      }
-    }
-    if (!available) {
-      setLastError("Channel disappeared before queued batch application: " + missingChannel);
-      continue;
-    }
-    for (const auto &[name, value] : batch) {
-      CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
-      mirrorChannelValue(name, value);
-    }
-  }
+void CsoundEngine::consumePendingChannelBatch() {
+  (void)channelMailbox_->consumeOne(
+      channelBindingGeneration_.load(std::memory_order_acquire));
 }
 
 void CsoundEngine::syncSharedMemoryFromChannels() {
@@ -1471,10 +1478,10 @@ void CsoundEngine::mirrorChannelValue(const std::string &name, double value) {
   }
 
   ChannelEntry *sharedMemoryEntry = nullptr;
-  {
-    std::lock_guard<std::mutex> lock(channelMutex_);
-    auto it = controlChannels_.find(name);
-    if (it != controlChannels_.end()) {
+  const auto bindings = getChannelBindings();
+  if (bindings) {
+    const auto it = bindings->controlChannels.find(name);
+    if (it != bindings->controlChannels.end()) {
       sharedMemoryEntry = it->second.sharedMemoryEntry;
     }
   }

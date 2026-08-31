@@ -41,6 +41,7 @@ export function openSettingsWindow(
   settingsWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    backgroundColor: '#1a1a2e',
     title: 'Settings',
     parent: mainWindow,
     // On macOS, modal child windows render as sheets (no normal title bar controls).

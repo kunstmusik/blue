@@ -6,6 +6,7 @@ import {
   broadcastProjectDocumentUpdateToEffectWindows,
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
+  isEffectEditorWebContents,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
@@ -39,7 +40,7 @@ const electronMock = vi.hoisted(() => {
     removeListener = vi.fn();
     close = vi.fn(() => {
       this.destroyed = true;
-      this.closedHandler?.();
+      this.trigger('closed');
     });
     isDestroyed = vi.fn(() => this.destroyed);
     isMaximized = vi.fn(() => false);
@@ -53,11 +54,12 @@ const electronMock = vi.hoisted(() => {
       send: ReturnType<typeof vi.fn>;
       getZoomFactor: ReturnType<typeof vi.fn>;
       setZoomFactor: ReturnType<typeof vi.fn>;
+      once: ReturnType<typeof vi.fn>;
+      on: ReturnType<typeof vi.fn>;
     };
 
     private readyToShowHandler?: () => void;
-    private closedHandler?: () => void;
-    eventHandlers: Record<string, () => void> = {};
+    eventHandlers: Record<string, (...args: unknown[]) => void> = {};
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -65,6 +67,12 @@ const electronMock = vi.hoisted(() => {
         send: vi.fn(),
         getZoomFactor: vi.fn(() => 1),
         setZoomFactor: vi.fn(),
+        once: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          this.eventHandlers[`webContents:${event}`] = handler;
+        }),
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          this.eventHandlers[`webContents:${event}`] = handler;
+        }),
       };
       instances.push(this);
     }
@@ -73,8 +81,12 @@ const electronMock = vi.hoisted(() => {
       this.readyToShowHandler?.();
     }
 
-    trigger(event: string): void {
-      this.eventHandlers[event]?.();
+    trigger(event: string, ...args: unknown[]): void {
+      this.eventHandlers[event]?.(...args);
+    }
+
+    triggerWebContents(event: string, ...args: unknown[]): void {
+      this.eventHandlers[`webContents:${event}`]?.(...args);
     }
   }
 
@@ -133,6 +145,54 @@ describe('effect editor window manager', () => {
     openEffectEditorWindow(mainWindow, request);
     expect(firstWindow.focus).toHaveBeenCalledTimes(1);
     expect(electronMock.instances).toHaveLength(1);
+  });
+
+  it('reports effect-interface lifecycle milestones and authorizes only its renderer', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const events: string[] = [];
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'effect-diagnostic',
+      projectRef: {
+        channelId: 'channel-1',
+        chain: 'pre' as const,
+        entryId: 'effect-diagnostic',
+      },
+    };
+
+    openEffectInterfaceWindow(mainWindow, request, 460, 560, {
+      diagnosticsEnabled: true,
+      diagnosticCondition: 'effect-interface',
+      effectInterfaceLoadMode: 'legacy',
+      onLifecycle: (milestone) => events.push(milestone),
+    });
+    const effectWindow = electronMock.instances[0]!;
+    effectWindow.triggerWebContents('did-finish-load');
+    effectWindow.triggerReadyToShow();
+
+    expect(events).toEqual([
+      'window-constructed',
+      'navigation-started',
+      'renderer-mounted',
+      'ready-to-show',
+      'shown',
+    ]);
+    expect(String(effectWindow.loadURL.mock.calls[0]?.[0]))
+      .toContain('editorOpenDiagnosticCondition=effect-interface');
+    expect(String(effectWindow.loadURL.mock.calls[0]?.[0]))
+      .toContain('effectInterfaceLoad=legacy');
+    expect(effectWindow.options.modal).toBe(false);
+    expect(effectWindow.options.backgroundColor).toBe('#1a1a2e');
+    expect(isEffectEditorWebContents(
+      effectWindow.webContents as never,
+      request,
+      'interface',
+    )).toBe(true);
+    expect(isEffectEditorWebContents(
+      effectWindow.webContents as never,
+      request,
+      'edit',
+    )).toBe(false);
   });
 
   it('keeps project and library editor windows separate', () => {
@@ -284,6 +344,7 @@ describe('effect editor window declarative zoom factor (SPEC 061)', () => {
     expect(webPreferences.zoomFactor).toBeCloseTo(1.4, 10);
     expect(webPreferences.contextIsolation).toBe(true);
     expect(webPreferences.nodeIntegration).toBe(false);
+    expect(editorWindow.options.backgroundColor).toBe('#1a1a2e');
     expect(editorWindow.options.modal).toBe(true);
     expect(editorWindow.options.show).toBe(false);
   });

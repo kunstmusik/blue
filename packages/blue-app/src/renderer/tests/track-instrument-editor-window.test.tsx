@@ -7,14 +7,19 @@ import type {
   TrackInstrumentEditorPatchResult,
   TrackInstrumentEditorSnapshot,
 } from '../../shared/project-editor';
+import { createDefaultBlueX7Voice } from '@blue/data';
 
 vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => ({
   default: ({
     instrument,
     onOrchestraPatch,
+    onEditorUsable,
+    blueX7Runtime,
   }: {
     instrument: { name: string };
     onOrchestraPatch: (patch: { type: 'updateInstrument'; patch: { name: string } }) => void;
+    onEditorUsable: () => void;
+    blueX7Runtime?: { enabled: boolean };
   }) => (
     <div>
       <button
@@ -44,6 +49,12 @@ vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => 
       >
         Rapid control
       </button>
+      <button type="button" data-testid="editor-usable" onClick={onEditorUsable}>
+        Editor usable
+      </button>
+      {blueX7Runtime && (
+        <div data-testid="blue-x7-runtime" data-enabled={String(blueX7Runtime.enabled)} />
+      )}
     </div>
   ),
 }));
@@ -72,6 +83,26 @@ function makeSnapshot(): TrackInstrumentEditorSnapshot {
       udolist: [],
     },
     projectUdos: [],
+  };
+}
+
+function makeBlueX7Snapshot(): TrackInstrumentEditorSnapshot {
+  return {
+    ...makeSnapshot(),
+    instrument: {
+      assignmentId: 'editor-track',
+      type: 'blueX7',
+      name: 'Live X7',
+      enabled: true,
+      comment: '',
+      voice: createDefaultBlueX7Voice(),
+      parameters: [{
+        parameterId: 'gain-id',
+        semanticKey: 'common.feedback',
+        fixedValue: 0,
+        automationEnabled: true,
+      }],
+    },
   };
 }
 
@@ -275,7 +306,7 @@ describe('Track instrument editor window page', () => {
     act(() => root.unmount());
   });
 
-  it('uses semantic typography role text-role-body on loading state', async () => {
+  it('uses a visually neutral shell while the snapshot is loading', async () => {
     window.history.replaceState(
       {},
       '',
@@ -295,8 +326,77 @@ describe('Track instrument editor window page', () => {
       root.render(<TrackInstrumentEditorPage />);
     });
 
-    const loadingDiv = container.querySelector('div');
-    expect(loadingDiv?.className).toContain('text-role-body');
+    const loadingShell = container.querySelector('div');
+    expect(loadingShell?.className).toContain('bg-app-bg');
+    expect(loadingShell?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.textContent).not.toContain('Loading');
     act(() => root.unmount());
+  });
+
+  it('gates BlueX7 runtime activity on editor readiness and ordered status updates', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+    );
+    let runtimeCallback: ((status: {
+      sequence: number;
+      playbackRunning: boolean;
+      blueLiveRunning: boolean;
+    }) => void) | undefined;
+    const unsubscribe = vi.fn(async () => undefined);
+    window.blueAPI = {
+      getTrackInstrumentEditorDocument: vi.fn().mockResolvedValue(makeBlueX7Snapshot()),
+      subscribeTrackInstrumentRuntimeStatus: vi.fn((_request, callback) => {
+        runtimeCallback = callback;
+        return Promise.resolve({
+          status: { sequence: 0, playbackRunning: false, blueLiveRunning: false },
+          unsubscribe,
+        });
+      }),
+      updateTrackInstrumentEditorDocument: vi.fn(),
+      onProjectDocumentUpdated: vi.fn(() => () => undefined),
+      sendBsbRealtimeControlUpdate: vi.fn().mockResolvedValue(undefined),
+    } as never;
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<TrackInstrumentEditorPage />);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const runtime = () => container.querySelector('[data-testid="blue-x7-runtime"]');
+    expect(runtime()?.getAttribute('data-enabled')).toBe('false');
+
+    await act(async () => {
+      runtimeCallback?.({ sequence: 1, playbackRunning: true, blueLiveRunning: false });
+    });
+    expect(runtime()?.getAttribute('data-enabled')).toBe('false');
+
+    await act(async () => {
+      (container.querySelector('[data-testid="editor-usable"]') as HTMLButtonElement).click();
+    });
+    expect(runtime()?.getAttribute('data-enabled')).toBe('true');
+
+    await act(async () => {
+      runtimeCallback?.({ sequence: 2, playbackRunning: false, blueLiveRunning: false });
+    });
+    expect(runtime()?.getAttribute('data-enabled')).toBe('false');
+
+    await act(async () => {
+      runtimeCallback?.({ sequence: 1, playbackRunning: true, blueLiveRunning: false });
+    });
+    expect(runtime()?.getAttribute('data-enabled')).toBe('false');
+
+    await act(async () => {
+      runtimeCallback?.({ sequence: 3, playbackRunning: false, blueLiveRunning: true });
+    });
+    expect(runtime()?.getAttribute('data-enabled')).toBe('true');
+
+    act(() => root.unmount());
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 });

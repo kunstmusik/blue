@@ -37,6 +37,8 @@ export interface BlueX7EditorProps extends OrchestraMutationProps {
     projectSessionId: number;
     enabled: boolean;
     parameterIds?: readonly string[];
+    onObservationStart?: () => void;
+    onObservationResult?: () => void;
   };
 }
 
@@ -92,6 +94,8 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
     projectSessionId: effectiveValues?.projectSessionId ?? null,
     parameterIds: visibleParameterIds,
     enabled: effectiveValues?.enabled ?? false,
+    onObservationStart: effectiveValues?.onObservationStart,
+    onObservationResult: effectiveValues?.onObservationResult,
   });
   const effectiveValuesByKey = useMemo(() => {
     const values = new Map<string, number>();

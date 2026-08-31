@@ -79,14 +79,34 @@ import {
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
 import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
 import {
+  EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+  isEffectEditorDiagnosticMilestoneRequest,
+  isEffectEditorRequest,
+  isTrackInstrumentEditorDiagnosticMilestoneRequest,
+  isDiagnosticCondition,
   isTrackInstrumentEditorPatchRequest,
   isTrackInstrumentEditorRequest,
+  TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
+  TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
+  type EditorInstrumentKind,
+  type DiagnosticCondition,
+  type EditorMilestoneName,
 } from '../shared/track-instrument-editor-contract';
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
 import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
+import {
+  createEditorOpenDiagnostics,
+  type DiagnosticRunInput,
+  type EditorOpenDiagnosticAttempt,
+  type EditorOpenDiagnosticRun,
+  type EditorOpenDiagnostics,
+} from './editor-open-diagnostics';
+import { TrackEditorDiagnosticAttemptTracker } from './track-editor-diagnostic-attempts';
 import {
   clearActiveBlueX7Bindings,
   createBlueX7RuntimeEnvironment,
@@ -144,7 +164,8 @@ import {
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
   broadcastProjectDocumentUpdateToEffectWindows,
-  focusEffectEditorWindow,
+  focusEffectEditorWindowMode,
+  isEffectEditorWebContents,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
@@ -154,8 +175,13 @@ import {
   closeTrackInstrumentEditorWindowsForGroup,
   closeTrackInstrumentEditorWindowsForTrack,
   focusTrackInstrumentEditorWindow,
+  isTrackInstrumentEditorWebContents,
   openTrackInstrumentEditorWindow,
 } from './track-instrument-editor-window-manager';
+import {
+  createTrackEditorRuntimeStatusCoordinator,
+  type TrackEditorRuntimeStatusCoordinator,
+} from './track-editor-runtime-status';
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import {
@@ -272,6 +298,7 @@ import {
   createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
+  getTrackInstrumentDiagnosticKind,
   resolveTimelineScoreObjects,
   createNoteProcessorChainSnapshot,
   findMixerChannelById,
@@ -442,6 +469,206 @@ let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
 let blueLiveTriggerController: BlueLiveTriggerController | null = null;
+let editorOpenDiagnostics: EditorOpenDiagnostics | null = null;
+let trackEditorRuntimeStatusCoordinator: TrackEditorRuntimeStatusCoordinator | null = null;
+let activeEditorOpenDiagnosticRun: EditorOpenDiagnosticRun | null = null;
+let editorOpenDiagnosticRunSetup: Promise<EditorOpenDiagnosticRun | null> | null = null;
+let editorOpenDiagnosticGeneration = 0;
+let editorOpenDiagnosticsFinalization: Promise<void> | null = null;
+const trackEditorDiagnosticAttempts = new TrackEditorDiagnosticAttemptTracker({
+  getProjectData: () => projectSession.read().data,
+  getCurrentProjectSessionId: () => getCurrentProjectSessionId(),
+  getAppMode: () => (app.isPackaged ? 'packaged' : 'development'),
+  getGeneration: () => editorOpenDiagnosticGeneration,
+  bumpGeneration: () => {
+    editorOpenDiagnosticGeneration += 1;
+  },
+  getOrCreateRun: (data, generation) => getOrCreateEditorOpenDiagnosticRun(data, generation),
+  getControlTrafficSnapshot: () => {
+    const realtime = engineBridge?.getControlTrafficSnapshot() ?? {
+      readCommands: 0,
+      readEntries: 0,
+      writeCommands: 0,
+      writeEntries: 0,
+    };
+    const blueLive = blueLiveSession?.getControlTrafficSnapshot() ?? {
+      readCommands: 0,
+      readEntries: 0,
+      writeCommands: 0,
+      writeEntries: 0,
+    };
+    return {
+      readCommands: realtime.readCommands + blueLive.readCommands,
+      readEntries: realtime.readEntries + blueLive.readEntries,
+      writeCommands: realtime.writeCommands + blueLive.writeCommands,
+      writeEntries: realtime.writeEntries + blueLive.writeEntries,
+    };
+  },
+});
+
+function readDiagnosticText(name: string): string | null {
+  const value = process.env[name]?.trim();
+  return value || null;
+}
+
+function readDiagnosticNonNegativeInteger(name: string): number | null {
+  const value = Number(process.env[name]);
+  return Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+function readEditorOpenDiagnosticCondition(): DiagnosticCondition {
+  const condition = process.env.BLUE_EDITOR_OPEN_DIAGNOSTIC_CONDITION;
+  return isDiagnosticCondition(condition) ? condition : 'shell-with-snapshot';
+}
+
+function readEffectInterfaceDiagnosticLoadMode(): 'isolated' | 'legacy' {
+  return process.env.BLUE_EDITOR_OPEN_DIAGNOSTIC_EFFECT_LOAD_MODE === 'legacy'
+    ? 'legacy'
+    : 'isolated';
+}
+
+function buildEditorOpenDiagnosticRunInput(
+  data: BlueData,
+  engineState: { sampleRate: number; ksmps: number },
+): DiagnosticRunInput | null {
+  const device = readDiagnosticText('BLUE_EDITOR_OPEN_DIAGNOSTIC_DEVICE');
+  const headroomSource = readDiagnosticText('BLUE_EDITOR_OPEN_DIAGNOSTIC_HEADROOM_SOURCE');
+  const baselineInterruptionCount = readDiagnosticNonNegativeInteger(
+    'BLUE_EDITOR_OPEN_DIAGNOSTIC_BASELINE_INTERRUPTION_COUNT',
+  );
+  if (!device || !headroomSource || baselineInterruptionCount === null) return null;
+  if (!Number.isFinite(engineState.sampleRate) || engineState.sampleRate <= 0
+    || !Number.isSafeInteger(engineState.ksmps) || engineState.ksmps <= 0) {
+    return null;
+  }
+
+  const metadata = resolveAppMetadata({
+    appVersion: app.getVersion(),
+    appPath: app.getAppPath(),
+    resourcesPath: process.resourcesPath,
+    isPackaged: app.isPackaged,
+    releaseChannel: process.env.BLUE_RELEASE_CHANNEL,
+    processVersions: {
+      electron: process.versions.electron,
+      chromium: process.versions.chrome,
+      node: process.versions.node,
+    },
+  });
+  const selection = engineRuntimeService?.getCurrentSelection();
+  const configuredEngineBuild = readDiagnosticText('BLUE_EDITOR_OPEN_DIAGNOSTIC_ENGINE_BUILD');
+  const engineBuild = configuredEngineBuild
+    ?? (selection
+      ? `${selection.source}:${selection.artifactSha256 ?? path.basename(selection.executablePath)}`
+      : null);
+  if (!engineBuild) return null;
+
+  const filePath = projectSession.read().filePath;
+  const fixtureId = readDiagnosticText('BLUE_EDITOR_OPEN_DIAGNOSTIC_FIXTURE_ID')
+    ?? (filePath ? path.basename(filePath) : 'untitled-project');
+  const controlDurationText = readDiagnosticText(
+    'BLUE_EDITOR_OPEN_DIAGNOSTIC_CONTROL_DURATION_SECONDS',
+  );
+  const controlDurationSeconds = controlDurationText === null ? 60 : Number(controlDurationText);
+  if (!Number.isFinite(controlDurationSeconds) || controlDurationSeconds < 0) return null;
+
+  const outputMode = process.env.BLUE_EDITOR_OPEN_DIAGNOSTIC_OUTPUT_MODE;
+  if (outputMode !== undefined && outputMode !== 'audible'
+    && outputMode !== 'loopback' && outputMode !== 'both') return null;
+  const diagnosticCondition = readEditorOpenDiagnosticCondition();
+  const defaultCandidateId = diagnosticCondition === 'effect-interface'
+    ? `effect-interface-${readEffectInterfaceDiagnosticLoadMode()}`
+    : 'progressive-startup';
+
+  return {
+    candidateId: readDiagnosticText('BLUE_EDITOR_OPEN_DIAGNOSTIC_CANDIDATE_ID')
+      ?? defaultCandidateId,
+    condition: diagnosticCondition,
+    environment: {
+      platform: `${process.platform}-${process.arch}`,
+      appBuild: `${metadata.version}:${metadata.sourceRevision}:${metadata.channel}`,
+      engineBuild,
+      device,
+      sampleRate: engineState.sampleRate,
+      ksmps: engineState.ksmps,
+      diagnosticsEnabled: true,
+    },
+    workload: {
+      fixtureId,
+      sampleRate: engineState.sampleRate,
+      ksmps: engineState.ksmps,
+      controlDurationSeconds,
+      baselineInterruptionCount,
+      headroomEvidence: { source: headroomSource },
+      outputMode: outputMode ?? 'both',
+    },
+  };
+}
+
+async function getOrCreateEditorOpenDiagnosticRun(
+  data: BlueData,
+  expectedGeneration = editorOpenDiagnosticGeneration,
+): Promise<EditorOpenDiagnosticRun | null> {
+  if (!editorOpenDiagnostics?.enabled) return null;
+  if (activeEditorOpenDiagnosticRun) return activeEditorOpenDiagnosticRun;
+  if (editorOpenDiagnosticRunSetup) return editorOpenDiagnosticRunSetup;
+
+  if (expectedGeneration !== editorOpenDiagnosticGeneration) return null;
+  const generation = expectedGeneration;
+  const setupPromise = (async () => {
+    const engineState = await engineBridge?.createEditorOpenStateSampler().sampleEngineState();
+    if (!engineState || generation !== editorOpenDiagnosticGeneration) return null;
+    const input = buildEditorOpenDiagnosticRunInput(data, engineState);
+    if (!input) return null;
+    const run = editorOpenDiagnostics?.beginRun(input) ?? null;
+    if (run && generation === editorOpenDiagnosticGeneration) {
+      activeEditorOpenDiagnosticRun = run;
+      return run;
+    }
+    return null;
+  })().catch((error: unknown) => {
+    console.warn(`[EditorOpenDiagnostics] Run setup failed: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  });
+  editorOpenDiagnosticRunSetup = setupPromise;
+
+  try {
+    return await setupPromise;
+  } finally {
+    if (editorOpenDiagnosticRunSetup === setupPromise) {
+      editorOpenDiagnosticRunSetup = null;
+    }
+  }
+}
+
+async function finalizeEditorOpenDiagnostics(): Promise<void> {
+  if (editorOpenDiagnosticsFinalization) {
+    await editorOpenDiagnosticsFinalization;
+    return;
+  }
+
+  const finalization = (async () => {
+    await trackEditorDiagnosticAttempts.finalize();
+    activeEditorOpenDiagnosticRun?.complete('incomplete');
+    activeEditorOpenDiagnosticRun = null;
+    await editorOpenDiagnostics?.flush();
+  })();
+  editorOpenDiagnosticsFinalization = finalization;
+
+  try {
+    await finalization;
+  } finally {
+    if (editorOpenDiagnosticsFinalization === finalization) {
+      editorOpenDiagnosticsFinalization = null;
+    }
+  }
+}
+
+function publishTrackEditorRuntimeStatus(): void {
+  trackEditorRuntimeStatusCoordinator?.publish({
+    playbackRunning: engineBridge?.isCurrentlyPlaying() ?? false,
+    blueLiveRunning: blueLiveSession?.isRunning() ?? false,
+  });
+}
 
 /**
  * Lazily build (or return the cached) Blue Live trigger controller wired to
@@ -1622,6 +1849,7 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    backgroundColor: '#1a1a2e',
     title: getWindowTitle(getCurrentFilePath()),
     icon: getAppIcon(),
     show: false,
@@ -1639,6 +1867,9 @@ function createWindow(): void {
   restoreWindowState(mainWindow, 'main');
   attachWindowStateHandlers(mainWindow, 'main');
   registerMainWindow(mainWindow);
+  trackEditorRuntimeStatusCoordinator = createTrackEditorRuntimeStatusCoordinator({
+    isAuthorized: (subscriber, request) => isTrackInstrumentEditorWebContents(subscriber, request),
+  });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -1711,6 +1942,7 @@ function createWindow(): void {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
+        backgroundColor: '#1a1a2e',
         preload: path.join(__dirname, '..', 'preload', 'preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
@@ -1747,6 +1979,10 @@ function createWindow(): void {
     'realtime',
     engineRuntimeService,
   );
+  engineBridge.setPlaybackStateChangeCallback(() => publishTrackEditorRuntimeStatus());
+  editorOpenDiagnostics ??= createEditorOpenDiagnostics({
+    sampler: engineBridge.createEditorOpenStateSampler(),
+  });
   engineBridge.setPlaybackErrorWarningCallback((message) => {
     void showCsoundErrorWarning(message);
   });
@@ -1794,6 +2030,7 @@ function createWindow(): void {
     5561,
     engineRuntimeService,
   );
+  blueLiveSession.setRuntimeStateChangeCallback(() => publishTrackEditorRuntimeStatus());
   javaRuntimeSessionManager = new JavaRuntimeSessionManager({
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
@@ -1902,11 +2139,12 @@ async function doQuit(): Promise<void> {
     unregisterDomainIpc?.();
     unregisterDomainIpc = null;
 
-    // Window layout persistence must survive domain teardown: renderer
-    // beforeunload handlers persist the FINAL workbench layout (e.g., a
-    // floated panel) via this channel while windows are closing, after the
-    // engine/service-backed handlers are already stopped. The layout handler
-    // only touches the program-settings file, so it is safe to keep alive.
+    // Settings persistence must survive domain teardown while renderer
+    // windows are still alive. Window beforeunload handlers persist the FINAL
+    // workbench layout, and a late React effect can still synchronize the
+    // recent-files list before final application shutdown closes the renderer.
+    // These handlers only touch program settings, so they are safe to keep
+    // alive after the engine/service-backed handlers have stopped.
     //
     // Late updates are DROPPED once quitting has begun: closing the popout
     // windows makes dockview redock their groups into the main grid, which
@@ -1921,6 +2159,10 @@ async function doQuit(): Promise<void> {
     }
     if (layoutGetHandler) {
       electronIpcMain.handle('window-layout:get', layoutGetHandler);
+    }
+    for (const channel of ['set-recent-files', 'get-recent-files'] as const) {
+      const handler = collectedIpcHandlers.get(channel);
+      if (handler) electronIpcMain.handle(channel, handler);
     }
 
     unregisterUnifiedLibraryIpc?.();
@@ -1954,6 +2196,13 @@ async function doQuit(): Promise<void> {
       }
       engineBridge = null;
     }
+
+    await finalizeEditorOpenDiagnostics();
+    await editorOpenDiagnostics?.dispose();
+    editorOpenDiagnostics = null;
+
+    trackEditorRuntimeStatusCoordinator?.dispose();
+    trackEditorRuntimeStatusCoordinator = null;
 
     blueLiveSession = null;
   await javaRuntimeSessionManager?.dispose();
@@ -2050,9 +2299,11 @@ const projectLifecycle = createProjectLifecycle({
     await stopActiveBlueLiveBeforeProjectReplacement();
     await disposeJavaRuntimeSession();
   },
-  closeProjectEditors: () => {
+  closeProjectEditors: async () => {
     closeEffectEditorWindowsForOwner('project');
     closeTrackInstrumentEditorWindows();
+    trackEditorRuntimeStatusCoordinator?.resetSubscriptions();
+    await finalizeEditorOpenDiagnostics();
   },
   clearProjectServices: () => {
     midiImportService.clearAll();
@@ -4557,6 +4808,20 @@ ipcRegistration.handle('open-effect-editor', async (_event, request: EffectEdito
 });
 
 ipcRegistration.handle('open-effect-interface', async (_event, request: EffectEditorRequest) => {
+  if (!isEffectEditorRequest(request)) {
+    throw new Error('Effect interface request is invalid.');
+  }
+  const diagnosticsEnabled = editorOpenDiagnostics?.enabled === true
+    && readEditorOpenDiagnosticCondition() === 'effect-interface';
+  const diagnosticAttempt = diagnosticsEnabled
+    ? trackEditorDiagnosticAttempts.startEffectAttempt(
+      request,
+      'interface',
+      trackEditorDiagnosticAttempts.isTargetSeen(
+        trackEditorDiagnosticAttempts.effectKeyFor(request, 'interface'),
+      ) ? 'reopened' : 'cold',
+    )
+    : null;
   let interfaceWidth: number | undefined;
   let interfaceHeight: number | undefined;
 
@@ -4571,17 +4836,56 @@ ipcRegistration.handle('open-effect-interface', async (_event, request: EffectEd
     }
   }
 
-  openEffectInterfaceWindow(mainWindow, request, interfaceWidth, interfaceHeight, {
+  const effectWindow = openEffectInterfaceWindow(mainWindow, request, interfaceWidth, interfaceHeight, {
     initialZoomFactor: appZoomController.getCurrentFactor(),
+    diagnosticsEnabled,
+    diagnosticCondition: diagnosticsEnabled ? 'effect-interface' : undefined,
+    effectInterfaceLoadMode: diagnosticsEnabled
+      ? readEffectInterfaceDiagnosticLoadMode()
+      : undefined,
+    onLifecycle: diagnosticAttempt
+      ? (milestone, errorCode) => trackEditorDiagnosticAttempts.recordEffectLifecycle(
+        request,
+        'interface',
+        milestone,
+        errorCode,
+        diagnosticAttempt.state,
+      )
+      : undefined,
   });
+  if (!effectWindow && diagnosticAttempt) {
+    trackEditorDiagnosticAttempts.setTerminal(
+      diagnosticAttempt.state,
+      { outcome: 'failed', errorCode: 'window-unavailable' },
+    );
+    trackEditorDiagnosticAttempts.completeAttempt(diagnosticAttempt.key, diagnosticAttempt.state);
+    return;
+  }
+  if (diagnosticAttempt) {
+    trackEditorDiagnosticAttempts.markTargetSeen(diagnosticAttempt.key);
+  }
 });
 
-ipcRegistration.handle('get-effect-editor-document', (_event, request: EffectEditorRequest) => {
+ipcRegistration.handle('get-effect-editor-document', (event, request: EffectEditorRequest) => {
+  if (!isEffectEditorRequest(request)) return null;
   if (request.ownerType === 'library') {
     return null;
   }
-
-  return getProjectEffectEditorSnapshot(request);
+  const diagnosticState = editorOpenDiagnostics?.enabled
+    && readEditorOpenDiagnosticCondition() === 'effect-interface'
+    && isEffectEditorWebContents(event.sender, request, 'interface')
+    ? trackEditorDiagnosticAttempts.getEffectState(request, 'interface')
+    : undefined;
+  if (diagnosticState) {
+    trackEditorDiagnosticAttempts.queueMilestone(diagnosticState, 'snapshot-start');
+    trackEditorDiagnosticAttempts.queueBracket(diagnosticState, 'snapshot-start');
+  }
+  const snapshot = getProjectEffectEditorSnapshot(request);
+  if (diagnosticState) {
+    trackEditorDiagnosticAttempts.queueMilestone(diagnosticState, 'snapshot-end');
+    trackEditorDiagnosticAttempts.queueBracket(diagnosticState, 'snapshot-end');
+  }
+  return snapshot;
 });
 
 ipcRegistration.handle('update-effect-editor-document', (_event, request: EffectEditorPatchRequest) => {
@@ -4589,7 +4893,35 @@ ipcRegistration.handle('update-effect-editor-document', (_event, request: Effect
 });
 
 ipcRegistration.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => {
-  return focusEffectEditorWindow(request);
+  if (!isEffectEditorRequest(request)) return false;
+  const mode = focusEffectEditorWindowMode(request);
+  if (mode === 'interface'
+    && editorOpenDiagnostics?.enabled
+    && readEditorOpenDiagnosticCondition() === 'effect-interface') {
+    const diagnosticAttempt = trackEditorDiagnosticAttempts.startEffectAttempt(
+      request,
+      mode,
+      'reused',
+      false,
+    );
+    if (diagnosticAttempt) {
+      void diagnosticAttempt.ready.then(() => {
+        trackEditorDiagnosticAttempts.queueMilestone(
+          diagnosticAttempt.state,
+          'existing-focused',
+        );
+        trackEditorDiagnosticAttempts.setTerminal(
+          diagnosticAttempt.state,
+          { outcome: 'usable' },
+        );
+        trackEditorDiagnosticAttempts.completeAttempt(
+          diagnosticAttempt.key,
+          diagnosticAttempt.state,
+        );
+      });
+    }
+  }
+  return mode !== null;
 });
 
 ipcRegistration.handle('open-track-instrument-editor', async (_event, request: TrackInstrumentEditorRequest) => {
@@ -4597,17 +4929,139 @@ ipcRegistration.handle('open-track-instrument-editor', async (_event, request: T
     || request.track.projectSessionId !== getCurrentProjectSessionId()) {
     throw new Error('Track instrument editor request is no longer valid.');
   }
+
+  if (focusTrackInstrumentEditorWindow(request)) {
+    if (editorOpenDiagnostics?.enabled) {
+      const data = projectSession.read().data;
+      const instrumentKind = data ? getTrackInstrumentDiagnosticKind(data, request) : null;
+      if (instrumentKind) {
+        const diagnosticAttempt = trackEditorDiagnosticAttempts.startAttempt(
+          request,
+          instrumentKind,
+          'reused',
+          false,
+        );
+        if (diagnosticAttempt) {
+          void diagnosticAttempt.ready.then(() => {
+            trackEditorDiagnosticAttempts.queueMilestone(
+              diagnosticAttempt.state,
+              'existing-focused',
+            );
+            trackEditorDiagnosticAttempts.setTerminal(
+              diagnosticAttempt.state,
+              { outcome: 'usable' },
+            );
+            trackEditorDiagnosticAttempts.completeAttempt(
+              diagnosticAttempt.key,
+              diagnosticAttempt.state,
+            );
+          });
+        }
+      }
+    }
+    return;
+  }
+
+  const diagnosticsEnabled = editorOpenDiagnostics?.enabled === true;
+  const diagnosticCondition = diagnosticsEnabled
+    ? readEditorOpenDiagnosticCondition()
+    : undefined;
+  const data = projectSession.read().data;
+  const instrumentKind = diagnosticsEnabled && data
+    ? getTrackInstrumentDiagnosticKind(data, request)
+    : null;
+  if (diagnosticsEnabled && !instrumentKind) {
+    throw new Error('Track instrument is not available. Assign it again and retry.');
+  }
+  const diagnosticAttempt = instrumentKind
+    ? trackEditorDiagnosticAttempts.startAttempt(
+      request,
+      instrumentKind,
+      trackEditorDiagnosticAttempts.isTargetSeen(trackEditorDiagnosticAttempts.keyFor(request))
+        ? 'reopened'
+        : 'cold',
+    )
+    : null;
+
   // Opening is a read/focus action. A pending renderer patch may have moved
   // the document revision since the tiny Track control rendered, so resolve
   // the stable Track identity against the current canonical snapshot and use
   // its current revision for the editor window fence.
-  const snapshot = getCurrentTrackInstrumentEditorSnapshot(request);
-  if (!snapshot) {
+  const skipSnapshot = diagnosticCondition === 'minimal-shell';
+  if (diagnosticAttempt && !skipSnapshot) {
+    trackEditorDiagnosticAttempts.queueMilestone(diagnosticAttempt.state, 'snapshot-start');
+    trackEditorDiagnosticAttempts.queueBracket(diagnosticAttempt.state, 'snapshot-start');
+  }
+  const snapshot = skipSnapshot ? null : getCurrentTrackInstrumentEditorSnapshot(request);
+  if (!skipSnapshot && !snapshot) {
+    if (diagnosticAttempt) {
+      trackEditorDiagnosticAttempts.setTerminal(
+        diagnosticAttempt.state,
+        { outcome: 'failed', errorCode: 'target-unavailable' },
+      );
+      trackEditorDiagnosticAttempts.completeAttempt(diagnosticAttempt.key, diagnosticAttempt.state);
+    }
     throw new Error('Track instrument is not available. Assign it again and retry.');
   }
-  openTrackInstrumentEditorWindow(mainWindow, { track: snapshot.track }, {
+  if (diagnosticAttempt && !skipSnapshot) {
+    trackEditorDiagnosticAttempts.queueMilestone(diagnosticAttempt.state, 'snapshot-end');
+    trackEditorDiagnosticAttempts.queueBracket(diagnosticAttempt.state, 'snapshot-end');
+  }
+  const editorRequest = skipSnapshot ? request : { track: snapshot!.track };
+  const editorWindow = openTrackInstrumentEditorWindow(mainWindow, editorRequest, {
     initialZoomFactor: appZoomController.getCurrentFactor(),
+    diagnosticsEnabled,
+    diagnosticCondition,
+    onLifecycle: diagnosticAttempt
+      ? (milestone, errorCode) => trackEditorDiagnosticAttempts.recordLifecycle(
+        request,
+        milestone,
+        errorCode,
+        diagnosticAttempt.state,
+      )
+      : undefined,
   });
+  if (!editorWindow) {
+    if (diagnosticAttempt) {
+      trackEditorDiagnosticAttempts.setTerminal(
+        diagnosticAttempt.state,
+        { outcome: 'failed', errorCode: 'window-unavailable' },
+      );
+      trackEditorDiagnosticAttempts.completeAttempt(diagnosticAttempt.key, diagnosticAttempt.state);
+    }
+    return;
+  }
+  if (diagnosticAttempt) {
+    trackEditorDiagnosticAttempts.markTargetSeen(diagnosticAttempt.key);
+  }
+});
+
+ipcRegistration.handle(TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL, (event, request: unknown) => {
+  if (!editorOpenDiagnostics?.enabled
+    || !isTrackInstrumentEditorDiagnosticMilestoneRequest(request)
+    || request.request.track.projectSessionId !== getCurrentProjectSessionId()
+    || !isTrackInstrumentEditorWebContents(event.sender, request.request)) {
+    return false;
+  }
+  return trackEditorDiagnosticAttempts.recordRendererMilestone(
+    request.request,
+    request.milestone,
+  );
+});
+
+ipcRegistration.handle(EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL, (event, request: unknown) => {
+  if (!editorOpenDiagnostics?.enabled
+    || readEditorOpenDiagnosticCondition() !== 'effect-interface'
+    || !isEffectEditorDiagnosticMilestoneRequest(request)
+    || request.mode !== 'interface'
+    || !isEffectEditorWebContents(event.sender, request.request, request.mode)) {
+    return false;
+  }
+  return trackEditorDiagnosticAttempts.recordEffectRendererMilestone(
+    request.request,
+    request.mode,
+    request.milestone,
+  );
 });
 
 ipcRegistration.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
@@ -4626,6 +5080,22 @@ ipcRegistration.handle('update-track-instrument-editor-document', (_event, reque
     return { status: 'unavailable', snapshot: null } satisfies TrackInstrumentEditorPatchResult;
   }
   return applyTrackInstrumentEditorPatch(request);
+});
+
+ipcRegistration.handle(TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL, (event, request: unknown) => {
+  if (!trackEditorRuntimeStatusCoordinator || !isTrackInstrumentEditorRequest(request)) return null;
+  return trackEditorRuntimeStatusCoordinator.getStatus(event.sender, request);
+});
+
+ipcRegistration.handle(TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL, (event, request: unknown) => {
+  if (!trackEditorRuntimeStatusCoordinator || !isTrackInstrumentEditorRequest(request)) return null;
+  return trackEditorRuntimeStatusCoordinator.subscribe(event.sender, request);
+});
+
+ipcRegistration.handle(TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL, (event, request: unknown) => {
+  if (!trackEditorRuntimeStatusCoordinator || !isTrackInstrumentEditorRequest(request)) return false;
+  trackEditorRuntimeStatusCoordinator.unsubscribe(event.sender, request);
+  return true;
 });
 
 // ─── Evaluate Code IPC Handler ───
@@ -5412,6 +5882,13 @@ async function rollbackApplicationShellStage(): Promise<void> {
   await engineBridge?.dispose();
   engineBridge = null;
   engineRuntimeService = null;
+
+  await finalizeEditorOpenDiagnostics();
+  await editorOpenDiagnostics?.dispose();
+  editorOpenDiagnostics = null;
+
+  trackEditorRuntimeStatusCoordinator?.dispose();
+  trackEditorRuntimeStatusCoordinator = null;
 
   await javaRuntimeSessionManager?.dispose();
   javaRuntimeSessionManager = null;

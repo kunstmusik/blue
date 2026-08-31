@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://blue.kunstmusik.com/schemas/editor-open-diagnostic-v1.json",
+  "title": "Blue editor-open diagnostic run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "candidateId",
+    "condition",
+    "environment",
+    "workload",
+    "attempts",
+    "disposition"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runId": { "$ref": "#/$defs/nonEmptyString" },
+    "candidateId": { "$ref": "#/$defs/nonEmptyString" },
+    "condition": {
+      "enum": [
+        "no-open",
+        "focus-existing",
+        "minimal-shell",
+        "shell-with-snapshot",
+        "editor-mount",
+        "library-init",
+        "bluex7-readback",
+        "effect-interface"
+      ]
+    },
+    "environment": { "$ref": "#/$defs/environment" },
+    "workload": { "$ref": "#/$defs/workload" },
+    "nativePerformance": { "$ref": "#/$defs/nativePerformance" },
+    "attempts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/attempt" }
+    },
+    "disposition": { "enum": ["incomplete", "rejected", "accepted"] },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 1000 },
+      "maxItems": 100
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "uint": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timestamp": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "string", "pattern": "^[0-9]+$" }
+      ]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "appBuild",
+        "engineBuild",
+        "device",
+        "sampleRate",
+        "ksmps",
+        "diagnosticsEnabled"
+      ],
+      "properties": {
+        "platform": { "$ref": "#/$defs/nonEmptyString" },
+        "appBuild": { "$ref": "#/$defs/nonEmptyString" },
+        "engineBuild": { "$ref": "#/$defs/nonEmptyString" },
+        "device": { "$ref": "#/$defs/nonEmptyString" },
+        "sampleRate": { "type": "number", "exclusiveMinimum": 0 },
+        "ksmps": { "$ref": "#/$defs/positiveInteger" },
+        "diagnosticsEnabled": { "const": true }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixtureId",
+        "sampleRate",
+        "ksmps",
+        "controlDurationSeconds",
+        "baselineInterruptionCount",
+        "headroomEvidence",
+        "outputMode"
+      ],
+      "properties": {
+        "fixtureId": { "$ref": "#/$defs/nonEmptyString" },
+        "sampleRate": { "type": "number", "exclusiveMinimum": 0 },
+        "ksmps": { "$ref": "#/$defs/positiveInteger" },
+        "controlDurationSeconds": { "type": "number", "minimum": 0 },
+        "baselineInterruptionCount": { "$ref": "#/$defs/uint" },
+        "headroomEvidence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "integer", "boolean", "null"]
+          }
+        },
+        "outputMode": { "enum": ["audible", "loopback", "both"] }
+      }
+    },
+    "trackTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "projectSessionId",
+        "layerGroupId",
+        "trackId",
+        "instrumentKind"
+      ],
+      "properties": {
+        "kind": { "const": "track-instrument" },
+        "projectSessionId": { "$ref": "#/$defs/nonEmptyString" },
+        "layerGroupId": { "$ref": "#/$defs/nonEmptyString" },
+        "trackId": { "$ref": "#/$defs/nonEmptyString" },
+        "instrumentKind": {
+          "enum": ["generic", "blue-synth-builder", "blue-x7"]
+        }
+      }
+    },
+    "effectTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "projectSessionId", "effectOwnerId", "effectId"],
+      "properties": {
+        "kind": { "enum": ["effect-interface", "effect-editor"] },
+        "projectSessionId": { "$ref": "#/$defs/nonEmptyString" },
+        "effectOwnerId": { "$ref": "#/$defs/nonEmptyString" },
+        "effectId": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "milestoneName": {
+      "enum": [
+        "request-received",
+        "existing-focused",
+        "target-validated",
+        "snapshot-start",
+        "snapshot-end",
+        "window-constructed",
+        "navigation-started",
+        "renderer-mounted",
+        "document-accepted",
+        "editor-import-start",
+        "editor-import-end",
+        "editor-usable",
+        "library-init-start",
+        "library-init-end",
+        "live-observation-start",
+        "live-observation-first-result",
+        "ready-to-show",
+        "shown",
+        "failed",
+        "cancelled",
+        "closed"
+      ]
+    },
+    "milestone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "monotonicNs"],
+      "properties": {
+        "name": { "$ref": "#/$defs/milestoneName" },
+        "monotonicNs": { "$ref": "#/$defs/timestamp" },
+        "durationNs": { "$ref": "#/$defs/timestamp" },
+        "count": { "$ref": "#/$defs/uint" }
+      }
+    },
+    "frameObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "milestone",
+        "requestBeforeMonotonicNs",
+        "sampleFrame",
+        "sampleRate",
+        "ksmps",
+        "responseAfterMonotonicNs"
+      ],
+      "properties": {
+        "milestone": { "$ref": "#/$defs/milestoneName" },
+        "requestBeforeMonotonicNs": { "$ref": "#/$defs/timestamp" },
+        "sampleFrame": { "$ref": "#/$defs/timestamp" },
+        "sampleRate": { "type": "number", "exclusiveMinimum": 0 },
+        "ksmps": { "$ref": "#/$defs/positiveInteger" },
+        "responseAfterMonotonicNs": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "audioObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "interruptionCount"],
+      "properties": {
+        "method": { "enum": ["audible", "loopback", "both", "unavailable"] },
+        "interruptionCount": { "$ref": "#/$defs/uint" },
+        "evidenceRef": { "type": "string", "maxLength": 1000 },
+        "notes": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "controlTraffic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readCommands", "readEntries", "writeCommands", "writeEntries"],
+      "properties": {
+        "readCommands": { "$ref": "#/$defs/uint" },
+        "readEntries": { "$ref": "#/$defs/uint" },
+        "writeCommands": { "$ref": "#/$defs/uint" },
+        "writeEntries": { "$ref": "#/$defs/uint" }
+      }
+    },
+    "nativeGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampleFrame", "gapNanoseconds", "budgetNanoseconds"],
+      "properties": {
+        "sampleFrame": { "$ref": "#/$defs/timestamp" },
+        "gapNanoseconds": { "$ref": "#/$defs/timestamp" },
+        "budgetNanoseconds": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "nativePerformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thresholdBudgetMultiple", "gapCount", "largestGaps"],
+      "properties": {
+        "thresholdBudgetMultiple": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "gapCount": { "$ref": "#/$defs/uint" },
+        "largestGaps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nativeGap" },
+          "maxItems": 100
+        }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attemptId",
+        "target",
+        "classification",
+        "appMode",
+        "startedMonotonicNs",
+        "milestones",
+        "frameObservations",
+        "audioObservation",
+        "outcome"
+      ],
+      "properties": {
+        "attemptId": { "$ref": "#/$defs/nonEmptyString" },
+        "target": {
+          "oneOf": [
+            { "$ref": "#/$defs/trackTarget" },
+            { "$ref": "#/$defs/effectTarget" }
+          ]
+        },
+        "classification": { "enum": ["cold", "reused", "reopened"] },
+        "appMode": { "enum": ["development", "packaged"] },
+        "startedMonotonicNs": { "$ref": "#/$defs/timestamp" },
+        "milestones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/milestone" },
+          "maxItems": 100
+        },
+        "frameObservations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/frameObservation" },
+          "maxItems": 100
+        },
+        "controlTraffic": { "$ref": "#/$defs/controlTraffic" },
+        "audioObservation": { "$ref": "#/$defs/audioObservation" },
+        "outcome": {
+          "enum": ["usable", "failed", "cancelled", "closed-before-usable"]
+        },
+        "errorCode": { "type": "string", "maxLength": 200 }
+      }
+    }
+  }
+}

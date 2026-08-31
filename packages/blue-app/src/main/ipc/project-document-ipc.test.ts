@@ -10,7 +10,7 @@ import {
 } from './ipc-registrar-test-utils';
 
 describe('project document IPC registrar', () => {
-  it('registers and disposes the exact 28-channel invoke sequence', () => {
+  it('registers and disposes the exact 32-channel invoke sequence', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const dispose = registerProjectDocumentIpc({
       ipcMain,

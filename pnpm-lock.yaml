@@ -166,6 +166,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: ^4.1.6
         version: 4.1.6(playwright@1.60.0)(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0))(vitest@4.1.6)
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
       autoprefixer:
         specifier: ^10.4.23
         version: 10.4.27(postcss@8.5.9)

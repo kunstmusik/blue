@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import type { WebContents } from 'electron';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 
@@ -11,6 +12,10 @@ import {
   attachWindowStateHandlers,
   restoreWindowState,
 } from './window-state-manager';
+import type {
+  DiagnosticCondition,
+  EditorMilestoneName,
+} from '../shared/track-instrument-editor-contract';
 
 interface TrackInstrumentEditorWindowState {
   window: BrowserWindow;
@@ -25,7 +30,11 @@ function getWindowKey(request: TrackInstrumentEditorRequest): string {
   return `${request.track.projectSessionId}:${request.track.rootGroupId}:${request.track.trackId}`;
 }
 
-function buildTrackInstrumentEditorUrl(request: TrackInstrumentEditorRequest): string {
+function buildTrackInstrumentEditorUrl(
+  request: TrackInstrumentEditorRequest,
+  diagnosticsEnabled = false,
+  diagnosticCondition?: DiagnosticCondition,
+): string {
   const params = new URLSearchParams({
     rootGroupId: request.track.rootGroupId,
     trackId: request.track.trackId,
@@ -33,6 +42,10 @@ function buildTrackInstrumentEditorUrl(request: TrackInstrumentEditorRequest): s
 
   params.set('projectSessionId', String(request.track.projectSessionId));
   params.set('projectRevision', String(request.track.projectRevision));
+  if (diagnosticsEnabled) params.set('editorOpenDiagnostics', '1');
+  if (diagnosticsEnabled && diagnosticCondition) {
+    params.set('editorOpenDiagnosticCondition', diagnosticCondition);
+  }
 
   if (process.env.VITE_DEV_SERVER_URL) {
     const devBase = process.env.VITE_DEV_SERVER_URL.replace(/\/$/, '');
@@ -48,6 +61,9 @@ function buildTrackInstrumentEditorUrl(request: TrackInstrumentEditorRequest): s
 
 export interface TrackInstrumentEditorWindowOptions {
   initialZoomFactor?: number;
+  onLifecycle?: (milestone: EditorMilestoneName, errorCode?: string) => void;
+  diagnosticsEnabled?: boolean;
+  diagnosticCondition?: DiagnosticCondition;
 }
 
 export function openTrackInstrumentEditorWindow(
@@ -68,6 +84,7 @@ export function openTrackInstrumentEditorWindow(
   const editorWindow = new BrowserWindow({
     width: 1000,
     height: 760,
+    backgroundColor: '#1a1a2e',
     title: 'Track Instrument Editor',
     parent: mainWindow,
     frame: true,
@@ -102,15 +119,51 @@ export function openTrackInstrumentEditorWindow(
   });
 
   editorWindow.once('ready-to-show', () => {
+    options.onLifecycle?.('ready-to-show');
     if (!editorWindow.isDestroyed()) editorWindow.show();
+    if (!editorWindow.isDestroyed()) options.onLifecycle?.('shown');
+  });
+
+  let closed = false;
+  let failureReported = false;
+  const reportFailure = (errorCode: string): void => {
+    if (closed || failureReported) return;
+    failureReported = true;
+    options.onLifecycle?.('failed', errorCode);
+    if (!editorWindow.isDestroyed()) editorWindow.close();
+  };
+
+  editorWindow.webContents.once('did-finish-load', () => {
+    if (!closed) options.onLifecycle?.('renderer-mounted');
+  });
+  editorWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    if (errorCode === -3) return;
+    reportFailure(`${errorCode}:${errorDescription || 'navigation failed'}`);
   });
 
   editorWindow.on('closed', () => {
+    closed = true;
     disposeStateHandlers?.();
-    trackInstrumentEditorWindows.delete(key);
+    if (trackInstrumentEditorWindows.get(key)?.window === editorWindow) {
+      trackInstrumentEditorWindows.delete(key);
+    }
+    options.onLifecycle?.('closed');
   });
 
-  editorWindow.loadURL(buildTrackInstrumentEditorUrl(request));
+  options.onLifecycle?.('window-constructed');
+  options.onLifecycle?.('navigation-started');
+  try {
+    void Promise.resolve(editorWindow.loadURL(buildTrackInstrumentEditorUrl(
+      request,
+      options.diagnosticsEnabled,
+      options.diagnosticCondition,
+    )))
+      .catch((error: unknown) => {
+        reportFailure(error instanceof Error ? error.message : String(error));
+      });
+  } catch (error: unknown) {
+    reportFailure(error instanceof Error ? error.message : String(error));
+  }
   return editorWindow;
 }
 
@@ -157,6 +210,14 @@ export function focusTrackInstrumentEditorWindow(
   existing.window.focus();
   existing.window.show();
   return true;
+}
+
+export function isTrackInstrumentEditorWebContents(
+  webContents: WebContents,
+  request: TrackInstrumentEditorRequest,
+): boolean {
+  const state = trackInstrumentEditorWindows.get(getWindowKey(request));
+  return Boolean(state && !state.window.isDestroyed() && state.window.webContents === webContents);
 }
 
 export function broadcastProjectDocumentUpdateToTrackInstrumentWindows(

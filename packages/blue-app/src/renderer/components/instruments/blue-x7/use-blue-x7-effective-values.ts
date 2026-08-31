@@ -25,6 +25,8 @@ export interface BlueX7EffectiveValuesOptions {
   enabled: boolean;
   /** Sampling rate; FR-014 requires at least 20 Hz. Defaults to 20. */
   pollHz?: number;
+  onObservationStart?: () => void;
+  onObservationResult?: () => void;
 }
 
 export interface BlueX7EffectiveValuesState {
@@ -56,9 +58,21 @@ function requestIdentity(
 export function useBlueX7EffectiveValues(
   options: BlueX7EffectiveValuesOptions,
 ): BlueX7EffectiveValuesState {
-  const { target, projectSessionId, parameterIds, enabled, pollHz = 20 } = options;
+  const {
+    target,
+    projectSessionId,
+    parameterIds,
+    enabled,
+    pollHz = 20,
+    onObservationStart,
+    onObservationResult,
+  } = options;
   const [state, setState] = useState<BlueX7EffectiveValuesState>(EMPTY_STATE);
   const inFlightRef = useRef(false);
+  const onObservationStartRef = useRef(onObservationStart);
+  const onObservationResultRef = useRef(onObservationResult);
+  onObservationStartRef.current = onObservationStart;
+  onObservationResultRef.current = onObservationResult;
   const identityRef = useRef(requestIdentity(target, projectSessionId));
   identityRef.current = requestIdentity(target, projectSessionId);
   const parameterIdsRef = useRef(parameterIds);
@@ -71,7 +85,11 @@ export function useBlueX7EffectiveValues(
       return;
     }
 
+    setState(EMPTY_STATE);
+    onObservationStartRef.current?.();
+
     let disposed = false;
+    let observedResult = false;
     const intervalMs = Math.max(5, Math.round(1000 / Math.max(1, pollHz)));
 
     const poll = async (): Promise<void> => {
@@ -94,6 +112,10 @@ export function useBlueX7EffectiveValues(
             engineSequence: previous.engineSequence,
           }));
           return;
+        }
+        if (!observedResult) {
+          observedResult = true;
+          onObservationResultRef.current?.();
         }
         setState({
           values: new Map(result.values.map((entry) => [entry.parameterId, entry.value])),
