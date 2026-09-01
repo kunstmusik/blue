@@ -2,7 +2,6 @@ import React from 'react';
 import type { BlueX7Lfo } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AppSelect } from '../../AppSelect';
-import { NextNoteBadge } from './next-note-badge';
 import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 const LFO_FIELD_DOMAINS = {
@@ -162,7 +161,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
               onChange={handleSyncToggle}
               className="rounded border-blue-border"
             />
-            Key Sync <NextNoteBadge semanticKey="lfo.sync" />
+            Key Sync
           </label>
         </div>
       </div>

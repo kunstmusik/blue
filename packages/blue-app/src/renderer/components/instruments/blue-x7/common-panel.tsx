@@ -3,7 +3,6 @@ import type { BlueX7Common } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
 import { AppSelect } from '../../AppSelect';
-import { NextNoteBadge } from './next-note-badge';
 import { blueX7WidgetDomain } from './catalog-domains';
 
 const ALGORITHM_DOMAIN = blueX7WidgetDomain('common.algorithm');
@@ -128,7 +127,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
             {/* Algorithm selector */}
             <div className="flex flex-col gap-1">
               <label htmlFor="bluex7-algorithm" className="text-role-body text-blue-muted">
-                Algorithm ({ALGORITHM_DOMAIN.min}–{ALGORITHM_DOMAIN.max}) <NextNoteBadge semanticKey="common.algorithm" />
+                Algorithm ({ALGORITHM_DOMAIN.min}–{ALGORITHM_DOMAIN.max})
               </label>
               <div className="flex items-center gap-1">
                 <AppSelect
@@ -205,7 +204,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     onChange={handleSharedSyncToggle}
                     className="rounded border-blue-border"
                   />
-                  Sync <NextNoteBadge semanticKey="common.oscillatorKeySync" />
+                  Sync
                 </label>
                 <div className="flex items-center gap-1">
                   <label htmlFor="bluex7-shared-pms" className="text-role-body text-blue-muted">

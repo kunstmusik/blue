@@ -38,7 +38,7 @@ describe('next-note catalog labels (Spec 092 FR-012)', () => {
     container.remove();
   });
 
-  it('labels algorithm and shared oscillator sync as next-note in the common panel', () => {
+  it('renders clean algorithm and shared oscillator sync labels in the common panel', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -52,9 +52,8 @@ describe('next-note catalog labels (Spec 092 FR-012)', () => {
       );
     });
     const badges = container.querySelectorAll('[data-testid="bluex7-next-note-badge"]');
-    expect(badges.length).toBe(2);
-    // the labels they attach to are the algorithm select and the shared sync
-    expect(container.querySelector('label[for="bluex7-algorithm"]')?.textContent).toContain('next note');
+    expect(badges.length).toBe(0);
+    expect(container.querySelector('label[for="bluex7-algorithm"]')?.textContent).toContain('Algorithm (1–32)');
     expect(container.querySelector('input[aria-label="Shared Oscillator Sync"]')).not.toBeNull();
     act(() => root.unmount());
     container.remove();
@@ -119,6 +118,45 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
     expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
   });
 
+  it.each([
+    ['session', {
+      ok: true,
+      projectSessionId: 6,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [{ parameterId: 'param-a', value: 42 }],
+    }],
+    ['owner', {
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:2',
+      engineSequence: 1,
+      values: [{ parameterId: 'param-a', value: 42 }],
+    }],
+    ['parameter set', {
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [{ parameterId: 'foreign-param', value: 42 }],
+    }],
+    ['finite value', {
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [{ parameterId: 'param-a', value: Number.NaN }],
+    }],
+  ])('rejects a successful response with invalid %s data', async (_kind, result) => {
+    getBlueX7EffectiveValues.mockResolvedValue(result);
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, baseProps));
+      await Promise.resolve();
+    });
+
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+  });
+
   it('keeps at most one request in flight', async () => {
     let resolveFirst: (value: unknown) => void = () => undefined;
     getBlueX7EffectiveValues.mockImplementation(
@@ -151,6 +189,47 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       await vi.advanceTimersByTimeAsync(100);
     });
     expect(getBlueX7EffectiveValues.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not let a stale generation release the current in-flight lock', async () => {
+    const resolvers: Array<(value: unknown) => void> = [];
+    getBlueX7EffectiveValues.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, baseProps));
+      await Promise.resolve();
+    });
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, {
+        ...baseProps,
+        parameterIds: ['next-a', 'next-b'],
+      }));
+      await Promise.resolve();
+    });
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolvers[0]?.({
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 1,
+        values: [{ parameterId: 'param-a', value: 42 }],
+      });
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(2);
   });
 
   it('discards late responses after the editor target changes', async () => {
@@ -289,13 +368,13 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
   it('starts a fresh observation when the target changes', async () => {
     const onObservationStart = vi.fn();
     const onObservationResult = vi.fn();
-    getBlueX7EffectiveValues.mockResolvedValue({
-      ok: true,
+    getBlueX7EffectiveValues.mockImplementation(async ({ target }: { target: { assignmentId: string } }) => ({
+      ok: true as const,
       projectSessionId: 5,
-      ownerIdentity: 'arrangement:1',
+      ownerIdentity: `arrangement:${target.assignmentId}`,
       engineSequence: 1,
       values: [],
-    });
+    }));
 
     await act(async () => {
       root?.render(React.createElement(HookProbe, {
@@ -358,6 +437,108 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
 
     expect((container?.querySelector('#bluex7-feedback') as HTMLInputElement).value).toBe('6');
     expect(onInstrumentPatch).not.toHaveBeenCalled();
+  });
+
+  it('rejects stale responses when switching between same-length parameter sets (e.g. Op 1 to Op 2)', async () => {
+    const resolvers: Array<(value: unknown) => void> = [];
+    getBlueX7EffectiveValues.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const op1Params = Array.from({ length: 24 }, (_, i) => `op1-param-${i}`);
+    const op2Params = Array.from({ length: 24 }, (_, i) => `op2-param-${i}`);
+
+    await act(async () => {
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          parameterIds: op1Params,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+
+    // Switch to Op 2 (same count: 24 IDs, different signature)
+    await act(async () => {
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          parameterIds: op2Params,
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(2);
+
+    // Resolve the first request (Op 1) late
+    await act(async () => {
+      resolvers[0]({
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 10,
+        values: [{ parameterId: 'op1-param-0', value: 77 }],
+      });
+      await Promise.resolve();
+    });
+
+    // The Op 1 value must NOT be accepted into display state
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
+
+    // Resolve the second request (Op 2)
+    await act(async () => {
+      resolvers[1]({
+        ok: true,
+        projectSessionId: 5,
+        ownerIdentity: 'arrangement:1',
+        engineSequence: 11,
+        values: [{ parameterId: 'op2-param-0', value: 88 }],
+      });
+      await Promise.resolve();
+    });
+
+    // Op 2 value is accepted
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+  });
+
+  it('suppresses requests when parameterIds is empty and clears display state', async () => {
+    getBlueX7EffectiveValues.mockResolvedValue({
+      ok: true,
+      projectSessionId: 5,
+      ownerIdentity: 'arrangement:1',
+      engineSequence: 1,
+      values: [{ parameterId: 'param-a', value: 42 }],
+    });
+
+    await act(async () => {
+      root?.render(React.createElement(HookProbe, baseProps));
+      await Promise.resolve();
+    });
+
+    expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('1');
+
+    getBlueX7EffectiveValues.mockClear();
+
+    // Switch to empty set (e.g. Csound tab)
+    await act(async () => {
+      root?.render(
+        React.createElement(HookProbe, {
+          ...baseProps,
+          parameterIds: [],
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(getBlueX7EffectiveValues).not.toHaveBeenCalled();
+    expect(container?.querySelector('[data-testid="hook-probe"]')?.getAttribute('data-size')).toBe('0');
   });
 });
 

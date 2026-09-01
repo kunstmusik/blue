@@ -464,6 +464,28 @@ describe('BlueX7 runtime sync (Spec 092)', () => {
     ).toEqual({ ok: false, reason: 'channel-unavailable' });
   });
 
+  it('fails closed on short or non-finite channel readbacks', async () => {
+    const env = createEnvironment({ data, bindings, sessionId: 7 });
+    const parameterIds = [
+      liveParameterId(data, 'common.feedback'),
+      liveParameterId(data, 'common.algorithm'),
+    ];
+
+    env.readChannels = async () => ({ ok: true, values: [42] });
+    await expect(requestBlueX7EffectiveValues(env, {
+      target: assignmentTarget('1'),
+      projectSessionId: 7,
+      parameterIds,
+    })).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
+
+    env.readChannels = async () => ({ ok: true, values: [Number.NaN, 12] });
+    await expect(requestBlueX7EffectiveValues(env, {
+      target: assignmentTarget('1'),
+      projectSessionId: 7,
+      parameterIds,
+    })).resolves.toEqual({ ok: false, reason: 'channel-unavailable' });
+  });
+
   it('routes four owners through disjoint channel sets with no cross-writes', async () => {
     const fourOwner = compileBlueX7ProjectFixtures({ arrangementInstruments: 2, trackInstruments: 2 });
     const env = createEnvironment({

@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe('BlueX7 editor browser layout', () => {
-  it('keeps every panel measurable and reachable in the desktop viewport', async () => {
+  it('keeps active panel and pinned header measurable and reachable in the desktop viewport', async () => {
     const rendered = mount(1000, 760);
 
     try {
@@ -81,13 +81,15 @@ describe('BlueX7 editor browser layout', () => {
       const editor = rendered.container.querySelector('[data-testid="blue-x7-editor"]') as HTMLDivElement;
       expect(editor.getBoundingClientRect().width).toBeGreaterThan(0);
 
-      for (const testId of [
-        'bluex7-common-panel',
-        'bluex7-lfo-panel',
-        'bluex7-operator-panel',
-        'bluex7-peg-panel',
-        'bluex7-csound-panel',
-      ]) {
+      // Header is visible and pinned
+      const nameInput = rendered.container.querySelector('input[aria-label="Instrument Name"]') as HTMLElement;
+      expect(nameInput.getBoundingClientRect().height).toBeGreaterThan(0);
+
+      // Voice & Global is active on mount
+      const globalPanel = rendered.container.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      expect(globalPanel.style.visibility).toBe('visible');
+
+      for (const testId of ['bluex7-common-panel', 'bluex7-lfo-panel']) {
         const panel = rendered.container.querySelector(`[data-testid="${testId}"]`) as HTMLElement;
         const rect = panel.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();
@@ -96,19 +98,27 @@ describe('BlueX7 editor browser layout', () => {
         expect(rect.right, testId).toBeLessThanOrEqual(editorRect.right + 1);
       }
 
-      editor.scrollTop = editor.scrollHeight;
+      // Outer editor has no vertical scroll (it is a non-scrolling shell)
+      expect(editor.scrollTop).toBe(0);
+
+      // Switch to Csound tab
+      const csoundTab = rendered.container.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
       await act(async () => {
+        csoundTab.click();
         await flushFrame();
       });
-      const csoundRect = (rendered.container.querySelector('[data-testid="bluex7-csound-panel"]') as HTMLElement).getBoundingClientRect();
+
+      const csoundPanel = rendered.container.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      expect(csoundPanel.style.visibility).toBe('visible');
+      const csoundRect = csoundPanel.getBoundingClientRect();
+      expect(csoundRect.width).toBeGreaterThan(0);
       expect(csoundRect.bottom).toBeLessThanOrEqual(editor.getBoundingClientRect().bottom + 1);
     } finally {
       rendered.unmount();
     }
   });
 
-  it('does not introduce horizontal overflow in a narrow host', async () => {
-    if (window.innerWidth > 500) return;
+  it('maintains a non-wrapping horizontal tab row in a narrow 360px host', async () => {
     const rendered = mount(360, 600);
 
     try {
@@ -118,8 +128,11 @@ describe('BlueX7 editor browser layout', () => {
 
       const editor = rendered.container.querySelector('[data-testid="blue-x7-editor"]') as HTMLDivElement;
       expect(editor.scrollWidth).toBeLessThanOrEqual(editor.clientWidth + 1);
-      const pms = rendered.container.querySelector('#bluex7-shared-pms') as HTMLInputElement;
-      expect(pms.getBoundingClientRect().right).toBeLessThanOrEqual(editor.getBoundingClientRect().right + 1);
+
+      const tablist = rendered.container.querySelector('[role="tablist"][aria-label="Instrument Sections"]') as HTMLElement;
+      expect(tablist).not.toBeNull();
+      expect(tablist.classList.contains('flex-nowrap')).toBe(true);
+      expect(tablist.classList.contains('overflow-x-auto')).toBe(true);
     } finally {
       rendered.unmount();
     }
@@ -150,6 +163,43 @@ describe('BlueX7 editor browser layout', () => {
       });
       expect(rendered.container.querySelector('[aria-label="Select DX7 Algorithm"]')).toBeNull();
       expect(document.activeElement).toBe(opener);
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('allocates full panel height to Csound Post Code and supports sub-tab switching', async () => {
+    const rendered = mount(1000, 760);
+
+    try {
+      await act(async () => {
+        await flushFrame();
+      });
+
+      // Switch to Csound tab
+      const csoundTab = rendered.container.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      await act(async () => {
+        csoundTab.click();
+        await flushFrame();
+      });
+
+      const postCodeTabPanel = rendered.container.querySelector('[data-testid="bluex7-post-code-tab"]') as HTMLElement;
+      expect(postCodeTabPanel).not.toBeNull();
+      expect(postCodeTabPanel.style.visibility).toBe('visible');
+
+      const editor = rendered.container.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
+      expect(editor).not.toBeNull();
+
+      // Switch to Preview sub-tab
+      const previewSubTab = rendered.container.querySelector('[role="tab"][data-testid="csound-tab-preview"]') as HTMLButtonElement;
+      await act(async () => {
+        previewSubTab.click();
+        await flushFrame();
+      });
+
+      const previewPanel = rendered.container.querySelector('[data-testid="bluex7-preview-tab"]') as HTMLElement;
+      expect(previewPanel.style.visibility).toBe('visible');
+      expect(postCodeTabPanel.style.visibility).toBe('hidden');
     } finally {
       rendered.unmount();
     }

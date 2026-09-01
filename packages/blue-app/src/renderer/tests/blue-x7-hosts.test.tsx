@@ -216,4 +216,150 @@ describe('BlueX7 Multi-Host Parity (Orchestra, Track Window, Library)', () => {
     expect((editorB.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled)
       .toBe(false);
   });
+
+  it('keeps ARIA tab and panel IDs unique for two mounts of the same assignment', async () => {
+    const first = createSnapshot('Shared Assignment A');
+    const second = createSnapshot('Shared Assignment B');
+
+    await act(async () => {
+      root?.render(
+        <>
+          <section data-testid="shared-editor-a">
+            <InstrumentEditorPanel
+              instrument={first}
+              projectUdos={[]}
+              onOrchestraPatch={onOrchestraPatch}
+            />
+          </section>
+          <section data-testid="shared-editor-b">
+            <InstrumentEditorPanel
+              instrument={second}
+              projectUdos={[]}
+              onOrchestraPatch={onOrchestraPatch}
+            />
+          </section>
+        </>,
+      );
+      await flushLazyEditor();
+    });
+
+    const topLevelTablist = container!.querySelector('[role="tablist"][aria-label="Instrument Sections"]')!;
+    const tabs = [...topLevelTablist.querySelectorAll<HTMLElement>('[role="tab"]')];
+    const panels = [...container!.querySelectorAll<HTMLElement>(
+      '[data-testid="bluex7-panel-global"], [data-testid="bluex7-panel-operators"], [data-testid="bluex7-panel-pitch"], [data-testid="bluex7-panel-csound"]',
+    )];
+    const tabIds = tabs.map((tab) => tab.id);
+    const panelIds = panels.map((panel) => panel.id);
+
+    expect(new Set(tabIds).size).toBe(tabIds.length);
+    expect(new Set(panelIds).size).toBe(panelIds.length);
+    for (const tab of tabs) {
+      expect(document.getElementById(tab.getAttribute('aria-controls') ?? '')).not.toBeNull();
+    }
+    for (const panel of panels) {
+      expect(document.getElementById(panel.getAttribute('aria-labelledby') ?? '')).not.toBeNull();
+    }
+  });
+
+  it('routes arrangement and track runtime snapshots to active controls without patches', async () => {
+    const arrangement = createSnapshot('Runtime Arrangement BlueX7');
+    arrangement.parameters = [{
+      parameterId: 'arrangement-feedback',
+      semanticKey: 'common.feedback',
+      fixedValue: 0,
+      automationEnabled: true,
+    }];
+    const track = createSnapshot('Runtime Track BlueX7');
+    track.parameters = [{
+      parameterId: 'track-feedback',
+      semanticKey: 'common.feedback',
+      fixedValue: 0,
+      automationEnabled: true,
+    }];
+    track.assignmentId = 'track-assignment';
+
+    const getBlueX7EffectiveValues = vi.fn().mockImplementation(async (request: {
+      target: {
+        assignmentId?: string;
+        track?: { rootGroupId: string; trackId: string };
+      };
+      projectSessionId: number;
+      parameterIds: string[];
+    }) => ({
+      ok: true as const,
+      projectSessionId: request.projectSessionId,
+      ownerIdentity: request.target.assignmentId
+        ? `arrangement:${request.target.assignmentId}`
+        : `track:${request.target.track!.rootGroupId}:${request.target.track!.trackId}`,
+      engineSequence: 1,
+      values: [{ parameterId: request.parameterIds[0]!, value: request.target.assignmentId ? 6 : 7 }],
+    }));
+    (window as unknown as { blueAPI: unknown }).blueAPI = { getBlueX7EffectiveValues };
+
+    await act(async () => {
+      root?.render(
+        <>
+          <section data-testid="runtime-arrangement-host">
+            <InstrumentEditorPanel
+              instrument={arrangement}
+              projectUdos={[]}
+              onOrchestraPatch={onOrchestraPatch}
+              blueX7Runtime={{
+                target: { assignmentId: '1' },
+                projectSessionId: 11,
+                enabled: true,
+              }}
+            />
+          </section>
+          <section data-testid="runtime-track-host">
+            <InstrumentEditorPanel
+              instrument={track}
+              projectUdos={[]}
+              onOrchestraPatch={onOrchestraPatch}
+              blueX7Runtime={{
+                target: {
+                  track: {
+                    projectSessionId: 22,
+                    rootGroupId: 'group-1',
+                    trackId: 'track-1',
+                  },
+                },
+                projectSessionId: 22,
+                enabled: true,
+              }}
+            />
+          </section>
+        </>,
+      );
+      await flushLazyEditor();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(getBlueX7EffectiveValues.mock.calls.map(([request]) => request)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          target: { assignmentId: '1' },
+          projectSessionId: 11,
+          parameterIds: ['arrangement-feedback'],
+        }),
+        expect.objectContaining({
+          target: {
+            track: {
+              projectSessionId: 22,
+              rootGroupId: 'group-1',
+              trackId: 'track-1',
+            },
+          },
+          projectSessionId: 22,
+          parameterIds: ['track-feedback'],
+        }),
+      ]),
+    );
+    expect((container!.querySelector('[data-testid="runtime-arrangement-host"] [aria-label="Feedback"]') as HTMLInputElement).value)
+      .toBe('6');
+    expect((container!.querySelector('[data-testid="runtime-track-host"] [aria-label="Feedback"]') as HTMLInputElement).value)
+      .toBe('7');
+    expect(onOrchestraPatch).not.toHaveBeenCalled();
+  });
 });

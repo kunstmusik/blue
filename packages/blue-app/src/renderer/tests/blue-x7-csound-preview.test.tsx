@@ -258,4 +258,54 @@ describe('CsoundPanel & Live Csound Preview', () => {
     expect(report).not.toContain('stored-only');
     expect(report).not.toContain('Dormant');
   });
+
+  it('exposes nested Csound tablist ARIA attributes and preserves sub-panel visibility states', () => {
+    const voice = createDefaultBlueX7Voice();
+    voice.csoundPostCode = 'outs aout, aout';
+
+    act(() => {
+      root?.render(
+        <CsoundPanel
+          instanceId="test-csound"
+          voice={voice}
+          instrumentName="TestX7"
+          onApplyPatch={onApplyPatch}
+        />,
+      );
+    });
+
+    const tablist = container?.querySelector('[role="tablist"][aria-label="Csound Sections"]');
+    expect(tablist).not.toBeNull();
+
+    const postCodeTab = container?.querySelector('[role="tab"][data-testid="csound-tab-post-code"]') as HTMLButtonElement;
+    const previewTab = container?.querySelector('[role="tab"][data-testid="csound-tab-preview"]') as HTMLButtonElement;
+    const bindingsTab = container?.querySelector('[role="tab"][data-testid="csound-tab-bindings"]') as HTMLButtonElement;
+
+    expect(postCodeTab.getAttribute('aria-selected')).toBe('true');
+    expect(previewTab.getAttribute('aria-selected')).toBe('false');
+    expect(bindingsTab.getAttribute('aria-selected')).toBe('false');
+
+    const postCodePanel = container?.querySelector('#test-csound-panel-postCode') as HTMLElement;
+    const previewPanel = container?.querySelector('#test-csound-panel-preview') as HTMLElement;
+    const bindingsPanel = container?.querySelector('#test-csound-panel-bindings') as HTMLElement;
+
+    expect(postCodePanel.style.visibility).toBe('visible');
+    expect(postCodePanel.getAttribute('aria-hidden')).toBe('false');
+    expect(previewPanel.style.visibility).toBe('hidden');
+    expect(previewPanel.getAttribute('aria-hidden')).toBe('true');
+    expect(bindingsPanel.style.visibility).toBe('hidden');
+    expect(bindingsPanel.getAttribute('aria-hidden')).toBe('true');
+
+    // Switch to Preview tab
+    act(() => {
+      previewTab.click();
+    });
+
+    expect(postCodeTab.getAttribute('aria-selected')).toBe('false');
+    expect(previewTab.getAttribute('aria-selected')).toBe('true');
+    expect(postCodePanel.style.visibility).toBe('hidden');
+    expect(postCodePanel.getAttribute('aria-hidden')).toBe('true');
+    expect(previewPanel.style.visibility).toBe('visible');
+    expect(previewPanel.getAttribute('aria-hidden')).toBe('false');
+  });
 });

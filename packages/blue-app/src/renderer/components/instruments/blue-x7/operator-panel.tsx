@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { BlueX7Operator, BlueX7EnvelopePoint } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { EnvelopeEditor } from './envelope-editor';
+import { BlueX7TabList, type BlueX7TabItem } from './tab-list';
 import { AppSelect } from '../../AppSelect';
-import { NextNoteBadge } from './next-note-badge';
 import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 export interface OperatorPanelProps {
@@ -19,6 +19,8 @@ export interface OperatorPanelProps {
   sharedSync?: number | 'mixed';
   sharedPms?: number | 'mixed';
   effectiveValues?: ReadonlyMap<string, number>;
+  instanceId?: string;
+  active?: boolean;
   onVisibleOperatorChange?: (operatorIndex: number) => void;
   onApplyPatch: (description: string, patch: BlueX7Patch) => void;
 }
@@ -38,9 +40,13 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   sharedSync,
   sharedPms,
   effectiveValues,
+  instanceId: providedInstanceId,
+  active = true,
   onVisibleOperatorChange,
   onApplyPatch,
 }) => {
+  const generatedId = useId().replace(/:/g, '');
+  const instanceId = providedInstanceId ?? `bluex7-ops-${generatedId}`;
   const [selectedOpIndex, setSelectedOpIndex] = useState<number>(0);
   const currentOp = operators[selectedOpIndex] ?? operators[0];
   const operatorKey = (suffix: string): string => `operator.${selectedOpIndex + 1}.${suffix}`;
@@ -50,24 +56,41 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   // so the numeric editors can never drift from patch validation.
   const domainOf = (semanticKey: string): BlueX7WidgetDomain => blueX7WidgetDomain(operatorKey(semanticKey));
 
-  // Envelope gestures (pointer drags, arrow-key edits) update a working stage
-  // point during the gesture and dispatch exactly one patch on commit, so a
-  // whole drag is a single undo step instead of one entry per pointer-move.
+  // Maintain local working envelopes for instant responsiveness and zero-snapback
+  const [localEnvelopes, setLocalEnvelopes] = useState<
+    [
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+      [BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint, BlueX7EnvelopePoint],
+    ]
+  >(() => operators.map((op) => op.envelope) as any);
+
   const gestureActiveRef = useRef(false);
-  const gestureStageRef = useRef<{
-    stageIndex: number;
-    point: BlueX7EnvelopePoint;
-  } | null>(null);
-  const [gestureStage, setGestureStage] = useState<{
-    stageIndex: number;
-    point: BlueX7EnvelopePoint;
-  } | null>(null);
+  const activeDragRef = useRef<{ stageIndex: number; point: BlueX7EnvelopePoint } | null>(null);
+
+  // Sync with incoming canonical operators prop when not actively dragging
+  useEffect(() => {
+    if (!gestureActiveRef.current) {
+      setLocalEnvelopes(operators.map((op) => op.envelope) as any);
+    }
+  }, [operators]);
+
+  const currentLocalEnvelope = localEnvelopes[selectedOpIndex] ?? currentOp.envelope;
 
   const cancelEnvelopeGesture = () => {
     gestureActiveRef.current = false;
-    gestureStageRef.current = null;
-    setGestureStage(null);
+    activeDragRef.current = null;
+    setLocalEnvelopes(operators.map((op) => op.envelope) as any);
   };
+
+  useEffect(() => {
+    if (!active) {
+      cancelEnvelopeGesture();
+    }
+  }, [active]);
 
   const handleFieldChange = (field: keyof BlueX7Operator, label: string, domain: BlueX7WidgetDomain) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,11 +153,19 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
       const val = parseInt(e.target.value, 10);
       if (!Number.isNaN(val)) {
         const clamped = Math.max(domain.min, Math.min(domain.max, val));
-        const currentPt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
+        const currentPt = currentLocalEnvelope[stage] ?? { rate: 0, level: 0 };
         const nextPt = {
           ...currentPt,
           [rateOrLevel]: clamped,
         };
+        setLocalEnvelopes((prev) => {
+          const next = [...prev] as typeof localEnvelopes;
+          const opEnv = next[selectedOpIndex];
+          if (opEnv) {
+            next[selectedOpIndex] = opEnv.map((pt, i) => (i === stage ? nextPt : pt)) as any;
+          }
+          return next;
+        });
         onApplyPatch(`Change Op ${selectedOpIndex + 1} Env ${rateOrLevel.toUpperCase()}${stage + 1} to ${clamped}`, {
           type: 'setOperatorEnvelopePoint',
           operatorIndex: selectedOpIndex,
@@ -146,17 +177,19 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
   };
 
   const handleStagePointChange = (stageIndex: number, point: BlueX7EnvelopePoint) => {
-    if (gestureActiveRef.current) {
-      gestureStageRef.current = { stageIndex, point };
-      setGestureStage({ stageIndex, point });
-      return;
-    }
-    onApplyPatch(`Change Op ${selectedOpIndex + 1} Env Stage ${stageIndex + 1}`, {
-      type: 'setOperatorEnvelopePoint',
-      operatorIndex: selectedOpIndex,
-      stageIndex,
-      point,
+    activeDragRef.current = { stageIndex, point };
+    setLocalEnvelopes((prev) => {
+      const next = [...prev] as typeof localEnvelopes;
+      const opEnv = next[selectedOpIndex];
+      if (opEnv) {
+        next[selectedOpIndex] = opEnv.map((pt, i) => (i === stageIndex ? point : pt)) as any;
+      }
+      return next;
     });
+  };
+
+  const handleGestureStart = () => {
+    gestureActiveRef.current = true;
   };
 
   const handleGestureCommit = () => {
@@ -164,55 +197,60 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
       return;
     }
     gestureActiveRef.current = false;
-    const finalStage = gestureStageRef.current;
-    gestureStageRef.current = null;
-    setGestureStage(null);
-    if (finalStage) {
-      onApplyPatch(`Change Op ${selectedOpIndex + 1} Env Stage ${finalStage.stageIndex + 1}`, {
+    const finalDrag = activeDragRef.current;
+    activeDragRef.current = null;
+    if (finalDrag) {
+      onApplyPatch(`Change Op ${selectedOpIndex + 1} Env Stage ${finalDrag.stageIndex + 1}`, {
         type: 'setOperatorEnvelopePoint',
         operatorIndex: selectedOpIndex,
-        stageIndex: finalStage.stageIndex,
-        point: finalStage.point,
+        stageIndex: finalDrag.stageIndex,
+        point: finalDrag.point,
       });
     }
   };
+
+  const operatorTabs: readonly BlueX7TabItem<string>[] = useMemo(
+    () =>
+      Array.from({ length: 6 }, (_, i) => {
+        const isEnabled = operatorEnabled[i] ?? true;
+        return {
+          key: String(i),
+          label: `Op ${i + 1}`,
+          badge: !isEnabled ? <span className="text-role-callout text-gray-400 font-normal">(Muted)</span> : undefined,
+          ariaLabel: `Select Operator ${i + 1}${!isEnabled ? ' (Muted)' : ''}`,
+          testId: `operator-tab-${i + 1}`,
+        };
+      }),
+    [operatorEnabled],
+  );
 
   return (
     <div className="rounded border border-blue-border bg-blue-surface/40 p-3 space-y-3" data-testid="bluex7-operator-panel">
       {/* Operator Tabs Header */}
       <div className="flex flex-col gap-2 border-b border-blue-border pb-2 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-role-headline font-bold text-gray-200 uppercase tracking-wider">Operators</span>
-        <div className="flex min-w-0 flex-wrap gap-1" role="tablist" aria-label="Operator Selector">
-          {Array.from({ length: 6 }, (_, i) => {
-            const isSelected = selectedOpIndex === i;
-            const isEnabled = operatorEnabled[i] ?? true;
-            return (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                aria-label={`Select Operator ${i + 1}`}
-                onClick={() => {
-                  cancelEnvelopeGesture();
-                  setSelectedOpIndex(i);
-                  onVisibleOperatorChange?.(i);
-                }}
-                className={`rounded px-3 py-1 text-role-body font-medium transition-colors ${
-                  isSelected
-                    ? 'bg-blue-accent text-white font-semibold'
-                    : 'bg-blue-bg text-gray-300 border border-blue-border hover:bg-blue-surface'
-                }`}
-              >
-                Op {i + 1} {!isEnabled && '(Muted)'}
-              </button>
-            );
-          })}
-        </div>
+        <BlueX7TabList
+          instanceId={instanceId}
+          ariaLabel="Operator Selector"
+          tabs={operatorTabs}
+          activeTab={String(selectedOpIndex)}
+          onSelectTab={(key) => {
+            const idx = parseInt(key, 10);
+            cancelEnvelopeGesture();
+            setSelectedOpIndex(idx);
+            onVisibleOperatorChange?.(idx);
+          }}
+        />
       </div>
 
       {/* Operator Parameters Grid */}
-      <div className="space-y-3">
+      <div
+        id={`${instanceId}-panel-${selectedOpIndex}`}
+        role="tabpanel"
+        aria-labelledby={`${instanceId}-tab-${selectedOpIndex}`}
+        className="space-y-3"
+        data-testid="bluex7-operator-workstation"
+      >
         {/* Frequency & Mode */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="flex flex-col gap-1">
@@ -293,7 +331,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 onChange={handleSyncToggle}
                 className="rounded border-blue-border"
               />
-              Sync <NextNoteBadge semanticKey="common.oscillatorKeySync" />
+              Sync
             </label>
           </div>
         </div>
@@ -466,19 +504,14 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
 
         {/* Graphical Envelope Editor */}
         <EnvelopeEditor
-          envelope={
-            (gestureStage
-              ? currentOp.envelope.map((pt, i) =>
-                  i === gestureStage.stageIndex ? gestureStage.point : pt,
-                )
-              : currentOp.envelope) as typeof currentOp.envelope
-          }
+          envelope={currentLocalEnvelope}
           title={`Operator ${selectedOpIndex + 1} Envelope`}
+          active={active}
+          cancelKey={selectedOpIndex}
           onChangeStage={handleStagePointChange}
-          onGestureStart={() => {
-            gestureActiveRef.current = true;
-          }}
+          onGestureStart={handleGestureStart}
           onGestureCommit={handleGestureCommit}
+          onGestureCancel={cancelEnvelopeGesture}
         />
 
         {/* 4-Stage Envelope Numeric Editor */}
@@ -488,7 +521,13 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
           </span>
           <div className="grid grid-cols-4 gap-3">
             {[0, 1, 2, 3].map((stage) => {
-              const pt = currentOp.envelope[stage] ?? { rate: 0, level: 0 };
+              const pt = currentLocalEnvelope[stage] ?? { rate: 0, level: 0 };
+              const displayRate = gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
+                ? pt.rate
+                : effectiveOperator(`envelope.${stage + 1}.rate`, pt.rate);
+              const displayLevel = gestureActiveRef.current && activeDragRef.current?.stageIndex === stage
+                ? pt.level
+                : effectiveOperator(`envelope.${stage + 1}.level`, pt.level);
               return (
                 <div key={stage} className="flex flex-col gap-1 rounded border border-blue-border/30 p-2 bg-blue-surface/20">
                   <span className="text-role-callout font-medium text-gray-400">Stage {stage + 1}</span>
@@ -503,7 +542,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         type="number"
                         min={domainOf(`envelope.${stage + 1}.rate`).min}
                         max={domainOf(`envelope.${stage + 1}.rate`).max}
-                        value={effectiveOperator(`envelope.${stage + 1}.rate`, pt.rate)}
+                        value={displayRate}
                         onChange={handleEnvelopePointChange(stage, 'rate', domainOf(`envelope.${stage + 1}.rate`))}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />
@@ -518,7 +557,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                         type="number"
                         min={domainOf(`envelope.${stage + 1}.level`).min}
                         max={domainOf(`envelope.${stage + 1}.level`).max}
-                        value={effectiveOperator(`envelope.${stage + 1}.level`, pt.level)}
+                        value={displayLevel}
                         onChange={handleEnvelopePointChange(stage, 'level', domainOf(`envelope.${stage + 1}.level`))}
                         className="w-full rounded border border-blue-border bg-blue-bg px-1 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
                       />

@@ -345,10 +345,17 @@ export async function requestBlueX7EffectiveValues(
     return { ok: false, reason: 'channel-unavailable' };
   }
 
+  if (
+    result.values.length !== channelNames.length
+    || result.values.some((value) => !Number.isFinite(value))
+  ) {
+    return { ok: false, reason: 'channel-unavailable' };
+  }
+
   // The response order is the request order; reattach parameter ids.
   const values = request.parameterIds.map((parameterId, index) => ({
     parameterId,
-    value: result.values[index] ?? 0,
+    value: result.values[index],
   }));
 
   return {

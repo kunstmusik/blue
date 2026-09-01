@@ -49,10 +49,17 @@ function requestIdentity(
   projectSessionId: number | null,
 ): string {
   if (!target || projectSessionId === null) return 'none';
+  const owner = target.assignmentId !== undefined
+    ? `arrangement:${target.assignmentId}`
+    : `track:${target.track.rootGroupId}:${target.track.trackId}`;
+  return `${projectSessionId}:${owner}`;
+}
+
+function ownerIdentity(target: BlueX7RuntimeTarget): string {
   if (target.assignmentId !== undefined) {
-    return `${projectSessionId}:arrangement:${target.assignmentId}`;
+    return `arrangement:${target.assignmentId}`;
   }
-  return `${projectSessionId}:track:${target.track.rootGroupId}:${target.track.trackId}`;
+  return `track:${target.track.rootGroupId}:${target.track.trackId}`;
 }
 
 export function useBlueX7EffectiveValues(
@@ -68,49 +75,83 @@ export function useBlueX7EffectiveValues(
     onObservationResult,
   } = options;
   const [state, setState] = useState<BlueX7EffectiveValuesState>(EMPTY_STATE);
-  const inFlightRef = useRef(false);
+  const inFlightGenerationRef = useRef<number | null>(null);
+  const currentGenerationRef = useRef(0);
   const onObservationStartRef = useRef(onObservationStart);
   const onObservationResultRef = useRef(onObservationResult);
   onObservationStartRef.current = onObservationStart;
   onObservationResultRef.current = onObservationResult;
   const identityRef = useRef(requestIdentity(target, projectSessionId));
   identityRef.current = requestIdentity(target, projectSessionId);
-  const parameterIdsRef = useRef(parameterIds);
-  parameterIdsRef.current = parameterIds;
+
+  const parameterSignature = parameterIds.join(',');
 
   useEffect(() => {
     if (!enabled || !target || projectSessionId === null || parameterIds.length === 0) {
-      inFlightRef.current = false;
+      inFlightGenerationRef.current = null;
       setState(EMPTY_STATE);
       return;
     }
 
+    const generation = ++currentGenerationRef.current;
+    inFlightGenerationRef.current = null;
     setState(EMPTY_STATE);
     onObservationStartRef.current?.();
 
     let disposed = false;
     let observedResult = false;
+    const requestParameterIds = [...parameterIds];
+    const activeParameterIds = new Set(requestParameterIds);
+    const expectedOwnerIdentity = ownerIdentity(target);
     const intervalMs = Math.max(5, Math.round(1000 / Math.max(1, pollHz)));
 
     const poll = async (): Promise<void> => {
-      if (disposed || inFlightRef.current) return;
-      inFlightRef.current = true;
+      if (
+        disposed
+        || inFlightGenerationRef.current !== null
+        || generation !== currentGenerationRef.current
+      ) return;
+      inFlightGenerationRef.current = generation;
       try {
         const result: BlueX7EffectiveValuesResult = await window.blueAPI.getBlueX7EffectiveValues({
           target,
           projectSessionId,
-          parameterIds: [...parameterIdsRef.current],
+          parameterIds: requestParameterIds,
         });
-        if (disposed) return;
+        if (disposed || generation !== currentGenerationRef.current) return;
         // Late-response rejection: accept only while the session and owner
         // still match this open editor.
         if (identityRef.current !== requestIdentity(target, projectSessionId)) return;
         if (!result.ok) {
-          setState((previous) => ({
-            values: previous.values,
+          setState({
+            values: new Map(),
             unavailable: true,
-            engineSequence: previous.engineSequence,
-          }));
+            engineSequence: 0,
+          });
+          return;
+        }
+        const seenParameterIds = new Set<string>();
+        const hasInvalidValue = result.values.some((entry) => {
+          if (
+            !activeParameterIds.has(entry.parameterId)
+            || seenParameterIds.has(entry.parameterId)
+            || !Number.isFinite(entry.value)
+          ) {
+            return true;
+          }
+          seenParameterIds.add(entry.parameterId);
+          return false;
+        });
+        if (
+          result.projectSessionId !== projectSessionId
+          || result.ownerIdentity !== expectedOwnerIdentity
+          || hasInvalidValue
+        ) {
+          setState({
+            values: new Map(),
+            unavailable: true,
+            engineSequence: 0,
+          });
           return;
         }
         if (!observedResult) {
@@ -123,11 +164,13 @@ export function useBlueX7EffectiveValues(
           engineSequence: result.engineSequence,
         });
       } catch {
-        if (!disposed) {
+        if (!disposed && generation === currentGenerationRef.current) {
           setState((previous) => ({ ...previous, unavailable: true }));
         }
       } finally {
-        inFlightRef.current = false;
+        if (inFlightGenerationRef.current === generation) {
+          inFlightGenerationRef.current = null;
+        }
       }
     };
 
@@ -136,9 +179,11 @@ export function useBlueX7EffectiveValues(
     return () => {
       disposed = true;
       window.clearInterval(timer);
-      inFlightRef.current = false;
+      if (inFlightGenerationRef.current === generation) {
+        inFlightGenerationRef.current = null;
+      }
     };
-  }, [enabled, target, projectSessionId, parameterIds.length, pollHz]);
+  }, [enabled, target, projectSessionId, parameterSignature, pollHz]);
 
   return state;
 }

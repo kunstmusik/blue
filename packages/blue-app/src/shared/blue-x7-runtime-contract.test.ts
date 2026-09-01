@@ -83,6 +83,14 @@ describe('BlueX7 effective-values request contract', () => {
 
   it('accepts bounded visible-control requests', () => {
     expect(isBlueX7EffectiveValuesRequest(base)).toBe(true);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, target: assignmentTarget })).toBe(true);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: 0 })).toBe(true);
+    expect(
+      isBlueX7EffectiveValuesRequest({
+        ...base,
+        parameterIds: ['single-param'],
+      }),
+    ).toBe(true);
     expect(
       isBlueX7EffectiveValuesRequest({
         ...base,
@@ -100,8 +108,20 @@ describe('BlueX7 effective-values request contract', () => {
       }),
     ).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, parameterIds: ['ok', ''] })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, parameterIds: ['ok', null as unknown as string] })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, parameterIds: ['ok', 123 as unknown as string] })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, parameterIds: null as unknown as string[] })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, parameterIds: 'param-1' as unknown as string[] })).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, target: {} })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, target: { assignmentId: '' } })).toBe(false);
     expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: -3 })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: 1.5 })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: Number.NaN })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: Number.POSITIVE_INFINITY })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest({ ...base, projectSessionId: '1' as unknown as number })).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest(null)).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest(undefined)).toBe(false);
+    expect(isBlueX7EffectiveValuesRequest('request')).toBe(false);
   });
 });
 

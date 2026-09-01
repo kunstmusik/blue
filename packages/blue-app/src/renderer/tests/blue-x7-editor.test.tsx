@@ -383,6 +383,81 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
   });
 
+  it('resynchronizes every keep-mounted panel from the canonical SysEx replacement', async () => {
+    const importedVoice = decodeSingleVoice(singleSysExBytes).voice;
+    const differentValue = (value: number): number => (value === 0 ? 1 : 0);
+    const initialVoice = createDefaultBlueX7Voice();
+    initialVoice.common.feedback = differentValue(importedVoice.common.feedback);
+    initialVoice.operators[0].freqCoarse = differentValue(importedVoice.operators[0].freqCoarse);
+    initialVoice.pitchEnvelope[0] = {
+      rate: differentValue(importedVoice.pitchEnvelope[0].rate),
+      level: differentValue(importedVoice.pitchEnvelope[0].level),
+    };
+    initialVoice.csoundPostCode = importedVoice.csoundPostCode === 'old code' ? 'new code' : 'old code';
+    const { instrument } = renderEditor({ voice: initialVoice });
+    const onImportSysEx = vi.fn().mockResolvedValue({
+      status: 'selected',
+      fileName: 'single-voice.syx',
+      bytes: selectedFile(singleSysExBytes),
+    });
+
+    function ControlledEditor(): React.ReactElement {
+      const [snapshot, setSnapshot] = React.useState(instrument);
+      const handlePatch = (patch: InstrumentPatch): void => {
+        onInstrumentPatch(patch);
+        if (patch.blueX7?.type === 'replaceVoice') {
+          setSnapshot((previous) => ({ ...previous, voice: patch.blueX7!.voice }));
+        }
+      };
+
+      return (
+        <BlueX7EditorComponent
+          instrument={snapshot}
+          onInstrumentPatch={handlePatch}
+          onImportSysEx={onImportSysEx}
+        />
+      );
+    }
+
+    await act(async () => {
+      root?.render(<ControlledEditor />);
+      await Promise.resolve();
+    });
+
+    const importBtn = container?.querySelector('button[aria-label="Import DX7 SysEx File"]') as HTMLButtonElement;
+    await act(async () => {
+      clickElement(importBtn);
+    });
+    const confirmBtn = container?.querySelector('button[aria-label="Confirm SysEx Import"]') as HTMLButtonElement;
+    act(() => {
+      clickElement(confirmBtn);
+    });
+
+    expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
+    expect(lastPatch?.blueX7).toEqual({ type: 'replaceVoice', voice: importedVoice });
+    expect((container?.querySelector('input[aria-label="Feedback"]') as HTMLInputElement).value)
+      .toBe(String(importedVoice.common.feedback));
+    expect((container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement).value)
+      .toBe(String(importedVoice.operators[0].freqCoarse));
+    expect((container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value)
+      .toBe(String(importedVoice.pitchEnvelope[0].rate));
+    expect((container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement).value)
+      .toBe(importedVoice.csoundPostCode);
+
+    for (const testId of [
+      'tab-operators',
+      'tab-pitch',
+      'tab-csound',
+      'tab-global',
+    ]) {
+      const tab = container?.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
+      act(() => {
+        clickElement(tab);
+      });
+    }
+    expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
+  });
+
   it('dispatches zero patches when single-voice import is canceled', async () => {
     const onImportSysEx = vi.fn().mockResolvedValue({
       status: 'selected',
@@ -685,5 +760,441 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
     // FR-017: a failed import must leave the selected instrument unchanged
     expect(onInstrumentPatch).not.toHaveBeenCalled();
+  });
+
+  describe('User Story 1 — Top-Level Tabbed Navigation', () => {
+    it('defaults to Voice & Global view on mount with header controls visible', () => {
+      const { instrument } = renderEditor();
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      // Header controls visible
+      expect(container?.querySelector('input[aria-label="Instrument Name"]')).not.toBeNull();
+      expect(container?.querySelector('input[aria-label="Instrument Enabled"]')).not.toBeNull();
+      expect(container?.querySelector('button[aria-label="Undo BlueX7 edit"]')).not.toBeNull();
+
+      // Top-level tabs present
+      const tablist = container?.querySelector('[role="tablist"][aria-label="Instrument Sections"]');
+      expect(tablist).not.toBeNull();
+
+      const globalTab = container?.querySelector('[role="tab"][data-testid="tab-global"]');
+      expect(globalTab?.getAttribute('aria-selected')).toBe('true');
+
+      // Global panel is visible
+      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      expect(globalPanel).not.toBeNull();
+      expect(globalPanel.style.visibility).toBe('visible');
+      expect(globalPanel.getAttribute('aria-hidden')).toBe('false');
+
+      // Other panels are hidden
+      const operatorsPanel = container?.querySelector('[data-testid="bluex7-panel-operators"]') as HTMLElement;
+      const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
+      const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+
+      expect(operatorsPanel.style.visibility).toBe('hidden');
+      expect(operatorsPanel.getAttribute('aria-hidden')).toBe('true');
+      expect(pitchPanel.style.visibility).toBe('hidden');
+      expect(pitchPanel.getAttribute('aria-hidden')).toBe('true');
+      expect(csoundPanel.style.visibility).toBe('hidden');
+      expect(csoundPanel.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('switches panels without emitting an instrument or orchestra patch', () => {
+      const { instrument } = renderEditor();
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+            onOrchestraPatch={onOrchestraPatch}
+          />,
+        );
+      });
+
+      onInstrumentPatch.mockClear();
+      onOrchestraPatch.mockClear();
+
+      // Switch to Operators tab
+      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      expect(operatorsTab.getAttribute('aria-selected')).toBe('true');
+      const operatorsPanel = container?.querySelector('[data-testid="bluex7-panel-operators"]') as HTMLElement;
+      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+
+      expect(operatorsPanel.style.visibility).toBe('visible');
+      expect(operatorsPanel.getAttribute('aria-hidden')).toBe('false');
+      expect(globalPanel.style.visibility).toBe('hidden');
+      expect(globalPanel.getAttribute('aria-hidden')).toBe('true');
+
+      // No patches emitted
+      expect(onInstrumentPatch).not.toHaveBeenCalled();
+      expect(onOrchestraPatch).not.toHaveBeenCalled();
+
+      // Switch to Pitch Envelope tab
+      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(pitchTab);
+      });
+      const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
+      expect(pitchPanel.style.visibility).toBe('visible');
+      expect(operatorsPanel.style.visibility).toBe('hidden');
+      expect(onInstrumentPatch).not.toHaveBeenCalled();
+
+      // Switch to Csound tab
+      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(csoundTab);
+      });
+      const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
+      expect(csoundPanel.style.visibility).toBe('visible');
+      expect(pitchPanel.style.visibility).toBe('hidden');
+      expect(onInstrumentPatch).not.toHaveBeenCalled();
+
+      // Header remains visible
+      expect(container?.querySelector('input[aria-label="Instrument Name"]')).not.toBeNull();
+    });
+
+    it('resets to Voice & Global on fresh mount', () => {
+      const { instrument } = renderEditor();
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      // Switch to Csound
+      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(csoundTab);
+      });
+      expect(csoundTab.getAttribute('aria-selected')).toBe('true');
+
+      // Unmount and remount
+      act(() => {
+        root?.unmount();
+      });
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      root = createRoot(container);
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      const globalTab = container?.querySelector('[role="tab"][data-testid="tab-global"]');
+      expect(globalTab?.getAttribute('aria-selected')).toBe('true');
+      const globalPanel = container?.querySelector('[data-testid="bluex7-panel-global"]') as HTMLElement;
+      expect(globalPanel.style.visibility).toBe('visible');
+    });
+  });
+
+  describe('User Story 2 — Focused Operator Workstation with Sub-Tabs', () => {
+    it('defaults to Op 1 in Operators tab and shows muted indicator for disabled operators', () => {
+      const voice = createDefaultBlueX7Voice();
+      voice.common.operatorEnabled = [true, false, true, false, true, false];
+      const { instrument } = renderEditor({ voice });
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      // Switch to Operators tab
+      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      // Op 1 is selected
+      const op1Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-1"]');
+      expect(op1Tab?.getAttribute('aria-selected')).toBe('true');
+
+      // Op 2 has (Muted)
+      const op2Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-2"]');
+      expect(op2Tab?.textContent).toContain('(Muted)');
+      expect(op1Tab?.textContent).not.toContain('(Muted)');
+    });
+
+    it('switches operator sub-tabs without emitting a patch and targets patches to selected operator', () => {
+      const { instrument } = renderEditor();
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      // Switch to Operators tab
+      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      onInstrumentPatch.mockClear();
+
+      // Switch to Op 3
+      const op3Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-3"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(op3Tab);
+      });
+
+      // No patch emitted on tab switch
+      expect(onInstrumentPatch).not.toHaveBeenCalled();
+      expect(op3Tab.getAttribute('aria-selected')).toBe('true');
+
+      // Edit Coarse tune on Op 3
+      const coarseInput = container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement;
+      expect(coarseInput).not.toBeNull();
+      act(() => {
+        setInputValue(coarseInput, '5');
+      });
+
+      expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
+      expect(lastPatch?.blueX7).toMatchObject({
+        type: 'setOperatorField',
+        operatorIndex: 2, // 0-indexed for Op 3
+        field: 'freqCoarse',
+        value: 5,
+      });
+    });
+
+    it('preserves selected operator sub-tab across top-level tab switches', () => {
+      const { instrument } = renderEditor();
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+          />,
+        );
+      });
+
+      // Switch to Operators tab
+      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      // Select Op 4
+      const op4Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-4"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(op4Tab);
+      });
+      expect(op4Tab.getAttribute('aria-selected')).toBe('true');
+
+      // Switch to Pitch Envelope
+      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(pitchTab);
+      });
+
+      // Switch back to Operators
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      // Op 4 is still selected
+      const op4TabAfter = container?.querySelector('[role="tab"][data-testid="operator-tab-4"]');
+      expect(op4TabAfter?.getAttribute('aria-selected')).toBe('true');
+    });
+  });
+
+  describe('User Story 4 — Realtime & Effective-Value Scope Synchronization', () => {
+    it('renders live Pitch Envelope values without dispatching a durable patch', async () => {
+      const getBlueX7EffectiveValues = vi.fn().mockResolvedValue({
+        ok: true,
+        projectSessionId: 10,
+        ownerIdentity: 'arrangement:x7-1',
+        engineSequence: 1,
+        values: [
+          { parameterId: 'pitch-rate-1', value: 77 },
+          { parameterId: 'pitch-level-1', value: 88 },
+        ],
+      });
+      (window as unknown as { blueAPI: unknown }).blueAPI = { getBlueX7EffectiveValues };
+      const { instrument } = renderEditor({
+        parameters: [
+          {
+            parameterId: 'pitch-rate-1',
+            semanticKey: 'pitchEnvelope.1.rate',
+            fixedValue: 0,
+            automationEnabled: true,
+          },
+          {
+            parameterId: 'pitch-level-1',
+            semanticKey: 'pitchEnvelope.1.level',
+            fixedValue: 0,
+            automationEnabled: true,
+          },
+        ],
+      });
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+            effectiveValues={{
+              target: { assignmentId: 'x7-1' },
+              projectSessionId: 10,
+              enabled: true,
+            }}
+          />,
+        );
+      });
+
+      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      await act(async () => {
+        clickElement(pitchTab);
+        await Promise.resolve();
+      });
+
+      expect(getBlueX7EffectiveValues).toHaveBeenCalledWith({
+        target: { assignmentId: 'x7-1' },
+        projectSessionId: 10,
+        parameterIds: ['pitch-rate-1', 'pitch-level-1'],
+      });
+      expect((container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value).toBe('77');
+      expect((container?.querySelector('input[aria-label="Pitch Level 1"]') as HTMLInputElement).value).toBe('88');
+      expect(onInstrumentPatch).not.toHaveBeenCalled();
+    });
+
+    it('partitions requested parameter IDs per active tab and suppresses Csound requests', async () => {
+      const getBlueX7EffectiveValues = vi.fn().mockResolvedValue({
+        ok: true,
+        projectSessionId: 10,
+        ownerIdentity: 'arrangement:x7-1',
+        engineSequence: 1,
+        values: [],
+      });
+      (window as unknown as { blueAPI: unknown }).blueAPI = { getBlueX7EffectiveValues };
+
+      const voice = createDefaultBlueX7Voice();
+      const allParameters = Array.from({ length: 151 }, (_, i) => ({
+        parameterId: `param-${i + 1}`,
+        semanticKey: (i === 0 ? 'common.algorithm' : i === 1 ? 'common.feedback' : `key-${i}`),
+        fixedValue: 0,
+        automationEnabled: true,
+      }));
+      // Map all 151 catalog descriptors to parameters
+      const descriptors = (await import('@blue/data')).BLUE_X7_PARAMETER_DESCRIPTORS;
+      const instrumentParams = descriptors.map((d, i) => ({
+        parameterId: `id-${d.key}`,
+        semanticKey: d.key,
+        fixedValue: 0,
+        automationEnabled: true,
+      }));
+
+      const instrument: BlueX7InstrumentSnapshot = {
+        assignmentId: 'x7-1',
+        type: 'blueX7',
+        name: 'Live BlueX7',
+        enabled: true,
+        comment: '',
+        voice,
+        parameters: instrumentParams,
+      };
+
+      act(() => {
+        root?.render(
+          <BlueX7EditorComponent
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+            effectiveValues={{
+              target: { assignmentId: 'x7-1' },
+              projectSessionId: 10,
+              enabled: true,
+            }}
+          />,
+        );
+      });
+
+      // 1. In Global view (default): 17 parameters requested
+      expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+      const globalCalls = getBlueX7EffectiveValues.mock.calls[0][0];
+      expect(globalCalls.parameterIds).toHaveLength(17);
+      expect(globalCalls.parameterIds).toContain('id-common.algorithm');
+      expect(globalCalls.parameterIds).toContain('id-lfo.speed');
+      expect(globalCalls.parameterIds).toContain('id-operator.1.enabled');
+
+      getBlueX7EffectiveValues.mockClear();
+
+      // 2. Switch to Operators tab (Op 1 by default): 24 parameters requested
+      const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(operatorsTab);
+      });
+
+      expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+      const op1Calls = getBlueX7EffectiveValues.mock.calls[0][0];
+      expect(op1Calls.parameterIds).toHaveLength(24);
+      expect(op1Calls.parameterIds).toContain('id-operator.1.frequencyCoarse');
+      expect(op1Calls.parameterIds).toContain('id-common.oscillatorKeySync');
+      expect(op1Calls.parameterIds).toContain('id-lfo.pitchModulationSensitivity');
+
+      getBlueX7EffectiveValues.mockClear();
+
+      // 3. Switch to Op 2: 24 parameters requested (Op 2 group)
+      const op2Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-2"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(op2Tab);
+      });
+
+      expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+      const op2Calls = getBlueX7EffectiveValues.mock.calls[0][0];
+      expect(op2Calls.parameterIds).toHaveLength(24);
+      expect(op2Calls.parameterIds).toContain('id-operator.2.frequencyCoarse');
+
+      getBlueX7EffectiveValues.mockClear();
+
+      // 4. Switch to Pitch Envelope tab: 8 parameters requested
+      const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(pitchTab);
+      });
+
+      expect(getBlueX7EffectiveValues).toHaveBeenCalledTimes(1);
+      const pitchCalls = getBlueX7EffectiveValues.mock.calls[0][0];
+      expect(pitchCalls.parameterIds).toHaveLength(8);
+      expect(pitchCalls.parameterIds).toContain('id-pitchEnvelope.1.rate');
+
+      getBlueX7EffectiveValues.mockClear();
+
+      // 5. Switch to Csound tab: 0 parameters -> request suppressed
+      const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+      act(() => {
+        clickElement(csoundTab);
+      });
+
+      expect(getBlueX7EffectiveValues).not.toHaveBeenCalled();
+    });
   });
 });

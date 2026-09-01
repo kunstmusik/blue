@@ -241,6 +241,13 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     };
 
     renderEditor(instrument);
+
+    // Switch to Csound & Code tab
+    const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
+    act(() => {
+      clickElement(csoundTab);
+    });
+
     const postCodeArea = container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement;
     act(() => {
       setInputValue(postCodeArea, 'outs aout, aout');
@@ -248,6 +255,59 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
 
     expect((container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
     expect((container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('preserves undo/redo history across top-level and nested operator tab transitions', () => {
+    const voice = createDefaultBlueX7Voice();
+    const instrument: BlueX7InstrumentSnapshot = {
+      assignmentId: 'x7-1',
+      type: 'blueX7',
+      name: 'Default X7',
+      enabled: true,
+      comment: '',
+      voice,
+    };
+
+    renderEditor(instrument);
+
+    // Make an edit in Voice & Global
+    const feedbackInput = container?.querySelector('#bluex7-feedback') as HTMLInputElement;
+    act(() => {
+      setInputValue(feedbackInput, '3');
+    });
+
+    const undoBtn = container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement;
+    expect(undoBtn.disabled).toBe(false);
+
+    // Switch to Operators tab -> Op 3
+    const operatorsTab = container?.querySelector('[role="tab"][data-testid="tab-operators"]') as HTMLButtonElement;
+    act(() => {
+      clickElement(operatorsTab);
+    });
+    const op3Tab = container?.querySelector('[role="tab"][data-testid="operator-tab-3"]') as HTMLButtonElement;
+    act(() => {
+      clickElement(op3Tab);
+    });
+
+    // Undo is still available and active
+    expect(undoBtn.disabled).toBe(false);
+
+    // Switch to Pitch Envelope tab
+    const pitchTab = container?.querySelector('[role="tab"][data-testid="tab-pitch"]') as HTMLButtonElement;
+    act(() => {
+      clickElement(pitchTab);
+    });
+    expect(undoBtn.disabled).toBe(false);
+
+    // Undo the Voice & Global edit from the Pitch Envelope tab
+    act(() => {
+      clickElement(undoBtn);
+    });
+
+    // Redo is now available
+    const redoBtn = container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement;
+    expect(redoBtn.disabled).toBe(false);
+    expect(undoBtn.disabled).toBe(true);
   });
 
   it('records a SysEx import as a single undo step that restores the prior voice', async () => {
