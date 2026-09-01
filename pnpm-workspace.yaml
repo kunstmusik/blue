@@ -8,3 +8,7 @@ allowBuilds:
   zeromq: true
   '@electron/rebuild': true
   electron-winstaller: true
+packageExtensions:
+  'vite-plugin-electron@0.29.1':
+    peerDependencies:
+      vite: '^7.3.2'

@@ -28,21 +28,5 @@
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@electron/rebuild",
-      "electron",
-      "electron-winstaller",
-      "esbuild",
-      "zeromq"
-    ],
-    "packageExtensions": {
-      "vite-plugin-electron@0.29.1": {
-        "peerDependencies": {
-          "vite": "^7.3.2"
-        }
-      }
-    }
   }
 }
