@@ -65,7 +65,7 @@
 
 ### Verification Task
 
-- [ ] T014 [US2] Run User Story 2 verification: `pnpm --filter @blue/data test`, `pnpm --filter @blue/app test`, and `pnpm --filter @blue/app build:main`
+- [X] T014 [US2] Run User Story 2 verification: `pnpm --filter @blue/data test`, `pnpm --filter @blue/app test`, and `pnpm --filter @blue/app build:main`
 
 **Checkpoint**: Core utilities aligned with modern platform standards and dead floating math removed.
 
@@ -78,7 +78,7 @@
 
 ### Implementation Tasks (Commit-Sized Units)
 
-- [ ] T015 [US3] Retire Spec 093 editor-open diagnostic tracking harness: delete `packages/blue-app/src/main/editor-open-diagnostics.ts` and `packages/blue-app/src/main/track-editor-diagnostic-attempts.ts`, removing diagnostic hooks from `packages/blue-app/src/main/main.ts` and editor window managers
+- [X] T015 [US3] Retire Spec 093 editor-open diagnostic tracking harness: delete `packages/blue-app/src/main/editor-open-diagnostics.ts` and `packages/blue-app/src/main/track-editor-diagnostic-attempts.ts`, removing diagnostic hooks from `packages/blue-app/src/main/main.ts` and editor window managers
 - [ ] T016 [US3] Flatten domain IPC registration in `packages/blue-app/src/main/ipc/main-process-domain-ipc.ts` to register handlers directly via `ipcMain.handle()` in their domain modules, eliminating `MAIN_PROCESS_DOMAIN_IPC_ORDER` slicing
 
 ### Verification Task

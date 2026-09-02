@@ -12,13 +12,8 @@ import {
   attachWindowStateHandlers,
   restoreWindowState,
 } from './window-state-manager';
-import type {
-  DiagnosticCondition,
-  EditorMilestoneName,
-} from '../shared/track-instrument-editor-contract';
 
 export type EffectEditorMode = 'interface' | 'edit';
-export type EffectInterfaceDiagnosticLoadMode = 'isolated' | 'legacy';
 
 interface EffectEditorKey {
   mode: EffectEditorMode;
@@ -39,9 +34,6 @@ function getWindowKey(request: EffectEditorRequest, mode: EffectEditorMode): str
 function buildEffectEditorUrl(
   request: EffectEditorRequest,
   mode: EffectEditorMode,
-  diagnosticsEnabled = false,
-  diagnosticCondition?: DiagnosticCondition,
-  effectInterfaceLoadMode?: EffectInterfaceDiagnosticLoadMode,
 ): string {
   const params = new URLSearchParams({
     ownerType: request.ownerType,
@@ -57,13 +49,6 @@ function buildEffectEditorUrl(
 
   if (request.libraryRef) {
     params.set('libraryEffectId', request.libraryRef.libraryEffectId);
-  }
-  if (diagnosticsEnabled) params.set('editorOpenDiagnostics', '1');
-  if (diagnosticsEnabled && diagnosticCondition) {
-    params.set('editorOpenDiagnosticCondition', diagnosticCondition);
-  }
-  if (diagnosticsEnabled && mode === 'interface' && effectInterfaceLoadMode) {
-    params.set('effectInterfaceLoad', effectInterfaceLoadMode);
   }
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -84,10 +69,6 @@ export interface EffectEditorWindowOptions {
    * before the effect editor/interface renderer becomes visible (SPEC 061).
    */
   initialZoomFactor?: number;
-  onLifecycle?: (milestone: EditorMilestoneName, errorCode?: string) => void;
-  diagnosticsEnabled?: boolean;
-  diagnosticCondition?: DiagnosticCondition;
-  effectInterfaceLoadMode?: EffectInterfaceDiagnosticLoadMode;
 }
 
 function finishOpeningEffectWindow(
@@ -96,57 +77,21 @@ function finishOpeningEffectWindow(
   request: EffectEditorRequest,
   mode: EffectEditorMode,
   disposeStateHandlers: (() => void) | null,
-  options: EffectEditorWindowOptions,
 ): void {
   effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
 
   effectWindow.once('ready-to-show', () => {
-    options.onLifecycle?.('ready-to-show');
     if (!effectWindow.isDestroyed()) effectWindow.show();
-    if (!effectWindow.isDestroyed()) options.onLifecycle?.('shown');
-  });
-
-  let closed = false;
-  let failureReported = false;
-  const reportFailure = (errorCode: string): void => {
-    if (closed || failureReported) return;
-    failureReported = true;
-    options.onLifecycle?.('failed', errorCode);
-    if (!effectWindow.isDestroyed()) effectWindow.close();
-  };
-
-  effectWindow.webContents.once('did-finish-load', () => {
-    if (!closed) options.onLifecycle?.('renderer-mounted');
-  });
-  effectWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-    if (errorCode === -3) return;
-    reportFailure(`${errorCode}:${errorDescription || 'navigation failed'}`);
   });
 
   effectWindow.on('closed', () => {
-    closed = true;
     disposeStateHandlers?.();
     if (effectEditorWindows.get(key)?.window === effectWindow) {
       effectEditorWindows.delete(key);
     }
-    options.onLifecycle?.('closed');
   });
 
-  options.onLifecycle?.('window-constructed');
-  options.onLifecycle?.('navigation-started');
-  try {
-    void Promise.resolve(effectWindow.loadURL(buildEffectEditorUrl(
-      request,
-      mode,
-      options.diagnosticsEnabled,
-      options.diagnosticCondition,
-      options.effectInterfaceLoadMode,
-    ))).catch((error: unknown) => {
-      reportFailure(error instanceof Error ? error.message : String(error));
-    });
-  } catch (error: unknown) {
-    reportFailure(error instanceof Error ? error.message : String(error));
-  }
+  void effectWindow.loadURL(buildEffectEditorUrl(request, mode));
 }
 
 export function openEffectInterfaceWindow(
@@ -204,7 +149,6 @@ export function openEffectInterfaceWindow(
     request,
     'interface',
     disposeStateHandlers,
-    options,
   );
   return effectWindow;
 }
@@ -257,7 +201,6 @@ export function openEffectEditorWindow(
     request,
     'edit',
     disposeStateHandlers,
-    options,
   );
   return effectWindow;
 }

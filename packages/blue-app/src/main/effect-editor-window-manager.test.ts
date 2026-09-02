@@ -147,9 +147,8 @@ describe('effect editor window manager', () => {
     expect(electronMock.instances).toHaveLength(1);
   });
 
-  it('reports effect-interface lifecycle milestones and authorizes only its renderer', () => {
+  it('opens an effect interface window and authorizes only its renderer', () => {
     const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
-    const events: string[] = [];
     const request = {
       ownerType: 'project' as const,
       effectId: 'effect-diagnostic',
@@ -160,27 +159,10 @@ describe('effect editor window manager', () => {
       },
     };
 
-    openEffectInterfaceWindow(mainWindow, request, 460, 560, {
-      diagnosticsEnabled: true,
-      diagnosticCondition: 'effect-interface',
-      effectInterfaceLoadMode: 'legacy',
-      onLifecycle: (milestone) => events.push(milestone),
-    });
+    openEffectInterfaceWindow(mainWindow, request, 460, 560);
     const effectWindow = electronMock.instances[0]!;
-    effectWindow.triggerWebContents('did-finish-load');
     effectWindow.triggerReadyToShow();
 
-    expect(events).toEqual([
-      'window-constructed',
-      'navigation-started',
-      'renderer-mounted',
-      'ready-to-show',
-      'shown',
-    ]);
-    expect(String(effectWindow.loadURL.mock.calls[0]?.[0]))
-      .toContain('editorOpenDiagnosticCondition=effect-interface');
-    expect(String(effectWindow.loadURL.mock.calls[0]?.[0]))
-      .toContain('effectInterfaceLoad=legacy');
     expect(effectWindow.options.modal).toBe(false);
     expect(effectWindow.options.backgroundColor).toBe('#1a1a2e');
     expect(isEffectEditorWebContents(

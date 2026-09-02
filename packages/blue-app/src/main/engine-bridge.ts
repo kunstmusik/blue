@@ -19,10 +19,6 @@ import { broadcastToWorkbenchWindows } from './workbench-window-host';
 import type { EngineRuntimeService } from './engine-runtime';
 import type { EngineProbeErrorCode } from '../shared/engine-runtime';
 import type { EngineRecoveryFailureCategory } from '../shared/engine-recovery';
-import type {
-  EditorOpenEngineStateSampler,
-  EngineStateSample,
-} from './editor-open-diagnostics';
 import type { EngineControlTrafficObservation } from '../shared/track-instrument-editor-contract';
 import {
   hasEngineFeature,
@@ -189,24 +185,6 @@ export interface EngineBridgeDependencies {
   createSession?: (request: EngineSessionCreationRequest) => EngineSession;
   /** Selects isolated TCP endpoint pairs. Injectable for tests. */
   allocateEndpoints?: (options: EndpointAllocationOptions) => Promise<TcpEndpointPair>;
-}
-
-export function createEngineStateSamplingAdapter(
-  getClient: () => Pick<EngineClient, 'getEngineState'> | null,
-): EditorOpenEngineStateSampler {
-  return {
-    async sampleEngineState(): Promise<EngineStateSample | null> {
-      const client = getClient();
-      if (!client) return null;
-      const response = await client.getEngineState();
-      if (!response.ok || !response.state) return null;
-      return {
-        sampleFrame: response.state.sampleFrames,
-        sampleRate: response.state.sampleRate,
-        ksmps: response.state.ksmps,
-      };
-    },
-  };
 }
 
 export class EngineBridge {
@@ -1301,10 +1279,6 @@ export class EngineBridge {
 
   getClient(): EngineClient | null {
     return this.activeSession?.getClient() ?? null;
-  }
-
-  createEditorOpenStateSampler(): EditorOpenEngineStateSampler {
-    return createEngineStateSamplingAdapter(() => this.getClient());
   }
 
   getActiveSession(): EngineSession | null {

@@ -124,38 +124,6 @@ describe('Track instrument editor window manager', () => {
     );
   });
 
-  it('reports cold-open milestones in order and marks diagnostic URLs', () => {
-    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
-    const events: string[] = [];
-    const request = {
-      track: {
-        rootGroupId: 'group-1',
-        trackId: 'track-1',
-        projectSessionId: 3,
-        projectRevision: 4,
-      },
-    };
-
-    openTrackInstrumentEditorWindow(mainWindow, request, {
-      diagnosticsEnabled: true,
-      onLifecycle: (milestone) => events.push(milestone),
-    });
-    const editorWindow = electronMock.instances[0]!;
-
-    editorWindow.emitWebContents('did-finish-load');
-    editorWindow.emit('ready-to-show');
-
-    expect(events).toEqual([
-      'window-constructed',
-      'navigation-started',
-      'renderer-mounted',
-      'ready-to-show',
-      'shown',
-    ]);
-    expect(String(editorWindow.loadURL.mock.calls[0]?.[0]))
-      .toContain('editorOpenDiagnostics=1');
-  });
-
   it('closes every editor attached to a removed Track group', () => {
     const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
     const fence = { projectSessionId: 3, projectRevision: 4 };

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EngineStateSnapshot } from '@blue/engine-client';
-import { createEngineStateSamplingAdapter, EngineBridge } from './engine-bridge';
+import { EngineBridge } from './engine-bridge';
 import type { EngineRuntimeService } from './engine-runtime';
 import { EngineSession, type EngineSessionCreationRequest } from './engine-session';
 import { FakeChildProcess, FakeEngineClient, FakeProcessRegistry } from './engine-session.test-support';
@@ -21,41 +21,6 @@ function windowStub() {
 
 describe('EngineBridge runtime selection and lifecycle', () => {
   beforeEach(() => showErrorBox.mockClear());
-
-  it('adapts the existing engine-state request into a bounded diagnostic sample', async () => {
-    const getEngineState = vi.fn(async () => ({
-      ok: true,
-      state: {
-        state: 'running' as const,
-        stopReason: 'none' as const,
-        engineCreated: true,
-        running: true,
-        sampleFrames: 96000,
-        sampleRate: 48000,
-        ksmps: 32,
-        sequence: 7,
-        lastError: '',
-      },
-      message: '',
-    }));
-    const sampler = createEngineStateSamplingAdapter(() => ({ getEngineState }));
-
-    await expect(sampler.sampleEngineState()).resolves.toEqual({
-      sampleFrame: 96000,
-      sampleRate: 48000,
-      ksmps: 32,
-    });
-    expect(getEngineState).toHaveBeenCalledOnce();
-  });
-
-  it('omits diagnostic samples when the engine is absent or returns no state', async () => {
-    const absentSampler = createEngineStateSamplingAdapter(() => null);
-    await expect(absentSampler.sampleEngineState()).resolves.toBeNull();
-
-    const getEngineState = vi.fn(async () => ({ ok: false, message: 'not running' }));
-    const unavailableSampler = createEngineStateSamplingAdapter(() => ({ getEngineState }));
-    await expect(unavailableSampler.sampleEngineState()).resolves.toBeNull();
-  });
 
   it('counts channel control commands and entries without sampling the engine', async () => {
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
