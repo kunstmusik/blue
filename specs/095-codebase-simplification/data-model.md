@@ -18,7 +18,7 @@ The core score model is retained in full, while legacy Java GUI listeners, empty
 * **`LayerGroupListener`** & **`LayerGroupDataEvent`** (`src/score/layers/`): Java Swing mutation event classes. Removed completely.
 * **`AutomatableCollectionListener`** (`src/automation/`): Unused mutation listener interface. Removed completely.
 * **`ScoreObjectLayerGroup`**, **`ScoreObjectLayer`**, **`AutomatableLayerGroup`**: Empty marker interfaces extending `LayerGroup` / `Layer`. Removed in favor of direct base types.
-* **`DeepCopyableLG`**: Java generic collision workaround. Method `deepCopyLG()` is renamed/aliased to standard `deepCopy()`.
+* **`DeepCopyableLG`**: Java generic collision workaround. Removed with `deepCopyLG()` in favor of standard `DeepCopyable<T>` and `deepCopy()`.
 
 ---
 
@@ -59,8 +59,8 @@ The core score model is retained in full, while legacy Java GUI listeners, empty
   * Updated: Standard ES2022 `Error` constructor options:
     ```typescript
     export class SoundObjectException extends Error {
-      constructor(message: string, options?: ErrorOptions) {
-        super(message, options);
+      constructor(message: string, cause?: unknown) {
+        super(message, cause !== undefined ? { cause } : undefined);
         this.name = 'SoundObjectException';
       }
     }

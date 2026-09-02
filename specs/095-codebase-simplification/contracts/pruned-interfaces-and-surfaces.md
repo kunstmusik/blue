@@ -32,7 +32,7 @@ The following dead symbols are removed from `packages/blue-data/src/index.ts`:
 * **Signature**:
   ```typescript
   export class SoundObjectException extends Error {
-    constructor(message: string, options?: ErrorOptions);
+    constructor(message: string, cause?: unknown);
   }
   ```
 * **Contract**: Standard `Error` subclass with `this.name = 'SoundObjectException'` and optional standard `cause`.

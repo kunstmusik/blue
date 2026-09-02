@@ -2,6 +2,8 @@
 
 **Branch**: `095-codebase-simplification` | **Date**: 2026-09-02 | **Spec**: [spec.md](./spec.md)
 
+**Status**: Complete | **Closed**: 2026-09-02
+
 **Input**: Feature specification from `specs/095-codebase-simplification/spec.md`
 
 ## Summary

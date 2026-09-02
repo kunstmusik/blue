@@ -2,7 +2,7 @@
  * PolyObject — a SoundObject that contains nested SoundLayers with SoundObjects.
  * Mirrors the Java PolyObject class.
  *
- * PolyObject is both a SoundObject (note generator) AND a ScoreObjectLayerGroup.
+ * PolyObject is both a SoundObject (note generator) and a LayerGroup<SoundLayer>.
  * It was the default/only score type before 2.3.0. After 2.3.0, Score became
  * the top-level container, but PolyObject is still used as a nested container.
  */
