@@ -3,10 +3,7 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import type { IpcMain } from 'electron';
 import { APPLICATION_IPC_CHANNELS } from './application-ipc';
-import {
-  MAIN_PROCESS_DOMAIN_IPC_ORDER,
-  registerMainProcessDomainIpc,
-} from './main-process-domain-ipc';
+import { registerMainProcessDomainIpc } from './main-process-domain-ipc';
 import { PLAYBACK_RUNTIME_IPC_CHANNELS } from './playback-runtime-ipc';
 import { PROJECT_ARTIFACTS_IPC_CHANNELS } from './project-artifacts-ipc';
 import { PROJECT_DOCUMENT_IPC_CHANNELS } from './project-document-ipc';
@@ -122,9 +119,17 @@ function createCodeRepositoryService(): CodeRepositoryService {
   } as unknown as CodeRepositoryService;
 }
 
+const DOMAIN_CHANNELS = [
+  ...PROJECT_LIFECYCLE_IPC_CHANNELS,
+  ...PLAYBACK_RUNTIME_IPC_CHANNELS,
+  ...PROJECT_ARTIFACTS_IPC_CHANNELS,
+  ...APPLICATION_IPC_CHANNELS,
+  ...PROJECT_DOCUMENT_IPC_CHANNELS,
+] as const;
+
 function expectedProcessWideRegistrations(collected: ReturnType<typeof collectedDomainHandlers>): string[] {
   return [
-    ...MAIN_PROCESS_DOMAIN_IPC_ORDER.map((channel) => (
+    ...DOMAIN_CHANNELS.map((channel) => (
       collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`
     )),
     ...WORKBENCH_WINDOW_IPC_CHANNELS.map((channel, index) => (
@@ -190,7 +195,7 @@ function collectedDomainHandlers(): {
 } {
   const listeners = new Map<string, IpcMainEventListener>();
   const handlers = new Map<string, IpcMainInvokeHandler>();
-  for (const channel of MAIN_PROCESS_DOMAIN_IPC_ORDER) {
+  for (const channel of DOMAIN_CHANNELS) {
     if (
       channel === 'sync-audition-score-object-availability'
       || channel === 'sync-follow-playback-state'
@@ -250,7 +255,7 @@ describe('main-process IPC inventory oracle', () => {
     const collected = collectedDomainHandlers();
     const dispose = registerMainProcessDomainIpc({ ipcMain, ...collected });
 
-    expect(ipcMain.registrations).toEqual(MAIN_PROCESS_DOMAIN_IPC_ORDER.map((channel) => (
+    expect(ipcMain.registrations).toEqual(DOMAIN_CHANNELS.map((channel) => (
       collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`
     )));
     expect(ipcMain.handlers.size).toBe(113);
@@ -290,13 +295,7 @@ describe('main-process IPC inventory oracle', () => {
       0,
     ) + collectedListeners.length;
     const existing = [...unified, ...code, ...workbench, ...midi];
-    const domainChannels = [
-      ...PROJECT_LIFECYCLE_IPC_CHANNELS,
-      ...PROJECT_ARTIFACTS_IPC_CHANNELS,
-      ...PLAYBACK_RUNTIME_IPC_CHANNELS,
-      ...PROJECT_DOCUMENT_IPC_CHANNELS,
-      ...APPLICATION_IPC_CHANNELS,
-    ];
+    const domainChannels = DOMAIN_CHANNELS;
 
     expect(directMain).toHaveLength(0);
     expect(collected).toHaveLength(114);
