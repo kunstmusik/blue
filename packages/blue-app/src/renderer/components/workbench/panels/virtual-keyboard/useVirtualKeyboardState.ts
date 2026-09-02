@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { clamp } from '@blue/data';
 
 export type VirtualKeyboardPressSource = 'mouse' | 'computer';
 
@@ -25,12 +26,12 @@ export interface VirtualKeyboardState {
   clearPressedNotes: () => void;
 }
 
-function clamp(value: number, minimum: number, maximum: number): number {
+function clampMidiValue(value: number, minimum: number, maximum: number): number {
   if (!Number.isFinite(value)) {
     return minimum;
   }
 
-  return Math.min(maximum, Math.max(minimum, Math.trunc(value)));
+  return clamp(Math.trunc(value), minimum, maximum);
 }
 
 export function useVirtualKeyboardState(): VirtualKeyboardState {
@@ -54,19 +55,19 @@ export function useVirtualKeyboardState(): VirtualKeyboardState {
   };
 
   const setChannel = (nextChannel: number) => {
-    setChannelState(clamp(nextChannel, 0, 15));
+    setChannelState(clampMidiValue(nextChannel, 0, 15));
   };
 
   const setOctave = (nextOctave: number) => {
-    setOctaveState(clamp(nextOctave, 0, 7));
+    setOctaveState(clampMidiValue(nextOctave, 0, 7));
   };
 
   const setVelocity = (nextVelocity: number) => {
-    setVelocityState(clamp(nextVelocity, 0, 127));
+    setVelocityState(clampMidiValue(nextVelocity, 0, 127));
   };
 
   const pressNote = (midiNote: number, source: VirtualKeyboardPressSource) => {
-    const note = clamp(midiNote, 0, 127);
+    const note = clampMidiValue(midiNote, 0, 127);
     const existing = pressedNotesMapRef.current.get(note);
     if (existing?.has(source)) {
       return false;
@@ -80,7 +81,7 @@ export function useVirtualKeyboardState(): VirtualKeyboardState {
   };
 
   const releaseNote = (midiNote: number, source: VirtualKeyboardPressSource) => {
-    const note = clamp(midiNote, 0, 127);
+    const note = clampMidiValue(midiNote, 0, 127);
     const existing = pressedNotesMapRef.current.get(note);
     if (!existing?.has(source)) {
       return false;
@@ -100,7 +101,7 @@ export function useVirtualKeyboardState(): VirtualKeyboardState {
   };
 
   const hasPressedNote = (midiNote: number, source?: VirtualKeyboardPressSource) => {
-    const note = clamp(midiNote, 0, 127);
+    const note = clampMidiValue(midiNote, 0, 127);
     const existing = pressedNotesMapRef.current.get(note);
     if (!existing) {
       return false;

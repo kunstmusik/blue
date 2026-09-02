@@ -8,6 +8,7 @@
  */
 import { Element } from '../serialization/xml-reader';
 import { BlueDataObject } from '../blue-data-object';
+import { clamp } from '../utilities/math-utils';
 import { generatePrefixedUuid } from '../utilities/uuid';
 import {
   JavaDecimal,
@@ -47,10 +48,6 @@ export function defaultResolutionDecimal(): JavaDecimal {
     throw new Error('default resolution failed to parse');
   }
   return parsed.value;
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function rescale(

@@ -446,6 +446,7 @@ export { ProjectUpgrader_2_1_10 } from './migration/upgrades/upgrade-2.1.10';
 export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 
 // ─── Utilities ───
+export { clamp } from './utilities/math-utils';
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
 export { writeInt, readInt, writeDouble, readDouble, writeBoolean, readBoolean } from './utilities/xml';
 export { applyNoteProcessorChain, setScoreStart, getNotes, getTotalDuration } from './utilities/score';

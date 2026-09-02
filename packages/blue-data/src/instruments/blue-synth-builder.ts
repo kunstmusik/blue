@@ -13,6 +13,7 @@ import { BSBGraphicInterface, GridSettingsData } from "./blue-synth-builder/bsb-
 import { BSBGroup } from "./blue-synth-builder/bsb-group";
 import { BSBWidget } from "./blue-synth-builder/bsb-widget";
 import { Parameter, AutomationCurve } from "../automation/parameter";
+import { clamp } from '../utilities/math-utils';
 import { JavaDecimal, parseJavaDecimal, snapToResolutionJava } from '../automation/java-decimal';
 import { BSBCheckBox } from "./blue-synth-builder/bsb-check-box";
 import { BSBHSlider } from "./blue-synth-builder/bsb-hslider";
@@ -84,10 +85,6 @@ function parseRequiredDecimal(text: string): JavaDecimal {
   const result = parseJavaDecimal(text);
   if (!result.ok) throw new Error(`${result.code}: ${result.message}`);
   return result.value;
-}
-
-function clampToRange(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function rescaleValue(
@@ -998,7 +995,7 @@ export class BlueSynthBuilder extends Instrument {
       return false;
     }
 
-    const clamped = Math.max(widget.minimum, Math.min(widget.maximum, value));
+    const clamped = clamp(value, widget.minimum, widget.maximum);
     widget.sliders[sliderIndex].setValue(clamped);
 
     if (widget.objectName) {

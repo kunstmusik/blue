@@ -6,6 +6,7 @@
 import { Element, Elements } from '../serialization/xml-reader';
 import { writeBoolean, writeDouble, writeInt, readBoolean, readDouble, readInt } from '../utilities/xml';
 import { formatBlueNumber } from '../utilities/number-format';
+import { clamp } from '../utilities/math-utils';
 import { NoteList } from './note-list';
 import { Note } from './note';
 
@@ -22,10 +23,6 @@ function shortClassName(type: string | null | undefined): string {
 function roundTo(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 function rescale(value: number, oldMin: number, oldMax: number, newMin: number, newMax: number): number {

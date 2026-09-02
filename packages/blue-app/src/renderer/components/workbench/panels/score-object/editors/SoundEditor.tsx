@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { parseJavaDecimal } from '@blue/data';
+import { clamp, parseJavaDecimal } from '@blue/data';
 import type {
   InstrumentPatch,
   SoundEditorPayload,
@@ -217,10 +217,6 @@ interface AutomationLineView {
   rightBound: boolean;
   endPointsLinked: boolean;
   points: Array<{ x: number; y: number }>;
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
 }
 
 function ensureAutomationPoints(parameter: SoundAutomationParameterSnapshot): Array<{ x: number; y: number }> | undefined {

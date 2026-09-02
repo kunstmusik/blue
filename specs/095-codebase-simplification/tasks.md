@@ -59,7 +59,7 @@
 
 - [X] T009 [P] [US2] Modernize UUID generator to delegate directly to `crypto.randomUUID()` in `packages/blue-data/src/utilities/uuid.ts` and update tests in `packages/blue-data/src/utilities/uuid.test.ts`
 - [X] T010 [P] [US2] Update `SoundObjectException` to extend standard `Error` with `{ cause }` options in `packages/blue-data/src/sound-objects/sound-object-exception.ts`
-- [ ] T011 [P] [US2] Consolidate duplicated `clamp()` implementations into `packages/blue-data/src/utilities/math-utils.ts` and update callers across packages
+- [X] T011 [P] [US2] Consolidate duplicated `clamp()` implementations into `packages/blue-data/src/utilities/math-utils.ts` and update callers across packages
 - [ ] T012 [US2] Migrate `RuntimeDeviceField.tsx` in `packages/blue-app/src/renderer/components/settings/RuntimeDeviceField.tsx` to `useHostSurface`, remove uncalled `computeColorPickerPosition` in `packages/blue-app/src/renderer/components/color-picker-utils.ts`, and delete `packages/blue-app/src/renderer/components/floating-position-utils.ts`
 - [ ] T013 [US2] Inline single-caller `createMainExternalExecutor` into `packages/blue-app/src/main/external-executor.ts` and delete `packages/blue-app/src/main/external-command-executor.ts`
 

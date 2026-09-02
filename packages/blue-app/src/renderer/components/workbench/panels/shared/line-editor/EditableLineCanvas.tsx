@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clamp } from '@blue/data';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
@@ -147,10 +148,6 @@ export function lineMaximum(line: EditableLineLike): number {
 function lineRange(line: EditableLineLike): number {
   const range = lineMaximum(line) - lineMinimum(line);
   return range === 0 ? 1 : range;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }
 
 function darkenColor(color: string, ratio = 0.7): string {
