@@ -83,7 +83,7 @@
 
 ### Verification Task
 
-- [ ] T017 [US3] Run User Story 3 verification: `pnpm --filter @blue/app build:main` and `pnpm --filter @blue/app test`
+- [X] T017 [US3] Run User Story 3 verification: `pnpm --filter @blue/app build:main` and `pnpm --filter @blue/app test`
 
 **Checkpoint**: Main process codebase simplified with zero diagnostic baggage and direct IPC registration.
 
@@ -93,8 +93,8 @@
 
 **Purpose**: End-to-end repository validation and whitespace checks before handoff.
 
-- [ ] T018 Run full repository verification suite: `pnpm test`, `pnpm lint`, and `git diff --check`
-- [ ] T019 Complete quickstart validation scenarios defined in `specs/095-codebase-simplification/quickstart.md`
+- [X] T018 Run full repository verification suite: `pnpm test`, `pnpm lint`, and `git diff --check`
+- [X] T019 Complete quickstart validation scenarios defined in `specs/095-codebase-simplification/quickstart.md`
 
 ---
 
@@ -143,3 +143,12 @@ T001 (Baseline) ─> T002 (Fixtures)
 
 - In **Phase 3 (US1)**: `T003` (`CopyBuffer`), `T004` (`Providers`), `T006` (`Marker Interfaces`), and `T007` (`Helper Stubs`) touch completely distinct files and can be executed in parallel or as independent single commits.
 - In **Phase 4 (US2)**: `T009` (`uuid.ts`), `T010` (`sound-object-exception.ts`), and `T011` (`math-utils.ts`) are completely independent utility edits.
+
+---
+
+## Phase 7: Convergence
+
+- [X] T020 Remove the hand-rolled UUID fallback from `packages/blue-data/src/utilities/uuid.ts`, delegate directly to `crypto.randomUUID()`, and update `packages/blue-data/src/utilities/uuid.test.ts` per FR-003 / SC-002 (partial)
+- [ ] T021 Remove the backward-compatible `deepCopyLG()` alias from `packages/blue-data/src/score/layers/layer-group.ts`, `packages/blue-data/src/score/track/track-layer-group.ts`, `packages/blue-data/src/score/patterns/patterns-layer-group.ts`, and `packages/blue-data/src/sound-objects/poly-object.ts`, migrating affected tests and callers to `deepCopy()` per plan: `DeepCopyable<T>` standardization (partial)
+- [ ] T022 Remove the remaining Spec 093 editor-open diagnostic path from renderer pages, preload and shared contracts, main-process registrations, and associated tests per US3/AC1 / SC-003 (partial)
+- [ ] T023 Eliminate `MAIN_PROCESS_DOMAIN_IPC_ORDER` and the centralized ordering loop, registering each domain's handlers and listeners directly while preserving IPC contracts and rollback behavior per FR-005 / SC-003 (contradicts)
