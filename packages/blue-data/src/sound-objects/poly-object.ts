@@ -8,8 +8,7 @@
  */
 import { SoundObject } from './sound-object';
 import { SoundLayer } from './sound-layer';
-import { ScoreObjectLayerGroup } from '../score/layers/score-object-layer-group';
-import { AutomatableLayerGroup } from '../score/layers/automatable-layer-group';
+import { LayerGroup } from '../score/layers/layer-group';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
 import { TimePosition } from '../time/time-position';
@@ -61,7 +60,7 @@ function resolveOnLoadTarget(sObj: SoundObject): OnLoadTarget | null {
 
 
 export class PolyObject extends Array<SoundLayer>
-  implements SoundObject, ScoreObjectLayerGroup<SoundLayer>, AutomatableLayerGroup {
+  implements SoundObject, LayerGroup<SoundLayer> {
 
   // ScoreObject properties
   protected _name = 'polyObject';
@@ -524,7 +523,7 @@ export class PolyObject extends Array<SoundLayer>
     return pObj;
   }
 
-  deepCopy(): SoundObject {
+  deepCopy(): PolyObject {
     const copy = new PolyObject(false);
     copy._name = this._name;
     copy._startTime = this._startTime;
@@ -540,6 +539,6 @@ export class PolyObject extends Array<SoundLayer>
   }
 
   deepCopyLG(): PolyObject {
-    return this.deepCopy() as PolyObject;
+    return this.deepCopy();
   }
 }

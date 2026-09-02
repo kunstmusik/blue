@@ -36,7 +36,7 @@ export class Score extends Array<LayerGroup<Layer>> {
       this.timeState = new TimeState(other.timeState);
       this.npc = new NoteProcessorChain(other.npc);
       for (const layerGroup of other) {
-        this.push(layerGroup.deepCopyLG() as LayerGroup<Layer>);
+        this.push(layerGroup.deepCopy() as LayerGroup<Layer>);
       }
       this.timeContext.setSmpteFrameRate(this.timeState.getSmpteFrameRate());
     } else if (!other) {

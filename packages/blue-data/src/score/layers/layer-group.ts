@@ -6,7 +6,7 @@
  * a list of LayerGroups, which can be of different types (audio, patterns, poly).
  */
 import { Layer } from './layer';
-import { DeepCopyableLG } from './deep-copyable-lg';
+import { DeepCopyable } from '../../deep-copyable';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
@@ -16,7 +16,7 @@ import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
 import type { ScoreGenerationOptionsOrSolo } from '../score-generation-options';
 
-export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<LayerGroup<T>> {
+export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyable<LayerGroup<T>> {
   /** Get the name of this layer group. */
   getName(): string;
   /** Set the name of this layer group. */
@@ -61,4 +61,10 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<La
 
   /** Called when a project has been loaded and allows initialization. */
   onLoadComplete(context: TimeContext): void;
+
+  /** Produce a deep copy of this layer group. */
+  deepCopy(): LayerGroup<T>;
+
+  /** Backward-compatible alias for deepCopy. */
+  deepCopyLG?(): LayerGroup<T>;
 }

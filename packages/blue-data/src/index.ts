@@ -201,11 +201,7 @@ export { ScoreGenerationException } from './score/score-generation-exception';
 export type { Layer } from './score/layers/layer';
 export { LAYER_HEIGHT } from './score/layers/layer';
 export type { LayerGroup } from './score/layers/layer-group';
-export type { ScoreObjectLayer } from './score/layers/score-object-layer';
-export type { ScoreObjectLayerGroup } from './score/layers/score-object-layer-group';
 export type { AutomatableLayer } from './score/layers/automatable-layer';
-export type { AutomatableLayerGroup } from './score/layers/automatable-layer-group';
-export type { DeepCopyableLG } from './score/layers/deep-copyable-lg';
 
 // ─── Audio Score Layers ───
 export { AudioClip } from './score/audio/audio-clip';

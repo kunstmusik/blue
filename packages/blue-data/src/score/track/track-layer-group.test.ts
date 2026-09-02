@@ -29,7 +29,8 @@ describe('TrackLayerGroup', () => {
     expect(group.map((track) => track.getUniqueId())).toEqual(['first', 'second']);
     expect(first.getHeightIndex()).toBe(2);
 
-    const copy = group.deepCopyLG();
+    const copy = group.deepCopy();
+    expect(group.deepCopyLG().getUniqueId()).toBe('group-a');
     expect(copy).not.toBe(group);
     expect(copy.getUniqueId()).toBe('group-a');
     expect(copy.map((track) => track.getUniqueId())).toEqual(['first', 'second']);

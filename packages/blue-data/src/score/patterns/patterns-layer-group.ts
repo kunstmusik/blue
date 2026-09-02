@@ -160,8 +160,12 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     // No-op for pattern layers
   }
 
-  deepCopyLG(): PatternsLayerGroup {
+  deepCopy(): PatternsLayerGroup {
     return new PatternsLayerGroup(this);
+  }
+
+  deepCopyLG(): PatternsLayerGroup {
+    return this.deepCopy();
   }
 
   /** Get the maximum pattern index across all layers. */

@@ -315,7 +315,8 @@ describe('PatternsLayerGroup', () => {
     const layer = group.newLayerAt(0);
     layer.getPatternData().setPattern(1, true);
 
-    const copy = group.deepCopyLG();
+    const copy = group.deepCopy();
+    expect(group.deepCopyLG().getName()).toBe('Original');
     expect(copy.getName()).toBe('Original');
     expect(copy.getPatternBeatsLength()).toBe(8);
     expect(copy.length).toBe(1);

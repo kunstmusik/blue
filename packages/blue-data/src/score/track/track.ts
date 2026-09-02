@@ -7,7 +7,6 @@ import { NoteList } from '../../sound-objects/note-list';
 import type { SoundObject } from '../../sound-objects/sound-object';
 import { AudioClip } from '../audio/audio-clip';
 import { ScoreObject } from '../score-object';
-import { ScoreObjectLayer } from '../layers/score-object-layer';
 import { AutomatableLayer } from '../layers/automatable-layer';
 import { LAYER_HEIGHT } from '../layers/layer';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
@@ -73,7 +72,7 @@ function remapCopiedInstrumentParameterIds(
   return remapped;
 }
 
-export class Track extends Array<TrackItem> implements ScoreObjectLayer<TrackItem>, AutomatableLayer {
+export class Track extends Array<TrackItem> implements AutomatableLayer {
   static readonly HEIGHT_MAX_INDEX = 9;
   static get [Symbol.species](): ArrayConstructor { return Array; }
 
