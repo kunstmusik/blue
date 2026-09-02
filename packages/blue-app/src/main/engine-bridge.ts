@@ -19,7 +19,13 @@ import { broadcastToWorkbenchWindows } from './workbench-window-host';
 import type { EngineRuntimeService } from './engine-runtime';
 import type { EngineProbeErrorCode } from '../shared/engine-runtime';
 import type { EngineRecoveryFailureCategory } from '../shared/engine-recovery';
-import type { EngineControlTrafficObservation } from '../shared/track-instrument-editor-contract';
+
+export interface EngineControlTrafficObservation {
+  readonly readCommands: number;
+  readonly readEntries: number;
+  readonly writeCommands: number;
+  readonly writeEntries: number;
+}
 import {
   hasEngineFeature,
   OWNER_LIVENESS_FEATURE,

@@ -79,11 +79,9 @@ import {
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
 import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
 import {
-  EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
   isEffectEditorRequest,
   isTrackInstrumentEditorPatchRequest,
   isTrackInstrumentEditorRequest,
-  TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
@@ -4653,10 +4651,6 @@ ipcRegistration.handle('open-track-instrument-editor', async (_event, request: T
     initialZoomFactor: appZoomController.getCurrentFactor(),
   });
 });
-
-ipcRegistration.handle(TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL, () => false);
-
-ipcRegistration.handle(EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL, () => false);
 
 ipcRegistration.handle('focus-track-instrument-editor', (_event, request: TrackInstrumentEditorRequest) => {
   if (!isTrackInstrumentEditorRequest(request)

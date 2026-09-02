@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
   type TrackInstrumentRuntimeStatus,
-  type TrackInstrumentEditorDiagnosticMilestoneRequest,
 } from '../shared/track-instrument-editor-contract';
 import type { TrackInstrumentEditorRequest } from '../shared/project-editor';
 
@@ -24,9 +22,6 @@ const electronMock = vi.hoisted(() => ({
 vi.mock('electron', () => electronMock);
 
 type RuntimeStatusBridge = {
-  reportTrackInstrumentEditorDiagnosticMilestone: (
-    request: TrackInstrumentEditorDiagnosticMilestoneRequest,
-  ) => Promise<boolean>;
   getTrackInstrumentRuntimeStatus: (
     request: TrackInstrumentEditorRequest,
   ) => Promise<TrackInstrumentRuntimeStatus | null>;
@@ -76,36 +71,6 @@ describe('Track editor runtime status preload surface', () => {
     electronMock.ipcRenderer.invoke.mockReset();
     electronMock.ipcRenderer.on.mockReset();
     electronMock.ipcRenderer.removeListener.mockReset();
-  });
-
-  it('validates and forwards diagnostic milestones while failing closed on IPC errors', async () => {
-    const bridge = await loadBridge();
-    const diagnosticRequest: TrackInstrumentEditorDiagnosticMilestoneRequest = {
-      request,
-      milestone: 'document-accepted',
-    };
-    electronMock.ipcRenderer.invoke.mockResolvedValueOnce(true);
-
-    await expect(
-      bridge.reportTrackInstrumentEditorDiagnosticMilestone(diagnosticRequest),
-    ).resolves.toBe(true);
-    expect(electronMock.ipcRenderer.invoke).toHaveBeenCalledWith(
-      TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
-      diagnosticRequest,
-    );
-
-    await expect(
-      bridge.reportTrackInstrumentEditorDiagnosticMilestone({
-        ...diagnosticRequest,
-        milestone: 'not-a-milestone',
-      } as never),
-    ).resolves.toBe(false);
-    expect(electronMock.ipcRenderer.invoke).toHaveBeenCalledTimes(1);
-
-    electronMock.ipcRenderer.invoke.mockRejectedValueOnce(new Error('host closed'));
-    await expect(
-      bridge.reportTrackInstrumentEditorDiagnosticMilestone(diagnosticRequest),
-    ).resolves.toBe(false);
   });
 
   it('validates query responses while forwarding the request', async () => {

@@ -35,17 +35,11 @@ import type {
   BlueX7EffectiveValuesResult,
 } from '../shared/project-editor/contract';
 import {
-  EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
-  isEffectEditorDiagnosticMilestoneRequest,
   isTrackInstrumentRuntimeStatus,
-  isTrackInstrumentEditorDiagnosticMilestoneRequest,
-  TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_SUBSCRIBE_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_UNSUBSCRIBE_CHANNEL,
-  type EffectEditorDiagnosticMilestoneRequest,
-  type TrackInstrumentEditorDiagnosticMilestoneRequest,
   type TrackInstrumentRuntimeStatus,
 } from '../shared/track-instrument-editor-contract';
 import type {
@@ -576,34 +570,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('open-effect-editor', request) as Promise<void>,
   openEffectInterface: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('open-effect-interface', request) as Promise<void>,
-  reportEffectEditorDiagnosticMilestone: async (
-    request: EffectEditorDiagnosticMilestoneRequest,
-  ): Promise<boolean> => {
-    if (!isEffectEditorDiagnosticMilestoneRequest(request)) return false;
-    try {
-      return (await ipcRenderer.invoke(
-        EFFECT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
-        request,
-      )) === true;
-    } catch {
-      return false;
-    }
-  },
   openTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('open-track-instrument-editor', request) as Promise<void>,
-  reportTrackInstrumentEditorDiagnosticMilestone: async (
-    request: TrackInstrumentEditorDiagnosticMilestoneRequest,
-  ): Promise<boolean> => {
-    if (!isTrackInstrumentEditorDiagnosticMilestoneRequest(request)) return false;
-    try {
-      return (await ipcRenderer.invoke(
-        TRACK_INSTRUMENT_EDITOR_DIAGNOSTIC_MILESTONE_CHANNEL,
-        request,
-      )) === true;
-    } catch {
-      return false;
-    }
-  },
   focusTrackInstrumentEditor: (request: TrackInstrumentEditorRequest) =>
     ipcRenderer.invoke('focus-track-instrument-editor', request) as Promise<boolean>,
   getTrackInstrumentEditorDocument: (request: TrackInstrumentEditorRequest) =>

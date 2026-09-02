@@ -205,7 +205,7 @@ function collectedDomainHandlers(): {
 }
 
 describe('main-process IPC inventory oracle', () => {
-  it('executes the full 183-endpoint composition in startup order with exact teardown', async () => {
+  it('executes the full 181-endpoint composition in startup order with exact teardown', async () => {
     const ipcMain = new CapturingIpcMain();
     const collected = collectedDomainHandlers();
     const expected = expectedProcessWideRegistrations(collected);
@@ -213,9 +213,9 @@ describe('main-process IPC inventory oracle', () => {
 
     try {
       expect(ipcMain.registrations).toEqual(expected);
-      expect(ipcMain.registrations).toHaveLength(183);
-      expect(new Set(ipcMain.registrations).size).toBe(183);
-      expect(ipcMain.handlers.size).toBe(177);
+      expect(ipcMain.registrations).toHaveLength(181);
+      expect(new Set(ipcMain.registrations).size).toBe(181);
+      expect(ipcMain.handlers.size).toBe(175);
       expect(ipcMain.listeners.size).toBe(6);
 
       expect(ipcMain.handlers.get('open-file')?.({ sender: {} })).toEqual({
@@ -245,7 +245,7 @@ describe('main-process IPC inventory oracle', () => {
     expect(ipcMain.listeners.size).toBe(0);
   });
 
-  it('executes all 118 domain registrations in the documented baseline order and tears them down exactly', () => {
+  it('executes all 116 domain registrations in the documented baseline order and tears them down exactly', () => {
     const ipcMain = new CapturingIpcMain();
     const collected = collectedDomainHandlers();
     const dispose = registerMainProcessDomainIpc({ ipcMain, ...collected });
@@ -253,7 +253,7 @@ describe('main-process IPC inventory oracle', () => {
     expect(ipcMain.registrations).toEqual(MAIN_PROCESS_DOMAIN_IPC_ORDER.map((channel) => (
       collected.listeners.has(channel) ? `on:${channel}` : `handle:${channel}`
     )));
-    expect(ipcMain.handlers.size).toBe(115);
+    expect(ipcMain.handlers.size).toBe(113);
     expect(ipcMain.listeners.size).toBe(3);
 
     dispose();
@@ -275,7 +275,7 @@ describe('main-process IPC inventory oracle', () => {
     expect(ipcMain.listeners.size).toBe(0);
   });
 
-  it('captures the current 183 inbound endpoint surface and registration modes', async () => {
+  it('captures the current 181 inbound endpoint surface and registration modes', async () => {
     const directMain = await registrations('main.ts', 'ipcMain');
     const collected = await registrations('main.ts', 'ipcRegistration');
     const unified = await registrations('unified-library/ipc.ts', 'scope');
@@ -299,18 +299,18 @@ describe('main-process IPC inventory oracle', () => {
     ];
 
     expect(directMain).toHaveLength(0);
-    expect(collected).toHaveLength(116);
-    expect(collectedInvoke).toHaveLength(113);
+    expect(collected).toHaveLength(114);
+    expect(collectedInvoke).toHaveLength(111);
     expect(collectedListeners).toHaveLength(3);
-    expect(collectedExpandedCount).toBe(118);
-    expect(domainChannels).toHaveLength(118);
-    expect(new Set(domainChannels).size).toBe(118);
+    expect(collectedExpandedCount).toBe(116);
+    expect(domainChannels).toHaveLength(116);
+    expect(new Set(domainChannels).size).toBe(116);
     expect(unified).toHaveLength(44);
     expect(code).toHaveLength(11);
     expect(workbench).toHaveLength(5);
     expect(midi).toHaveLength(5);
     expect(existing).toHaveLength(65);
-    expect(domainChannels.length + existing.length).toBe(183);
+    expect(domainChannels.length + existing.length).toBe(181);
   });
 
   it('keeps registration expressions unique by mode and records listener identity sites', async () => {

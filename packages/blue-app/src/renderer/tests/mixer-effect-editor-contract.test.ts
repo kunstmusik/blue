@@ -20,7 +20,6 @@ declare global {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
-      reportEffectEditorDiagnosticMilestone: (request: unknown) => Promise<boolean>;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
       ) => () => void;
@@ -185,7 +184,6 @@ beforeEach(() => {
       return currentSnapshot;
     }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
-    reportEffectEditorDiagnosticMilestone: vi.fn().mockResolvedValue(true),
     onProjectDocumentUpdated: vi.fn(() => () => undefined),
   };
 });

@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  isDiagnosticRun,
-  isEffectEditorDiagnosticMilestoneRequest,
   isEffectEditorRequest,
-  isEditorMilestone,
-  isEngineControlTrafficObservation,
-  isEditorOpenAttempt,
-  isEditorTargetIdentity,
   isJsonSerializable,
   isNewerTrackInstrumentRuntimeStatus,
   isTrackInstrumentRuntimeStatus,
@@ -105,86 +99,7 @@ describe('Track instrument realtime control contract', () => {
   });
 });
 
-describe('Track instrument editor diagnostic contract', () => {
-  const target = {
-    kind: 'track-instrument' as const,
-    projectSessionId: '4',
-    layerGroupId: 'group-1',
-    trackId: 'track-1',
-    instrumentKind: 'blue-x7' as const,
-  };
-
-  const attempt = {
-    attemptId: 'attempt-1',
-    target,
-    classification: 'cold' as const,
-    appMode: 'development' as const,
-    startedMonotonicNs: '100',
-    milestones: [
-      { name: 'request-received' as const, monotonicNs: '100' },
-      { name: 'editor-usable' as const, monotonicNs: '200' },
-    ],
-    frameObservations: [],
-    audioObservation: { method: 'unavailable' as const, interruptionCount: 0 },
-    outcome: 'usable' as const,
-  };
-
-  const run = {
-    schemaVersion: 1 as const,
-    runId: 'run-1',
-    candidateId: 'baseline',
-    condition: 'editor-mount' as const,
-    environment: {
-      platform: 'darwin-arm64',
-      appBuild: 'test',
-      engineBuild: 'test',
-      device: 'test-device',
-      sampleRate: 48000,
-      ksmps: 32,
-      diagnosticsEnabled: true as const,
-    },
-    workload: {
-      fixtureId: 'fixture-1',
-      sampleRate: 48000,
-      ksmps: 32,
-      controlDurationSeconds: 60,
-      baselineInterruptionCount: 0,
-      headroomEvidence: { clean: true, cpuPercent: 40 },
-      outputMode: 'audible' as const,
-    },
-    attempts: [attempt],
-    disposition: 'incomplete' as const,
-  };
-
-  it('accepts complete targets, attempts, and runs', () => {
-    expect(isEditorTargetIdentity(target)).toBe(true);
-    expect(isEditorOpenAttempt(attempt)).toBe(true);
-    expect(isDiagnosticRun(run)).toBe(true);
-    expect(isJsonSerializable(run)).toBe(true);
-    expect(isEngineControlTrafficObservation({
-      readCommands: 1,
-      readEntries: 32,
-      writeCommands: 0,
-      writeEntries: 0,
-    })).toBe(true);
-  });
-
-  it('rejects malformed payloads and out-of-order milestones', () => {
-    expect(isEditorTargetIdentity({ ...target, projectSessionId: 4 })).toBe(false);
-    expect(isEditorMilestone({ name: 'unknown', monotonicNs: 1 })).toBe(false);
-    expect(isEditorOpenAttempt({
-      ...attempt,
-      milestones: [
-        { name: 'editor-usable', monotonicNs: 200 },
-        { name: 'request-received', monotonicNs: 100 },
-      ],
-    })).toBe(false);
-    expect(isDiagnosticRun({
-      ...run,
-      environment: { ...run.environment, diagnosticsEnabled: false },
-    })).toBe(false);
-  });
-
+describe('Track instrument runtime status contract', () => {
   it('accepts only newer runtime status sequences', () => {
     const current = { sequence: 4, playbackRunning: false, blueLiveRunning: false };
     expect(isTrackInstrumentRuntimeStatus(current)).toBe(true);
@@ -202,7 +117,7 @@ describe('Track instrument editor diagnostic contract', () => {
   });
 });
 
-describe('Effect editor diagnostic contract', () => {
+describe('Effect editor contract', () => {
   const projectRequest = {
     ownerType: 'project' as const,
     effectId: 'effect-1',
@@ -218,20 +133,10 @@ describe('Effect editor diagnostic contract', () => {
     })).toBe(true);
   });
 
-  it('rejects ambiguous identities and invalid diagnostic milestones', () => {
+  it('rejects ambiguous identities', () => {
     expect(isEffectEditorRequest({
       ...projectRequest,
       libraryRef: { libraryEffectId: 'effect-1' },
-    })).toBe(false);
-    expect(isEffectEditorDiagnosticMilestoneRequest({
-      request: projectRequest,
-      mode: 'interface',
-      milestone: 'editor-usable',
-    })).toBe(true);
-    expect(isEffectEditorDiagnosticMilestoneRequest({
-      request: projectRequest,
-      mode: 'preview',
-      milestone: 'editor-usable',
     })).toBe(false);
   });
 });

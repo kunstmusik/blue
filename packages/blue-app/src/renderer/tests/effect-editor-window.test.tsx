@@ -20,7 +20,6 @@ declare global {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
-      reportEffectEditorDiagnosticMilestone: (request: unknown) => Promise<boolean>;
       onProjectDocumentUpdated: (
         callback: (event: ProjectDocumentUpdatedEvent) => void,
       ) => () => void;
@@ -161,7 +160,6 @@ beforeEach(() => {
       return currentSnapshot;
     }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
-    reportEffectEditorDiagnosticMilestone: vi.fn().mockResolvedValue(true),
     onProjectDocumentUpdated: vi.fn((callback) => {
       projectDocumentUpdatedListener = callback;
       return () => {
@@ -183,7 +181,7 @@ describe('EffectEditorPage', () => {
     window.history.replaceState(
       {},
       '',
-      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1',
+      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface',
     );
     window.blueAPI.getEffectEditorDocument = vi.fn(() => new Promise(() => {}));
 
@@ -192,9 +190,6 @@ describe('EffectEditorPage', () => {
       await Promise.resolve();
     });
 
-    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'interface', milestone: 'editor-import-start' }),
-    );
     const loadingShell = container.querySelector('div');
     expect(loadingShell?.className).toContain('bg-app-bg');
     expect(loadingShell?.getAttribute('aria-hidden')).toBe('true');
@@ -430,11 +425,11 @@ describe('EffectEditorPage', () => {
     container.remove();
   });
 
-  it('loads the interface-only surface and reports its diagnostic milestones', async () => {
+  it('loads the interface-only surface', async () => {
     window.history.replaceState(
       {},
       '',
-      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1',
+      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface',
     );
     const { container, root } = renderPage();
 
@@ -444,34 +439,6 @@ describe('EffectEditorPage', () => {
 
     expect(container.querySelector('[data-testid="bsb-interface-editor"]')).toBeTruthy();
     expect(container.textContent).not.toContain('Code');
-    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'interface', milestone: 'document-accepted' }),
-    );
-    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'interface', milestone: 'editor-usable' }),
-    );
-
-    act(() => root.unmount());
-    container.remove();
-  });
-
-  it('can reproduce the legacy full dependency load while rendering only the interface', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/effect-editor.html?ownerType=library&effectId=fx-1&libraryEffectId=fx-1&mode=interface&editorOpenDiagnostics=1&effectInterfaceLoad=legacy',
-    );
-    const { container, root } = renderPage();
-
-    await act(async () => {
-      await flushFullEditorImport();
-    });
-
-    expect(container.querySelector('[data-testid="bsb-interface-editor"]')).toBeTruthy();
-    expect(container.textContent).not.toContain('Code');
-    expect(window.blueAPI.reportEffectEditorDiagnosticMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'interface', milestone: 'editor-import-end' }),
-    );
 
     act(() => root.unmount());
     container.remove();

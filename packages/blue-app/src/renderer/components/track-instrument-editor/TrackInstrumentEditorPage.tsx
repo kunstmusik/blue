@@ -9,9 +9,6 @@ import {
 } from '../../../shared/project-editor';
 import {
   isNewerTrackInstrumentRuntimeStatus,
-  isDiagnosticCondition,
-  type DiagnosticCondition,
-  type EditorMilestoneName,
   type TrackInstrumentRuntimeStatus,
 } from '../../../shared/track-instrument-editor-contract';
 import InstrumentEditorPanel from '../workbench/panels/orchestra/InstrumentEditorPanel';
@@ -57,16 +54,6 @@ function parseRequestFromLocation(): TrackInstrumentEditorRequest | null {
   };
 }
 
-function isEditorOpenDiagnosticsEnabled(): boolean {
-  return new URLSearchParams(window.location.search).get('editorOpenDiagnostics') === '1';
-}
-
-function parseDiagnosticCondition(): DiagnosticCondition | null {
-  const condition = new URLSearchParams(window.location.search)
-    .get('editorOpenDiagnosticCondition');
-  return isDiagnosticCondition(condition) ? condition : null;
-}
-
 function projectSnapshotToTrackInstrument(
   request: TrackInstrumentEditorRequest,
   event: Parameters<Parameters<typeof window.blueAPI.onProjectDocumentUpdated>[0]>[0],
@@ -93,17 +80,6 @@ function projectSnapshotToTrackInstrument(
 
 export default function TrackInstrumentEditorPage(): React.ReactElement {
   const parsedRequest = useMemo(parseRequestFromLocation, []);
-  const diagnosticsEnabled = useMemo(isEditorOpenDiagnosticsEnabled, []);
-  const diagnosticCondition = useMemo(parseDiagnosticCondition, []);
-  const shouldMountEditor = diagnosticCondition !== 'minimal-shell'
-    && diagnosticCondition !== 'shell-with-snapshot';
-  const shouldInitializeLibrary = diagnosticCondition === null
-    || diagnosticCondition === 'focus-existing'
-    || diagnosticCondition === 'library-init'
-    || diagnosticCondition === 'bluex7-readback';
-  const shouldObserveRuntime = diagnosticCondition === null
-    || diagnosticCondition === 'focus-existing'
-    || diagnosticCondition === 'bluex7-readback';
   const [snapshot, setSnapshot] = useState<TrackInstrumentEditorSnapshot | null>(null);
   const [editorUsable, setEditorUsable] = useState(false);
   const [runtimeStatus, setRuntimeStatus] = useState<TrackInstrumentRuntimeStatus>(INACTIVE_RUNTIME_STATUS);
@@ -115,43 +91,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   const drainingPatchesRef = useRef(false);
   const mountedRef = useRef(true);
   const editorIdentityRef = useRef<string | null>(null);
-  const documentAcceptedRef = useRef(false);
-  const liveObservationStartedRef = useRef(false);
-  const liveObservationResultRef = useRef(false);
-
-  const reportDiagnosticMilestone = useCallback((
-    milestone: EditorMilestoneName,
-    request = requestRef.current,
-  ): void => {
-    if (!diagnosticsEnabled || !request) return;
-    const report = window.blueAPI?.reportTrackInstrumentEditorDiagnosticMilestone;
-    if (typeof report !== 'function') return;
-    void report({ request, milestone }).catch(() => undefined);
-  }, [diagnosticsEnabled]);
 
   const handleEditorUsable = useCallback(() => {
-    reportDiagnosticMilestone('editor-import-end');
     setEditorUsable(true);
-    reportDiagnosticMilestone('editor-usable');
-    if (!shouldInitializeLibrary) return;
-    reportDiagnosticMilestone('library-init-start');
-    void useLibraryStore.getState().initialize().then(
-      () => reportDiagnosticMilestone('library-init-end'),
-      () => reportDiagnosticMilestone('library-init-end'),
-    );
-  }, [reportDiagnosticMilestone, shouldInitializeLibrary]);
-
-  const reportLiveObservationStart = useCallback(() => {
-    if (liveObservationStartedRef.current) return;
-    liveObservationStartedRef.current = true;
-    reportDiagnosticMilestone('live-observation-start');
-  }, [reportDiagnosticMilestone]);
-
-  const reportLiveObservationResult = useCallback(() => {
-    if (liveObservationResultRef.current) return;
-    liveObservationResultRef.current = true;
-    reportDiagnosticMilestone('live-observation-first-result');
-  }, [reportDiagnosticMilestone]);
+    void useLibraryStore.getState().initialize();
+  }, []);
 
   const acceptSnapshot = useCallback((next: TrackInstrumentEditorSnapshot) => {
     const nextEditorIdentity = [
@@ -163,9 +107,6 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     ].join(':');
     if (editorIdentityRef.current !== nextEditorIdentity) {
       editorIdentityRef.current = nextEditorIdentity;
-      documentAcceptedRef.current = false;
-      liveObservationStartedRef.current = false;
-      liveObservationResultRef.current = false;
       setEditorUsable(false);
     }
     const current = requestRef.current;
@@ -179,11 +120,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     setSnapshot(next);
     setError(null);
     document.title = `${next.instrument.name || 'Track Instrument'} - Track Instrument Editor`;
-    if (!documentAcceptedRef.current) {
-      documentAcceptedRef.current = true;
-      reportDiagnosticMilestone('document-accepted');
-    }
-  }, [reportDiagnosticMilestone]);
+  }, []);
 
   const acceptRuntimeStatus = useCallback((next: TrackInstrumentRuntimeStatus) => {
     const previous = runtimeStatusSequenceRef.current === null
@@ -207,7 +144,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (!parsedRequest || !shouldObserveRuntime) return;
+    if (!parsedRequest) return;
 
     let cancelled = false;
     runtimeStatusSequenceRef.current = null;
@@ -240,10 +177,10 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       runtimeUnsubscribeRef.current = null;
       if (unsubscribe) void unsubscribe().catch(() => undefined);
     };
-  }, [acceptRuntimeStatus, parsedRequest, shouldObserveRuntime]);
+  }, [acceptRuntimeStatus, parsedRequest]);
 
   useEffect(() => {
-    if (!parsedRequest || diagnosticCondition === 'minimal-shell') return;
+    if (!parsedRequest) return;
     let cancelled = false;
     void window.blueAPI.getTrackInstrumentEditorDocument(parsedRequest).then((loaded) => {
       if (cancelled) return;
@@ -256,29 +193,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [acceptSnapshot, diagnosticCondition, parsedRequest]);
-
-  useEffect(() => {
-    if (!diagnosticsEnabled || !parsedRequest) return;
-    if (diagnosticCondition === 'minimal-shell') {
-      reportDiagnosticMilestone('editor-usable');
-      return;
-    }
-    if (diagnosticCondition === 'shell-with-snapshot' && snapshot) {
-      reportDiagnosticMilestone('editor-usable');
-      return;
-    }
-    if (snapshot && shouldMountEditor) {
-      reportDiagnosticMilestone('editor-import-start');
-    }
-  }, [
-    diagnosticCondition,
-    diagnosticsEnabled,
-    parsedRequest,
-    reportDiagnosticMilestone,
-    shouldMountEditor,
-    snapshot,
-  ]);
+  }, [acceptSnapshot, parsedRequest]);
 
   useEffect(() => {
     if (!parsedRequest) return;
@@ -384,15 +299,7 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
     );
   }
 
-  if (diagnosticCondition === 'minimal-shell') {
-    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
-  }
-
   if (!snapshot) {
-    return <div aria-hidden="true" className="h-screen bg-app-bg" />;
-  }
-
-  if (diagnosticCondition === 'shell-with-snapshot') {
     return <div aria-hidden="true" className="h-screen bg-app-bg" />;
   }
 
@@ -411,11 +318,8 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
             },
           },
           projectSessionId: snapshot.track.projectSessionId,
-          enabled: shouldObserveRuntime
-            && editorUsable
+          enabled: editorUsable
             && (runtimeStatus.playbackRunning || runtimeStatus.blueLiveRunning),
-          onObservationStart: reportLiveObservationStart,
-          onObservationResult: reportLiveObservationResult,
         } : undefined}
         onEditorUsable={handleEditorUsable}
         embeddedUdoTarget={{

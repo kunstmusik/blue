@@ -16,7 +16,7 @@ import {
   isNonnegativeInteger,
 } from '../shared/midi-input';
 import type { EngineRuntimeService } from './engine-runtime';
-import type { EngineControlTrafficObservation } from '../shared/track-instrument-editor-contract';
+import type { EngineControlTrafficObservation } from './engine-bridge';
 
 export type BlueLiveEngineStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 

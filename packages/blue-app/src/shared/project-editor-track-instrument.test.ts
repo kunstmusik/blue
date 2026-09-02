@@ -16,7 +16,6 @@ import {
   applyProjectDocumentPatch,
   createInstrumentSnapshot,
   createTrackInstrumentEditorSnapshot,
-  getTrackInstrumentDiagnosticKind,
   type TrackRef,
 } from './project-editor';
 
@@ -191,7 +190,6 @@ describe('Track instrument project patches', () => {
 
     const request = { track: { ...ref } };
     expect(createTrackInstrumentEditorSnapshot(data, request)).not.toBeNull();
-    expect(getTrackInstrumentDiagnosticKind(data, request)).toBe('blue-x7');
 
     // Opening/focusing an editor is a read: the canonical project content,
     // its generated CSD, and its serialization must be byte-identical.

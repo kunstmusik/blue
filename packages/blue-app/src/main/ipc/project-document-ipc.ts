@@ -33,8 +33,6 @@ export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   'focus-track-instrument-editor',
   'get-track-instrument-editor-document',
   'update-track-instrument-editor-document',
-  'effect-editor:diagnostic-milestone',
-  'track-instrument-editor:diagnostic-milestone',
   'track-instrument-editor:runtime-status:get',
   'track-instrument-editor:runtime-status:subscribe',
   'track-instrument-editor:runtime-status:unsubscribe',
