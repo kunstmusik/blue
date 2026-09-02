@@ -17,26 +17,14 @@ const PLAYBACK_LISTENERS = new Set<string>([
 const APPLICATION_LISTENERS = new Set<string>(['settings:close-response']);
 
 /**
- * The baseline registration sequence frozen before the handler move. Slices
- * intentionally interleave domain owners where the original source did.
+ * Domain-owned channel sets registered in domain groups without historical interleaving slices.
  */
 export const MAIN_PROCESS_DOMAIN_IPC_ORDER = [
-  ...PROJECT_LIFECYCLE_IPC_CHANNELS.slice(0, 14),
-  ...PLAYBACK_RUNTIME_IPC_CHANNELS.slice(0, 9),
-  PROJECT_LIFECYCLE_IPC_CHANNELS[14],
-  ...PROJECT_ARTIFACTS_IPC_CHANNELS.slice(0, 2),
-  ...PROJECT_LIFECYCLE_IPC_CHANNELS.slice(15),
-  ...PROJECT_ARTIFACTS_IPC_CHANNELS.slice(2),
-  ...PLAYBACK_RUNTIME_IPC_CHANNELS.slice(9, 16),
+  ...PROJECT_LIFECYCLE_IPC_CHANNELS,
+  ...PLAYBACK_RUNTIME_IPC_CHANNELS,
+  ...PROJECT_ARTIFACTS_IPC_CHANNELS,
   ...APPLICATION_IPC_CHANNELS,
-  ...PROJECT_DOCUMENT_IPC_CHANNELS.slice(19),
-  PLAYBACK_RUNTIME_IPC_CHANNELS[16],
-  ...PROJECT_DOCUMENT_IPC_CHANNELS.slice(0, 3),
-  ...PROJECT_DOCUMENT_IPC_CHANNELS.slice(4, 19),
-  ...PLAYBACK_RUNTIME_IPC_CHANNELS.slice(17, 24),
-  ...PLAYBACK_RUNTIME_IPC_CHANNELS.slice(24, 27),
-  PROJECT_DOCUMENT_IPC_CHANNELS[3],
-  ...PLAYBACK_RUNTIME_IPC_CHANNELS.slice(27),
+  ...PROJECT_DOCUMENT_IPC_CHANNELS,
 ] as const;
 
 export interface MainProcessDomainIpcOptions {
