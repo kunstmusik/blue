@@ -3,7 +3,6 @@ import '../../src/sound-objects/register-sound-object-types';
 import { PatternData } from '../../src/score/patterns/pattern-data';
 import { PatternLayer } from '../../src/score/patterns/pattern-layer';
 import { PatternsLayerGroup } from '../../src/score/patterns/patterns-layer-group';
-import { PatternsLayerGroupProvider } from '../../src/score/patterns/patterns-layer-group-provider';
 import { GenericScore } from '../../src/sound-objects/generic-score';
 import { PatternObject } from '../../src/sound-objects/pattern-object';
 import { TrackerObject } from '../../src/sound-objects/tracker-object';
@@ -324,38 +323,6 @@ describe('PatternsLayerGroup', () => {
     // Modifying copy should not affect original
     (copy as PatternsLayerGroup)[0].getPatternData().setPattern(1, false);
     expect(group[0].getPatternData().isPatternSet(1)).toBe(true);
-  });
-});
-
-describe('PatternsLayerGroupProvider', () => {
-  it('returns correct name', () => {
-    const provider = new PatternsLayerGroupProvider();
-    expect(provider.getLayerGroupName()).toBe('Patterns');
-  });
-
-  it('creates a default group with one layer', () => {
-    const provider = new PatternsLayerGroupProvider();
-    const group = provider.createLayerGroup();
-    expect(group).toBeInstanceOf(PatternsLayerGroup);
-    expect(group.length).toBe(1);
-  });
-
-  it('loads from matching XML', () => {
-    const provider = new PatternsLayerGroupProvider();
-    const xml = new Element('patternsLayerGroup');
-    xml.setAttribute('name', 'Test');
-    xml.addElement('patternLayers');
-
-    const result = provider.loadFromXML(xml, new Map());
-    expect(result).toBeInstanceOf(PatternsLayerGroup);
-    expect(result!.getName()).toBe('Test');
-  });
-
-  it('returns null for non-matching XML', () => {
-    const provider = new PatternsLayerGroupProvider();
-    const xml = new Element('audioLayerGroup');
-    const result = provider.loadFromXML(xml, new Map());
-    expect(result).toBeNull();
   });
 });
 

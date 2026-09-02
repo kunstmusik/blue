@@ -205,8 +205,6 @@ export type { ScoreObjectLayer } from './score/layers/score-object-layer';
 export type { ScoreObjectLayerGroup } from './score/layers/score-object-layer-group';
 export type { AutomatableLayer } from './score/layers/automatable-layer';
 export type { AutomatableLayerGroup } from './score/layers/automatable-layer-group';
-export type { LayerGroupProvider } from './score/layers/layer-group-provider';
-export { LayerGroupProviderManager } from './score/layers/layer-group-provider-manager';
 export { LayerGroupDataEvent, LayerGroupDataEventType } from './score/layers/layer-group-data-event';
 export type { LayerGroupListener } from './score/layers/layer-group-listener';
 export type { DeepCopyableLG } from './score/layers/deep-copyable-lg';
@@ -220,7 +218,6 @@ export { Track as ScoreTrack } from './score/track/track';
 export type { TrackItem } from './score/track/track';
 export { TrackLayerGroup } from './score/track/track-layer-group';
 export { createAuditionProjectCopy } from './score/audition-project';
-export { TrackLayerGroupProvider } from './score/track/track-layer-group-provider';
 export { generateTrackAudioPlaybackNotes, ensureTrackAudioPlaybackInstrument } from './score/track/track-audio-playback';
 export { FadeType, fadeTypeFromString, fadeTypeToString, fadeTypeToCsound } from './score/audio/fade-type';
 export { PLAYBACK_INSTRUMENT_ORC } from './score/audio/playback-instrument-orc';
@@ -230,7 +227,6 @@ export { BLUE_FADE_UDO } from './score/audio/blue-fade-udo';
 export { PatternData } from './score/patterns/pattern-data';
 export { PatternLayer } from './score/patterns/pattern-layer';
 export { PatternsLayerGroup } from './score/patterns/patterns-layer-group';
-export { PatternsLayerGroupProvider } from './score/patterns/patterns-layer-group-provider';
 
 // ─── Sound Objects ───
 // ─── Sound Objects ───
@@ -243,7 +239,6 @@ export { NoteList } from './sound-objects/note-list';
 export { GenericScore } from './sound-objects/generic-score';
 export { PolyObject } from './sound-objects/poly-object';
 export { SoundLayer } from './sound-objects/sound-layer';
-export { PolyObjectLayerGroupProvider } from './sound-objects/poly-object-layer-group-provider';
 export { SoundObjectLibrary, collectInstanceSoundObjects } from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
 export { ObjectBuilder } from './sound-objects/object-builder';
