@@ -164,10 +164,6 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     return new PatternsLayerGroup(this);
   }
 
-  deepCopyLG(): PatternsLayerGroup {
-    return this.deepCopy();
-  }
-
   /** Get the maximum pattern index across all layers. */
   getMaxPattern(): number {
     let max = 0;

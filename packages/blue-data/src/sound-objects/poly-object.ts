@@ -537,8 +537,4 @@ export class PolyObject extends Array<SoundLayer>
     }
     return copy;
   }
-
-  deepCopyLG(): PolyObject {
-    return this.deepCopy();
-  }
 }

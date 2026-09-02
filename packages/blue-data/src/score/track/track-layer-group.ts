@@ -214,7 +214,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   onLoadComplete(_context: TimeContext): void {}
 
   deepCopy(): TrackLayerGroup { return new TrackLayerGroup(this); }
-  deepCopyLG(): TrackLayerGroup { return this.deepCopy(); }
   getTotalHeight(): number { return this.reduce((height, track) => height + track.getLayerHeight(), 0); }
   getLayerNumForY(y: number): number {
     let running = 0;

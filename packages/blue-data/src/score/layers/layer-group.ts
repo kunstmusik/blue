@@ -64,7 +64,4 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyable<Laye
 
   /** Produce a deep copy of this layer group. */
   deepCopy(): LayerGroup<T>;
-
-  /** Backward-compatible alias for deepCopy. */
-  deepCopyLG?(): LayerGroup<T>;
 }
