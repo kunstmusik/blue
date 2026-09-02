@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prepareCommandLine, shouldUseOutFile } from '../shared/external-executor';
-import { executeExternalTest } from './external-executor';
+import { createMainExternalExecutor, executeExternalTest } from './external-executor';
 
 const EXTERNAL_PROCESS_TEST_TIMEOUT = 35_000;
 
@@ -107,4 +107,17 @@ describe('executeExternalTest', () => {
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 1');
   }, EXTERNAL_PROCESS_TEST_TIMEOUT);
+});
+
+describe('createMainExternalExecutor', () => {
+  it('creates an executor that runs commands synchronously and returns output', () => {
+    const executor = createMainExternalExecutor(() => null);
+    const output = executor.execute('node -e "process.stdout.write(\'test output\')"', '', null);
+    expect(output).toBe('test output');
+  });
+
+  it('throws an error when command execution fails', () => {
+    const executor = createMainExternalExecutor(() => null);
+    expect(() => executor.execute('false', '', null)).toThrow();
+  });
 });

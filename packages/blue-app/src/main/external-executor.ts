@@ -2,6 +2,7 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import type { ExternalCommandExecutor } from '@blue/data';
 import {
   prepareCommandLine,
   shouldUseOutFile,
@@ -80,4 +81,17 @@ function runCommandSync(commandLine: string, cwd: string): string {
 
 export async function executeExternalTest(request: ExternalTestRequest): Promise<ExternalTestResult> {
   return executeExternalTestSync(request);
+}
+
+export function createMainExternalExecutor(getProjectDir: () => string | null): ExternalCommandExecutor {
+  return {
+    execute(commandLine: string, textBody: string, _projectDir: string | null): string {
+      const projectDir = getProjectDir();
+      const result = executeExternalTestSync({ commandLine, text: textBody, projectDir });
+      if (!result.ok) {
+        throw new Error(result.error ?? 'External command failed');
+      }
+      return result.output;
+    },
+  };
 }

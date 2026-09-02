@@ -195,8 +195,7 @@ import {
   registerBlueAudioProtocolHandler,
   resolveAuthorizedAudioFilePath,
 } from './audio-stream-protocol';
-import { executeExternalTest } from './external-executor';
-import { createMainExternalExecutor } from './external-command-executor';
+import { createMainExternalExecutor, executeExternalTest } from './external-executor';
 import {
   inspectSoundFont,
   type SoundFontExecutionSeam,
