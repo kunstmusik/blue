@@ -26,8 +26,6 @@ import {
   setScoreStart,
 } from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { LayerGroupDataEvent, LayerGroupDataEventType } from '../score/layers/layer-group-data-event';
-import { LayerGroupListener } from '../score/layers/layer-group-listener';
 import { ScoreObjectListener, ScoreObjectEvent, ScoreEventType } from '../score/score-object-event';
 import { Layer } from '../score/layers/layer';
 import { getBasicXML, initBasicFromXML } from './sound-object-utilities';
@@ -79,7 +77,6 @@ export class PolyObject extends Array<SoundLayer>
   private _listeners: ScoreObjectListener[] = [];
 
   // LayerGroup properties
-  private _layerGroupListeners: LayerGroupListener[] = [];
   private _defaultHeightIndex = 0;
 
   getDefaultHeightIndex(): number {
@@ -419,17 +416,6 @@ export class PolyObject extends Array<SoundLayer>
         }
       }
     }
-  }
-
-  addLayerGroupListener(listener: LayerGroupListener): void {
-    if (!this._layerGroupListeners.includes(listener)) {
-      this._layerGroupListeners.push(listener);
-    }
-  }
-
-  removeLayerGroupListener(listener: LayerGroupListener): void {
-    const i = this._layerGroupListeners.indexOf(listener);
-    if (i !== -1) this._layerGroupListeners.splice(i, 1);
   }
 
   // ─── XML Serialization ───

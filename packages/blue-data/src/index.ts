@@ -205,8 +205,6 @@ export type { ScoreObjectLayer } from './score/layers/score-object-layer';
 export type { ScoreObjectLayerGroup } from './score/layers/score-object-layer-group';
 export type { AutomatableLayer } from './score/layers/automatable-layer';
 export type { AutomatableLayerGroup } from './score/layers/automatable-layer-group';
-export { LayerGroupDataEvent, LayerGroupDataEventType } from './score/layers/layer-group-data-event';
-export type { LayerGroupListener } from './score/layers/layer-group-listener';
 export type { DeepCopyableLG } from './score/layers/deep-copyable-lg';
 
 // ─── Audio Score Layers ───
@@ -364,7 +362,6 @@ export type {
   JavaDecimalResult,
 } from './automation/java-decimal';
 export type { Automatable } from './automation/automatable';
-export type { AutomatableCollectionListener } from './automation/automatable-collection-listener';
 export { LineColors } from './automation/line-colors';
 
 // ─── Live ───

@@ -14,7 +14,6 @@ import { CompileData } from '../../compile-data';
 import { ScoreGenerationException } from '../score-generation-exception';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
-import { LayerGroupListener } from './layer-group-listener';
 import type { ScoreGenerationOptionsOrSolo } from '../score-generation-options';
 
 export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<LayerGroup<T>> {
@@ -62,9 +61,4 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyableLG<La
 
   /** Called when a project has been loaded and allows initialization. */
   onLoadComplete(context: TimeContext): void;
-
-  /** Add a listener for layer group data events. */
-  addLayerGroupListener(listener: LayerGroupListener): void;
-  /** Remove a listener for layer group data events. */
-  removeLayerGroupListener(listener: LayerGroupListener): void;
 }

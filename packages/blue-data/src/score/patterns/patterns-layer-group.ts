@@ -8,8 +8,6 @@
  */
 import { PatternLayer } from './pattern-layer';
 import { LayerGroup } from '../../score/layers/layer-group';
-import { LayerGroupDataEvent, LayerGroupDataEventType } from '../../score/layers/layer-group-data-event';
-import { LayerGroupListener } from '../../score/layers/layer-group-listener';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
@@ -25,7 +23,6 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
   private _name = 'Patterns Layer Group';
   private _patternBeatsLength = 4;
   private _npc = new NoteProcessorChain();
-  private _layerGroupListeners: LayerGroupListener[] = [];
 
   constructor(other?: PatternsLayerGroup) {
     super();
@@ -138,77 +135,29 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     const insertIndex = Math.min(Math.max(index, 0), this.length);
     this.splice(insertIndex, 0, patternLayer);
 
-    const event = new LayerGroupDataEvent(
-      this,
-      LayerGroupDataEventType.DATA_ADDED,
-      insertIndex,
-      insertIndex,
-      [patternLayer],
-    );
-    this._fireLayerGroupDataEvent(event);
-
     return patternLayer;
   }
 
   removeLayers(startIdx: number, endIdx: number): void {
-    const removed: PatternLayer[] = [];
     for (let i = endIdx; i >= startIdx; i--) {
-      const layer = this[i];
-      removed.push(layer);
       this.splice(i, 1);
     }
-
-    const event = new LayerGroupDataEvent(
-      this,
-      LayerGroupDataEventType.DATA_REMOVED,
-      startIdx,
-      endIdx,
-      removed,
-    );
-    this._fireLayerGroupDataEvent(event);
   }
 
   pushUpLayers(startIdx: number, endIdx: number): void {
     if (startIdx <= 0) return;
     const item = this.splice(startIdx - 1, 1)[0];
     this.splice(endIdx, 0, item);
-
-    const event = new LayerGroupDataEvent(
-      this,
-      LayerGroupDataEventType.DATA_CHANGED,
-      startIdx - 1,
-      endIdx,
-    );
-    this._fireLayerGroupDataEvent(event);
   }
 
   pushDownLayers(startIdx: number, endIdx: number): void {
     if (endIdx >= this.length - 1) return;
     const item = this.splice(endIdx + 1, 1)[0];
     this.splice(startIdx, 0, item);
-
-    const event = new LayerGroupDataEvent(
-      this,
-      LayerGroupDataEventType.DATA_CHANGED,
-      -startIdx,
-      -(endIdx + 1),
-    );
-    this._fireLayerGroupDataEvent(event);
   }
 
   onLoadComplete(_context: TimeContext): void {
     // No-op for pattern layers
-  }
-
-  addLayerGroupListener(listener: LayerGroupListener): void {
-    if (!this._layerGroupListeners.includes(listener)) {
-      this._layerGroupListeners.push(listener);
-    }
-  }
-
-  removeLayerGroupListener(listener: LayerGroupListener): void {
-    const i = this._layerGroupListeners.indexOf(listener);
-    if (i !== -1) this._layerGroupListeners.splice(i, 1);
   }
 
   deepCopyLG(): PatternsLayerGroup {
@@ -223,13 +172,5 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
       if (ms > max) max = ms;
     }
     return max;
-  }
-
-  // ─── Helpers ───
-
-  private _fireLayerGroupDataEvent(event: LayerGroupDataEvent): void {
-    for (const listener of this._layerGroupListeners) {
-      listener.layerGroupChanged(event);
-    }
   }
 }

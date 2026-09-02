@@ -1,7 +1,5 @@
 import { Track } from './track';
 import { LayerGroup } from '../layers/layer-group';
-import { LayerGroupDataEvent, LayerGroupDataEventType } from '../layers/layer-group-data-event';
-import { LayerGroupListener } from '../layers/layer-group-listener';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { PythonObject } from '../../sound-objects/python-object';
@@ -23,7 +21,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   private _name = 'Track Layer Group';
   private _uniqueId = generateUniqueId();
   private _defaultHeightIndex = 0;
-  private _listeners: LayerGroupListener[] = [];
   private _unknownAttributes = new Map<string, string>();
   private _unknownChildren: Element[] = [];
   private _tracksAttributes = new Map<string, string>();
@@ -192,7 +189,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     track.setHeightIndex(this._defaultHeightIndex);
     const insertIndex = Math.min(Math.max(index, 0), this.length);
     this.splice(insertIndex, 0, track);
-    this.fire(new LayerGroupDataEvent(this, LayerGroupDataEventType.DATA_ADDED, insertIndex, insertIndex, [track]));
     return track;
   }
 
@@ -200,34 +196,23 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     const safeStart = Math.max(0, startIndex);
     const safeEnd = Math.min(this.length - 1, endIndex);
     if (safeEnd < safeStart) return;
-    const removed: Track[] = [];
-    for (let i = safeEnd; i >= safeStart; i--) removed.push(...this.splice(i, 1));
-    this.fire(new LayerGroupDataEvent(this, LayerGroupDataEventType.DATA_REMOVED, safeStart, safeEnd, removed));
+    for (let i = safeEnd; i >= safeStart; i--) this.splice(i, 1);
   }
 
   pushUpLayers(startIndex: number, endIndex: number): void {
     if (startIndex <= 0 || startIndex > endIndex) return;
     const moved = this.splice(startIndex - 1, 1)[0];
     if (moved) this.splice(Math.min(endIndex, this.length), 0, moved);
-    this.fire(new LayerGroupDataEvent(this, LayerGroupDataEventType.DATA_CHANGED, startIndex - 1, endIndex));
   }
 
   pushDownLayers(startIndex: number, endIndex: number): void {
     if (endIndex >= this.length - 1 || startIndex > endIndex) return;
     const moved = this.splice(endIndex + 1, 1)[0];
     if (moved) this.splice(startIndex, 0, moved);
-    this.fire(new LayerGroupDataEvent(this, LayerGroupDataEventType.DATA_CHANGED, -startIndex, -(endIndex + 1)));
   }
 
   onLoadComplete(_context: TimeContext): void {}
 
-  addLayerGroupListener(listener: LayerGroupListener): void {
-    if (!this._listeners.includes(listener)) this._listeners.push(listener);
-  }
-  removeLayerGroupListener(listener: LayerGroupListener): void {
-    const index = this._listeners.indexOf(listener);
-    if (index >= 0) this._listeners.splice(index, 1);
-  }
   deepCopyLG(): TrackLayerGroup { return new TrackLayerGroup(this); }
   getTotalHeight(): number { return this.reduce((height, track) => height + track.getLayerHeight(), 0); }
   getLayerNumForY(y: number): number {
@@ -237,10 +222,6 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
       if (running > y) return i;
     }
     return this.length - 1;
-  }
-
-  private fire(event: LayerGroupDataEvent): void {
-    for (const listener of this._listeners) listener.layerGroupChanged(event);
   }
 }
 
