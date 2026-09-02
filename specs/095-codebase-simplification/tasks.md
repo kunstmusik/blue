@@ -44,7 +44,7 @@
 
 ### Verification Task
 
-- [ ] T008 [US1] Run User Story 1 verification: `pnpm --filter @blue/data build`, `pnpm --filter @blue/data test`, and `pnpm --filter @blue/engine-client test`
+- [X] T008 [US1] Run User Story 1 verification: `pnpm --filter @blue/data build`, `pnpm --filter @blue/data test`, and `pnpm --filter @blue/engine-client test`
 
 **Checkpoint**: Dead Java Swing-era infrastructure completely eliminated from `@blue/data` with 100% test pass.
 
@@ -57,7 +57,7 @@
 
 ### Implementation Tasks (Commit-Sized Units)
 
-- [ ] T009 [P] [US2] Modernize UUID generator to delegate directly to `crypto.randomUUID()` in `packages/blue-data/src/utilities/uuid.ts` and update tests in `packages/blue-data/src/utilities/uuid.test.ts`
+- [X] T009 [P] [US2] Modernize UUID generator to delegate directly to `crypto.randomUUID()` in `packages/blue-data/src/utilities/uuid.ts` and update tests in `packages/blue-data/src/utilities/uuid.test.ts`
 - [ ] T010 [P] [US2] Update `SoundObjectException` to extend standard `Error` with `{ cause }` options in `packages/blue-data/src/sound-objects/sound-object-exception.ts`
 - [ ] T011 [P] [US2] Consolidate duplicated `clamp()` implementations into `packages/blue-data/src/utilities/math-utils.ts` and update callers across packages
 - [ ] T012 [US2] Migrate `RuntimeDeviceField.tsx` in `packages/blue-app/src/renderer/components/settings/RuntimeDeviceField.tsx` to `useHostSurface`, remove uncalled `computeColorPickerPosition` in `packages/blue-app/src/renderer/components/color-picker-utils.ts`, and delete `packages/blue-app/src/renderer/components/floating-position-utils.ts`
