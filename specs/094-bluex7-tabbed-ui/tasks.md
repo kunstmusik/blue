@@ -73,18 +73,18 @@ preload, main-process, engine, XML, CSD, and SysEx boundaries are preserved and 
 
 ## Phase 5: User Story 3 - Full-Height Csound Post-Processing Workspace (Priority: P3)
 
-**Goal**: Give Post Code, Generated Preview, and Bindings & Diagnostics a full-height Csound workspace with persistent nested state.
+**Goal**: Give the Csound Post Code editor a full-height workspace without an additional nested tab layer.
 
-**Independent Test**: The Csound & Code tab exposes its three nested tabs, Post Code fills the active panel height, Preview and Bindings retain their existing generation/diagnostic behavior, and Csound edits continue through the current patch/history path.
+**Independent Test**: The Csound tab exposes one full-height Post Code editor, has no nested Csound tabs, and continues through the current patch/history path.
 
 ### Verification for User Story 3
 
-- [X] T018 [P] [US3] Extend Csound panel tests for nested manual tab semantics, Post Code/Preview/Bindings state preservation, generated preview updates, diagnostics content, and existing Csound mutation behavior in `packages/blue-app/src/renderer/tests/blue-x7-csound-preview.test.tsx`
-- [X] T019 [P] [US3] Add browser assertions for CodeMirror height, visible nested Csound panel geometry, keyboard focus, and local preview scrolling in `packages/blue-app/src/renderer/browser/blue-x7-editor.browser.test.tsx`
+- [X] T018 [P] [US3] Extend Csound panel tests for the single Post Code view, header/description, absence of obsolete nested tabs, and existing Csound mutation behavior in `packages/blue-app/src/renderer/tests/blue-x7-csound-preview.test.tsx`
+- [X] T019 [P] [US3] Add browser assertions for the Post Code editor height, visible Csound panel geometry, keyboard focus, and top-level tab switching in `packages/blue-app/src/renderer/browser/blue-x7-editor.browser.test.tsx`
 
 ### Implementation for User Story 3
 
-- [X] T020 [US3] Refactor the Csound panel to use `BlueX7TabList`, expose nested tabpanel relationships, pass active state to `SelectedCodeEditor`, and replace fixed-height Post Code/preview sizing with a full-height flex layout in `packages/blue-app/src/renderer/components/instruments/blue-x7/csound-panel.tsx`
+- [X] T020 [US3] Simplify the Csound panel to a single full-height Post Code view, pass active state to `SelectedCodeEditor`, and remove obsolete nested preview/diagnostic state in `packages/blue-app/src/renderer/components/instruments/blue-x7/csound-panel.tsx`
 
 **Checkpoint**: User Stories 1–3 are independently usable; Csound authoring has the full active panel height without changing CSD generation.
 
@@ -157,7 +157,7 @@ Task T013: Add envelope lifecycle tests in blue-x7-envelope.test.tsx
 #### User Story 3
 
 ```text
-Task T018: Add CsoundPanel unit/preview tests in blue-x7-csound-preview.test.tsx
+Task T018: Add CsoundPanel unit/Post Code tests in blue-x7-csound-preview.test.tsx
 Task T019: Add browser Csound geometry/focus tests in blue-x7-editor.browser.test.tsx
 ```
 
@@ -180,14 +180,14 @@ Task T024: Implement hook signature/generation invalidation in use-blue-x7-effec
 ### Incremental Delivery
 
 1. Add US2 for accessible operator sub-tabs and safe atomic envelope interaction.
-2. Add US3 for full-height Csound authoring and nested preview/binding tabs.
+2. Add US3 for full-height Csound Post Code authoring in a single focused view.
 3. Add US4 for active-only effective-value polling and stale-response handling.
 4. Run the compatibility and repository-wide validation phase after each desired increment.
 
 ### Boundary and Compatibility Strategy
 
 - Keep `BlueX7Voice`, `BlueX7Patch`, `BlueX7InstrumentSnapshot`, `BLUE_X7_PARAMETER_DESCRIPTORS`, project XML, CSD generation, SysEx parsing, preload envelopes, and main-process runtime ownership unchanged.
-- Keep tab, focus, selected-operator, Csound sub-tab, effective-value, and gesture state renderer-local and disposable.
+- Keep tab, focus, selected-operator, effective-value, and gesture state renderer-local and disposable.
 - Treat the existing modern-render hash and Chromium startup failures documented in `specs/094-bluex7-tabbed-ui/quickstart.md` as pre-existing until a test proves otherwise; never silently rebaseline them.
 
 ## Notes

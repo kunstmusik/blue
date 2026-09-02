@@ -5,7 +5,7 @@
 **Rationale:** The existing instrument editors already use a `relative min-h-0 flex-1` panel
 stack with the active child rendered normally and inactive children positioned absolutely with
 `aria-hidden`, `visibility: hidden`, and `pointer-events: none`. Reusing that pattern avoids
-destroying the CodeMirror view or the local Csound/operator sub-tab state every time the user
+destroying the CodeMirror view or the local operator-tab state every time the user
 changes the top-level view. The BlueX7 outer shell can therefore become a non-scrolling,
 full-height flex column while each active panel owns any necessary inner scroll region.
 
@@ -17,19 +17,19 @@ unrelated sections while preserving a recoverable inner scroll path for narrow o
 
 **Alternatives considered:**
 
-- Unmount inactive panels: rejected because it resets the Csound sub-tab/CodeMirror view and
-  makes an in-flight envelope gesture harder to finalize before unmounting.
+- Unmount inactive panels: rejected because it resets the CodeMirror view and makes an in-flight
+  envelope gesture harder to finalize before unmounting.
 - Keep the entire original stack and add anchors: rejected because it does not meet the
   scroll-reduction goal or the full-height Csound requirement.
 - Add a new global workbench/store tab state: rejected because the specification makes the
   state an editor-instance presentation concern and explicitly forbids persistence.
 
-## Decision: Add one small reusable ARIA tab-list primitive for all BlueX7 tab levels
+## Decision: Add one small reusable ARIA tab-list primitive for the BlueX7 tab levels
 
-**Rationale:** The feature has three tab lists with the same requirements: the four top-level
-views, six operator tabs, and three Csound sub-tabs. A local renderer primitive keeps the
-`role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, roving `tabIndex`, focus
-movement, and Enter/Space activation behavior identical across all three. It does not add a
+**Rationale:** The feature has two tab lists with the same requirements: the four top-level
+views and six operator tabs. A local renderer primitive keeps the `role="tablist"`, `role="tab"`,
+`aria-selected`, `aria-controls`, roving `tabIndex`, focus movement, and Enter/Space activation
+behavior identical across both. It does not add a
 runtime dependency or cross package boundary.
 
 The tab lists will use the manual-activation ARIA pattern required by the clarified behavior:
@@ -41,8 +41,8 @@ overflow at widths below 500px, and activation scrolls the selected tab into vie
 
 **Alternatives considered:**
 
-- Continue with plain buttons: rejected because the existing operator buttons and Csound
-  buttons do not expose the complete tab contract required by FR-005.
+- Continue with plain buttons: rejected because the existing operator buttons do not expose the
+  complete tab contract required by FR-005.
 - Use a third-party tabs package: rejected because the repository has no established package
   for this small behavior and a local primitive avoids styling/portal integration risk.
 - Automatic activation on every arrow press: rejected because the clarified requirement
@@ -60,7 +60,7 @@ IDs:
 | Voice & Global | All `Common` and `LFO` descriptors, including shared oscillator sync and shared PMS, plus all six visible `operator.N.enabled` controls |
 | Operators | The selected operator's descriptors, including its envelope and enable/muted indicator, plus the shared oscillator sync and shared PMS keys used by the workstation |
 | Pitch Envelope | All `Pitch Envelope` descriptors |
-| Csound & Code | No effective-value request; this view has generated/code diagnostics, not live parameter controls |
+| Csound | No effective-value request; this view contains only the Post Code editor, not live parameter controls |
 
 An optional host-supplied parameter allowlist, if present for compatibility, will only be
 intersected with the active-view set; it can never reintroduce hidden-tab parameters. The
@@ -106,7 +106,7 @@ the cleanup can be deterministic without destroying editor state.
 **Rationale:** `BlueX7Editor` already owns editor-local history and turns UI actions into typed
 `BlueX7Patch` intents. The main process remains the owner of `BlueData`; the renderer receives a
 serializable `BlueX7InstrumentSnapshot` and uses the existing preload effective-value and SysEx
-surfaces. Tab selection, focused tab index, operator selection, Csound sub-tab, and staged
+surfaces. Tab selection, focused tab index, operator selection, and staged
 gesture state remain renderer-local and are not added to `BlueX7Voice`, `InstrumentPatch`,
 project XML, app settings, or the engine protocol.
 

@@ -27,7 +27,7 @@ const TOP_LEVEL_TABS: readonly BlueX7TabItem<BlueX7TopTab>[] = [
   { key: 'global', label: 'Voice & Global', ariaLabel: 'Voice & Global Tab', testId: 'tab-global' },
   { key: 'operators', label: 'Operators', ariaLabel: 'Operators Tab', testId: 'tab-operators' },
   { key: 'pitch', label: 'Pitch Envelope', ariaLabel: 'Pitch Envelope Tab', testId: 'tab-pitch' },
-  { key: 'csound', label: 'Csound & Code', ariaLabel: 'Csound & Code Tab', testId: 'tab-csound' },
+  { key: 'csound', label: 'Csound', ariaLabel: 'Csound Tab', testId: 'tab-csound' },
 ];
 
 export interface BlueX7EditorProps extends OrchestraMutationProps {
@@ -431,7 +431,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           />
         </div>
 
-        {/* Csound & Code Tab Panel */}
+        {/* Csound Tab Panel */}
         <div
           id={`${editorId}-panel-csound`}
           role="tabpanel"
@@ -446,10 +446,8 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
           data-testid="bluex7-panel-csound"
         >
           <CsoundPanel
-            instanceId={`${editorId}-csound`}
             active={activeTab === 'csound'}
             voice={voice}
-            instrumentName={instrument.name ?? 'BlueX7'}
             onApplyPatch={applyPatch}
           />
         </div>

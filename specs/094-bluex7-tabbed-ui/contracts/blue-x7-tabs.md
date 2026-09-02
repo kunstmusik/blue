@@ -15,7 +15,7 @@ The tab list exposes four tabs in fixed order:
 | `global` | Voice & Global | Algorithm topology/selector, transpose, feedback, shared sync/PMS, operator enables, and LFO |
 | `operators` | Operators | Op 1–Op 6 workstation, tuning, sensitivities, keyboard scaling, and envelope editor |
 | `pitch` | Pitch Envelope | Four-stage PEG graph and numeric rate/level controls |
-| `csound` | Csound & Code | Post Code editor, Generated Preview, and Bindings & Diagnostics |
+| `csound` | Csound | Full-height Post Code editor |
 
 The top header containing Instrument Name, Enabled, Comment, Import SysEx, Undo, and Redo is
 outside the tabpanel stack and remains visible for every active top-level tab.
@@ -43,18 +43,17 @@ Keyboard behavior for every horizontal BlueX7 tab list is manual activation:
 - Click activates the clicked tab.
 - Tab follows the normal browser order into active panel content.
 
-No editor-level shortcut keys are added. Nested operator and Csound tab lists use the same
-contract independently.
+No editor-level shortcut keys are added. The nested operator tab list uses the same contract
+independently; Csound has no nested tab list.
 
 ## Presentation and persistence contract
 
-The active top-level tab, focused tab index, selected operator, Csound sub-tab, and staged
-envelope gesture are renderer-local state. They are not fields in `BlueX7Voice`,
+The active top-level tab, focused tab index, selected operator, and staged envelope gesture are
+renderer-local state. They are not fields in `BlueX7Voice`,
 `BlueX7InstrumentSnapshot`, `InstrumentPatch`, project XML, app settings, or the engine client.
 
-Every fresh editor mount starts at Voice & Global with Op 1 selected. The existing Csound
-sub-tab starts at Post Code. Hidden panels stay mounted so an active Csound editor and local
-sub-tab state survive a top-level switch; all of that state is discarded on unmount.
+Every fresh editor mount starts at Voice & Global with Op 1 selected. Hidden panels stay mounted
+so the Csound editor survives a top-level switch; all presentation state is discarded on unmount.
 
 ## Effective-value request contract
 
@@ -65,7 +64,7 @@ parameter IDs corresponding to controls in the active view:
   `operator.1..6.enabled` controls.
 - Operators: the selected operator catalog entries plus the shared sync and shared PMS entries.
 - Pitch Envelope: `Pitch Envelope` catalog entries.
-- Csound & Code: no request.
+- Csound: no request.
 
 The request list is derived by semantic key from the immutable
 `BLUE_X7_PARAMETER_DESCRIPTORS` catalog and then mapped to the snapshot's stable parameter IDs.

@@ -423,15 +423,15 @@ describe('BlueX7Editor — US1 Top-Level Tab/Panel ARIA & Layout Integration', (
     expect(operatorsPanel.style.visibility).toBe('hidden');
     expect(operatorsPanel.classList.contains('pointer-events-none')).toBe(true);
 
+    const pitchPanel = container?.querySelector('[data-testid="bluex7-panel-pitch"]') as HTMLElement;
+    expect(pitchPanel.getAttribute('aria-hidden')).toBe('true');
+    expect(pitchPanel.style.visibility).toBe('hidden');
+    expect(pitchPanel.classList.contains('pointer-events-none')).toBe(true);
+
     const csoundPanel = container?.querySelector('[data-testid="bluex7-panel-csound"]') as HTMLElement;
     expect(csoundPanel.getAttribute('aria-hidden')).toBe('true');
     expect(csoundPanel.style.visibility).toBe('hidden');
     expect(csoundPanel.classList.contains('pointer-events-none')).toBe(true);
-
-    const postCodeTab = container?.querySelector('[data-testid="bluex7-post-code-tab"]') as HTMLElement;
-    expect(postCodeTab.getAttribute('aria-hidden')).toBe('true');
-    expect(postCodeTab.style.visibility).toBe('hidden');
-    expect(postCodeTab.classList.contains('pointer-events-none')).toBe(true);
   });
 
   it('maintains a one-row horizontal tablist with overflow-x-auto in narrow 360px host', () => {

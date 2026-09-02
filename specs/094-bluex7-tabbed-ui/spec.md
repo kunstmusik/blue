@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-01
 
-**Status**: Accepted — 2026-09-01
+**Status**: Accepted — 2026-09-01; Csound scope revised — 2026-09-01
 
 **Input**: User description: "Use the /boost agent to investigate the state of BlueX7. I'd like a comparison to Dx7 and dexed for the audio synthesis side, as well as a report on the User Interface. I think the UI needs improvement for usability to reduce need to scroll by having tabs, but I'd like your review on that."
 
@@ -21,7 +21,7 @@
 
 ### User Story 1 - Tabbed Navigation for Major Instrument Sections (Priority: P1)
 
-A sound designer opens the BlueX7 editor in the Orchestra panel or a popout window and navigates between high-level instrument sections (Voice & Global, Operators, Pitch Envelope, and Csound & Code) using a persistent top-level tab bar. The active section fits comfortably within the viewport without requiring vertical scrolling through the other sections.
+A sound designer opens the BlueX7 editor in the Orchestra panel or a popout window and navigates between high-level instrument sections (Voice & Global, Operators, Pitch Envelope, and Csound) using a persistent top-level tab bar. The active section fits comfortably within the viewport without requiring vertical scrolling through the other sections.
 
 **Why this priority**: Eliminating excessive vertical scrolling (~1600px height stack) is the primary usability objective, making voice configuration, tuning, and sound design immediately accessible.
 
@@ -53,16 +53,15 @@ A musician sculpting FM tones switches between Operator 1 through Operator 6 usi
 
 ### User Story 3 - Full-Height Csound Post-Processing Workspace (Priority: P3)
 
-An electroacoustic composer or advanced sound designer switches to the "Csound & Code" tab to write custom Csound post-processing code (e.g. filters, stereo spatialization, delay/reverb effects) or inspect the generated CSD body, F-tables, and parameter bindings.
+An electroacoustic composer or advanced sound designer switches to the "Csound" tab to write custom Csound post-processing code (e.g. filters, stereo spatialization, delay/reverb effects).
 
-**Why this priority**: Csound post-code authoring currently suffers from being constrained to a small fixed-height box at the bottom of the long scrolling page. A dedicated tab allows the code editor and preview panes to expand to the full vertical height of the window.
+**Why this priority**: Csound post-code authoring currently suffers from being constrained to a small fixed-height box at the bottom of the long scrolling page. A dedicated tab allows the code editor to expand to the full available height of the window without adding another layer of navigation.
 
-**Independent Test**: Can be tested by opening the Csound & Code tab, typing Csound code into the Monaco editor, switching to the Preview sub-tab, and verifying syntax highlighting, live preview generation, and diagnostics display.
+**Independent Test**: Can be tested by opening the Csound tab, typing Csound code into the CodeMirror editor, and verifying syntax highlighting, full-height layout, and the existing post-code patch/history behavior.
 
 **Acceptance Scenarios**:
 
-1. **Given** the user selects the "Csound & Code" tab, **When** editing Csound post-code, **Then** the code editor expands to use the full available panel height.
-2. **Given** the "Generated Preview" sub-tab is selected, **When** voice parameters are modified, **Then** the generated F-tables and Csound instrument body update smoothly in a split or scrollable preview pane.
+1. **Given** the user selects the "Csound" tab, **When** editing Csound post-code, **Then** the code editor expands to use the full available panel height.
 
 ---
 
@@ -96,7 +95,7 @@ During live playback or BlueLive auditioning, the user switches tabs while autom
   1. **Voice & Global**: Algorithm topology diagram, algorithm selector ($1..32$), Key Transpose semitones ($-24..+24$), Feedback ($0..7$), Shared Sync, Shared PMS, Operator Output Enables ($1..6$), and LFO parameters.
   2. **Operators**: Dedicated operator workstation with sub-tabs for Op 1 through Op 6, mode, tuning, sensitivities, keyboard level/rate scaling, and graphical SVG envelope editor.
   3. **Pitch Envelope**: Dedicated Pitch Envelope Generator (PEG) graphical SVG editor and 4-stage numeric rates/levels.
-  4. **Csound & Code**: Full-height Csound post-code Monaco editor, Generated Preview (F-tables & instrument body), and Parameter Bindings & Diagnostics.
+  4. **Csound**: Full-height Csound post-code CodeMirror editor.
 - **FR-002**: The top header area (Instrument Name, Enabled checkbox, Comment input, Import SysEx button, Undo/Redo buttons) MUST remain persistently visible above the tab bar across all tab views.
 - **FR-003**: Tab switching MUST be purely client-side presentation state; it MUST NOT mutate the underlying `BlueX7Voice` model or emit false project change events.
 - **FR-004**: Tab switching MUST preserve all in-flight undo/redo history and must not discard undo stack depth.
@@ -114,7 +113,7 @@ During live playback or BlueLive auditioning, the user switches tabs while autom
   - Project XML serialization (`<blue.soundObject.editor.bluex7.BlueX7>`) MUST remain unchanged and lossless.
   - Csound CSD generation and modern module compilation MUST remain byte-for-byte identical.
   - SysEx file import and bank extraction MUST remain fully compatible.
-- **Intentional Divergences**: Layout changes from a vertically stacked ~1600px scrolling column to an organized 4-tab interface to improve workflow and usability.
+- **Intentional Divergences**: Layout changes from a vertically stacked ~1600px scrolling column to an organized 4-tab interface to improve workflow and usability; the Csound tab intentionally contains only the Post Code editor.
 - **State Ownership**: Active tab selection is renderer-local UI session state; project voice data remains canonically owned by `BlueData` via the document bridge.
 
 ### Key Entities
@@ -136,15 +135,16 @@ During live playback or BlueLive auditioning, the user switches tabs while autom
 ## Assumptions
 
 - Standard screen resolutions and workbench panels provide at least 600px of vertical height and 500px of horizontal width for the instrument editor.
-- The 4-tab organization (Voice & Global, Operators, Pitch Envelope, Csound & Code) provides the optimal balance between logical separation and minimal click depth.
+- The 4-tab organization (Voice & Global, Operators, Pitch Envelope, Csound) provides the optimal balance between logical separation and minimal click depth.
 - Users who need to write extensive Csound post-processing scripts benefit significantly from an expanded code editor pane.
 
 ## Closure
 
-Implementation is complete and the requester manually reviewed the BlueX7 workflows described by
-this specification with no issues reported. Tasks T001–T039 are checked off in `tasks.md`.
+Implementation is complete for the revised four-tab scope. The Csound tab intentionally exposes
+only the full-height Post Code editor; generated preview and binding/diagnostic panes are outside
+this feature's UI scope. Tasks T001–T039 are checked off in `tasks.md`.
 
-Automated closure evidence includes the full `@blue/app` suite (4,026 passed, 2 skipped), the
+Automated closure evidence includes the full `@blue/app` suite (4,022 passed, 2 skipped), the
 renderer/main/preload builds, lint, script checks, and clean whitespace validation. The existing
 modern-render locked-hash mismatch and the Chromium `SIGABRT` startup failure remain documented
 in `quickstart.md`; neither was rebaselined or caused by the renderer-only tabbed UI change.

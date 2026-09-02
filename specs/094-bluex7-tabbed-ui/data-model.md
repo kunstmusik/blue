@@ -14,7 +14,7 @@ Renderer-local top-level presentation state:
 | Field | Type | Rules |
 |---|---|---|
 | active tab | `BlueX7Tab` | Defaults to `global` on `BlueX7Editor` mount; changes only from the tab list; never serialized or patched |
-| tab order | fixed tuple | `global`, `operators`, `pitch`, `csound`; labels are Voice & Global, Operators, Pitch Envelope, Csound & Code |
+| tab order | fixed tuple | `global`, `operators`, `pitch`, `csound`; labels are Voice & Global, Operators, Pitch Envelope, Csound |
 | panel identity | generated string | Unique per editor instance so `aria-controls`/`aria-labelledby` do not collide between editors or popouts |
 
 The state lifetime is the mounted editor instance. Closing/reopening the editor creates a new
@@ -34,18 +34,11 @@ Changing the selection changes which operator fields are rendered in the active 
 and which operator parameter IDs are eligible for effective-value readback. It does not change
 the voice or emit a patch.
 
-## `BlueX7CsoundTab`
+## `BlueX7CsoundView`
 
-The existing Csound panel's local sub-tab state remains:
-
-```text
-'postCode' | 'preview' | 'bindings'
-```
-
-It defaults to `postCode` on Csound panel mount and is kept mounted across top-level tab
-switches. The sub-tabs control the Csound Post Code editor, Generated Preview, and Parameter
-Bindings & Diagnostics views. The authored post-code value remains `voice.csoundPostCode` and
-is changed only through the existing `setCsoundPostCode` patch.
+The Csound top-level view has no additional local selection. It renders one full-height Post Code
+editor and remains mounted across top-level tab switches. The authored post-code value remains
+`voice.csoundPostCode` and is changed only through the existing `setCsoundPostCode` patch.
 
 ## `BlueX7Voice` (canonical, unchanged)
 
@@ -86,12 +79,12 @@ The resulting request is disposable and renderer-to-preload only:
 ```
 
 No empty request is sent because the existing preload contract intentionally rejects an empty
-`parameterIds` array. Csound & Code therefore clears the effective display state and makes no
+`parameterIds` array. Csound therefore clears the effective display state and makes no
 readback request.
 
 ## State transitions and invariants
 
-1. Mount: `activeTab = global`, `selectedOperator = 0`, Csound sub-tab = `postCode`.
+1. Mount: `activeTab = global`, `selectedOperator = 0`.
 2. Tab click or Enter/Space: the focused tab becomes active; the previous active panel is
    deactivated and any staged envelope gesture is canceled with pointer capture released.
 3. Left/Right in a tab list: focus moves with wraparound; it does not mutate voice state or
@@ -100,7 +93,7 @@ readback request.
    existing operator-panel behavior; the new operator's effective scope becomes current.
 5. Voice edit/import: existing patch/history behavior is unchanged and all mounted panels read
    the new canonical snapshot. The active presentation state is not persisted or overwritten.
-6. Close/unmount: all presentation, effective-value, preview, and gesture state is disposed.
+6. Close/unmount: all presentation, effective-value, and gesture state is disposed.
 
 Invariant: no presentation-state transition changes `BlueX7Voice`, `BlueX7InstrumentSnapshot`,
 project revision, undo/redo stacks, project XML, app settings, or Csound generation.

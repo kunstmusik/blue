@@ -9,9 +9,9 @@
 ## Summary
 
 Recompose the BlueX7 renderer editor into four client-side top-level views—Voice & Global,
-Operators, Pitch Envelope, and Csound & Code—while keeping the metadata/effective-value header
+Operators, Pitch Envelope, and Csound—while keeping the metadata/effective-value header
 and undo/redo controls visible. The implementation will reuse the repository's keep-mounted
-panel pattern, add one local ARIA tab-list primitive for the top-level and nested tab lists,
+panel pattern, add one local ARIA tab-list primitive for the top-level and operator tab lists,
 derive visible effective-value requests from the active view, and give the Csound editor the
 full available panel height. Voice mutation, history, SysEx import, automation parameters,
 serialization, and Csound generation remain on their existing paths; the only intentional
@@ -26,8 +26,7 @@ for the existing voice/catalog types, `codemirror` 6 through `SelectedCodeEditor
 `lucide-react`, and the existing `AppSelect`/renderer components. No new runtime dependency.
 
 **Storage**: No new storage. `BlueData` remains the canonical project owner through the existing
-document bridge; tab, focus, sub-tab, effective readback, preview, and gesture state remain
-renderer-local/disposable.
+document bridge; tab, focus, effective readback, and gesture state remain renderer-local/disposable.
 
 **Testing**: Vitest 4.1 jsdom renderer suites for DOM/patch/history/polling behavior, the
 existing Vitest Playwright browser suite for real layout/focus/viewport checks, and existing
@@ -51,7 +50,7 @@ the seven approved typography roles; pending envelope gestures must finish safel
 becomes hidden.
 
 **Scale/Scope**: One BlueX7 editor instance at a time per panel/window, four top-level tabs, six
-operator sub-tabs, three Csound sub-tabs, up to 151 catalog parameters, and both docked and
+operator sub-tabs, one Csound Post Code view, up to 151 catalog parameters, and both docked and
 popout hosts. The feature is renderer-only; the original request's audio-synthesis comparison
 does not expand this implementation beyond the specified presentation change.
 
@@ -70,13 +69,13 @@ does not expand this implementation beyond the specified presentation change.
   `.blue` XML, CSD, modern module, SysEx, or parameter behavior. The renderer's four-view
   organization is the intentional presentation-only divergence named in the spec.
 - **Canonical ownership and contracts**: **PASS** — `BlueData`/main document bridge owns durable
-  voice/project state; the renderer owns only mounted-editor presentation, focus, nested tabs,
-  effective display, preview, and gesture state. Existing serializable `BlueX7Patch` and
+  voice/project state; the renderer owns only mounted-editor presentation, focus, operator tabs,
+  effective display, and gesture state. Existing serializable `BlueX7Patch` and
   `BlueX7EffectiveValuesRequest` contracts remain the mutation/readback boundaries, with no new
   persistence or migration path.
 - **Runtime and engine isolation**: **PASS** — the renderer continues to call the existing
   preload readback bridge and patch callback; main-process engine, Java, filesystem, process, and
-  ZeroMQ ownership is unchanged. Csound preview remains the existing pure data function.
+  ZeroMQ ownership is unchanged. Csound generation remains on its existing pure data path.
 - **Host-path portability**: **PASS / N/A** — this change reads no native paths, performs no
   filesystem/process work, and introduces no external-text path form or normalization boundary.
 - **Verification evidence**: **PASS** — focused BlueX7 renderer tests, a browser viewport/focus
@@ -115,7 +114,7 @@ packages/blue-app/src/renderer/components/instruments/
     ├── lfo-panel.tsx                   # existing Voice & Global content
     ├── operator-panel.tsx              # nested operator tabs and gesture cancellation
     ├── pitch-envelope-panel.tsx        # PEG layout and gesture cancellation
-    ├── csound-panel.tsx                # nested tabs and full-height code/preview panes
+    ├── csound-panel.tsx                # full-height Post Code view
     └── use-blue-x7-effective-values.ts  # active-scope refresh/stale-response handling
 
 packages/blue-app/src/renderer/tests/
@@ -124,7 +123,7 @@ packages/blue-app/src/renderer/tests/
 ├── blue-x7-effective-values.test.tsx   # scope changes and activation refresh
 ├── blue-x7-undo.test.tsx               # history survives view switches
 ├── blue-x7-envelope.test.tsx            # gesture commit/cancel on deactivation
-└── blue-x7-csound-preview.test.tsx      # nested Csound tabs and preview preservation
+└── blue-x7-csound-preview.test.tsx      # Post Code view and mutation coverage
 
 packages/blue-app/src/renderer/browser/
 └── blue-x7-editor.browser.test.tsx     # desktop/narrow browser geometry and focus
@@ -144,15 +143,15 @@ feature.
 
 1. Define the fixed top-level tab metadata and a reusable `BlueX7TabList` with generated
    instance-local IDs, roving `tabIndex`, `aria-controls`, selected-state styling, horizontal
-   overflow support, and manual activation for click/Enter/Space. Use it for the top-level,
-   operator, and Csound tab lists so nested accessibility behavior is consistent.
+   overflow support, and manual activation for click/Enter/Space. Use it for the top-level and
+   operator tab lists so the nested accessibility behavior is consistent.
 2. Change `BlueX7Editor` to a `h-full min-h-0 flex-col overflow-hidden` shell. Keep the error
    banner, metadata header, effective-value status, and top-level tab list outside a
    `relative min-h-0 flex-1` tabpanel stack. Keep panel instances mounted but hide inactive
    panels with the existing visibility/pointer/accessibility pattern. This preserves nested
-   Csound/operator state and keeps header actions and history in one owner.
+   Csound editor state and keeps header actions and history in one owner.
 3. Render Common + LFO only in Voice & Global, the existing OperatorPanel only in Operators,
-   the PEG only in Pitch Envelope, and the existing CsoundPanel only in Csound & Code. Give each
+   the PEG only in Pitch Envelope, and the existing CsoundPanel only in Csound. Give each
    tabpanel an explicit role/id/label relationship. Use `active` props so CodeMirror requests a
    fresh measure when Csound becomes visible and envelope panels finish pending staged gestures
    when deactivated.
@@ -170,16 +169,16 @@ feature.
    operator changes cancel staged state and release capture without a partial patch.
 6. Update focused unit/browser tests to prove tab DOM semantics, keyboard activation, panel
    visibility, no model patches on tab changes, state reset on fresh mount, header persistence,
-   gesture atomicity, effective-value request subsets/refresh timing, CodeMirror height, and
-   narrow one-row tab scrolling. Leave existing data tests as the guard for XML/CSD/automation
-   compatibility and run the validation matrix in `quickstart.md`.
+   gesture atomicity, effective-value request subsets/refresh timing, the single Csound Post Code
+   view's CodeMirror height, and narrow one-row tab scrolling. Leave existing data tests as the
+   guard for XML/CSD/automation compatibility and run the validation matrix in `quickstart.md`.
 
 ## Risks and mitigations
 
 - **ARIA focus drift:** centralize tab behavior in `BlueX7TabList`; assert selected/controlled
   relationships and inactive-panel exclusion in jsdom and browser tests.
 - **CodeMirror hidden layout:** keep its instance mounted, pass `active`, and assert the active
-  panel/editor rect in the browser suite.
+  Post Code panel/editor rect in the browser suite.
 - **Stale live values on same-sized operator scopes:** derive a stable ordered ID signature and
   reject responses from prior scope generations; test an unresolved old request before switching
   operators.
@@ -211,5 +210,5 @@ feature.
 ## Complexity Tracking
 
 No constitution violations. The only new abstraction is the shared local tab-list primitive,
-justified by three tab lists needing the same ARIA/focus contract; no new persistence, IPC layer,
+justified by two tab lists needing the same ARIA/focus contract; no new persistence, IPC layer,
 or data-model abstraction is introduced.

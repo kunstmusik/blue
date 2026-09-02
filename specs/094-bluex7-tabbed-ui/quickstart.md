@@ -83,9 +83,9 @@ pnpm test
 4. Start a drag and activate another top-level tab before releasing. Confirm the staged value
    commits once (or is safely canceled with no partial patch) and focus is not left on a hidden
    control.
-5. In Csound & Code, edit Post Code, switch to Generated Preview, then Bindings & Diagnostics.
-   Confirm the editor uses the panel height, generated content updates, and Csound edits retain
-   their existing mutation/history behavior.
+5. In Csound, edit Post Code and switch to another top-level tab and back. Confirm the editor uses
+   the panel height, no nested Csound tabs are shown, and edits retain their existing
+   mutation/history behavior.
 6. During playback or BlueLive effective-value observation, switch between Global, Operators,
    Pitch, and Csound. Inspect the preload request mock/log: hidden-tab IDs must be absent, Csound
    must issue no empty request, and the newly active controls must receive values within one
@@ -101,7 +101,7 @@ pnpm test
 - Implementation: tasks T001–T039 are complete, including the convergence fixes for runtime
   readback validation, request-generation ownership, live Pitch display, gesture cleanup,
   per-mount ARIA identity, canonical SysEx synchronization, and docked/track host coverage.
-- Automated checks: `@blue/app` passed 4,026 tests with 2 skipped; renderer/main/preload builds,
+- Automated checks: `@blue/app` passed 4,022 tests with 2 skipped; renderer/main/preload builds,
   lint, script checks, and `git diff --check` passed.
 - Exceptions: the four-file `@blue/data` check still has the pre-existing modern-render hash
   mismatch, and the configured Chrome process still exits with `SIGABRT` before browser tests

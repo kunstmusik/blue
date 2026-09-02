@@ -242,7 +242,7 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
 
     renderEditor(instrument);
 
-    // Switch to Csound & Code tab
+    // Switch to Csound tab
     const csoundTab = container?.querySelector('[role="tab"][data-testid="tab-csound"]') as HTMLButtonElement;
     act(() => {
       clickElement(csoundTab);
