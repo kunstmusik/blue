@@ -4,10 +4,7 @@
  */
 export class SoundObjectException extends Error {
   constructor(message: string, cause?: unknown) {
-    super(message);
+    super(message, cause !== undefined ? { cause } : undefined);
     this.name = 'SoundObjectException';
-    if (cause instanceof Error) {
-      this.cause = cause;
-    }
   }
 }
