@@ -48,7 +48,6 @@ export {
 	setJavaScriptSession,
 	getJavaScriptSession,
 } from './javascript-runtime';
-export { setCopy as setCopyBuffer, getCopy as getCopyBuffer, hasContent as hasClipboardContent, clear as clearClipboard } from './copy-buffer';
 
 // ─── Arrangement ───
 export { Arrangement } from './arrangement';
