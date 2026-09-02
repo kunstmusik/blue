@@ -18,7 +18,6 @@ import {
   type ColorPickerAnchorRect,
 } from './color-picker-utils';
 
-export { computeColorPickerPosition } from './color-picker-utils';
 export type { ColorPickerAnchorRect } from './color-picker-utils';
 
 const PRESET_COLORS = [

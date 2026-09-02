@@ -1,5 +1,3 @@
-import { computeFloatingPosition } from './floating-position-utils';
-
 export interface ColorPickerAnchorRect {
   left: number;
   right: number;
@@ -7,30 +5,7 @@ export interface ColorPickerAnchorRect {
   bottom: number;
 }
 
-export interface ColorPickerPosition {
-  left: number;
-  top: number;
-  placement: 'top' | 'bottom';
-}
-
-export interface ColorPickerSize {
-  width: number;
-  height: number;
-}
-
-export const COLOR_PICKER_SIZE: ColorPickerSize = { width: 240, height: 260 };
 export const COLOR_PICKER_MARGIN = 8;
-export function computeColorPickerPosition(
-  anchor: ColorPickerAnchorRect,
-  popup: ColorPickerSize,
-  viewport: ColorPickerSize,
-): ColorPickerPosition {
-  return computeFloatingPosition(anchor, popup, viewport, {
-    gap: 8,
-    margin: COLOR_PICKER_MARGIN,
-    align: 'center',
-  });
-}
 
 export function normalizeHex(value: string): string {
   const normalized = value.trim().toLowerCase();

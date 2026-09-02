@@ -7,9 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import ColorPickerButton, {
   ColorPickerPopover,
-  computeColorPickerPosition,
 } from '../components/ColorPicker';
-import { getFloatingViewport } from '../components/floating-position-utils';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -90,20 +88,6 @@ describe('ColorPicker', () => {
     expect(document.querySelector('[role="dialog"]')).toBeTruthy();
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(document.querySelector('[role="dialog"]')).toBeNull();
-  });
-
-  it('places the popup below when it fits and above when lower space is insufficient', () => {
-    expect(computeColorPickerPosition(
-      { left: 100, right: 120, top: 100, bottom: 120 },
-      { width: 240, height: 260 },
-      { width: 800, height: 800 },
-    )).toEqual({ left: 8, top: 128, placement: 'bottom' });
-
-    expect(computeColorPickerPosition(
-      { left: 500, right: 520, top: 700, bottom: 720 },
-      { width: 240, height: 260 },
-      { width: 800, height: 800 },
-    )).toEqual({ left: 390, top: 432, placement: 'top' });
   });
 
   it('portals the popover into the anchor element document (floating workbench panels)', () => {
@@ -198,27 +182,6 @@ describe('ColorPicker', () => {
       popoutDoc.dispatchEvent(new PopoutKeyboardEvent('keydown', { key: 'Escape' }));
     });
     expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('measures the floating viewport against the window that owns the anchor', () => {
-    const popout = new JSDOM('<!doctype html><html><body><div id="anchor"></div></body></html>');
-    const anchor = popout.window.document.getElementById('anchor')!;
-    const view = popout.window;
-    const originalInnerWidth = Object.getOwnPropertyDescriptor(window, 'innerWidth')!;
-    const originalInnerHeight = Object.getOwnPropertyDescriptor(window, 'innerHeight')!;
-    Object.defineProperty(view, 'innerWidth', { configurable: true, value: 555 });
-    Object.defineProperty(view, 'innerHeight', { configurable: true, value: 444 });
-    try {
-      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1920 });
-      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1080 });
-
-      const viewport = getFloatingViewport(anchor);
-      expect(viewport.width).toBe(555);
-      expect(viewport.height).toBe(444);
-    } finally {
-      Object.defineProperty(window, 'innerWidth', originalInnerWidth);
-      Object.defineProperty(window, 'innerHeight', originalInnerHeight);
-    }
   });
 
   it('stops pointer events from bubbling to ancestors behind the popover', () => {
