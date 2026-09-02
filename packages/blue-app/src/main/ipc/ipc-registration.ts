@@ -148,8 +148,3 @@ export function registerIpcTransaction(
     scope.dispose();
   };
 }
-
-export function clearIpcRegistrationLeasesForTesting(): void {
-  // WeakMap keys are intentionally not enumerable. Tests should dispose the
-  // scopes they acquire; this function documents that no global reset exists.
-}

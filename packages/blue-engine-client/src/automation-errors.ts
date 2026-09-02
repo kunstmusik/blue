@@ -36,8 +36,3 @@ export function isAutomationDiagnosticCode(value: unknown): value is AutomationD
     (AUTOMATION_DIAGNOSTIC_CODES as readonly string[]).includes(value)
   );
 }
-
-/** Human-readable prefix for a diagnostic; used in engine responses. */
-export function automationDiagnosticPrefix(code: AutomationDiagnosticCode): string {
-  return `[${code}]`;
-}

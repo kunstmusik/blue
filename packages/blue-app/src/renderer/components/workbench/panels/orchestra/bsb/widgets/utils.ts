@@ -537,10 +537,6 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function escapeHtmlAttribute(text: string): string {
-  return escapeHtml(text).replace(/`/g, '&#96;');
-}
-
 function cacheMarkup(key: string, value: string): void {
   if (htmlMarkupCache.size > 500) {
     htmlMarkupCache.clear();
