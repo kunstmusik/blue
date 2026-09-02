@@ -21,6 +21,8 @@ await build({
     path.resolve(rootDir, '../blue-data/node_modules'),
     path.resolve(rootDir, '../../node_modules'),
   ],
+  // quickjs-emscripten must be externalized from the bundle and listed in
+  // package.json dependencies so standalone CLI installations can resolve it at runtime.
   external: ['quickjs-emscripten'],
   banner: {
     js: '#!/usr/bin/env node',
