@@ -17,14 +17,19 @@ import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilities/score';
+import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from '../score/layers/layer-color';
+import { Element } from '../serialization/xml-reader';
 
 export class SoundLayer extends Array<SoundObject> implements Layer, AutomatableLayer {
   private _name = '';
   private _muted = false;
   private _solo = false;
   private _heightIndex = 0;
+  private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _npc = new NoteProcessorChain();
   private _automationParameters = new ParameterIdList();
+  private _unknownAttributes = new Map<string, string>();
+  private _unknownChildren: Element[] = [];
 
   constructor(other?: SoundLayer | number) {
     if (typeof other === 'number') {
@@ -38,8 +43,14 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       this._muted = other._muted;
       this._solo = other._solo;
       this._heightIndex = other._heightIndex;
+      this._backgroundColor = other._backgroundColor;
       this._npc = new NoteProcessorChain(other._npc);
       this._automationParameters = other._automationParameters.deepCopy();
+
+      for (const [k, v] of other._unknownAttributes) {
+        this._unknownAttributes.set(k, v);
+      }
+      this._unknownChildren = other._unknownChildren.map((c) => c.clone());
 
       for (const sObj of other) {
         this.push(sObj.deepCopy());
@@ -47,7 +58,31 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     }
   }
 
+  getUnknownAttributes(): ReadonlyMap<string, string> {
+    return this._unknownAttributes;
+  }
+
+  setUnknownAttribute(name: string, value: string): void {
+    this._unknownAttributes.set(name, value);
+  }
+
+  getUnknownChildren(): readonly Element[] {
+    return this._unknownChildren;
+  }
+
+  addUnknownChild(child: Element): void {
+    this._unknownChildren.push(child);
+  }
+
   // ─── Layer implementation ───
+
+  getBackgroundColor(): number {
+    return this._backgroundColor;
+  }
+
+  setBackgroundColor(color: number): void {
+    this._backgroundColor = normalizeLayerColor(color);
+  }
 
   getName(): string {
     return this._name;

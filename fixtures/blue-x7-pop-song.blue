@@ -155,6 +155,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
       <defaultHeightIndex>0</defaultHeightIndex>
       <tracks>
         <track name="E Piano" muted="false" solo="false" heightIndex="0" uniqueId="313b80ef-a098-404e-b957-cc88ac030af5" automationSelectedIndex="-1">
+          <backgroundColor>-12566464</backgroundColor>
           <noteProcessorChain/>
           <instrument type="blue.orchestra.BlueX7" enabled="true">
             <name>E Piano</name>
@@ -2513,6 +2514,7 @@ Tempo map is enabled at 112 BPM; mixer is enabled with one channel per track.</n
           </soundObject>
         </track>
         <track name="Bass" muted="false" solo="false" heightIndex="0" uniqueId="1fef7747-e706-4786-a1aa-ac20b50b6f8e" automationSelectedIndex="-1">
+          <backgroundColor>-12566464</backgroundColor>
           <noteProcessorChain/>
           <instrument type="blue.orchestra.BlueX7" enabled="true">
             <name>FM Bass</name>

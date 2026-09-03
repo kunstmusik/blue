@@ -94,6 +94,8 @@ import {
   getNotes as parseScoreNotes,
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
+  isValidLayerColorInput,
+  normalizeLayerColor,
 } from '@blue/data';
 import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
@@ -771,6 +773,15 @@ function isLayerHeightManagedLayer(value: unknown): value is LayerHeightManagedL
     && typeof value.setHeightIndex === 'function';
 }
 
+function isColorManaged(value: unknown): value is { getBackgroundColor(): number; setBackgroundColor(color: number): void } {
+  return typeof value === 'object'
+    && value !== null
+    && 'getBackgroundColor' in value
+    && typeof (value as { getBackgroundColor: unknown }).getBackgroundColor === 'function'
+    && 'setBackgroundColor' in value
+    && typeof (value as { setBackgroundColor: unknown }).setBackgroundColor === 'function';
+}
+
 function applyUpdateLayerStatePatch(
   data: BlueData,
   patch: ScorePatch & { type: 'updateLayerState' },
@@ -783,7 +794,21 @@ function applyUpdateLayerStatePatch(
   const layer = targetGroup[patch.layerIndex];
   if (!isLayerStateManagedLayer(layer)) return false;
 
+  if (patch.patch.backgroundColor !== undefined) {
+    if (!isValidLayerColorInput(patch.patch.backgroundColor)) {
+      return false;
+    }
+  }
+
   let changed = false;
+
+  if (patch.patch.backgroundColor !== undefined && isColorManaged(layer)) {
+    const normalized = normalizeLayerColor(patch.patch.backgroundColor);
+    if (layer.getBackgroundColor() !== normalized) {
+      layer.setBackgroundColor(normalized);
+      changed = true;
+    }
+  }
 
   if (patch.patch.muted !== undefined && layer.isMuted() !== patch.patch.muted) {
     layer.setMuted(patch.patch.muted);
@@ -877,7 +902,14 @@ function applyAddScoreObjectsPatch(data: BlueData, patch: ScorePatch & { type: '
         beatsToDuration(obj.durationBeats, (obj.durationTimeBase ?? TimeBase.BEATS) as TimeBase, context),
       );
     }
-    targetObject.setBackgroundColor(obj.backgroundColor);
+    if (obj.backgroundColor !== undefined) {
+      targetObject.setBackgroundColor(obj.backgroundColor);
+    } else if (!obj.serializedXml && !obj.sourceTarget?.location) {
+      const destLayer = targetGroup[obj.layerIndex];
+      if (destLayer && isColorManaged(destLayer)) {
+        targetObject.setBackgroundColor(destLayer.getBackgroundColor());
+      }
+    }
 
     if (obj.layerIndex < 0 || obj.layerIndex >= targetGroup.length) {
       continue;
@@ -1818,6 +1850,9 @@ function applyTrackScorePatch(
     if (!target) return false;
     const item = reifyTrackItemTransfer(patch.item, context);
     if (!item || !target.track.accepts(item)) return false;
+    if (!patch.item.serializedXml && patch.item.backgroundColor === undefined) {
+      item.setBackgroundColor(target.track.getBackgroundColor());
+    }
     setTrackItemTiming(
       item,
       context,
@@ -2129,6 +2164,122 @@ function applyUpdatePatternBeatsLengthPatch(
   return true;
 }
 
+function getScoreObjectColorTargetKey(target: ScoreObjectEditorTargetSnapshot | null | undefined): string | null {
+  if (!target) return null;
+  if (target.patternSource) {
+    const ps = target.patternSource;
+    return `pat:${ps.groupId}:${ps.layerId}:${ps.sourceObjectId}`;
+  }
+  if (target.location) {
+    const loc = target.location;
+    return `loc:${loc.rootGroupIndex}:${(loc.containerPath ?? []).join('/')}:${loc.layerIndex}:${loc.objectIndex}`;
+  }
+  if (target.selectionId) return `sel:${target.selectionId}`;
+  return null;
+}
+
+function resolveScoreObjectColorUpdates(
+  data: BlueData,
+  updates: unknown,
+): Array<{ sObj: SoundObject | AudioClip; color: number }> | null {
+  if (!Array.isArray(updates)) return null;
+
+  const seenKeys = new Set<string>();
+  const seenObjects = new Set<SoundObject | AudioClip>();
+  const resolvedList: Array<{ sObj: SoundObject | AudioClip; color: number }> = [];
+
+  for (const update of updates) {
+    if (!update || typeof update !== 'object') return null;
+    const candidate = update as {
+      target?: ScoreObjectEditorTargetSnapshot;
+      backgroundColor?: unknown;
+    };
+    const target = candidate.target;
+    if (!target || !isValidLayerColorInput(candidate.backgroundColor)) return null;
+    if (target.ownerKind === 'blueLive' || target.ownerKind === 'library') return null;
+
+    const key = getScoreObjectColorTargetKey(target);
+    if (!key || seenKeys.has(key)) return null;
+    seenKeys.add(key);
+
+    let resolved: { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null;
+    try {
+      resolved = resolveEditorTarget(data, target);
+    } catch {
+      return null;
+    }
+    if (!resolved || resolved.isLibraryOwned || !isColorManaged(resolved.sObj)) {
+      return null;
+    }
+
+    if (seenObjects.has(resolved.sObj)) return null;
+    seenObjects.add(resolved.sObj);
+    resolvedList.push({
+      sObj: resolved.sObj,
+      color: normalizeLayerColor(candidate.backgroundColor),
+    });
+  }
+
+  return resolvedList;
+}
+
+function areEquivalentScoreColors(left: number, right: number): boolean {
+  if (left === right) return true;
+  if (!isValidLayerColorInput(left) || !isValidLayerColorInput(right)) return false;
+  return normalizeLayerColor(left) === normalizeLayerColor(right);
+}
+
+/**
+ * Reports whether a score color patch is valid and resolves to project-owned
+ * color state. This deliberately differs from the boolean mutation result:
+ * valid no-op layer and item edits are accepted even when no setter runs.
+ */
+export function isScoreColorPatchAccepted(data: BlueData, patch: ScorePatch): boolean {
+  switch (patch.type) {
+    case 'updateLayerState': {
+      const color = patch.patch?.backgroundColor;
+      if (!isValidLayerColorInput(color) || !Number.isInteger(patch.layerIndex)) return false;
+      const group = findLayerGroupByGroupId(data.getScore(), patch.groupId);
+      const layer = group?.[patch.layerIndex];
+      return !!group && !!layer && isLayerStateManagedLayer(layer) && isColorManaged(layer);
+    }
+    case 'updateSharedProperties': {
+      if (!isValidLayerColorInput(patch.patch?.backgroundColor)) return false;
+      if (patch.target?.ownerKind === 'blueLive' || patch.target?.ownerKind === 'library') return false;
+      let resolved: { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null;
+      try {
+        resolved = resolveEditorTarget(data, patch.target);
+      } catch {
+        return false;
+      }
+      return !!resolved && !resolved.isLibraryOwned && isColorManaged(resolved.sObj);
+    }
+    case 'setScoreObjectBackgroundColors':
+      return Array.isArray(patch.updates)
+        && (patch.updates.length === 0 || resolveScoreObjectColorUpdates(data, patch.updates) !== null);
+    default:
+      return false;
+  }
+}
+
+function applySetScoreObjectBackgroundColorsPatch(
+  data: BlueData,
+  patch: ScorePatch & { type: 'setScoreObjectBackgroundColors' },
+): boolean {
+  const resolvedList = resolveScoreObjectColorUpdates(data, patch.updates);
+  if (!resolvedList || resolvedList.length === 0) return false;
+
+  let changed = false;
+  for (const { sObj, color } of resolvedList) {
+    if (!areEquivalentScoreColors(sObj.getBackgroundColor(), color)) {
+      sObj.setBackgroundColor(color);
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
 export function applyScoreObjectPatch(
   data: BlueData,
   patch: ScorePatch,
@@ -2142,6 +2293,9 @@ export function applyScoreObjectPatch(
   }
   if (patch.type === 'updatePatternBeatsLength') {
     return applyUpdatePatternBeatsLengthPatch(data, patch);
+  }
+  if (patch.type === 'setScoreObjectBackgroundColors') {
+    return applySetScoreObjectBackgroundColorsPatch(data, patch);
   }
   if (patch.type === 'addScoreObjects') {
     return applyAddScoreObjectsPatch(data, patch);
@@ -2340,33 +2494,39 @@ export function applyScoreObjectPatch(
   switch (patch.type) {
     case 'updateSharedProperties': {
       const p = patch.patch;
-      if (p.name !== undefined) sObj.setName(p.name);
+      if (p.backgroundColor !== undefined && !isScoreColorPatchAccepted(data, patch)) {
+        return false;
+      }
+
+      let changed = false;
+      if (p.name !== undefined && sObj.getName() !== p.name) {
+        sObj.setName(p.name);
+        changed = true;
+      }
       if (p.backgroundColor !== undefined) {
-        if (sObj instanceof AudioClip) {
+        if (isColorManaged(sObj)
+          && !areEquivalentScoreColors(sObj.getBackgroundColor(), p.backgroundColor)) {
           sObj.setBackgroundColor(p.backgroundColor);
-        } else if (sObj instanceof AbstractSoundObject) {
-          sObj.setBackgroundColor(p.backgroundColor);
+          changed = true;
         }
       }
       if (p.startTime !== undefined) {
         const tb = p.startTime.timeBase as TimeBase;
         const tp = beatsToTimePosition(p.startTime.value, tb, context);
-        if (sObj instanceof AudioClip) {
+        if (!sObj.getStartTime().equals(tp)) {
           sObj.setStartTime(tp);
-        } else if (sObj instanceof AbstractSoundObject) {
-          sObj.setStartTime(tp);
+          changed = true;
         }
       }
       if (p.subjectiveDuration !== undefined) {
         const tb = p.subjectiveDuration.timeBase as TimeBase;
         const td = beatsToDuration(p.subjectiveDuration.value, tb, context);
-        if (sObj instanceof AudioClip) {
+        if (!sObj.getSubjectiveDuration().equals(td)) {
           sObj.setSubjectiveDuration(td);
-        } else if (sObj instanceof AbstractSoundObject) {
-          sObj.setSubjectiveDuration(td);
+          changed = true;
         }
       }
-      return true;
+      return changed;
     }
     case 'updateSoundObjectBehavior': {
       if (!(sObj instanceof AbstractSoundObject)) return false;

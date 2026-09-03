@@ -1,0 +1,56 @@
+<blueData version="2.3.0">
+  <score>
+    <timeContext />
+    <timeState />
+    <noteProcessorChain />
+    <soundObject type="blue.soundObject.PolyObject">
+      <name>SoundObject Layer Group</name>
+      <soundLayer name="Ordinary Layer 1" muted="false" solo="false" heightIndex="0">
+        <noteProcessorChain />
+        <soundObject type="blue.soundObject.GenericScore">
+          <name>Score Clip 1</name>
+          <startTime type="beats">0</startTime>
+          <subjectiveDuration type="beats">4</subjectiveDuration>
+          <backgroundColor>-16728065</backgroundColor>
+          <scoreText>i1 0 2 440 0.5</scoreText>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+    <trackLayerGroup name="Track Group 1" uniqueId="tg-1">
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <tracks>
+        <track name="Track 1" muted="false" solo="false" heightIndex="0" uniqueId="t-1">
+          <audioClip>
+            <name>Audio Clip 1</name>
+            <audioFile>/fixtures/test.wav</audioFile>
+            <numChannels>2</numChannels>
+            <audioDuration>4</audioDuration>
+            <fileStart>0</fileStart>
+            <startTime type="beats">0</startTime>
+            <subjectiveDuration type="beats">4</subjectiveDuration>
+            <backgroundColor>-10066330</backgroundColor>
+          </audioClip>
+        </track>
+      </tracks>
+    </trackLayerGroup>
+    <patternsLayerGroup name="Pattern Group 1">
+      <patternBeatsLength>4</patternBeatsLength>
+      <patternLayers>
+        <patternLayer name="Pattern 1" muted="false" solo="false">
+          <soundObject type="blue.soundObject.GenericScore">
+            <name>Pattern Source 1</name>
+            <startTime type="beats">0</startTime>
+            <subjectiveDuration type="beats">4</subjectiveDuration>
+            <backgroundColor>-256</backgroundColor>
+            <scoreText>i1 0 1 880 0.3</scoreText>
+          </soundObject>
+          <patternData>
+            <patternData-boolean>true</patternData-boolean>
+            <patternData-boolean>false</patternData-boolean>
+          </patternData>
+        </patternLayer>
+      </patternLayers>
+      <noteProcessorChain />
+    </patternsLayerGroup>
+  </score>
+</blueData>

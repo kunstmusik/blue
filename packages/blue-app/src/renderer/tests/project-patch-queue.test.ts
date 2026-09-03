@@ -10,6 +10,39 @@ function makePatch(tempo: number): ProjectDocumentPatch {
   return { blueLive: { type: 'updateTempoRepeat', patch: { tempo } } };
 }
 
+function makeLayerColorPatch(): ProjectDocumentPatch {
+  return {
+    score: {
+      type: 'updateLayerState',
+      groupId: 'group-1',
+      layerIndex: 0,
+      patch: { backgroundColor: -65536 },
+    },
+  };
+}
+
+function makeItemColorPatch(): ProjectDocumentPatch {
+  return {
+    score: {
+      type: 'updateSharedProperties',
+      target: {
+        selectionId: 'item-1',
+        selectedObjectType: 'GenericScore',
+        editorObjectType: 'GenericScore',
+        ownerKind: 'timeline',
+        displayContext: 'timeline',
+        location: {
+          rootGroupIndex: 0,
+          containerPath: [],
+          layerIndex: 0,
+          objectIndex: 0,
+        },
+      },
+      patch: { backgroundColor: -65536 },
+    },
+  };
+}
+
 function makeReceipt(overrides: Partial<ProjectDocumentCommitReceipt> = {}): ProjectDocumentCommitReceipt {
   return { changed: true, revision: 1, sessionId: 1, ...overrides };
 }
@@ -141,6 +174,58 @@ describe('ProjectPatchQueue', () => {
     await queue.awaitPending();
     expect(dependencies.commit).toHaveBeenCalledTimes(2);
     expect(dependencies.reportBackgroundError).toHaveBeenCalledWith(error);
+  });
+
+  it('rejects stale layer and item color patches even when unrelated patches changed', async () => {
+    const dependencies = makeDependencies({
+      commit: vi.fn().mockResolvedValue(makeReceipt({
+        changed: true,
+        patchChanged: [true, false, false],
+        patchAccepted: [true, false, false],
+      })),
+    });
+    const queue = createProjectPatchQueue(dependencies);
+
+    queue.enqueue(makePatch(60), false);
+    queue.enqueue(makeLayerColorPatch(), false);
+    queue.enqueue(makeItemColorPatch(), false);
+
+    await expect(queue.flush()).rejects.toThrow('color change was not applied');
+    expect(dependencies.fetchCanonicalSnapshot).toHaveBeenCalled();
+  });
+
+  it('accepts valid no-op color patches when acceptance is true despite no mutation', async () => {
+    const dependencies = makeDependencies({
+      commit: vi.fn().mockResolvedValue(makeReceipt({
+        changed: true,
+        patchChanged: [true, false, false],
+        patchAccepted: [true, true, true],
+      })),
+    });
+    const queue = createProjectPatchQueue(dependencies);
+
+    queue.enqueue(makePatch(60), false);
+    queue.enqueue(makeLayerColorPatch(), false);
+    queue.enqueue(makeItemColorPatch(), false);
+
+    await expect(queue.flush()).resolves.toBeUndefined();
+    expect(dependencies.fetchCanonicalSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('rejects a genuinely rejected color patch even when the batch reports no mutation', async () => {
+    const dependencies = makeDependencies({
+      commit: vi.fn().mockResolvedValue(makeReceipt({
+        changed: false,
+        patchChanged: [false],
+        patchAccepted: [false],
+      })),
+    });
+    const queue = createProjectPatchQueue(dependencies);
+
+    queue.enqueue(makeLayerColorPatch(), false);
+
+    await expect(queue.flush()).rejects.toThrow('color change was not applied');
+    expect(dependencies.fetchCanonicalSnapshot).toHaveBeenCalledTimes(1);
   });
 
   it('fences revisions and clears queued work on session changes', async () => {

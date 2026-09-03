@@ -8,6 +8,7 @@
  */
 import { SoundObject } from './sound-object';
 import { SoundLayer } from './sound-layer';
+import { normalizeXmlLayerColor } from '../score/layers/layer-color';
 import { LayerGroup } from '../score/layers/layer-group';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { TimeBehavior } from './time-behavior';
@@ -425,11 +426,15 @@ export class PolyObject extends Array<SoundLayer>
 
     for (const layer of this) {
       const layerElem = new Element('soundLayer');
+      for (const [attrName, attrValue] of layer.getUnknownAttributes()) {
+        layerElem.setAttribute(attrName, attrValue);
+      }
       layerElem.setAttribute('name', layer.getName());
       layerElem.setAttribute('muted', layer.isMuted().toString());
       layerElem.setAttribute('solo', layer.isSolo().toString());
       layerElem.setAttribute('heightIndex', layer.getHeightIndex().toString());
       layerElem.setAttribute('automationSelectedIndex', layer.getAutomationParameters().getSelectedIndex().toString());
+      layerElem.addElement('backgroundColor').setText(String(layer.getBackgroundColor()));
       layerElem.addElement(layer.getNoteProcessorChain().saveAsXML());
 
       for (const sObj of layer) {
@@ -438,6 +443,10 @@ export class PolyObject extends Array<SoundLayer>
 
       for (const id of layer.getAutomationParameters().getIds()) {
         layerElem.addElement('parameterId').setText(id);
+      }
+
+      for (const child of layer.getUnknownChildren()) {
+        layerElem.addElement(child.clone());
       }
 
       elem.addElement(layerElem);
@@ -483,6 +492,12 @@ export class PolyObject extends Array<SoundLayer>
 
       if (nodeName === 'soundLayer') {
         const layer = new SoundLayer();
+        const knownAttrs = new Set(['name', 'muted', 'solo', 'heightIndex', 'automationSelectedIndex']);
+        for (const attrName of node.getAttributeNames()) {
+          if (!knownAttrs.has(attrName)) {
+            layer.setUnknownAttribute(attrName, node.getAttribute(attrName) ?? '');
+          }
+        }
         const layerName = node.getAttribute('name');
         if (layerName) layer.setName(layerName);
 
@@ -498,13 +513,24 @@ export class PolyObject extends Array<SoundLayer>
         const sObjNodes = node.getElements();
         while (sObjNodes.hasMoreElements()) {
           const sObjNode = sObjNodes.next();
-          if (sObjNode.getName() === 'soundObject') {
+          const childName = sObjNode.getName();
+          if (childName === 'soundObject') {
             const sObj = loadSoundObjectFromXML(sObjNode, _objRefMap);
-            if (sObj) layer.push(sObj);
-          } else if (sObjNode.getName() === 'noteProcessorChain') {
+            if (sObj) {
+              layer.push(sObj);
+            } else {
+              // Keep unsupported sound objects opaque so loading a project does
+              // not silently delete content that this runtime cannot execute.
+              layer.addUnknownChild(sObjNode.clone());
+            }
+          } else if (childName === 'backgroundColor') {
+            layer.setBackgroundColor(normalizeXmlLayerColor(sObjNode.getTextString()));
+          } else if (childName === 'noteProcessorChain') {
             layer.setNoteProcessorChain(NoteProcessorChain.loadFromXML(sObjNode));
-          } else if (sObjNode.getName() === 'parameterId') {
+          } else if (childName === 'parameterId') {
             layer.getAutomationParameters().addParameterId(sObjNode.getTextString());
+          } else {
+            layer.addUnknownChild(sObjNode.clone());
           }
         }
         if (automationSelectedIndex) {

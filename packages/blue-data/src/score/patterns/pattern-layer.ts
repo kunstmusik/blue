@@ -7,6 +7,7 @@
  * where the pattern is active (true), offset by index * patternBeatsLength.
  */
 import { Layer, LAYER_HEIGHT } from '../../score/layers/layer';
+import { DEFAULT_LAYER_COLOR, normalizeLayerColor, normalizeXmlLayerColor } from '../../score/layers/layer-color';
 import { ScoreObject } from '../../score/score-object';
 import { PatternData } from './pattern-data';
 import { TimeContext } from '../../time/time-context';
@@ -28,24 +29,52 @@ export class PatternLayer implements Layer {
   private _name = '';
   private _muted = false;
   private _solo = false;
+  private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _patternData: PatternData;
+  private _unknownAttributes = new Map<string, string>();
+  private _unknownChildren: Element[] = [];
+  private _unresolvedSoundObject: Element | null = null;
 
   constructor(other?: PatternLayer) {
     if (other) {
       this._name = other._name;
       this._muted = other._muted;
       this._solo = other._solo;
+      this._backgroundColor = other._backgroundColor;
       this._soundObject = other._soundObject.deepCopy();
       this._patternData = new PatternData(other._patternData);
+
+      for (const [k, v] of other._unknownAttributes) {
+        this._unknownAttributes.set(k, v);
+      }
+      this._unknownChildren = other._unknownChildren.map((c) => c.clone());
+      this._unresolvedSoundObject = other._unresolvedSoundObject?.clone() ?? null;
     } else {
       // Mirrors the Java PatternLayer constructor: a GenericScore with a real
       // beat-based start/duration (serializable) and no time behavior.
       this._soundObject = new GenericScore();
+      this._soundObject.setBackgroundColor(this._backgroundColor);
       this._soundObject.setStartTime(TimePosition.beats(0));
       this._soundObject.setSubjectiveDuration(TimeDuration.beats(4));
       this._soundObject.setTimeBehavior(TimeBehavior.NONE);
       this._patternData = new PatternData();
     }
+  }
+
+  getUnknownAttributes(): ReadonlyMap<string, string> {
+    return this._unknownAttributes;
+  }
+
+  setUnknownAttribute(name: string, value: string): void {
+    this._unknownAttributes.set(name, value);
+  }
+
+  getUnknownChildren(): readonly Element[] {
+    return this._unknownChildren;
+  }
+
+  addUnknownChild(child: Element): void {
+    this._unknownChildren.push(child);
   }
 
   // ─── Layer ───
@@ -54,6 +83,9 @@ export class PatternLayer implements Layer {
   setName(name: string): void { this._name = name; }
 
   getLayerHeight(): number { return LAYER_HEIGHT; }
+
+  getBackgroundColor(): number { return this._backgroundColor; }
+  setBackgroundColor(color: number): void { this._backgroundColor = normalizeLayerColor(color); }
 
   accepts(_object: ScoreObject): boolean { return false; }
   contains(_object: ScoreObject): boolean { return false; }
@@ -72,6 +104,7 @@ export class PatternLayer implements Layer {
 
   setSoundObject(sObj: SoundObject): void {
     this._soundObject = sObj;
+    this._unresolvedSoundObject = null;
   }
 
   isMuted(): boolean { return this._muted; }
@@ -116,20 +149,37 @@ export class PatternLayer implements Layer {
 
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('patternLayer');
+    for (const [name, value] of this._unknownAttributes) {
+      elem.setAttribute(name, value);
+    }
     elem.setAttribute('name', this._name);
     elem.setAttribute('muted', this._muted.toString());
     elem.setAttribute('solo', this._solo.toString());
 
-    if (this._soundObject) {
+    elem.addElement('backgroundColor').setText(String(this._backgroundColor));
+    if (this._unresolvedSoundObject) {
+      elem.addElement(this._unresolvedSoundObject.clone());
+    } else if (this._soundObject) {
       elem.addElement(this._soundObject.saveAsXML(_objRefMap));
     }
     elem.addElement(this._patternData.saveAsXML());
+
+    for (const child of this._unknownChildren) {
+      elem.addElement(child.clone());
+    }
 
     return elem;
   }
 
   static loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): PatternLayer {
     const layer = new PatternLayer();
+
+    const knownAttrs = new Set(['name', 'muted', 'solo']);
+    for (const name of data.getAttributeNames()) {
+      if (!knownAttrs.has(name)) {
+        layer.setUnknownAttribute(name, data.getAttribute(name) ?? '');
+      }
+    }
 
     layer._name = data.getAttributeValue('name') ?? '';
     layer._muted = data.getAttributeValue('muted') === 'true';
@@ -140,16 +190,24 @@ export class PatternLayer implements Layer {
       const node = nodes.next();
       const nodeName = node.getName();
 
-      if (nodeName === 'soundObject') {
+      if (nodeName === 'backgroundColor') {
+        layer._backgroundColor = normalizeXmlLayerColor(node.getTextString());
+      } else if (nodeName === 'soundObject') {
         const loaded = loadSoundObjectFromXML(node, objRefMap);
         if (loaded) {
           layer._soundObject = loaded;
+        } else {
+          // Keep unsupported sources opaque while retaining the constructor's
+          // GenericScore as the safe runtime fallback.
+          layer._unresolvedSoundObject = node.clone();
         }
-        // If loader returns null (unknown type), keep the default GenericScore.
-        // This matches Java's fallback behavior where PatternLayer retains its
-        // constructor-assigned SoundObject when ObjectUtilities.loadFromXML fails.
+        // If loader returns null (unknown type), keep the default GenericScore
+        // for runtime behavior. The original source is saved above instead of
+        // emitting that fallback, so unsupported content survives round trips.
       } else if (nodeName === 'patternData') {
         layer._patternData = PatternData.loadFromXML(node);
+      } else {
+        layer.addUnknownChild(node.clone());
       }
     }
 

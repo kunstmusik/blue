@@ -230,6 +230,7 @@ export interface ScoreLayerSnapshot {
   layerSelectionId?: string;
   name: string;
   height: number;
+  backgroundColor: number;
   muted?: boolean;
   solo?: boolean;
   items: ScoreRowObjectSnapshot[];
@@ -827,7 +828,7 @@ export type ScorePatch =
         durationBeats: number;
         startTimeBase?: string;
         durationTimeBase?: string;
-        backgroundColor: number;
+        backgroundColor?: number;
         serializedXml?: string;
         sourceTarget?: ScoreObjectEditorTargetSnapshot;
       }>;
@@ -844,6 +845,13 @@ export type ScorePatch =
   | {
       type: 'removeScoreObjects';
       targets: ScoreObjectEditorTargetSnapshot[];
+    }
+  | {
+      type: 'setScoreObjectBackgroundColors';
+      updates: Array<{
+        target: ScoreObjectEditorTargetSnapshot;
+        backgroundColor: number;
+      }>;
     }
   | {
       // Mirrors Java ConvertToObjectBuilderAction: removes a single
@@ -906,6 +914,7 @@ export type ScorePatch =
         muted?: boolean;
         solo?: boolean;
         heightIndex?: number;
+        backgroundColor?: number;
       };
     }
   | { type: 'renameLayer'; groupId: string; layerIndex: number; name: string }
@@ -1674,8 +1683,21 @@ export interface ProjectDocumentCommitReceipt {
    * all-no-op or rejected batch returns `changed: false` with the unchanged
    * revision so live commands do not falsely treat a clean no-op as a fence
    * break.
-   */
+  */
   changed: boolean;
+  /**
+   * True when the corresponding patch mutated canonical project data. A
+   * valid no-op is false here even when the patch was accepted.
+   */
+  patchChanged?: boolean[];
+  /**
+   * True when the corresponding patch was accepted by canonical validation,
+   * in the same order as the request. A valid no-op is true here. Older
+   * non-document mutation receipts may omit this field; document patch
+   * commits provide it so mixed batches cannot hide a rejected score-color
+   * operation behind an unrelated successful edit.
+   */
+  patchAccepted?: boolean[];
 }
 
 export interface ProjectDocumentPatchContext {

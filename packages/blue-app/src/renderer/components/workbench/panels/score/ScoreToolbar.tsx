@@ -4,6 +4,7 @@ import { getSnapValue, type SnapValueName, type SnapCategory } from '@blue/data'
 import type { ScorePathSegment } from './types';
 import type { NoteProcessorChainSnapshot } from '../../../../../shared/project-editor';
 import { PopoutDropdownMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { useScoreColorHistoryStore } from '../../../../stores/score-color-history-store';
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
@@ -51,6 +52,10 @@ export default function ScoreToolbar({
   getSegmentNoteProcessorChain,
 }: Props) {
   const snapDef = getSnapValue(snapValue);
+  const canUndoColor = useScoreColorHistoryStore((s) => s.canUndo);
+  const canRedoColor = useScoreColorHistoryStore((s) => s.canRedo);
+  const undoColor = useScoreColorHistoryStore((s) => s.undo);
+  const redoColor = useScoreColorHistoryStore((s) => s.redo);
 
   return (
     <div className="flex items-center h-7 px-2 bg-app-surface border-b border-app-border/40 text-role-body select-none shrink-0">
@@ -225,6 +230,28 @@ export default function ScoreToolbar({
       >
         Ruler
       </button>
+
+      {/* Score color history undo/redo */}
+      <div className="flex items-center gap-1 ml-2">
+        <button
+          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={!canUndoColor}
+          onClick={() => void undoColor()}
+          aria-label="Undo score color change"
+          title="Undo score color change"
+        >
+          Undo Color
+        </button>
+        <button
+          className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-role-callout text-app-text cursor-pointer transition-colors hover:bg-app-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={!canRedoColor}
+          onClick={() => void redoColor()}
+          aria-label="Redo score color change"
+          title="Redo score color change"
+        >
+          Redo Color
+        </button>
+      </div>
 
     </div>
   );

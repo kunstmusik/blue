@@ -48,6 +48,8 @@ import {
   collectTimelineBoundarySelection,
   collectTimelineLayerSelection,
 } from './score-timeline-gesture-utils';
+import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
+import { useScoreColorHistoryStore } from '../../../../../stores/score-color-history-store';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -257,7 +259,6 @@ interface PendingConvertTarget {
 }
 
 const RESIZE_EDGE_PX = 5;
-const DEFAULT_SOBJ_BG = 0xFF404040;
 const DEFAULT_SOBJ_DURATION = 4.0;
 const MIN_SCORE_OBJECT_DURATION = 0.25;
 
@@ -1222,6 +1223,28 @@ export default function ScoreTimeCanvas({
     colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor, colorPickerAnchorElementRef.current);
   }, [getSelectedEntries]);
 
+  const handleSetToLayerColor = useCallback(async () => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0) return;
+    const pair = buildSetSelectionToLayerColorPatch({
+      selection: entries,
+      layerGroups: interactionLayerGroups,
+    });
+    if (pair) {
+      try {
+        await applyProjectDocumentPatch(pair.forward);
+        await flushPendingPatches();
+        useScoreColorHistoryStore.getState().pushEntry({
+          label: 'Set to Layer Color',
+          forward: pair.forward,
+          inverse: pair.inverse,
+        });
+      } catch {
+        // Rejection reconciliation - do not record history entry
+      }
+    }
+  }, [getSelectedEntries, interactionLayerGroups, applyProjectDocumentPatch, flushPendingPatches]);
+
   const handleExport = useCallback(async () => {
     const entries = getSelectedEntries();
     if (
@@ -1782,6 +1805,7 @@ export default function ScoreTimeCanvas({
               onReverse={handleReverse}
               onShift={handleShift}
               onSetColor={handleSetColor}
+              onSetToLayerColor={handleSetToLayerColor}
               onSetSubjectiveToObjective={handleSetSubjectiveToObjective}
               canSetObjectiveDuration={canSetObjectiveDuration}
               onReplaceWithBuffer={handleReplaceWithBuffer}
@@ -1856,7 +1880,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder, onConvertToPolyObject, canConvertToPolyObject }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onShift, onSetColor, onSetToLayerColor, onSetSubjectiveToObjective, canSetObjectiveDuration, onReplaceWithBuffer, canReplaceWithBuffer, onFreezeUnfreeze, onExport, canExport, onConvertToObjectBuilder, canConvertToObjectBuilder, onConvertToPolyObject, canConvertToPolyObject }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1872,6 +1896,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onReverse: () => void;
   onShift: () => void;
   onSetColor: () => void;
+  onSetToLayerColor: () => void;
   onSetSubjectiveToObjective: () => void;
   canSetObjectiveDuration: boolean;
   onReplaceWithBuffer: () => void;
@@ -1956,6 +1981,9 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Item className={menuItemClass} onSelect={onSetColor}>
         Set Color…
       </ContextMenu.Item>
+      <ContextMenu.Item className={menuItemClass} onSelect={onSetToLayerColor}>
+        Set to Layer Color
+      </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} disabled={!canExport} onSelect={onExport}>
         Export…
@@ -1992,7 +2020,6 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
       name: typeName,
       startBeats: snapBeatValue(contextMenuPos.xBeats),
       durationBeats: DEFAULT_SOBJ_DURATION,
-      backgroundColor: DEFAULT_SOBJ_BG,
       objectType: typeName,
       isContainer,
     }]);

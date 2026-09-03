@@ -15,7 +15,7 @@ import type {
 import { DEFAULT_ROW_HEIGHT } from "./score/types";
 import { computePatternExtentBeats } from "./score/layer-groups/patterns-timeline-utils";
 import type { TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
-import type { SnapValueName } from "@blue/data";
+import { type SnapValueName, DEFAULT_LAYER_COLOR, formatLayerColorToHex, normalizeLayerColor } from "@blue/data";
 import type { RulerConfigChanges } from "./score/RulerConfigDialog";
 import SplitPane from "./orchestra/SplitPane";
 import ScoreToolbar from "./score/ScoreToolbar";
@@ -34,12 +34,14 @@ import { useLayerSelectionStore } from "../../../stores/layer-selection-store";
 import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { getFollowScrollTarget } from "./score/follow-playback";
 import { usePlaybackStore } from "../../../stores/playback-store";
+import { useScoreColorHistoryStore } from "../../../stores/score-color-history-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
 import TrackInstrumentControl from "./score/TrackInstrumentControl";
 import ColorPickerButton from "../../ColorPicker";
 import PatternLayerHeader from "./score/PatternLayerHeader";
 import LayerRemovalConfirmationDialog from "./score/LayerRemovalConfirmationDialog";
+import { buildApplyLayerColorToAllClipsPatch } from "./score/score-color-actions";
 import { secondsToBeats as tempoMapSecondsToBeats } from "./score/tempo-map-utils";
 import {
   buildLayerRemovalPlan,
@@ -199,6 +201,7 @@ export default function ScorePanel() {
 
   useEffect(() => {
     resetSession();
+    useScoreColorHistoryStore.getState().reset();
   }, [sessionId, resetSession]);
 
   useEffect(() => {
@@ -1286,6 +1289,8 @@ function SoundLayerHeader({
 }) {
   const setLayerMute = useProjectStore((s) => s.setLayerMute);
   const setLayerSolo = useProjectStore((s) => s.setLayerSolo);
+  const setLayerBackgroundColor = useProjectStore((s) => s.setLayerBackgroundColor);
+  const pushColorHistoryEntry = useScoreColorHistoryStore((s) => s.pushEntry);
   const renameLayer = useProjectStore((s) => s.renameLayer);
   const setLayerHeight = useProjectStore((s) => s.setLayerHeight);
   const addLayer = useProjectStore((s) => s.addLayer);
@@ -1531,6 +1536,45 @@ function SoundLayerHeader({
             </span>
           )}
           <div className="shrink-0 flex items-start gap-px mr-1 pt-0.5">
+            <ColorPickerButton
+              value={formatLayerColorToHex(layer.backgroundColor ?? DEFAULT_LAYER_COLOR)}
+              onChange={(hex) => {
+                const color = normalizeLayerColor(parseInt(hex.replace('#', ''), 16));
+                setLayerBackgroundColor(groupId, layerIndex, color);
+              }}
+              onGestureComplete={async ({ initialValue, finalValue }) => {
+                const initial = normalizeLayerColor(parseInt(initialValue.replace('#', ''), 16));
+                const final = normalizeLayerColor(parseInt(finalValue.replace('#', ''), 16));
+                if (initial === final) return;
+                try {
+                  await flushPendingPatches();
+                  pushColorHistoryEntry({
+                    label: `Change ${layer.name} Color`,
+                    forward: {
+                      score: {
+                        type: 'updateLayerState',
+                        groupId,
+                        layerIndex,
+                        patch: { backgroundColor: final },
+                      },
+                    },
+                    inverse: {
+                      score: {
+                        type: 'updateLayerState',
+                        groupId,
+                        layerIndex,
+                        patch: { backgroundColor: initial },
+                      },
+                    },
+                  });
+                } catch {
+                  // Rejection reconciliation - do not record history entry
+                }
+              }}
+              ariaLabel={`Layer color for ${layer.name}`}
+              title={`Layer color: ${layer.name}`}
+              className="w-4 h-4 rounded-sm border border-app-border/40 shrink-0 cursor-pointer mr-0.5"
+            />
             <button
               className={btnClass(!!layer.muted, 'bg-app-warning')}
               title="Mute"
@@ -1732,6 +1776,33 @@ function SoundLayerHeader({
               </ContextMenu.Sub>
             </>
           )}
+          <ContextMenu.Separator className="editor-context-menu__separator" />
+          <ContextMenu.Item
+            className={ctxItemClass}
+            onSelect={async () => {
+              const groups = layerGroups ?? [];
+              const pair = buildApplyLayerColorToAllClipsPatch({
+                groupId,
+                layerIndex,
+                layerGroups: groups,
+              });
+              if (pair) {
+                try {
+                  await applyProjectDocumentPatch(pair.forward);
+                  await flushPendingPatches();
+                  pushColorHistoryEntry({
+                    label: `Apply Layer Color to All Clips (${layer.name})`,
+                    forward: pair.forward,
+                    inverse: pair.inverse,
+                  });
+                } catch {
+                  // Rejection reconciliation - do not record history entry
+                }
+              }
+            }}
+          >
+            Apply Layer Color to All Clips
+          </ContextMenu.Item>
         </ContextMenu.Content>
       </PopoutContextMenuPortal>
     </ContextMenu.Root>

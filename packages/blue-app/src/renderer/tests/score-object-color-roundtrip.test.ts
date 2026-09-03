@@ -202,4 +202,46 @@ describe('Score object color round trip (properties panel → timeline → canon
 
     expect(gs.getBackgroundColor()).toBe(0xff8833);
   });
+
+  it('individual item color edit remains canonical and does not change when layer color changes later', async () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = new SoundLayer();
+    layer.setBackgroundColor(0x112233);
+    const gs = new GenericScore();
+    gs.setName('Independent Item');
+    layer.push(gs);
+    poly.push(layer);
+    data.getScore().push(poly);
+
+    loadDataIntoStore(data);
+
+    const item = firstStoreItem()!;
+    // 1. Explicitly edit item color
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'updateSharedProperties',
+        target: item.editorTarget!,
+        patch: { backgroundColor: 0x445566 },
+      },
+    });
+    await flushAndAwait();
+    expect(gs.getBackgroundColor()).toBe(0x445566);
+
+    // 2. Change layer color to something else
+    await useProjectStore.getState().applyProjectDocumentPatch({
+      score: {
+        type: 'updateLayerState',
+        groupId: useProjectStore.getState().score.layerGroups[0].groupId,
+        layerIndex: 0,
+        patch: { backgroundColor: 0x998877 },
+      },
+    });
+    await flushAndAwait();
+
+    // 3. Verify item remains unchanged at 0x445566
+    expect(gs.getBackgroundColor()).toBe(0x445566);
+    expect(firstStoreItem()!.backgroundColor).toBe(0x445566);
+  });
 });

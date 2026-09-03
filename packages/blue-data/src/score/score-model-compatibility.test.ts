@@ -347,4 +347,25 @@ i1 2 1 440</scoreText>
       expect([...notes].map((note) => note.getPField(1))).toEqual(['2']);
     });
   });
+
+  describe('Layer and Item Color XML Compatibility (US4)', () => {
+    it('produces XML with Java Blue-readable concrete item backgroundColor while containing layer-level backgroundColor', () => {
+      const poly = new PolyObject();
+      const layer = new SoundLayer();
+      layer.setBackgroundColor(-65536);
+
+      const sObj = new GenericScore();
+      sObj.setName('TestClip');
+      sObj.setBackgroundColor(-16711936);
+      layer.push(sObj);
+      poly.push(layer);
+
+      const xml = poly.saveAsXML();
+      const layerElem = xml.getElement('soundLayer')!;
+      expect(layerElem.getTextString('backgroundColor')).toBe('-65536');
+
+      const sObjElem = layerElem.getElement('soundObject')!;
+      expect(sObjElem.getTextString('backgroundColor')).toBe('-16711936');
+    });
+  });
 });

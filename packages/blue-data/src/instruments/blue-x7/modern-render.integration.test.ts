@@ -492,6 +492,12 @@ endin`;
     // Re-locked 2026-08-29 after matching msfa's gain[0]/gain[1] behavior:
     // every operator gain now ramps across its 64-sample block, and carrier
     // parking retains the final transition block before reaching zero.
-    expect(hash).toBe('82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6');
+    // Reference hashes:
+    // - 82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6 (Csound 7 pre-Aug 31)
+    // - 0a385a4cbc4ff7da579f534429d25426738e0243859827e1ff91d767467e7854 (Csound 7 Aug 31 commit 3938970e)
+    expect([
+      '82012869f2451e4968a0646b5a9d4329cc0c89cbcac277f7c2fe8238453882c6',
+      '0a385a4cbc4ff7da579f534429d25426738e0243859827e1ff91d767467e7854',
+    ]).toContain(hash);
   }, 60_000);
 });

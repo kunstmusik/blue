@@ -177,6 +177,7 @@ export function ColorPickerPopover({
 interface ColorPickerButtonProps {
   value: string;
   onChange: (value: string) => void;
+  onGestureComplete?: (context: { initialValue: string; finalValue: string }) => void;
   ariaLabel: string;
   title?: string;
   className?: string;
@@ -186,6 +187,7 @@ interface ColorPickerButtonProps {
 export default function ColorPickerButton({
   value,
   onChange,
+  onGestureComplete,
   ariaLabel,
   title,
   className = 'h-6 w-7 rounded border border-app-border',
@@ -194,7 +196,22 @@ export default function ColorPickerButton({
   const triggerRef: RefObject<HTMLButtonElement | null> = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<ColorPickerAnchorRect | null>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const initialValueRef = useRef<string | null>(null);
+  const latestValueRef = useRef<string | null>(null);
+
+  const handleChange = useCallback((nextValue: string) => {
+    latestValueRef.current = nextValue;
+    onChange(nextValue);
+  }, [onChange]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    const initial = initialValueRef.current;
+    const final = latestValueRef.current ?? value;
+    if (onGestureComplete && initial !== null && final !== null && normalizeHex(initial) !== normalizeHex(final)) {
+      onGestureComplete({ initialValue: initial, finalValue: final });
+    }
+  }, [onGestureComplete, value]);
 
   return (
     <>
@@ -213,6 +230,8 @@ export default function ColorPickerButton({
           if (open) {
             return;
           }
+          initialValueRef.current = value;
+          latestValueRef.current = value;
           const rect = event.currentTarget.getBoundingClientRect();
           setAnchor({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
           setOpen(true);
@@ -223,7 +242,7 @@ export default function ColorPickerButton({
         value={value}
         anchor={anchor}
         anchorElement={triggerRef.current}
-        onChange={onChange}
+        onChange={handleChange}
         onClose={close}
       />
     </>

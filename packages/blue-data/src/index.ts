@@ -202,6 +202,14 @@ export type { Layer } from './score/layers/layer';
 export { LAYER_HEIGHT } from './score/layers/layer';
 export type { LayerGroup } from './score/layers/layer-group';
 export type { AutomatableLayer } from './score/layers/automatable-layer';
+export {
+  DEFAULT_LAYER_COLOR,
+  isValidLayerColorInput,
+  normalizeLayerColor,
+  tryNormalizeLayerColor,
+  normalizeXmlLayerColor,
+  formatLayerColorToHex,
+} from './score/layers/layer-color';
 
 // ─── Audio Score Layers ───
 export { AudioClip } from './score/audio/audio-clip';

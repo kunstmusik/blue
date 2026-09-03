@@ -1366,6 +1366,7 @@ export function createNestedPolyObjectSnapshot(
       height: subLayer.getLayerHeight(),
       muted: subLayer.isMuted(),
       solo: subLayer.isSolo(),
+      backgroundColor: subLayer.getBackgroundColor(),
       items,
       noteProcessorChain: subLayer.getNoteProcessorChain().getProcessors().length > 0
         ? createNoteProcessorChainSnapshot(subLayer.getNoteProcessorChain())

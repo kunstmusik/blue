@@ -25,6 +25,8 @@ import { useLibraryStore } from '../../../../../stores/library-store';
 import { useProjectStore } from '../../../../../stores/project-store';
 import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
+import { useScoreColorHistoryStore } from '../../../../../stores/score-color-history-store';
+import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
@@ -552,6 +554,28 @@ export default function TrackLayerGroupCanvas({
     pendingColorTargetsRef.current = targets;
     colorPickerRef.current?.open(entries[0]!.backgroundColor, anchor, colorPickerAnchorElementRef.current);
   }, [getSelectedEntries]);
+
+  const handleSetToLayerColor = useCallback(async () => {
+    const entries = getSelectedEntries();
+    if (entries.length === 0) return;
+    const pair = buildSetSelectionToLayerColorPatch({
+      selection: entries,
+      layerGroups: allLayerGroups,
+    });
+    if (pair) {
+      try {
+        await applyProjectDocumentPatch(pair.forward);
+        await flushPendingPatches();
+        useScoreColorHistoryStore.getState().pushEntry({
+          label: 'Set to Layer Color',
+          forward: pair.forward,
+          inverse: pair.inverse,
+        });
+      } catch {
+        // Rejection reconciliation - do not record history entry
+      }
+    }
+  }, [getSelectedEntries, allLayerGroups, applyProjectDocumentPatch, flushPendingPatches]);
 
   const handleReplaceWithBuffer = useCallback(() => {
     const selected = getSelectedEntries();
@@ -1537,6 +1561,7 @@ export default function TrackLayerGroupCanvas({
               </ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetColor}>Set Color…</ContextMenu.Item>
+              <ContextMenu.Item className="editor-context-menu__item" onSelect={handleSetToLayerColor}>Set to Layer Color</ContextMenu.Item>
               <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className="editor-context-menu__item" disabled={!canExport} onSelect={handleExport}>Export…</ContextMenu.Item>
             </>

@@ -19,6 +19,11 @@ export interface Layer extends DeepCopyable<Layer> {
   /** Get the display height of this layer in pixels. */
   getLayerHeight(): number;
 
+  /** Get the concrete background color for this layer (signed 32-bit ARGB). */
+  getBackgroundColor(): number;
+  /** Set the concrete background color for this layer (signed 32-bit ARGB). */
+  setBackgroundColor(color: number): void;
+
   /** Check if this layer can accept the given ScoreObject. */
   accepts(object: ScoreObject): boolean;
   /** Check if this layer contains the given ScoreObject. */

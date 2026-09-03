@@ -4,11 +4,16 @@ import {
   BlueSynthBuilder,
   BlueX7,
   cloneBlueX7Voice,
+  AudioClip,
   Effect,
   Element,
   GenericInstrument,
   JavaScriptInstrument,
   PythonInstrument,
+  DEFAULT_LAYER_COLOR,
+  isValidLayerColorInput,
+  loadSoundObjectFromXML,
+  normalizeLayerColor,
 } from '@blue/data';
 import {
   createEmptyProjectEditorSnapshot,
@@ -101,6 +106,7 @@ import {
   type MidiRoutingReconciliation,
 } from './midi-routing-store';
 import { useLayerSelectionStore } from './layer-selection-store';
+import { useScoreColorHistoryStore } from './score-color-history-store';
 import {
   createProjectPatchQueue,
   type ProjectPatchQueue,
@@ -180,7 +186,8 @@ interface ProjectActions {
   flushPendingPatches: () => Promise<void>;
   moveScoreObjects: (moves: Array<{ objectId: string; targetStartBeats: number; targetLayerIndex?: number; targetGroupId?: string }>) => void;
   removeScoreObjects: (objectIds: ReadonlySet<string>) => void;
-  addScoreObjects: (objects: Array<{ layerIndex: number; groupId: string; name: string; startBeats: number; durationBeats: number; startTimeBase?: string; durationTimeBase?: string; backgroundColor: number; objectType: string; isContainer: boolean; editorTarget?: ScoreObjectEditorTargetSnapshot; serializedXml?: string; barRenderer?: ScoreRowObjectSnapshot['barRenderer'] }>) => void;
+  addScoreObjects: (objects: Array<{ layerIndex: number; groupId: string; name: string; startBeats: number; durationBeats: number; startTimeBase?: string; durationTimeBase?: string; backgroundColor?: number; objectType: string; isContainer: boolean; editorTarget?: ScoreObjectEditorTargetSnapshot; serializedXml?: string; barRenderer?: ScoreRowObjectSnapshot['barRenderer'] }>) => void;
+  setLayerBackgroundColor: (groupId: string, layerIndex: number, color: number) => void;
   setLayerMute: (groupId: string, layerIndex: number, muted: boolean) => void;
   setLayerSolo: (groupId: string, layerIndex: number, solo: boolean) => void;
   renameLayer: (layerId: string, name: string) => void;
@@ -443,6 +450,9 @@ function getProjectPatchQueue(): ProjectPatchQueue {
       logRefreshError: (error) => {
         console.error('[project-store] Failed to refresh canonical project state:', error);
       },
+      onStructuralScoreEdit: () => {
+        useScoreColorHistoryStore.getState().reset();
+      },
     });
   }
   return projectPatchQueue;
@@ -512,6 +522,7 @@ function applyProjectInfoToState(
       storeSet(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
       useLayerSelectionStore.getState().clear();
+      useScoreColorHistoryStore.getState().reset();
     }
     return;
   }
@@ -522,6 +533,7 @@ function applyProjectInfoToState(
     if (incomingSessionId !== getProjectPatchQueue().getSessionId()) {
       getProjectPatchQueue().reset(incomingSessionId);
       useLayerSelectionStore.getState().clear();
+      useScoreColorHistoryStore.getState().reset();
     }
 
     const nextProjectProperties = info.projectProperties
@@ -1588,6 +1600,90 @@ function isScoreItemMatchingTarget(
   return item.objectId === target.selectionId;
 }
 
+type ScoreColorSnapshotTarget = ScoreRowObjectSnapshot | PatternSourceObjectSnapshot;
+
+function isPatternSourceMatchingTarget(
+  sourceObject: PatternSourceObjectSnapshot,
+  target: ScoreObjectEditorTargetSnapshot,
+): boolean {
+  if (target.patternSource) {
+    const sourceRef = sourceObject.editorTarget.patternSource;
+    const targetRef = target.patternSource;
+    return sourceRef?.groupId === targetRef.groupId
+      && sourceRef.layerId === targetRef.layerId
+      && sourceRef.sourceObjectId === targetRef.sourceObjectId;
+  }
+
+  return sourceObject.objectId === target.selectionId
+    || sourceObject.editorTarget.selectionId === target.selectionId;
+}
+
+function findScoreColorSnapshotTarget(
+  score: ScoreDocumentSnapshot,
+  target: ScoreObjectEditorTargetSnapshot,
+): ScoreColorSnapshotTarget | null {
+  if (target.ownerKind === 'blueLive' || target.ownerKind === 'library') return null;
+
+  const canMatchPatternSource = Boolean(target.patternSource)
+    || (!target.location && !target.sourceInstanceLocation);
+  for (const group of score.layerGroups) {
+    if (group.groupType === 'patterns') {
+      if (canMatchPatternSource) {
+        for (const layer of group.layers) {
+          if (isPatternSourceMatchingTarget(layer.sourceObject, target)) {
+            return layer.sourceObject;
+          }
+        }
+      }
+      continue;
+    }
+
+    if (!target.location && !target.sourceInstanceLocation) continue;
+    for (const layer of group.layers) {
+      const item = layer.items.find((candidate) => isScoreItemMatchingTarget(candidate, target));
+      if (item) return item;
+    }
+  }
+
+  return null;
+}
+
+function getSerializedScoreObjectBackgroundColor(serializedXml: string | undefined): number | null {
+  if (!serializedXml) return null;
+
+  try {
+    const serialized = Element.parse(serializedXml);
+    const scoreObject = serialized.getName() === 'audioClip'
+      ? AudioClip.loadFromXML(serialized)
+      : loadSoundObjectFromXML(serialized);
+    return scoreObject?.getBackgroundColor() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveOptimisticScoreObjectColor(
+  score: ScoreDocumentSnapshot,
+  layer: ScoreLayerSnapshot,
+  object: {
+    backgroundColor?: number;
+    serializedXml?: string;
+    editorTarget?: ScoreObjectEditorTargetSnapshot;
+  },
+): number {
+  if (object.backgroundColor !== undefined) return object.backgroundColor;
+
+  const serializedColor = getSerializedScoreObjectBackgroundColor(object.serializedXml);
+  if (serializedColor !== null) return serializedColor;
+
+  if (object.editorTarget) {
+    const source = findScoreColorSnapshotTarget(score, object.editorTarget);
+    if (source) return source.backgroundColor;
+  }
+
+  return layer.backgroundColor ?? DEFAULT_LAYER_COLOR;
+}
+
 function updateScoreItemLocation(
   item: ScoreLayerSnapshot['items'][number],
   rootGroupIndex: number,
@@ -1916,6 +2012,9 @@ function applyScorePatchToSnapshot(
 
         return {
           ...layer,
+          ...(patch.patch.backgroundColor !== undefined && isValidLayerColorInput(patch.patch.backgroundColor)
+            ? { backgroundColor: normalizeLayerColor(patch.patch.backgroundColor) }
+            : {}),
           ...(patch.patch.muted !== undefined ? { muted: patch.patch.muted } : {}),
           ...(patch.patch.solo !== undefined ? { solo: patch.patch.solo } : {}),
           ...(patch.patch.heightIndex !== undefined ? { height: (Math.max(0, patch.patch.heightIndex) + 1) * layerUnit } : {}),
@@ -2095,6 +2194,85 @@ function applyScorePatchToSnapshot(
     || patch.type === 'setAutomationResolution'
   ) {
     return score;
+  }
+
+  if (patch.type === 'setScoreObjectBackgroundColors') {
+    if (!Array.isArray(patch.updates) || patch.updates.length === 0) {
+      return score;
+    }
+
+    const seenKeys = new Set<string>();
+    const seenObjects = new Set<object>();
+    const updateByObject = new Map<object, number>();
+    for (const u of patch.updates) {
+      if (!u || !u.target || !isValidLayerColorInput(u.backgroundColor)) {
+        return score;
+      }
+      if (u.target.ownerKind === 'blueLive' || u.target.ownerKind === 'library') {
+        return score;
+      }
+
+      let key = '';
+      if (u.target.patternSource) {
+        const ps = u.target.patternSource;
+        key = `pat:${ps.groupId}:${ps.layerId}:${ps.sourceObjectId}`;
+      } else if (u.target.location) {
+        const loc = u.target.location;
+        key = `loc:${loc.rootGroupIndex}:${(loc.containerPath ?? []).join('/')}:${loc.layerIndex}:${loc.objectIndex}`;
+      } else if (u.target.selectionId) {
+        key = `sel:${u.target.selectionId}`;
+      } else {
+        return score;
+      }
+
+      if (seenKeys.has(key)) {
+        return score;
+      }
+      seenKeys.add(key);
+
+      const resolvedObject = findScoreColorSnapshotTarget(score, u.target);
+      if (!resolvedObject || seenObjects.has(resolvedObject)) return score;
+      seenObjects.add(resolvedObject);
+      updateByObject.set(resolvedObject, normalizeLayerColor(u.backgroundColor));
+    }
+
+    let changed = false;
+    const nextLayerGroups = score.layerGroups.map((lg) => {
+      if (lg.groupType === 'patterns') {
+        const layers = lg.layers.map((layer) => {
+          const color = updateByObject.get(layer.sourceObject);
+          if (color !== undefined && layer.sourceObject.backgroundColor !== color) {
+            changed = true;
+            return {
+              ...layer,
+              sourceObject: { ...layer.sourceObject, backgroundColor: color },
+            };
+          }
+          return layer;
+        });
+        return { ...lg, layers };
+      }
+
+      return {
+        ...lg,
+        layers: lg.layers.map((layer) => ({
+          ...layer,
+          items: layer.items.map((item) => {
+            const color = updateByObject.get(item);
+            if (color !== undefined && item.backgroundColor !== color) {
+              changed = true;
+              return {
+                ...item,
+                backgroundColor: color,
+              };
+            }
+            return item;
+          }),
+        })),
+      };
+    });
+
+    return changed ? { ...score, layerGroups: nextLayerGroups } : score;
   }
 
   if (patch.type !== 'updateSharedProperties') return score;
@@ -2953,6 +3131,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       set(buildInitialState());
       useMidiRoutingStore.getState().clearFocusForProjectSession();
       useLayerSelectionStore.getState().clear();
+      useScoreColorHistoryStore.getState().reset();
     },
 
   revertProject: async () => {
@@ -3342,7 +3521,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       durationBeats: number;
       startTimeBase?: string;
       durationTimeBase?: string;
-      backgroundColor: number;
+      backgroundColor?: number;
       serializedXml?: string;
       sourceTarget?: import('../../../shared/project-editor').ScoreObjectEditorTargetSnapshot;
     }> = [];
@@ -3361,6 +3540,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
             const objectId = createLocalScoreObjectId(o.objectType);
             const objectIndex = layer.items.length + j;
             const isSObj = o.objectType !== 'AudioClip';
+            const resolvedColor = resolveOptimisticScoreObjectColor(score, layer, o);
             const editorTarget = {
               selectionId: objectId,
               selectedObjectType: o.objectType,
@@ -3398,7 +3578,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
               durationBeats: o.durationBeats,
               startTimeBase: o.startTimeBase ?? 'BEATS',
               durationTimeBase: o.durationTimeBase ?? 'BEATS',
-              backgroundColor: o.backgroundColor,
+              backgroundColor: resolvedColor,
               isContainer: o.isContainer,
               serializedXml: o.serializedXml,
               barRenderer: createOptimisticBarRendererSnapshot(o),
@@ -3419,6 +3599,17 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         objects: patchObjects,
       },
     }).then(() => __testFlushPendingPatches());
+  },
+
+  setLayerBackgroundColor: (groupId, layerIndex, color) => {
+    void get().applyProjectDocumentPatch({
+      score: {
+        type: 'updateLayerState',
+        groupId,
+        layerIndex,
+        patch: { backgroundColor: color },
+      },
+    });
   },
 
   setLayerMute: (groupId, layerIndex, muted) => {

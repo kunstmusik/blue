@@ -9,6 +9,7 @@ import { AudioClip } from '../audio/audio-clip';
 import { ScoreObject } from '../score-object';
 import { AutomatableLayer } from '../layers/automatable-layer';
 import { LAYER_HEIGHT } from '../layers/layer';
+import { DEFAULT_LAYER_COLOR, isValidLayerColorInput, normalizeLayerColor, normalizeXmlLayerColor } from '../layers/layer-color';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { TimeContext } from '../../time/time-context';
 import { Element } from '../../serialization/xml-reader';
@@ -81,6 +82,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _solo = false;
   private _uniqueId = generateUniqueId();
   private _heightIndex = 0;
+  private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _automationParameters = new ParameterIdList();
   private _npc = new NoteProcessorChain();
   private _instrument: Instrument | null = null;
@@ -95,6 +97,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       this._solo = other._solo;
       this._uniqueId = other._uniqueId;
       this._heightIndex = other._heightIndex;
+      this._backgroundColor = other._backgroundColor;
       this._npc = new NoteProcessorChain(other._npc);
       this._instrument = other._instrument?.deepCopy() ?? null;
       this._automationParameters = remapCopiedInstrumentParameterIds(
@@ -113,6 +116,8 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   getName(): string { return this._name; }
   setName(name: string): void { this._name = name; }
   getLayerHeight(): number { return LAYER_HEIGHT * (this._heightIndex + 1); }
+  getBackgroundColor(): number { return this._backgroundColor; }
+  setBackgroundColor(color: number): void { this._backgroundColor = normalizeLayerColor(color); }
   getHeightIndex(): number { return this._heightIndex; }
   setHeightIndex(index: number): void { this._heightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index)); }
   getUniqueId(): string { return this._uniqueId; }
@@ -310,6 +315,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     root.setAttribute('heightIndex', String(this._heightIndex));
     root.setAttribute('uniqueId', this._uniqueId);
     root.setAttribute('automationSelectedIndex', String(this._automationParameters.getSelectedIndex()));
+    root.addElement('backgroundColor').setText(String(this._backgroundColor));
     root.addElement(this._npc.saveAsXML().setName('noteProcessorChain'));
     if (this._instrument) root.addElement(this._instrument.saveAsXML());
     for (const item of this) root.addElement(item.saveAsXML(objRefMap));
@@ -346,6 +352,10 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     while (children.hasMoreElements()) {
       const child = children.next();
       switch (child.getName()) {
+        case 'backgroundColor': {
+          track._backgroundColor = normalizeXmlLayerColor(child.getTextString());
+          break;
+        }
         case 'noteProcessorChain':
           track._npc = NoteProcessorChain.loadFromXML(child);
           break;

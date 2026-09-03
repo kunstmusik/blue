@@ -287,6 +287,7 @@ import {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   isEmptyProjectDocumentPatch,
+  isScoreColorPatchAccepted,
   isBsbRealtimeControlUpdate,
   resolveTimelineTarget,
   type EffectEditorPatchRequest,
@@ -4860,6 +4861,8 @@ async function commitProjectDocumentPatchBatch(
 
   let javaRuntimeDependenciesChanged = false;
   let anyCanonicalMutation = false;
+  const patchChanged: boolean[] = [];
+  const patchAccepted: boolean[] = [];
 
   for (const patch of patches) {
     const blueX7BindingsToInvalidate = collectBlueX7BindingsToInvalidate(getCurrentData(), patch);
@@ -4869,11 +4872,16 @@ async function commitProjectDocumentPatchBatch(
     const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch);
     maybeCloseRemovedProjectEffectEditors(patch);
     maybeCloseRemovedTrackInstrumentEditors(patch);
+    const colorPatchAccepted = patch.score
+      ? isScoreColorPatchAccepted(getCurrentData(), patch.score)
+      : false;
     const changed = applyProjectDocumentPatch(getCurrentData(), patch, {
       projectSessionId: getCurrentProjectSessionId(),
       projectRevision: getCurrentProjectRevision(),
       defaultLayerGroupType: loadProgramSettings().projectDefaults.defaultLayerGroupType,
     });
+    patchChanged.push(changed);
+    patchAccepted.push(colorPatchAccepted || changed);
     if (changed) {
       anyCanonicalMutation = true;
       for (const ownerIdentity of blueX7BindingsToInvalidate) {
@@ -4911,6 +4919,8 @@ async function commitProjectDocumentPatchBatch(
     revision: getCurrentProjectRevision(),
     sessionId: getCurrentProjectSessionId(),
     changed: anyCanonicalMutation,
+    patchChanged,
+    patchAccepted,
   };
   return receipt;
 }

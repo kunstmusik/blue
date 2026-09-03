@@ -234,4 +234,129 @@ describe('ColorPicker', () => {
 
     expect(events).toEqual([]);
   });
+
+  it('fires gesture-completion callback with initial and final color when popover closes after edits', () => {
+    const onGestureComplete = vi.fn();
+    const onChange = vi.fn();
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    function TestComponent(): React.ReactElement {
+      const [val, setVal] = React.useState('#336699');
+      return (
+        <ColorPickerButton
+          value={val}
+          onChange={(next) => {
+            onChange(next);
+            setVal(next);
+          }}
+          onGestureComplete={onGestureComplete}
+          ariaLabel="Layer color"
+        />
+      );
+    }
+
+    act(() => {
+      root.render(<TestComponent />);
+    });
+
+    const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Layer color"]')!;
+    act(() => trigger.click());
+
+    // Multiple changes
+    act(() => {
+      document.querySelector<HTMLButtonElement>('[aria-label="Set color #ef4444"]')!.click();
+    });
+    expect(onChange).toHaveBeenCalledWith('#ef4444');
+
+    const hex = document.querySelector<HTMLInputElement>('[aria-label="Hex color"]')!;
+    act(() => {
+      hex.value = '#00ff00';
+      hex.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledWith('#00ff00');
+
+    // Callback should NOT have fired yet while open
+    expect(onGestureComplete).not.toHaveBeenCalled();
+
+    // Close via outside click
+    act(() => {
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    });
+
+    // Fired once on close with initial and final values
+    expect(onGestureComplete).toHaveBeenCalledTimes(1);
+    expect(onGestureComplete).toHaveBeenCalledWith({
+      initialValue: '#336699',
+      finalValue: '#00ff00',
+    });
+  });
+
+  it('does not fire gesture-completion callback if value was unchanged when closing', () => {
+    const onGestureComplete = vi.fn();
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    act(() => {
+      root.render(
+        <ColorPickerButton
+          value="#336699"
+          onChange={vi.fn()}
+          onGestureComplete={onGestureComplete}
+          ariaLabel="Layer color"
+        />,
+      );
+    });
+
+    const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Layer color"]')!;
+    act(() => trigger.click());
+
+    // Close immediately via Escape
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(onGestureComplete).not.toHaveBeenCalled();
+  });
+
+  it('suppresses completion for repeated picker previews that round back to the initial color', () => {
+    const onGestureComplete = vi.fn();
+    const onChange = vi.fn();
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+
+    function TestComponent(): React.ReactElement {
+      const [value, setValue] = React.useState('#336699');
+      return (
+        <ColorPickerButton
+          value={value}
+          onChange={(next) => {
+            onChange(next);
+            setValue(next);
+          }}
+          onGestureComplete={onGestureComplete}
+          ariaLabel="Layer color"
+        />
+      );
+    }
+
+    act(() => root.render(<TestComponent />));
+    const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Layer color"]')!;
+    act(() => trigger.click());
+
+    const hex = document.querySelector<HTMLInputElement>('[aria-label="Hex color"]')!;
+    act(() => {
+      hex.value = '#336699';
+      hex.dispatchEvent(new Event('input', { bubbles: true }));
+      hex.value = '#336699';
+      hex.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledTimes(2);
+
+    act(() => document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+    expect(onGestureComplete).not.toHaveBeenCalled();
+  });
 });

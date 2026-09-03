@@ -64,6 +64,7 @@ export {
 
 export {
   applyScoreTimeStatePatch,
+  isScoreColorPatchAccepted,
 } from './patch-score';
 
 export {

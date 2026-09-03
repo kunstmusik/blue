@@ -14,6 +14,7 @@ export interface ProjectPatchQueueDependencies {
   setDirty(dirty: boolean): void;
   reportBackgroundError(error: unknown): void;
   logRefreshError(error: unknown): void;
+  onStructuralScoreEdit?: () => void;
 }
 
 export interface ProjectPatchQueue {
@@ -25,6 +26,27 @@ export interface ProjectPatchQueue {
   getSessionId(): number;
   awaitPending(): Promise<void>;
   clearPending(): void;
+}
+
+export function isStructuralScorePatch(patch: ScorePatch): boolean {
+  switch (patch.type) {
+    case 'addLayer':
+    case 'removeLayer':
+    case 'moveLayerRange':
+    case 'removeLayerRanges':
+    case 'addLayerGroup':
+    case 'removeLayerGroup':
+    case 'moveLayerGroup':
+    case 'removeScoreObjects':
+    case 'moveScoreObjects':
+    case 'convertToPolyObject':
+    case 'convertScoreObjectToObjectBuilder':
+    case 'removeTrackItems':
+    case 'moveTrackItems':
+      return true;
+    default:
+      return false;
+  }
 }
 
 function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
@@ -88,14 +110,72 @@ function patchesRequireCanonicalProjectRefresh(
   );
 }
 
-function patchesRequireMutationAcknowledgement(
-  patches: readonly ProjectDocumentPatch[],
-): boolean {
-  return patches.some((patch) => (
+function isMutationAcknowledgementPatch(patch: ProjectDocumentPatch): boolean {
+  return (
     patch.score?.type === 'createTrackInstrument'
     || patch.score?.type === 'replaceTrackInstrument'
     || patch.score?.type === 'clearTrackInstrument'
-  ));
+    || isScoreColorPatch(patch)
+  );
+}
+
+function isTrackInstrumentAcknowledgementPatch(patch: ProjectDocumentPatch): boolean {
+  return isMutationAcknowledgementPatch(patch) && !isScoreColorPatch(patch);
+}
+
+function patchesRequireMutationAcknowledgement(
+  patches: readonly ProjectDocumentPatch[],
+): boolean {
+  return patches.some(isMutationAcknowledgementPatch);
+}
+
+function isScoreColorPatch(patch: ProjectDocumentPatch): boolean {
+  const scorePatch = patch.score;
+  if (!scorePatch) return false;
+  if (scorePatch.type === 'setScoreObjectBackgroundColors') return true;
+  if (scorePatch.type === 'updateLayerState') {
+    return scorePatch.patch.backgroundColor !== undefined;
+  }
+  return scorePatch.type === 'updateSharedProperties'
+    && scorePatch.patch.backgroundColor !== undefined;
+}
+
+function hasUnacknowledgedMutation(
+  patches: readonly ProjectDocumentPatch[],
+  receipt: ProjectDocumentCommitReceipt,
+): boolean {
+  if (!patchesRequireMutationAcknowledgement(patches)) return false;
+
+  const colorStatuses = receipt.patchAccepted ?? receipt.patchChanged;
+  if (patches.some(isScoreColorPatch)) {
+    if (colorStatuses === undefined) {
+      // Keep compatibility with older receipts while the live document IPC
+      // contract rolls out the per-patch acknowledgement field.
+      return receipt.changed === false;
+    }
+
+    if (colorStatuses.length !== patches.length) return true;
+
+    if (patches.some((patch, index) => (
+      isScoreColorPatch(patch) && colorStatuses[index] !== true
+    ))) {
+      return true;
+    }
+  }
+
+  if (patches.some(isTrackInstrumentAcknowledgementPatch)) {
+    if (receipt.patchChanged === undefined) return receipt.changed === false;
+    if (receipt.patchChanged.length !== patches.length) return true;
+
+    if (patches.some((patch, index) => (
+      isTrackInstrumentAcknowledgementPatch(patch)
+        && receipt.patchChanged?.[index] !== true
+    ))) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function createProjectPatchQueue(
@@ -135,13 +215,17 @@ export function createProjectPatchQueue(
 
     try {
       const receipt = await dependencies.commit(patches);
-      if (receipt.changed === false && patchesRequireMutationAcknowledgement(patches)) {
-        throw new Error('Track instrument change was not applied; the project may have changed. Please try again.');
-      }
-
       sequenceChanged = sequenceChanged || receipt.changed !== false;
       if (receipt.sessionId === currentSessionId && Number.isInteger(receipt.revision)) {
         currentRevision = Math.max(currentRevision, receipt.revision);
+      }
+
+      if (hasUnacknowledgedMutation(patches, receipt)) {
+        const isColorPatch = patches.some(isScoreColorPatch);
+        const message = isColorPatch
+          ? 'Score object color change was not applied; the project may have changed. Please try again.'
+          : 'Track instrument change was not applied; the project may have changed. Please try again.';
+        throw new Error(message);
       }
 
       if (patchesRequireCanonicalProjectRefresh(patches)) {
@@ -193,6 +277,9 @@ export function createProjectPatchQueue(
       if (dirtyBaseline === null) {
         dirtyBaseline = baseline;
         sequenceChanged = false;
+      }
+      if (patch.score && isStructuralScorePatch(patch.score)) {
+        dependencies.onStructuralScoreEdit?.();
       }
       pending.push(patch);
       schedule();
