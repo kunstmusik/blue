@@ -7,7 +7,7 @@
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
     "test:scripts": "node --test scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs",
-    "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint",
+    "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint && pnpm format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "fixtures:java-automation": "node scripts/generate-java-blue-automation-fixtures.mjs",
